@@ -1,0 +1,357 @@
+// ===========================================
+// OirConecta - Esquema de Base de Datos
+// ===========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================================
+// USUARIOS Y AUTENTICACIÓN
+// ===========================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nombre    String
+  role      Role     @default(ADMIN)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  leadsCreados    Lead[]        @relation("LeadCreatedBy")
+  citasCreadas    Appointment[] @relation("AppointmentCreatedBy")
+  ventasCreadas   Sale[]        @relation("SaleCreatedBy")
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  VENDEDOR
+  AUDIOLOGA
+  RECEPCION
+  SOLO_LECTURA
+}
+
+// ===========================================
+// LEADS
+// ===========================================
+
+model Lead {
+  id                       String      @id @default(uuid())
+  nombre                   String
+  email                    String
+  telefono                 String
+  direccion                String?
+  ciudad                   String?
+  usuarioAudifonosMedicados String     @default("NO")
+  procedencia              String      @default("visita-medica")
+  interes                  String      @default("Consulta General")
+  notas                    String?
+  estado                   LeadEstado  @default(NUEVO)
+  
+  // Campos adicionales de procedencia
+  medicoReferente          String?
+  redSocial                String?
+  campanaMarketingOffline  String?
+  personaRecomendacion     String?
+  agendamientoManualTipo   String?
+  
+  // Relaciones
+  createdById              String?
+  createdBy                User?       @relation("LeadCreatedBy", fields: [createdById], references: [id])
+  appointmentId            String?
+  appointment              Appointment? @relation(fields: [appointmentId], references: [id])
+  patient                  Patient?
+  
+  createdAt                DateTime    @default(now())
+  updatedAt                DateTime    @updatedAt
+
+  @@map("leads")
+}
+
+enum LeadEstado {
+  NUEVO
+  CONTACTADO
+  AGENDADO
+  CALIFICADO
+  CONVERTIDO
+  PERDIDO
+  PACIENTE
+}
+
+// ===========================================
+// PACIENTES
+// ===========================================
+
+model Patient {
+  id                       String   @id @default(uuid())
+  nombre                   String
+  email                    String   @unique
+  telefono                 String
+  direccion                String?
+  ciudad                   String?
+  fechaNacimiento          DateTime?
+  genero                   String?
+  tipoDocumento            String?
+  numeroDocumento          String?
+  ocupacion                String?
+  estadoCivil              String?
+  eps                      String?
+  usuarioAudifonosMedicados String  @default("NO")
+  procedencia              String   @default("visita-medica")
+  notas                    String?
+  
+  // Datos clínicos generales
+  tienePerdidaAuditiva     Boolean  @default(false)
+  
+  // Relación con lead original
+  leadId                   String?  @unique
+  lead                     Lead?    @relation(fields: [leadId], references: [id])
+  
+  // Relaciones
+  appointments             Appointment[]
+  quotes                   Quote[]
+  sales                    Sale[]
+  consultations            Consultation[]
+  
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@map("patients")
+}
+
+// ===========================================
+// CITAS / APPOINTMENTS
+// ===========================================
+
+model Appointment {
+  id            String            @id @default(uuid())
+  fecha         DateTime
+  hora          String
+  motivo        String?
+  procedencia   String            @default("visita-medica")
+  estado        AppointmentStatus @default(CONFIRMED)
+  notas         String?
+  tipoConsulta  String?           // primera-vez, control, adaptacion, etc.
+  
+  // Paciente (puede no existir aún si es lead)
+  patientId     String?
+  patient       Patient?          @relation(fields: [patientId], references: [id])
+  
+  // Datos del paciente (si aún no es paciente registrado)
+  patientName   String?
+  patientEmail  String?
+  patientPhone  String?
+  
+  // Creado por
+  createdById   String?
+  createdBy     User?             @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
+  
+  // Relaciones
+  leads         Lead[]
+  consultation  Consultation?
+  
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  CONFIRMED
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+  RESCHEDULED
+  PATIENT
+}
+
+// ===========================================
+// CONSULTAS (Historia clínica)
+// ===========================================
+
+model Consultation {
+  id               String      @id @default(uuid())
+  fecha            DateTime    @default(now())
+  tipoConsulta     String      // primera-vez, control, adaptacion, etc.
+  notasConsulta    String?
+  perdidaAuditiva  Boolean?
+  proximosPasos    String?
+  
+  // Datos del formulario según tipo de consulta (JSON flexible)
+  formData         Json?
+  
+  // Relaciones
+  patientId        String
+  patient          Patient     @relation(fields: [patientId], references: [id])
+  appointmentId    String?     @unique
+  appointment      Appointment? @relation(fields: [appointmentId], references: [id])
+  
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@map("consultations")
+}
+
+// ===========================================
+// CAMPAÑAS DE MARKETING
+// ===========================================
+
+model Campaign {
+  id                String         @id @default(uuid())
+  nombre            String
+  tipo              String         // Email, Redes Sociales, SMS, etc.
+  estado            CampaignStatus @default(ACTIVA)
+  fechaInicio       DateTime
+  fechaFin          DateTime
+  fabricante        String?        // Marca asociada
+  descuentoAprobado Float          @default(0)
+  
+  // Métricas
+  destinatarios     Int            @default(0)
+  abiertos          Int            @default(0)
+  clicks            Int            @default(0)
+  
+  // Relaciones
+  quotes            Quote[]
+  sales             Sale[]
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@map("campaigns")
+}
+
+enum CampaignStatus {
+  ACTIVA
+  PAUSADA
+  FINALIZADA
+}
+
+// ===========================================
+// COTIZACIONES
+// ===========================================
+
+model Quote {
+  id              String      @id @default(uuid())
+  estado          QuoteStatus @default(PENDING)
+  
+  // Producto
+  marca           String
+  cantidad        Int         @default(1)
+  tecnologia      String?
+  plataforma      String?
+  recargable      String      @default("NO")
+  
+  // Garantía y seguros
+  anosGarantia    Int         @default(1)
+  seguroPerdida   String      @default("NO")
+  seguroRotura    String      @default("NO")
+  
+  // Precios
+  valorUnitario   Float
+  descuento       Float       @default(0)
+  valorPorUnidad  Float?
+  valorTotal      Float
+  
+  // Campaña
+  campaignId      String?
+  campaign        Campaign?   @relation(fields: [campaignId], references: [id])
+  
+  // Paciente
+  patientId       String
+  patient         Patient     @relation(fields: [patientId], references: [id])
+  
+  // Metadata (imágenes, comentarios, etc.)
+  metadata        Json?
+  notas           String?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CONVERTED
+}
+
+// ===========================================
+// VENTAS
+// ===========================================
+
+model Sale {
+  id                    String       @id @default(uuid())
+  categoria             SaleCategory @default(HEARING_AID)
+  
+  // Producto (para audífonos)
+  marca                 String?
+  modelo                String?
+  cantidad              Int          @default(1)
+  tecnologia            String?
+  plataforma            String?
+  recargable            String?
+  
+  // Precios
+  valorUnitario         Float
+  descuento             Float        @default(0)
+  valorTotal            Float
+  
+  // Garantía y seguros (audífonos)
+  anosGarantia          Int?
+  seguroPerdida         String?
+  seguroRotura          String?
+  
+  // Fechas importantes
+  fechaVenta            DateTime     @default(now())
+  fechaAdaptacion       DateTime?
+  fechaFinGarantia      DateTime?
+  fechaPrimerControl    DateTime?
+  fechaPrimerMantenimiento DateTime?
+  
+  // Campaña (audífonos)
+  campaignId            String?
+  campaign              Campaign?    @relation(fields: [campaignId], references: [id])
+  
+  // Para consultas
+  descripcionConsulta   String?
+  fechaConsulta         DateTime?
+  
+  // Para accesorios (JSON con items)
+  accesoriosItems       Json?
+  
+  // Paciente
+  patientId             String
+  patient               Patient      @relation(fields: [patientId], references: [id])
+  
+  // Creado por
+  createdById           String?
+  createdBy             User?        @relation("SaleCreatedBy", fields: [createdById], references: [id])
+  
+  // Metadata adicional
+  metadata              Json?
+  notas                 String?
+  
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  @@map("sales")
+}
+
+enum SaleCategory {
+  HEARING_AID  // Audífonos
+  SERVICE      // Consulta
+  ACCESSORY    // Accesorio
+}

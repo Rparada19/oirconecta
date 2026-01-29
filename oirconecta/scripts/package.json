@@ -1,0 +1,23 @@
+{
+  "name": "oirconecta-data-extractor",
+  "version": "1.0.0",
+  "description": "Script para extraer datos de directorios oficiales de profesionales auditivos en Colombia",
+  "main": "extractData.js",
+  "scripts": {
+    "extract": "node extractData.js",
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "puppeteer": "^21.0.0"
+  },
+  "keywords": [
+    "data-extraction",
+    "healthcare",
+    "colombia",
+    "audiologists",
+    "otolaryngologists"
+  ],
+  "author": "OirConecta Team",
+  "license": "MIT"
+}

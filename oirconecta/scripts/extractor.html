@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OírConecta - Extractor de Datos</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8fafc;
+            color: #272F50;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #085946;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .portal-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .portal-section h3 {
+            color: #085946;
+            margin-top: 0;
+        }
+        .btn {
+            background: #085946;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #272F50;
+        }
+        .btn-secondary {
+            background: #86899C;
+        }
+        .btn-secondary:hover {
+            background: #272F50;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        .results {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .results pre {
+            margin: 0;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .instructions {
+            background: #f0f4f3;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .instructions h4 {
+            color: #085946;
+            margin-top: 0;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 OírConecta - Extractor de Datos</h1>
+        
+        <div class="instructions">
+            <h4>📋 Instrucciones de Uso:</h4>
+            <ol>
+                <li><strong>Abre cada portal</strong> en una pestaña separada del navegador</li>
+                <li><strong>Inspecciona la estructura</strong> de cada página para identificar los selectores CSS</li>
+                <li><strong>Ajusta los selectores</strong> en el código según la estructura real de cada sitio</li>
+                <li><strong>Ejecuta la extracción</strong> desde la consola del navegador</li>
+                <li><strong>Descarga los datos</strong> en formato JSON</li>
+            </ol>
+        </div>
+
+        <div class="portal-section">
+            <h3>🎧 ASOAUDIO - Audiólogos</h3>
+            <p><strong>URL:</strong> <a href="https://asoaudio.org.co/directorio/" target="_blank">https://asoaudio.org.co/directorio/</a></p>
+            <button class="btn" onclick="openPortal('asoaudio')">Abrir Portal</button>
+            <button class="btn btn-secondary" onclick="extractFromPortal('asoaudio')">Extraer Datos</button>
+            <div id="asoaudio-status"></div>
+            <div id="asoaudio-results" class="results" style="display: none;"></div>
+        </div>
+
+        <div class="portal-section">
+            <h3>👨‍⚕️ ACORL - Otorrinolaringólogos</h3>
+            <p><strong>URL:</strong> <a href="https://acorl.org.co/directorio-otorrino" target="_blank">https://acorl.org.co/directorio-otorrino</a></p>
+            <button class="btn" onclick="openPortal('acorl')">Abrir Portal</button>
+            <button class="btn btn-secondary" onclick="extractFromPortal('acorl')">Extraer Datos</button>
+            <div id="acorl-status"></div>
+            <div id="acorl-results" class="results" style="display: none;"></div>
+        </div>
+
+        <div class="portal-section">
+            <h3>🔬 ACON - Otólogos</h3>
+            <p><strong>URL:</strong> <a href="https://www.acon.com.co/directorio-de-especialistas/" target="_blank">https://www.acon.com.co/directorio-de-especialistas/</a></p>
+            <button class="btn" onclick="openPortal('acon')">Abrir Portal</button>
+            <button class="btn btn-secondary" onclick="extractFromPortal('acon')">Extraer Datos</button>
+            <div id="acon-status"></div>
+            <div id="acon-results" class="results" style="display: none;"></div>
+        </div>
+
+        <div class="portal-section">
+            <h3>📊 Acciones Globales</h3>
+            <button class="btn" onclick="extractAllData()">Extraer Todos los Datos</button>
+            <button class="btn btn-secondary" onclick="downloadAllData()">Descargar Todos los Datos</button>
+            <button class="btn btn-secondary" onclick="clearAllData()">Limpiar Datos</button>
+            <div id="global-status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de portales
+        const portals = {
+            asoaudio: {
+                url: 'https://asoaudio.org.co/directorio/',
+                name: 'ASOAUDIO',
+                selectors: {
+                    container: '.directorio-item, .member-item, .professional-item',
+                    nombre: '.nombre, .name, h3, h4',
+                    titulo: '.titulo, .title, .credentials',
+                    ciudad: '.ciudad, .city, .location',
+                    telefono: '.telefono, .phone, .contact',
+                    email: '.email, .mail',
+                    direccion: '.direccion, .address'
+                }
+            },
+            acorl: {
+                url: 'https://acorl.org.co/directorio-otorrino',
+                name: 'ACORL',
+                selectors: {
+                    container: '.directorio-item, .member-item, .professional-item',
+                    nombre: '.nombre, .name, h3, h4',
+                    titulo: '.titulo, .title, .credentials',
+                    ciudad: '.ciudad, .city, .location',
+                    telefono: '.telefono, .phone, .contact',
+                    email: '.email, .mail',
+                    direccion: '.direccion, .address'
+                }
+            },
+            acon: {
+                url: 'https://www.acon.com.co/directorio-de-especialistas/',
+                name: 'ACON',
+                selectors: {
+                    container: '.directorio-item, .member-item, .professional-item',
+                    nombre: '.nombre, .name, h3, h4',
+                    titulo: '.titulo, .title, .credentials',
+                    ciudad: '.ciudad, .city, .location',
+                    telefono: '.telefono, .phone, .contact',
+                    email: '.email, .mail',
+                    direccion: '.direccion, .address'
+                }
+            }
+        };
+
+        // Función para abrir portal
+        function openPortal(portalKey) {
+            const portal = portals[portalKey];
+            window.open(portal.url, '_blank');
+            showStatus(portalKey, `Portal ${portal.name} abierto en nueva pestaña`, 'info');
+        }
+
+        // Función para extraer datos de un portal específico
+        function extractFromPortal(portalKey) {
+            const portal = portals[portalKey];
+            showStatus(portalKey, `Extrayendo datos de ${portal.name}...`, 'info');
+            
+            try {
+                // Intentar extraer con diferentes selectores
+                const data = extractDataWithSelectors(portal.selectors, portalKey);
+                
+                if (data.length > 0) {
+                    // Guardar en localStorage
+                    localStorage.setItem(`oirconecta_${portalKey}`, JSON.stringify(data));
+                    
+                    showStatus(portalKey, `✅ Extraídos ${data.length} registros de ${portal.name}`, 'success');
+                    showResults(portalKey, data);
+                } else {
+                    showStatus(portalKey, `❌ No se encontraron datos en ${portal.name}. Revisa los selectores.`, 'error');
+                }
+            } catch (error) {
+                showStatus(portalKey, `❌ Error extrayendo datos: ${error.message}`, 'error');
+            }
+        }
+
+        // Función para extraer datos con múltiples selectores
+        function extractDataWithSelectors(selectors, portalKey) {
+            const data = [];
+            const containers = document.querySelectorAll(selectors.container);
+            
+            if (containers.length === 0) {
+                // Intentar selectores alternativos
+                const altSelectors = [
+                    '.member', '.professional', '.doctor', '.specialist',
+                    '[class*="directorio"]', '[class*="member"]', '[class*="professional"]'
+                ];
+                
+                for (const altSelector of altSelectors) {
+                    const altContainers = document.querySelectorAll(altSelector);
+                    if (altContainers.length > 0) {
+                        console.log(`Usando selector alternativo: ${altSelector}`);
+                        return extractFromElements(altContainers, selectors, portalKey);
+                    }
+                }
+                
+                return [];
+            }
+            
+            return extractFromElements(containers, selectors, portalKey);
+        }
+
+        // Función para extraer datos de elementos
+        function extractFromElements(elements, selectors, portalKey) {
+            const data = [];
+            
+            elements.forEach((element, index) => {
+                try {
+                    const extracted = {
+                        id: `${portalKey}_${index + 1}`,
+                        nombre: getTextContent(element, selectors.nombre),
+                        especialidad: getEspecialidad(portalKey),
+                        titulo: getTextContent(element, selectors.titulo),
+                        ciudad: getTextContent(element, selectors.ciudad),
+                        telefono: getTextContent(element, selectors.telefono),
+                        email: getTextContent(element, selectors.email),
+                        direccion: getTextContent(element, selectors.direccion),
+                        fuente: portalKey.toUpperCase(),
+                        fechaActualizacion: new Date().toISOString()
+                    };
+                    
+                    if (extracted.nombre) {
+                        data.push(extracted);
+                    }
+                } catch (error) {
+                    console.error(`Error extrayendo elemento ${index}:`, error);
+                }
+            });
+            
+            return data;
+        }
+
+        // Función para obtener texto de múltiples selectores
+        function getTextContent(element, selectorString) {
+            const selectors = selectorString.split(', ');
+            
+            for (const selector of selectors) {
+                const found = element.querySelector(selector);
+                if (found && found.textContent.trim()) {
+                    return found.textContent.trim();
+                }
+            }
+            
+            return '';
+        }
+
+        // Función para obtener especialidad según portal
+        function getEspecialidad(portalKey) {
+            const especialidades = {
+                asoaudio: 'Audiólogo',
+                acorl: 'Otorrinolaringólogo',
+                acon: 'Otólogo'
+            };
+            return especialidades[portalKey] || 'Especialista';
+        }
+
+        // Función para extraer todos los datos
+        function extractAllData() {
+            showStatus('global', 'Extrayendo datos de todos los portales...', 'info');
+            
+            const allData = {
+                audiologos: [],
+                otorrinolaringologos: [],
+                etologos: []
+            };
+            
+            // Intentar extraer de cada portal
+            Object.keys(portals).forEach(portalKey => {
+                try {
+                    const data = extractDataWithSelectors(portals[portalKey].selectors, portalKey);
+                    
+                    switch (portalKey) {
+                        case 'asoaudio':
+                            allData.audiologos = data;
+                            break;
+                        case 'acorl':
+                            allData.otorrinolaringologos = data;
+                            break;
+                        case 'acon':
+                            allData.etologos = data;
+                            break;
+                    }
+                } catch (error) {
+                    console.error(`Error con ${portalKey}:`, error);
+                }
+            });
+            
+            // Guardar todos los datos
+            localStorage.setItem('oirconecta_all_data', JSON.stringify(allData));
+            
+            const total = allData.audiologos.length + allData.otorrinolaringologos.length + allData.etologos.length;
+            showStatus('global', `✅ Extracción completada: ${total} registros totales`, 'success');
+        }
+
+        // Función para descargar todos los datos
+        function downloadAllData() {
+            const allData = localStorage.getItem('oirconecta_all_data');
+            
+            if (allData) {
+                const data = JSON.parse(allData);
+                downloadJSON(data, 'oirconecta_database.json');
+                showStatus('global', '✅ Datos descargados como oirconecta_database.json', 'success');
+            } else {
+                showStatus('global', '❌ No hay datos para descargar', 'error');
+            }
+        }
+
+        // Función para limpiar datos
+        function clearAllData() {
+            localStorage.removeItem('oirconecta_all_data');
+            Object.keys(portals).forEach(portalKey => {
+                localStorage.removeItem(`oirconecta_${portalKey}`);
+            });
+            showStatus('global', '✅ Todos los datos han sido limpiados', 'success');
+        }
+
+        // Función para mostrar estado
+        function showStatus(portalKey, message, type) {
+            const statusElement = document.getElementById(`${portalKey}-status`);
+            if (statusElement) {
+                statusElement.innerHTML = `<div class="status ${type}">${message}</div>`;
+            }
+        }
+
+        // Función para mostrar resultados
+        function showResults(portalKey, data) {
+            const resultsElement = document.getElementById(`${portalKey}-results`);
+            if (resultsElement) {
+                resultsElement.style.display = 'block';
+                resultsElement.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+        }
+
+        // Función para descargar JSON
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Mostrar instrucciones iniciales
+        showStatus('global', '🚀 Extractor listo. Abre los portales y ejecuta las extracciones.', 'info');
+    </script>
+</body>
+</html> 

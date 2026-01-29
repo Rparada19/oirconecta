@@ -1,0 +1,49 @@
+═══════════════════════════════════════════════════════════════════
+RESUMEN DE CAMBIOS - OirConecta CRM
+Fecha: $(date)
+═══════════════════════════════════════════════════════════════════
+
+ARCHIVOS MODIFICADOS:
+───────────────────────────────────────────────────────────────────
+
+1. oirconecta/src/components/patient/PatientProfileDialog.jsx
+   - Agregado sistema de agendamiento desde perfil del paciente
+   - Dos subsecciones: Historial de Consultas y Agendar Cita
+   - 5 tipos de citas con duraciones específicas
+   - Sistema de recordatorios automáticos
+   - Integración de DateSelector y TimeSelector
+
+2. oirconecta/src/pages/crm/CitasPage.jsx
+   - Corregidos errores de sintaxis en operadores ternarios
+   - Implementado closeMenuOnly() para mantener selectedAppointment
+   - Mejorado manejo de estados en diálogos
+   - Agregada columna 'Historial' en tabla de citas
+
+3. oirconecta/vite.config.js
+   - Puerto del servidor cambiado a 5174
+
+FUNCIONALIDADES IMPLEMENTADAS:
+───────────────────────────────────────────────────────────────────
+
+✅ Sistema de Agendamiento desde Perfil del Paciente
+   - Historial de Consultas: Muestra todas las citas con detalles completos
+   - Agendar Cita: Permite crear nuevas citas con diferentes tipos
+
+✅ Tipos de Citas Implementados:
+   - Cita de Control: 30 minutos
+   - Cita de Adaptación: 60 minutos (1 hora)
+   - Cita para Entregar Mantenimiento: 20 minutos
+   - Cita para Revisar Audífonos: 20 minutos
+   - Cita para Hacer Exámenes: 40 minutos
+
+✅ Sistema de Recordatorios Automáticos:
+   - Recordatorio por Email (1 día antes a las 9:00 AM)
+   - Recordatorio por WhatsApp (1 día antes a las 10:00 AM)
+   - Recordatorio por Llamada (1 día antes a las 11:00 AM)
+
+✅ Correcciones en Gestión de Citas:
+   - Diálogos funcionando correctamente
+   - Mejor manejo de estados
+   - Columna Historial agregada
+
+═══════════════════════════════════════════════════════════════════

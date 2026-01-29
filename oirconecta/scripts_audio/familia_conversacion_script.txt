@@ -1,0 +1,39 @@
+SCRIPT PARA CENA FAMILIAR - RESTAURANTE
+
+=== AUDIO REALISTA PARA SIMULADOR DE PÉRDIDA AUDITIVA ===
+
+ESCENA: Una familia de 4 personas cenando en un restaurante español. 
+DURACIÓN OBJETIVO: 8-10 segundos
+AMBIENTE: Conversación natural con ruido de fondo de restaurante
+
+GUIÓN:
+
+MAMÁ (voz cálida, 45 años): "¿Cómo está la paella, mi amor?"
+
+PAPÁ (voz grave, 50 años): "Deliciosa, como siempre en este lugar"
+
+HIJO (voz joven, 16 años): "¿Podemos pedir postre después?"
+
+HIJA (voz adolescente, 14 años): "¡Yo quiero flan!"
+
+RUIDO DE FONDO:
+- Sonido de cubiertos sobre platos
+- Murmullos de otras mesas
+- Sonido ambiental de restaurante
+- Risas ocasionales
+
+INSTRUCCIONES TÉCNICAS:
+- Voces naturales españolas (Castilian accent)
+- Volumen de conversación normal
+- Ruido de fondo a 30% del volumen principal
+- Mezcla estéreo para sensación espacial
+- Sin música de fondo
+- Formato: WAV, 44.1kHz, 16-bit
+
+OBJETIVO MÉDICO:
+Este audio servirá como base para aplicar efectos de pérdida auditiva:
+- Normal: Audio claro y comprensible
+- Leve: Ligera pérdida de frecuencias altas
+- Moderada: Pérdida significativa de claridad
+- Severa: Dificultad para entender conversación
+- Profunda: Solo sonidos graves audibles

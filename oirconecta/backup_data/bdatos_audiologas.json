@@ -1,0 +1,2534 @@
+[
+  {
+    "nombre": "DRA. MARÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-123-4567"
+  },
+  {
+    "nombre": "DRA. ANA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-234-5678"
+  },
+  {
+    "nombre": "DRA. CARMEN LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-345-6789"
+  },
+  {
+    "nombre": "DRA. PATRICIA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-456-7890"
+  },
+  {
+    "nombre": "DRA. ISABEL VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-567-8901"
+  },
+  {
+    "nombre": "DRA. CLAUDIA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-678-9012"
+  },
+  {
+    "nombre": "DRA. SANDRA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-789-0123"
+  },
+  {
+    "nombre": "DRA. LUCÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-890-1234"
+  },
+  {
+    "nombre": "DRA. ADRIANA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-901-2345"
+  },
+  {
+    "nombre": "DRA. DIANA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-012-3456"
+  },
+  {
+    "nombre": "DRA. ELENA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-123-4568"
+  },
+  {
+    "nombre": "DRA. FABIOLA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-234-5679"
+  },
+  {
+    "nombre": "DRA. GABRIELA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-345-6780"
+  },
+  {
+    "nombre": "DRA. HELENA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-456-7891"
+  },
+  {
+    "nombre": "DRA. INGRID SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-567-8902"
+  },
+  {
+    "nombre": "DRA. JULIANA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-678-9013"
+  },
+  {
+    "nombre": "DRA. KAREN VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-789-0124"
+  },
+  {
+    "nombre": "DRA. LAURA GÓMEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-890-1235"
+  },
+  {
+    "nombre": "DRA. MARIANA PÉREZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-901-2346"
+  },
+  {
+    "nombre": "DRA. NATALIA CÁRDENAS",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-012-3457"
+  },
+  {
+    "nombre": "DRA. OLGA RENDÓN",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-123-4569"
+  },
+  {
+    "nombre": "DRA. PAULA ACOSTA",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-234-5680"
+  },
+  {
+    "nombre": "DRA. QUINTINA ROJAS",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-345-6781"
+  },
+  {
+    "nombre": "DRA. ROSA MENDOZA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-456-7892"
+  },
+  {
+    "nombre": "DRA. SOFÍA ARIAS",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-567-8903"
+  },
+  {
+    "nombre": "DRA. TATIANA BERNAL",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-678-9014"
+  },
+  {
+    "nombre": "DRA. ÚRSULA CORTÉS",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-789-0125"
+  },
+  {
+    "nombre": "DRA. VALENTINA DÍAZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-890-1236"
+  },
+  {
+    "nombre": "DRA. WENDY ESCOBAR",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-901-2347"
+  },
+  {
+    "nombre": "DRA. XIMENA FUENTES",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-012-3458"
+  },
+  {
+    "nombre": "DRA. YOLANDA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-123-4570"
+  },
+  {
+    "nombre": "DRA. ZULMA HERNÁNDEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-234-5681"
+  },
+  {
+    "nombre": "DRA. ALEJANDRA IBÁÑEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-345-6782"
+  },
+  {
+    "nombre": "DRA. BEATRIZ JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-456-7893"
+  },
+  {
+    "nombre": "DRA. CAROLINA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-567-8904"
+  },
+  {
+    "nombre": "DRA. DANIELA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-678-9015"
+  },
+  {
+    "nombre": "DRA. ELIZABETH NÚÑEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-789-0126"
+  },
+  {
+    "nombre": "DRA. FERNANDA OCHOA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-890-1237"
+  },
+  {
+    "nombre": "DRA. GLORIA PACHECO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-901-2348"
+  },
+  {
+    "nombre": "DRA. HORTENSIA QUINTERO",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-012-3459"
+  },
+  {
+    "nombre": "DRA. IRENE RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-123-4571"
+  },
+  {
+    "nombre": "DRA. JACQUELINE SÁNCHEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-234-5682"
+  },
+  {
+    "nombre": "DRA. KATHERINE TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-345-6783"
+  },
+  {
+    "nombre": "DRA. LORENA URIBE",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-456-7894"
+  },
+  {
+    "nombre": "DRA. MÓNICA VALENCIA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-567-8905"
+  },
+  {
+    "nombre": "DRA. NANCY ZAPATA",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-678-9016"
+  },
+  {
+    "nombre": "DRA. OLIVIA ÁLVAREZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-789-0127"
+  },
+  {
+    "nombre": "DRA. PATRICIA BENAVIDES",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-890-1238"
+  },
+  {
+    "nombre": "DRA. QUINTINA CÁRDENAS",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-901-2349"
+  },
+  {
+    "nombre": "DRA. ROSA DELGADO",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-012-3460"
+  },
+  {
+    "nombre": "DRA. SOFÍA ESCOBAR",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-123-4572"
+  },
+  {
+    "nombre": "DRA. TATIANA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-234-5683"
+  },
+  {
+    "nombre": "DRA. ÚRSULA GIRALDO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-345-6784"
+  },
+  {
+    "nombre": "DRA. VALENTINA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-456-7895"
+  },
+  {
+    "nombre": "DRA. WENDY JARAMILLO",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-567-8906"
+  },
+  {
+    "nombre": "DRA. XIMENA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-678-9017"
+  },
+  {
+    "nombre": "DRA. YOLANDA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-789-0128"
+  },
+  {
+    "nombre": "DRA. ZULMA NARVÁEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-890-1239"
+  },
+  {
+    "nombre": "DRA. ALEJANDRA OCHOA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-901-2350"
+  },
+  {
+    "nombre": "DRA. BEATRIZ PACHECO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-012-3461"
+  },
+  {
+    "nombre": "DRA. CAROLINA QUINTERO",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-123-4573"
+  },
+  {
+    "nombre": "DRA. DANIELA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-234-5684"
+  },
+  {
+    "nombre": "DRA. ELIZABETH SÁNCHEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-345-6785"
+  },
+  {
+    "nombre": "DRA. FERNANDA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-456-7896"
+  },
+  {
+    "nombre": "DRA. GLORIA URIBE",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-567-8907"
+  },
+  {
+    "nombre": "DRA. HORTENSIA VALENCIA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-678-9018"
+  },
+  {
+    "nombre": "DRA. IRENE ZAPATA",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-789-0129"
+  },
+  {
+    "nombre": "DRA. JACQUELINE ÁLVAREZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-890-1240"
+  },
+  {
+    "nombre": "DRA. KATHERINE BENAVIDES",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-901-2351"
+  },
+  {
+    "nombre": "DRA. LORENA CÁRDENAS",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-012-3462"
+  },
+  {
+    "nombre": "DRA. MÓNICA DELGADO",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-123-4574"
+  },
+  {
+    "nombre": "DRA. NANCY ESCOBAR",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-234-5685"
+  },
+  {
+    "nombre": "DRA. OLIVIA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-345-6786"
+  },
+  {
+    "nombre": "DRA. PATRICIA GIRALDO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-456-7897"
+  },
+  {
+    "nombre": "DRA. QUINTINA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-567-8908"
+  },
+  {
+    "nombre": "DRA. ROSA JARAMILLO",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-678-9019"
+  },
+  {
+    "nombre": "DRA. SOFÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-789-0130"
+  },
+  {
+    "nombre": "DRA. TATIANA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-890-1241"
+  },
+  {
+    "nombre": "DRA. ÚRSULA NARVÁEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-901-2352"
+  },
+  {
+    "nombre": "DRA. VALENTINA OCHOA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-012-3463"
+  },
+  {
+    "nombre": "DRA. WENDY PACHECO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-123-4575"
+  },
+  {
+    "nombre": "DRA. XIMENA QUINTERO",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-234-5686"
+  },
+  {
+    "nombre": "DRA. YOLANDA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-345-6787"
+  },
+  {
+    "nombre": "DRA. ZULMA SÁNCHEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-456-7898"
+  },
+  {
+    "nombre": "DRA. ALEJANDRA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-567-8909"
+  },
+  {
+    "nombre": "DRA. BEATRIZ URIBE",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-678-9020"
+  },
+  {
+    "nombre": "DRA. CAROLINA VALENCIA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-789-0131"
+  },
+  {
+    "nombre": "DRA. DANIELA ZAPATA",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-890-1242"
+  },
+  {
+    "nombre": "DRA. ELIZABETH ÁLVAREZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-901-2353"
+  },
+  {
+    "nombre": "DRA. FERNANDA BENAVIDES",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-012-3464"
+  },
+  {
+    "nombre": "DRA. GLORIA CÁRDENAS",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-123-4576"
+  },
+  {
+    "nombre": "DRA. HORTENSIA DELGADO",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-234-5687"
+  },
+  {
+    "nombre": "DRA. IRENE ESCOBAR",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-345-6788"
+  },
+  {
+    "nombre": "DRA. JACQUELINE FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-456-7899"
+  },
+  {
+    "nombre": "DRA. KATHERINE GIRALDO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-567-8910"
+  },
+  {
+    "nombre": "DRA. LORENA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-678-9021"
+  },
+  {
+    "nombre": "DRA. MÓNICA JARAMILLO",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-789-0132"
+  },
+  {
+    "nombre": "DRA. NANCY LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-890-1243"
+  },
+  {
+    "nombre": "DRA. OLIVIA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-901-2354"
+  },
+  {
+    "nombre": "DRA. PATRICIA NARVÁEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-012-3465"
+  },
+  {
+    "nombre": "DRA. QUINTINA OCHOA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-123-4577"
+  },
+  {
+    "nombre": "DRA. ROSA PACHECO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-234-5688"
+  },
+  {
+    "nombre": "DRA. SOFÍA QUINTERO",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-345-6789"
+  },
+  {
+    "nombre": "DRA. TATIANA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-456-7900"
+  },
+  {
+    "nombre": "DRA. ÚRSULA SÁNCHEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-567-8911"
+  },
+  {
+    "nombre": "DRA. VALENTINA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-678-9022"
+  },
+  {
+    "nombre": "DRA. WENDY URIBE",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-789-0133"
+  },
+  {
+    "nombre": "DRA. XIMENA VALENCIA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-890-1244"
+  },
+  {
+    "nombre": "DRA. YOLANDA ZAPATA",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-901-2355"
+  },
+  {
+    "nombre": "DRA. ZULMA ÁLVAREZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-012-3466"
+  },
+  {
+    "nombre": "DRA. ALEJANDRA BENAVIDES",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-123-4578"
+  },
+  {
+    "nombre": "DRA. BEATRIZ CÁRDENAS",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-234-5689"
+  },
+  {
+    "nombre": "DRA. CAROLINA DELGADO",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-345-6790"
+  },
+  {
+    "nombre": "DRA. DANIELA ESCOBAR",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-456-7901"
+  },
+  {
+    "nombre": "DRA. ELIZABETH FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-567-8912"
+  },
+  {
+    "nombre": "DRA. FERNANDA GIRALDO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-678-9023"
+  },
+  {
+    "nombre": "DRA. GLORIA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-789-0134"
+  },
+  {
+    "nombre": "DRA. HORTENSIA JARAMILLO",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-890-1245"
+  },
+  {
+    "nombre": "DRA. IRENE LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-901-2356"
+  },
+  {
+    "nombre": "DRA. JACQUELINE MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-012-3467"
+  },
+  {
+    "nombre": "DRA. KATHERINE NARVÁEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-123-4579"
+  },
+  {
+    "nombre": "DRA. LORENA OCHOA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-234-5690"
+  },
+  {
+    "nombre": "DRA. MÓNICA PACHECO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-345-6791"
+  },
+  {
+    "nombre": "DRA. NANCY QUINTERO",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-456-7902"
+  },
+  {
+    "nombre": "DRA. OLIVIA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-567-8913"
+  },
+  {
+    "nombre": "DRA. PATRICIA SÁNCHEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-678-9024"
+  },
+  {
+    "nombre": "DRA. QUINTINA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-789-0135"
+  },
+  {
+    "nombre": "DRA. ROSA URIBE",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-890-1246"
+  },
+  {
+    "nombre": "DRA. SOFÍA VALENCIA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-901-2357"
+  },
+  {
+    "nombre": "DRA. TATIANA ZAPATA",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-012-3468"
+  },
+  {
+    "nombre": "DRA. ÚRSULA ÁLVAREZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-123-4580"
+  },
+  {
+    "nombre": "DRA. VALENTINA BENAVIDES",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-234-5691"
+  },
+  {
+    "nombre": "DRA. WENDY CÁRDENAS",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-345-6792"
+  },
+  {
+    "nombre": "DRA. XIMENA DELGADO",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-456-7903"
+  },
+  {
+    "nombre": "DRA. YOLANDA ESCOBAR",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-567-8914"
+  },
+  {
+    "nombre": "DRA. ZULMA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-678-9025"
+  },
+  {
+    "nombre": "DRA. ANA LUCÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-583-7544"
+  },
+  {
+    "nombre": "DRA. BEATRIZ GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-415-3517"
+  },
+  {
+    "nombre": "DRA. CAROLINA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-103-1170"
+  },
+  {
+    "nombre": "DRA. DIANA PATRICIA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-774-3331"
+  },
+  {
+    "nombre": "DRA. ELENA MARÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-366-7543"
+  },
+  {
+    "nombre": "DRA. FABIOLA ANDREA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-679-1755"
+  },
+  {
+    "nombre": "DRA. GABRIELA ISABEL VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-238-2963"
+  },
+  {
+    "nombre": "DRA. HELENA CARMEN RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-604-5071"
+  },
+  {
+    "nombre": "DRA. INGRID PATRICIA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-865-1063"
+  },
+  {
+    "nombre": "DRA. JULIANA ALEJANDRA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-568-9928"
+  },
+  {
+    "nombre": "DRA. KAREN LUCÍA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-751-2973"
+  },
+  {
+    "nombre": "DRA. LAURA CRISTINA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-203-5063"
+  },
+  {
+    "nombre": "DRA. MARÍA FERNANDA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-388-3615"
+  },
+  {
+    "nombre": "DRA. NATALIA ANDREA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-334-4960"
+  },
+  {
+    "nombre": "DRA. OLGA LUCÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-362-6521"
+  },
+  {
+    "nombre": "DRA. PATRICIA ELENA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-201-4810"
+  },
+  {
+    "nombre": "DRA. QUINTINA MARÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-904-4201"
+  },
+  {
+    "nombre": "DRA. ROSA ALEJANDRA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-736-1829"
+  },
+  {
+    "nombre": "DRA. SANDRA PATRICIA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-967-1092"
+  },
+  {
+    "nombre": "DRA. TATIANA LUCÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-682-1647"
+  },
+  {
+    "nombre": "DRA. ÚRSULA MARÍA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-600-5689"
+  },
+  {
+    "nombre": "DRA. VALENTINA ISABEL LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-111-3642"
+  },
+  {
+    "nombre": "DRA. WENDY CAROLINA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-843-2964"
+  },
+  {
+    "nombre": "DRA. XIMENA PATRICIA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-822-2220"
+  },
+  {
+    "nombre": "DRA. YOLANDA LUCÍA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-564-2151"
+  },
+  {
+    "nombre": "DRA. ZOILA MARÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-434-7085"
+  },
+  {
+    "nombre": "DRA. ADRIANA BEATRIZ RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-352-2360"
+  },
+  {
+    "nombre": "DRA. BLANCA ELENA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-783-8222"
+  },
+  {
+    "nombre": "DRA. CARMEN ROSA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-518-4838"
+  },
+  {
+    "nombre": "DRA. DORIS PATRICIA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-699-2818"
+  },
+  {
+    "nombre": "DRA. EVA LUCÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-737-4792"
+  },
+  {
+    "nombre": "DRA. FLOR MARÍA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-215-3800"
+  },
+  {
+    "nombre": "DRA. GLORIA PATRICIA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-270-5381"
+  },
+  {
+    "nombre": "DRA. HILDA LUCÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-641-4882"
+  },
+  {
+    "nombre": "DRA. IRMA MARÍA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-324-7219"
+  },
+  {
+    "nombre": "DRA. JOSEFINA PATRICIA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-439-5005"
+  },
+  {
+    "nombre": "DRA. KARINA LUCÍA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-177-4730"
+  },
+  {
+    "nombre": "DRA. LUCÍA MARÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-881-9198"
+  },
+  {
+    "nombre": "DRA. MARÍA ELENA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "RIOHACHA",
+    "telefono": "300-348-8686"
+  },
+  {
+    "nombre": "DRA. NANCY PATRICIA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-397-5935"
+  },
+  {
+    "nombre": "DRA. OLGA LUCÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-983-8788"
+  },
+  {
+    "nombre": "DRA. PATRICIA MARÍA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-675-5647"
+  },
+  {
+    "nombre": "DRA. QUINTINA LUCÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-243-1264"
+  },
+  {
+    "nombre": "DRA. ROSA PATRICIA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-938-6548"
+  },
+  {
+    "nombre": "DRA. SANDRA MARÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-916-4241"
+  },
+  {
+    "nombre": "DRA. TATIANA LUCÍA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-252-6097"
+  },
+  {
+    "nombre": "DRA. ÚRSULA PATRICIA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-896-2795"
+  },
+  {
+    "nombre": "DRA. VALENTINA MARÍA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-572-6565"
+  },
+  {
+    "nombre": "DRA. WENDY LUCÍA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-525-7791"
+  },
+  {
+    "nombre": "DRA. XIMENA PATRICIA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-173-3481"
+  },
+  {
+    "nombre": "DRA. YOLANDA MARÍA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-906-9978"
+  },
+  {
+    "nombre": "DRA. ZOILA LUCÍA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-164-5927"
+  },
+  {
+    "nombre": "DRA. ANA PATRICIA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-758-4191"
+  },
+  {
+    "nombre": "DRA. BEATRIZ MARÍA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-863-8885"
+  },
+  {
+    "nombre": "DRA. CAROLINA LUCÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-200-7854"
+  },
+  {
+    "nombre": "DRA. DIANA PATRICIA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-609-6090"
+  },
+  {
+    "nombre": "DRA. ELENA MARÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-185-5658"
+  },
+  {
+    "nombre": "DRA. FABIOLA LUCÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-127-1763"
+  },
+  {
+    "nombre": "DRA. GABRIELA PATRICIA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-737-5141"
+  },
+  {
+    "nombre": "DRA. HELENA MARÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-371-3289"
+  },
+  {
+    "nombre": "DRA. INGRID LUCÍA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-169-3938"
+  },
+  {
+    "nombre": "DRA. JULIANA PATRICIA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-215-9702"
+  },
+  {
+    "nombre": "DRA. KAREN MARÍA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-606-2673"
+  },
+  {
+    "nombre": "DRA. LAURA LUCÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-471-7568"
+  },
+  {
+    "nombre": "DRA. MARÍA PATRICIA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-364-6262"
+  },
+  {
+    "nombre": "DRA. NATALIA MARÍA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "RIOHACHA",
+    "telefono": "300-492-8668"
+  },
+  {
+    "nombre": "DRA. OLGA LUCÍA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-786-3922"
+  },
+  {
+    "nombre": "DRA. PATRICIA PATRICIA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-115-9691"
+  },
+  {
+    "nombre": "DRA. QUINTINA MARÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-813-7685"
+  },
+  {
+    "nombre": "DRA. ROSA LUCÍA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-444-8301"
+  },
+  {
+    "nombre": "DRA. SANDRA PATRICIA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-368-6872"
+  },
+  {
+    "nombre": "DRA. TATIANA MARÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-340-6253"
+  },
+  {
+    "nombre": "DRA. ÚRSULA LUCÍA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-481-5605"
+  },
+  {
+    "nombre": "DRA. VALENTINA PATRICIA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-169-1995"
+  },
+  {
+    "nombre": "DRA. WENDY MARÍA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "RIOHACHA",
+    "telefono": "300-761-9353"
+  },
+  {
+    "nombre": "DRA. XIMENA LUCÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-456-6458"
+  },
+  {
+    "nombre": "DRA. YOLANDA PATRICIA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-382-4402"
+  },
+  {
+    "nombre": "DRA. ZOILA MARÍA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-794-6373"
+  },
+  {
+    "nombre": "DRA. ADRIANA LUCÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-517-7362"
+  },
+  {
+    "nombre": "DRA. BLANCA PATRICIA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-412-6888"
+  },
+  {
+    "nombre": "DRA. CARMEN MARÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-116-9495"
+  },
+  {
+    "nombre": "DRA. DORIS LUCÍA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-997-9072"
+  },
+  {
+    "nombre": "DRA. EVA PATRICIA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-755-7791"
+  },
+  {
+    "nombre": "DRA. FLOR MARÍA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-437-4657"
+  },
+  {
+    "nombre": "DRA. GLORIA LUCÍA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-517-2705"
+  },
+  {
+    "nombre": "DRA. HILDA PATRICIA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-429-5326"
+  },
+  {
+    "nombre": "DRA. IRMA MARÍA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-682-4520"
+  },
+  {
+    "nombre": "DRA. JOSEFINA LUCÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-327-7192"
+  },
+  {
+    "nombre": "DRA. KARINA PATRICIA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-915-4569"
+  },
+  {
+    "nombre": "DRA. LUCÍA MARÍA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-926-9973"
+  },
+  {
+    "nombre": "DRA. MARÍA LUCÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-332-4103"
+  },
+  {
+    "nombre": "DRA. NANCY PATRICIA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-490-7695"
+  },
+  {
+    "nombre": "DRA. OLGA MARÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-555-7805"
+  },
+  {
+    "nombre": "DRA. PATRICIA LUCÍA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-656-4058"
+  },
+  {
+    "nombre": "DRA. QUINTINA PATRICIA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-577-6264"
+  },
+  {
+    "nombre": "DRA. ROSA MARÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-428-2427"
+  },
+  {
+    "nombre": "DRA. SANDRA LUCÍA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-689-9475"
+  },
+  {
+    "nombre": "DRA. TATIANA PATRICIA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-374-9337"
+  },
+  {
+    "nombre": "DRA. ÚRSULA MARÍA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-539-1396"
+  },
+  {
+    "nombre": "DRA. VALENTINA LUCÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-651-3908"
+  },
+  {
+    "nombre": "DRA. WENDY PATRICIA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-775-5364"
+  },
+  {
+    "nombre": "DRA. XIMENA MARÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-243-2203"
+  },
+  {
+    "nombre": "DRA. YOLANDA LUCÍA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-322-7290"
+  },
+  {
+    "nombre": "DRA. ZOILA PATRICIA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-168-3231"
+  },
+  {
+    "nombre": "DRA. ANA MARÍA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-897-2128"
+  },
+  {
+    "nombre": "DRA. BEATRIZ LUCÍA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-446-6706"
+  },
+  {
+    "nombre": "DRA. CAROLINA PATRICIA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-126-4558"
+  },
+  {
+    "nombre": "DRA. DIANA MARÍA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-612-4271"
+  },
+  {
+    "nombre": "DRA. ELENA LUCÍA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-206-8203"
+  },
+  {
+    "nombre": "DRA. FABIOLA PATRICIA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-348-9034"
+  },
+  {
+    "nombre": "DRA. GABRIELA MARÍA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-401-1685"
+  },
+  {
+    "nombre": "DRA. HELENA LUCÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-716-1298"
+  },
+  {
+    "nombre": "DRA. INGRID PATRICIA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-731-3267"
+  },
+  {
+    "nombre": "DRA. JULIANA MARÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-286-8664"
+  },
+  {
+    "nombre": "DRA. KAREN LUCÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-312-1556"
+  },
+  {
+    "nombre": "DRA. LAURA PATRICIA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-183-8980"
+  },
+  {
+    "nombre": "DRA. MARÍA LUCÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-702-2864"
+  },
+  {
+    "nombre": "DRA. NATALIA PATRICIA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-787-8247"
+  },
+  {
+    "nombre": "DRA. OLGA MARÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-775-8135"
+  },
+  {
+    "nombre": "DRA. PATRICIA LUCÍA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-916-7811"
+  },
+  {
+    "nombre": "DRA. QUINTINA PATRICIA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-746-6819"
+  },
+  {
+    "nombre": "DRA. ROSA MARÍA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-577-8281"
+  },
+  {
+    "nombre": "DRA. SANDRA LUCÍA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-539-1046"
+  },
+  {
+    "nombre": "DRA. TATIANA PATRICIA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-855-3579"
+  },
+  {
+    "nombre": "DRA. ÚRSULA MARÍA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-220-2436"
+  },
+  {
+    "nombre": "DRA. VALENTINA LUCÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-735-9465"
+  },
+  {
+    "nombre": "DRA. WENDY PATRICIA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-925-5743"
+  },
+  {
+    "nombre": "DRA. XIMENA MARÍA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-429-3504"
+  },
+  {
+    "nombre": "DRA. YOLANDA LUCÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-527-8375"
+  },
+  {
+    "nombre": "DRA. ZOILA PATRICIA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-200-4317"
+  },
+  {
+    "nombre": "DRA. ADRIANA MARÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-893-3704"
+  },
+  {
+    "nombre": "DRA. BLANCA LUCÍA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-861-8081"
+  },
+  {
+    "nombre": "DRA. CARMEN PATRICIA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-409-6877"
+  },
+  {
+    "nombre": "DRA. DORIS MARÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-657-8480"
+  },
+  {
+    "nombre": "DRA. EVA LUCÍA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-168-7277"
+  },
+  {
+    "nombre": "DRA. FLOR PATRICIA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-889-5331"
+  },
+  {
+    "nombre": "DRA. GLORIA MARÍA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-921-6544"
+  },
+  {
+    "nombre": "DRA. HILDA LUCÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-971-7339"
+  },
+  {
+    "nombre": "DRA. IRMA PATRICIA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-772-6036"
+  },
+  {
+    "nombre": "DRA. JOSEFINA MARÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-821-9835"
+  },
+  {
+    "nombre": "DRA. KARINA LUCÍA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-963-4590"
+  },
+  {
+    "nombre": "DRA. LUCÍA PATRICIA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-252-8899"
+  },
+  {
+    "nombre": "DRA. MARÍA LUCÍA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-472-2189"
+  },
+  {
+    "nombre": "DRA. NANCY PATRICIA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-703-6895"
+  },
+  {
+    "nombre": "DRA. OLGA MARÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-483-3660"
+  },
+  {
+    "nombre": "DRA. PATRICIA LUCÍA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-103-8623"
+  },
+  {
+    "nombre": "DRA. QUINTINA PATRICIA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-919-8462"
+  },
+  {
+    "nombre": "DRA. ROSA MARÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-405-3287"
+  },
+  {
+    "nombre": "DRA. SANDRA LUCÍA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-678-1673"
+  },
+  {
+    "nombre": "DRA. TATIANA PATRICIA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-825-4971"
+  },
+  {
+    "nombre": "DRA. ÚRSULA MARÍA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-977-8150"
+  },
+  {
+    "nombre": "DRA. VALENTINA LUCÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-410-2630"
+  },
+  {
+    "nombre": "DRA. WENDY PATRICIA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-274-6753"
+  },
+  {
+    "nombre": "DRA. XIMENA MARÍA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-822-9961"
+  },
+  {
+    "nombre": "DRA. YOLANDA LUCÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-938-3705"
+  },
+  {
+    "nombre": "DRA. ZOILA PATRICIA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-500-2446"
+  },
+  {
+    "nombre": "DRA. ANA MARÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-288-2936"
+  },
+  {
+    "nombre": "DRA. BEATRIZ LUCÍA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-460-1030"
+  },
+  {
+    "nombre": "DRA. CAROLINA PATRICIA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-807-3292"
+  },
+  {
+    "nombre": "DRA. DIANA MARÍA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-983-5531"
+  },
+  {
+    "nombre": "DRA. ELENA LUCÍA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-168-4490"
+  },
+  {
+    "nombre": "DRA. FABIOLA PATRICIA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-824-9944"
+  },
+  {
+    "nombre": "DRA. GABRIELA MARÍA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-204-4819"
+  },
+  {
+    "nombre": "DRA. HELENA LUCÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-471-1964"
+  },
+  {
+    "nombre": "DRA. INGRID PATRICIA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-108-6785"
+  },
+  {
+    "nombre": "DRA. JULIANA MARÍA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-460-4682"
+  },
+  {
+    "nombre": "DRA. KAREN LUCÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-855-6516"
+  },
+  {
+    "nombre": "DRA. LAURA PATRICIA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-298-2206"
+  },
+  {
+    "nombre": "DRA. MARÍA LUCÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-910-2592"
+  },
+  {
+    "nombre": "DRA. NATALIA PATRICIA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-574-3489"
+  },
+  {
+    "nombre": "DRA. OLGA MARÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-272-9427"
+  },
+  {
+    "nombre": "DRA. PATRICIA LUCÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-275-4483"
+  },
+  {
+    "nombre": "DRA. QUINTINA PATRICIA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-113-9235"
+  },
+  {
+    "nombre": "DRA. ROSA MARÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-905-7375"
+  },
+  {
+    "nombre": "DRA. SANDRA LUCÍA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-146-5967"
+  },
+  {
+    "nombre": "DRA. TATIANA PATRICIA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-550-1618"
+  },
+  {
+    "nombre": "DRA. ÚRSULA MARÍA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-853-1876"
+  },
+  {
+    "nombre": "DRA. VALENTINA LUCÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-436-5973"
+  },
+  {
+    "nombre": "DRA. WENDY PATRICIA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-321-5413"
+  },
+  {
+    "nombre": "DRA. XIMENA MARÍA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-954-6718"
+  },
+  {
+    "nombre": "DRA. YOLANDA LUCÍA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-691-8265"
+  },
+  {
+    "nombre": "DRA. ZOILA PATRICIA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-867-8859"
+  },
+  {
+    "nombre": "DRA. ADRIANA MARÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-339-2314"
+  },
+  {
+    "nombre": "DRA. BLANCA LUCÍA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-782-3179"
+  },
+  {
+    "nombre": "DRA. CARMEN PATRICIA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-126-1779"
+  },
+  {
+    "nombre": "DRA. DORIS MARÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-369-8386"
+  },
+  {
+    "nombre": "DRA. EVA LUCÍA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-137-9285"
+  },
+  {
+    "nombre": "DRA. FLOR PATRICIA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-360-2200"
+  },
+  {
+    "nombre": "DRA. GLORIA MARÍA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-204-8190"
+  },
+  {
+    "nombre": "DRA. HILDA LUCÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-187-5007"
+  },
+  {
+    "nombre": "DRA. IRMA PATRICIA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-233-6033"
+  },
+  {
+    "nombre": "DRA. JOSEFINA MARÍA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-530-1713"
+  },
+  {
+    "nombre": "DRA. KARINA LUCÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-630-7440"
+  },
+  {
+    "nombre": "DRA. LUCÍA PATRICIA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-234-7383"
+  },
+  {
+    "nombre": "DRA. MARÍA LUCÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-884-9888"
+  },
+  {
+    "nombre": "DRA. NANCY PATRICIA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-456-9686"
+  },
+  {
+    "nombre": "DRA. OLGA MARÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-594-7276"
+  },
+  {
+    "nombre": "DRA. PATRICIA LUCÍA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-141-4591"
+  },
+  {
+    "nombre": "DRA. QUINTINA PATRICIA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-618-6625"
+  },
+  {
+    "nombre": "DRA. ROSA MARÍA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-654-1426"
+  },
+  {
+    "nombre": "DRA. SANDRA LUCÍA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-439-3149"
+  },
+  {
+    "nombre": "DRA. TATIANA PATRICIA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-651-9487"
+  },
+  {
+    "nombre": "DRA. ÚRSULA MARÍA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-873-9416"
+  },
+  {
+    "nombre": "DRA. VALENTINA LUCÍA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-494-8110"
+  },
+  {
+    "nombre": "DRA. WENDY PATRICIA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-213-1147"
+  },
+  {
+    "nombre": "DRA. XIMENA MARÍA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-547-5814"
+  },
+  {
+    "nombre": "DRA. YOLANDA LUCÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-279-2471"
+  },
+  {
+    "nombre": "DRA. ZOILA PATRICIA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-113-7855"
+  },
+  {
+    "nombre": "DRA. ANA MARÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-120-8750"
+  },
+  {
+    "nombre": "DRA. BEATRIZ LUCÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-638-6072"
+  },
+  {
+    "nombre": "DRA. CAROLINA PATRICIA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-358-8311"
+  },
+  {
+    "nombre": "DRA. DIANA MARÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-594-9072"
+  },
+  {
+    "nombre": "DRA. ELENA LUCÍA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-961-9251"
+  },
+  {
+    "nombre": "DRA. FABIOLA PATRICIA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-665-1625"
+  },
+  {
+    "nombre": "DRA. GABRIELA MARÍA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-856-2408"
+  },
+  {
+    "nombre": "DRA. HELENA LUCÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-143-4222"
+  },
+  {
+    "nombre": "DRA. INGRID PATRICIA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-744-9077"
+  },
+  {
+    "nombre": "DRA. JULIANA MARÍA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-131-5738"
+  },
+  {
+    "nombre": "DRA. KAREN LUCÍA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-262-4559"
+  },
+  {
+    "nombre": "DRA. LAURA PATRICIA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-463-2670"
+  },
+  {
+    "nombre": "DRA. MARÍA LUCÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-503-2343"
+  },
+  {
+    "nombre": "DRA. NATALIA PATRICIA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "RIOHACHA",
+    "telefono": "300-725-3208"
+  },
+  {
+    "nombre": "DRA. OLGA MARÍA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-171-1506"
+  },
+  {
+    "nombre": "DRA. PATRICIA LUCÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-639-8309"
+  },
+  {
+    "nombre": "DRA. QUINTINA PATRICIA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-837-5824"
+  },
+  {
+    "nombre": "DRA. ROSA MARÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-728-2397"
+  },
+  {
+    "nombre": "DRA. SANDRA LUCÍA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-150-2748"
+  },
+  {
+    "nombre": "DRA. TATIANA PATRICIA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-879-2046"
+  },
+  {
+    "nombre": "DRA. ÚRSULA MARÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-961-8106"
+  },
+  {
+    "nombre": "DRA. VALENTINA LUCÍA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-808-6918"
+  },
+  {
+    "nombre": "DRA. WENDY PATRICIA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VILLAVICENCIO",
+    "telefono": "300-201-6290"
+  },
+  {
+    "nombre": "DRA. XIMENA MARÍA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-300-1933"
+  },
+  {
+    "nombre": "DRA. YOLANDA LUCÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-971-2462"
+  },
+  {
+    "nombre": "DRA. ZOILA PATRICIA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-716-7365"
+  },
+  {
+    "nombre": "DRA. ADRIANA MARÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-463-5109"
+  },
+  {
+    "nombre": "DRA. BLANCA LUCÍA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-884-9655"
+  },
+  {
+    "nombre": "DRA. CARMEN PATRICIA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-661-8041"
+  },
+  {
+    "nombre": "DRA. DORIS MARÍA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-192-1916"
+  },
+  {
+    "nombre": "DRA. EVA LUCÍA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-349-2087"
+  },
+  {
+    "nombre": "DRA. FLOR PATRICIA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-405-3698"
+  },
+  {
+    "nombre": "DRA. GLORIA MARÍA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-678-8935"
+  },
+  {
+    "nombre": "DRA. HILDA LUCÍA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-700-4653"
+  },
+  {
+    "nombre": "DRA. IRMA PATRICIA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-313-8247"
+  },
+  {
+    "nombre": "DRA. JOSEFINA MARÍA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-948-3862"
+  },
+  {
+    "nombre": "DRA. KARINA LUCÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-666-4211"
+  },
+  {
+    "nombre": "DRA. LUCÍA PATRICIA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-431-8330"
+  },
+  {
+    "nombre": "DRA. MARÍA LUCÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-330-2856"
+  },
+  {
+    "nombre": "DRA. NANCY PATRICIA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-173-7769"
+  },
+  {
+    "nombre": "DRA. OLGA MARÍA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-136-5285"
+  },
+  {
+    "nombre": "DRA. PATRICIA LUCÍA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-823-6523"
+  },
+  {
+    "nombre": "DRA. QUINTINA PATRICIA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-362-3325"
+  },
+  {
+    "nombre": "DRA. ROSA MARÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-347-5161"
+  },
+  {
+    "nombre": "DRA. SANDRA LUCÍA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "NEIVA",
+    "telefono": "300-683-3091"
+  },
+  {
+    "nombre": "DRA. TATIANA PATRICIA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-242-3615"
+  },
+  {
+    "nombre": "DRA. ÚRSULA MARÍA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "RIOHACHA",
+    "telefono": "300-646-5951"
+  },
+  {
+    "nombre": "DRA. VALENTINA LUCÍA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-248-9276"
+  },
+  {
+    "nombre": "DRA. WENDY PATRICIA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "MONTERÍA",
+    "telefono": "300-879-5921"
+  },
+  {
+    "nombre": "DRA. XIMENA MARÍA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-218-1429"
+  },
+  {
+    "nombre": "DRA. YOLANDA LUCÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-505-8515"
+  },
+  {
+    "nombre": "DRA. ZOILA PATRICIA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-955-8248"
+  },
+  {
+    "nombre": "DRA. ANA MARÍA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-478-8978"
+  },
+  {
+    "nombre": "DRA. BEATRIZ LUCÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "RIOHACHA",
+    "telefono": "300-896-2037"
+  },
+  {
+    "nombre": "DRA. CAROLINA PATRICIA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-783-9934"
+  },
+  {
+    "nombre": "DRA. DIANA MARÍA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-607-7395"
+  },
+  {
+    "nombre": "DRA. ELENA LUCÍA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-522-3496"
+  },
+  {
+    "nombre": "DRA. FABIOLA PATRICIA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-688-1254"
+  },
+  {
+    "nombre": "DRA. GABRIELA MARÍA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-545-1552"
+  },
+  {
+    "nombre": "DRA. HELENA LUCÍA GARCÍA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-636-6451"
+  },
+  {
+    "nombre": "DRA. INGRID PATRICIA LÓPEZ",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-696-8997"
+  },
+  {
+    "nombre": "DRA. JULIANA MARÍA SILVA",
+    "profesion": "Audióloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-119-6477"
+  },
+  {
+    "nombre": "DRA. KAREN LUCÍA RODRÍGUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "IBAGUÉ",
+    "telefono": "300-495-6215"
+  },
+  {
+    "nombre": "DRA. LAURA PATRICIA TORRES",
+    "profesion": "Audióloga",
+    "ciudad": "CALI",
+    "telefono": "300-368-4681"
+  },
+  {
+    "nombre": "DRA. MARÍA LUCÍA VARGAS",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-641-9216"
+  },
+  {
+    "nombre": "DRA. NATALIA PATRICIA RUIZ",
+    "profesion": "Audióloga",
+    "ciudad": "VALLEDUPAR",
+    "telefono": "300-731-4477"
+  },
+  {
+    "nombre": "DRA. OLGA MARÍA JIMÉNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "POPAYÁN",
+    "telefono": "300-209-9454"
+  },
+  {
+    "nombre": "DRA. PATRICIA LUCÍA NAVARRO",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-134-2210"
+  },
+  {
+    "nombre": "DRA. QUINTINA PATRICIA VELÁSQUEZ",
+    "profesion": "Audióloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-754-5968"
+  },
+  {
+    "nombre": "DRA. ROSA MARÍA MORALES",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-292-9686"
+  },
+  {
+    "nombre": "DRA. SANDRA LUCÍA ORTIZ",
+    "profesion": "Audióloga",
+    "ciudad": "SANTA MARTA",
+    "telefono": "300-161-9757"
+  },
+  {
+    "nombre": "DRA. TATIANA PATRICIA CASTRO",
+    "profesion": "Audióloga",
+    "ciudad": "MANIZALES",
+    "telefono": "300-130-8897"
+  },
+  {
+    "nombre": "DRA. ÚRSULA MARÍA HERRERA",
+    "profesion": "Audióloga",
+    "ciudad": "RIOHACHA",
+    "telefono": "300-393-8997"
+  },
+  {
+    "nombre": "DRA. VALENTINA LUCÍA SANTOS",
+    "profesion": "Audióloga",
+    "ciudad": "SINCELEJO",
+    "telefono": "300-177-3620"
+  },
+  {
+    "nombre": "DRA. WENDY PATRICIA GONZÁLEZ",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-515-1639"
+  },
+  {
+    "nombre": "DRA. XIMENA MARÍA RAMÍREZ",
+    "profesion": "Audióloga",
+    "ciudad": "CARTAGENA",
+    "telefono": "300-169-2309"
+  },
+  {
+    "nombre": "DRA. YOLANDA LUCÍA FLÓREZ",
+    "profesion": "Audióloga",
+    "ciudad": "TUNJA",
+    "telefono": "300-169-4045"
+  },
+  {
+    "nombre": "DRA. ZOILA PATRICIA MARTÍNEZ",
+    "profesion": "Audióloga",
+    "ciudad": "PASTO",
+    "telefono": "300-149-7085"
+  }
+]

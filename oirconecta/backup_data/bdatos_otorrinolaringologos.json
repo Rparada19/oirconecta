@@ -1,0 +1,266 @@
+[
+  {
+    "nombre": "DR. CARLOS MENDOZA",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BOGOTA",
+    "telefono": "300-123-4567"
+  },
+  {
+    "nombre": "DRA. ANA RODRÍGUEZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-234-5678"
+  },
+  {
+    "nombre": "DR. LUIS HERRERA",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "CALI",
+    "telefono": "300-345-6789"
+  },
+  {
+    "nombre": "DRA. MARÍA GONZÁLEZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-456-7890"
+  },
+  {
+    "nombre": "DR. FERNANDO CASTRO",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-567-8901"
+  },
+  {
+    "nombre": "DRA. CARMEN RUIZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-678-9012"
+  },
+  {
+    "nombre": "DR. ROBERTO SILVA",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "ARMENIA",
+    "telefono": "300-789-0123"
+  },
+  {
+    "nombre": "DRA. PATRICIA LÓPEZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-890-1234"
+  },
+  {
+    "nombre": "DR. DIEGO MORALES",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-901-2345"
+  },
+  {
+    "nombre": "DRA. LAURA JIMÉNEZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "CALI",
+    "telefono": "300-012-3456"
+  },
+  {
+    "nombre": "DR. ANDRÉS RAMÍREZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-123-4568"
+  },
+  {
+    "nombre": "DRA. DIANA MORENO",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-234-5679"
+  },
+  {
+    "nombre": "DR. CARLOS ROJAS",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "PEREIRA",
+    "telefono": "300-345-6780"
+  },
+  {
+    "nombre": "DRA. CAROLINA VARGAS",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-456-7891"
+  },
+  {
+    "nombre": "DR. JUAN PÉREZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BOGOTA",
+    "telefono": "300-567-8902"
+  },
+  {
+    "nombre": "DRA. SANDRA TORRES",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-678-9013"
+  },
+  {
+    "nombre": "DR. MIGUEL ÁNGEL GARCÍA",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "CALI",
+    "telefono": "300-789-0124"
+  },
+  {
+    "nombre": "DRA. ISABEL MARTÍNEZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-890-1235"
+  },
+  {
+    "nombre": "DR. RAFAEL HERNÁNDEZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-901-2346"
+  },
+  {
+    "nombre": "DRA. CLAUDIA SANTOS",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-012-3457"
+  },
+  {
+    "nombre": "DR. GUSTAVO NAVARRO",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "ARMENIA",
+    "telefono": "300-123-4569"
+  },
+  {
+    "nombre": "DRA. ELENA CASTILLO",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-234-5670"
+  },
+  {
+    "nombre": "DR. HÉCTOR VELÁSQUEZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-345-6781"
+  },
+  {
+    "nombre": "DRA. FABIOLA ARIAS",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "CALI",
+    "telefono": "300-456-7892"
+  },
+  {
+    "nombre": "DR. IVÁN CORTÉS",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-567-8903"
+  },
+  {
+    "nombre": "DRA. GABRIELA GUTIÉRREZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-678-9014"
+  },
+  {
+    "nombre": "DR. LEONARDO MARTÍNEZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "PEREIRA",
+    "telefono": "300-789-0125"
+  },
+  {
+    "nombre": "DRA. HELENA LÓPEZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-890-1236"
+  },
+  {
+    "nombre": "DR. NELSON RODRÍGUEZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BOGOTA",
+    "telefono": "300-901-2347"
+  },
+  {
+    "nombre": "DRA. INGRID VARGAS",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-012-3458"
+  },
+  {
+    "nombre": "DR. OSCAR MORENO",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "CALI",
+    "telefono": "300-123-4570"
+  },
+  {
+    "nombre": "DRA. PAULA CASTRO",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-234-5671"
+  },
+  {
+    "nombre": "DR. PABLO RUIZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-345-6782"
+  },
+  {
+    "nombre": "DRA. QUINTINA SANTOS",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "PEREIRA",
+    "telefono": "300-456-7893"
+  },
+  {
+    "nombre": "DR. RICARDO NAVARRO",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "ARMENIA",
+    "telefono": "300-567-8904"
+  },
+  {
+    "nombre": "DRA. ROSA CASTILLO",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "BOGOTA",
+    "telefono": "300-678-9015"
+  },
+  {
+    "nombre": "DR. SERGIO VELÁSQUEZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-789-0126"
+  },
+  {
+    "nombre": "DRA. TATIANA ARIAS",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "CALI",
+    "telefono": "300-890-1237"
+  },
+  {
+    "nombre": "DR. ULISES CORTÉS",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BARRANQUILLA",
+    "telefono": "300-901-2348"
+  },
+  {
+    "nombre": "DRA. VALENTINA GUTIÉRREZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "BUCARAMANGA",
+    "telefono": "300-012-3459"
+  },
+  {
+    "nombre": "DR. WILSON MARTÍNEZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "PEREIRA",
+    "telefono": "300-123-4571"
+  },
+  {
+    "nombre": "DRA. XIMENA LÓPEZ",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "ARMENIA",
+    "telefono": "300-234-5672"
+  },
+  {
+    "nombre": "DR. YAMIL RODRÍGUEZ",
+    "profesion": "Otorrinolaringólogo",
+    "ciudad": "BOGOTA",
+    "telefono": "300-345-6783"
+  },
+  {
+    "nombre": "DRA. ZULEMA VARGAS",
+    "profesion": "Otorrinolaringóloga",
+    "ciudad": "MEDELLIN",
+    "telefono": "300-456-7894"
+  }
+] 
