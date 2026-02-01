@@ -122,8 +122,7 @@ const ciudadesDefault = [
   'ARMENIA',
   'MANIZALES',
   'SINCELEJO',
-  'CUCUTA',
-  'MEDELLLIN'
+  'CUCUTA'
 ];
 
 const polizasSaludDefault = [
@@ -146,18 +145,29 @@ export default function SearchEngine({
   isProfessionalPage = false,
   ciudades = null,
   especialidades = null,
-  polizas = null
+  polizas = null,
+  initialFilters = null
 }) {
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const [especialidad, setEspecialidad] = useState('');
-  const [ciudad, setCiudad] = useState('');
-  const [poliza, setPoliza] = useState('');
+  const [query, setQuery] = useState(initialFilters?.query ?? '');
+  const [especialidad, setEspecialidad] = useState(initialFilters?.especialidad ?? '');
+  const [ciudad, setCiudad] = useState(initialFilters?.ciudad ?? '');
+  const [poliza, setPoliza] = useState(initialFilters?.poliza ?? '');
 
   // Usar datos dinámicos si están disponibles, sino usar los estáticos
   const especialidadesList = especialidades ? ['Todas las especialidades', ...especialidades] : especialidadesDefault;
   const ciudadesList = ciudades ? ['Todas las ciudades', ...ciudades] : ciudadesDefault;
   const polizasList = polizas ? ['Todas las pólizas', ...polizas] : polizasSaludDefault;
+
+  // Sincronizar con initialFilters (ej. cuando se llega con URL params)
+  useEffect(() => {
+    if (initialFilters) {
+      if (initialFilters.query !== undefined) setQuery(initialFilters.query);
+      if (initialFilters.especialidad !== undefined) setEspecialidad(initialFilters.especialidad);
+      if (initialFilters.ciudad !== undefined) setCiudad(initialFilters.ciudad);
+      if (initialFilters.poliza !== undefined) setPoliza(initialFilters.poliza);
+    }
+  }, [initialFilters?.query, initialFilters?.especialidad, initialFilters?.ciudad, initialFilters?.poliza]);
 
   // Aplicar filtros automáticamente cuando cambien los valores
   useEffect(() => {
@@ -175,7 +185,7 @@ export default function SearchEngine({
   const handleSearch = (e) => {
     e.preventDefault();
     
-    // Si hay una función onFilter, usarla para filtros locales
+    // Si hay una función onFilter, usarla para filtros locales (páginas de profesionales)
     if (onFilter) {
       onFilter({
         query: query,
@@ -186,23 +196,24 @@ export default function SearchEngine({
       return;
     }
     
-    // Comportamiento original para navegación
-    // Si no hay filtros, ir a /centros-destacados
-    if (!query && (!especialidad || especialidad === 'Todas las especialidades') && (!ciudad || ciudad === 'Todas las ciudades')) {
-      navigate('/centros-destacados');
-      return;
-    }
-    // Si hay algún filtro, construir la URL de búsqueda
+    // Navegación desde Hero: conectar con páginas según especialidad
     const searchParams = new URLSearchParams();
     if (query) searchParams.append('q', query);
-    if (especialidad && especialidad !== 'Todas las especialidades') {
-      searchParams.append('especialidad', especialidad);
+    if (ciudad && ciudad !== 'Todas las ciudades') searchParams.append('ciudad', ciudad);
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    
+    // Mapear especialidad a la página correspondiente
+    const esp = especialidad && especialidad !== 'Todas las especialidades' ? especialidad : '';
+    if (esp === 'Audiólogo' || esp === 'Fonoaudiólogo') {
+      navigate(`/profesionales/audiologos${queryString}`);
+      return;
     }
-    if (ciudad && ciudad !== 'Todas las ciudades') {
-      searchParams.append('ciudad', ciudad);
+    if (esp === 'Otólogo' || esp === 'Otorrinolaringólogo') {
+      navigate(`/profesionales/otologos${queryString}`);
+      return;
     }
-    const searchUrl = `/profesionales${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-    navigate(searchUrl);
+    // Sin especialidad o "Todas": ir a audiólogas por defecto
+    navigate(`/profesionales/audiologos${queryString}`);
   };
 
   const handleClearFilters = () => {

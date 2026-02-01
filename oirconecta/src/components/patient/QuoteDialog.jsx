@@ -18,10 +18,11 @@ import {
   Paper,
 } from '@mui/material';
 import { Save, Close, Delete, Image as ImageIcon } from '@mui/icons-material';
-import { createQuote } from '../../services/productService';
+import { createQuote, updateQuote } from '../../services/productService';
 import { getCampaigns, MARCAS } from '../../services/campaignService';
 
-const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => {
+const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData, quoteId, editQuote }) => {
+  const isEdit = Boolean(quoteId && editQuote);
   const [campaigns, setCampaigns] = useState([]);
   const [formData, setFormData] = useState({
     brand: '',
@@ -43,11 +44,32 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) =>
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    setCampaigns(getCampaigns());
+    if (!open) return;
+    getCampaigns().then(setCampaigns);
   }, [open]);
 
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    if (isEdit && editQuote) {
+      const md = editQuote.metadata || {};
+      setFormData({
+        brand: editQuote.brand || editQuote.productName || '',
+        quantity: editQuote.quantity ?? 1,
+        technology: md.technology || editQuote.model?.split(' - ')[0] || '',
+        platform: md.platform || editQuote.model?.split(' - ')[1] || '',
+        rechargeable: (md.rechargeable || 'NO').toUpperCase().slice(0, 2),
+        campaignId: md.campaignId || '',
+        warrantyYears: md.warrantyYears ?? 1,
+        seguroPerdidaRobo: (md.seguroPerdidaRobo || 'NO').toUpperCase().slice(0, 2),
+        seguroRotura: (md.seguroRotura || 'NO').toUpperCase().slice(0, 2),
+        unitPrice: editQuote.unitPrice ?? 0,
+        notes: editQuote.notes || '',
+        patientName: patientData?.nombre || patientData?.patientName || '',
+        patientEmail: patientEmail || patientData?.email || editQuote.patientEmail || '',
+        patientPhone: patientData?.telefono || patientData?.patientPhone || '',
+      });
+      setImages(md.images?.map((img, i) => ({ id: i, file: {}, preview: img.data || img, name: img.name || `img-${i}` })) || []);
+    } else {
       const emailToSet = patientEmail || patientData?.email || '';
       const nameToSet = patientData?.nombre || patientData?.patientName || '';
       const phoneToSet = patientData?.telefono || patientData?.patientPhone || '';
@@ -60,7 +82,7 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) =>
         }));
       }
     }
-  }, [open, patientData, patientEmail]);
+  }, [open, patientData, patientEmail, isEdit, editQuote]);
 
   const campaignsByBrand = formData.brand
     ? campaigns.filter((c) => (c.fabricante || '').trim() === formData.brand)
@@ -119,9 +141,9 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) =>
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const emailToUse = formData.patientEmail || patientEmail || patientData?.email || '';
-    if (!emailToUse?.trim()) {
+    if (!isEdit && !emailToUse?.trim()) {
       alert('Error: No se encontró el email del paciente. Verifica que el perfil tenga un email válido.');
       return;
     }
@@ -165,12 +187,16 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) =>
       },
     };
 
-    const result = createQuote(emailToUse, quoteData);
-    if (result.success) {
-      onSuccess?.(result.product);
-      handleClose();
-    } else {
-      alert('Error al guardar la cotización: ' + (result.error || 'Error desconocido'));
+    try {
+      const result = isEdit ? await updateQuote(quoteId, quoteData) : await createQuote(emailToUse, quoteData);
+      if (result.success) {
+        onSuccess?.(result.product);
+        handleClose();
+      } else {
+        alert('Error al guardar la cotización: ' + (result.error || 'Error desconocido'));
+      }
+    } catch (e) {
+      alert('Error al guardar la cotización: ' + (e?.message || 'Error desconocido'));
     }
   };
 
@@ -209,7 +235,7 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) =>
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ bgcolor: '#085946', color: '#ffffff', fontWeight: 700 }}>
-        Nueva Cotización
+        {isEdit ? 'Editar cotización' : 'Nueva Cotización'}
       </DialogTitle>
       <DialogContent sx={{ mt: 2 }}>
         <Grid container spacing={3}>

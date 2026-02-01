@@ -78,6 +78,7 @@ import {
   getAvailableTimeSlots,
   rescheduleAppointment,
   getAppointmentById,
+  createAppointment,
 } from '../../services/appointmentService';
 import {
   getPatientRecords,
@@ -129,49 +130,49 @@ const CitasPage = () => {
   const [cancellationReason, setCancellationReason] = useState('');
   const [newComment, setNewComment] = useState({ title: '', description: '', type: 'note' });
   const [rescheduleData, setRescheduleData] = useState({ date: '', time: '' });
-  const [activityTab, setActivityTab] = useState(0); // 0: Activity, 1: Notes, 2: Emails, 3: Calls
+  const [activityTab, setActivityTab] = useState(0);
+  const [rescheduleAvailableSlots, setRescheduleAvailableSlots] = useState([]);
+  const [rescheduledToAppointment, setRescheduledToAppointment] = useState(null);
+
+  useEffect(() => {
+    if (!selectedAppointment?.rescheduledToId) {
+      setRescheduledToAppointment(null);
+      return;
+    }
+    getAppointmentById(selectedAppointment.rescheduledToId).then(setRescheduledToAppointment);
+  }, [selectedAppointment?.rescheduledToId]);
+
+  const loadData = async () => {
+    try {
+      const [allAppointments] = await Promise.all([getAllAppointments()]);
+      setAppointments(allAppointments);
+      setFilteredAppointments(allAppointments);
+      setBlockedSlots(getBlockedSlots());
+    } catch (e) {
+      console.error('[CitasPage] Error al cargar:', e);
+    }
+  };
 
   useEffect(() => {
     loadData();
-    
-    // Escuchar cambios en localStorage para actualizar en tiempo real
     const handleStorageChange = (e) => {
-      if (e.key === 'oirconecta_appointments' || e.key === 'oirconecta_blocked_slots') {
-        loadData();
-      }
+      if (e.key === 'oirconecta_appointments' || e.key === 'oirconecta_blocked_slots') loadData();
     };
-    
     window.addEventListener('storage', handleStorageChange);
-    
-    // También verificar periódicamente (por si el cambio es en la misma pestaña)
-    const interval = setInterval(() => {
-      const currentAppointments = getAllAppointments();
-      if (currentAppointments.length !== appointments.length) {
-        loadData();
-      }
-    }, 2000); // Verificar cada 2 segundos
-    
+    const interval = setInterval(loadData, 10000);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
-  }, [appointments.length]);
+  }, []);
 
-  const loadData = () => {
-    const allAppointments = getAllAppointments();
-    console.log('[CitasPage] 🔄 Cargando datos:', {
-      totalCitas: allAppointments.length,
-      citas: allAppointments.map(apt => ({
-        id: apt.id,
-        paciente: apt.patientName,
-        fecha: apt.date,
-        estado: apt.status
-      }))
-    });
-    setAppointments(allAppointments);
-    setFilteredAppointments(allAppointments);
-    setBlockedSlots(getBlockedSlots());
-  };
+  useEffect(() => {
+    if (!rescheduleData.date) {
+      setRescheduleAvailableSlots([]);
+      return;
+    }
+    getAvailableTimeSlots(rescheduleData.date, '07:00', '18:00').then(setRescheduleAvailableSlots);
+  }, [rescheduleData.date]);
 
   useEffect(() => {
     let filtered = appointments;
@@ -252,7 +253,7 @@ const CitasPage = () => {
     closeMenuOnly();
   };
 
-  const handleUpdateStatus = (newStatus) => {
+  const handleUpdateStatus = async (newStatus) => {
     if (selectedAppointment) {
       if (newStatus === 'completed') {
         // Abrir dialog de consulta
@@ -263,18 +264,14 @@ const CitasPage = () => {
         setNoShowDialogOpen(true);
         closeMenuOnly();
       } else if (newStatus === 'patient') {
-        // Marcar como paciente directamente
-        const result = updateAppointmentStatus(selectedAppointment.id, newStatus);
+        const result = await updateAppointmentStatus(selectedAppointment.id, newStatus);
         if (result.success) {
-          // Registrar como paciente en los registros
           addPatientRecord(selectedAppointment.patientEmail, {
             type: 'note',
             title: 'Convertido a Paciente',
             description: 'Paciente marcado como paciente después de consulta',
             appointmentId: selectedAppointment.id,
           });
-          
-          // Registrar en interacciones
           recordAppointmentInteraction(selectedAppointment.patientEmail, {
             title: 'Convertido a Paciente',
             description: `Paciente marcado como paciente después de la cita del ${selectedAppointment.date} a las ${selectedAppointment.time}.`,
@@ -284,13 +281,12 @@ const CitasPage = () => {
             status: 'completed',
             action: 'patient',
           });
-          
-          loadData();
+          await loadData();
           handleMenuClose();
           showSnackbar('Paciente marcado exitosamente. Ahora aparece en la sección de Pacientes.', 'success');
         }
       } else {
-        const result = updateAppointmentStatus(selectedAppointment.id, newStatus);
+        const result = await updateAppointmentStatus(selectedAppointment.id, newStatus);
         if (result.success) {
           // Registrar cambio de estado en interacciones
           recordAppointmentInteraction(selectedAppointment.patientEmail, {
@@ -302,8 +298,7 @@ const CitasPage = () => {
             status: newStatus,
             action: newStatus,
           });
-          
-          loadData();
+          await loadData();
           handleMenuClose();
           showSnackbar('Estado actualizado exitosamente', 'success');
         }
@@ -311,13 +306,11 @@ const CitasPage = () => {
     }
   };
 
-  const handleSaveConsultation = () => {
+  const handleSaveConsultation = async () => {
     if (selectedAppointment) {
-      // Actualizar estado a completado primero
-      const statusResult = updateAppointmentStatus(selectedAppointment.id, 'completed');
+      const statusResult = await updateAppointmentStatus(selectedAppointment.id, 'completed');
       if (statusResult.success) {
-        // Inmediatamente cambiar a estado 'patient' para que aparezca en Pacientes
-        const patientResult = updateAppointmentStatus(selectedAppointment.id, 'patient');
+        const patientResult = await updateAppointmentStatus(selectedAppointment.id, 'patient');
         
         // Registrar consulta
         const recordResult = recordConsultation(
@@ -358,7 +351,7 @@ const CitasPage = () => {
         });
         
         if (recordResult.success) {
-          loadData();
+          await loadData();
           setConsultationDialogOpen(false);
           setConsultationData({ notes: '', hearingLoss: false, nextSteps: '' });
           setSelectedAppointment(null);
@@ -368,12 +361,10 @@ const CitasPage = () => {
     }
   };
 
-  const handleNoShowRecontact = () => {
+  const handleNoShowRecontact = async () => {
     if (selectedAppointment) {
-      // Actualizar estado a no-show
-      const statusResult = updateAppointmentStatus(selectedAppointment.id, 'no-show');
+      const statusResult = await updateAppointmentStatus(selectedAppointment.id, 'no-show');
       if (statusResult.success) {
-        // Registrar en interacciones
         recordAppointmentInteraction(selectedAppointment.patientEmail, {
           title: 'Cita No Asistida',
           description: `Paciente no asistió a la cita del ${selectedAppointment.date} a las ${selectedAppointment.time}. Se contactó para re-agendar.`,
@@ -383,29 +374,23 @@ const CitasPage = () => {
           status: 'missed',
           action: 'no-show',
         });
-        
-        // Registrar contacto
         addPatientRecord(selectedAppointment.patientEmail, {
           type: 'contact',
           title: 'Re-contacto - No Asistió',
           description: 'Paciente no asistió a la cita, se contactó para re-agendar',
           appointmentId: selectedAppointment.id,
         });
-        
-        loadData();
+        await loadData();
         setNoShowDialogOpen(false);
         showSnackbar('Estado actualizado. Puedes re-agendar desde el menú de acciones.', 'success');
       }
     }
   };
 
-  const handleNoShowReschedule = (newDate, newTime) => {
+  const handleNoShowReschedule = async (newDate, newTime) => {
     if (selectedAppointment) {
-      // Actualizar estado a no-show primero
-      updateAppointmentStatus(selectedAppointment.id, 'no-show');
-      
-      // Re-agendar
-      const rescheduleResult = rescheduleAppointment(selectedAppointment.id, newDate, newTime);
+      await updateAppointmentStatus(selectedAppointment.id, 'no-show');
+      const rescheduleResult = await rescheduleAppointment(selectedAppointment.id, newDate, newTime);
       if (rescheduleResult.success) {
         // Registrar re-agendamiento
         recordReschedule(
@@ -458,8 +443,7 @@ const CitasPage = () => {
           description: `Paciente no asistió, se contactó y re-agendó para ${newDate} ${newTime}`,
           appointmentId: selectedAppointment.id,
         });
-        
-        loadData();
+        await loadData();
         setNoShowDialogOpen(false);
         showSnackbar('Cita re-agendada exitosamente', 'success');
       } else {
@@ -468,42 +452,83 @@ const CitasPage = () => {
     }
   };
 
-  const handleCancelWithReason = () => {
-    if (selectedAppointment && cancellationReason.trim()) {
-      const cancelResult = cancelAppointment(selectedAppointment.id);
-      if (cancelResult.success) {
-        // Registrar cancelación con motivo
-        recordCancellation(selectedAppointment.patientEmail, selectedAppointment.id, cancellationReason);
-        
-        // Registrar en interacciones
+  const handleCancelWithReason = async () => {
+    if (!selectedAppointment || !cancellationReason.trim()) {
+      showSnackbar('Por favor ingresa el motivo de cancelación', 'error');
+      return;
+    }
+    const cancelResult = await cancelAppointment(selectedAppointment.id);
+    if (!cancelResult.success) {
+      showSnackbar('Error al cancelar la cita', 'error');
+      return;
+    }
+    if (rescheduleData.date && rescheduleData.time) {
+      const newAppointmentResult = await createAppointment({
+        date: rescheduleData.date,
+        time: rescheduleData.time,
+        patientName: selectedAppointment.patientName,
+        patientEmail: selectedAppointment.patientEmail,
+        patientPhone: selectedAppointment.patientPhone,
+        reason: selectedAppointment.reason || 'Consulta General',
+        procedencia: selectedAppointment.procedencia || 'visita-medica',
+      });
+      if (newAppointmentResult.success && newAppointmentResult.appointment) {
+        recordReschedule(
+          selectedAppointment.patientEmail,
+          selectedAppointment.id,
+          newAppointmentResult.appointment.id,
+          selectedAppointment.date,
+          selectedAppointment.time,
+          rescheduleData.date,
+          rescheduleData.time
+        );
         recordAppointmentInteraction(selectedAppointment.patientEmail, {
-          title: 'Cita Cancelada',
-          description: `Cita cancelada del ${selectedAppointment.date} a las ${selectedAppointment.time}. Motivo: ${cancellationReason}`,
+          title: 'Cita Cancelada y Re-agendada',
+          description: `Cita cancelada del ${selectedAppointment.date} ${selectedAppointment.time}. Motivo: ${cancellationReason}. Nueva cita agendada para ${rescheduleData.date} ${rescheduleData.time}.`,
           scheduledDate: selectedAppointment.date,
           scheduledTime: selectedAppointment.time,
           relatedAppointmentId: selectedAppointment.id,
           status: 'cancelled',
           action: 'cancelled',
-          metadata: {
-            reason: cancellationReason,
-          },
+          metadata: { reason: cancellationReason, newDate: rescheduleData.date, newTime: rescheduleData.time },
         });
-        
-        loadData();
-        setCancelDialogOpen(false);
-        setCancellationReason('');
-        setRescheduleData({ date: '', time: '' });
-        setSelectedAppointment(null);
-        showSnackbar('Cita cancelada exitosamente', 'success');
+        recordAppointmentInteraction(selectedAppointment.patientEmail, {
+          title: 'Nueva Cita Agendada (Después de Cancelación)',
+          description: `Nueva cita agendada para ${rescheduleData.date} a las ${rescheduleData.time} después de cancelar la cita anterior.`,
+          scheduledDate: rescheduleData.date,
+          scheduledTime: rescheduleData.time,
+          relatedAppointmentId: newAppointmentResult.appointment.id,
+          status: 'scheduled',
+          action: 'created',
+        });
+        showSnackbar('Cita cancelada y re-agendada exitosamente', 'success');
+      } else {
+        showSnackbar('Cita cancelada, pero error al re-agendar: ' + (newAppointmentResult.error || ''), 'warning');
       }
     } else {
-      showSnackbar('Por favor ingresa el motivo de cancelación', 'error');
+      recordCancellation(selectedAppointment.patientEmail, selectedAppointment.id, cancellationReason);
+      recordAppointmentInteraction(selectedAppointment.patientEmail, {
+        title: 'Cita Cancelada',
+        description: `Cita cancelada del ${selectedAppointment.date} a las ${selectedAppointment.time}. Motivo: ${cancellationReason}`,
+        scheduledDate: selectedAppointment.date,
+        scheduledTime: selectedAppointment.time,
+        relatedAppointmentId: selectedAppointment.id,
+        status: 'cancelled',
+        action: 'cancelled',
+        metadata: { reason: cancellationReason },
+      });
+      showSnackbar('Cita cancelada exitosamente. Puedes re-agendar desde el menú de acciones.', 'success');
     }
+    await loadData();
+    setCancelDialogOpen(false);
+    setCancellationReason('');
+    setRescheduleData({ date: '', time: '' });
+    setSelectedAppointment(null);
   };
 
-  const handleReschedule = () => {
+  const handleReschedule = async () => {
     if (selectedAppointment && rescheduleData.date && rescheduleData.time) {
-      const rescheduleResult = rescheduleAppointment(
+      const rescheduleResult = await rescheduleAppointment(
         selectedAppointment.id,
         rescheduleData.date,
         rescheduleData.time
@@ -547,7 +572,7 @@ const CitasPage = () => {
           status: 'scheduled',
           action: 'created',
         });
-        loadData();
+        await loadData();
         setRescheduleDialogOpen(false);
         setRescheduleData({ date: '', time: '' });
         setSelectedAppointment(null);
@@ -559,7 +584,6 @@ const CitasPage = () => {
       showSnackbar('Por favor selecciona fecha y hora', 'error');
     }
   };
-
 
   const handleAddComment = () => {
     if (selectedAppointment && newComment.title.trim()) {
@@ -599,17 +623,15 @@ const CitasPage = () => {
     window.open(`https://wa.me/${cleanPhone}`, '_blank');
   };
 
-  const handleBlockSlot = () => {
+  const handleBlockSlot = async () => {
     if (!selectedDateForBlock) {
       showSnackbar('Por favor selecciona una fecha', 'error');
       return;
     }
-
     const dateStr = selectedDateForBlock.toISOString().split('T')[0];
     const result = blockTimeSlot(dateStr, blockAllDay ? null : selectedTimeForBlock);
-    
     if (result.success) {
-      loadData();
+      await loadData();
       setBlockDialogOpen(false);
       setSelectedDateForBlock(null);
       setSelectedTimeForBlock(null);
@@ -620,10 +642,10 @@ const CitasPage = () => {
     }
   };
 
-  const handleUnblockSlot = (blockId) => {
+  const handleUnblockSlot = async (blockId) => {
     const result = unblockTimeSlot(blockId);
     if (result.success) {
-      loadData();
+      await loadData();
       showSnackbar('Horario desbloqueado exitosamente', 'success');
     } else {
       showSnackbar(result.error || 'Error al desbloquear el horario', 'error');
@@ -1653,19 +1675,16 @@ const CitasPage = () => {
                       </Box>
                     )}
                     {/* Mostrar re-agendamiento si existe */}
-                    {selectedAppointment.rescheduledToId && (() => {
-                      const newAppointment = getAppointmentById(selectedAppointment.rescheduledToId);
-                      return newAppointment ? (
-                        <Box sx={{ p: 2, bgcolor: '#f3e5f5', borderRadius: 2, border: '1px solid #7b1fa2' }}>
-                          <Typography variant="caption" sx={{ color: '#86899C', display: 'block', mb: 0.5, fontWeight: 600 }}>
-                            Re-agendada para:
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#7b1fa2' }}>
-                            {formatDate(newAppointment.date)} a las {formatTime(newAppointment.time)}
-                          </Typography>
-                        </Box>
-                      ) : null;
-                    })()}
+                    {rescheduledToAppointment && (
+                      <Box sx={{ p: 2, bgcolor: '#f3e5f5', borderRadius: 2, border: '1px solid #7b1fa2' }}>
+                        <Typography variant="caption" sx={{ color: '#86899C', display: 'block', mb: 0.5, fontWeight: 600 }}>
+                          Re-agendada para:
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#7b1fa2' }}>
+                          {formatDate(rescheduledToAppointment.date)} a las {formatTime(rescheduledToAppointment.time)}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 </Box>
               </Box>
@@ -2151,7 +2170,7 @@ const CitasPage = () => {
                           onTimeSelect={(time) => {
                             setRescheduleData({ ...rescheduleData, time });
                           }}
-                          availableTimes={getAvailableTimeSlots(rescheduleData.date)}
+                          availableTimes={rescheduleAvailableSlots}
                         />
                       </Box>
                     ) : (
@@ -2319,7 +2338,7 @@ const CitasPage = () => {
                           onTimeSelect={(time) => {
                             setRescheduleData({ ...rescheduleData, time });
                           }}
-                          availableTimes={getAvailableTimeSlots(rescheduleData.date)}
+                          availableTimes={rescheduleAvailableSlots}
                         />
                       </Box>
                     ) : (
@@ -2366,105 +2385,7 @@ const CitasPage = () => {
             Cancelar
           </Button>
           <Button 
-            onClick={() => {
-              if (!selectedAppointment) {
-                showSnackbar('Error: No se encontró la cita seleccionada', 'error');
-                return;
-              }
-              if (!cancellationReason.trim()) {
-                showSnackbar('Por favor ingresa el motivo de cancelación', 'error');
-                return;
-              }
-              
-              // Cancelar la cita
-              const cancelResult = cancelAppointment(selectedAppointment.id);
-              if (cancelResult.success) {
-                // Si se seleccionó fecha y hora, reprogramar
-                if (rescheduleData.date && rescheduleData.time) {
-                  // Crear nueva cita
-                  const { createAppointment } = require('../../services/appointmentService');
-                  const newAppointmentResult = createAppointment({
-                    date: rescheduleData.date,
-                    time: rescheduleData.time,
-                    patientName: selectedAppointment.patientName,
-                    patientEmail: selectedAppointment.patientEmail,
-                    patientPhone: selectedAppointment.patientPhone,
-                    reason: selectedAppointment.reason || 'Consulta General',
-                    procedencia: selectedAppointment.procedencia || 'visita-medica',
-                  });
-                  
-                  if (newAppointmentResult.success) {
-                    // Registrar re-agendamiento
-                    recordReschedule(
-                      selectedAppointment.patientEmail,
-                      selectedAppointment.id,
-                      newAppointmentResult.appointment.id,
-                      selectedAppointment.date,
-                      selectedAppointment.time,
-                      rescheduleData.date,
-                      rescheduleData.time
-                    );
-                    
-                    // Registrar en interacciones
-                    recordAppointmentInteraction(selectedAppointment.patientEmail, {
-                      title: 'Cita Cancelada y Re-agendada',
-                      description: `Cita cancelada del ${selectedAppointment.date} ${selectedAppointment.time}. Motivo: ${cancellationReason}. Nueva cita agendada para ${rescheduleData.date} ${rescheduleData.time}.`,
-                      scheduledDate: selectedAppointment.date,
-                      scheduledTime: selectedAppointment.time,
-                      relatedAppointmentId: selectedAppointment.id,
-                      status: 'cancelled',
-                      action: 'cancelled',
-                      metadata: {
-                        reason: cancellationReason,
-                        newDate: rescheduleData.date,
-                        newTime: rescheduleData.time,
-                      },
-                    });
-                    
-                    recordAppointmentInteraction(selectedAppointment.patientEmail, {
-                      title: 'Nueva Cita Agendada (Después de Cancelación)',
-                      description: `Nueva cita agendada para ${rescheduleData.date} a las ${rescheduleData.time} después de cancelar la cita anterior.`,
-                      scheduledDate: rescheduleData.date,
-                      scheduledTime: rescheduleData.time,
-                      relatedAppointmentId: newAppointmentResult.appointment.id,
-                      status: 'scheduled',
-                      action: 'created',
-                    });
-                    
-                    showSnackbar('Cita cancelada y re-agendada exitosamente', 'success');
-                  } else {
-                    showSnackbar('Cita cancelada, pero error al re-agendar: ' + newAppointmentResult.error, 'warning');
-                  }
-                } else {
-                  // Solo cancelar sin reprogramar
-                  recordCancellation(selectedAppointment.patientEmail, selectedAppointment.id, cancellationReason);
-                  
-                  // Registrar en interacciones
-                  recordAppointmentInteraction(selectedAppointment.patientEmail, {
-                    title: 'Cita Cancelada',
-                    description: `Cita cancelada del ${selectedAppointment.date} a las ${selectedAppointment.time}. Motivo: ${cancellationReason}`,
-                    scheduledDate: selectedAppointment.date,
-                    scheduledTime: selectedAppointment.time,
-                    relatedAppointmentId: selectedAppointment.id,
-                    status: 'cancelled',
-                    action: 'cancelled',
-                    metadata: {
-                      reason: cancellationReason,
-                    },
-                  });
-                  
-                  showSnackbar('Cita cancelada exitosamente. Puedes re-agendar desde el menú de acciones.', 'success');
-                }
-                
-                loadData();
-                setCancelDialogOpen(false);
-                setCancellationReason('');
-                setRescheduleData({ date: '', time: '' });
-                setSelectedAppointment(null);
-              } else {
-                showSnackbar('Error al cancelar la cita', 'error');
-              }
-            }} 
+            onClick={handleCancelWithReason}
             variant="contained" 
             sx={{ bgcolor: '#c62828' }}
           >
@@ -2553,7 +2474,7 @@ const CitasPage = () => {
                           onTimeSelect={(time) => {
                             setRescheduleData({ ...rescheduleData, time });
                           }}
-                          availableTimes={getAvailableTimeSlots(rescheduleData.date)}
+                          availableTimes={rescheduleAvailableSlots}
                         />
                       </Box>
                     ) : (

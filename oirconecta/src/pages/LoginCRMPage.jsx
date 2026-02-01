@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -19,11 +19,17 @@ import {
   VisibilityOff,
   Login as LoginIcon,
 } from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
 
 const LoginCRMPage = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) navigate('/portal-crm', { replace: true });
+  }, [isAuthenticated, navigate]);
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -43,21 +49,20 @@ const LoginCRMPage = () => {
     setError('');
     setIsLoading(true);
 
-    // Validación básica
-    if (!formData.username || !formData.password) {
-      setError('Por favor, completa todos los campos');
+    if (!formData.email?.trim() || !formData.password) {
+      setError('Por favor, ingresa email y contraseña');
       setIsLoading(false);
       return;
     }
 
-    // Simulación de autenticación (aquí iría la lógica real)
-    setTimeout(() => {
-      setIsLoading(false);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('oirconecta_crm_user', formData.username || '');
-      }
+    const result = await login(formData.email.trim(), formData.password);
+    setIsLoading(false);
+
+    if (result.success) {
       navigate('/portal-crm');
-    }, 1000);
+    } else {
+      setError(result.error || 'Error al iniciar sesión');
+    }
   };
 
   const handleTogglePassword = () => {
@@ -150,12 +155,13 @@ const LoginCRMPage = () => {
 
             <TextField
               fullWidth
-              label="Usuario"
-              placeholder="Ingresa tu usuario"
-              value={formData.username}
-              onChange={handleChange('username')}
+              label="Email"
+              placeholder="admin@oirconecta.com"
+              type="email"
+              value={formData.email}
+              onChange={handleChange('email')}
               required
-              autoComplete="username"
+              autoComplete="email"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

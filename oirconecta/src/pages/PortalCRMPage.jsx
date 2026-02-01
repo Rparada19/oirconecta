@@ -3,7 +3,6 @@ import {
   Box,
   Container,
   Typography,
-  Paper,
   Grid,
   Card,
   CardContent,
@@ -20,11 +19,14 @@ import {
   Campaign,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const PortalCRMPage = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
+    logout();
     navigate('/login-crm');
   };
 

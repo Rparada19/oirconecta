@@ -36,6 +36,14 @@ router.get(
   productsController.getQuoteById
 );
 
+// GET /api/products/quotes/:id/history - Historial de cambios de la cotización
+router.get(
+  '/quotes/:id/history',
+  [param('id').isUUID()],
+  validateRequest,
+  productsController.getQuoteHistory
+);
+
 // POST /api/products/quotes - Crear cotización
 router.post(
   '/quotes',

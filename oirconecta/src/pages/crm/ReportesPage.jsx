@@ -37,8 +37,11 @@ const ReportesPage = () => {
   const [period, setPeriod] = useState('month');
 
   useEffect(() => {
-    const allAppointments = getAllAppointments();
-    setAppointments(allAppointments);
+    const load = async () => {
+      const allAppointments = await getAllAppointments();
+      setAppointments(allAppointments);
+    };
+    load();
   }, []);
 
   const getFilteredAppointments = () => {

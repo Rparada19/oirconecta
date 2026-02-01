@@ -57,11 +57,24 @@ const createQuote = async (req, res, next) => {
 
 const updateQuote = async (req, res, next) => {
   try {
-    const quote = await productsService.updateQuote(req.params.id, req.body);
+    const quote = await productsService.updateQuote(req.params.id, req.body, req.user?.id);
     
     res.json({
       success: true,
       data: quote,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getQuoteHistory = async (req, res, next) => {
+  try {
+    const result = await productsService.getQuoteHistory(req.params.id);
+    
+    res.json({
+      success: true,
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -163,6 +176,7 @@ module.exports = {
   getQuoteById,
   createQuote,
   updateQuote,
+  getQuoteHistory,
   convertQuoteToSale,
   getAllSales,
   getSalesStats,

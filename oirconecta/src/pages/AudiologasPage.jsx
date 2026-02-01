@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaStar, FaUserMd, FaUpload, FaFileExcel, FaDownload, FaTrash, FaInstagram, FaFacebook, FaGlobe } from 'react-icons/fa';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SearchEngine from '../components/SearchEngine';
-
+import { normalizeForSearch } from '../utils/textUtils';
 
 // Usar datos reales de audiólogas
 
@@ -20,7 +20,18 @@ const AudiologasPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [detectedColumns, setDetectedColumns] = useState([]);
-  const cardsPerPage = 16; // Cambiado a 16 tarjetas por página
+  const cardsPerPage = 16;
+  const [searchParams] = useSearchParams();
+
+  // Aplicar filtros desde la URL al cargar (desde la barra de búsqueda del Hero)
+  useEffect(() => {
+    const q = searchParams.get('q') || '';
+    const ciudad = searchParams.get('ciudad') || '';
+    if (q || ciudad) {
+      setSearchTerm(q);
+      setSelectedCity(ciudad);
+    }
+  }, [searchParams]);
 
   // Función para cargar datos de audiólogas desde localStorage
   const loadAudiologasData = () => {
@@ -83,21 +94,23 @@ const AudiologasPage = () => {
   // Filtrar datos aplicando los filtros activos
   const audiologasFiltradas = useMemo(() => {
     return audiologas.filter(audiologa => {
-      // Filtro por término de búsqueda (nombre, ciudad)
-      const searchMatch = !searchTerm || 
-        audiologa.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        audiologa.ciudad?.toLowerCase().includes(searchTerm.toLowerCase());
+      // Filtro por término de búsqueda (nombre, ciudad) - normalizado para cruzar acentos
+      const searchNorm = normalizeForSearch(searchTerm);
+      const searchMatch = !searchNorm ||
+        normalizeForSearch(audiologa.nombre).includes(searchNorm) ||
+        normalizeForSearch(audiologa.ciudad).includes(searchNorm);
 
-      // Filtro por ciudad
-      const cityMatch = !selectedCity || selectedCity === 'Todas las ciudades' || 
-        audiologa.ciudad === selectedCity;
+      // Filtro por ciudad - normalizado para cruzar "MEDELLIN" con "Medellín"
+      const cityNorm = normalizeForSearch(selectedCity);
+      const cityMatch = !selectedCity || selectedCity === 'Todas las ciudades' ||
+        normalizeForSearch(audiologa.ciudad) === cityNorm;
 
       // Filtro por especialidad
-      const specialtyMatch = !selectedSpecialty || selectedSpecialty === 'Todas las especialidades' || 
-        audiologa.profesion === selectedSpecialty;
+      const specialtyMatch = !selectedSpecialty || selectedSpecialty === 'Todas las especialidades' ||
+        audiologa.especialidad === selectedSpecialty || audiologa.profesion === selectedSpecialty || audiologa.titulo === selectedSpecialty;
 
       // Filtro por prepagada
-      const polizaMatch = !selectedPoliza || selectedPoliza === 'Todas las pólizas' || 
+      const polizaMatch = !selectedPoliza || selectedPoliza === 'Todas las pólizas' ||
         (audiologa.prepagadas && audiologa.prepagadas.includes(selectedPoliza));
 
       return searchMatch && cityMatch && specialtyMatch && polizaMatch;
@@ -205,6 +218,10 @@ const AudiologasPage = () => {
           ciudades={ciudades}
           especialidades={['Audióloga']}
           polizas={[]}
+          initialFilters={{
+            query: searchParams.get('q') || '',
+            ciudad: searchParams.get('ciudad') || '',
+          }}
         />
       </div>
 

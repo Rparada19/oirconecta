@@ -28,6 +28,18 @@ router.get(
 // GET /api/leads/stats - Estadísticas de leads (para funnel)
 router.get('/stats', leadsController.getStats);
 
+// GET /api/leads/check-duplicate - Verificar duplicados (antes de /:id)
+router.get(
+  '/check-duplicate',
+  [
+    query('email').optional().isEmail(),
+    query('telefono').optional(),
+    query('excludeId').optional().isUUID(),
+  ],
+  validateRequest,
+  leadsController.checkDuplicate
+);
+
 // GET /api/leads/:id - Obtener lead por ID
 router.get(
   '/:id',
@@ -79,17 +91,6 @@ router.post(
   [param('id').isUUID()],
   validateRequest,
   leadsController.convertToPatient
-);
-
-// GET /api/leads/check-duplicate - Verificar duplicados
-router.get(
-  '/check-duplicate',
-  [
-    query('email').optional().isEmail(),
-    query('telefono').optional(),
-  ],
-  validateRequest,
-  leadsController.checkDuplicate
 );
 
 module.exports = router;

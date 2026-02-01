@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -75,14 +75,17 @@ import {
   Assessment,
   Visibility,
   FileDownload,
+  Print,
+  PictureAsPdf,
+  ArrowDropDown,
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
+import html2pdf from 'html2pdf.js';
 import { getPatientProfile, savePatientProfile, initializePatientProfile } from '../../services/patientProfileService';
 import { getAllAppointments } from '../../services/appointmentService';
-import { getAllLeadsCombined } from '../../services/leadService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
 import { getPatientInteractions } from '../../services/interactionService';
-import { getPatientProducts, convertQuoteToSale } from '../../services/productService';
+import { getPatientProducts, convertQuoteToSale, getQuoteHistory } from '../../services/productService';
 import { getPatientMaintenances, getUpcomingMaintenances } from '../../services/maintenanceService';
 import QuoteDialog from './QuoteDialog';
 import SaleDialog from './SaleDialog';
@@ -107,6 +110,11 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
   const [viewProductDialog, setViewProductDialog] = useState({ open: false, product: null, type: null });
+  const [quoteHistoryDialog, setQuoteHistoryDialog] = useState({ open: false, quoteId: null, history: [], quote: null });
+  const [editQuoteId, setEditQuoteId] = useState(null);
+  const [editQuoteData, setEditQuoteData] = useState(null);
+  const [printMenuAnchor, setPrintMenuAnchor] = useState(null);
+  const printContentRef = useRef(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   // Estados para agendamiento desde perfil
@@ -238,7 +246,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
 
   useEffect(() => {
     if (open && (appointment || lead)) {
-      loadPatientData();
+      loadPatientData().catch((e) => console.error('[PatientProfileDialog] loadPatientData:', e));
     }
   }, [open, appointment, lead]);
 
@@ -261,26 +269,16 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     return () => clearInterval(interval);
   }, [open, historiaAbiertaAt]);
 
-  // Escuchar cambios en productos para actualizar automáticamente
   useEffect(() => {
     const handleProductsUpdate = () => {
       const email = formData.email || appointment?.patientEmail || lead?.email;
-      console.log('[PatientProfileDialog] productsUpdated event recibido, email:', email);
-      if (email && open) {
-        const products = getPatientProducts(email);
-        console.log('[PatientProfileDialog] Productos actualizados desde evento:', products);
-        setPatientProducts([...products]);
-      }
-    };
-
+      if (email && open) getPatientProducts(email).then((p) => setPatientProducts([...p]));
+    }
     window.addEventListener('productsUpdated', handleProductsUpdate);
-    
-    return () => {
-      window.removeEventListener('productsUpdated', handleProductsUpdate);
-    };
+    return () => window.removeEventListener('productsUpdated', handleProductsUpdate);
   }, [appointment, lead, open, formData.email]);
 
-  const loadPatientData = () => {
+  const loadPatientData = async () => {
     try {
       const sourceData = appointment || lead;
       const email = appointment?.patientEmail || lead?.email;
@@ -493,7 +491,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
 
       // Cargar citas del paciente
       try {
-        const allAppointments = getAllAppointments();
+        const allAppointments = await getAllAppointments();
         const patientApts = allAppointments.filter(apt => apt.patientEmail === email);
         setPatientAppointments(patientApts);
         
@@ -518,7 +516,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
 
       // Cargar productos del paciente
       try {
-        const products = getPatientProducts(email);
+        const products = await getPatientProducts(email);
         setPatientProducts(products);
       } catch (error) {
         console.error('[PatientProfileDialog] Error loading products:', error);
@@ -559,52 +557,29 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     { value: 'control', label: 'Cita control', duration: 30 },
   ];
 
-  // Efecto para cargar horarios disponibles cuando cambia la fecha o tipo
   useEffect(() => {
-    if (appointmentDate && appointmentType) {
-      const selectedType = appointmentTypes.find(t => t.value === appointmentType);
-      if (selectedType) {
-        // Calcular horarios disponibles
-        // Nota: getAvailableTimeSlots usa slots de 50 minutos por defecto,
-        // pero isTimeSlotAvailable verifica correctamente la duración personalizada
-        const times = getAvailableTimeSlots(appointmentDate, '07:00', '18:00');
-        setAvailableTimes(times);
-      }
-    } else {
+    if (!appointmentDate || !appointmentType) {
       setAvailableTimes([]);
+      return;
     }
+    getAvailableTimeSlots(appointmentDate, '07:00', '18:00').then(setAvailableTimes);
   }, [appointmentDate, appointmentType]);
 
-  // Función para crear cita desde perfil
-  const handleCreateAppointmentFromProfile = () => {
+  const handleCreateAppointmentFromProfile = async () => {
     const email = getPatientEmail();
     if (!email || !appointmentDate || !appointmentTime || !appointmentType) {
-      setSnackbar({
-        open: true,
-        message: 'Por favor completa todos los campos obligatorios',
-        severity: 'error',
-      });
+      setSnackbar({ open: true, message: 'Por favor completa todos los campos obligatorios', severity: 'error' });
       return;
     }
-
     const selectedType = appointmentTypes.find(t => t.value === appointmentType);
     const duration = selectedType ? selectedType.duration : 50;
-
-    // Validar que tenemos los datos del paciente
     const patientName = formData.nombre || appointment?.patientName || lead?.nombre || '';
     const patientPhone = formData.telefono || appointment?.patientPhone || lead?.telefono || '';
-
     if (!patientName || !patientPhone) {
-      setSnackbar({
-        open: true,
-        message: 'Por favor completa los datos del paciente (nombre y teléfono)',
-        severity: 'error',
-      });
+      setSnackbar({ open: true, message: 'Por favor completa los datos del paciente (nombre y teléfono)', severity: 'error' });
       return;
     }
-
-    // Crear la cita directamente - createAppointment ya verifica la disponibilidad
-    const result = createAppointment({
+    const result = await createAppointment({
       date: appointmentDate,
       time: appointmentTime,
       patientName: patientName,
@@ -654,10 +629,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
         status: 'scheduled',
       });
 
-      // Recargar datos
-      loadPatientData();
-      
-      // Limpiar formulario
+      await loadPatientData();
       setAppointmentDate('');
       setAppointmentTime('');
       setAppointmentType('');
@@ -689,12 +661,11 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     setEvolucionarDialogOpen(true);
   };
 
-  // Cita primera vez: No asistió → marcar no-show y cerrar
-  const handleEvolucionarNoAsistio = () => {
+  const handleEvolucionarNoAsistio = async () => {
     if (!evolucionarAppointment) return;
-    const result = updateAppointmentStatus(evolucionarAppointment.id, 'no-show');
+    const result = await updateAppointmentStatus(evolucionarAppointment.id, 'no-show');
     if (result.success) {
-      loadPatientData();
+      await loadPatientData();
       setEvolucionarDialogOpen(false);
       setEvolucionarAppointment(null);
       setEvolucionarData({ notes: '', hearingLoss: false, nextSteps: '', formData: {} });
@@ -863,11 +834,11 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     setSnackbar({ open: true, message: 'Se abrió la historia clínica en una nueva ventana. Use Imprimir → Guardar como PDF.', severity: 'info' });
   };
 
-  const handleSaveEvolucionar = () => {
+  const handleSaveEvolucionar = async () => {
     if (!evolucionarAppointment) return;
     const email = evolucionarAppointment.patientEmail || getPatientEmail();
     const aptType = evolucionarAppointment.appointmentType ?? appointmentTypes.find((t) => t.label === evolucionarAppointment.reason)?.value ?? null;
-    const statusResult = updateAppointmentStatus(evolucionarAppointment.id, 'completed');
+    const statusResult = await updateAppointmentStatus(evolucionarAppointment.id, 'completed');
     if (statusResult.success) {
       recordConsultation(email, evolucionarAppointment.id, {
         notes: evolucionarData.notes,
@@ -876,7 +847,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
         appointmentType: aptType,
         formData: evolucionarData.formData && Object.keys(evolucionarData.formData).length ? evolucionarData.formData : null,
       });
-      loadPatientData();
+      await loadPatientData();
       setEvolucionarDialogOpen(false);
       setEvolucionarAppointment(null);
       setEvolucionarData({ notes: '', hearingLoss: false, nextSteps: '', formData: {} });
@@ -891,51 +862,28 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     return formData.email || appointment?.patientEmail || lead?.email || '';
   };
 
-  const handleQuoteSuccess = (product) => {
-    console.log('[PatientProfileDialog] handleQuoteSuccess llamado con producto:', product);
+  const handleQuoteSuccess = async (product) => {
     const email = getPatientEmail();
-    console.log('[PatientProfileDialog] Email usado para cargar productos:', email);
-    console.log('[PatientProfileDialog] formData.email:', formData.email);
-    console.log('[PatientProfileDialog] appointment?.patientEmail:', appointment?.patientEmail);
-    console.log('[PatientProfileDialog] lead?.email:', lead?.email);
-    
-    if (email && email.trim() !== '') {
-      // Forzar actualización del estado
-      const products = getPatientProducts(email);
-      console.log('[PatientProfileDialog] Productos cargados:', products);
-      setPatientProducts([...products]); // Usar spread para forzar actualización
-      
-      // Cambiar a la pestaña de Productos
-      setActiveTab(4);
-      
-      // Cerrar el diálogo de cotización
-      setQuoteDialogOpen(false);
-    } else {
-      console.error('[PatientProfileDialog] No se encontró email para cargar productos');
-      alert('Error: No se encontró el email del paciente. Por favor, verifica que el perfil tenga un email válido.');
+    if (!email?.trim()) {
+      alert('Error: No se encontró el email del paciente. Verifica que el perfil tenga un email válido.');
+      return;
     }
+    const products = await getPatientProducts(email);
+    setPatientProducts([...products]);
+    setActiveTab(4);
+    setQuoteDialogOpen(false);
   };
 
-  const handleSaleSuccess = (product) => {
-    console.log('[PatientProfileDialog] handleSaleSuccess llamado con producto:', product);
+  const handleSaleSuccess = async (product) => {
     const email = getPatientEmail();
-    console.log('[PatientProfileDialog] Email usado para cargar productos:', email);
-    
-    if (email && email.trim() !== '') {
-      // Forzar actualización del estado
-      const products = getPatientProducts(email);
-      console.log('[PatientProfileDialog] Productos cargados:', products);
-      setPatientProducts([...products]); // Usar spread para forzar actualización
-      
-      // Cambiar a la pestaña de Productos
-      setActiveTab(4);
-      
-      // Cerrar el diálogo de venta
-      setSaleDialogOpen(false);
-    } else {
-      console.error('[PatientProfileDialog] No se encontró email para cargar productos');
-      alert('Error: No se encontró el email del paciente. Por favor, verifica que el perfil tenga un email válido.');
+    if (!email?.trim()) {
+      alert('Error: No se encontró el email del paciente. Verifica que el perfil tenga un email válido.');
+      return;
     }
+    const products = await getPatientProducts(email);
+    setPatientProducts([...products]);
+    setActiveTab(4);
+    setSaleDialogOpen(false);
   };
 
   const handleConvertQuoteToSale = async (quoteId) => {
@@ -951,20 +899,13 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
       return;
     }
 
-    // Convertir directamente la cotización en venta
-    // Usar los datos de la cotización y permitir agregar datos adicionales después
-    const result = convertQuoteToSale(email, quoteId, {
+    const result = await convertQuoteToSale(email, quoteId, {
       saleDate: new Date().toISOString().split('T')[0],
-      // Los datos adicionales (adaptación, mantenimiento, etc.) se pueden agregar después editando la venta
     });
 
     if (result.success) {
-      // Recargar productos para reflejar el cambio
-      const products = getPatientProducts(email);
+      const products = await getPatientProducts(email);
       setPatientProducts(products);
-      
-      // Mostrar mensaje de éxito (podrías agregar un snackbar aquí)
-      console.log('[PatientProfileDialog] Cotización convertida a venta exitosamente');
     } else {
       console.error('[PatientProfileDialog] Error al convertir cotización:', result.error);
     }
@@ -3286,6 +3227,8 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                         email: formData.email || appointment?.patientEmail || lead?.email,
                         telefono: formData.telefono || appointment?.patientPhone || lead?.telefono,
                       });
+                      setEditQuoteId(null);
+                      setEditQuoteData(null);
                       setQuoteDialogOpen(true);
                     }}
                     sx={{ borderColor: '#085946', color: '#085946' }}
@@ -3340,6 +3283,32 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                                 title="Ver cotización"
                               >
                                 <Visibility fontSize="small" />
+                              </IconButton>
+                              {product.status !== 'converted' && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() => {
+                                    setEditQuoteId(product.id);
+                                    setEditQuoteData(product);
+                                    setQuoteDialogOpen(true);
+                                  }}
+                                  sx={{ color: '#1976d2' }}
+                                  title="Editar cotización"
+                                >
+                                  <Edit fontSize="small" />
+                                </IconButton>
+                              )}
+                              <IconButton
+                                size="small"
+                                onClick={async () => {
+                                  const res = await getQuoteHistory(product.id);
+                                  if (res.success) setQuoteHistoryDialog({ open: true, quoteId: product.id, history: res.history || [], quote: res.quote });
+                                  else setSnackbar({ open: true, message: res.error || 'Error al cargar historial', severity: 'error' });
+                                }}
+                                sx={{ color: '#e65100' }}
+                                title="Ver historial"
+                              >
+                                <History fontSize="small" />
                               </IconButton>
                               <Chip
                                 label={product.status === 'pending' ? 'Pendiente' : product.status === 'approved' ? 'Aprobada' : product.status === 'rejected' ? 'Rechazada' : product.status}
@@ -4164,11 +4133,14 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
       <QuoteDialog
         open={quoteDialogOpen}
         onClose={() => {
-          console.log('[PatientProfileDialog] Cerrando QuoteDialog');
           setQuoteDialogOpen(false);
+          setEditQuoteId(null);
+          setEditQuoteData(null);
         }}
         patientEmail={getPatientEmail()}
         onSuccess={handleQuoteSuccess}
+        quoteId={editQuoteId}
+        editQuote={editQuoteData}
         patientData={(() => {
           const data = {
             nombre: formData.nombre || appointment?.patientName || lead?.nombre,
@@ -4206,12 +4178,46 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
         fullWidth
         scroll="paper"
       >
-        <DialogTitle sx={{ bgcolor: '#085946', color: '#ffffff', fontWeight: 700 }}>
-          {viewProductDialog.type === 'quote' ? 'Ver cotización' : 'Ver venta'}
+        <DialogTitle sx={{ bgcolor: '#085946', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
+          <span>{viewProductDialog.type === 'quote' ? 'Ver cotización' : 'Ver venta'}</span>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<Print />}
+              endIcon={<ArrowDropDown />}
+              onClick={(e) => setPrintMenuAnchor(e.currentTarget)}
+              sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}
+            >
+              Imprimir / PDF
+            </Button>
+            <Menu
+              anchorEl={printMenuAnchor}
+              open={Boolean(printMenuAnchor)}
+              onClose={() => setPrintMenuAnchor(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <MenuItem onClick={() => { window.print(); setPrintMenuAnchor(null); }}>
+                <ListItemIcon><Print fontSize="small" /></ListItemIcon>
+                <ListItemText>Imprimir</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => {
+                if (printContentRef.current) {
+                  html2pdf().set({ margin: 10, filename: `${viewProductDialog.type === 'quote' ? 'cotizacion' : 'venta'}-${viewProductDialog.product?.productName || 'documento'}.pdf` }).from(printContentRef.current).save();
+                }
+                setPrintMenuAnchor(null);
+              }}
+              >
+                <ListItemIcon><PictureAsPdf fontSize="small" /></ListItemIcon>
+                <ListItemText>Exportar a PDF</ListItemText>
+              </MenuItem>
+            </Menu>
+          </Box>
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           {viewProductDialog.product && (
-            <Box>
+            <Box ref={printContentRef}>
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 0.5 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50' }}>
@@ -4448,6 +4454,53 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
         </DialogActions>
       </Dialog>
 
+      {/* Diálogo Historial de cotización */}
+      <Dialog
+        open={quoteHistoryDialog.open}
+        onClose={() => setQuoteHistoryDialog({ open: false, quoteId: null, history: [], quote: null })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ bgcolor: '#e65100', color: '#ffffff', fontWeight: 700 }}>
+          Historial de cambios de la cotización
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          {quoteHistoryDialog.quote && (
+            <Typography variant="body2" sx={{ mb: 2, color: '#272F50' }}>
+              Cotización actual: {quoteHistoryDialog.quote.productName} — ${quoteHistoryDialog.quote.totalPrice?.toLocaleString() || '0'}
+            </Typography>
+          )}
+          {quoteHistoryDialog.history.length === 0 ? (
+            <Typography variant="body2" sx={{ color: '#86899C' }}>
+              No hay historial de cambios para esta cotización.
+            </Typography>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {quoteHistoryDialog.history.map((h, idx) => {
+                const s = h.snapshot || {};
+                const dateStr = h.createdAt ? new Date(h.createdAt).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+                return (
+                  <Paper key={h.id} sx={{ p: 2, bgcolor: '#f8fafc' }}>
+                    <Typography variant="caption" sx={{ color: '#86899C', display: 'block', mb: 1 }}>
+                      Versión {quoteHistoryDialog.history.length - idx} — {dateStr}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#272F50' }}>
+                      {s.marca} · {s.cantidad} audífono{s.cantidad > 1 ? 's' : ''} · Valor: ${(s.valorTotal ?? 0).toLocaleString()} · Descuento: {s.descuento ?? 0}%
+                    </Typography>
+                    {s.notas && <Typography variant="caption" sx={{ color: '#86899C', display: 'block', mt: 0.5 }}>{s.notas}</Typography>}
+                  </Paper>
+                );
+              })}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setQuoteHistoryDialog({ open: false, quoteId: null, history: [], quote: null })} variant="outlined">
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Diálogo Evolucionar consulta — formulario de historia clínica por tipo de cita */}
       <Dialog
         open={evolucionarDialogOpen}
@@ -4521,7 +4574,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                         <ClinicalHistoryForm
                           data={evolucionarData.formData || {}}
                           onChange={(field, value) => setEvolucionarData((prev) => ({ ...prev, formData: { ...(prev.formData || {}), [field]: value } }))}
-                          onNuevaCotizacion={isPrimeraVez ? () => { setEvolucionarDialogOpen(false); setEvolucionarAppointment(null); setEvolucionarData({ notes: '', hearingLoss: false, nextSteps: '', formData: {} }); setEvolucionarPrimeraVezStep('asistencia'); setQuoteDialogOpen(true); } : undefined}
+                          onNuevaCotizacion={isPrimeraVez ? () => { setEvolucionarDialogOpen(false); setEvolucionarAppointment(null); setEvolucionarData({ notes: '', hearingLoss: false, nextSteps: '', formData: {} }); setEvolucionarPrimeraVezStep('asistencia'); setEditQuoteId(null); setEditQuoteData(null); setQuoteDialogOpen(true); } : undefined}
                         />
                       </Box>
                     ) : (

@@ -46,6 +46,8 @@ import PacientesPage from './pages/crm/PacientesPage';
 import CampanasPage from './pages/crm/CampanasPage';
 import ReportesPage from './pages/crm/ReportesPage';
 import ConfiguracionPage from './pages/crm/ConfiguracionPage';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/crm/ProtectedRoute';
 import './utils/clearAllData'; // Carga la función global clearAllOirConectaData()
 
 
@@ -71,6 +73,7 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
+        <AuthProvider>
         <Routes>
           <Route path="/" element={<Home />} />
 
@@ -110,23 +113,22 @@ export default function App() {
           {/* Ruta de agendamiento */}
           <Route path="/agendar" element={<AgendamientoPage />} />
           
-          {/* Ruta de login CRM */}
+          {/* Login CRM (sin proteger) */}
           <Route path="/login-crm" element={<LoginCRMPage />} />
           <Route path="/crm-login" element={<LoginCRMPage />} />
           
-          {/* Ruta de portal CRM */}
-          <Route path="/portal-crm" element={<PortalCRMPage />} />
-          
-          {/* Rutas del CRM */}
-          <Route path="/portal-crm/dashboard" element={<DashboardPage />} />
-          <Route path="/portal-crm/citas" element={<CitasPage />} />
-          <Route path="/portal-crm/leads" element={<LeadsPage />} />
-          <Route path="/portal-crm/pacientes" element={<PacientesPage />} />
-          <Route path="/portal-crm/campanas" element={<CampanasPage />} />
-          <Route path="/portal-crm/reportes" element={<ReportesPage />} />
-          <Route path="/portal-crm/configuracion" element={<ConfiguracionPage />} />
+          {/* Portal y rutas CRM (protegidas) */}
+          <Route path="/portal-crm" element={<ProtectedRoute><PortalCRMPage /></ProtectedRoute>} />
+          <Route path="/portal-crm/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/portal-crm/citas" element={<ProtectedRoute><CitasPage /></ProtectedRoute>} />
+          <Route path="/portal-crm/leads" element={<ProtectedRoute><LeadsPage /></ProtectedRoute>} />
+          <Route path="/portal-crm/pacientes" element={<ProtectedRoute><PacientesPage /></ProtectedRoute>} />
+          <Route path="/portal-crm/campanas" element={<ProtectedRoute><CampanasPage /></ProtectedRoute>} />
+          <Route path="/portal-crm/reportes" element={<ProtectedRoute><ReportesPage /></ProtectedRoute>} />
+          <Route path="/portal-crm/configuracion" element={<ProtectedRoute><ConfiguracionPage /></ProtectedRoute>} />
 
         </Routes>
+        </AuthProvider>
       </Router>
     </ThemeProvider>
   );

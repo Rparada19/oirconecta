@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Alert,
   Box,
+  CircularProgress,
   Container,
   Grid,
   Card,
@@ -39,7 +41,8 @@ import {
   Assessment,
   Refresh,
 } from '@mui/icons-material';
-import { getAllAppointments, getAppointmentById } from '../../services/appointmentService';
+import { api } from '../../services/apiClient';
+import { getAllAppointments } from '../../services/appointmentService';
 import { getAllLeadsCombined } from '../../services/leadService';
 import { formatProcedencia, getProcedenciaOptions, getProcedenciaOptionsCRM } from '../../utils/procedenciaUtils';
 import { normalizarProcedencia } from '../../utils/procedenciaNormalizer';
@@ -53,36 +56,60 @@ const DashboardPage = () => {
   const [citasPeriodo, setCitasPeriodo] = useState('month');
   const [pacientesFiltro, setPacientesFiltro] = useState('todos');
   const [ventasTab, setVentasTab] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
-  // Función para cargar todos los datos
-  const loadAllData = () => {
+  const loadAllData = async () => {
+    setLoadError(null);
+    setLoading(true);
     try {
-      const allAppointments = getAllAppointments();
-      const allLeads = getAllLeadsCombined();
-      const allProducts = getAllPatientProducts();
-      
-      // Debug detallado
-      console.log('=== [Dashboard] 📊 Cargando Datos ===');
-      console.log('[Dashboard] Total citas cargadas:', allAppointments.length);
-      console.log('[Dashboard] Total leads cargados:', allLeads.length);
-      console.log('[Dashboard] Total productos cargados:', Object.keys(allProducts).length);
-      
-      // Verificar citas con procedencia "recomendacion"
-      const citasRecomendacion = allAppointments.filter(apt => {
-        const proc = (apt.procedencia || '').toLowerCase();
-        return proc === 'recomendacion' || proc === 'recomendación';
-      });
-      console.log('[Dashboard] Citas con procedencia "recomendacion":', citasRecomendacion.length);
-      
-      // Forzar actualización del estado incluso si los datos parecen iguales
-      // Esto asegura que React detecte los cambios
-      setAppointments([...allAppointments]);
-      setLeads([...allLeads]);
-      setProducts({...allProducts});
-      
-      console.log('[Dashboard] ✅ Datos actualizados en el estado');
-    } catch (error) {
-      console.error('[Dashboard] ❌ Error al cargar datos:', error);
+      const { error: healthError } = await api.get('/api/appointments?limit=1');
+      if (healthError) {
+        setLoadError(
+          'No se puede conectar con el servidor. Comprueba que el backend esté en marcha, la URL en VITE_API_URL y que hayas iniciado sesión.'
+        );
+        return;
+      }
+
+      const [aptRes, leadsRes, prodRes] = await Promise.allSettled([
+        getAllAppointments(),
+        getAllLeadsCombined(),
+        getAllPatientProducts(),
+      ]);
+
+      if (aptRes.status === 'fulfilled') {
+        setAppointments([...(aptRes.value || [])]);
+      }
+      if (leadsRes.status === 'fulfilled') {
+        setLeads([...(leadsRes.value || [])]);
+      }
+      if (prodRes.status === 'fulfilled') {
+        setProducts({ ...(prodRes.value || {}) });
+      }
+
+      const errors = [];
+      if (aptRes.status === 'rejected') {
+        console.error('[Dashboard] Error citas:', aptRes.reason);
+        errors.push('citas');
+      }
+      if (leadsRes.status === 'rejected') {
+        console.error('[Dashboard] Error leads:', leadsRes.reason);
+        errors.push('leads');
+      }
+      if (prodRes.status === 'rejected') {
+        console.error('[Dashboard] Error productos:', prodRes.reason);
+        errors.push('productos');
+      }
+      if (errors.length) {
+        setLoadError(
+          `Error al cargar: ${errors.join(', ')}. Comprueba conexión, sesión y que el backend esté en marcha.`
+        );
+      }
+    } catch (err) {
+      console.error('[Dashboard] ❌ Error al cargar datos:', err);
+      setLoadError(err?.message || 'Error al cargar los datos.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -134,11 +161,8 @@ const DashboardPage = () => {
     };
     window.addEventListener('localStorageChange', handleLocalStorageChange);
 
-    // Intervalo para refrescar datos cada 2 segundos (actualización en tiempo real)
-    const intervalId = setInterval(() => {
-      console.log('[Dashboard] 🔄 Actualización automática (intervalo)');
-      loadAllData();
-    }, 2000);
+    // Intervalo para refrescar datos cada 30 segundos (evitar saturar API / rate limit)
+    const intervalId = setInterval(loadAllData, 30000);
 
     // Cleanup
     return () => {
@@ -425,6 +449,39 @@ const DashboardPage = () => {
           </Box>
         </Container>
       </Box>
+
+      {loadError && (
+        <Container maxWidth="lg" sx={{ pt: 2 }}>
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" size="small" onClick={loadAllData}>
+                Reintentar
+              </Button>
+            }
+            sx={{ mb: 2 }}
+          >
+            {loadError}
+          </Alert>
+        </Container>
+      )}
+
+      {!loading && !loadError && appointments.length === 0 && leads.length === 0 && Object.keys(products).length === 0 && (
+        <Container maxWidth="lg" sx={{ pt: 2 }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            No hay citas, leads ni ventas aún. Crea registros en <strong>Citas</strong>, <strong>Leads</strong> o <strong>Cotizaciones/Ventas</strong> desde el portal CRM.
+          </Alert>
+        </Container>
+      )}
+
+      {loading && (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, py: 2 }}>
+          <CircularProgress size={24} />
+          <Typography variant="body2" color="text.secondary">
+            Cargando datos…
+          </Typography>
+        </Box>
+      )}
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Métricas Principales */}
@@ -858,18 +915,19 @@ const DashboardPage = () => {
                   </TableHead>
                   <TableBody>
                     {citasSemanaAnterior.map((appointment) => {
-                      // Verificar si tiene re-agendamiento
-                      const rescheduledTo = appointment.rescheduledToId ? getAppointmentById(appointment.rescheduledToId) : null;
+                      const rescheduledTo = appointment.rescheduledToId
+                        ? appointments.find((a) => a.id === appointment.rescheduledToId)
+                        : null;
                       return (
                         <TableRow key={appointment.id} hover>
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Avatar sx={{ width: 32, height: 32, bgcolor: '#085946', fontSize: '0.875rem' }}>
-                                {appointment.patientName.charAt(0).toUpperCase()}
+                                {(appointment.patientName || ' ').charAt(0).toUpperCase()}
                               </Avatar>
                               <Box>
                                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                  {appointment.patientName}
+                                  {appointment.patientName || '—'}
                                 </Typography>
                                 {rescheduledTo && (
                                   <Typography variant="caption" sx={{ color: '#7b1fa2', display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -1131,13 +1189,7 @@ const DashboardPage = () => {
                     console.log('[Dashboard] 🔄 Botón Actualizar presionado');
                     loadAllData();
                     // Forzar re-render después de un pequeño delay
-                    setTimeout(() => {
-                      const allAppointments = getAllAppointments();
-                      const allLeads = getAllLeadsCombined();
-                      setAppointments([...allAppointments]);
-                      setLeads([...allLeads]);
-                      console.log('[Dashboard] ✅ Datos actualizados manualmente');
-                    }, 200);
+                    setTimeout(() => loadAllData(), 200);
                   }}
                   sx={{
                     borderColor: '#085946',

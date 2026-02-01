@@ -105,7 +105,14 @@ const getById = async (id) => {
 /**
  * Crear lead
  */
+const VALID_ESTADOS = ['NUEVO', 'CONTACTADO', 'AGENDADO', 'CALIFICADO', 'CONVERTIDO', 'PERDIDO', 'PACIENTE'];
+
 const create = async (data, createdById) => {
+  let estado = 'NUEVO';
+  if (data.estado) {
+    const e = String(data.estado).toUpperCase();
+    if (VALID_ESTADOS.includes(e)) estado = e;
+  }
   return prisma.lead.create({
     data: {
       nombre: data.nombre,
@@ -117,12 +124,13 @@ const create = async (data, createdById) => {
       procedencia: data.procedencia || 'visita-medica',
       interes: data.interes || 'Consulta General',
       notas: data.notas,
-      estado: 'NUEVO',
+      estado,
       medicoReferente: data.medicoReferente,
       redSocial: data.redSocial,
       campanaMarketingOffline: data.campanaMarketingOffline,
       personaRecomendacion: data.personaRecomendacion,
       agendamientoManualTipo: data.agendamientoManualTipo,
+      appointmentId: data.appointmentId || null,
       createdById,
     },
   });

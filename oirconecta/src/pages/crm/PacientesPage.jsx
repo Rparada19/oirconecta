@@ -48,10 +48,8 @@ const PacientesPage = () => {
   const [patientProfileDialogOpen, setPatientProfileDialogOpen] = useState(false);
 
   useEffect(() => {
-    const loadPatients = () => {
-      const allAppointments = getAllAppointments();
-      
-      // Filtrar solo citas con estado 'patient' (marcadas explícitamente como paciente)
+    const loadPatients = async () => {
+      const allAppointments = await getAllAppointments();
       const patientAppointments = allAppointments.filter(
         (apt) => apt.status === 'patient'
       );
@@ -107,8 +105,7 @@ const PacientesPage = () => {
     
     window.addEventListener('storage', handleStorageChange);
     
-    // Intervalo de actualización periódica
-    const interval = setInterval(loadPatients, 2000);
+    const interval = setInterval(loadPatients, 30000);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);

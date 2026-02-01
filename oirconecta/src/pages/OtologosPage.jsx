@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaStar, FaUserMd, FaInstagram, FaFacebook, FaGlobe } from 'react-icons/fa';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SearchEngine from '../components/SearchEngine';
 import otologosData from '../data/bdatos_otologos.json';
+import { normalizeForSearch } from '../utils/textUtils';
 
 // Generar datos de otólogos fuera del componente para evitar re-renderizados
 const prepagadasDisponibles = [
@@ -72,10 +73,21 @@ const otologosConPrepagadas = otologosData.map((otologo) => {
 
 const OtologosPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
   const [selectedPoliza, setSelectedPoliza] = useState('');
+
+  // Aplicar filtros desde la URL al cargar (desde la barra de búsqueda del Hero)
+  useEffect(() => {
+    const q = searchParams.get('q') || '';
+    const ciudad = searchParams.get('ciudad') || '';
+    if (q || ciudad) {
+      setSearchTerm(q);
+      setSelectedCity(ciudad);
+    }
+  }, [searchParams]);
 
   // Debug: verificar que los datos se cargan
   console.log('OtologosPage - Datos cargados:', otologosConPrepagadas);
@@ -90,21 +102,23 @@ const OtologosPage = () => {
   // Filtrar datos aplicando los filtros activos
   const otologosFiltrados = useMemo(() => {
     return otologosConPrepagadas.filter(otologo => {
-      // Filtro por término de búsqueda (nombre, ciudad)
-      const searchMatch = !searchTerm || 
-        otologo.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        otologo.ciudad?.toLowerCase().includes(searchTerm.toLowerCase());
+      // Filtro por término de búsqueda (nombre, ciudad) - normalizado para cruzar acentos
+      const searchNorm = normalizeForSearch(searchTerm);
+      const searchMatch = !searchNorm ||
+        normalizeForSearch(otologo.nombre).includes(searchNorm) ||
+        normalizeForSearch(otologo.ciudad).includes(searchNorm);
 
-      // Filtro por ciudad
-      const cityMatch = !selectedCity || selectedCity === 'Todas las ciudades' || 
-        otologo.ciudad === selectedCity;
+      // Filtro por ciudad - normalizado para cruzar "MEDELLIN" con "Medellín"
+      const cityNorm = normalizeForSearch(selectedCity);
+      const cityMatch = !selectedCity || selectedCity === 'Todas las ciudades' ||
+        normalizeForSearch(otologo.ciudad) === cityNorm;
 
-      // Filtro por especialidad
-      const specialtyMatch = !selectedSpecialty || selectedSpecialty === 'Todas las especialidades' || 
-        otologo.especialidad === selectedSpecialty;
+      // Filtro por especialidad (otologos usan profesion o especialidad)
+      const specialtyMatch = !selectedSpecialty || selectedSpecialty === 'Todas las especialidades' ||
+        otologo.profesion === selectedSpecialty || otologo.especialidad === selectedSpecialty;
 
       // Filtro por prepagada
-      const polizaMatch = !selectedPoliza || selectedPoliza === 'Todas las pólizas' || 
+      const polizaMatch = !selectedPoliza || selectedPoliza === 'Todas las pólizas' ||
         (otologo.prepagadas && otologo.prepagadas.includes(selectedPoliza));
 
       return searchMatch && cityMatch && specialtyMatch && polizaMatch;
@@ -232,6 +246,10 @@ const OtologosPage = () => {
           ciudades={ciudades}
           especialidades={['Otólogo']}
           polizas={prepagadasDisponibles}
+          initialFilters={{
+            query: searchParams.get('q') || '',
+            ciudad: searchParams.get('ciudad') || '',
+          }}
         />
       </div>
 

@@ -275,10 +275,25 @@ model Quote {
   metadata        Json?
   notas           String?
   
+  // Historial de cambios
+  history         QuoteHistory[]
+  
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
   @@map("quotes")
+}
+
+// Historial de cotizaciones (versiones anteriores al editar)
+model QuoteHistory {
+  id        String   @id @default(uuid())
+  quoteId   String
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  snapshot  Json     // Snapshot completo de la cotización antes del cambio
+  createdAt DateTime @default(now())
+
+  @@index([quoteId])
+  @@map("quote_history")
 }
 
 enum QuoteStatus {

@@ -63,11 +63,64 @@ const createQuote = async (data) => {
   });
 };
 
-const updateQuote = async (id, data) => {
+const updateQuote = async (id, data, updatedById = null) => {
+  const existing = await prisma.quote.findUnique({
+    where: { id },
+    include: { patient: true, campaign: true },
+  });
+  if (!existing) {
+    const err = new Error('Cotización no encontrada');
+    err.statusCode = 404;
+    throw err;
+  }
+  await prisma.quoteHistory.create({
+    data: {
+      quoteId: id,
+      snapshot: {
+        marca: existing.marca,
+        cantidad: existing.cantidad,
+        tecnologia: existing.tecnologia,
+        plataforma: existing.plataforma,
+        recargable: existing.recargable,
+        anosGarantia: existing.anosGarantia,
+        seguroPerdida: existing.seguroPerdida,
+        seguroRotura: existing.seguroRotura,
+        valorUnitario: existing.valorUnitario,
+        descuento: existing.descuento,
+        valorPorUnidad: existing.valorPorUnidad,
+        valorTotal: existing.valorTotal,
+        campaignId: existing.campaignId,
+        metadata: existing.metadata,
+        notas: existing.notas,
+        estado: existing.estado,
+        updatedAt: existing.updatedAt,
+        patientEmail: existing.patient?.email,
+        patientName: existing.patient?.nombre,
+      },
+    },
+  });
   return prisma.quote.update({
     where: { id },
     data,
+    include: { patient: true, campaign: true },
   });
+};
+
+const getQuoteHistory = async (quoteId) => {
+  const quote = await prisma.quote.findUnique({
+    where: { id: quoteId },
+    include: { patient: true, campaign: true },
+  });
+  if (!quote) {
+    const err = new Error('Cotización no encontrada');
+    err.statusCode = 404;
+    throw err;
+  }
+  const history = await prisma.quoteHistory.findMany({
+    where: { quoteId },
+    orderBy: { createdAt: 'desc' },
+  });
+  return { quote, history };
 };
 
 const convertQuoteToSale = async (quoteId, additionalData = {}, createdById) => {
@@ -259,6 +312,7 @@ module.exports = {
   getQuoteById,
   createQuote,
   updateQuote,
+  getQuoteHistory,
   convertQuoteToSale,
   getAllSales,
   getSalesStats,

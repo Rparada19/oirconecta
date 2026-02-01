@@ -29,13 +29,14 @@ const AgendamientoPage = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Cuando se selecciona una fecha, obtener los horarios disponibles
   useEffect(() => {
-    if (selectedDate) {
-      const times = getAvailableTimeSlots(selectedDate, '07:00', '18:00');
-      setAvailableTimes(times);
-      setSelectedTime(null); // Resetear hora seleccionada al cambiar fecha
+    if (!selectedDate) {
+      setAvailableTimes([]);
+      setSelectedTime(null);
+      return;
     }
+    getAvailableTimeSlots(selectedDate, '07:00', '18:00').then(setAvailableTimes);
+    setSelectedTime(null);
   }, [selectedDate]);
 
   const handleDateSelect = (date) => {
@@ -83,16 +84,13 @@ const AgendamientoPage = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
     setError(null);
-
-    const result = createAppointment({
+    const result = await createAppointment({
       date: selectedDate,
       time: selectedTime,
       ...patientData,
-      durationMinutes: 50, // Duración de la cita
+      durationMinutes: 50,
     });
-
     setIsLoading(false);
-
     if (result.success) {
       setAppointment(result.appointment);
       setActiveStep(3);

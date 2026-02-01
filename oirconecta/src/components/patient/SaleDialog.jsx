@@ -91,7 +91,7 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
   const [newAccessory, setNewAccessory] = useState({ name: '', price: 0 });
 
   useEffect(() => {
-    setCampaigns(getCampaigns());
+    if (open) getCampaigns().then(setCampaigns);
   }, [open]);
 
   useEffect(() => {
@@ -188,7 +188,7 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const email = audifonos.patientEmail || patientEmail || patientData?.email || '';
     if (!email?.trim()) {
       alert('No se encontró el email del paciente. Verifica que el perfil tenga un email válido.');
@@ -199,7 +199,7 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
     const saleDate = new Date().toISOString().split('T')[0];
 
     if (tipoVenta === 'consulta') {
-      const result = recordSale(email, {
+      const result = await recordSale(email, {
         productName: 'Consulta',
         brand: '',
         model: consulta.descripcion || '',
@@ -226,7 +226,7 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
     }
 
     if (tipoVenta === 'accesorio') {
-      const result = recordSale(email, {
+      const result = await recordSale(email, {
         productName: accesoriosItems.length === 1 ? accesoriosItems[0].nombre : 'Accesorios',
         brand: '',
         model: accesoriosItems.map((it) => it.nombre).join(', '),
@@ -261,7 +261,7 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
 
     const imageData = images.map((img) => ({ name: img.name, data: img.preview, type: img.file.type }));
 
-    const result = recordSale(email, {
+    const result = await recordSale(email, {
       productName: audifonos.brand,
       brand: audifonos.brand,
       model: `${audifonos.technology} - ${audifonos.platform}`,

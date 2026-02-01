@@ -31,12 +31,13 @@ import {
   People,
   CalendarToday,
 } from '@mui/icons-material';
-import { getCampaigns, setCampaigns, MARCAS } from '../../services/campaignService';
+import { getCampaigns, createCampaign, MARCAS } from '../../services/campaignService';
 
 const CampanasPage = () => {
   const navigate = useNavigate();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [campaigns, setCampaignsState] = useState([]);
+  const [createLoading, setCreateLoading] = useState(false);
   const [createForm, setCreateForm] = useState({
     nombre: '',
     tipo: 'email',
@@ -47,13 +48,19 @@ const CampanasPage = () => {
     descripcion: '',
   });
 
-  const loadCampaigns = () => setCampaignsState(getCampaigns());
+  const loadCampaigns = async () => {
+    try {
+      const list = await getCampaigns();
+      setCampaignsState(list);
+    } catch (e) {
+      console.error('[CampanasPage] Error al cargar campañas:', e);
+    }
+  };
 
   useEffect(() => {
     loadCampaigns();
-    const onUpdate = () => loadCampaigns();
-    window.addEventListener('campaignsUpdated', onUpdate);
-    return () => window.removeEventListener('campaignsUpdated', onUpdate);
+    const interval = setInterval(loadCampaigns, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const getEstadoChip = (estado) => {
@@ -436,33 +443,28 @@ const CampanasPage = () => {
           <Button
             variant="contained"
             sx={{ bgcolor: '#085946' }}
-            disabled={!createForm.nombre?.trim() || !createForm.fechaInicio || !createForm.fechaFin}
-            onClick={() => {
-              if (!createForm.nombre?.trim() || !createForm.fechaInicio || !createForm.fechaFin) {
-                return;
-              }
-              const list = getCampaigns();
-              const nextId = Math.max(0, ...list.map((c) => c.id)) + 1;
-              const tipoLabel = { email: 'Email', sms: 'SMS', redes: 'Redes Sociales', web: 'Sitio Web' }[createForm.tipo] || createForm.tipo;
-              const newCampaign = {
-                id: nextId,
+            disabled={!createForm.nombre?.trim() || !createForm.fechaInicio || !createForm.fechaFin || createLoading}
+            onClick={async () => {
+              if (!createForm.nombre?.trim() || !createForm.fechaInicio || !createForm.fechaFin) return;
+              setCreateLoading(true);
+              const tipoLabel = { email: 'Email', sms: 'SMS', redes: 'Redes Sociales', web: 'Sitio Web' }[createForm.tipo] || 'Email';
+              const result = await createCampaign({
                 nombre: createForm.nombre.trim(),
                 tipo: tipoLabel,
-                estado: 'activa',
                 fechaInicio: createForm.fechaInicio,
                 fechaFin: createForm.fechaFin,
                 fabricante: createForm.fabricante?.trim() || '',
                 descuentoAprobado: createForm.descuentoAprobado ?? 0,
-                destinatarios: 0,
-                abiertos: 0,
-                clicks: 0,
-              };
-              setCampaigns([...list, newCampaign]);
-              setCreateForm({ nombre: '', tipo: 'email', fechaInicio: '', fechaFin: '', fabricante: '', descuentoAprobado: 0, descripcion: '' });
-              setCreateDialogOpen(false);
+              });
+              setCreateLoading(false);
+              if (result.success) {
+                setCreateForm({ nombre: '', tipo: 'email', fechaInicio: '', fechaFin: '', fabricante: '', descuentoAprobado: 0, descripcion: '' });
+                setCreateDialogOpen(false);
+                loadCampaigns();
+              }
             }}
           >
-            Crear Campaña
+            {createLoading ? 'Creando…' : 'Crear Campaña'}
           </Button>
         </DialogActions>
       </Dialog>

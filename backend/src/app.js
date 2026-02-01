@@ -21,24 +21,28 @@ const app = express();
 // Helmet para cabeceras de seguridad
 app.use(helmet());
 
-// CORS
+// CORS (en dev aceptar localhost y 127.0.0.1)
+const corsOrigins = config.nodeEnv === 'development'
+  ? ['http://localhost:5174', 'http://127.0.0.1:5174', 'http://localhost:5173', 'http://127.0.0.1:5173']
+  : config.frontendUrl;
 app.use(cors({
-  origin: config.frontendUrl,
+  origin: Array.isArray(corsOrigins) ? corsOrigins : [corsOrigins],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // máximo 100 requests por ventana
-  message: {
-    success: false,
-    error: 'Demasiadas solicitudes, intenta de nuevo más tarde',
-  },
-});
-app.use('/api/', limiter);
+// Rate limiting: desactivado en desarrollo (evita "Demasiadas solicitudes" con polling)
+if (config.nodeEnv !== 'development') {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: { success: false, error: 'Demasiadas solicitudes, intenta de nuevo más tarde' },
+  });
+  app.use('/api/', limiter);
+} else {
+  console.log('[OirConecta] Rate limiting desactivado (entorno development)');
+}
 
 // ===========================================
 // MIDDLEWARE GENERAL

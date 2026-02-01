@@ -94,6 +94,7 @@ const LeadsPage = () => {
   const [viewMode, setViewMode] = useState('funnel'); // 'funnel' o 'list'
   const [patientDialogOpen, setPatientDialogOpen] = useState(false);
   const [patientData, setPatientData] = useState({ hasHearingLoss: false, notes: '' });
+  const [leadsLoading, setLeadsLoading] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -120,39 +121,33 @@ const LeadsPage = () => {
     time: '',
     reason: '',
   });
+  const [convertAvailableSlots, setConvertAvailableSlots] = useState([]);
+
+  useEffect(() => {
+    if (!convertDialogOpen || !appointmentData.date) {
+      setConvertAvailableSlots([]);
+      return;
+    }
+    getAvailableTimeSlots(appointmentData.date, '07:00', '18:00').then(setConvertAvailableSlots);
+  }, [convertDialogOpen, appointmentData.date]);
+
+  const loadLeads = async () => {
+    setLeadsLoading(true);
+    try {
+      const allLeads = await getAllLeadsCombined();
+      setLeads([...allLeads]);
+    } catch (e) {
+      console.error('[LeadsPage] Error al cargar leads:', e);
+      setSnackbar({ open: true, message: e?.message || 'Error al cargar leads', severity: 'error' });
+    } finally {
+      setLeadsLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadLeads();
-    
-    // Escuchar cambios en localStorage (entre pestañas)
-    const handleStorageChange = (e) => {
-      if (e.key === 'oirconecta_leads' || e.key === 'oirconecta_appointments') {
-        console.log('[LeadsPage] Cambio detectado en localStorage (entre pestañas):', e.key);
-        setTimeout(() => {
-          loadLeads();
-        }, 100);
-      }
-    };
-    
-    // Escuchar evento personalizado (misma pestaña)
-    const handleLeadsUpdated = () => {
-      console.log('[LeadsPage] Evento leadsUpdated recibido, recargando...');
-      setTimeout(() => {
-        loadLeads();
-      }, 100);
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('leadsUpdated', handleLeadsUpdated);
-    
-    // Intervalo de actualización periódica
-    const interval = setInterval(loadLeads, 2000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('leadsUpdated', handleLeadsUpdated);
-      clearInterval(interval);
-    };
+    const interval = setInterval(loadLeads, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -171,79 +166,18 @@ const LeadsPage = () => {
     // Filtrar por estado
     if (filterEstado !== 'all') {
       filtered = filtered.filter((lead) => lead.estado === filterEstado);
-    } else {
-      // En vista "all", excluir solo leads manuales convertidos a pacientes
-      // Pero mantener los que vienen de citas (tienen appointmentId)
-      filtered = filtered.filter((lead) => {
-        if (lead.appointmentId) {
-          return true; // Siempre mostrar leads desde citas
-        }
-        return lead.estado !== 'paciente'; // Excluir leads manuales convertidos a pacientes
-      });
     }
+    // "Todos": mostrar todos los leads (incl. paciente y perdido)
 
     // Ordenar por fecha más reciente
     filtered.sort((a, b) => {
-      const dateA = new Date(a.fecha + 'T00:00:00');
-      const dateB = new Date(b.fecha + 'T00:00:00');
+      const dateA = new Date((a.fecha || '1970-01-01') + 'T00:00:00');
+      const dateB = new Date((b.fecha || '1970-01-01') + 'T00:00:00');
       return dateB - dateA;
     });
 
     setFilteredLeads(filtered);
   }, [searchTerm, filterEstado, leads]);
-
-  const loadLeads = () => {
-    console.log('[LeadsPage] 🔄 loadLeads llamado');
-    const allLeads = getAllLeadsCombined();
-    console.log('[LeadsPage] ✅ Leads cargados:', allLeads.length);
-    
-    // Verificar leads manuales directamente desde localStorage
-    const manualLeads = getAllLeads();
-    console.log('[LeadsPage] 📋 Leads manuales en localStorage:', manualLeads.length);
-    manualLeads.forEach((lead, index) => {
-      console.log(`[LeadsPage] Lead manual ${index + 1}:`, {
-        id: lead.id,
-        nombre: lead.nombre,
-        email: lead.email,
-        estado: lead.estado,
-        appointmentId: lead.appointmentId,
-        procedencia: lead.procedencia
-      });
-    });
-    
-    // Debug detallado de cada lead combinado
-    allLeads.forEach((lead, index) => {
-      console.log(`[LeadsPage] Lead combinado ${index + 1}:`, {
-        id: lead.id,
-        nombre: lead.nombre,
-        email: lead.email,
-        estado: lead.estado,
-        appointmentId: lead.appointmentId,
-        procedencia: lead.procedencia,
-        tipo: lead.appointmentId ? 'desde-cita' : 'manual'
-      });
-    });
-    
-    // Verificar leads convertidos específicamente
-    const convertidos = allLeads.filter(l => l.estado === 'convertido');
-    console.log('[LeadsPage] 🎯 Leads convertidos encontrados:', convertidos.length);
-    
-    // Verificar leads nuevos
-    const nuevos = allLeads.filter(l => l.estado === 'nuevo' && !l.appointmentId);
-    console.log('[LeadsPage] 🆕 Leads nuevos (manuales) encontrados:', nuevos.length);
-    nuevos.forEach(lead => {
-      console.log('[LeadsPage] 📊 Lead nuevo manual:', {
-        id: lead.id,
-        nombre: lead.nombre,
-        estado: lead.estado,
-        appointmentId: lead.appointmentId
-      });
-    });
-    
-    // Forzar actualización del estado
-    setLeads([...allLeads]);
-    console.log('[LeadsPage] ✅ Estado actualizado con', allLeads.length, 'leads');
-  };
 
   const handleMenuClick = (event, lead) => {
     setAnchorEl(event.currentTarget);
@@ -291,26 +225,21 @@ const LeadsPage = () => {
     handleMenuClose();
   };
 
-  const handleConvertToPatient = () => {
+  const handleConvertToPatient = async () => {
     if (!selectedLead) return;
     
     if (patientData.hasHearingLoss) {
       console.log('[LeadsPage] Convirtiendo lead a paciente:', selectedLead);
       
       // 1. Buscar si hay una cita asociada al lead (por email o teléfono)
-      const allAppointments = getAllAppointments();
+      const allAppointments = await getAllAppointments();
       const existingAppointment = allAppointments.find(apt => 
         (apt.patientEmail === selectedLead.email || apt.patientPhone === selectedLead.telefono) &&
-        apt.status !== 'cancelled' // No considerar citas canceladas
+        apt.status !== 'cancelled'
       );
       
-      console.log('[LeadsPage] Cita existente encontrada:', existingAppointment);
-      
       if (existingAppointment) {
-        // Si hay una cita, actualizar su estado a 'patient'
-        console.log('[LeadsPage] Actualizando cita existente a estado "patient"');
-        const updateResult = updateAppointmentStatus(existingAppointment.id, 'patient');
-        
+        const updateResult = await updateAppointmentStatus(existingAppointment.id, 'patient');
         if (!updateResult.success) {
           console.error('[LeadsPage] Error al actualizar cita:', updateResult.error);
           showSnackbar('Error al actualizar la cita. El lead se marcó como paciente pero puede no aparecer en Pacientes.', 'warning');
@@ -324,8 +253,7 @@ const LeadsPage = () => {
         const dateStr = today.toISOString().split('T')[0];
         const defaultTime = '10:00'; // Hora por defecto
         
-        console.log('[LeadsPage] Creando nueva cita con estado "patient"');
-        const appointmentResult = createAppointment({
+        const appointmentResult = await createAppointment({
           date: dateStr,
           time: defaultTime,
           patientName: selectedLead.nombre,
@@ -335,11 +263,8 @@ const LeadsPage = () => {
           procedencia: selectedLead.procedencia || 'visita-medica',
         });
         
-        if (appointmentResult.success) {
-          console.log('[LeadsPage] ✅ Cita creada, actualizando estado a "patient"');
-          // Inmediatamente actualizar el estado de la cita recién creada a 'patient'
-          const updateResult = updateAppointmentStatus(appointmentResult.appointment.id, 'patient');
-          
+        if (appointmentResult.success && appointmentResult.appointment) {
+          const updateResult = await updateAppointmentStatus(appointmentResult.appointment.id, 'patient');
           if (!updateResult.success) {
             console.error('[LeadsPage] Error al actualizar nueva cita a "patient":', updateResult.error);
           }
@@ -371,14 +296,14 @@ const LeadsPage = () => {
       }
       
       // 3. Actualizar el lead a estado 'paciente'
-      const result = updateLead(selectedLead.id, { 
+      const result = await updateLead(selectedLead.id, { 
         estado: 'paciente',
         notas: `${selectedLead.notas || ''}\n\n[Convertido a Paciente] ${new Date().toLocaleDateString()}\nPérdida auditiva confirmada.\n${patientData.notes || ''}`.trim(),
       });
       
       if (result.success) {
         console.log('[LeadsPage] ✅ Lead actualizado a estado "paciente"');
-        loadLeads();
+        await loadLeads();
         setPatientDialogOpen(false);
         setPatientData({ hasHearingLoss: false, notes: '' });
         showSnackbar('Lead convertido a paciente exitosamente. Ahora aparece en la sección de Pacientes.', 'success');
@@ -392,11 +317,11 @@ const LeadsPage = () => {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedLead && !selectedLead.appointmentId) {
-      const result = deleteLead(selectedLead.id);
+      const result = await deleteLead(selectedLead.id);
       if (result.success) {
-        loadLeads();
+        await loadLeads();
         showSnackbar('Lead eliminado exitosamente', 'success');
       } else {
         showSnackbar(result.error || 'Error al eliminar el lead', 'error');
@@ -407,7 +332,7 @@ const LeadsPage = () => {
     handleMenuClose();
   };
 
-  const handleUpdateEstado = (newEstado) => {
+  const handleUpdateEstado = async (newEstado) => {
     if (!selectedLead) {
       handleMenuClose();
       return;
@@ -429,9 +354,9 @@ const LeadsPage = () => {
     }
     
     // Actualizar el estado del lead
-    const result = updateLead(selectedLead.id, { estado: newEstado });
+    const result = await updateLead(selectedLead.id, { estado: newEstado });
     if (result.success) {
-      loadLeads();
+      await loadLeads();
       showSnackbar(`Estado actualizado a "${newEstado}" exitosamente`, 'success');
     } else {
       showSnackbar(result.error || 'Error al actualizar el estado', 'error');
@@ -468,66 +393,49 @@ const LeadsPage = () => {
     setConvertDialogOpen(true);
   };
 
-  const handleSaveLead = () => {
-    console.log('[LeadsPage] handleSaveLead llamado');
-    console.log('[LeadsPage] selectedLead:', selectedLead);
-    console.log('[LeadsPage] formData:', formData);
-    
+  const handleSaveLead = async () => {
     if (selectedLead) {
-      // Editar
-      console.log('[LeadsPage] Editando lead existente');
-      const result = updateLead(selectedLead.id, formData);
+      const result = await updateLead(selectedLead.id, formData);
       if (result.success) {
-        loadLeads();
+        await loadLeads();
         setCreateDialogOpen(false);
         resetForm();
         showSnackbar('Lead actualizado exitosamente', 'success');
       } else {
-        console.error('[LeadsPage] Error al actualizar:', result.error);
         showSnackbar(result.error || 'Error al actualizar el lead', 'error');
       }
     } else {
-      // Crear nuevo: aviso previo si ya existe un lead con mismo email o teléfono
-      console.log('[LeadsPage] Creando nuevo lead manual');
-      const existing = findLeadByEmailOrPhone(formData.email, formData.telefono);
+      const existing = await findLeadByEmailOrPhone(formData.email, formData.telefono);
       if (existing) {
         setDuplicateLead(existing);
         setDuplicateDialogOpen(true);
         return;
       }
-
-      const result = createLead(formData);
-      console.log('[LeadsPage] Resultado de createLead:', result);
-
+      const result = await createLead(formData);
       if (result.success) {
-        loadLeads();
-        setTimeout(() => loadLeads(), 300);
+        await loadLeads();
         setCreateDialogOpen(false);
         resetForm();
         showSnackbar('Lead creado exitosamente', 'success');
       } else {
-        console.error('[LeadsPage] ❌ Error al crear lead:', result.error);
         showSnackbar(result.error || 'Error al crear el lead', 'error');
       }
     }
   };
 
-  const handleCreateAppointment = () => {
+  const handleCreateAppointment = async () => {
     if (!selectedLead || !appointmentData.date || !appointmentData.time) {
       showSnackbar('Por favor selecciona fecha y hora', 'error');
       return;
     }
 
-    const result = createAppointment({
+    const result = await createAppointment({
       date: appointmentData.date,
       time: appointmentData.time,
       patientName: selectedLead.nombre,
       patientEmail: selectedLead.email,
       patientPhone: selectedLead.telefono,
       reason: appointmentData.reason,
-      // Usar la procedencia original del lead tal cual está guardada
-      // Si el lead viene de una cita, ya tiene el valor correcto (ej: 'leads-marketing-digital')
-      // Si es un lead manual, también debe tener el valor estandarizado
       procedencia: selectedLead.procedencia || selectedLead.origen || 'visita-medica',
     });
 
@@ -540,23 +448,17 @@ const LeadsPage = () => {
       // porque se genera dinámicamente. En su lugar, creamos/actualizamos un lead manual.
       
       if (selectedLead.appointmentId) {
-        // Lead desde cita: buscar si existe un lead manual con el mismo email/teléfono
-        const allManualLeads = getAllLeads();
+        const allManualLeads = await getAllLeads();
         const existingManualLead = allManualLeads.find(l => 
           l.email === selectedLead.email || l.telefono === selectedLead.telefono
         );
-        
         if (existingManualLead) {
-          // Actualizar el lead manual existente
-          console.log('[LeadsPage] Actualizando lead manual existente:', existingManualLead.id);
-          updateLead(existingManualLead.id, { 
+          await updateLead(existingManualLead.id, { 
             estado: 'convertido',
             appointmentId: result.appointment.id
           });
         } else {
-          // Crear un nuevo lead manual con estado "convertido"
-          console.log('[LeadsPage] Creando nuevo lead manual desde lead de cita');
-          createLead({
+          await createLead({
             nombre: selectedLead.nombre,
             email: selectedLead.email,
             telefono: selectedLead.telefono,
@@ -571,24 +473,15 @@ const LeadsPage = () => {
           });
         }
       } else {
-        // Lead manual: actualizar directamente
-        console.log('[LeadsPage] Actualizando lead manual:', selectedLead.id);
-        const updateResult = updateLead(selectedLead.id, { 
+        const updateResult = await updateLead(selectedLead.id, { 
           estado: 'convertido',
           appointmentId: result.appointment.id
         });
-        
         if (!updateResult.success) {
           console.error('[LeadsPage] Error al actualizar lead:', updateResult.error);
-        } else {
-          console.log('[LeadsPage] ✅ Lead actualizado a estado "convertido"');
         }
       }
-      
-      // Recargar leads después de un pequeño delay para asegurar que se guardó
-      setTimeout(() => {
-        loadLeads();
-      }, 300);
+      await loadLeads();
       
       setConvertDialogOpen(false);
       setAppointmentData({ date: '', time: '', reason: '' });
@@ -799,6 +692,7 @@ const LeadsPage = () => {
                     <MenuItem value="agendado">Agendado</MenuItem>
                     <MenuItem value="calificado">Calificado</MenuItem>
                     <MenuItem value="convertido">Convertido</MenuItem>
+                    <MenuItem value="paciente">Paciente</MenuItem>
                     <MenuItem value="perdido">Perdido</MenuItem>
                   </Select>
                 </FormControl>
@@ -953,6 +847,28 @@ const LeadsPage = () => {
                 },
               }}
             >
+              <Typography variant="h4" sx={{ color: '#2e7d32', fontWeight: 700 }}>
+                {leads.filter((l) => l.estado === 'paciente').length}
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
+                Pacientes
+              </Typography>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={2.4} sx={{ minWidth: 0 }}>
+            <Card
+              sx={{
+                border: '1px solid rgba(8, 89, 70, 0.1)',
+                borderRadius: 3,
+                textAlign: 'center',
+                p: 2,
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 4px 12px rgba(8, 89, 70, 0.15)',
+                },
+              }}
+            >
               <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700 }}>
                 {leads.length}
               </Typography>
@@ -1010,61 +926,11 @@ const LeadsPage = () => {
                   { estado: 'contactado', label: 'Contactados', color: '#e65100', icon: <Phone /> },
                   { estado: 'calificado', label: 'Calificados', color: '#085946', icon: <CheckCircle /> },
                   { estado: 'convertido', label: 'Convertidos a Cita', color: '#7b1fa2', icon: <CalendarToday /> },
+                  { estado: 'paciente', label: 'Pacientes', color: '#2e7d32', icon: <Person /> },
                   { estado: 'perdido', label: 'Perdidos', color: '#c62828', icon: <Close /> },
                 ].map((stage) => {
-                  // Debug: mostrar todos los leads antes de filtrar
-                  console.log(`[LeadsPage Funnel] 📊 Filtrando para etapa "${stage.estado}":`, {
-                    totalLeads: leads.length,
-                    leadsDisponibles: leads.map(l => ({
-                      nombre: l.nombre,
-                      estado: l.estado,
-                      appointmentId: l.appointmentId
-                    }))
-                  });
-                  
-                  const stageLeads = leads.filter(l => {
-                    const matches = l.estado === stage.estado;
-                    
-                    // Debug detallado para cada lead
-                    if (stage.estado === 'convertido' || stage.estado === 'nuevo') {
-                      console.log(`[LeadsPage Funnel] Verificando "${l.nombre}" para "${stage.estado}":`, {
-                        nombre: l.nombre,
-                        estado: l.estado,
-                        estadoEsperado: stage.estado,
-                        matches: matches,
-                        appointmentId: l.appointmentId,
-                        tipo: typeof l.estado
-                      });
-                    }
-                    
-                    return matches;
-                  });
-                  
+                  const stageLeads = leads.filter((l) => l.estado === stage.estado);
                   const percentage = leads.length > 0 ? (stageLeads.length / leads.length) * 100 : 0;
-                  
-                  // Debug final para todas las etapas
-                  console.log(`[LeadsPage Funnel] ✅ Etapa "${stage.label}": ${stageLeads.length} lead(s) encontrado(s)`, {
-                    etapa: stage.estado,
-                    encontrados: stageLeads.map(l => ({
-                      nombre: l.nombre,
-                      estado: l.estado
-                    }))
-                  });
-                  
-                  // Debug específico para convertidos
-                  if (stage.estado === 'convertido') {
-                    console.log('[LeadsPage Funnel] 🎯 RESUMEN - Leads "convertido" encontrados:', stageLeads.length);
-                    if (stageLeads.length === 0) {
-                      console.warn('[LeadsPage Funnel] ⚠️ No se encontraron leads convertidos. Verificando todos los leads...');
-                      const leadsConConvertido = leads.filter(l => 
-                        l.estado === 'convertido' || 
-                        l.estado?.toLowerCase() === 'convertido' ||
-                        (l.estado && l.estado.includes('convertido'))
-                      );
-                      console.log('[LeadsPage Funnel] Leads con estado que contiene "convertido":', leadsConConvertido);
-                    }
-                  }
-                  
                   return (
                     <Grid item xs={12} sm={6} md={2} key={stage.estado}>
                       <Card
@@ -1118,6 +984,8 @@ const LeadsPage = () => {
                   { estado: 'contactado', label: 'Leads Contactados', color: '#e65100' },
                   { estado: 'calificado', label: 'Leads Calificados', color: '#085946' },
                   { estado: 'convertido', label: 'Leads Convertidos', color: '#7b1fa2' },
+                  { estado: 'paciente', label: 'Pacientes', color: '#2e7d32' },
+                  { estado: 'perdido', label: 'Leads Perdidos', color: '#c62828' },
                 ].map((stage) => {
                   const stageLeads = leads.filter(l => l.estado === stage.estado);
                   
@@ -1946,7 +1814,7 @@ const LeadsPage = () => {
                             console.log('[LeadsPage] Hora seleccionada:', time);
                             setAppointmentData({ ...appointmentData, time });
                           }}
-                          availableTimes={getAvailableTimeSlots(appointmentData.date)}
+                          availableTimes={convertAvailableSlots}
                         />
                       </Box>
                     ) : (
