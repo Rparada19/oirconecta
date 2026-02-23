@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Box, Typography, Grid, Paper, IconButton } from '@mui/material';
-import { CalendarToday, ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { Box, Typography, Paper, IconButton, Button } from '@mui/material';
+import { CalendarToday, ChevronLeft, ChevronRight, Today } from '@mui/icons-material';
 
-const DateSelector = ({ selectedDate, onDateSelect }) => {
+const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowAllDates = false }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Obtener el primer día del mes y cuántos días tiene
@@ -75,9 +75,9 @@ const DateSelector = ({ selectedDate, onDateSelect }) => {
   };
 
   const handleDateClick = (day) => {
-    if (day && !isPast(day) && !isWeekend(day)) {
-      onDateSelect(formatDate(day));
-    }
+    if (!day) return;
+    if (!allowAllDates && (isPast(day) || isWeekend(day))) return;
+    onDateSelect(formatDate(day));
   };
 
   const monthNames = [
@@ -101,267 +101,267 @@ const DateSelector = ({ selectedDate, onDateSelect }) => {
     return dateStr === selectedDate;
   };
 
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <CalendarToday sx={{ color: '#085946', mr: 1 }} />
-        <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600 }}>
-          Selecciona una fecha
-        </Typography>
-      </Box>
+  const goToToday = () => {
+    const now = new Date();
+    setCurrentMonth(now);
+    onDateSelect(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`);
+  };
 
+  const hasAppointments = (day) => {
+    if (!day) return 0;
+    const dateStr = formatDate(day);
+    return datesWithCounts[dateStr] || 0;
+  };
+
+  return (
+    <Box sx={{ width: '100%' }}>
       <Paper
         elevation={0}
         sx={{
-          p: { xs: 2, md: 4 },
-          borderRadius: 3,
-          backgroundColor: '#ffffff',
-          border: '1px solid rgba(8, 89, 70, 0.1)',
-          boxShadow: '0 8px 32px rgba(8, 89, 70, 0.1)',
-          position: 'relative',
+          p: { xs: 2, md: 3 },
+          borderRadius: 4,
+          background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+          border: '1px solid rgba(8, 89, 70, 0.08)',
+          boxShadow: '0 4px 24px rgba(8, 89, 70, 0.08), 0 0 0 1px rgba(8, 89, 70, 0.04)',
           overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '4px',
-            background: 'linear-gradient(90deg, #085946 0%, #272F50 100%)',
-          },
         }}
       >
-        {/* Header del calendario mejorado */}
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            mb: 3,
+        {/* Header del calendario */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
             pb: 2,
-            borderBottom: '2px solid rgba(8, 89, 70, 0.1)',
+            borderBottom: '1px solid rgba(8, 89, 70, 0.12)',
           }}
         >
           <IconButton
             onClick={goToPreviousMonth}
+            size="small"
             sx={{
               color: '#085946',
-              bgcolor: '#f0f4f3',
-              '&:hover': {
-                backgroundColor: '#085946',
-                color: '#ffffff',
-                transform: 'scale(1.1)',
-              },
-              transition: 'all 0.3s ease',
+              bgcolor: 'rgba(8, 89, 70, 0.06)',
+              '&:hover': { bgcolor: '#085946', color: '#fff' },
+              transition: 'all 0.2s',
             }}
           >
             <ChevronLeft />
           </IconButton>
-          <Typography 
-            variant="h5" 
-            sx={{ 
-              color: '#272F50', 
+          <Typography
+            variant="h6"
+            sx={{
+              color: '#272F50',
               fontWeight: 700,
-              fontSize: { xs: '1.25rem', md: '1.5rem' },
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              textTransform: 'capitalize',
             }}
           >
             {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </Typography>
           <IconButton
             onClick={goToNextMonth}
+            size="small"
             sx={{
               color: '#085946',
-              bgcolor: '#f0f4f3',
-              '&:hover': {
-                backgroundColor: '#085946',
-                color: '#ffffff',
-                transform: 'scale(1.1)',
-              },
-              transition: 'all 0.3s ease',
+              bgcolor: 'rgba(8, 89, 70, 0.06)',
+              '&:hover': { bgcolor: '#085946', color: '#fff' },
+              transition: 'all 0.2s',
             }}
           >
             <ChevronRight />
           </IconButton>
         </Box>
 
-        {/* Días de la semana mejorados */}
-        <Grid container spacing={1.5} sx={{ mb: 2 }}>
-          {weekDays.map((day, idx) => (
-            <Grid item xs={12/7} key={`weekday-${idx}`}>
-              <Typography
-                variant="body2"
-                sx={{
-                  textAlign: 'center',
-                  display: 'block',
-                  color: '#272F50',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  py: 1.5,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                {day}
-              </Typography>
-            </Grid>
+        {/* Días de la semana */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: 0.5,
+            mb: 1,
+          }}
+        >
+          {weekDays.map((d, i) => (
+            <Typography
+              key={d}
+              variant="caption"
+              sx={{
+                textAlign: 'center',
+                color: '#64748b',
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+                py: 1,
+              }}
+            >
+              {d}
+            </Typography>
           ))}
-        </Grid>
+        </Box>
 
-        {/* Días del mes */}
-        <Grid container spacing={1.5}>
+        {/* Días del mes - grid 7 columnas */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: 0.5,
+          }}
+        >
           {days.map((day, index) => (
-            <Grid item xs={12/7} key={`day-${index}`} sx={{ minHeight: '70px' }}>
+            <Box key={`day-${index}`} sx={{ aspectRatio: '1', minHeight: 44 }}>
               {day ? (
                 <Box
                   onClick={() => handleDateClick(day)}
                   sx={{
                     width: '100%',
-                    minHeight: '70px',
+                    height: '100%',
+                    minHeight: 44,
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: 3,
-                    cursor: (isPast(day) || isWeekend(day)) ? 'not-allowed' : 'pointer',
-                    backgroundColor: isSelected(day)
-                      ? 'linear-gradient(135deg, #085946 0%, #272F50 100%)'
-                      : isToday(day) && !isWeekend(day)
-                      ? 'linear-gradient(135deg, #e8f5e9 0%, #f0f4f3 100%)'
-                      : isWeekend(day)
-                      ? '#fafafa'
-                      : '#ffffff',
+                    borderRadius: 2,
+                    cursor: !allowAllDates && (isPast(day) || isWeekend(day)) ? 'not-allowed' : 'pointer',
                     background: isSelected(day)
-                      ? 'linear-gradient(135deg, #085946 0%, #272F50 100%)'
-                      : isToday(day) && !isWeekend(day)
-                      ? 'linear-gradient(135deg, #e8f5e9 0%, #f0f4f3 100%)'
+                      ? 'linear-gradient(135deg, #085946 0%, #0d7a63 100%)'
+                      : isToday(day)
+                      ? 'rgba(8, 89, 70, 0.08)'
                       : isWeekend(day)
-                      ? '#fafafa'
-                      : '#ffffff',
+                      ? 'rgba(0,0,0,0.02)'
+                      : 'transparent',
                     color: isSelected(day)
-                      ? '#ffffff'
-                      : isPast(day) || isWeekend(day)
-                      ? '#A1AFB5'
+                      ? '#fff'
+                      : !allowAllDates && (isPast(day) || isWeekend(day))
+                      ? '#94a3b8'
                       : isToday(day)
                       ? '#085946'
-                      : '#272F50',
-                    fontWeight: isSelected(day) ? 700 : (isToday(day) && !isWeekend(day)) ? 600 : 500,
-                    border: isSelected(day)
-                      ? '2px solid #085946'
-                      : isToday(day) && !isSelected(day) && !isWeekend(day) 
-                      ? '2px solid #085946' 
                       : isWeekend(day)
-                      ? '1px solid #e0e0e0'
-                      : '1px solid #e0e0e0',
-                    opacity: isWeekend(day) ? 0.5 : 1,
+                      ? '#64748b'
+                      : '#334155',
+                    fontWeight: isSelected(day) ? 700 : isToday(day) ? 600 : 500,
+                    border: isSelected(day)
+                      ? 'none'
+                      : isToday(day)
+                      ? '2px solid #085946'
+                      : '1px solid transparent',
+                    opacity: isWeekend(day) && !allowAllDates ? 0.6 : 1,
                     position: 'relative',
-                    py: 1,
-                    px: 0.5,
-                    boxShadow: isSelected(day)
-                      ? '0 4px 16px rgba(8, 89, 70, 0.3)'
-                      : isToday(day) && !isWeekend(day)
-                      ? '0 2px 8px rgba(8, 89, 70, 0.15)'
-                      : '0 1px 3px rgba(0, 0, 0, 0.05)',
-                    '&:hover': {
-                      backgroundColor: (isPast(day) || isWeekend(day))
-                        ? (isWeekend(day) ? '#fafafa' : '#ffffff')
-                        : isSelected(day)
-                        ? 'linear-gradient(135deg, #085946 0%, #272F50 100%)'
-                        : 'linear-gradient(135deg, #e8f5e9 0%, #f0f4f3 100%)',
-                      background: (isPast(day) || isWeekend(day))
-                        ? (isWeekend(day) ? '#fafafa' : '#ffffff')
-                        : isSelected(day)
-                        ? 'linear-gradient(135deg, #085946 0%, #272F50 100%)'
-                        : 'linear-gradient(135deg, #e8f5e9 0%, #f0f4f3 100%)',
-                      transform: (isPast(day) || isWeekend(day)) ? 'none' : 'scale(1.08) translateY(-2px)',
-                      boxShadow: (isPast(day) || isWeekend(day)) 
-                        ? 'none' 
-                        : isSelected(day)
-                        ? '0 6px 20px rgba(8, 89, 70, 0.4)'
-                        : '0 4px 12px rgba(8, 89, 70, 0.2)',
-                    },
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.2s ease',
+                    '&:hover': !allowAllDates && (isPast(day) || isWeekend(day))
+                      ? {}
+                      : {
+                          background: isSelected(day)
+                            ? 'linear-gradient(135deg, #0a6b56 0%, #0d7a63 100%)'
+                            : 'rgba(8, 89, 70, 0.12)',
+                          transform: 'scale(1.06)',
+                          boxShadow: '0 2px 8px rgba(8, 89, 70, 0.2)',
+                        },
                   }}
                 >
-                  <Box
+                  <Typography
+                    variant="body2"
                     sx={{
-                      position: 'relative',
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
+                      fontWeight: 'inherit',
+                      color: 'inherit',
+                      lineHeight: 1,
                     }}
                   >
-                    <Typography 
-                      variant="h6" 
-                      component="span"
-                      sx={{ 
-                        fontSize: isSelected(day) ? '1.5rem' : '1.25rem',
-                        fontWeight: isSelected(day) ? 700 : (isToday(day) && !isWeekend(day)) ? 600 : 500,
-                        position: 'relative',
-                        zIndex: 20,
-                        lineHeight: 1,
-                        color: 'inherit',
+                    {day}
+                  </Typography>
+                  {hasAppointments(day) > 0 && !isSelected(day) && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 4,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        display: 'flex',
+                        gap: 0.25,
                       }}
                     >
-                      {day}
-                    </Typography>
-                    {(isWeekend(day) || (isPast(day) && !isWeekend(day))) && (
-                      <Box
-                        component="span"
-                        sx={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '10%',
-                          right: '10%',
-                          height: '3px',
-                          backgroundColor: '#757575',
-                          zIndex: 10,
-                          opacity: 0.8,
-                          transform: 'translateY(-50%)',
-                        }}
-                      />
-                    )}
-                  </Box>
+                      {[...Array(Math.min(hasAppointments(day), 3))].map((_, i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            width: 4,
+                            height: 4,
+                            borderRadius: '50%',
+                            bgcolor: isToday(day) ? '#085946' : '#64748b',
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                  {!allowAllDates && (isPast(day) || isWeekend(day)) && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '15%',
+                        right: '15%',
+                        height: 1,
+                        bgcolor: '#cbd5e1',
+                        transform: 'translateY(-50%)',
+                      }}
+                    />
+                  )}
                 </Box>
-              ) : (
-                <Box sx={{ minHeight: '70px', width: '100%' }} />
-              )}
-            </Grid>
+              ) : null}
+            </Box>
           ))}
-        </Grid>
+        </Box>
+
+        {/* Acción: Ir a hoy */}
+        <Button
+          fullWidth
+          size="small"
+          startIcon={<Today />}
+          onClick={goToToday}
+          sx={{
+            mt: 2,
+            py: 1,
+            color: '#085946',
+            fontWeight: 600,
+            '&:hover': { bgcolor: 'rgba(8, 89, 70, 0.08)' },
+          }}
+        >
+          Ir a hoy
+        </Button>
       </Paper>
 
       {selectedDate && (
-        <Box 
-          sx={{ 
-            mt: 3, 
-            p: 3, 
-            background: 'linear-gradient(135deg, #e8f5e9 0%, #f0f4f3 100%)',
-            borderRadius: 3,
-            border: '2px solid #085946',
-            boxShadow: '0 4px 16px rgba(8, 89, 70, 0.15)',
+        <Box
+          sx={{
+            mt: 2,
+            p: 2,
+            borderRadius: 2,
+            bgcolor: 'rgba(8, 89, 70, 0.06)',
+            border: '1px solid rgba(8, 89, 70, 0.12)',
           }}
         >
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              color: '#085946', 
-              fontWeight: 700,
-              fontSize: '1.1rem',
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#085946',
+              fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
               gap: 1,
             }}
           >
-            <CalendarToday sx={{ fontSize: 24 }} />
-            Fecha seleccionada: {(() => {
+            <CalendarToday sx={{ fontSize: 18, opacity: 0.8 }} />
+            {(() => {
               try {
                 const date = new Date(selectedDate + 'T00:00:00');
                 return date.toLocaleDateString('es-ES', {
                   weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
                   day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
                 });
               } catch (e) {
                 return selectedDate;

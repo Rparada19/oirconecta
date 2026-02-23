@@ -24,6 +24,7 @@ const toFrontend = (a) => {
   const dateStr = a.fecha ? (typeof a.fecha === 'string' ? a.fecha.slice(0, 10) : a.fecha.toISOString?.().slice(0, 10)) : '';
   return {
     ...a,
+    professionalId: a.professionalId || null,
     id: a.id,
     date: dateStr,
     time: a.hora,
@@ -33,7 +34,7 @@ const toFrontend = (a) => {
     patientEmail: a.patientEmail,
     patientPhone: a.patientPhone,
     procedencia: a.procedencia || 'visita-medica',
-    durationMinutes: a.durationMinutes ?? DEFAULT_DURATION_MINUTES,
+    durationMinutes: a.durationMinutes != null ? a.durationMinutes : null,
     createdAt: a.createdAt,
     updatedAt: a.updatedAt,
   };
@@ -110,23 +111,25 @@ export async function getAppointmentById(appointmentId) {
  * @returns {Promise<{ success: boolean, appointment?: Object, error?: string }>}
  */
 export async function createAppointment(appointmentData) {
-  const { date, time, patientName, patientEmail, patientPhone, reason, procedencia, appointmentType } = appointmentData;
+  const { date, time, patientName, patientEmail, patientPhone, reason, procedencia, appointmentType, durationMinutes, professionalId } = appointmentData;
   if (!date || !time || !patientName || !patientEmail || !patientPhone) {
     return { success: false, appointment: null, error: 'Todos los campos son obligatorios' };
   }
-  const slots = await getAvailableTimeSlots(date, '07:00', '18:00');
+  const slots = await getAvailableTimeSlots(date, '07:00', '18:00', professionalId || null);
   if (!slots.includes(time)) {
     return { success: false, appointment: null, error: 'El horario seleccionado no está disponible. Elige otro.' };
   }
   const payload = {
     fecha: date.includes('T') ? date : `${date}T12:00:00.000Z`,
     hora: time,
+    professionalId: professionalId || undefined,
     patientName,
     patientEmail: (patientEmail || '').trim().toLowerCase(),
     patientPhone,
     motivo: reason || '',
     procedencia: validarYNormalizarProcedencia(procedencia || 'visita-medica'),
     tipoConsulta: appointmentType || null,
+    durationMinutes: durationMinutes != null ? durationMinutes : undefined,
   };
   const { data, error } = await api.post('/api/appointments', payload);
   if (error) return { success: false, appointment: null, error };
@@ -160,10 +163,13 @@ export async function cancelAppointment(appointmentId) {
  * @param {string} date YYYY-MM-DD
  * @param {string} startTime
  * @param {string} endTime
+ * @param {string} [professionalId] - Si se indica, devuelve slots disponibles para ese profesional
  * @returns {Promise<string[]>} Horas disponibles HH:MM
  */
-export async function getAvailableTimeSlots(date, startTime = '07:00', endTime = '18:00') {
-  const { data, error } = await api.get(`/api/appointments/available-slots?fecha=${date}`);
+export async function getAvailableTimeSlots(date, startTime = '07:00', endTime = '18:00', professionalId = null) {
+  let url = `/api/appointments/available-slots?fecha=${date}`;
+  if (professionalId) url += `&professionalId=${encodeURIComponent(professionalId)}`;
+  const { data, error } = await api.get(url, { skipAuth: true });
   let list = [];
   if (!error && data?.data?.availableSlots) list = data.data.availableSlots;
 
@@ -178,11 +184,7 @@ export async function getAvailableTimeSlots(date, startTime = '07:00', endTime =
     return m >= start && m <= end;
   });
 
-  const blocked = getBlockedSlots().filter((b) => b.date === date);
-  const dayBlocked = blocked.some((b) => !b.time);
-  if (dayBlocked) return [];
-  const blockedSet = new Set(blocked.filter((b) => b.time).map((b) => b.time));
-  return list.filter((s) => !blockedSet.has(s));
+  return list;
 }
 
 /**
@@ -198,12 +200,13 @@ export async function getAppointmentsByDate(date) {
  * @param {string} appointmentId
  * @param {string} newDate YYYY-MM-DD
  * @param {string} newTime HH:MM
+ * @param {string} [professionalId] - Profesional para la nueva cita
  * @returns {Promise<{ success: boolean, newAppointment?: Object, error?: string }>}
  */
-export async function rescheduleAppointment(appointmentId, newDate, newTime) {
+export async function rescheduleAppointment(appointmentId, newDate, newTime, professionalId = null) {
   const original = await getAppointmentById(appointmentId);
   if (!original) return { success: false, newAppointment: null, error: 'Cita no encontrada' };
-  const slots = await getAvailableTimeSlots(newDate, '07:00', '18:00');
+  const slots = await getAvailableTimeSlots(newDate, '07:00', '18:00', professionalId);
   if (!slots.includes(newTime)) {
     return { success: false, newAppointment: null, error: 'El nuevo horario no está disponible.' };
   }
@@ -216,6 +219,7 @@ export async function rescheduleAppointment(appointmentId, newDate, newTime) {
     reason: original.reason,
     procedencia: original.procedencia,
     appointmentType: original.appointmentType,
+    professionalId: professionalId || original.professionalId || undefined,
   });
   if (!createResult.success) return { success: false, newAppointment: null, error: createResult.error };
   await updateAppointmentStatus(appointmentId, 'rescheduled');

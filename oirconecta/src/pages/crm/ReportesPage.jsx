@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Página de Reportes y Análisis
+ * Tipos: Citas | Leads | Ventas | Agenda | Pacientes | Funnel
+ */
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -14,133 +18,418 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Tabs,
+  Tab,
+  Paper,
+  Chip,
+  CircularProgress,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
-  Assessment,
   ArrowBack,
   Download,
+  PictureAsPdf,
+  TableChart,
   CalendarToday,
   TrendingUp,
   People,
   CheckCircle,
+  Cancel,
+  EventBusy,
+  PersonAdd,
+  AttachMoney,
+  Hearing,
+  ShoppingCart,
+  Schedule,
+  Person,
+  LocationOn,
 } from '@mui/icons-material';
 import { getAllAppointments } from '../../services/appointmentService';
+import { getAllLeadsCombined } from '../../services/leadService';
+import { getAllPatientProducts } from '../../services/productService';
+import { getConfig } from '../../services/configService';
+import { formatProcedencia } from '../../utils/procedenciaUtils';
+import * as XLSX from 'xlsx';
+import html2pdf from 'html2pdf.js';
+
+const SLOTS_PER_DAY = 19;
+
+const getDateRange = (period) => {
+  const now = new Date();
+  now.setHours(23, 59, 59, 999);
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  if (period === 'week') start.setDate(now.getDate() - 7);
+  else if (period === 'month') start.setMonth(now.getMonth() - 1);
+  else if (period === 'quarter') start.setMonth(now.getMonth() - 3);
+  else if (period === 'year') start.setFullYear(now.getFullYear() - 1);
+  else if (period === 'all') start.setTime(0);
+  return { start, end: now };
+};
+
+const filterByDate = (items, dateField, period) => {
+  if (period === 'all') return items;
+  const { start, end } = getDateRange(period);
+  return items.filter((item) => {
+    const d = item[dateField] ? new Date(String(item[dateField]).slice(0, 10) + 'T00:00:00') : null;
+    return d && d >= start && d <= end;
+  });
+};
+
+const getWorkingDays = (start, end) => {
+  let count = 0;
+  const d = new Date(start);
+  d.setHours(0, 0, 0, 0);
+  const endDate = new Date(end);
+  endDate.setHours(23, 59, 59, 999);
+  while (d <= endDate) {
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+};
+
+const formatCurrency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v || 0);
 
 const ReportesPage = () => {
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState([]);
+  const exportRef = useRef(null);
+  const [exportAnchor, setExportAnchor] = useState(null);
   const [period, setPeriod] = useState('month');
+  const [activeTab, setActiveTab] = useState(0);
+  const [appointments, setAppointments] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [products, setProducts] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      const allAppointments = await getAllAppointments();
-      setAppointments(allAppointments);
+      setLoading(true);
+      const [aptRes, leadsRes, prodRes] = await Promise.allSettled([
+        getAllAppointments(),
+        getAllLeadsCombined(),
+        getAllPatientProducts(),
+      ]);
+      setAppointments(aptRes.status === 'fulfilled' ? (aptRes.value || []) : []);
+      setLeads(leadsRes.status === 'fulfilled' ? (leadsRes.value || []) : []);
+      setProducts(prodRes.status === 'fulfilled' ? (prodRes.value || {}) : {});
+      setLoading(false);
     };
     load();
   }, []);
 
-  const getFilteredAppointments = () => {
-    const now = new Date();
-    let startDate = new Date();
+  const { start: rangeStart, end: rangeEnd } = getDateRange(period);
+  const workingDays = period === 'all' ? 365 : getWorkingDays(rangeStart, rangeEnd);
+  const totalSlots = workingDays * SLOTS_PER_DAY;
 
-    switch (period) {
-      case 'week':
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case 'month':
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      case 'quarter':
-        startDate.setMonth(now.getMonth() - 3);
-        break;
-      case 'year':
-        startDate.setFullYear(now.getFullYear() - 1);
-        break;
-      default:
-        return appointments;
-    }
-
-    return appointments.filter((apt) => {
-      const aptDate = new Date(apt.date + 'T00:00:00');
-      return aptDate >= startDate && aptDate <= now;
-    });
+  // Citas
+  const aptsFiltered = filterByDate(appointments, 'date', period);
+  const aptsByStatus = {
+    confirmed: aptsFiltered.filter((a) => a.status === 'confirmed' || a.status === 'rescheduled'),
+    completed: aptsFiltered.filter((a) => a.status === 'completed' || a.status === 'patient'),
+    noShow: aptsFiltered.filter((a) => a.status === 'no-show'),
+    cancelled: aptsFiltered.filter((a) => a.status === 'cancelled'),
   };
-
-  const filteredAppointments = getFilteredAppointments();
-  const confirmedAppointments = filteredAppointments.filter((apt) => apt.status === 'confirmed');
-  const cancelledAppointments = filteredAppointments.filter((apt) => apt.status === 'cancelled');
-  const uniquePatients = new Set(filteredAppointments.map((apt) => apt.patientEmail)).size;
-
-  // Estadísticas por día de la semana
-  const appointmentsByDay = {
-    Lunes: 0,
-    Martes: 0,
-    Miércoles: 0,
-    Jueves: 0,
-    Viernes: 0,
-  };
-
-  filteredAppointments.forEach((apt) => {
-    const date = new Date(apt.date + 'T00:00:00');
-    const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' });
-    if (appointmentsByDay[dayName] !== undefined) {
-      appointmentsByDay[dayName]++;
-    }
+  const aptsByDay = { Lunes: 0, Martes: 0, Miércoles: 0, Jueves: 0, Viernes: 0, Sábado: 0, Domingo: 0 };
+  aptsFiltered.forEach((a) => {
+    const day = new Date(a.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long' });
+    if (aptsByDay[day] !== undefined) aptsByDay[day]++;
   });
+  const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
+  const aptsByProf = {};
+  aptsFiltered.forEach((a) => {
+    const id = a.professionalId || '_sin_asignar';
+    aptsByProf[id] = (aptsByProf[id] || 0) + 1;
+  });
+  const aptsByProcedencia = {};
+  aptsFiltered.forEach((a) => {
+    const p = a.procedencia || 'visita-medica';
+    aptsByProcedencia[p] = (aptsByProcedencia[p] || 0) + 1;
+  });
+  const uniquePatientsApt = new Set(aptsFiltered.filter((a) => a.patientEmail).map((a) => a.patientEmail)).size;
+
+  // Leads
+  const leadsFiltered = filterByDate(
+    leads.map((l) => ({ ...l, fecha: l.fecha || l.createdAt?.slice?.(0, 10) })),
+    'fecha',
+    period
+  );
+  const leadsByEstado = { nuevo: 0, contactado: 0, convertido: 0 };
+  leadsFiltered.forEach((l) => {
+    const e = (l.estado || 'nuevo').toLowerCase();
+    if (leadsByEstado[e] !== undefined) leadsByEstado[e]++;
+    else leadsByEstado.nuevo++;
+  });
+  const leadsByProcedencia = {};
+  leadsFiltered.forEach((l) => {
+    const p = l.procedencia || 'visita-medica';
+    leadsByProcedencia[p] = (leadsByProcedencia[p] || 0) + 1;
+  });
+  const convertidosCount = leadsFiltered.filter((l) => (l.estado || '').toLowerCase() === 'convertido' && l.appointmentId).length;
+
+  // Ventas
+  let allSales = [];
+  Object.values(products).forEach((arr) => {
+    (arr || []).forEach((p) => {
+      if (p.type === 'sale') allSales.push(p);
+    });
+  });
+  const salesFiltered = filterByDate(allSales, 'saleDate', period);
+  const ventasPorProf = {};
+  const ventasPorSede = {};
+  const ventasPorProcedencia = {}; // { procedencia: { total, count } } para ASP
+  const serviciosPorServicio = {};
+  let valorTotal = 0;
+  let factAudifonos = 0;
+  let factConsultas = 0;
+  let factAccesorios = 0;
+  salesFiltered.forEach((s) => {
+    valorTotal += s.totalPrice || 0;
+    const profId = s.professionalId || s.metadata?.professionalId || '_sin_asignar';
+    const sedeId = s.sedeId || s.metadata?.sedeId || '_sin_asignar';
+    const proc = s.procedencia || 'visita-medica';
+    ventasPorProf[profId] = (ventasPorProf[profId] || 0) + (s.totalPrice || 0);
+    ventasPorSede[sedeId] = (ventasPorSede[sedeId] || 0) + (s.totalPrice || 0);
+    if (!ventasPorProcedencia[proc]) ventasPorProcedencia[proc] = { total: 0, count: 0 };
+    ventasPorProcedencia[proc].total += s.totalPrice || 0;
+    ventasPorProcedencia[proc].count += 1;
+    const cat = s.category || 'hearing-aid';
+    if (cat === 'service') {
+      factConsultas += s.totalPrice || 0;
+      const serv = s.productName || s.metadata?.descripcionConsulta || 'Consulta';
+      serviciosPorServicio[serv] = (serviciosPorServicio[serv] || 0) + 1;
+    } else if (cat === 'hearing-aid') factAudifonos += s.totalPrice || 0;
+    else if (cat === 'accessory') factAccesorios += s.totalPrice || 0;
+  });
+
+  // Cotizaciones (quotes)
+  let allQuotes = [];
+  Object.values(products).forEach((arr) => {
+    (arr || []).forEach((p) => {
+      if (p.type === 'quote') allQuotes.push(p);
+    });
+  });
+  const quotesFiltered = filterByDate(allQuotes.map((q) => ({ ...q, quoteDate: q.quoteDate || q.createdAt?.slice?.(0, 10) })), 'quoteDate', period);
+  const cotizacionesPorProductoMarca = {};
+  quotesFiltered.forEach((q) => {
+    const marca = q.brand || q.productName || 'Sin marca';
+    cotizacionesPorProductoMarca[marca] = (cotizacionesPorProductoMarca[marca] || 0) + 1;
+  });
+
+  // Remisiones por médico (leads con medicoReferente)
+  const remisionesPorMedico = {};
+  leadsFiltered.filter((l) => l.medicoReferente && String(l.medicoReferente).trim()).forEach((l) => {
+    const med = String(l.medicoReferente).trim();
+    remisionesPorMedico[med] = (remisionesPorMedico[med] || 0) + 1;
+  });
+
+  // Agenda
+  const ocupados = aptsFiltered.length;
+  const pctOcupacion = totalSlots > 0 ? Math.round((ocupados / totalSlots) * 100) : 0;
+  const pctLibre = totalSlots > 0 ? Math.round(((totalSlots - ocupados) / totalSlots) * 100) : 100;
+  const sedes = getConfig().sedes || [];
+
+  // Funnel
+  const totalLeads = leads.length;
+  const totalConCita = leads.filter((l) => l.appointmentId).length;
+  const totalPacientes = leads.filter((l) => (l.estado || '').toLowerCase() === 'paciente' || (l.estado || '').toLowerCase() === 'convertido').length;
+  const totalVentas = allSales.length;
+
+  const MetricCard = ({ icon: Icon, value, label, color = '#085946' }) => (
+    <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 2, p: 2, textAlign: 'center', height: '100%' }}>
+      <Icon sx={{ fontSize: 36, color, mb: 0.5 }} />
+      <Typography variant="h4" sx={{ fontWeight: 700, color: '#272F50' }}>{value}</Typography>
+      <Typography variant="body2" sx={{ color: '#86899C' }}>{label}</Typography>
+    </Card>
+  );
+
+  const TableBar = ({ count, total }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ flex: 1, height: 8, bgcolor: '#f0f4f3', borderRadius: 1, overflow: 'hidden' }}>
+        <Box sx={{ width: `${total > 0 ? (count / total) * 100 : 0}%`, height: '100%', bgcolor: '#085946' }} />
+      </Box>
+      <Typography variant="body2" sx={{ minWidth: 40, textAlign: 'right' }}>
+        {total > 0 ? Math.round((count / total) * 100) : 0}%
+      </Typography>
+    </Box>
+  );
+
+  const tabNames = ['Citas', 'Leads', 'Ventas', 'Agenda', 'Pacientes', 'Funnel'];
+
+  const handleExportExcel = () => {
+    setExportAnchor(null);
+    try {
+    const wsData = [];
+    if (activeTab === 0) {
+      wsData.push(['Reporte de Citas', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
+      wsData.push([]);
+      wsData.push(['Métrica', 'Valor']);
+      wsData.push(['Total citas', aptsFiltered.length]);
+      wsData.push(['Asistidas', aptsByStatus.completed.length]);
+      wsData.push(['No asistidas', aptsByStatus.noShow.length]);
+      wsData.push(['Canceladas', aptsByStatus.cancelled.length]);
+      wsData.push(['Pacientes únicos', uniquePatientsApt]);
+      wsData.push([]);
+      wsData.push(['Citas por día', 'Cantidad', '%']);
+      Object.entries(aptsByDay).forEach(([d, c]) => wsData.push([d, c, aptsFiltered.length ? Math.round((c / aptsFiltered.length) * 100) : 0]));
+      wsData.push([]);
+      wsData.push(['Citas por profesional', 'Cantidad']);
+      Object.entries(aptsByProf).forEach(([id, c]) => wsData.push([id === '_sin_asignar' ? 'Sin asignar' : profesionales.find((p) => p.id === id)?.nombre || id, c]));
+      wsData.push([]);
+      wsData.push(['Procedencia', 'Cantidad', '%']);
+      Object.entries(aptsByProcedencia).forEach(([p, c]) => wsData.push([formatProcedencia(p), c, aptsFiltered.length ? Math.round((c / aptsFiltered.length) * 100) : 0]));
+    } else if (activeTab === 1) {
+      wsData.push(['Reporte de Leads', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
+      wsData.push([]);
+      wsData.push(['Métrica', 'Valor']);
+      wsData.push(['Total leads', leadsFiltered.length]);
+      wsData.push(['Convertidos a cita', convertidosCount]);
+      wsData.push(['% Conversión', leadsFiltered.length ? Math.round((convertidosCount / leadsFiltered.length) * 100) : 0]);
+      wsData.push([]);
+      wsData.push(['Estado', 'Cantidad']);
+      Object.entries(leadsByEstado).forEach(([e, c]) => wsData.push([e, c]));
+      wsData.push([]);
+      wsData.push(['Procedencia', 'Cantidad', '%']);
+      Object.entries(leadsByProcedencia).forEach(([p, c]) => wsData.push([formatProcedencia(p), c, leadsFiltered.length ? Math.round((c / leadsFiltered.length) * 100) : 0]));
+      wsData.push([]);
+      wsData.push(['Remisiones por médico', 'Leads']);
+      Object.entries(remisionesPorMedico).forEach(([med, c]) => wsData.push([med, c]));
+    } else if (activeTab === 2) {
+      wsData.push(['Reporte de Ventas', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
+      wsData.push([]);
+      wsData.push(['Métrica', 'Valor']);
+      wsData.push(['Valor total', valorTotal]);
+      wsData.push(['Total ventas', salesFiltered.length]);
+      wsData.push(['Audífonos', factAudifonos]);
+      wsData.push(['Consultas', factConsultas]);
+      wsData.push(['Accesorios', factAccesorios]);
+      wsData.push([]);
+      wsData.push(['Ventas por profesional', 'Valor']);
+      Object.entries(ventasPorProf).forEach(([id, v]) => wsData.push([id === '_sin_asignar' ? 'Sin asignar' : profesionales.find((p) => p.id === id)?.nombre || id, v]));
+      wsData.push([]);
+      wsData.push(['Ventas por sede', 'Valor']);
+      Object.entries(ventasPorSede).forEach(([id, v]) => wsData.push([id === '_sin_asignar' ? 'Sin asignar' : sedes.find((s) => s.id === id)?.nombre || id, v]));
+      wsData.push([]);
+      wsData.push(['Ventas por procedencia', 'Cantidad', 'Valor total', 'ASP']);
+      Object.entries(ventasPorProcedencia).forEach(([p, d]) => wsData.push([formatProcedencia(p), d.count, d.total, d.count > 0 ? d.total / d.count : 0]));
+      wsData.push([]);
+      wsData.push(['Servicios por tipo', 'Cantidad']);
+      Object.entries(serviciosPorServicio).forEach(([s, c]) => wsData.push([s, c]));
+      wsData.push([]);
+      wsData.push(['Cotizaciones por marca', 'Cantidad']);
+      Object.entries(cotizacionesPorProductoMarca).forEach(([m, c]) => wsData.push([m, c]));
+    } else if (activeTab === 3) {
+      wsData.push(['Reporte de Agenda', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
+      wsData.push([]);
+      wsData.push(['Métrica', 'Valor']);
+      wsData.push(['Espacios totales', totalSlots]);
+      wsData.push(['Ocupados', ocupados]);
+      wsData.push(['% Ocupación', pctOcupacion]);
+      wsData.push(['% Libre', pctLibre]);
+      wsData.push([`Base: ${workingDays} días laborables × ${SLOTS_PER_DAY} slots/día`]);
+      wsData.push([]);
+      wsData.push(['Sede', 'Audiólogo', 'Citas']);
+      sedes.forEach((sede) => {
+        profesionales.filter((prof) => (prof.asignaciones || []).some((a) => a.sedeId === sede.id && a.activo !== false)).forEach((prof) => {
+          const c = aptsFiltered.filter((a) => a.professionalId === prof.id).length;
+          wsData.push([sede.nombre || sede.id, prof.nombre || prof.id, c]);
+        });
+      });
+    } else if (activeTab === 4) {
+      wsData.push(['Reporte de Pacientes', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
+      wsData.push([]);
+      wsData.push(['Métrica', 'Valor']);
+      wsData.push(['Pacientes únicos (citas)', uniquePatientsApt]);
+      wsData.push(['Pacientes atendidos', aptsByStatus.completed.length]);
+      wsData.push([]);
+      wsData.push(['Procedencia', 'Cantidad']);
+      Object.entries(aptsByProcedencia).forEach(([p, c]) => wsData.push([formatProcedencia(p), c]));
+    } else if (activeTab === 5) {
+      wsData.push(['Reporte Funnel', ''], ['Métrica', 'Valor']);
+      wsData.push(['Leads totales', totalLeads]);
+      wsData.push(['Con cita agendada', totalConCita]);
+      wsData.push(['% Conversión', totalLeads ? Math.round((totalConCita / totalLeads) * 100) : 0]);
+      wsData.push(['Pacientes / Convertidos', totalPacientes]);
+      wsData.push(['Ventas realizadas', totalVentas]);
+    }
+    if (wsData.length === 0) wsData.push(['Sin datos']);
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    const sheetName = String(tabNames[activeTab] || 'Reporte').replace(/[\\/:*?[\]]/g, '_').slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    const fileName = `Reporte_${tabNames[activeTab]}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    } catch (err) {
+      console.error('Error exportando Excel:', err);
+      alert('Error al exportar a Excel. Revisa la consola para más detalles.');
+    }
+  };
+
+  const handleExportPdf = () => {
+    setExportAnchor(null);
+    const el = exportRef.current;
+    if (!el) {
+      alert('No se pudo obtener el contenido para exportar.');
+      return;
+    }
+    try {
+      const sheetName = String(tabNames[activeTab] || 'Reporte').replace(/[\\/:*?[\]]/g, '_');
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: `Reporte_${sheetName}_${new Date().toISOString().slice(0, 10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4' },
+      };
+      html2pdf().set(opt).from(el).save().catch((err) => {
+        console.error('Error exportando PDF:', err);
+        alert('Error al exportar a PDF. Revisa la consola para más detalles.');
+      });
+    } catch (err) {
+      console.error('Error exportando PDF:', err);
+      alert('Error al exportar a PDF. Revisa la consola para más detalles.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress sx={{ color: '#085946' }} />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)' }}>
-      {/* Header */}
-      <Box
-        sx={{
-          background: 'linear-gradient(135deg, #085946 0%, #272F50 100%)',
-          color: '#ffffff',
-          py: 3,
-          boxShadow: '0 4px 20px rgba(8, 89, 70, 0.2)',
-        }}
-      >
+      <Box sx={{ background: 'linear-gradient(135deg, #085946 0%, #272F50 100%)', color: '#fff', py: 3, boxShadow: '0 4px 20px rgba(8,89,70,0.2)' }}>
         <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 0.5 }}>
-                Reportes y Estadísticas
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Análisis y estadísticas del sistema
-              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>Reportes y Análisis</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>Análisis detallado del sistema</Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<Download />}
-                sx={{
-                  bgcolor: '#ffffff',
-                  color: '#085946',
-                  '&:hover': {
-                    bgcolor: '#f5f5f5',
-                  },
-                }}
-              >
+              <Button variant="contained" startIcon={<Download />} onClick={(e) => setExportAnchor(e.currentTarget)} sx={{ bgcolor: '#fff', color: '#085946', '&:hover': { bgcolor: '#f5f5f5' } }}>
                 Exportar
               </Button>
-              <Button
-                variant="outlined"
-                startIcon={<ArrowBack />}
-                onClick={() => navigate('/portal-crm')}
-                sx={{
-                  borderColor: '#ffffff',
-                  color: '#ffffff',
-                  '&:hover': {
-                    borderColor: '#ffffff',
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                  },
-                }}
-              >
+              <Menu anchorEl={exportAnchor} open={Boolean(exportAnchor)} onClose={() => setExportAnchor(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
+                <MenuItem onClick={handleExportPdf}>
+                  <ListItemIcon><PictureAsPdf fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Exportar a PDF" />
+                </MenuItem>
+                <MenuItem onClick={handleExportExcel}>
+                  <ListItemIcon><TableChart fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Exportar a Excel" />
+                </MenuItem>
+              </Menu>
+              <Button variant="outlined" startIcon={<ArrowBack />} onClick={() => navigate('/portal-crm')} sx={{ borderColor: '#fff', color: '#fff' }}>
                 Volver
               </Button>
             </Box>
@@ -149,215 +438,378 @@ const ReportesPage = () => {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Filtro de Período */}
-        <Card
-          sx={{
-            mb: 4,
-            border: '1px solid rgba(8, 89, 70, 0.1)',
-            borderRadius: 3,
-            boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <FormControl fullWidth>
-              <InputLabel>Período</InputLabel>
-              <Select value={period} label="Período" onChange={(e) => setPeriod(e.target.value)}>
-                <MenuItem value="week">Última Semana</MenuItem>
-                <MenuItem value="month">Último Mes</MenuItem>
-                <MenuItem value="quarter">Último Trimestre</MenuItem>
-                <MenuItem value="year">Último Año</MenuItem>
-                <MenuItem value="all">Todo el Período</MenuItem>
-              </Select>
-            </FormControl>
-          </CardContent>
-        </Card>
+        <Box ref={exportRef}>
+        <Paper sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Período:</Typography>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Período</InputLabel>
+            <Select value={period} label="Período" onChange={(e) => setPeriod(e.target.value)}>
+              <MenuItem value="week">Última semana</MenuItem>
+              <MenuItem value="month">Último mes</MenuItem>
+              <MenuItem value="quarter">Último trimestre</MenuItem>
+              <MenuItem value="year">Último año</MenuItem>
+              <MenuItem value="all">Todo</MenuItem>
+            </Select>
+          </FormControl>
+        </Paper>
 
-        {/* Métricas Principales */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                textAlign: 'center',
-                p: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-              }}
-            >
-              <CalendarToday sx={{ fontSize: 40, color: '#085946', mb: 1 }} />
-              <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 0.5 }}>
-                {filteredAppointments.length}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C' }}>
-                Total de Citas
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                textAlign: 'center',
-                p: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-              }}
-            >
-              <CheckCircle sx={{ fontSize: 40, color: '#0a6b56', mb: 1 }} />
-              <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 0.5 }}>
-                {confirmedAppointments.length}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C' }}>
-                Citas Confirmadas
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                textAlign: 'center',
-                p: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-              }}
-            >
-              <People sx={{ fontSize: 40, color: '#272F50', mb: 1 }} />
-              <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 0.5 }}>
-                {uniquePatients}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C' }}>
-                Pacientes Únicos
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                textAlign: 'center',
-                p: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-              }}
-            >
-              <TrendingUp sx={{ fontSize: 40, color: '#085946', mb: 1 }} />
-              <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 0.5 }}>
-                {filteredAppointments.length > 0
-                  ? Math.round((confirmedAppointments.length / filteredAppointments.length) * 100)
-                  : 0}
-                %
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C' }}>
-                Tasa de Confirmación
-              </Typography>
-            </Card>
-          </Grid>
-        </Grid>
+        <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+          <Tab icon={<CalendarToday />} iconPosition="start" label="Citas" />
+          <Tab icon={<PersonAdd />} iconPosition="start" label="Leads" />
+          <Tab icon={<AttachMoney />} iconPosition="start" label="Ventas" />
+          <Tab icon={<Schedule />} iconPosition="start" label="Agenda" />
+          <Tab icon={<People />} iconPosition="start" label="Pacientes" />
+          <Tab icon={<TrendingUp />} iconPosition="start" label="Funnel" />
+        </Tabs>
 
-        {/* Distribución por Día */}
-        <Card
-          sx={{
-            mb: 4,
-            border: '1px solid rgba(8, 89, 70, 0.1)',
-            borderRadius: 3,
-            boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h5" sx={{ color: '#272F50', fontWeight: 700, mb: 3 }}>
-              Distribución de Citas por Día de la Semana
-            </Typography>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                    <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Día</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#272F50' }} align="right">
-                      Cantidad de Citas
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Porcentaje</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Object.entries(appointmentsByDay).map(([day, count]) => (
-                    <TableRow key={day}>
-                      <TableCell sx={{ fontWeight: 500 }}>{day}</TableCell>
-                      <TableCell align="right">{count}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box
-                            sx={{
-                              flex: 1,
-                              height: 8,
-                              bgcolor: '#f0f4f3',
-                              borderRadius: 1,
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                width: `${filteredAppointments.length > 0 ? (count / filteredAppointments.length) * 100 : 0}%`,
-                                height: '100%',
-                                bgcolor: '#085946',
-                              }}
-                            />
-                          </Box>
-                          <Typography variant="body2" sx={{ minWidth: 40, textAlign: 'right' }}>
-                            {filteredAppointments.length > 0
-                              ? Math.round((count / filteredAppointments.length) * 100)
-                              : 0}
-                            %
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </CardContent>
-        </Card>
-
-        {/* Resumen de Cancelaciones */}
-        <Card
-          sx={{
-            border: '1px solid rgba(8, 89, 70, 0.1)',
-            borderRadius: 3,
-            boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h5" sx={{ color: '#272F50', fontWeight: 700, mb: 3 }}>
-              Resumen de Cancelaciones
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
-                  <Typography variant="h4" sx={{ color: '#c62828', fontWeight: 700, mb: 0.5 }}>
-                    {cancelledAppointments.length}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#86899C' }}>
-                    Citas Canceladas
-                  </Typography>
-                </Box>
+        {/* TAB CITAS */}
+        {activeTab === 0 && (
+          <Box>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={6} sm={3}><MetricCard icon={CalendarToday} value={aptsFiltered.length} label="Total citas" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={CheckCircle} value={aptsByStatus.completed.length} label="Asistidas" color="#2e7d32" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={EventBusy} value={aptsByStatus.noShow.length} label="No asistidas" color="#e65100" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={Cancel} value={aptsByStatus.cancelled.length} label="Canceladas" color="#c62828" /></Grid>
+            </Grid>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={6} sm={3}><MetricCard icon={People} value={uniquePatientsApt} label="Pacientes únicos" /></Grid>
+              <Grid item xs={6} sm={3}>
+                <MetricCard
+                  icon={TrendingUp}
+                  value={aptsFiltered.length > 0 ? Math.round((aptsByStatus.completed.length / aptsFiltered.length) * 100) : 0}
+                  label="% Asistencia"
+                />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
-                  <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700, mb: 0.5 }}>
-                    {filteredAppointments.length > 0
-                      ? Math.round((cancelledAppointments.length / filteredAppointments.length) * 100)
-                      : 0}
-                    %
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#86899C' }}>
-                    Tasa de Cancelación
-                  </Typography>
-                </Box>
+              <Grid item xs={6} sm={3}>
+                <MetricCard
+                  icon={TrendingUp}
+                  value={aptsFiltered.length > 0 ? Math.round((aptsByStatus.cancelled.length / aptsFiltered.length) * 100) : 0}
+                  label="% Cancelación"
+                  color="#c62828"
+                />
               </Grid>
             </Grid>
-          </CardContent>
-        </Card>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Citas por día de la semana</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell>Día</TableCell><TableCell align="right">Cantidad</TableCell><TableCell>%</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {Object.entries(aptsByDay).map(([d, c]) => (
+                        <TableRow key={d}><TableCell>{d}</TableCell><TableCell align="right">{c}</TableCell><TableCell><TableBar count={c} total={aptsFiltered.length} /></TableCell></TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Citas por profesional</Typography>
+                <Grid container spacing={2}>
+                  {Object.entries(aptsByProf).map(([id, c]) => (
+                    <Grid item xs={12} sm={6} md={4} key={id}>
+                      <Paper sx={{ p: 2 }}>
+                        <Typography variant="body2" sx={{ color: '#86899C' }}>{id === '_sin_asignar' ? 'Sin asignar' : (profesionales.find((p) => p.id === id)?.nombre || id)}</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>{c}</Typography>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Citas por procedencia</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell>Procedencia</TableCell><TableCell align="right">Cantidad</TableCell><TableCell>%</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {Object.entries(aptsByProcedencia).map(([p, c]) => (
+                        <TableRow key={p}><TableCell>{formatProcedencia(p)}</TableCell><TableCell align="right">{c}</TableCell><TableCell><TableBar count={c} total={aptsFiltered.length} /></TableCell></TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+
+        {/* TAB LEADS */}
+        {activeTab === 1 && (
+          <Box>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={6} sm={3}><MetricCard icon={PersonAdd} value={leadsFiltered.length} label="Total leads" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={CheckCircle} value={convertidosCount} label="Convertidos a cita" color="#2e7d32" /></Grid>
+              <Grid item xs={6} sm={3}>
+                <MetricCard
+                  icon={TrendingUp}
+                  value={leadsFiltered.length > 0 ? Math.round((convertidosCount / leadsFiltered.length) * 100) : 0}
+                  label="% Conversión"
+                />
+              </Grid>
+            </Grid>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Leads por estado</Typography>
+                <Grid container spacing={2}>
+                  {Object.entries(leadsByEstado).map(([e, c]) => (
+                    <Grid item xs={4} key={e}><Chip label={`${e}: ${c}`} sx={{ bgcolor: '#e8f5e9', color: '#2e7d32' }} /></Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Leads por procedencia</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell>Procedencia</TableCell><TableCell align="right">Cantidad</TableCell><TableCell>%</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {Object.entries(leadsByProcedencia).map(([p, c]) => (
+                        <TableRow key={p}><TableCell>{formatProcedencia(p)}</TableCell><TableCell align="right">{c}</TableCell><TableCell><TableBar count={c} total={leadsFiltered.length} /></TableCell></TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Remisiones por médico</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell>Médico referente</TableCell><TableCell align="right">Leads</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {Object.entries(remisionesPorMedico).map(([med, c]) => (
+                        <TableRow key={med}><TableCell>{med}</TableCell><TableCell align="right">{c}</TableCell></TableRow>
+                      ))}
+                      {Object.keys(remisionesPorMedico).length === 0 && (
+                        <TableRow><TableCell colSpan={2} align="center" sx={{ color: '#86899C' }}>Sin remisiones con médico referente en el período</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+
+        {/* TAB VENTAS */}
+        {activeTab === 2 && (
+          <Box>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={6} sm={3}><MetricCard icon={AttachMoney} value={formatCurrency(valorTotal)} label="Valor total" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={ShoppingCart} value={salesFiltered.length} label="Ventas" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={Hearing} value={formatCurrency(factAudifonos)} label="Audífonos" color="#2e7d32" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={CalendarToday} value={formatCurrency(factConsultas)} label="Consultas" /></Grid>
+            </Grid>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Ventas por profesional</Typography>
+                <Grid container spacing={2}>
+                  {Object.entries(ventasPorProf).map(([id, v]) => (
+                    <Grid item xs={12} sm={6} md={4} key={id}>
+                      <Paper sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Person sx={{ color: '#085946', fontSize: 20 }} />
+                          <Typography variant="body2">{id === '_sin_asignar' ? 'Sin asignar' : (profesionales.find((p) => p.id === id)?.nombre || id)}</Typography>
+                        </Box>
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>{formatCurrency(v)}</Typography>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Ventas por sede</Typography>
+                <Grid container spacing={2}>
+                  {Object.entries(ventasPorSede).map(([id, v]) => (
+                    <Grid item xs={12} sm={6} md={4} key={id}>
+                      <Paper sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <LocationOn sx={{ color: '#085946', fontSize: 20 }} />
+                          <Typography variant="body2">{id === '_sin_asignar' ? 'Sin asignar' : (sedes.find((s) => s.id === id)?.nombre || id)}</Typography>
+                        </Box>
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>{formatCurrency(v)}</Typography>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Ventas por procedencia</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell>Procedencia</TableCell><TableCell align="right">Ventas</TableCell><TableCell align="right">Valor total</TableCell><TableCell align="right">ASP</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {Object.entries(ventasPorProcedencia).map(([p, d]) => (
+                        <TableRow key={p}>
+                          <TableCell>{formatProcedencia(p)}</TableCell>
+                          <TableCell align="right">{d.count}</TableCell>
+                          <TableCell align="right">{formatCurrency(d.total)}</TableCell>
+                          <TableCell align="right">{d.count > 0 ? formatCurrency(d.total / d.count) : '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}># Servicios por tipo</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell>Servicio</TableCell><TableCell align="right">Cantidad</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {Object.entries(serviciosPorServicio).map(([s, c]) => (
+                        <TableRow key={s}><TableCell>{s}</TableCell><TableCell align="right">{c}</TableCell></TableRow>
+                      ))}
+                      {Object.keys(serviciosPorServicio).length === 0 && (
+                        <TableRow><TableCell colSpan={2} align="center" sx={{ color: '#86899C' }}>Sin servicios facturados en el período</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}># Cotizaciones por producto por marca</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell>Marca</TableCell><TableCell align="right">Cotizaciones</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {Object.entries(cotizacionesPorProductoMarca).map(([m, c]) => (
+                        <TableRow key={m}><TableCell>{m}</TableCell><TableCell align="right">{c}</TableCell></TableRow>
+                      ))}
+                      {Object.keys(cotizacionesPorProductoMarca).length === 0 && (
+                        <TableRow><TableCell colSpan={2} align="center" sx={{ color: '#86899C' }}>Sin cotizaciones en el período</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+
+        {/* TAB AGENDA */}
+        {activeTab === 3 && (
+          <Box>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={6} sm={3}><MetricCard icon={Schedule} value={totalSlots} label="Espacios totales" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={CheckCircle} value={ocupados} label="Ocupados" color="#2e7d32" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={TrendingUp} value={`${pctOcupacion}%`} label="% Ocupación" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={CalendarToday} value={`${pctLibre}%`} label="% Libre" color="#0a6b56" /></Grid>
+            </Grid>
+            <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
+              Base: {workingDays} días laborables × {SLOTS_PER_DAY} slots/día
+            </Typography>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Agenda por sede por audiólogo</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell>Sede</TableCell><TableCell>Audiologo/a</TableCell><TableCell align="right">Citas</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {(() => {
+                        const rows = sedes.flatMap((sede) =>
+                          profesionales
+                            .filter((prof) => (prof.asignaciones || []).some((a) => a.sedeId === sede.id && a.activo !== false))
+                            .map((prof) => ({
+                              sede: sede.nombre || sede.id,
+                              prof: prof.nombre || prof.id,
+                              c: aptsFiltered.filter((a) => a.professionalId === prof.id).length,
+                              key: `${sede.id}-${prof.id}`,
+                            }))
+                        );
+                        if (rows.length === 0) {
+                          return (
+                            <TableRow><TableCell colSpan={3} align="center" sx={{ color: '#86899C' }}>Sin datos. Configura sedes y profesionales con asignaciones.</TableCell></TableRow>
+                          );
+                        }
+                        return rows.map((r) => (
+                          <TableRow key={r.key}><TableCell>{r.sede}</TableCell><TableCell>{r.prof}</TableCell><TableCell align="right">{r.c}</TableCell></TableRow>
+                        ));
+                      })()}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+
+        {/* TAB PACIENTES */}
+        {activeTab === 4 && (
+          <Box>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={6} sm={3}><MetricCard icon={People} value={uniquePatientsApt} label="Pacientes únicos (citas)" /></Grid>
+              <Grid item xs={6} sm={3}><MetricCard icon={People} value={aptsByStatus.completed.length} label="Pacientes atendidos" color="#2e7d32" /></Grid>
+            </Grid>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Pacientes por procedencia (desde citas)</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell>Procedencia</TableCell><TableCell align="right">Cantidad</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {Object.entries(aptsByProcedencia).map(([p, c]) => (
+                        <TableRow key={p}><TableCell>{formatProcedencia(p)}</TableCell><TableCell align="right">{c}</TableCell></TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+
+        {/* TAB FUNNEL */}
+        {activeTab === 5 && (
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>Funnel comercial</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Paper sx={{ p: 2, bgcolor: '#fff3e0' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>Leads totales</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>{totalLeads}</Typography>
+                </Box>
+              </Paper>
+              <Typography variant="body2" sx={{ textAlign: 'center', color: '#86899C' }}>↓</Typography>
+              <Paper sx={{ p: 2, bgcolor: '#e3f2fd' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>Con cita agendada</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>{totalConCita}</Typography>
+                </Box>
+                {totalLeads > 0 && <Typography variant="caption">{Math.round((totalConCita / totalLeads) * 100)}% conversión</Typography>}
+              </Paper>
+              <Typography variant="body2" sx={{ textAlign: 'center', color: '#86899C' }}>↓</Typography>
+              <Paper sx={{ p: 2, bgcolor: '#e8f5e9' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>Pacientes / Convertidos</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>{totalPacientes}</Typography>
+                </Box>
+              </Paper>
+              <Typography variant="body2" sx={{ textAlign: 'center', color: '#86899C' }}>↓</Typography>
+              <Paper sx={{ p: 2, bgcolor: '#f3e5f5' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>Ventas realizadas</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>{totalVentas}</Typography>
+                </Box>
+              </Paper>
+            </Box>
+          </Box>
+        )}
+        </Box>
       </Container>
     </Box>
   );

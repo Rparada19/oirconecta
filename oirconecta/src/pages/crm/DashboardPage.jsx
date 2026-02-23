@@ -40,6 +40,8 @@ import {
   ShoppingCart,
   Assessment,
   Refresh,
+  Person,
+  LocationOn,
 } from '@mui/icons-material';
 import { api } from '../../services/apiClient';
 import { getAllAppointments } from '../../services/appointmentService';
@@ -47,6 +49,7 @@ import { getAllLeadsCombined } from '../../services/leadService';
 import { formatProcedencia, getProcedenciaOptions, getProcedenciaOptionsCRM } from '../../utils/procedenciaUtils';
 import { normalizarProcedencia } from '../../utils/procedenciaNormalizer';
 import { getAllPatientProducts } from '../../services/productService';
+import { getConfig } from '../../services/configService';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -277,7 +280,6 @@ const DashboardPage = () => {
 
   const citasSemanaAnterior = getCitasSemanaAnterior();
 
-  // Datos de ventas (simulados por ahora)
   // Calcular datos de ventas desde productos reales
   const calcularVentasData = () => {
     let allQuotes = [];
@@ -288,8 +290,9 @@ const DashboardPage = () => {
     let facturacionConsultas = 0;
     let facturacionAccesorios = 0;
     let facturacionAudifonos = 0;
+    const ventasPorProfesional = {};
+    const ventasPorSede = {};
 
-    // Recorrer todos los productos de todos los pacientes
     Object.values(products).forEach(patientProducts => {
       patientProducts.forEach(product => {
         if (product.type === 'quote') {
@@ -301,19 +304,19 @@ const DashboardPage = () => {
           allSales.push(product);
           valorFacturado += product.totalPrice || 0;
 
+          const profId = product.professionalId || product.metadata?.professionalId || '_sin_asignar';
+          const sedeId = product.sedeId || product.metadata?.sedeId || '_sin_asignar';
+          ventasPorProfesional[profId] = (ventasPorProfesional[profId] || 0) + (product.totalPrice || 0);
+          ventasPorSede[sedeId] = (ventasPorSede[sedeId] || 0) + (product.totalPrice || 0);
+
           const cat = product.category || 'hearing-aid';
 
-          // Contar por marca solo audífonos
           if (cat === 'hearing-aid' && product.brand) {
             audifonosPorMarca[product.brand] = (audifonosPorMarca[product.brand] || 0) + (product.quantity || 1);
           }
-
-          // Facturación por consultas: ventas tipo Consulta (category === 'service')
           if (cat === 'service') {
             facturacionConsultas += product.totalPrice || 0;
           }
-
-          // Facturación por accesorios: ventas tipo Accesorio (category === 'accessory') + accesorios dentro de audífonos
           if (cat === 'accessory') {
             facturacionAccesorios += product.totalPrice || 0;
           }
@@ -322,8 +325,6 @@ const DashboardPage = () => {
               facturacionAccesorios += acc.price || 0;
             });
           }
-
-          // Facturación por audífonos: ventas tipo Audífonos (category === 'hearing-aid')
           if (cat === 'hearing-aid') {
             facturacionAudifonos += product.totalPrice || 0;
           }
@@ -340,6 +341,8 @@ const DashboardPage = () => {
       facturacionConsultas,
       facturacionAccesorios,
       facturacionAudifonos,
+      ventasPorProfesional,
+      ventasPorSede,
     };
   };
 
@@ -987,6 +990,8 @@ const DashboardPage = () => {
             <Tabs
               value={ventasTab}
               onChange={(e, newValue) => setVentasTab(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
               sx={{
                 mb: 3,
                 '& .MuiTab-root': {
@@ -1004,6 +1009,8 @@ const DashboardPage = () => {
               <Tab label="Resumen" />
               <Tab label="Audífonos" />
               <Tab label="Facturación" />
+              <Tab label="Por profesional" />
+              <Tab label="Por sede" />
             </Tabs>
 
             {ventasTab === 0 && (
@@ -1161,6 +1168,82 @@ const DashboardPage = () => {
                     </Card>
                   </Grid>
                 </Grid>
+              );
+            })()}
+
+            {ventasTab === 3 && (() => {
+              const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
+              const entries = Object.entries(ventasData.ventasPorProfesional || {});
+              return (
+                <Box>
+                  <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600, mb: 2 }}>
+                    Ventas por Profesional
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {entries.map(([profId, valor]) => {
+                      const prof = profId === '_sin_asignar' ? null : profesionales.find((p) => p.id === profId);
+                      const nombre = profId === '_sin_asignar' ? 'Sin asignar' : (prof?.nombre || profId);
+                      return (
+                        <Grid item xs={12} sm={6} md={4} key={profId}>
+                          <Card sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                              <Person sx={{ color: '#085946', fontSize: 20 }} />
+                              <Typography variant="body2" sx={{ color: '#86899C' }}>
+                                {nombre}
+                              </Typography>
+                            </Box>
+                            <Typography variant="h5" sx={{ color: '#085946', fontWeight: 700 }}>
+                              {formatCurrency(valor)}
+                            </Typography>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                  {entries.length === 0 && (
+                    <Typography variant="body2" sx={{ color: '#86899C' }}>
+                      No hay ventas con profesional asignado. Las ventas se asignan al registrar la venta.
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })()}
+
+            {ventasTab === 4 && (() => {
+              const sedes = getConfig().sedes || [];
+              const entries = Object.entries(ventasData.ventasPorSede || {});
+              return (
+                <Box>
+                  <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600, mb: 2 }}>
+                    Ventas por Sede
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {entries.map(([sedeId, valor]) => {
+                      const sede = sedeId === '_sin_asignar' ? null : sedes.find((s) => s.id === sedeId);
+                      const nombre = sedeId === '_sin_asignar' ? 'Sin asignar' : (sede?.nombre || sedeId);
+                      return (
+                        <Grid item xs={12} sm={6} md={4} key={sedeId}>
+                          <Card sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                              <LocationOn sx={{ color: '#085946', fontSize: 20 }} />
+                              <Typography variant="body2" sx={{ color: '#86899C' }}>
+                                {nombre}
+                              </Typography>
+                            </Box>
+                            <Typography variant="h5" sx={{ color: '#085946', fontWeight: 700 }}>
+                              {formatCurrency(valor)}
+                            </Typography>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                  {entries.length === 0 && (
+                    <Typography variant="body2" sx={{ color: '#86899C' }}>
+                      No hay ventas con sede asignada. Las ventas se asignan al registrar la venta.
+                    </Typography>
+                  )}
+                </Box>
               );
             })()}
           </CardContent>

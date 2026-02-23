@@ -72,27 +72,35 @@ import {
   getAllAppointments,
   cancelAppointment,
   updateAppointmentStatus,
-  getBlockedSlots,
-  blockTimeSlot,
-  unblockTimeSlot,
   getAvailableTimeSlots,
   rescheduleAppointment,
   getAppointmentById,
   createAppointment,
 } from '../../services/appointmentService';
 import {
+  requestBlock,
+  getAllBlockedSlots,
+  getPendingBlockedSlots,
+  approveBlock,
+  rejectBlock,
+} from '../../services/blockedSlotsService';
+import {
   getPatientRecords,
   addPatientRecord,
   recordConsultation,
   recordCancellation,
   recordReschedule,
+  recordNoShow,
   getRescheduleHistory,
 } from '../../services/patientRecordService';
 import { recordAppointmentInteraction } from '../../services/interactionService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
+import { getConfig, getSedes, getConsultoriosFlat } from '../../services/configService';
 import DateSelector from '../../components/appointments/DateSelector';
+import DaySchedulePanel from '../../components/appointments/DaySchedulePanel';
 import TimeSelector from '../../components/appointments/TimeSelector';
 import PatientProfileDialog from '../../components/patient/PatientProfileDialog';
+import { useAuth } from '../../context/AuthContext';
 
 const CitasPage = () => {
   const navigate = useNavigate();
@@ -103,14 +111,21 @@ const CitasPage = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('list'); // 'list' o 'calendar'
+  const [viewMode, setViewMode] = useState('list'); // 'list' o 'calendar' o 'stats'
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarFilters, setCalendarFilters] = useState({ sedeId: '', consultorioId: '', professionalId: '' });
+  const [statsPeriodo, setStatsPeriodo] = useState('month'); // week, month, year
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [selectedDateForBlock, setSelectedDateForBlock] = useState(null);
-  const [selectedTimeForBlock, setSelectedTimeForBlock] = useState(null);
+  const [blockHoraInicio, setBlockHoraInicio] = useState('08:00');
+  const [blockHoraFin, setBlockHoraFin] = useState('18:00');
+  const [blockMotivo, setBlockMotivo] = useState('');
   const [blockAllDay, setBlockAllDay] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [blockedSlots, setBlockedSlots] = useState([]);
+  const [pendingBlocks, setPendingBlocks] = useState([]);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   
   // Estados para nuevos dialogs
   const [consultationDialogOpen, setConsultationDialogOpen] = useState(false);
@@ -128,10 +143,13 @@ const CitasPage = () => {
     nextSteps: '',
   });
   const [cancellationReason, setCancellationReason] = useState('');
+  const [noShowReason, setNoShowReason] = useState('');
+  const [noShowContactNotes, setNoShowContactNotes] = useState('');
   const [newComment, setNewComment] = useState({ title: '', description: '', type: 'note' });
-  const [rescheduleData, setRescheduleData] = useState({ date: '', time: '' });
+  const [rescheduleData, setRescheduleData] = useState({ date: '', time: '', reason: '', professionalId: '' });
   const [activityTab, setActivityTab] = useState(0);
   const [rescheduleAvailableSlots, setRescheduleAvailableSlots] = useState([]);
+  const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
   const [rescheduledToAppointment, setRescheduledToAppointment] = useState(null);
 
   useEffect(() => {
@@ -142,19 +160,40 @@ const CitasPage = () => {
     getAppointmentById(selectedAppointment.rescheduledToId).then(setRescheduledToAppointment);
   }, [selectedAppointment?.rescheduledToId]);
 
+  // Cargar registros del paciente al abrir el detalle
+  useEffect(() => {
+    if (detailDialogOpen && selectedAppointment?.patientEmail) {
+      const records = getPatientRecords(selectedAppointment.patientEmail);
+      setPatientRecords(records);
+    }
+  }, [detailDialogOpen, selectedAppointment?.patientEmail]);
+
   const loadData = async () => {
     try {
-      const [allAppointments] = await Promise.all([getAllAppointments()]);
+      const [allAppointments, blocksRes] = await Promise.all([
+        getAllAppointments(),
+        getAllBlockedSlots(),
+      ]);
       setAppointments(allAppointments);
       setFilteredAppointments(allAppointments);
-      setBlockedSlots(getBlockedSlots());
+      setBlockedSlots(blocksRes.success ? blocksRes.data : []);
     } catch (e) {
       console.error('[CitasPage] Error al cargar:', e);
     }
   };
 
+  const loadPendingBlocks = async () => {
+    if (!isAdmin) {
+      setPendingBlocks([]);
+      return;
+    }
+    const res = await getPendingBlockedSlots();
+    setPendingBlocks(res.success ? res.data : []);
+  };
+
   useEffect(() => {
     loadData();
+    loadPendingBlocks();
     const handleStorageChange = (e) => {
       if (e.key === 'oirconecta_appointments' || e.key === 'oirconecta_blocked_slots') loadData();
     };
@@ -171,8 +210,8 @@ const CitasPage = () => {
       setRescheduleAvailableSlots([]);
       return;
     }
-    getAvailableTimeSlots(rescheduleData.date, '07:00', '18:00').then(setRescheduleAvailableSlots);
-  }, [rescheduleData.date]);
+    getAvailableTimeSlots(rescheduleData.date, '07:00', '18:00', rescheduleData.professionalId || null).then(setRescheduleAvailableSlots);
+  }, [rescheduleData.date, rescheduleData.professionalId]);
 
   useEffect(() => {
     let filtered = appointments;
@@ -388,67 +427,65 @@ const CitasPage = () => {
   };
 
   const handleNoShowReschedule = async (newDate, newTime) => {
-    if (selectedAppointment) {
-      await updateAppointmentStatus(selectedAppointment.id, 'no-show');
-      const rescheduleResult = await rescheduleAppointment(selectedAppointment.id, newDate, newTime);
-      if (rescheduleResult.success) {
-        // Registrar re-agendamiento
-        recordReschedule(
-          selectedAppointment.patientEmail,
-          selectedAppointment.id,
-          rescheduleResult.newAppointment.id,
-          selectedAppointment.date,
-          selectedAppointment.time,
+    if (!selectedAppointment || !noShowReason.trim() || !noShowContactNotes.trim()) {
+      showSnackbar('Por favor completa el motivo y las notas de contacto', 'error');
+      return;
+    }
+    await updateAppointmentStatus(selectedAppointment.id, 'no-show');
+    const profId = rescheduleData.professionalId || selectedAppointment.professionalId || null;
+    const rescheduleResult = await rescheduleAppointment(selectedAppointment.id, newDate, newTime, profId);
+    if (rescheduleResult.success) {
+      recordNoShow(
+        selectedAppointment.patientEmail,
+        selectedAppointment.id,
+        noShowReason.trim(),
+        noShowContactNotes.trim(),
+        {
+          newAppointmentId: rescheduleResult.newAppointment.id,
+          oldDate: selectedAppointment.date,
+          oldTime: selectedAppointment.time,
           newDate,
-          newTime
-        );
-        
-        // Registrar en interacciones - No asistencia
-        recordAppointmentInteraction(selectedAppointment.patientEmail, {
-          title: 'Cita No Asistida y Re-agendada',
-          description: `Paciente no asistió a la cita del ${selectedAppointment.date} a las ${selectedAppointment.time}. Se contactó y re-agendó para ${newDate} a las ${newTime}.`,
-          scheduledDate: selectedAppointment.date,
-          scheduledTime: selectedAppointment.time,
-          relatedAppointmentId: selectedAppointment.id,
-          status: 'missed',
-          action: 'no-show',
-          metadata: {
-            oldDate: selectedAppointment.date,
-            oldTime: selectedAppointment.time,
-            newDate: newDate,
-            newTime: newTime,
-          },
-        });
-        
-        // Registrar en interacciones - Nueva cita
-        recordAppointmentInteraction(selectedAppointment.patientEmail, {
-          title: 'Cita Re-agendada',
-          description: `Cita re-agendada desde ${selectedAppointment.date} ${selectedAppointment.time} a ${newDate} ${newTime} después de no asistencia.`,
-          scheduledDate: newDate,
-          scheduledTime: newTime,
-          relatedAppointmentId: rescheduleResult.newAppointment.id,
-          status: 'scheduled',
-          action: 'rescheduled',
-          metadata: {
-            oldDate: selectedAppointment.date,
-            oldTime: selectedAppointment.time,
-            reason: 'No asistencia - Re-agendamiento',
-          },
-        });
-        
-        // Registrar contacto
-        addPatientRecord(selectedAppointment.patientEmail, {
-          type: 'contact',
-          title: 'Re-contacto y Re-agendamiento',
-          description: `Paciente no asistió, se contactó y re-agendó para ${newDate} ${newTime}`,
-          appointmentId: selectedAppointment.id,
-        });
-        await loadData();
-        setNoShowDialogOpen(false);
-        showSnackbar('Cita re-agendada exitosamente', 'success');
-      } else {
-        showSnackbar(rescheduleResult.error || 'Error al re-agendar', 'error');
-      }
+          newTime,
+        }
+      );
+      recordReschedule(
+        selectedAppointment.patientEmail,
+        selectedAppointment.id,
+        rescheduleResult.newAppointment.id,
+        selectedAppointment.date,
+        selectedAppointment.time,
+        newDate,
+        newTime,
+        `No asistió. Motivo: ${noShowReason.trim()}. Contacto: ${noShowContactNotes.trim()}`
+      );
+      recordAppointmentInteraction(selectedAppointment.patientEmail, {
+        title: 'Cita No Asistida y Re-agendada',
+        description: `Paciente no asistió a la cita del ${selectedAppointment.date} a las ${selectedAppointment.time}. Motivo: ${noShowReason}. Contacto: ${noShowContactNotes}. Re-agendada para ${newDate} a las ${newTime}.`,
+        scheduledDate: selectedAppointment.date,
+        scheduledTime: selectedAppointment.time,
+        relatedAppointmentId: selectedAppointment.id,
+        status: 'missed',
+        action: 'no-show',
+        metadata: { oldDate: selectedAppointment.date, oldTime: selectedAppointment.time, newDate, newTime, noShowReason, contactNotes: noShowContactNotes },
+      });
+      recordAppointmentInteraction(selectedAppointment.patientEmail, {
+        title: 'Cita Re-agendada',
+        description: `Cita re-agendada desde ${selectedAppointment.date} ${selectedAppointment.time} a ${newDate} ${newTime} después de no asistencia.`,
+        scheduledDate: newDate,
+        scheduledTime: newTime,
+        relatedAppointmentId: rescheduleResult.newAppointment.id,
+        status: 'scheduled',
+        action: 'rescheduled',
+        metadata: { oldDate: selectedAppointment.date, oldTime: selectedAppointment.time, reason: 'No asistencia - Re-agendamiento' },
+      });
+      await loadData();
+      setNoShowDialogOpen(false);
+      setNoShowReason('');
+      setNoShowContactNotes('');
+      setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
+      showSnackbar('Cita re-agendada exitosamente', 'success');
+    } else {
+      showSnackbar(rescheduleResult.error || 'Error al re-agendar', 'error');
     }
   };
 
@@ -471,6 +508,7 @@ const CitasPage = () => {
         patientPhone: selectedAppointment.patientPhone,
         reason: selectedAppointment.reason || 'Consulta General',
         procedencia: selectedAppointment.procedencia || 'visita-medica',
+        professionalId: rescheduleData.professionalId || selectedAppointment.professionalId || undefined,
       });
       if (newAppointmentResult.success && newAppointmentResult.appointment) {
         recordReschedule(
@@ -480,7 +518,8 @@ const CitasPage = () => {
           selectedAppointment.date,
           selectedAppointment.time,
           rescheduleData.date,
-          rescheduleData.time
+          rescheduleData.time,
+          cancellationReason?.trim() || null
         );
         recordAppointmentInteraction(selectedAppointment.patientEmail, {
           title: 'Cita Cancelada y Re-agendada',
@@ -522,16 +561,18 @@ const CitasPage = () => {
     await loadData();
     setCancelDialogOpen(false);
     setCancellationReason('');
-    setRescheduleData({ date: '', time: '' });
+    setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
     setSelectedAppointment(null);
   };
 
   const handleReschedule = async () => {
     if (selectedAppointment && rescheduleData.date && rescheduleData.time) {
+      const profId = rescheduleData.professionalId || selectedAppointment.professionalId || null;
       const rescheduleResult = await rescheduleAppointment(
         selectedAppointment.id,
         rescheduleData.date,
-        rescheduleData.time
+        rescheduleData.time,
+        profId
       );
       if (rescheduleResult.success) {
         // Registrar re-agendamiento
@@ -542,7 +583,8 @@ const CitasPage = () => {
           selectedAppointment.date,
           selectedAppointment.time,
           rescheduleData.date,
-          rescheduleData.time
+          rescheduleData.time,
+          rescheduleData.reason?.trim() || null
         );
         
         // Registrar en interacciones - Cita original re-agendada
@@ -574,7 +616,7 @@ const CitasPage = () => {
         });
         await loadData();
         setRescheduleDialogOpen(false);
-        setRescheduleData({ date: '', time: '' });
+        setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
         setSelectedAppointment(null);
         showSnackbar('Cita re-agendada exitosamente', 'success');
       } else {
@@ -628,27 +670,52 @@ const CitasPage = () => {
       showSnackbar('Por favor selecciona una fecha', 'error');
       return;
     }
-    const dateStr = selectedDateForBlock.toISOString().split('T')[0];
-    const result = blockTimeSlot(dateStr, blockAllDay ? null : selectedTimeForBlock);
+    const horaInicio = blockAllDay ? '08:00' : blockHoraInicio;
+    const horaFin = blockAllDay ? '18:00' : blockHoraFin;
+    if (!blockMotivo?.trim()) {
+      showSnackbar('Por favor escribe el motivo del bloqueo', 'error');
+      return;
+    }
+    const result = await requestBlock({
+      fecha: selectedDateForBlock.toISOString().split('T')[0],
+      horaInicio,
+      horaFin,
+      motivo: blockMotivo.trim(),
+    });
     if (result.success) {
       await loadData();
+      await loadPendingBlocks();
       setBlockDialogOpen(false);
       setSelectedDateForBlock(null);
-      setSelectedTimeForBlock(null);
+      setBlockHoraInicio('08:00');
+      setBlockHoraFin('18:00');
+      setBlockMotivo('');
       setBlockAllDay(false);
-      showSnackbar('Horario bloqueado exitosamente', 'success');
+      showSnackbar('Solicitud enviada. Un administrador la revisará.', 'success');
     } else {
-      showSnackbar(result.error || 'Error al bloquear el horario', 'error');
+      showSnackbar(result.error || 'Error al enviar la solicitud', 'error');
     }
   };
 
-  const handleUnblockSlot = async (blockId) => {
-    const result = unblockTimeSlot(blockId);
+  const handleApproveBlock = async (id) => {
+    const result = await approveBlock(id);
     if (result.success) {
       await loadData();
-      showSnackbar('Horario desbloqueado exitosamente', 'success');
+      await loadPendingBlocks();
+      showSnackbar('Bloqueo aprobado. El horario ya no está disponible.', 'success');
     } else {
-      showSnackbar(result.error || 'Error al desbloquear el horario', 'error');
+      showSnackbar(result.error || 'Error al aprobar', 'error');
+    }
+  };
+
+  const handleRejectBlock = async (id) => {
+    const result = await rejectBlock(id);
+    if (result.success) {
+      await loadData();
+      await loadPendingBlocks();
+      showSnackbar('Solicitud de bloqueo rechazada.', 'success');
+    } else {
+      showSnackbar(result.error || 'Error al rechazar', 'error');
     }
   };
 
@@ -749,16 +816,85 @@ const CitasPage = () => {
   const canceladasCount = appointments.filter((a) => a.status === 'cancelled').length;
   const totalCount = agendadasCount + asistidasCount + noAsistidasCount + canceladasCount;
 
-  // Obtener citas del día seleccionado en el calendario
+  // Obtener citas del día seleccionado en el calendario (con filtros)
   const getAppointmentsForDate = (date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return appointments.filter(apt => apt.date === dateStr);
+    let list = appointments.filter(apt => apt.date === dateStr);
+    if (calendarFilters.professionalId) {
+      list = list.filter((apt) => apt.professionalId === calendarFilters.professionalId);
+    }
+    return list;
   };
 
-  // Obtener horarios bloqueados del día
+  // Slots típicos por día (mismo que DaySchedulePanel)
+  const SLOTS_PER_DAY = 19;
+
+  const getWorkingDaysInRange = (start, end) => {
+    let count = 0;
+    const d = new Date(start);
+    d.setHours(0, 0, 0, 0);
+    const endDate = new Date(end);
+    endDate.setHours(23, 59, 59, 999);
+    while (d <= endDate) {
+      const day = d.getDay();
+      if (day !== 0 && day !== 6) count++;
+      d.setDate(d.getDate() + 1);
+    }
+    return count;
+  };
+
+  // Citas filtradas para estadísticas por período
+  const getStatsAppointments = () => {
+    let list = appointments;
+    if (calendarFilters.professionalId) {
+      list = list.filter((a) => a.professionalId === calendarFilters.professionalId);
+    }
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    if (statsPeriodo === 'day') {
+      // Solo hoy
+    } else if (statsPeriodo === 'week') {
+      start.setDate(now.getDate() - 7);
+    } else if (statsPeriodo === 'month') {
+      start.setMonth(now.getMonth() - 1);
+    } else if (statsPeriodo === 'year') {
+      start.setFullYear(now.getFullYear() - 1);
+    }
+    return list.filter((a) => {
+      const d = new Date(a.date + 'T00:00:00');
+      return d >= start && d <= now && a.status !== 'cancelled';
+    });
+  };
+  const statsAppointments = getStatsAppointments();
+
+  // Total slots y % ocupación/libre
+  const statsRange = (() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    if (statsPeriodo === 'day') {
+      return { start: new Date(now.getFullYear(), now.getMonth(), now.getDate()), end: now };
+    }
+    if (statsPeriodo === 'week') start.setDate(now.getDate() - 7);
+    else if (statsPeriodo === 'month') start.setMonth(now.getMonth() - 1);
+    else if (statsPeriodo === 'year') start.setFullYear(now.getFullYear() - 1);
+    return { start, end: now };
+  })();
+  const statsWorkingDays = getWorkingDaysInRange(statsRange.start, statsRange.end);
+  const statsTotalSlots = statsWorkingDays * SLOTS_PER_DAY;
+  const statsOcupados = statsAppointments.length;
+  const statsDisponibles = Math.max(0, statsTotalSlots - statsOcupados);
+  const statsPctOcupacion = statsTotalSlots > 0 ? Math.round((statsOcupados / statsTotalSlots) * 100) : 0;
+  const statsPctLibre = statsTotalSlots > 0 ? Math.round((statsDisponibles / statsTotalSlots) * 100) : 100;
+
+  // Obtener horarios bloqueados del día (solo aprobados)
   const getBlockedSlotsForDate = (date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return blockedSlots.filter(block => block.date === dateStr);
+    return blockedSlots.filter((block) => {
+      const blockDate = block.fecha ? (typeof block.fecha === 'string' ? block.fecha.slice(0, 10) : block.fecha.toISOString?.().slice(0, 10)) : '';
+      return blockDate === dateStr && block.estado === 'APPROVED';
+    });
   };
 
   return (
@@ -919,6 +1055,7 @@ const CitasPage = () => {
           >
             <Tab icon={<List />} iconPosition="start" label="Lista de Citas" value="list" />
             <Tab icon={<CalendarToday />} iconPosition="start" label="Calendario" value="calendar" />
+            <Tab icon={<Event />} iconPosition="start" label="Estadísticas" value="stats" />
           </Tabs>
         </Card>
 
@@ -1173,118 +1310,211 @@ const CitasPage = () => {
               )}
             </CardContent>
           </Card>
-        ) : (
+        ) : viewMode === 'calendar' ? (
           /* Vista de Calendario */
           <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
-              <Card
-                sx={{
-                  border: '1px solid rgba(8, 89, 70, 0.1)',
-                  borderRadius: 3,
-                  boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50' }}>
-                      Calendario de Citas
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<Block />}
-                      onClick={() => {
-                        setSelectedDateForBlock(new Date());
-                        setBlockDialogOpen(true);
-                      }}
-                      sx={{
-                        bgcolor: '#085946',
-                        '&:hover': { bgcolor: '#0a6b56' },
-                      }}
-                    >
-                      Bloquear Horario
-                    </Button>
-                  </Box>
-                  <DateSelector
-                    selectedDate={calendarDate.toISOString().split('T')[0]}
-                    onDateSelect={(date) => setCalendarDate(new Date(date + 'T00:00:00'))}
-                  />
-                </CardContent>
-              </Card>
+            <Grid item xs={12}>
+              <Paper sx={{ p: 2, mb: 2, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Filtrar por:</Typography>
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                  <InputLabel>Sede</InputLabel>
+                  <Select value={calendarFilters.sedeId || ''} label="Sede" onChange={(e) => setCalendarFilters((f) => ({ ...f, sedeId: e.target.value, consultorioId: '', professionalId: '' }))}>
+                    <SelectMenuItem value="">Todas</SelectMenuItem>
+                    {getSedes().map((s) => (
+                      <SelectMenuItem key={s.id} value={s.id}>{s.nombre}</SelectMenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                  <InputLabel>Consultorio</InputLabel>
+                  <Select value={calendarFilters.consultorioId || ''} label="Consultorio" onChange={(e) => setCalendarFilters((f) => ({ ...f, consultorioId: e.target.value }))}>
+                    <SelectMenuItem value="">Todos</SelectMenuItem>
+                    {getConsultoriosFlat().filter((c) => !calendarFilters.sedeId || c.sedeId === calendarFilters.sedeId).map((c) => (
+                      <SelectMenuItem key={c.id} value={c.id}>{c.sedeNombre} - {c.nombre}</SelectMenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 180 }}>
+                  <InputLabel>Profesional</InputLabel>
+                  <Select value={calendarFilters.professionalId || ''} label="Profesional" onChange={(e) => setCalendarFilters((f) => ({ ...f, professionalId: e.target.value }))}>
+                    <SelectMenuItem value="">Todos</SelectMenuItem>
+                    {profesionales.map((p) => (
+                      <SelectMenuItem key={p.id} value={p.id}>{p.nombre || 'Sin nombre'} {p.especialidad ? `- ${p.especialidad}` : ''}</SelectMenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Paper>
             </Grid>
-            <Grid item xs={12} md={4}>
-              <Card
-                sx={{
-                  border: '1px solid rgba(8, 89, 70, 0.1)',
-                  borderRadius: 3,
-                  boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>
-                    Citas del Día
+            {isAdmin && pendingBlocks.length > 0 && (
+              <Grid item xs={12}>
+                <Alert
+                  severity="warning"
+                  sx={{ borderRadius: 2 }}
+                  action={
+                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                      {pendingBlocks.length} solicitud{pendingBlocks.length !== 1 ? 'es' : ''} pendiente{pendingBlocks.length !== 1 ? 's' : ''}
+                    </Typography>
+                  }
+                >
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                    Solicitudes de bloqueo pendientes de aprobación
                   </Typography>
-                  <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
-                    {getAppointmentsForDate(calendarDate).length > 0 ? (
-                      getAppointmentsForDate(calendarDate).map((apt) => (
-                        <Box
-                          key={apt.id}
-                          sx={{
-                            p: 2,
-                            mb: 1,
-                            borderRadius: 2,
-                            border: '1px solid rgba(8, 89, 70, 0.1)',
-                            bgcolor: '#f8fafc',
-                          }}
-                        >
-                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                            {formatTime(apt.time)} - {apt.patientName}
-                          </Typography>
-                          {getStatusChip(apt.status)}
-                        </Box>
-                      ))
-                    ) : (
-                      <Typography variant="body2" sx={{ color: '#86899C', textAlign: 'center', py: 4 }}>
-                        No hay citas para este día
-                      </Typography>
-                    )}
-                  </Box>
-                  {getBlockedSlotsForDate(calendarDate).length > 0 && (
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#272F50', mb: 1 }}>
-                        Horarios Bloqueados
-                      </Typography>
-                      {getBlockedSlotsForDate(calendarDate).map((block) => (
+                  <Box sx={{ maxHeight: 120, overflowY: 'auto' }}>
+                    {pendingBlocks.map((block) => {
+                      const fechaStr = block.fecha ? (typeof block.fecha === 'string' ? block.fecha.slice(0, 10) : block.fecha.toISOString?.().slice(0, 10)) : '';
+                      const rango = block.horaInicio === '08:00' && block.horaFin === '18:00' ? 'Día completo' : `${block.horaInicio} - ${block.horaFin}`;
+                      return (
                         <Box
                           key={block.id}
                           sx={{
                             p: 1.5,
                             mb: 1,
                             borderRadius: 2,
-                            border: '1px solid #ff9800',
-                            bgcolor: '#fff3e0',
+                            bgcolor: '#fff8e1',
+                            border: '1px solid #ffc107',
                             display: 'flex',
                             justifyContent: 'space-between',
-                            alignItems: 'center',
+                            alignItems: 'flex-start',
+                            flexWrap: 'wrap',
+                            gap: 1,
                           }}
                         >
-                          <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                            {block.time ? formatTime(block.time) : 'Día completo bloqueado'}
-                          </Typography>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleUnblockSlot(block.id)}
-                            sx={{ color: '#ff9800' }}
-                          >
-                            <Cancel fontSize="small" />
-                          </IconButton>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {fechaStr} · {rango}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#666', display: 'block' }}>
+                              {block.motivo}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Button size="small" variant="contained" sx={{ bgcolor: '#085946', '&:hover': { bgcolor: '#0a6b56' } }} onClick={() => handleApproveBlock(block.id) }>
+                              Aprobar
+                            </Button>
+                            <Button size="small" variant="outlined" color="error" onClick={() => handleRejectBlock(block.id) }>
+                              Rechazar
+                            </Button>
+                          </Box>
                         </Box>
-                      ))}
-                    </Box>
-                  )}
+                      );
+                    })}
+                  </Box>
+                </Alert>
+              </Grid>
+            )}
+            <Grid item xs={12} md={4}>
+              <Card
+                sx={{
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                  height: 'fit-content',
+                }}
+              >
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                      Calendario
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<Block />}
+                      onClick={() => { setSelectedDateForBlock(calendarDate); setBlockDialogOpen(true); }}
+                      sx={{ bgcolor: '#085946', '&:hover': { bgcolor: '#0a6b56' } }}
+                    >
+                      Bloquear
+                    </Button>
+                  </Box>
+                  <DateSelector
+                    selectedDate={calendarDate.toISOString().split('T')[0]}
+                    onDateSelect={(date) => setCalendarDate(new Date(date + 'T00:00:00'))}
+                    datesWithCounts={appointments.reduce((acc, apt) => {
+                      const d = apt.date;
+                      if (d && apt.status !== 'cancelled') acc[d] = (acc[d] || 0) + 1;
+                      return acc;
+                    }, {})}
+                    allowAllDates
+                  />
                 </CardContent>
               </Card>
             </Grid>
+            <Grid item xs={12} md={8}>
+              <DaySchedulePanel
+                date={calendarDate}
+                appointments={getAppointmentsForDate(calendarDate)}
+                getStatusChip={getStatusChip}
+                onAppointmentClick={(apt) => { setSelectedAppointment(apt); setDetailDialogOpen(true); }}
+                formatDate={formatDate}
+                professionalId={calendarFilters.professionalId || null}
+              />
+            </Grid>
           </Grid>
+        ) : (
+          /* Vista de Estadísticas */
+          <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>Estadísticas de agenda</Typography>
+              <Typography variant="body2" sx={{ color: '#86899C', mb: 3 }}>Espacio agendado y disponible por período, filtrable por sede, consultorio y profesional.</Typography>
+              <Paper sx={{ p: 2, mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Período:</Typography>
+                {['day', 'week', 'month', 'year'].map((p) => (
+                  <Chip key={p} label={p === 'day' ? 'Día' : p === 'week' ? 'Semana' : p === 'month' ? 'Mes' : 'Año'} onClick={() => setStatsPeriodo(p)} sx={{ bgcolor: statsPeriodo === p ? '#085946' : '#f0f0f0', color: statsPeriodo === p ? '#fff' : '#333' }} />
+                ))}
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, ml: 2 }}>Filtrar profesional:</Typography>
+                <FormControl size="small" sx={{ minWidth: 180 }}>
+                  <InputLabel>Profesional</InputLabel>
+                  <Select value={calendarFilters.professionalId || ''} label="Profesional" onChange={(e) => setCalendarFilters((f) => ({ ...f, professionalId: e.target.value }))}>
+                    <SelectMenuItem value="">Todos</SelectMenuItem>
+                    {profesionales.map((p) => (
+                      <SelectMenuItem key={p.id} value={p.id}>{p.nombre || 'Sin nombre'}</SelectMenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Paper>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#e3f2fd' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#1976d2' }}>{statsAppointments.length}</Typography>
+                    <Typography variant="body2" sx={{ color: '#666' }}>Citas en período</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#e8f5e9' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#2e7d32' }}>{statsAppointments.filter((a) => a.status === 'completed' || a.status === 'patient').length}</Typography>
+                    <Typography variant="body2" sx={{ color: '#666' }}>Asistidas</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#fff3e0' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#e65100' }}>{statsAppointments.filter((a) => a.status === 'confirmed' || a.status === 'rescheduled').length}</Typography>
+                    <Typography variant="body2" sx={{ color: '#666' }}>Agendadas (pendientes)</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#fce4ec' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#c2185b' }}>{statsAppointments.filter((a) => a.status === 'no-show').length}</Typography>
+                    <Typography variant="body2" sx={{ color: '#666' }}>No asistidas</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#ede7f6' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#5e35b1' }}>{statsPctOcupacion}%</Typography>
+                    <Typography variant="body2" sx={{ color: '#666' }}>% Ocupación</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#e0f2f1' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#00695c' }}>{statsPctLibre}%</Typography>
+                    <Typography variant="body2" sx={{ color: '#666' }}>% Espacio libre</Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+              <Typography variant="caption" sx={{ display: 'block', mt: 2, color: '#86899C' }}>
+                Base: {statsTotalSlots} espacios totales ({statsWorkingDays} días laborables × {SLOTS_PER_DAY} slots/día). Ocupados: {statsOcupados}. Libres: {statsDisponibles}.
+              </Typography>
+            </CardContent>
+          </Card>
         )}
 
         {/* Estadísticas */}
@@ -1675,16 +1905,31 @@ const CitasPage = () => {
                       </Box>
                     )}
                     {/* Mostrar re-agendamiento si existe */}
-                    {rescheduledToAppointment && (
-                      <Box sx={{ p: 2, bgcolor: '#f3e5f5', borderRadius: 2, border: '1px solid #7b1fa2' }}>
-                        <Typography variant="caption" sx={{ color: '#86899C', display: 'block', mb: 0.5, fontWeight: 600 }}>
-                          Re-agendada para:
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#7b1fa2' }}>
-                          {formatDate(rescheduledToAppointment.date)} a las {formatTime(rescheduledToAppointment.time)}
-                        </Typography>
-                      </Box>
-                    )}
+                    {rescheduledToAppointment && (() => {
+                      const rescheduleRecord = patientRecords.find(
+                        (r) => r.type === 'reschedule' && r.appointmentId === selectedAppointment?.id
+                      );
+                      return (
+                        <Box sx={{ p: 2, bgcolor: '#f3e5f5', borderRadius: 2, border: '1px solid #7b1fa2' }}>
+                          <Typography variant="caption" sx={{ color: '#86899C', display: 'block', mb: 0.5, fontWeight: 600 }}>
+                            Re-agendada para:
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#7b1fa2', mb: 1 }}>
+                            {formatDate(rescheduledToAppointment.date)} a las {formatTime(rescheduledToAppointment.time)}
+                          </Typography>
+                          {rescheduleRecord?.rescheduleReason && (
+                            <>
+                              <Typography variant="caption" sx={{ color: '#86899C', display: 'block', mb: 0.5, fontWeight: 600 }}>
+                                Motivo:
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#272F50' }}>
+                                {rescheduleRecord.rescheduleReason}
+                              </Typography>
+                            </>
+                          )}
+                        </Box>
+                      );
+                    })()}
                   </Box>
                 </Box>
               </Box>
@@ -1730,6 +1975,8 @@ const CitasPage = () => {
                                 ? '#c62828'
                                 : record.type === 'reschedule'
                                 ? '#7b1fa2'
+                                : record.type === 'no-show'
+                                ? '#e65100'
                                 : record.type === 'contact'
                                 ? '#1976d2'
                                 : '#86899C';
@@ -1757,6 +2004,8 @@ const CitasPage = () => {
                                         <Phone sx={{ fontSize: 16 }} />
                                       ) : record.type === 'reschedule' ? (
                                         <Refresh sx={{ fontSize: 16 }} />
+                                      ) : record.type === 'no-show' ? (
+                                        <EventBusy sx={{ fontSize: 16 }} />
                                       ) : (
                                         <Note sx={{ fontSize: 16 }} />
                                       )}
@@ -1824,6 +2073,31 @@ const CitasPage = () => {
                                             Motivo:
                                           </Typography>
                                           <Typography variant="body2">{record.cancellationReason}</Typography>
+                                        </Box>
+                                      )}
+                                      {record.type === 'no-show' && (record.noShowReason || record.contactNotes) && (
+                                        <Box sx={{ mt: 2, p: 2, bgcolor: '#fff3e0', borderRadius: 1 }}>
+                                          {record.noShowReason && (
+                                            <Box sx={{ mb: 1 }}>
+                                              <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                                                Motivo:
+                                              </Typography>
+                                              <Typography variant="body2">{record.noShowReason}</Typography>
+                                            </Box>
+                                          )}
+                                          {record.contactNotes && (
+                                            <Box>
+                                              <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                                                Qué dijeron al contactar:
+                                              </Typography>
+                                              <Typography variant="body2">{record.contactNotes}</Typography>
+                                            </Box>
+                                          )}
+                                          {record.newDate && (
+                                            <Typography variant="body2" sx={{ mt: 1, color: '#e65100', fontWeight: 500 }}>
+                                              Re-agendada para {record.newDate} {record.newTime}
+                                            </Typography>
+                                          )}
                                         </Box>
                                       )}
                                       {record.type === 'reschedule' && record.newDate && (
@@ -1931,16 +2205,21 @@ const CitasPage = () => {
         onClose={() => {
           setBlockDialogOpen(false);
           setSelectedDateForBlock(null);
-          setSelectedTimeForBlock(null);
+          setBlockHoraInicio('08:00');
+          setBlockHoraFin('18:00');
+          setBlockMotivo('');
           setBlockAllDay(false);
         }}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle sx={{ bgcolor: '#085946', color: '#ffffff', fontWeight: 700 }}>
-          Bloquear Horario
+          Solicitar Bloqueo de Horario
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            La solicitud se enviará al administrador para su aprobación. Una vez aprobada, el horario no estará disponible para agendar.
+          </Alert>
           <Box sx={{ mb: 3 }}>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
               Fecha
@@ -1954,27 +2233,83 @@ const CitasPage = () => {
             />
           </Box>
           <Box sx={{ mb: 3 }}>
-            <Button
-              fullWidth
-              variant={blockAllDay ? 'contained' : 'outlined'}
-              onClick={() => {
-                setBlockAllDay(!blockAllDay);
-                if (!blockAllDay) setSelectedTimeForBlock(null);
-              }}
-              sx={{ mb: 2 }}
-            >
-              {blockAllDay ? 'Día Completo Bloqueado' : 'Bloquear Día Completo'}
-            </Button>
-            {!blockAllDay && (
-              <TextField
-                fullWidth
-                type="time"
-                label="Hora"
-                value={selectedTimeForBlock || ''}
-                onChange={(e) => setSelectedTimeForBlock(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
+            <Typography variant="body2" sx={{ mb: 1.5, fontWeight: 600 }}>
+              Tipo de bloqueo
+            </Typography>
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={6}>
+                <Button
+                  fullWidth
+                  variant={blockAllDay === true ? 'contained' : 'outlined'}
+                  onClick={() => {
+                    setBlockAllDay(true);
+                    setBlockHoraInicio('08:00');
+                    setBlockHoraFin('18:00');
+                  }}
+                  sx={blockAllDay === true ? { bgcolor: '#085946', '&:hover': { bgcolor: '#0a6b56' } } : {}}
+                >
+                  Bloquear día completo
+                </Button>
+              </Grid>
+              <Grid item xs={6}>
+                <Button
+                  fullWidth
+                  variant={blockAllDay === false ? 'contained' : 'outlined'}
+                  onClick={() => setBlockAllDay(false)}
+                  sx={blockAllDay === false ? { bgcolor: '#085946', '&:hover': { bgcolor: '#0a6b56' } } : {}}
+                >
+                  Bloquear franja horaria
+                </Button>
+              </Grid>
+            </Grid>
+            {blockAllDay === false && (
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                    Hora inicio
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    type="time"
+                    value={blockHoraInicio}
+                    onChange={(e) => setBlockHoraInicio(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                    Hora fin
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    type="time"
+                    value={blockHoraFin}
+                    onChange={(e) => setBlockHoraFin(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+              </Grid>
             )}
+          </Box>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+              Motivo del bloqueo
+            </Typography>
+            <TextareaAutosize
+              minRows={3}
+              placeholder="Ej: Reunión de equipo, capacitación, mantenimiento..."
+              value={blockMotivo}
+              onChange={(e) => setBlockMotivo(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e0e0e0',
+                borderRadius: '4px',
+                fontFamily: 'inherit',
+                fontSize: '0.875rem',
+                boxSizing: 'border-box',
+              }}
+            />
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
@@ -1982,7 +2317,9 @@ const CitasPage = () => {
             onClick={() => {
               setBlockDialogOpen(false);
               setSelectedDateForBlock(null);
-              setSelectedTimeForBlock(null);
+              setBlockHoraInicio('08:00');
+              setBlockHoraFin('18:00');
+              setBlockMotivo('');
               setBlockAllDay(false);
             }}
             variant="outlined"
@@ -1990,7 +2327,7 @@ const CitasPage = () => {
             Cancelar
           </Button>
           <Button onClick={handleBlockSlot} variant="contained" sx={{ bgcolor: '#085946' }}>
-            Bloquear
+            Enviar solicitud
           </Button>
         </DialogActions>
       </Dialog>
@@ -2095,7 +2432,9 @@ const CitasPage = () => {
         open={noShowDialogOpen}
         onClose={() => {
           setNoShowDialogOpen(false);
-          setRescheduleData({ date: '', time: '' });
+          setNoShowReason('');
+          setNoShowContactNotes('');
+          setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
         }}
         maxWidth="lg"
         fullWidth
@@ -2113,8 +2452,71 @@ const CitasPage = () => {
           {selectedAppointment ? (
             <Box>
               <Alert severity="warning" sx={{ mb: 3 }}>
-                {selectedAppointment.patientName} no asistió a la cita del {formatDate(selectedAppointment.date)} {formatTime(selectedAppointment.time)}. Selecciona una nueva fecha y hora para reprogramar.
+                {selectedAppointment.patientName} no asistió a la cita del {formatDate(selectedAppointment.date)} {formatTime(selectedAppointment.time)}. Completa la información y selecciona una nueva fecha para reprogramar.
               </Alert>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Motivo por el cual no asistió *
+                </Typography>
+                <TextareaAutosize
+                  minRows={2}
+                  placeholder="Ej: No respondió llamadas, olvidó la cita, emergencia..."
+                  value={noShowReason}
+                  onChange={(e) => setNoShowReason(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontFamily: 'inherit',
+                    fontSize: '0.875rem',
+                  }}
+                />
+              </Box>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                  ¿Qué dijeron cuando se contactó al paciente? *
+                </Typography>
+                <TextareaAutosize
+                  minRows={2}
+                  placeholder="Notas del contacto: lo que dijo el paciente, si quiere reprogramar..."
+                  value={noShowContactNotes}
+                  onChange={(e) => setNoShowContactNotes(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontFamily: 'inherit',
+                    fontSize: '0.875rem',
+                  }}
+                />
+              </Box>
+              
+              <Divider sx={{ my: 3 }} />
+              
+              {profesionales.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Profesional</InputLabel>
+                    <Select
+                      value={rescheduleData.professionalId || selectedAppointment?.professionalId || ''}
+                      label="Profesional"
+                      onChange={(e) => setRescheduleData({ ...rescheduleData, professionalId: e.target.value, date: '', time: '' })}
+                    >
+                      <SelectMenuItem value="">Sin asignar (agenda general)</SelectMenuItem>
+                      {profesionales.map((p) => (
+                        <SelectMenuItem key={p.id} value={p.id}>{p.nombre || 'Sin nombre'}{p.especialidad ? ` - ${p.especialidad}` : ''}</SelectMenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              )}
+
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                Selecciona nueva fecha y hora
+              </Typography>
               
               <Grid container spacing={3}>
                 {/* Calendario */}
@@ -2208,7 +2610,9 @@ const CitasPage = () => {
           <Button 
             onClick={() => {
               setNoShowDialogOpen(false);
-              setRescheduleData({ date: '', time: '' });
+              setNoShowReason('');
+              setNoShowContactNotes('');
+              setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
               setSelectedAppointment(null);
             }} 
             variant="outlined"
@@ -2217,6 +2621,10 @@ const CitasPage = () => {
           </Button>
           <Button 
             onClick={() => {
+              if (!noShowReason.trim() || !noShowContactNotes.trim()) {
+                showSnackbar('Por favor completa el motivo y las notas de contacto', 'error');
+                return;
+              }
               if (rescheduleData.date && rescheduleData.time) {
                 handleNoShowReschedule(rescheduleData.date, rescheduleData.time);
               } else {
@@ -2225,7 +2633,7 @@ const CitasPage = () => {
             }} 
             variant="contained" 
             sx={{ bgcolor: '#085946' }}
-            disabled={!rescheduleData.date || !rescheduleData.time}
+            disabled={!noShowReason.trim() || !noShowContactNotes.trim() || !rescheduleData.date || !rescheduleData.time}
           >
             Reprogramar Cita
           </Button>
@@ -2238,7 +2646,7 @@ const CitasPage = () => {
         onClose={() => {
           setCancelDialogOpen(false);
           setCancellationReason('');
-          setRescheduleData({ date: '', time: '' });
+          setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
           setSelectedAppointment(null);
         }}
         maxWidth="lg"
@@ -2280,6 +2688,24 @@ const CitasPage = () => {
               
               <Divider sx={{ my: 3 }} />
               
+              {profesionales.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Profesional</InputLabel>
+                    <Select
+                      value={rescheduleData.professionalId || selectedAppointment?.professionalId || ''}
+                      label="Profesional"
+                      onChange={(e) => setRescheduleData({ ...rescheduleData, professionalId: e.target.value, date: '', time: '' })}
+                    >
+                      <SelectMenuItem value="">Sin asignar (agenda general)</SelectMenuItem>
+                      {profesionales.map((p) => (
+                        <SelectMenuItem key={p.id} value={p.id}>{p.nombre || 'Sin nombre'}{p.especialidad ? ` - ${p.especialidad}` : ''}</SelectMenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              )}
+
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                 ¿Deseas reprogramar la cita ahora? (Opcional)
               </Typography>
@@ -2377,7 +2803,7 @@ const CitasPage = () => {
             onClick={() => {
               setCancelDialogOpen(false);
               setCancellationReason('');
-              setRescheduleData({ date: '', time: '' });
+              setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
               setSelectedAppointment(null);
             }}
             variant="outlined"
@@ -2399,7 +2825,7 @@ const CitasPage = () => {
         open={rescheduleDialogOpen}
         onClose={() => {
           setRescheduleDialogOpen(false);
-          setRescheduleData({ date: '', time: '' });
+          setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
         }}
         maxWidth="lg"
         fullWidth
@@ -2420,6 +2846,39 @@ const CitasPage = () => {
                 <br />
                 Cita actual: {formatDate(selectedAppointment.date)} {formatTime(selectedAppointment.time)}
               </Alert>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#272F50', mb: 1 }}>
+                  Motivo de la re-agendación *
+                </Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  placeholder="Ej: Cambio de disponibilidad del paciente, conflicto de horarios..."
+                  value={rescheduleData.reason || ''}
+                  onChange={(e) => setRescheduleData({ ...rescheduleData, reason: e.target.value })}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+              </Box>
+
+              {profesionales.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Profesional</InputLabel>
+                    <Select
+                      value={rescheduleData.professionalId || selectedAppointment?.professionalId || ''}
+                      label="Profesional"
+                      onChange={(e) => setRescheduleData({ ...rescheduleData, professionalId: e.target.value, date: '', time: '' })}
+                    >
+                      <SelectMenuItem value="">Sin asignar (agenda general)</SelectMenuItem>
+                      {profesionales.map((p) => (
+                        <SelectMenuItem key={p.id} value={p.id}>{p.nombre || 'Sin nombre'}{p.especialidad ? ` - ${p.especialidad}` : ''}</SelectMenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              )}
               
               <Grid container spacing={3}>
                 {/* Calendario - Mismo estilo que en AgendamientoPage */}
@@ -2505,11 +2964,11 @@ const CitasPage = () => {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button
-            onClick={() => {
-              setRescheduleDialogOpen(false);
-              setRescheduleData({ date: '', time: '' });
-              setSelectedAppointment(null);
-            }}
+          onClick={() => {
+            setRescheduleDialogOpen(false);
+            setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
+            setSelectedAppointment(null);
+          }}
             variant="outlined"
           >
             Cancelar
@@ -2518,7 +2977,7 @@ const CitasPage = () => {
             onClick={handleReschedule} 
             variant="contained" 
             sx={{ bgcolor: '#7b1fa2' }}
-            disabled={!rescheduleData.date || !rescheduleData.time || !selectedAppointment}
+            disabled={!rescheduleData.date || !rescheduleData.time || !rescheduleData.reason?.trim() || !selectedAppointment}
           >
             Re-agendar
           </Button>

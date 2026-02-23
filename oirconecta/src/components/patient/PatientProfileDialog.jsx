@@ -93,6 +93,7 @@ import { getClinicalHistoryForm } from './clinicalHistory';
 import DateSelector from '../appointments/DateSelector';
 import TimeSelector from '../appointments/TimeSelector';
 import { getAvailableTimeSlots, createAppointment, updateAppointmentStatus } from '../../services/appointmentService';
+import { getConfig } from '../../services/configService';
 import { getPatientRecords, recordConsultation } from '../../services/patientRecordService';
 import { recordReminder } from '../../services/interactionService';
 
@@ -121,8 +122,10 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentTime, setAppointmentTime] = useState('');
   const [appointmentType, setAppointmentType] = useState('');
+  const [appointmentProfessional, setAppointmentProfessional] = useState('');
   const [appointmentReason, setAppointmentReason] = useState('');
   const [availableTimes, setAvailableTimes] = useState([]);
+  const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
   
   // Foto del paciente: cámara activa y refs
   const [cameraActive, setCameraActive] = useState(false);
@@ -548,13 +551,13 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
 
   // Tipos de citas con duraciones
   const appointmentTypes = [
-    { value: 'primera-vez', label: 'Cita primera vez', duration: 60 },
-    { value: 'adaptacion', label: 'Cita de adaptación', duration: 60 },
-    { value: 'prueba-audifonos', label: 'Prueba de audífonos', duration: 40 },
-    { value: 'entrega-mantenimiento', label: 'Entrega de mantenimiento', duration: 20 },
-    { value: 'revision', label: 'Revisión de audífonos', duration: 20 },
-    { value: 'examenes', label: 'Cita de exámenes', duration: 40 },
-    { value: 'control', label: 'Cita control', duration: 30 },
+    { value: 'primera-vez', label: 'Cita primera vez (60 min)', duration: 60 },
+    { value: 'adaptacion', label: 'Cita de adaptación (60 min)', duration: 60 },
+    { value: 'prueba-audifonos', label: 'Prueba de audífonos (30 min)', duration: 30 },
+    { value: 'entrega-mantenimiento', label: 'Entrega de mantenimiento (20 min)', duration: 20 },
+    { value: 'revision', label: 'Revisión de audífonos (20 min)', duration: 20 },
+    { value: 'examenes', label: 'Cita de exámenes (60 min)', duration: 60 },
+    { value: 'control', label: 'Cita control (30 min)', duration: 30 },
   ];
 
   useEffect(() => {
@@ -562,8 +565,9 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
       setAvailableTimes([]);
       return;
     }
-    getAvailableTimeSlots(appointmentDate, '07:00', '18:00').then(setAvailableTimes);
-  }, [appointmentDate, appointmentType]);
+    const profId = appointmentProfessional || null;
+    getAvailableTimeSlots(appointmentDate, '07:00', '18:00', profId).then(setAvailableTimes);
+  }, [appointmentDate, appointmentType, appointmentProfessional]);
 
   const handleCreateAppointmentFromProfile = async () => {
     const email = getPatientEmail();
@@ -589,6 +593,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
       appointmentType: appointmentType,
       procedencia: 'paciente-existente',
       durationMinutes: duration,
+      professionalId: appointmentProfessional || undefined,
     });
 
     if (result.success) {
@@ -633,6 +638,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
       setAppointmentDate('');
       setAppointmentTime('');
       setAppointmentType('');
+      setAppointmentProfessional('');
       setAppointmentReason('');
       setAvailableTimes([]);
 
@@ -3916,7 +3922,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                           value={appointmentType}
                           onChange={(e) => {
                             setAppointmentType(e.target.value);
-                            setAppointmentTime(''); // Resetear hora al cambiar tipo
+                            setAppointmentTime('');
                           }}
                           label="Tipo de Cita *"
                         >
@@ -3928,6 +3934,31 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                         </Select>
                       </FormControl>
                     </Grid>
+
+                    {/* Selector de Profesional */}
+                    {profesionales.length > 0 && (
+                      <Grid item xs={12}>
+                        <FormControl fullWidth>
+                          <InputLabel>Profesional *</InputLabel>
+                          <Select
+                            value={appointmentProfessional}
+                            onChange={(e) => {
+                              setAppointmentProfessional(e.target.value);
+                              setAppointmentDate('');
+                              setAppointmentTime('');
+                            }}
+                            label="Profesional *"
+                          >
+                            <MenuItem value="">Sin asignar (agenda general)</MenuItem>
+                            {profesionales.map((p) => (
+                              <MenuItem key={p.id} value={p.id}>
+                                {p.nombre || 'Sin nombre'} {p.especialidad ? `- ${p.especialidad}` : ''}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                    )}
 
                     {/* Calendario */}
                     {appointmentType && (
@@ -4010,6 +4041,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                               setAppointmentDate('');
                               setAppointmentTime('');
                               setAppointmentType('');
+                              setAppointmentProfessional('');
                               setAppointmentReason('');
                               setAvailableTimes([]);
                             }}

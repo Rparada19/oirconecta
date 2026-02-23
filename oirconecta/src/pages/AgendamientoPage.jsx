@@ -525,7 +525,7 @@ const AgendamientoPage = () => {
               </Typography>
               <Box sx={{ pl: 2 }}>
                 <Typography variant="body1" sx={{ color: '#272F50', mb: 1.5, fontWeight: 500 }}>
-                  • Las citas tienen una duración de 50 minutos
+                  • Las citas tienen una duración de 30 a 60 minutos según el tipo de consulta
                 </Typography>
                 <Typography variant="body1" sx={{ color: '#272F50', mb: 1.5, fontWeight: 500 }}>
                   • Horario disponible: Lunes a Jueves de 7:00 AM a 4:00 PM

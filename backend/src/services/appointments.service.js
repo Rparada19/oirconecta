@@ -112,35 +112,65 @@ const getStats = async (periodo = 'month') => {
 };
 
 /**
- * Obtener horarios disponibles para una fecha
+ * Determinar si un slot cae dentro de un rango bloqueado
  */
-const getAvailableSlots = async (fecha) => {
-  const startOfDay = new Date(fecha);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(fecha);
-  endOfDay.setHours(23, 59, 59, 999);
+const slotInBlockRange = (slot, horaInicio, horaFin) => {
+  const toMin = (t) => {
+    const [h, m] = (t || '00:00').split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+  const slotMin = toMin(slot);
+  const startMin = toMin(horaInicio);
+  const endMin = toMin(horaFin);
+  return slotMin >= startMin && slotMin < endMin;
+};
 
-  // Obtener citas del día que no estén canceladas
+/**
+ * Obtener horarios disponibles para una fecha
+ * Si professionalId se proporciona, solo excluye citas de ese profesional
+ * Si no, excluye todas las citas (comportamiento anterior)
+ */
+const getAvailableSlots = async (fecha, professionalId = null) => {
+  const dateStr = typeof fecha === 'string' ? fecha.split('T')[0] : fecha;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const startOfDay = new Date(y, m - 1, d, 0, 0, 0, 0);
+  const endOfDay = new Date(y, m - 1, d, 23, 59, 59, 999);
+
+  const whereClause = {
+    fecha: { gte: startOfDay, lte: endOfDay },
+    estado: { notIn: ['CANCELLED'] },
+  };
+  if (professionalId) {
+    whereClause.professionalId = professionalId;
+  }
+
   const bookedAppointments = await prisma.appointment.findMany({
-    where: {
-      fecha: {
-        gte: startOfDay,
-        lte: endOfDay,
-      },
-      estado: {
-        notIn: ['CANCELLED'],
-      },
-    },
+    where: whereClause,
     select: { hora: true },
   });
 
-  const bookedSlots = bookedAppointments.map((a) => a.hora);
-  const availableSlots = DEFAULT_SLOTS.filter((slot) => !bookedSlots.includes(slot));
+  let approvedBlocks = [];
+  try {
+    const blockedSlotsService = require('./blockedSlots.service');
+    approvedBlocks = await blockedSlotsService.getApprovedForDate(fecha);
+  } catch (e) {
+    console.warn('[getAvailableSlots] BlockedSlot no disponible, usando solo citas:', e.message);
+  }
+
+  const bookedSlots = new Set(bookedAppointments.map((a) => a.hora));
+
+  const availableSlots = DEFAULT_SLOTS.filter((slot) => {
+    if (bookedSlots.has(slot)) return false;
+    const inBlock = approvedBlocks.some((b) =>
+      slotInBlockRange(slot, b.horaInicio, b.horaFin)
+    );
+    return !inBlock;
+  });
 
   return {
     fecha,
     availableSlots,
-    bookedSlots,
+    bookedSlots: [...bookedSlots],
   };
 };
 
@@ -176,6 +206,8 @@ const create = async (data, createdById) => {
       estado: 'CONFIRMED',
       notas: data.notas,
       tipoConsulta: data.tipoConsulta,
+      durationMinutes: data.durationMinutes != null ? parseInt(data.durationMinutes, 10) : null,
+      professionalId: data.professionalId || null,
       patientId: data.patientId,
       patientName: data.patientName,
       patientEmail: data.patientEmail?.toLowerCase(),

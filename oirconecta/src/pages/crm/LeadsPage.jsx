@@ -73,6 +73,7 @@ import {
 import { createAppointment, getAllAppointments, getAppointmentById, updateAppointmentStatus, getAvailableTimeSlots } from '../../services/appointmentService';
 import { initializePatientProfile } from '../../services/patientProfileService';
 import { formatProcedencia, getProcedenciaOptions, getProcedenciaOptionsCRM, getAgendamientoManualOptions } from '../../utils/procedenciaUtils';
+import { getConfig } from '../../services/configService';
 import DateSelector from '../../components/appointments/DateSelector';
 import TimeSelector from '../../components/appointments/TimeSelector';
 import otologosData from '../../data/bdatos_otologos.json';
@@ -91,7 +92,7 @@ const LeadsPage = () => {
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [duplicateLead, setDuplicateLead] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [viewMode, setViewMode] = useState('funnel'); // 'funnel' o 'list'
+  const [viewMode, setViewMode] = useState('funnel'); // 'funnel', 'list' o 'stats'
   const [patientDialogOpen, setPatientDialogOpen] = useState(false);
   const [patientData, setPatientData] = useState({ hasHearingLoss: false, notes: '' });
   const [leadsLoading, setLeadsLoading] = useState(false);
@@ -120,22 +121,24 @@ const LeadsPage = () => {
     date: '',
     time: '',
     reason: '',
+    professionalId: '',
   });
   const [convertAvailableSlots, setConvertAvailableSlots] = useState([]);
+  const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
 
   useEffect(() => {
     if (!convertDialogOpen || !appointmentData.date) {
       setConvertAvailableSlots([]);
       return;
     }
-    getAvailableTimeSlots(appointmentData.date, '07:00', '18:00').then(setConvertAvailableSlots);
-  }, [convertDialogOpen, appointmentData.date]);
+    getAvailableTimeSlots(appointmentData.date, '07:00', '18:00', appointmentData.professionalId || null).then(setConvertAvailableSlots);
+  }, [convertDialogOpen, appointmentData.date, appointmentData.professionalId]);
 
   const loadLeads = async () => {
     setLeadsLoading(true);
     try {
       const allLeads = await getAllLeadsCombined();
-      setLeads([...allLeads]);
+      setLeads(Array.isArray(allLeads) ? allLeads : []);
     } catch (e) {
       console.error('[LeadsPage] Error al cargar leads:', e);
       setSnackbar({ open: true, message: e?.message || 'Error al cargar leads', severity: 'error' });
@@ -150,8 +153,14 @@ const LeadsPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Leads activos = sin cita agendada (cuando se agenda, pasan a paciente y desaparecen de Leads)
+  const activeLeads = React.useMemo(() => {
+    const list = Array.isArray(leads) ? leads : [];
+    return list.filter((l) => !l?.appointmentId);
+  }, [leads]);
+
   useEffect(() => {
-    let filtered = leads;
+    let filtered = activeLeads;
 
     // Filtrar por búsqueda
     if (searchTerm) {
@@ -177,7 +186,7 @@ const LeadsPage = () => {
     });
 
     setFilteredLeads(filtered);
-  }, [searchTerm, filterEstado, leads]);
+  }, [searchTerm, filterEstado, activeLeads]);
 
   const handleMenuClick = (event, lead) => {
     setAnchorEl(event.currentTarget);
@@ -437,6 +446,7 @@ const LeadsPage = () => {
       patientPhone: selectedLead.telefono,
       reason: appointmentData.reason,
       procedencia: selectedLead.procedencia || selectedLead.origen || 'visita-medica',
+      professionalId: appointmentData.professionalId || undefined,
     });
 
     if (result.success) {
@@ -484,7 +494,7 @@ const LeadsPage = () => {
       await loadLeads();
       
       setConvertDialogOpen(false);
-      setAppointmentData({ date: '', time: '', reason: '' });
+      setAppointmentData({ date: '', time: '', reason: '', professionalId: '' });
       showSnackbar('Cita creada exitosamente. El lead ahora aparece como "Convertido a Cita" en el funnel', 'success');
     } else {
       showSnackbar(result.error || 'Error al crear la cita', 'error');
@@ -603,6 +613,24 @@ const LeadsPage = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)' }}>
+      {leadsLoading && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: 'rgba(255,255,255,0.8)',
+            zIndex: 9999,
+          }}
+        >
+          <Typography>Cargando leads...</Typography>
+        </Box>
+      )}
       {/* Header */}
       <Box
         sx={{
@@ -687,13 +715,8 @@ const LeadsPage = () => {
                     onChange={(e) => setFilterEstado(e.target.value)}
                   >
                     <MenuItem value="all">Todos</MenuItem>
-                    <MenuItem value="nuevo">Nuevo</MenuItem>
-                    <MenuItem value="contactado">Contactado</MenuItem>
-                    <MenuItem value="agendado">Agendado</MenuItem>
-                    <MenuItem value="calificado">Calificado</MenuItem>
-                    <MenuItem value="convertido">Convertido</MenuItem>
-                    <MenuItem value="paciente">Paciente</MenuItem>
-                    <MenuItem value="perdido">Perdido</MenuItem>
+                    <MenuItem value="nuevo">Lead Nuevo</MenuItem>
+                    <MenuItem value="contactado">Lead Contactado</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -738,14 +761,14 @@ const LeadsPage = () => {
               }}
             >
               <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 700 }}>
-                {leads.filter((l) => l.estado === 'nuevo').length}
+                {activeLeads.filter((l) => l.estado === 'nuevo').length}
               </Typography>
               <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-                Nuevos
+                Lead Nuevo
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4} sx={{ minWidth: 0 }}>
+          <Grid item xs={12} sm={6} md={2} sx={{ minWidth: 0 }}>
             <Card
               sx={{
                 border: '1px solid rgba(8, 89, 70, 0.1)',
@@ -760,14 +783,16 @@ const LeadsPage = () => {
               }}
             >
               <Typography variant="h4" sx={{ color: '#e65100', fontWeight: 700 }}>
-                {leads.filter((l) => l.estado === 'contactado').length}
+                {activeLeads.filter((l) => l.estado === 'contactado').length +
+                  leads.filter((l) => l.appointmentId && l.estado !== 'paciente').length +
+                  leads.filter((l) => l.estado === 'paciente').length}
               </Typography>
               <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-                Contactados
+                Contactado (incl. convertidos)
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4} sx={{ minWidth: 0 }}>
+          <Grid item xs={12} sm={6} md={2} sx={{ minWidth: 0 }}>
             <Card
               sx={{
                 border: '1px solid rgba(8, 89, 70, 0.1)',
@@ -781,37 +806,15 @@ const LeadsPage = () => {
                 },
               }}
             >
-              <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 700 }}>
-                {leads.filter((l) => l.estado === 'agendado').length}
+              <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700 }}>
+                {activeLeads.length}
               </Typography>
               <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-                Agendados
+                Total (pendientes)
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4} sx={{ minWidth: 0 }}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                textAlign: 'center',
-                p: 2,
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 4px 12px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-            >
-              <Typography variant="h4" sx={{ color: '#085946', fontWeight: 700 }}>
-                {leads.filter((l) => l.estado === 'calificado').length}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-                Calificados
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4} sx={{ minWidth: 0 }}>
+          <Grid item xs={12} sm={6} md={2} sx={{ minWidth: 0 }}>
             <Card
               sx={{
                 border: '1px solid rgba(8, 89, 70, 0.1)',
@@ -826,14 +829,14 @@ const LeadsPage = () => {
               }}
             >
               <Typography variant="h4" sx={{ color: '#7b1fa2', fontWeight: 700 }}>
-                {leads.filter((l) => l.estado === 'convertido').length}
+                {leads.filter((l) => l.appointmentId && l.estado !== 'paciente').length}
               </Typography>
               <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-                Convertidos
+                Convertidos a Cita
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4} sx={{ minWidth: 0 }}>
+          <Grid item xs={12} sm={6} md={2} sx={{ minWidth: 0 }}>
             <Card
               sx={{
                 border: '1px solid rgba(8, 89, 70, 0.1)',
@@ -851,29 +854,7 @@ const LeadsPage = () => {
                 {leads.filter((l) => l.estado === 'paciente').length}
               </Typography>
               <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-                Pacientes
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4} sx={{ minWidth: 0 }}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                textAlign: 'center',
-                p: 2,
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 4px 12px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-            >
-              <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700 }}>
-                {leads.length}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-                Total
+                Convertidos a Paciente
               </Typography>
             </Card>
           </Grid>
@@ -900,8 +881,9 @@ const LeadsPage = () => {
               },
             }}
           >
-            <Tab label="Funnel de Seguimiento" value="funnel" />
+            <Tab label="Lead Nuevo / Contactado" value="funnel" />
             <Tab label="Lista de Leads" value="list" />
+            <Tab label="Estadísticas" value="stats" />
           </Tabs>
         </Card>
 
@@ -916,21 +898,13 @@ const LeadsPage = () => {
             }}
           >
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 3 }}>
-                Funnel de Seguimiento de Leads
-              </Typography>
               <Grid container spacing={2}>
                 {[
-                  { estado: 'nuevo', label: 'Nuevos', color: '#1976d2', icon: <Schedule /> },
-                  { estado: 'agendado', label: 'Agendados', color: '#0288d1', icon: <CalendarToday /> },
-                  { estado: 'contactado', label: 'Contactados', color: '#e65100', icon: <Phone /> },
-                  { estado: 'calificado', label: 'Calificados', color: '#085946', icon: <CheckCircle /> },
-                  { estado: 'convertido', label: 'Convertidos a Cita', color: '#7b1fa2', icon: <CalendarToday /> },
-                  { estado: 'paciente', label: 'Pacientes', color: '#2e7d32', icon: <Person /> },
-                  { estado: 'perdido', label: 'Perdidos', color: '#c62828', icon: <Close /> },
+                  { estado: 'nuevo', label: 'Lead Nuevo', color: '#1976d2', icon: <Schedule /> },
+                  { estado: 'contactado', label: 'Lead Contactado', color: '#e65100', icon: <Phone /> },
                 ].map((stage) => {
-                  const stageLeads = leads.filter((l) => l.estado === stage.estado);
-                  const percentage = leads.length > 0 ? (stageLeads.length / leads.length) * 100 : 0;
+                  const stageLeads = activeLeads.filter((l) => l.estado === stage.estado);
+                  const percentage = activeLeads.length > 0 ? (stageLeads.length / activeLeads.length) * 100 : 0;
                   return (
                     <Grid item xs={12} sm={6} md={2} key={stage.estado}>
                       <Card
@@ -979,15 +953,10 @@ const LeadsPage = () => {
               {/* Lista de leads por etapa */}
               <Box sx={{ mt: 4 }}>
                 {[
-                  { estado: 'nuevo', label: 'Leads Nuevos', color: '#1976d2' },
-                  { estado: 'agendado', label: 'Leads Agendados', color: '#0288d1' },
-                  { estado: 'contactado', label: 'Leads Contactados', color: '#e65100' },
-                  { estado: 'calificado', label: 'Leads Calificados', color: '#085946' },
-                  { estado: 'convertido', label: 'Leads Convertidos', color: '#7b1fa2' },
-                  { estado: 'paciente', label: 'Pacientes', color: '#2e7d32' },
-                  { estado: 'perdido', label: 'Leads Perdidos', color: '#c62828' },
+                  { estado: 'nuevo', label: 'Lead Nuevo', color: '#1976d2' },
+                  { estado: 'contactado', label: 'Lead Contactado', color: '#e65100' },
                 ].map((stage) => {
-                  const stageLeads = leads.filter(l => l.estado === stage.estado);
+                  const stageLeads = activeLeads.filter(l => l.estado === stage.estado);
                   
                   if (stageLeads.length === 0) return null;
                   
@@ -1048,6 +1017,92 @@ const LeadsPage = () => {
                   );
                 })}
               </Box>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Vista de Estadísticas */}
+        {viewMode === 'stats' && (
+          <Card
+            sx={{
+              mb: 3,
+              border: '1px solid rgba(8, 89, 70, 0.1)',
+              borderRadius: 3,
+              boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 3 }}>
+                Estadísticas de Leads
+              </Typography>
+
+              {/* Resumen general */}
+              <Grid container spacing={2} sx={{ mb: 4 }}>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Card sx={{ border: '2px solid #1976d2', borderRadius: 2, p: 2, textAlign: 'center', bgcolor: 'rgba(25, 118, 210, 0.05)' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#1976d2' }}>{activeLeads.filter((l) => l.estado === 'nuevo').length}</Typography>
+                    <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>Lead Nuevo</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Card sx={{ border: '2px solid #e65100', borderRadius: 2, p: 2, textAlign: 'center', bgcolor: 'rgba(230, 81, 0, 0.05)' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#e65100' }}>
+                      {activeLeads.filter((l) => l.estado === 'contactado').length + leads.filter((l) => l.appointmentId && l.estado !== 'paciente').length + leads.filter((l) => l.estado === 'paciente').length}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>Contactado (incl. convertidos)</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Card sx={{ border: '2px solid #272F50', borderRadius: 2, p: 2, textAlign: 'center', bgcolor: 'rgba(39, 47, 80, 0.05)' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#272F50' }}>{activeLeads.length}</Typography>
+                    <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>Total pendientes</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Card sx={{ border: '2px solid #7b1fa2', borderRadius: 2, p: 2, textAlign: 'center', bgcolor: 'rgba(123, 31, 162, 0.05)' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#7b1fa2' }}>{leads.filter((l) => l.appointmentId && l.estado !== 'paciente').length}</Typography>
+                    <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>Convertidos a Cita</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Card sx={{ border: '2px solid #2e7d32', borderRadius: 2, p: 2, textAlign: 'center', bgcolor: 'rgba(46, 125, 50, 0.05)' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#2e7d32' }}>{leads.filter((l) => l.estado === 'paciente').length}</Typography>
+                    <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>Convertidos a Paciente</Typography>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              {/* Por procedencia */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>
+                # de datos por procedencia
+              </Typography>
+              <Grid container spacing={2}>
+                {Object.entries(
+                  (leads || []).reduce((acc, l) => {
+                    const p = l.procedencia || l.origen || 'visita-medica';
+                    acc[p] = (acc[p] || 0) + 1;
+                    return acc;
+                  }, {})
+                )
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([proc, count]) => (
+                    <Grid item xs={12} sm={6} md={4} key={proc}>
+                      <Card sx={{ border: '1px solid #e0e0e0', borderRadius: 2, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: '#272F50' }}>
+                          {formatProcedencia(proc)}
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#085946' }}>
+                          {count}
+                        </Typography>
+                      </Card>
+                    </Grid>
+                  ))}
+                {(!leads || leads.length === 0) && (
+                  <Grid item xs={12}>
+                    <Typography variant="body2" sx={{ color: '#86899C' }}>No hay datos por procedencia</Typography>
+                  </Grid>
+                )}
+              </Grid>
             </CardContent>
           </Card>
         )}
@@ -1237,20 +1292,8 @@ const LeadsPage = () => {
         {selectedLead?.estado !== 'paciente' && (
           <>
             <Divider />
-            <MenuItem onClick={() => handleUpdateEstado('nuevo')}>
-              <Schedule sx={{ mr: 1, fontSize: 20, color: '#1976d2' }} /> Marcar como Nuevo
-            </MenuItem>
             <MenuItem onClick={() => handleUpdateEstado('contactado')}>
               <Phone sx={{ mr: 1, fontSize: 20, color: '#e65100' }} /> Marcar como Contactado
-            </MenuItem>
-            <MenuItem onClick={() => handleUpdateEstado('agendado')}>
-              <CalendarToday sx={{ mr: 1, fontSize: 20, color: '#1976d2' }} /> Marcar como Agendado
-            </MenuItem>
-            <MenuItem onClick={() => handleUpdateEstado('calificado')}>
-              <CheckCircle sx={{ mr: 1, fontSize: 20, color: '#085946' }} /> Marcar como Calificado
-            </MenuItem>
-            <MenuItem onClick={() => handleUpdateEstado('perdido')}>
-              <Close sx={{ mr: 1, fontSize: 20, color: '#c62828' }} /> Marcar como Perdido
             </MenuItem>
             <Divider />
             {/* Convertir a Cita */}
@@ -1274,8 +1317,8 @@ const LeadsPage = () => {
           </MenuItem>
         )}
         
-        {/* Editar y Eliminar - Solo para leads manuales */}
-        {selectedLead && !selectedLead.appointmentId && (
+        {/* Editar y Eliminar */}
+        {selectedLead && (
           <>
             <Divider />
             <MenuItem onClick={handleEdit}>
@@ -1723,7 +1766,7 @@ const LeadsPage = () => {
         open={convertDialogOpen}
         onClose={() => {
           setConvertDialogOpen(false);
-          setAppointmentData({ date: '', time: '', reason: '' });
+          setAppointmentData({ date: '', time: '', reason: '', professionalId: '' });
           setSelectedLead(null); // Limpiar solo cuando se cierra el diálogo
         }}
         maxWidth="lg"
@@ -1750,9 +1793,27 @@ const LeadsPage = () => {
                   Agendando cita para: <strong>{selectedLead.nombre}</strong>
                 </Typography>
                 <Typography variant="caption" sx={{ display: 'block' }}>
-                  Selecciona la fecha y hora disponible para agendar la cita. Una vez agendada, el lead aparecerá en el funnel como "Agendado".
+                  Selecciona el profesional, la fecha y hora disponible. Una vez agendada, el lead aparecerá en el funnel como "Agendado".
                 </Typography>
               </Alert>
+
+              {profesionales.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Profesional</InputLabel>
+                    <Select
+                      value={appointmentData.professionalId || ''}
+                      label="Profesional"
+                      onChange={(e) => setAppointmentData({ ...appointmentData, professionalId: e.target.value, date: '', time: '' })}
+                    >
+                      <MenuItem value="">Sin asignar (agenda general)</MenuItem>
+                      {profesionales.map((p) => (
+                        <MenuItem key={p.id} value={p.id}>{p.nombre || 'Sin nombre'} {p.especialidad ? `- ${p.especialidad}` : ''}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              )}
               
               <Grid container spacing={3}>
                 {/* Calendario */}

@@ -68,6 +68,9 @@ function mapSaleToProduct(s) {
     adaptationDate: s.fechaAdaptacion ? (typeof s.fechaAdaptacion === 'string' ? s.fechaAdaptacion.slice(0, 10) : s.fechaAdaptacion.toISOString?.().slice(0, 10)) : null,
     warrantyStartDate: null,
     warrantyEndDate: s.fechaFinGarantia ? (typeof s.fechaFinGarantia === 'string' ? s.fechaFinGarantia.slice(0, 10) : s.fechaFinGarantia.toISOString?.().slice(0, 10)) : null,
+    professionalId: s.metadata?.professionalId || s.professionalId || null,
+    sedeId: s.metadata?.sedeId || s.sedeId || null,
+    procedencia: s.patient?.procedencia || 'visita-medica',
     metadata: {
       technology: s.tecnologia,
       platform: s.plataforma,
@@ -266,6 +269,10 @@ export async function recordSale(patientEmail, saleData) {
     notas: saleData.notes || null,
   };
 
+  const metadataExtra = {};
+  if (md.professionalId) metadataExtra.professionalId = md.professionalId;
+  if (md.sedeId) metadataExtra.sedeId = md.sedeId;
+
   if (categoria === 'SERVICE') {
     const payload = {
       ...base,
@@ -274,6 +281,7 @@ export async function recordSale(patientEmail, saleData) {
       cantidad: 1,
       descripcionConsulta: md.descripcionConsulta || saleData.model || '',
       fechaConsulta: md.fechaConsulta ? (md.fechaConsulta.includes('T') ? md.fechaConsulta : `${md.fechaConsulta}T12:00:00.000Z`) : null,
+      metadata: Object.keys(metadataExtra).length ? metadataExtra : null,
     };
     const { data, error } = await api.post('/api/products/sales', payload);
     if (error) return { success: false, product: null, error };
@@ -289,6 +297,7 @@ export async function recordSale(patientEmail, saleData) {
       modelo: saleData.model || (acc.map((a) => a.nombre).join(', ')),
       cantidad: saleData.quantity ?? acc.reduce((sum, a) => sum + (a.cantidad || 1), 0),
       accesoriosItems: acc,
+      metadata: Object.keys(metadataExtra).length ? metadataExtra : null,
     };
     const { data, error } = await api.post('/api/products/sales', payload);
     if (error) return { success: false, product: null, error };
@@ -316,7 +325,7 @@ export async function recordSale(patientEmail, saleData) {
     fechaPrimerControl: md.firstControlDate ? (String(md.firstControlDate).includes('T') ? md.firstControlDate : `${md.firstControlDate}T12:00:00.000Z`) : null,
     fechaPrimerMantenimiento: md.firstMaintenanceDate ? (String(md.firstMaintenanceDate).includes('T') ? md.firstMaintenanceDate : `${md.firstMaintenanceDate}T12:00:00.000Z`) : null,
     accesoriosItems: md.accesoriosItems || md.accessories || null,
-    metadata: md.images?.length ? { images: md.images } : null,
+    metadata: md.images?.length || Object.keys(metadataExtra).length ? { ...metadataExtra, ...(md.images?.length ? { images: md.images } : {}) } : null,
   };
 
   const { data, error } = await api.post('/api/products/sales', payload);

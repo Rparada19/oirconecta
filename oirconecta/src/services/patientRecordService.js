@@ -60,7 +60,7 @@ export const getPatientRecords = (patientEmail) => {
  */
 export const addPatientRecord = (patientEmail, recordData) => {
   const {
-    type, // 'contact', 'note', 'consultation', 'cancellation', 'reschedule'
+    type, // 'contact', 'note', 'consultation', 'cancellation', 'reschedule', 'no-show'
     title,
     description,
     appointmentId,
@@ -70,6 +70,9 @@ export const addPatientRecord = (patientEmail, recordData) => {
     newDate,
     newTime,
     cancellationReason,
+    rescheduleReason,
+    noShowReason,
+    contactNotes,
     consultationNotes,
     hearingLoss,
     nextSteps,
@@ -100,6 +103,9 @@ export const addPatientRecord = (patientEmail, recordData) => {
     newDate: newDate || null,
     newTime: newTime || null,
     cancellationReason: cancellationReason || null,
+    rescheduleReason: rescheduleReason || null,
+    noShowReason: noShowReason || null,
+    contactNotes: contactNotes || null,
     consultationNotes: consultationNotes || null,
     hearingLoss: hearingLoss || null,
     nextSteps: nextSteps || null,
@@ -162,6 +168,37 @@ export const recordConsultation = (patientEmail, appointmentId, consultationData
  * @param {string} reason - Motivo de cancelación
  * @returns {Object} {success: boolean, record: Object|null, error: string|null}
  */
+/**
+ * Registra una no asistencia
+ * @param {string} patientEmail - Email del paciente
+ * @param {string} appointmentId - ID de la cita
+ * @param {string} noShowReason - Motivo por el cual no asistió
+ * @param {string} contactNotes - Qué dijeron cuando se contactó al paciente
+ * @param {Object} rescheduleData - Opcional: { newAppointmentId, oldDate, oldTime, newDate, newTime } si se reprogramó
+ * @returns {Object} {success: boolean, record: Object|null, error: string|null}
+ */
+export const recordNoShow = (patientEmail, appointmentId, noShowReason, contactNotes, rescheduleData = null) => {
+  const desc = rescheduleData
+    ? `No asistió. Motivo: ${noShowReason}. Contacto: ${contactNotes}. Re-agendada para ${rescheduleData.newDate} ${rescheduleData.newTime}.`
+    : `No asistió. Motivo: ${noShowReason}. Contacto: ${contactNotes}.`;
+  return addPatientRecord(patientEmail, {
+    type: 'no-show',
+    title: 'No Asistió a la Cita',
+    description: desc,
+    appointmentId,
+    date: new Date().toISOString().split('T')[0],
+    noShowReason: noShowReason || null,
+    contactNotes: contactNotes || null,
+    ...(rescheduleData && {
+      relatedAppointmentId: rescheduleData.newAppointmentId,
+      oldDate: rescheduleData.oldDate,
+      oldTime: rescheduleData.oldTime,
+      newDate: rescheduleData.newDate,
+      newTime: rescheduleData.newTime,
+    }),
+  });
+};
+
 export const recordCancellation = (patientEmail, appointmentId, reason) => {
   return addPatientRecord(patientEmail, {
     type: 'cancellation',
@@ -184,11 +221,13 @@ export const recordCancellation = (patientEmail, appointmentId, reason) => {
  * @param {string} newTime - Nueva hora
  * @returns {Object} {success: boolean, record: Object|null, error: string|null}
  */
-export const recordReschedule = (patientEmail, originalAppointmentId, newAppointmentId, oldDate, oldTime, newDate, newTime) => {
+export const recordReschedule = (patientEmail, originalAppointmentId, newAppointmentId, oldDate, oldTime, newDate, newTime, rescheduleReason = null) => {
   return addPatientRecord(patientEmail, {
     type: 'reschedule',
     title: 'Cita Re-agendada',
-    description: `Cita re-agendada de ${oldDate} ${oldTime} a ${newDate} ${newTime}`,
+    description: rescheduleReason
+      ? `Cita re-agendada de ${oldDate} ${oldTime} a ${newDate} ${newTime}. Motivo: ${rescheduleReason}`
+      : `Cita re-agendada de ${oldDate} ${oldTime} a ${newDate} ${newTime}`,
     appointmentId: originalAppointmentId,
     relatedAppointmentId: newAppointmentId,
     date: new Date().toISOString().split('T')[0],
@@ -196,6 +235,7 @@ export const recordReschedule = (patientEmail, originalAppointmentId, newAppoint
     oldTime,
     newDate,
     newTime,
+    rescheduleReason: rescheduleReason || null,
   });
 };
 

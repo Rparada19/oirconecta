@@ -9,6 +9,12 @@ export default defineConfig({
     host: true,
     strictPort: false,
     open: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
   },
   optimizeDeps: {
     force: true, // Forzar reoptimización de dependencias

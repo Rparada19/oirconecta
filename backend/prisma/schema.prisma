@@ -29,8 +29,37 @@ model User {
   leadsCreados    Lead[]        @relation("LeadCreatedBy")
   citasCreadas    Appointment[] @relation("AppointmentCreatedBy")
   ventasCreadas   Sale[]        @relation("SaleCreatedBy")
+  blockedSlotsRequested BlockedSlot[] @relation("BlockedSlotRequestedBy")
+  blockedSlotsApproved  BlockedSlot[] @relation("BlockedSlotApprovedBy")
 
   @@map("users")
+}
+
+// ===========================================
+// BLOQUEOS DE HORARIO (requieren aprobación admin)
+// ===========================================
+
+model BlockedSlot {
+  id            String            @id @default(uuid())
+  fecha         DateTime
+  horaInicio    String            // HH:MM
+  horaFin       String            // HH:MM
+  motivo        String
+  estado        BlockedSlotStatus @default(PENDING)
+  requestedById String
+  requestedBy   User              @relation("BlockedSlotRequestedBy", fields: [requestedById], references: [id])
+  approvedById  String?
+  approvedBy    User?             @relation("BlockedSlotApprovedBy", fields: [approvedById], references: [id])
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@map("blocked_slots")
+}
+
+enum BlockedSlotStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum Role {
@@ -134,14 +163,15 @@ model Patient {
 // ===========================================
 
 model Appointment {
-  id            String            @id @default(uuid())
-  fecha         DateTime
-  hora          String
-  motivo        String?
-  procedencia   String            @default("visita-medica")
-  estado        AppointmentStatus @default(CONFIRMED)
-  notas         String?
-  tipoConsulta  String?           // primera-vez, control, adaptacion, etc.
+  id              String            @id @default(uuid())
+  fecha           DateTime
+  hora            String
+  motivo          String?
+  procedencia     String            @default("visita-medica")
+  estado          AppointmentStatus @default(CONFIRMED)
+  notas           String?
+  tipoConsulta    String?           // primera-vez, control, adaptacion, etc.
+  durationMinutes Int?              // duración de la consulta en minutos (ej. 20, 30, 50)
   
   // Paciente (puede no existir aún si es lead)
   patientId     String?
@@ -151,6 +181,9 @@ model Appointment {
   patientName   String?
   patientEmail  String?
   patientPhone  String?
+  
+  // Profesional (ID desde configuración del centro)
+  professionalId String?
   
   // Creado por
   createdById   String?

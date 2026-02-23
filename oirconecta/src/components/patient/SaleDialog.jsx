@@ -23,6 +23,7 @@ import {
 import { Save, Close, Add, Delete, Image as ImageIcon } from '@mui/icons-material';
 import { recordSale } from '../../services/productService';
 import { getCampaigns, MARCAS } from '../../services/campaignService';
+import { getConfig } from '../../services/configService';
 
 const TIPOS_ACCESORIO = [
   'Baterías',
@@ -45,6 +46,8 @@ const formatDateRange = (start, end) => {
 
 const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => {
   const [tipoVenta, setTipoVenta] = useState('audifonos'); // 'consulta' | 'accesorio' | 'audifonos'
+  const [saleProfessionalId, setSaleProfessionalId] = useState('');
+  const [saleSedeId, setSaleSedeId] = useState('');
   const [campaigns, setCampaigns] = useState([]);
   const [errors, setErrors] = useState({});
 
@@ -216,6 +219,8 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
           patientName: audifonos.patientName,
           patientEmail: email,
           patientPhone: audifonos.patientPhone,
+          professionalId: saleProfessionalId || undefined,
+          sedeId: saleSedeId || undefined,
         },
       });
       if (result.success) {
@@ -242,6 +247,8 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
           patientName: audifonos.patientName,
           patientEmail: email,
           patientPhone: audifonos.patientPhone,
+          professionalId: saleProfessionalId || undefined,
+          sedeId: saleSedeId || undefined,
         },
       });
       if (result.success) {
@@ -295,6 +302,8 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
         patientName: audifonos.patientName,
         patientEmail: email,
         patientPhone: audifonos.patientPhone,
+        professionalId: saleProfessionalId || undefined,
+        sedeId: saleSedeId || undefined,
       },
     });
 
@@ -306,6 +315,8 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
 
   const handleClose = () => {
     setTipoVenta('audifonos');
+    setSaleProfessionalId('');
+    setSaleSedeId('');
     setConsulta({ descripcion: '', valor: 0, fecha: new Date().toISOString().split('T')[0], notas: '' });
     setAccesoriosItems([]);
     setNuevoAccesorio({ tipo: 'Baterías', nombreOtro: '', cantidad: 1, valorUnitario: 0, descuento: 0 });
@@ -361,6 +372,49 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
               </Select>
             </FormControl>
           </Grid>
+
+          {(() => {
+            const config = getConfig();
+            const profesionales = (config.profesionales || []).filter((p) => p.activo);
+            const sedes = config.sedes || [];
+            if (profesionales.length > 0 || sedes.length > 0) {
+              return (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Profesional (opcional)</InputLabel>
+                      <Select
+                        value={saleProfessionalId}
+                        label="Profesional (opcional)"
+                        onChange={(e) => setSaleProfessionalId(e.target.value)}
+                      >
+                        <MenuItem value="">Sin asignar</MenuItem>
+                        {profesionales.map((p) => (
+                          <MenuItem key={p.id} value={p.id}>{p.nombre || 'Sin nombre'}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Sede (opcional)</InputLabel>
+                      <Select
+                        value={saleSedeId}
+                        label="Sede (opcional)"
+                        onChange={(e) => setSaleSedeId(e.target.value)}
+                      >
+                        <MenuItem value="">Sin asignar</MenuItem>
+                        {sedes.map((s) => (
+                          <MenuItem key={s.id} value={s.id}>{s.nombre || 'Sin nombre'}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </>
+              );
+            }
+            return null;
+          })()}
 
           {/* --- CONSULTA --- */}
           {tipoVenta === 'consulta' && (

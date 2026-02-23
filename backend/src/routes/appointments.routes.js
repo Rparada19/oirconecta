@@ -1,5 +1,6 @@
 /**
  * Rutas de citas
+ * Las rutas de available-slots y POST (crear) son públicas para autoagendamiento.
  */
 
 const express = require('express');
@@ -7,10 +8,32 @@ const { body, param, query } = require('express-validator');
 const router = express.Router();
 
 const appointmentsController = require('../controllers/appointments.controller');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuth } = require('../middleware/auth');
 const validateRequest = require('../middleware/validateRequest');
 
-// Todas las rutas requieren autenticación
+// Rutas PÚBLICAS (autoagendamiento en /agendar - sin login)
+router.get(
+  '/available-slots',
+  [query('fecha').notEmpty().withMessage('fecha es requerida')],
+  validateRequest,
+  appointmentsController.getAvailableSlots
+);
+
+router.post(
+  '/',
+  optionalAuth,
+  [
+    body('fecha').notEmpty().withMessage('fecha es requerida'),
+    body('hora').matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Hora inválida (formato HH:MM)'),
+    body('patientName').notEmpty().withMessage('patientName es requerido'),
+    body('patientEmail').notEmpty().withMessage('patientEmail es requerido'),
+    body('patientPhone').notEmpty().withMessage('patientPhone es requerido'),
+  ],
+  validateRequest,
+  appointmentsController.createPublic
+);
+
+// Rutas protegidas (requieren autenticación CRM)
 router.use(authenticate);
 
 // GET /api/appointments - Listar citas
@@ -29,35 +52,12 @@ router.get(
 // GET /api/appointments/stats - Estadísticas de citas
 router.get('/stats', appointmentsController.getStats);
 
-// GET /api/appointments/available-slots - Horarios disponibles
-router.get(
-  '/available-slots',
-  [query('fecha').isISO8601()],
-  validateRequest,
-  appointmentsController.getAvailableSlots
-);
-
 // GET /api/appointments/:id - Obtener cita por ID
 router.get(
   '/:id',
   [param('id').isUUID()],
   validateRequest,
   appointmentsController.getById
-);
-
-// POST /api/appointments - Crear cita
-router.post(
-  '/',
-  [
-    body('fecha').isISO8601().withMessage('Fecha inválida'),
-    body('hora').matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Hora inválida (formato HH:MM)'),
-    body('patientId').optional().isUUID(),
-    body('patientName').optional().notEmpty(),
-    body('patientEmail').optional().isEmail(),
-    body('patientPhone').optional().notEmpty(),
-  ],
-  validateRequest,
-  appointmentsController.create
 );
 
 // PUT /api/appointments/:id - Actualizar cita

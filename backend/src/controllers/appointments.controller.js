@@ -34,8 +34,8 @@ const getStats = async (req, res, next) => {
 
 const getAvailableSlots = async (req, res, next) => {
   try {
-    const { fecha } = req.query;
-    const slots = await appointmentsService.getAvailableSlots(fecha);
+    const { fecha, professionalId } = req.query;
+    const slots = await appointmentsService.getAvailableSlots(fecha, professionalId || null);
     
     res.json({
       success: true,
@@ -69,6 +69,24 @@ const getById = async (req, res, next) => {
 const create = async (req, res, next) => {
   try {
     const appointment = await appointmentsService.create(req.body, req.user.id);
+    
+    res.status(201).json({
+      success: true,
+      data: appointment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Crear cita (público o con usuario)
+ * Usado por /agendar (sin login) y por CRM (con login)
+ */
+const createPublic = async (req, res, next) => {
+  try {
+    const createdById = req.user?.id || null;
+    const appointment = await appointmentsService.create(req.body, createdById);
     
     res.status(201).json({
       success: true,
@@ -125,6 +143,7 @@ module.exports = {
   getAvailableSlots,
   getById,
   create,
+  createPublic,
   update,
   updateStatus,
   cancel,
