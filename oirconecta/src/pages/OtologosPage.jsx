@@ -1,11 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FaStar, FaUserMd, FaInstagram, FaFacebook, FaGlobe } from 'react-icons/fa';
+import { useSearchParams } from 'react-router-dom';
+import { FaStar, FaUserMd } from 'react-icons/fa';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SearchEngine from '../components/SearchEngine';
 import otologosData from '../data/bdatos_otologos.json';
 import { normalizeForSearch } from '../utils/textUtils';
+import { recordMatchesProfesion, PROFESION_LABEL_TODAS, profesionesParaListing } from '../utils/profesionFilter';
+import { POLIZAS_COLOMBIA, POLIZA_LABEL_TODAS } from '../config/polizasColombia';
+import { slugForOtologoList } from '../utils/professionalSlug';
+import ProfessionalListCard from '../components/professionals/ProfessionalListCard';
 
 // Generar datos de otólogos fuera del componente para evitar re-renderizados
 const prepagadasDisponibles = [
@@ -72,20 +76,27 @@ const otologosConPrepagadas = otologosData.map((otologo) => {
 });
 
 const OtologosPage = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [selectedSpecialty, setSelectedSpecialty] = useState('');
+  const [selectedProfesion, setSelectedProfesion] = useState(PROFESION_LABEL_TODAS);
   const [selectedPoliza, setSelectedPoliza] = useState('');
 
   // Aplicar filtros desde la URL al cargar (desde la barra de búsqueda del Hero)
   useEffect(() => {
     const q = searchParams.get('q') || '';
     const ciudad = searchParams.get('ciudad') || '';
+    const profesion = searchParams.get('profesion') || '';
+    const poliza = searchParams.get('poliza') || '';
     if (q || ciudad) {
       setSearchTerm(q);
       setSelectedCity(ciudad);
+    }
+    if (profesion) {
+      setSelectedProfesion(profesion);
+    }
+    if (poliza) {
+      setSelectedPoliza(poliza);
     }
   }, [searchParams]);
 
@@ -113,17 +124,17 @@ const OtologosPage = () => {
       const cityMatch = !selectedCity || selectedCity === 'Todas las ciudades' ||
         normalizeForSearch(otologo.ciudad) === cityNorm;
 
-      // Filtro por especialidad (otologos usan profesion o especialidad)
-      const specialtyMatch = !selectedSpecialty || selectedSpecialty === 'Todas las especialidades' ||
-        otologo.profesion === selectedSpecialty || otologo.especialidad === selectedSpecialty;
+      const profesionMatch = recordMatchesProfesion(otologo, selectedProfesion);
 
-      // Filtro por prepagada
-      const polizaMatch = !selectedPoliza || selectedPoliza === 'Todas las pólizas' ||
-        (otologo.prepagadas && otologo.prepagadas.includes(selectedPoliza));
+      const polizaMatch =
+        !selectedPoliza ||
+        selectedPoliza === POLIZA_LABEL_TODAS ||
+        !otologo.prepagadas?.length ||
+        otologo.prepagadas.includes(selectedPoliza);
 
-      return searchMatch && cityMatch && specialtyMatch && polizaMatch;
+      return searchMatch && cityMatch && profesionMatch && polizaMatch;
     });
-  }, [otologosConPrepagadas, searchTerm, selectedCity, selectedSpecialty, selectedPoliza]);
+  }, [otologosConPrepagadas, searchTerm, selectedCity, selectedProfesion, selectedPoliza]);
 
   // Verificar que los datos existen
   if (!otologosConPrepagadas || otologosConPrepagadas.length === 0) {
@@ -148,60 +159,9 @@ const OtologosPage = () => {
     console.log('OtologosPage - Filtros recibidos:', filters);
     setSearchTerm(filters.query || '');
     setSelectedCity(filters.ciudad || '');
-    setSelectedSpecialty(filters.especialidad || '');
-    setSelectedPoliza(filters.poliza || '');
-  };
-
-  // Función para manejar el clic en una tarjeta de profesional
-  const handleProfessionalClick = (otologo) => {
-    console.log('Clic en otólogo:', otologo.nombre);
-    const professionalId = otologo.nombre.toLowerCase().replace(/\s+/g, '-');
-    console.log('ID generado:', professionalId);
-    console.log('Navegando a:', `/profesionales/otologos/${professionalId}`);
-    navigate(`/profesionales/otologos/${professionalId}`);
-  };
-
-  // Función para mostrar prepagadas
-  const mostrarPrepagadas = (prepagadas) => {
-    if (!prepagadas || prepagadas.length === 0) {
-      return <span style={{ color: '#86899C', fontSize: '12px' }}>No especificado</span>;
-    }
-
-    const prepagadasMostrar = prepagadas.slice(0, 3);
-    const prepagadasRestantes = prepagadas.length - 3;
-
-    return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center' }}>
-        {prepagadasMostrar.map((prepagada, index) => (
-          <span
-            key={index}
-            style={{
-              background: 'rgba(8, 89, 70, 0.1)',
-              color: '#085946',
-              padding: '2px 6px',
-              borderRadius: '12px',
-              fontSize: '10px',
-              fontWeight: '500'
-            }}
-          >
-            {prepagada}
-          </span>
-        ))}
-        {prepagadasRestantes > 0 && (
-          <span
-            style={{
-              background: '#f3f4f6',
-              color: '#86899C',
-              padding: '2px 6px',
-              borderRadius: '12px',
-              fontSize: '10px',
-              fontWeight: '500'
-            }}
-          >
-            +{prepagadasRestantes} más
-          </span>
-        )}
-      </div>
+    setSelectedProfesion(filters.profesion || filters.especialidad || PROFESION_LABEL_TODAS);
+    setSelectedPoliza(
+      !filters.poliza || filters.poliza === POLIZA_LABEL_TODAS ? '' : filters.poliza
     );
   };
 
@@ -244,11 +204,13 @@ const OtologosPage = () => {
           onFilter={handleSearchFilter} 
           isProfessionalPage={true}
           ciudades={ciudades}
-          especialidades={['Otólogo']}
-          polizas={prepagadasDisponibles}
+          profesiones={profesionesParaListing('otorrino')}
+          polizas={POLIZAS_COLOMBIA}
           initialFilters={{
             query: searchParams.get('q') || '',
             ciudad: searchParams.get('ciudad') || '',
+            profesion: searchParams.get('profesion') || '',
+            poliza: searchParams.get('poliza') || '',
           }}
         />
       </div>
@@ -267,224 +229,13 @@ const OtologosPage = () => {
         
         {otologosFiltrados.length > 0 ? (
           <div className="cards-grid">
-            {otologosFiltrados.map((otologo, idx) => (
-              <div 
-                key={idx} 
-                className="professional-card"
-                onClick={() => handleProfessionalClick(otologo)}
-                style={{ 
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  transform: 'translateY(0)',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 8px 25px rgba(8, 89, 70, 0.2)'
-                  }
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(8, 89, 70, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '';
-                }}
-              >
-                <div className="card-header">
-                  <div className="card-image-container">
-                    <div className="card-image">
-                      {/* Placeholder para imagen */}
-                    </div>
-                  </div>
-                  <div className="verified-badge">
-                    <FaStar size={12} />
-                    Verificado
-                  </div>
-                </div>
-                <div className="card-content">
-                  <div className="specialty-badge">
-                    Otólogo
-                  </div>
-                  <h3 className="professional-name">
-                    <b>{otologo.nombre}</b>
-                  </h3>
-                  <div className="location-info">
-                    <span style={{ fontWeight: 'bold' }}>{otologo.ciudad}</span>
-                  </div>
-
-                  {/* Datos de contacto */}
-                  <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                    <div style={{ fontSize: '12px', color: '#86899C', marginBottom: '4px' }}>
-                      Teléfono: {otologo.telefono}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#86899C', marginBottom: '4px' }}>
-                      Email: {otologo.email || 'No disponible'}
-                    </div>
-                  </div>
-
-                  {/* Prepagadas */}
-                  {otologo.prepagadas && otologo.prepagadas.length > 0 && (
-                    <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#272F50' }}>Prepagadas aceptadas</span>
-                      </div>
-                      {mostrarPrepagadas(otologo.prepagadas)}
-                    </div>
-                  )}
-
-                  {/* Servicios */}
-                  {otologo.servicios && otologo.servicios.length > 0 && (
-                    <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#272F50' }}>Servicios principales</span>
-                      </div>
-                      <div style={{ 
-                        display: 'flex', 
-                        flexWrap: 'wrap', 
-                        gap: '4px', 
-                        justifyContent: 'center',
-                        maxHeight: '60px',
-                        overflow: 'hidden'
-                      }}>
-                        {otologo.servicios.slice(0, 3).map((servicio, index) => (
-                          <span
-                            key={index}
-                            style={{
-                              fontSize: '9px',
-                              padding: '2px 6px',
-                              backgroundColor: 'rgba(8, 89, 70, 0.1)',
-                              color: '#085946',
-                              borderRadius: '4px',
-                              fontWeight: '500',
-                              border: '1px solid rgba(8, 89, 70, 0.2)'
-                            }}
-                          >
-                            {servicio}
-                          </span>
-                        ))}
-                        {otologo.servicios.length > 3 && (
-                          <span
-                            style={{
-                              fontSize: '9px',
-                              padding: '2px 6px',
-                              backgroundColor: '#f3f4f6',
-                              color: '#86899C',
-                              borderRadius: '4px',
-                              fontWeight: '500'
-                            }}
-                          >
-                            +{otologo.servicios.length - 3} más
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-
-
-                  <div className="action-buttons">
-                    <button className="btn-contact" style={{ marginBottom: '10px' }}>
-                      Agendar cita
-                    </button>
-                    <button className="btn-contact" style={{ marginBottom: '5px' }}>
-                      Llamar
-                    </button>
-                    
-
-                    <div style={{ 
-                      textAlign: 'center', 
-                      marginBottom: '5px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#272F50'
-                    }}>
-                      Contáctanos
-                    </div>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'center', 
-                      gap: '12px', 
-                      padding: '8px 0'
-                    }}>
-                      <a 
-                        href="#" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        style={{
-                          color: '#085946',
-                          textDecoration: 'none',
-                          padding: '8px',
-                          borderRadius: '50%',
-                          background: 'rgba(8, 89, 70, 0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.3s ease',
-                          ':hover': {
-                            background: 'rgba(8, 89, 70, 0.3)',
-                            color: '#272F50',
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 8px rgba(8, 89, 70, 0.2)'
-                          }
-                        }}
-                        aria-label="Instagram"
-                      >
-                        <FaInstagram size={16} />
-                      </a>
-                      <a 
-                        href="#" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        style={{
-                          color: '#085946',
-                          textDecoration: 'none',
-                          padding: '8px',
-                          borderRadius: '50%',
-                          background: 'rgba(8, 89, 70, 0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.3s ease',
-                          ':hover': {
-                            background: 'rgba(8, 89, 70, 0.3)',
-                            color: '#272F50',
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 8px rgba(8, 89, 70, 0.2)'
-                          }
-                        }}
-                        aria-label="Facebook"
-                      >
-                        <FaFacebook size={16} />
-                      </a>
-                      <a 
-                        href="#" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        style={{
-                          color: '#085946',
-                          textDecoration: 'none',
-                          padding: '8px',
-                          borderRadius: '50%',
-                          background: 'rgba(8, 89, 70, 0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.3s ease',
-                          ':hover': {
-                            background: 'rgba(8, 89, 70, 0.3)',
-                            color: '#272F50',
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 8px rgba(8, 89, 70, 0.2)'
-                          }
-                        }}
-                        aria-label="Página web"
-                      >
-                        <FaGlobe size={16} />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {otologosFiltrados.map((otologo) => (
+              <ProfessionalListCard
+                key={`${slugForOtologoList(otologo.nombre)}-${otologo.ciudad}`}
+                professional={otologo}
+                roleLabel="Otólogo"
+                toProfile={`/profesionales/otologos/${slugForOtologoList(otologo.nombre)}`}
+              />
             ))}
           </div>
         ) : (
@@ -498,7 +249,7 @@ const OtologosPage = () => {
               onClick={() => {
                 setSearchTerm('');
                 setSelectedCity('');
-                setSelectedSpecialty('');
+                setSelectedProfesion(PROFESION_LABEL_TODAS);
                 setSelectedPoliza('');
               }}
               className="btn-clear"

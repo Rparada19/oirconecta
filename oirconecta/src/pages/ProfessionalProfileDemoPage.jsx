@@ -151,7 +151,6 @@ const ActionButton = styled(Button)(() => ({
 const ProfessionalProfileDemoPage = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [bookingDialog, setBookingDialog] = useState(false);
-  const [chatDialog, setChatDialog] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
 
   // Datos del profesional demo
@@ -445,10 +444,6 @@ const ProfessionalProfileDemoPage = () => {
     setBookingDialog(true);
   };
 
-  const handleChatClick = () => {
-    setChatDialog(true);
-  };
-
   const handleVideoClick = (video) => {
     setSelectedVideo(video);
   };
@@ -677,7 +672,6 @@ const ProfessionalProfileDemoPage = () => {
             <Tab label="Contacto" />
             <Tab label="Agendar Cita" />
             <Tab label="Multimedia" />
-            <Tab label="Hablemos" />
             <Tab label="Preguntas" />
             <Tab label="Aliados" />
             <Tab label="Estudios Profesionales" />
@@ -974,96 +968,8 @@ const ProfessionalProfileDemoPage = () => {
 
 
 
-          {/* Pestaña 3: Hablemos */}
-          {selectedTab === 3 && (
-            <Grid container spacing={4}>
-              {/* Chat Directo */}
-              <Grid item xs={12} md={4}>
-                <SectionCard>
-                  <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
-                      Chat Directo
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 3 }}>
-                      ¿Tienes una pregunta específica? Chatea directamente con el Dr. Mendoza.
-                    </Typography>
-                    <ActionButton
-                      variant="contained"
-                      startIcon={<Forum sx={{ fontSize: 20 }} />}
-                      onClick={handleChatClick}
-                      fullWidth
-                      sx={{
-                        background: 'linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%)',
-                        color: 'white',
-                        border: '2px solid transparent',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #7B1FA2 0%, #9C27B0 100%)',
-                          border: '2px solid rgba(255, 255, 255, 0.3)',
-                          transform: 'translateY(-4px) scale(1.02)',
-                          boxShadow: '0 12px 32px rgba(156, 39, 176, 0.4)'
-                        }
-                      }}
-                    >
-                      Iniciar Chat
-                    </ActionButton>
-                  </CardContent>
-                </SectionCard>
-              </Grid>
-
-              {/* Estadísticas */}
-              <Grid item xs={12} md={4}>
-                <SectionCard>
-                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                    <Typography variant="h3" sx={{ fontWeight: 900, color: '#085946', mb: 1 }}>
-                      {professional.rating}
-                    </Typography>
-                    <Rating value={professional.rating} readOnly size="large" sx={{ mb: 2 }} />
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                      Calificación Promedio
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Basado en {professional.reviews} reseñas
-                    </Typography>
-                  </CardContent>
-                </SectionCard>
-              </Grid>
-
-              {/* Opiniones */}
-              <Grid item xs={12} md={4}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
-                  Opiniones de Nuestros Pacientes
-                </Typography>
-                <Grid container spacing={3}>
-                  {patientReviews.slice(0, 3).map((review) => (
-                    <Grid item xs={12} key={review.id}>
-                      <SectionCard>
-                        <CardContent sx={{ p: 3 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Avatar src={review.avatar} sx={{ mr: 2, width: 40, height: 40 }} />
-                            <Box sx={{ flex: 1 }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                {review.name}
-                              </Typography>
-                              <Rating value={review.rating} readOnly size="small" />
-                            </Box>
-                            <Typography variant="caption" color="text.secondary">
-                              {review.date}
-                            </Typography>
-                          </Box>
-                          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, fontSize: '0.875rem' }}>
-                            "{review.comment}"
-                          </Typography>
-                        </CardContent>
-                      </SectionCard>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Grid>
-            </Grid>
-          )}
-
           {/* Pestaña 4: Preguntas y Respuestas */}
-          {selectedTab === 4 && (
+          {selectedTab === 3 && (
             <Grid container spacing={4}>
               {/* Formulario para enviar pregunta */}
               <Grid item xs={12} md={4}>
@@ -1163,7 +1069,7 @@ const ProfessionalProfileDemoPage = () => {
           
 
           {/* Pestaña 5: Aliados */}
-          {selectedTab === 5 && (
+          {selectedTab === 4 && (
             <Grid container spacing={4}>
               <Grid item xs={12}>
                 <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
@@ -1198,7 +1104,7 @@ const ProfessionalProfileDemoPage = () => {
           )}
 
           {/* Pestaña 6: Estudios Profesionales */}
-          {selectedTab === 6 && (
+          {selectedTab === 5 && (
             <Grid container spacing={4}>
               {/* Estudios */}
               <Grid item xs={12}>
@@ -1328,31 +1234,6 @@ const ProfessionalProfileDemoPage = () => {
           <Button onClick={() => setBookingDialog(false)}>Cancelar</Button>
           <Button variant="contained" onClick={() => setBookingDialog(false)}>
             Confirmar Cita
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Diálogo de chat */}
-      <Dialog open={chatDialog} onClose={() => setChatDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Chat con Dr. Mendoza</DialogTitle>
-        <DialogContent>
-          <Box sx={{ height: '300px', bgcolor: 'grey.100', p: 2, borderRadius: 1, mb: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Sistema de chat integrado
-            </Typography>
-          </Box>
-          <TextField
-            fullWidth
-            label="Escribe tu mensaje..."
-            multiline
-            rows={2}
-            variant="outlined"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setChatDialog(false)}>Cerrar</Button>
-          <Button variant="contained" startIcon={<Send />}>
-            Enviar
           </Button>
         </DialogActions>
       </Dialog>

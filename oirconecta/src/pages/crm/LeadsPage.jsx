@@ -1774,9 +1774,18 @@ const LeadsPage = () => {
         PaperProps={{
           sx: {
             maxHeight: '95vh',
-            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
             '& .MuiDialogContent-root': {
-              overflow: 'visible',
+              overflow: 'auto',
+              flex: 1,
+              minHeight: 0, // permite que el contenido se reduzca y muestre el scroll, dejando visible DialogActions
+            },
+            '& .MuiDialogActions-root': {
+              flexShrink: 0,
+              borderTop: '1px solid #e0e0e0',
+              bgcolor: '#f8fafc',
             },
           },
         }}
@@ -1784,7 +1793,7 @@ const LeadsPage = () => {
         <DialogTitle sx={{ bgcolor: '#085946', color: '#ffffff', fontWeight: 700 }}>
           Agendar Cita para Lead
         </DialogTitle>
-        <DialogContent sx={{ pt: 3, overflow: 'auto', minHeight: '500px' }}>
+        <DialogContent sx={{ pt: 3, overflow: 'auto' }}>
           {console.log('[LeadsPage Dialog] selectedLead:', selectedLead)}
           {selectedLead ? (
             <Box>

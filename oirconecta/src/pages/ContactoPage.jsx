@@ -43,20 +43,24 @@ const ContactoPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Aquí se enviaría el formulario
-    console.log('Formulario enviado:', formData);
-    
+    const { nombre, email, telefono, asunto, mensaje } = formData;
+    const subject = encodeURIComponent(asunto?.trim() || 'Consulta web OírConecta');
+    const body = encodeURIComponent(
+      `Nombre: ${nombre}\nEmail: ${email}\nTeléfono: ${telefono}\n\nMensaje:\n${mensaje}`
+    );
+    window.location.href = `mailto:info@oirconecta.com?subject=${subject}&body=${body}`;
+
     setSnackbar({
       open: true,
-      message: '¡Gracias por tu mensaje! Te contactaremos pronto.',
-      severity: 'success'
+      message: 'Se abrirá tu correo para enviar el mensaje a info@oirconecta.com.',
+      severity: 'success',
     });
     setFormData({
       nombre: '',
       email: '',
       telefono: '',
       asunto: '',
-      mensaje: ''
+      mensaje: '',
     });
   };
 
@@ -110,7 +114,8 @@ const ContactoPage = () => {
               Contáctanos
             </Typography>
             <Typography variant="h5" color="text.secondary" sx={{ maxWidth: 800, mx: 'auto' }}>
-              Estamos aquí para ayudarte. Contáctanos para obtener información sobre nuestros servicios o para encontrar el especialista que necesitas.
+              Escríbenos para dudas sobre la plataforma, la red de profesionales o para orientación general. Para temas
+              clínicos o precios concretos, el especialista o centro que elijas te responderá directamente.
             </Typography>
           </Box>
 

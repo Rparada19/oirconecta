@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -9,26 +10,17 @@ import {
   Divider,
   Stack,
   TextField,
-  Button
+  Button,
 } from '@mui/material';
-import {
-  Facebook,
-  Twitter,
-  Instagram,
-  LinkedIn,
-  YouTube,
-  Email,
-  Phone,
-  LocationOn,
-  Send
-} from '@mui/icons-material';
+import { Facebook, Twitter, Instagram, LinkedIn, YouTube, Email, Phone, LocationOn, Send } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import { directoryProfesionToSlug } from '../utils/directoryPresentation';
 
 const FooterContainer = styled(Box)(() => ({
   background: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
   color: 'white',
   padding: '64px 0 32px',
-  marginTop: 'auto'
+  marginTop: 'auto',
 }));
 
 const FooterSection = styled(Box)(() => ({
@@ -36,146 +28,115 @@ const FooterSection = styled(Box)(() => ({
     color: '#A1AFB5',
     fontWeight: 600,
     marginBottom: '16px',
-    fontSize: '1.1rem'
+    fontSize: '1.1rem',
   },
-  '& a': {
-    color: '#86899C',
-    textDecoration: 'none',
-    transition: 'color 0.3s ease',
-    '&:hover': {
-      color: '#A1AFB5'
-    }
-  }
 }));
 
 const NewsletterBox = styled(Box)(() => ({
   background: 'rgba(255,255,255,0.05)',
   borderRadius: '16px',
   padding: '24px',
-  border: '1px solid rgba(255,255,255,0.1)'
+  border: '1px solid rgba(255,255,255,0.1)',
 }));
 
+const footerSections = [
+  {
+    title: 'OírConecta',
+    links: [
+      { name: 'Inicio', to: '/' },
+      { name: 'Nosotros', to: '/nosotros' },
+      { name: 'Servicios', to: '/servicios' },
+      { name: 'Contacto', to: '/contacto' },
+      { name: 'Agendar cita', to: '/agendar' },
+    ],
+  },
+  {
+    title: 'Servicios y productos',
+    links: [{ name: 'Tienda', to: '/ecommerce' }],
+  },
+  {
+    title: 'Profesionales',
+    links: [
+      { name: 'Fonoaudiología', to: `/directorio/profesion/${directoryProfesionToSlug('Fonoaudiología')}` },
+      { name: 'Audiología', to: `/directorio/profesion/${directoryProfesionToSlug('Audiología')}` },
+      { name: 'Otorrinolaringología', to: `/directorio/profesion/${directoryProfesionToSlug('Otorrinolaringología')}` },
+      { name: 'Otología', to: `/directorio/profesion/${directoryProfesionToSlug('Otología')}` },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { name: 'Términos y condiciones', to: '/legal#terminos' },
+      { name: 'Política de privacidad', to: '/legal#privacidad' },
+      { name: 'Política de cookies', to: '/legal#cookies' },
+    ],
+  },
+];
+
 const Footer = () => {
-  const footerSections = [
-    {
-      title: 'OírConecta',
-      links: [
-        { name: 'Acerca de nosotros', href: '/nosotros' },
-        { name: 'Nuestra misión', href: '/mision' },
-        { name: 'Equipo médico', href: '/equipo' },
-        { name: 'Certificaciones', href: '/certificaciones' },
-        { name: 'Trabaja con nosotros', href: '/trabaja-con-nosotros' }
-      ]
-    },
-    {
-      title: 'Servicios',
-      links: [
-        { name: 'Audífonos', href: '/audifonos' },
-        { name: 'Implantes cocleares', href: '/implantes' },
-        { name: 'Evaluación auditiva', href: '/evaluacion' },
-        { name: 'Terapia del habla', href: '/terapia' },
-        { name: 'Mantenimiento', href: '/mantenimiento' }
-      ]
-    },
-    {
-      title: 'Profesionales',
-      links: [
-        { name: 'Buscar especialistas', href: '/profesionales' },
-        { name: 'Centros médicos', href: '/centros-destacados' },
-        { name: 'Especialidades', href: '/especialidades' },
-        { name: 'Reseñas y calificaciones', href: '/reseñas' },
-        { name: 'Agendar cita', href: '/citas' }
-      ]
-    },
-    {
-      title: 'Recursos',
-      links: [
-        { name: 'Blog de salud auditiva', href: '/blog' },
-        { name: 'Guías de cuidado', href: '/guias' },
-        { name: 'Preguntas frecuentes', href: '/faq' },
-        { name: 'Glosario médico', href: '/glosario' },
-        { name: 'Descargar app', href: '/app' }
-      ]
-    }
-  ];
-
-  const socialLinks = [
-    { icon: <Facebook />, href: '#', label: 'Facebook' },
-    { icon: <Twitter />, href: '#', label: 'Twitter' },
-    { icon: <Instagram />, href: '#', label: 'Instagram' },
-    { icon: <LinkedIn />, href: '#', label: 'LinkedIn' },
-    { icon: <YouTube />, href: '#', label: 'YouTube' }
-  ];
-
-  const contactInfo = [
-    { icon: <Phone />, text: '+57 (1) 234-5678', href: 'tel:+5712345678' },
-    { icon: <Email />, text: 'info@oirconecta.com', href: 'mailto:info@oirconecta.com' },
-    { icon: <LocationOn />, text: 'Bogotá, Colombia', href: '#' }
-  ];
+  const handleNewsletterClick = () => {
+    const subject = encodeURIComponent('Suscripción boletín OírConecta');
+    const body = encodeURIComponent('Hola,\n\nDeseo suscribirme al boletín. Mi correo es:\n\n');
+    window.location.href = `mailto:info@oirconecta.com?subject=${subject}&body=${body}`;
+  };
 
   return (
     <footer role="contentinfo">
       <FooterContainer>
         <Container maxWidth="lg">
           <Grid container spacing={4}>
-            {/* Logo y descripción */}
             <Grid item xs={12} md={4}>
               <Box sx={{ mb: 3 }}>
-                <img 
-                  src="/logo-oirconecta-blanco.png"
-                  alt="OírConecta Logo Blanco"
-                  style={{ height: 48, marginRight: 16 }}
-                />
+                <img src="/logo-oirconecta-blanco.png" alt="OírConecta" style={{ height: 48, marginRight: 16 }} />
               </Box>
-              <Typography 
-                component="p"
-                variant="body2" 
-                sx={{ 
-                  mb: 3, 
-                  color: '#86899C', 
-                  lineHeight: 1.6 
-                }}
-              >
-                Somos la plataforma líder en Colombia para conectar pacientes con los mejores 
-                especialistas del oído. Nuestra misión es mejorar la calidad de vida de las 
-                personas con problemas auditivos.
+              <Typography component="p" variant="body1" sx={{ mb: 3, color: 'rgba(255,255,255,0.72)', lineHeight: 1.65, fontSize: '1rem' }}>
+                Referencia de valores de audífonos y accesorios, educación, ayuda para ubicar al profesional adecuado y
+                acompañamiento en decisiones. Oferta de servicios de la red e información sobre marcas del mercado.
               </Typography>
-              
-              {/* Redes sociales */}
               <Stack direction="row" spacing={1}>
-                {socialLinks.map((social, index) => (
-                  <IconButton
-                    key={index}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={social.label}
-                    sx={{
-                      color: '#86899C',
-                      '&:hover': {
-                        color: '#A1AFB5',
-                        bgcolor: 'rgba(255,255,255,0.1)'
-                      }
-                    }}
-                  >
-                    {social.icon}
-                  </IconButton>
-                ))}
+                <IconButton
+                  component={RouterLink}
+                  to="/contacto"
+                  aria-label="Contacto (redes próximamente)"
+                  sx={{
+                    color: '#86899C',
+                    '&:hover': { color: '#A1AFB5', bgcolor: 'rgba(255,255,255,0.1)' },
+                  }}
+                >
+                  <Facebook />
+                </IconButton>
+                <IconButton component={RouterLink} to="/contacto" aria-label="Contacto" sx={{ color: '#86899C', '&:hover': { color: '#A1AFB5', bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                  <Twitter />
+                </IconButton>
+                <IconButton component={RouterLink} to="/contacto" aria-label="Contacto" sx={{ color: '#86899C', '&:hover': { color: '#A1AFB5', bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                  <Instagram />
+                </IconButton>
+                <IconButton component={RouterLink} to="/contacto" aria-label="Contacto" sx={{ color: '#86899C', '&:hover': { color: '#A1AFB5', bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                  <LinkedIn />
+                </IconButton>
+                <IconButton component={RouterLink} to="/contacto" aria-label="Contacto" sx={{ color: '#86899C', '&:hover': { color: '#A1AFB5', bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                  <YouTube />
+                </IconButton>
               </Stack>
+              <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#86899C' }}>
+                Redes sociales: enlazamos a contacto hasta publicar perfiles oficiales.
+              </Typography>
             </Grid>
 
-            {/* Enlaces de navegación */}
             {footerSections.map((section, index) => (
               <Grid item xs={12} sm={6} md={2} key={index}>
                 <FooterSection>
-                  <Typography component="h3" variant="h6">{section.title}</Typography>
+                  <Typography component="h3" variant="h6">
+                    {section.title}
+                  </Typography>
                   <Stack spacing={1}>
-                    {section.links.map((link, linkIndex) => (
+                    {section.links.map((link) => (
                       <Link
-                        key={linkIndex}
-                        href={link.href}
+                        key={link.to + link.name}
+                        component={RouterLink}
+                        to={link.to}
                         variant="body2"
-                        sx={{ display: 'block' }}
+                        sx={{ display: 'block', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '1rem', py: 0.25, '&:hover': { color: '#fff' } }}
                       >
                         {link.name}
                       </Link>
@@ -185,98 +146,79 @@ const Footer = () => {
               </Grid>
             ))}
 
-            {/* Newsletter y contacto */}
             <Grid item xs={12} md={4}>
               <NewsletterBox sx={{ mb: 3 }}>
                 <Typography component="h3" variant="h6" sx={{ mb: 2 }}>
-                  Suscríbete a nuestro boletín
+                  Boletín
                 </Typography>
-                <Typography 
-                  component="p"
-                  variant="body2" 
-                  sx={{ 
-                    mb: 2, 
-                    color: '#86899C' 
-                  }}
-                >
-                  Recibe las últimas noticias sobre salud auditiva y ofertas especiales.
+                <Typography component="p" variant="body2" sx={{ mb: 2, color: '#86899C' }}>
+                  Escríbenos para enterarte de novedades y campañas (sin backend aún: se abre tu correo).
                 </Typography>
                 <Stack direction="row" spacing={1}>
                   <TextField
                     size="small"
                     placeholder="Tu email"
+                    disabled
                     sx={{
                       flex: 1,
                       '& .MuiOutlinedInput-root': {
                         color: 'white',
-                        '& fieldset': {
-                          borderColor: 'rgba(255,255,255,0.3)'
-                        },
-                        '&:hover fieldset': {
-                          borderColor: '#A1AFB5'
-                        }
-                      }
+                        '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                      },
                     }}
                   />
                   <Button
                     variant="contained"
-                    sx={{
-                      bgcolor: '#085946',
-                      '&:hover': { bgcolor: '#272F50' }
-                    }}
+                    onClick={handleNewsletterClick}
+                    sx={{ bgcolor: '#085946', '&:hover': { bgcolor: '#272F50' } }}
+                    startIcon={<Send />}
                   >
-                    <Send />
+                    Enviar
                   </Button>
                 </Stack>
               </NewsletterBox>
 
-              {/* Información de contacto */}
               <Typography component="h3" variant="h6" sx={{ mb: 2 }}>
                 Contacto
               </Typography>
               <Stack spacing={2}>
-                {contactInfo.map((contact, index) => (
-                  <Link
-                    key={index}
-                    href={contact.href}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      color: '#86899C',
-                      textDecoration: 'none',
-                      '&:hover': { color: '#A1AFB5' }
-                    }}
-                  >
-                    {contact.icon}
-                    <Typography component="span" variant="body2">{contact.text}</Typography>
-                  </Link>
-                ))}
+                <Link href="tel:+5712345678" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#86899C', textDecoration: 'none', '&:hover': { color: '#A1AFB5' } }}>
+                  <Phone />
+                  <Typography component="span" variant="body2">
+                    +57 (1) 234-5678
+                  </Typography>
+                </Link>
+                <Link href="mailto:info@oirconecta.com" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#86899C', textDecoration: 'none', '&:hover': { color: '#A1AFB5' } }}>
+                  <Email />
+                  <Typography component="span" variant="body2">
+                    info@oirconecta.com
+                  </Typography>
+                </Link>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#86899C' }}>
+                  <LocationOn />
+                  <Typography component="span" variant="body2">
+                    Bogotá, Colombia
+                  </Typography>
+                </Box>
               </Stack>
             </Grid>
           </Grid>
 
           <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.2)' }} />
 
-          {/* Footer inferior */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-            <Typography 
-              component="p"
-              variant="body2" 
-              sx={{ color: '#86899C' }}
-            >
-              © 2024 OírConecta. Todos los derechos reservados.
+            <Typography component="p" variant="body2" sx={{ color: '#86899C' }}>
+              © {new Date().getFullYear()} OírConecta. Todos los derechos reservados.
             </Typography>
-            
-            <Stack direction="row" spacing={3}>
-              <Link href="/terminos" variant="body2" sx={{ color: '#86899C' }}>
-                Términos y condiciones
+            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <Link component={RouterLink} to="/legal#terminos" variant="body2" sx={{ color: '#86899C' }}>
+                Términos
               </Link>
-              <Link href="/privacidad" variant="body2" sx={{ color: '#86899C' }}>
-                Política de privacidad
+              <Link component={RouterLink} to="/legal#privacidad" variant="body2" sx={{ color: '#86899C' }}>
+                Privacidad
               </Link>
-              <Link href="/cookies" variant="body2" sx={{ color: '#86899C' }}>
-                Política de cookies
+              <Link component={RouterLink} to="/legal#cookies" variant="body2" sx={{ color: '#86899C' }}>
+                Cookies
               </Link>
             </Stack>
           </Box>
@@ -286,4 +228,4 @@ const Footer = () => {
   );
 };
 
-export default Footer; 
+export default Footer;

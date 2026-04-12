@@ -8,9 +8,12 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUserState] = useState(() => {
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem(USER_KEY) : null;
-      return raw ? JSON.parse(raw) : null;
-    } catch {
+      if (typeof window === 'undefined') return null;
+      const raw = localStorage.getItem(USER_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      try { localStorage.removeItem(USER_KEY); } catch {}
       return null;
     }
   });
@@ -36,7 +39,7 @@ export function AuthProvider({ children }) {
     setToken(t);
     setTokenState(t);
     setUser(u);
-    return { success: true, error: null };
+    return { success: true, error: null, user: u };
   }, [setUser]);
 
   const logout = useCallback(() => {

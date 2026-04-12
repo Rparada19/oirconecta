@@ -10,11 +10,19 @@ const prisma = new PrismaClient();
 // COTIZACIONES
 // ===========================================
 
-const getAllQuotes = async ({ patientId, estado }) => {
+const getAllQuotes = async ({ patientId, estado, createdByUserId }) => {
   const where = {};
 
   if (patientId) where.patientId = patientId;
   if (estado) where.estado = estado;
+  if (createdByUserId) {
+    const patientIds = await prisma.sale.findMany({
+      where: { createdById: createdByUserId },
+      select: { patientId: true },
+      distinct: ['patientId'],
+    }).then((rows) => rows.map((r) => r.patientId));
+    where.patientId = { in: patientIds.length ? patientIds : [] };
+  }
 
   return prisma.quote.findMany({
     where,
@@ -176,11 +184,12 @@ const convertQuoteToSale = async (quoteId, additionalData = {}, createdById) => 
 // VENTAS
 // ===========================================
 
-const getAllSales = async ({ patientId, categoria }) => {
+const getAllSales = async ({ patientId, categoria, createdByUserId }) => {
   const where = {};
 
   if (patientId) where.patientId = patientId;
   if (categoria) where.categoria = categoria;
+  if (createdByUserId) where.createdById = createdByUserId;
 
   return prisma.sale.findMany({
     where,
@@ -300,6 +309,13 @@ const updateSale = async (id, data) => {
       updateData[field] = new Date(data[field]);
     }
   });
+
+  // Fusionar metadata con la existente para no perder datos (ej. renovationHandledAt, renovationBought)
+  if (data.metadata && typeof data.metadata === 'object') {
+    const existing = await prisma.sale.findUnique({ where: { id }, select: { metadata: true } });
+    const existingMeta = existing?.metadata && typeof existing.metadata === 'object' ? existing.metadata : {};
+    updateData.metadata = { ...existingMeta, ...data.metadata };
+  }
 
   return prisma.sale.update({
     where: { id },

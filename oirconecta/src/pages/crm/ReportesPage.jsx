@@ -30,6 +30,13 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  Checkbox,
+  FormControlLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -49,12 +56,17 @@ import {
   Schedule,
   Person,
   LocationOn,
+  PhoneCallback,
 } from '@mui/icons-material';
 import { getAllAppointments } from '../../services/appointmentService';
 import { getAllLeadsCombined } from '../../services/leadService';
-import { getAllPatientProducts } from '../../services/productService';
+import { getAllPatientProducts, recordSale, updateSale } from '../../services/productService';
+import { getPatients } from '../../services/patientService';
 import { getConfig } from '../../services/configService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
+import { useAuth } from '../../context/AuthContext';
+import { canRegisterSales } from '../../utils/rolePermissions';
+import PatientProfileDialog from '../../components/patient/PatientProfileDialog';
 import * as XLSX from 'xlsx';
 import html2pdf from 'html2pdf.js';
 
@@ -100,30 +112,49 @@ const formatCurrency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency'
 
 const ReportesPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canSales = canRegisterSales(user?.role);
   const exportRef = useRef(null);
   const [exportAnchor, setExportAnchor] = useState(null);
+  const tabIndices = canSales ? [0, 1, 2, 3, 4, 5] : [0, 1, 3, 4, 5];
   const [period, setPeriod] = useState('month');
   const [activeTab, setActiveTab] = useState(0);
   const [appointments, setAppointments] = useState([]);
   const [leads, setLeads] = useState([]);
   const [products, setProducts] = useState({});
+  const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileAppointment, setProfileAppointment] = useState(null);
+  const [renovacionDialogOpen, setRenovacionDialogOpen] = useState(false);
+  const [renovacionRow, setRenovacionRow] = useState(null);
+  const [renovacionForm, setRenovacionForm] = useState({ fechaFinGarantia: '', marca: '', notas: '' });
+  const [renovacionSaving, setRenovacionSaving] = useState(false);
+  const [noComproSaving, setNoComproSaving] = useState(null); // saleId when saving "No compró"
+
+  const loadData = async () => {
+    setLoading(true);
+    const [aptRes, leadsRes, prodRes, patientsRes] = await Promise.allSettled([
+      getAllAppointments(),
+      getAllLeadsCombined(),
+      getAllPatientProducts(),
+      getPatients({ limit: 500 }).then((r) => r.patients || []),
+    ]);
+    setAppointments(aptRes.status === 'fulfilled' ? (aptRes.value || []) : []);
+    setLeads(leadsRes.status === 'fulfilled' ? (leadsRes.value || []) : []);
+    setProducts(prodRes.status === 'fulfilled' ? (prodRes.value || {}) : {});
+    setPatients(patientsRes.status === 'fulfilled' ? (patientsRes.value || []) : []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const [aptRes, leadsRes, prodRes] = await Promise.allSettled([
-        getAllAppointments(),
-        getAllLeadsCombined(),
-        getAllPatientProducts(),
-      ]);
-      setAppointments(aptRes.status === 'fulfilled' ? (aptRes.value || []) : []);
-      setLeads(leadsRes.status === 'fulfilled' ? (leadsRes.value || []) : []);
-      setProducts(prodRes.status === 'fulfilled' ? (prodRes.value || {}) : {});
-      setLoading(false);
-    };
-    load();
+    loadData();
   }, []);
+
+  const refreshProducts = async () => {
+    const p = await getAllPatientProducts();
+    setProducts(p || {});
+  };
 
   const { start: rangeStart, end: rangeEnd } = getDateRange(period);
   const workingDays = period === 'all' ? 365 : getWorkingDays(rangeStart, rangeEnd);
@@ -242,6 +273,40 @@ const ReportesPage = () => {
   const totalPacientes = leads.filter((l) => (l.estado || '').toLowerCase() === 'paciente' || (l.estado || '').toLowerCase() === 'convertido').length;
   const totalVentas = allSales.length;
 
+  // Renovaciones en audiología: ventas de audífonos; excluir las ya gestionadas (renovationHandledAt)
+  const patientsByEmail = {};
+  (patients || []).forEach((p) => { patientsByEmail[(p.email || '').toLowerCase()] = p.nombre || p.email || ''; });
+  const sixMonthsFromNow = new Date();
+  sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+  sixMonthsFromNow.setHours(23, 59, 59, 999);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const renovacionesList = allSales
+    .filter((s) => (s.category || '') === 'hearing-aid' && !(s.metadata?.renovationHandledAt))
+    .map((s) => {
+      const warrantyEnd = s.warrantyEndDate ? new Date(String(s.warrantyEndDate).slice(0, 10)) : null;
+      const listoParaRenovar = warrantyEnd && warrantyEnd.getTime() <= sixMonthsFromNow.getTime();
+      return {
+        id: s.id,
+        patientEmail: s.patientEmail || '',
+        patientName: patientsByEmail[(s.patientEmail || '').toLowerCase()] || s.patientEmail || '—',
+        technology: s.metadata?.technology || s.model || '—',
+        platform: s.metadata?.platform || '—',
+        brand: s.brand || s.productName || '—',
+        saleDate: s.saleDate || '—',
+        warrantyEndDate: s.warrantyEndDate || '—',
+        listoParaRenovar: !!listoParaRenovar,
+        saleMetadata: s.metadata && typeof s.metadata === 'object' ? s.metadata : {},
+        saleRef: s,
+      };
+    })
+    .sort((a, b) => {
+      if (a.listoParaRenovar !== b.listoParaRenovar) return a.listoParaRenovar ? -1 : 1;
+      const da = a.warrantyEndDate !== '—' ? new Date(a.warrantyEndDate) : new Date(0);
+      const db = b.warrantyEndDate !== '—' ? new Date(b.warrantyEndDate) : new Date(0);
+      return da.getTime() - db.getTime();
+    });
+
   const MetricCard = ({ icon: Icon, value, label, color = '#085946' }) => (
     <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 2, p: 2, textAlign: 'center', height: '100%' }}>
       <Icon sx={{ fontSize: 36, color, mb: 0.5 }} />
@@ -262,12 +327,21 @@ const ReportesPage = () => {
   );
 
   const tabNames = ['Citas', 'Leads', 'Ventas', 'Agenda', 'Pacientes', 'Funnel'];
+  const tabConfig = [
+    { icon: CalendarToday, label: 'Citas' },
+    { icon: PersonAdd, label: 'Leads' },
+    { icon: AttachMoney, label: 'Ventas' },
+    { icon: Schedule, label: 'Agenda' },
+    { icon: People, label: 'Pacientes' },
+    { icon: TrendingUp, label: 'Funnel' },
+  ];
+  const realTab = tabIndices[activeTab] ?? 0;
 
   const handleExportExcel = () => {
     setExportAnchor(null);
     try {
     const wsData = [];
-    if (activeTab === 0) {
+    if (realTab === 0) {
       wsData.push(['Reporte de Citas', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
       wsData.push([]);
       wsData.push(['Métrica', 'Valor']);
@@ -285,7 +359,7 @@ const ReportesPage = () => {
       wsData.push([]);
       wsData.push(['Procedencia', 'Cantidad', '%']);
       Object.entries(aptsByProcedencia).forEach(([p, c]) => wsData.push([formatProcedencia(p), c, aptsFiltered.length ? Math.round((c / aptsFiltered.length) * 100) : 0]));
-    } else if (activeTab === 1) {
+    } else if (realTab === 1) {
       wsData.push(['Reporte de Leads', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
       wsData.push([]);
       wsData.push(['Métrica', 'Valor']);
@@ -301,7 +375,7 @@ const ReportesPage = () => {
       wsData.push([]);
       wsData.push(['Remisiones por médico', 'Leads']);
       Object.entries(remisionesPorMedico).forEach(([med, c]) => wsData.push([med, c]));
-    } else if (activeTab === 2) {
+    } else if (realTab === 2) {
       wsData.push(['Reporte de Ventas', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
       wsData.push([]);
       wsData.push(['Métrica', 'Valor']);
@@ -325,7 +399,7 @@ const ReportesPage = () => {
       wsData.push([]);
       wsData.push(['Cotizaciones por marca', 'Cantidad']);
       Object.entries(cotizacionesPorProductoMarca).forEach(([m, c]) => wsData.push([m, c]));
-    } else if (activeTab === 3) {
+    } else if (realTab === 3) {
       wsData.push(['Reporte de Agenda', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
       wsData.push([]);
       wsData.push(['Métrica', 'Valor']);
@@ -342,7 +416,7 @@ const ReportesPage = () => {
           wsData.push([sede.nombre || sede.id, prof.nombre || prof.id, c]);
         });
       });
-    } else if (activeTab === 4) {
+    } else if (realTab === 4) {
       wsData.push(['Reporte de Pacientes', ''], ['Período', period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : period === 'quarter' ? 'Trimestre' : period === 'year' ? 'Año' : 'Todo']);
       wsData.push([]);
       wsData.push(['Métrica', 'Valor']);
@@ -351,7 +425,7 @@ const ReportesPage = () => {
       wsData.push([]);
       wsData.push(['Procedencia', 'Cantidad']);
       Object.entries(aptsByProcedencia).forEach(([p, c]) => wsData.push([formatProcedencia(p), c]));
-    } else if (activeTab === 5) {
+    } else if (realTab === 5) {
       wsData.push(['Reporte Funnel', ''], ['Métrica', 'Valor']);
       wsData.push(['Leads totales', totalLeads]);
       wsData.push(['Con cita agendada', totalConCita]);
@@ -362,9 +436,9 @@ const ReportesPage = () => {
     if (wsData.length === 0) wsData.push(['Sin datos']);
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
-    const sheetName = String(tabNames[activeTab] || 'Reporte').replace(/[\\/:*?[\]]/g, '_').slice(0, 31);
+    const sheetName = String(tabNames[realTab] || 'Reporte').replace(/[\\/:*?[\]]/g, '_').slice(0, 31);
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    const fileName = `Reporte_${tabNames[activeTab]}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const fileName = `Reporte_${tabNames[realTab]}_${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
     } catch (err) {
       console.error('Error exportando Excel:', err);
@@ -380,7 +454,7 @@ const ReportesPage = () => {
       return;
     }
     try {
-      const sheetName = String(tabNames[activeTab] || 'Reporte').replace(/[\\/:*?[\]]/g, '_');
+      const sheetName = String(tabNames[realTab] || 'Reporte').replace(/[\\/:*?[\]]/g, '_');
       const opt = {
         margin: [8, 8, 8, 8],
         filename: `Reporte_${sheetName}_${new Date().toISOString().slice(0, 10)}.pdf`,
@@ -454,16 +528,14 @@ const ReportesPage = () => {
         </Paper>
 
         <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Tab icon={<CalendarToday />} iconPosition="start" label="Citas" />
-          <Tab icon={<PersonAdd />} iconPosition="start" label="Leads" />
-          <Tab icon={<AttachMoney />} iconPosition="start" label="Ventas" />
-          <Tab icon={<Schedule />} iconPosition="start" label="Agenda" />
-          <Tab icon={<People />} iconPosition="start" label="Pacientes" />
-          <Tab icon={<TrendingUp />} iconPosition="start" label="Funnel" />
+          {tabIndices.map((idx) => {
+            const TabIcon = tabConfig[idx].icon;
+            return <Tab key={idx} icon={<TabIcon />} iconPosition="start" label={tabConfig[idx].label} />;
+          })}
         </Tabs>
 
         {/* TAB CITAS */}
-        {activeTab === 0 && (
+        {realTab === 0 && (
           <Box>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={6} sm={3}><MetricCard icon={CalendarToday} value={aptsFiltered.length} label="Total citas" /></Grid>
@@ -538,7 +610,7 @@ const ReportesPage = () => {
         )}
 
         {/* TAB LEADS */}
-        {activeTab === 1 && (
+        {realTab === 1 && (
           <Box>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={6} sm={3}><MetricCard icon={PersonAdd} value={leadsFiltered.length} label="Total leads" /></Grid>
@@ -598,7 +670,7 @@ const ReportesPage = () => {
         )}
 
         {/* TAB VENTAS */}
-        {activeTab === 2 && (
+        {realTab === 2 && (
           <Box>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={6} sm={3}><MetricCard icon={AttachMoney} value={formatCurrency(valorTotal)} label="Valor total" /></Grid>
@@ -698,11 +770,220 @@ const ReportesPage = () => {
                 </TableContainer>
               </CardContent>
             </Card>
+
+            {/* Renovaciones en audiología: listado para llamar a renovar (rojo = vence en ≤6 meses) */}
+            <Card sx={{ mb: 3, border: '1px solid #e0e0e0' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Hearing sx={{ color: '#085946', fontSize: 28 }} />
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>Renovaciones en audiología</Typography>
+                    <Typography variant="body2" sx={{ color: '#86899C' }}>
+                      Pacientes con audífonos vendidos. En <strong style={{ color: '#c62828' }}>rojo</strong>: garantía vence en 6 meses o menos — listos para llamar a renovar.
+                    </Typography>
+                  </Box>
+                </Box>
+                <TableContainer>
+                  <Table size="small" sx={{ minWidth: 640 }}>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                        <TableCell sx={{ fontWeight: 600 }}>Paciente</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Tecnología</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Plataforma</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Marca</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Fecha compra</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Venc. garantía</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }} align="center">Estado</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }} align="center">Paciente compró</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {renovacionesList.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} align="center" sx={{ color: '#86899C', py: 3 }}>
+                            No hay ventas de audífonos pendientes de gestionar.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        renovacionesList.map((r) => (
+                          <TableRow
+                            key={r.id}
+                            sx={{
+                              bgcolor: r.listoParaRenovar ? 'rgba(198, 40, 40, 0.08)' : undefined,
+                              borderLeft: r.listoParaRenovar ? '4px solid #c62828' : '4px solid transparent',
+                            }}
+                          >
+                            <TableCell sx={{ fontWeight: r.listoParaRenovar ? 600 : 400 }}>
+                              <Button
+                                variant="text"
+                                size="small"
+                                onClick={() => {
+                                  setProfileAppointment({ patientEmail: r.patientEmail, patientName: r.patientName });
+                                  setProfileDialogOpen(true);
+                                }}
+                                sx={{
+                                  textTransform: 'none',
+                                  color: '#085946',
+                                  fontWeight: 'inherit',
+                                  p: 0,
+                                  minWidth: 0,
+                                  '&:hover': { textDecoration: 'underline', bgcolor: 'transparent' },
+                                }}
+                              >
+                                {r.patientName}
+                              </Button>
+                            </TableCell>
+                            <TableCell>{r.technology}</TableCell>
+                            <TableCell>{r.platform}</TableCell>
+                            <TableCell>{r.brand}</TableCell>
+                            <TableCell>{r.saleDate !== '—' ? new Date(r.saleDate).toLocaleDateString('es-ES') : '—'}</TableCell>
+                            <TableCell>{r.warrantyEndDate !== '—' ? new Date(r.warrantyEndDate).toLocaleDateString('es-ES') : '—'}</TableCell>
+                            <TableCell align="center">
+                              {r.listoParaRenovar ? (
+                                <Chip size="small" icon={<PhoneCallback sx={{ fontSize: 16 }} />} label="Listo para llamar" sx={{ bgcolor: '#ffebee', color: '#c62828', fontWeight: 600 }} />
+                              ) : (
+                                <Chip size="small" label="Vigente" sx={{ bgcolor: '#e8f5e9', color: '#2e7d32' }} />
+                              )}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                                <FormControlLabel
+                                  control={
+                                    <Checkbox
+                                      size="small"
+                                      checked={false}
+                                      disabled={noComproSaving === r.id}
+                                      onChange={() => {
+                                        setRenovacionRow(r);
+                                        setRenovacionForm({
+                                          fechaFinGarantia: '',
+                                          marca: r.brand !== '—' ? r.brand : '',
+                                          notas: '',
+                                        });
+                                        setRenovacionDialogOpen(true);
+                                      }}
+                                      sx={{ color: '#085946', '&.Mui-checked': { color: '#085946' } }}
+                                    />
+                                  }
+                                  label={<Typography variant="body2">Sí</Typography>}
+                                />
+                                <FormControlLabel
+                                  control={
+                                    <Checkbox
+                                      size="small"
+                                      checked={false}
+                                      disabled={renovacionDialogOpen && renovacionRow?.id === r.id}
+                                      onChange={async () => {
+                                        setNoComproSaving(r.id);
+                                        const res = await updateSale(r.id, {
+                                          metadata: { ...r.saleMetadata, renovationHandledAt: new Date().toISOString(), renovationBought: false },
+                                        });
+                                        setNoComproSaving(null);
+                                        if (res.success) await refreshProducts();
+                                      }}
+                                      sx={{ color: '#666', '&.Mui-checked': { color: '#c62828' } }}
+                                    />
+                                  }
+                                  label={<Typography variant="body2">No</Typography>}
+                                />
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+
+            {/* Diálogo: Paciente compró — registrar nueva venta con nuevas fechas de garantía */}
+            <Dialog open={renovacionDialogOpen} onClose={() => { setRenovacionDialogOpen(false); setRenovacionRow(null); }} maxWidth="sm" fullWidth>
+              <DialogTitle>Paciente compró — Registrar nueva venta</DialogTitle>
+              <DialogContent>
+                {renovacionRow && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+                    <Typography variant="body2" sx={{ color: '#86899C' }}>
+                      Se creará un nuevo registro de venta para {renovacionRow.patientName} con las nuevas fechas de garantía. El paciente saldrá del listado de renovaciones.
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Fecha fin garantía"
+                      type="date"
+                      required
+                      value={renovacionForm.fechaFinGarantia}
+                      onChange={(e) => setRenovacionForm((f) => ({ ...f, fechaFinGarantia: e.target.value }))}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Marca"
+                      value={renovacionForm.marca}
+                      onChange={(e) => setRenovacionForm((f) => ({ ...f, marca: e.target.value }))}
+                    />
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Notas"
+                      multiline
+                      rows={2}
+                      value={renovacionForm.notas}
+                      onChange={(e) => setRenovacionForm((f) => ({ ...f, notas: e.target.value }))}
+                    />
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => { setRenovacionDialogOpen(false); setRenovacionRow(null); }}>Cancelar</Button>
+                <Button
+                  variant="contained"
+                  disabled={!renovacionForm.fechaFinGarantia || renovacionSaving}
+                  sx={{ bgcolor: '#085946' }}
+                  onClick={async () => {
+                    if (!renovacionRow || !renovacionForm.fechaFinGarantia) return;
+                    setRenovacionSaving(true);
+                    const s = renovacionRow.saleRef;
+                    const today = new Date().toISOString().slice(0, 10);
+                    const res = await recordSale(renovacionRow.patientEmail, {
+                      category: 'hearing-aid',
+                      brand: renovacionForm.marca || s.brand || '',
+                      model: s.model || '',
+                      quantity: s.quantity ?? 1,
+                      unitPrice: s.unitPrice ?? 0,
+                      totalPrice: s.totalPrice ?? s.unitPrice ?? 0,
+                      saleDate: today,
+                      warrantyEndDate: renovacionForm.fechaFinGarantia,
+                      adaptationDate: today,
+                      notes: renovacionForm.notas || null,
+                      metadata: {
+                        technology: s.metadata?.technology || null,
+                        platform: s.metadata?.platform || null,
+                        warrantyYears: s.metadata?.warrantyYears ?? null,
+                      },
+                    });
+                    if (res.success) {
+                      await updateSale(renovacionRow.id, {
+                        metadata: { ...renovacionRow.saleMetadata, renovationHandledAt: new Date().toISOString(), renovationBought: true },
+                      });
+                      await refreshProducts();
+                      setRenovacionDialogOpen(false);
+                      setRenovacionRow(null);
+                      setRenovacionForm({ fechaFinGarantia: '', marca: '', notas: '' });
+                    }
+                    setRenovacionSaving(false);
+                  }}
+                >
+                  {renovacionSaving ? 'Guardando…' : 'Crear nueva venta y quitar del listado'}
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Box>
         )}
 
         {/* TAB AGENDA */}
-        {activeTab === 3 && (
+        {realTab === 3 && (
           <Box>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={6} sm={3}><MetricCard icon={Schedule} value={totalSlots} label="Espacios totales" /></Grid>
@@ -749,7 +1030,7 @@ const ReportesPage = () => {
         )}
 
         {/* TAB PACIENTES */}
-        {activeTab === 4 && (
+        {realTab === 4 && (
           <Box>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={6} sm={3}><MetricCard icon={People} value={uniquePatientsApt} label="Pacientes únicos (citas)" /></Grid>
@@ -774,7 +1055,7 @@ const ReportesPage = () => {
         )}
 
         {/* TAB FUNNEL */}
-        {activeTab === 5 && (
+        {realTab === 5 && (
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>Funnel comercial</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -811,6 +1092,15 @@ const ReportesPage = () => {
         )}
         </Box>
       </Container>
+
+      <PatientProfileDialog
+        open={profileDialogOpen}
+        onClose={() => {
+          setProfileDialogOpen(false);
+          setProfileAppointment(null);
+        }}
+        appointment={profileAppointment}
+      />
     </Box>
   );
 };

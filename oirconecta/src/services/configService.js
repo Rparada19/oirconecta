@@ -72,6 +72,8 @@ const DEFAULT_CONFIG = {
       profesionalesHabilitados: [],
     },
   ],
+  // Plantillas PDF de consentimientos informados (por tipo). Cada clave es el nombre del tipo, valor: dataUrl base64 del PDF o null
+  consentimientosPlantillas: {},
   // Profesionales: atados a consultorio(s), con horarios, CV, servicios/productos
   profesionales: [
     {

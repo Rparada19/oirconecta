@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -34,7 +34,10 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Paper
+  Paper,
+  Snackbar,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   Phone,
@@ -42,14 +45,7 @@ import {
   LocationOn,
   WhatsApp,
   CalendarToday,
-  VideoLibrary,
-  PhotoLibrary,
-  Article,
-  Forum,
-  QuestionAnswer,
   School,
-  EmojiEvents,
-  Business,
   AccessTime,
   Star,
   ExpandMore,
@@ -59,7 +55,13 @@ import {
   Instagram,
   Language,
   VerifiedUser,
-  StarBorder
+  StarBorder,
+  AttachMoney,
+  MenuBook,
+  Business,
+  Schedule,
+  ArrowForward,
+  EventAvailable,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { Helmet } from 'react-helmet';
@@ -67,6 +69,14 @@ import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import audiologasData from '../data/bdatos_audiologas.json';
+import { createAppointment, getAvailableTimeSlots } from '../services/appointmentService';
+import {
+  buildPublicAllies,
+  buildPublicStudies,
+  buildConsultationInfo,
+  alliesCategoriesWithContent,
+  studyCategoriesWithContent,
+} from '../utils/professionalProfilePublicContent';
 
 // Componentes estilizados
 const BannerContainer = styled(Box)(() => ({
@@ -154,34 +164,33 @@ const ProfessionalProfilePage = () => {
   const { id, nombre } = useParams();
   const [selectedTab, setSelectedTab] = useState(0);
   const [bookingDialog, setBookingDialog] = useState(false);
-  const [chatDialog, setChatDialog] = useState(false);
+  const [pickDate, setPickDate] = useState('');
+  const [slots, setSlots] = useState([]);
+  const [pickSlot, setPickSlot] = useState('');
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [bookingName, setBookingName] = useState('');
+  const [bookingPhone, setBookingPhone] = useState('');
+  const [bookingEmail, setBookingEmail] = useState('');
+  const [bookingReason, setBookingReason] = useState('Evaluación auditiva');
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   // const [selectedVideo, setSelectedVideo] = useState(null);
 
   // Determinar si es una audióloga o un otólogo
   const isAudiologa = window.location.pathname.includes('/audiologos/');
-  
-  console.log('🔍 Debug ProfessionalProfilePage:');
-  console.log('📍 URL actual:', window.location.pathname);
-  console.log('🆔 ID recibido:', id);
-  console.log('📝 Nombre recibido:', nombre);
-  console.log('👩‍⚕️ ¿Es audióloga?', isAudiologa);
-  console.log('📊 Total audiólogas en datos:', audiologasData.length);
-  
+
   // Buscar la audióloga en los datos si es una audióloga
-  const audiologaEncontrada = isAudiologa && id ? 
-    audiologasData.find(audiologa => {
-      const cleanName = audiologa.nombre
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-      
-      console.log('🔍 Comparando:', cleanName, 'con', id);
-      return cleanName === id;
-    }) : null;
-    
-  console.log('✅ Audióloga encontrada:', audiologaEncontrada);
+  const audiologaEncontrada = isAudiologa && id
+    ? audiologasData.find((audiologa) => {
+        const cleanName = audiologa.nombre
+          .toLowerCase()
+          .replace(/[^a-z0-9\s]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+        return cleanName === id;
+      })
+    : null;
   
   // Convertir el ID a nombre legible
   const nameFromId = id ? id.split('-').map(word => 
@@ -257,7 +266,60 @@ const ProfessionalProfilePage = () => {
     }
   };
 
-  // Videos de ejemplo
+  const alliesByCategory = buildPublicAllies(isAudiologa, audiologaEncontrada);
+  const studiesByCategory = buildPublicStudies(isAudiologa, audiologaEncontrada);
+  const consultationInfo = buildConsultationInfo(isAudiologa, audiologaEncontrada, professional);
+  const bookingProfessionalId = isAudiologa && audiologaEncontrada?.id ? audiologaEncontrada.id : null;
+  const professionalNotifyEmailForBooking =
+    professional.email && professional.email.includes('@') && !String(professional.email).includes('No especificado')
+      ? String(professional.email).trim()
+      : null;
+
+  const allySections = alliesCategoriesWithContent(alliesByCategory);
+  const studySections = studyCategoriesWithContent(studiesByCategory);
+
+  const nextTwoWeeksDates = useMemo(() => {
+    const out = [];
+    const d = new Date();
+    for (let i = 0; i < 14; i += 1) {
+      const x = new Date(d);
+      x.setDate(d.getDate() + i);
+      out.push(x.toISOString().slice(0, 10));
+    }
+    return out;
+  }, []);
+
+  useEffect(() => {
+    if (selectedTab === 1 && !pickDate && nextTwoWeeksDates[0]) {
+      setPickDate(nextTwoWeeksDates[0]);
+    }
+  }, [selectedTab, pickDate, nextTwoWeeksDates]);
+
+  const loadSlots = useCallback(
+    async (dateStr) => {
+      if (!dateStr) {
+        setSlots([]);
+        return;
+      }
+      setSlotsLoading(true);
+      setPickSlot('');
+      try {
+        const list = await getAvailableTimeSlots(dateStr, '07:00', '18:00', bookingProfessionalId);
+        setSlots(list);
+      } catch {
+        setSlots([]);
+      } finally {
+        setSlotsLoading(false);
+      }
+    },
+    [bookingProfessionalId]
+  );
+
+  useEffect(() => {
+    if (pickDate) loadSlots(pickDate);
+  }, [pickDate, loadSlots]);
+
+  // Videos de ejemplo (máximo 2 en perfil público)
   const videos = [
     {
       id: 1,
@@ -272,13 +334,6 @@ const ProfessionalProfilePage = () => {
       thumbnail: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=300&h=200&fit=crop',
       duration: '8:15',
       views: '1.8k'
-    },
-    {
-      id: 3,
-      title: 'Implantes cocleares: Todo lo que debes saber',
-      thumbnail: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=200&fit=crop',
-      duration: '12:45',
-      views: '3.1k'
     }
   ];
 
@@ -388,11 +443,42 @@ const ProfessionalProfilePage = () => {
   };
 
   const handleBookingClick = () => {
+    const today = nextTwoWeeksDates[0] || '';
+    setPickDate(today);
+    setPickSlot('');
     setBookingDialog(true);
   };
 
-  const handleChatClick = () => {
-    setChatDialog(true);
+  const handleConfirmBooking = async () => {
+    if (!pickDate || !pickSlot || !bookingName.trim() || !bookingEmail.trim() || !bookingPhone.trim()) {
+      setSnackbar({ open: true, message: 'Completa fecha, hora y datos de contacto.', severity: 'warning' });
+      return;
+    }
+    setBookingSubmitting(true);
+    const res = await createAppointment({
+      date: pickDate,
+      time: pickSlot,
+      patientName: bookingName.trim(),
+      patientEmail: bookingEmail.trim(),
+      patientPhone: bookingPhone.trim(),
+      reason: bookingReason || 'Cita desde perfil público',
+      procedencia: 'visita-medica',
+      professionalId: bookingProfessionalId || undefined,
+      professionalNotifyEmail: professionalNotifyEmailForBooking || undefined,
+      professionalDisplayName: professional.name,
+    });
+    setBookingSubmitting(false);
+    if (res.success) {
+      setSnackbar({
+        open: true,
+        message:
+          'Cita registrada. Recibirás un correo de confirmación; el profesional también es notificado cuando el servidor de correo esté configurado.',
+        severity: 'success',
+      });
+      setBookingDialog(false);
+    } else {
+      setSnackbar({ open: true, message: res.error || 'No se pudo agendar.', severity: 'error' });
+    }
   };
 
   const handleVideoClick = () => {
@@ -608,7 +694,6 @@ const ProfessionalProfilePage = () => {
             <Tab label="Contacto" />
             <Tab label="Agendar Cita" />
             <Tab label="Multimedia" />
-            <Tab label="Hablemos" />
             <Tab label="Preguntas" />
             <Tab label="Aliados" />
             <Tab label="Estudios Profesionales" />
@@ -737,75 +822,445 @@ const ProfessionalProfilePage = () => {
 
           {/* Pestaña 2: Agendar Cita */}
           {selectedTab === 1 && (
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={8}>
-                <SectionCard>
-                  <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
-                      Calendario de Disponibilidad
+            <Box sx={{ maxWidth: 1120, mx: 'auto' }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: { xs: 2.5, md: 3.5 },
+                  mb: 3,
+                  borderRadius: 3,
+                  background: 'linear-gradient(125deg, rgba(8, 89, 70, 0.09) 0%, rgba(39, 47, 80, 0.07) 55%, rgba(113, 160, 149, 0.12) 100%)',
+                  border: '1px solid rgba(8, 89, 70, 0.14)',
+                }}
+              >
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }} justifyContent="space-between">
+                  <Box>
+                    <Typography
+                      variant="overline"
+                      sx={{ letterSpacing: 0.12, fontWeight: 700, color: '#085946', display: 'block', mb: 0.5 }}
+                    >
+                      Reserva en línea
                     </Typography>
-                    <Box sx={{ 
-                      height: '400px', 
-                      bgcolor: 'grey.100', 
-                      borderRadius: 2,
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#272F50', lineHeight: 1.2, mb: 0.5 }}>
+                      Agenda tu cita
+                    </Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#085946', mb: 1 }}>
+                      {professional.name}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 560, lineHeight: 1.65 }}>
+                      Elige día y hora en los próximos 14 días. Los cupos se sincronizan con la agenda del sistema; las horas ocupadas no aparecen.
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <Typography variant="h6" color="text.secondary">
-                        Calendario de citas integrado
+                      gap: 1,
+                      px: 2.5,
+                      py: 1.5,
+                      borderRadius: 2,
+                      bgcolor: 'rgba(255,255,255,0.65)',
+                      border: '1px solid rgba(255,255,255,0.9)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <EventAvailable sx={{ fontSize: 40, color: '#085946' }} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Especialidad
+                      </Typography>
+                      <Typography variant="subtitle1" fontWeight={700} color="#272F50">
+                        {professional.specialty}
                       </Typography>
                     </Box>
-                  </CardContent>
-                </SectionCard>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <SectionCard>
-                  <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
-                      Horarios de Atención
-                    </Typography>
-                    <List>
-                      <ListItem>
-                        <ListItemText 
-                          primary="Lunes - Viernes" 
-                          secondary="8:00 AM - 6:00 PM"
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText 
-                          primary="Sábados" 
-                          secondary="9:00 AM - 2:00 PM"
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText 
-                          primary="Domingos" 
-                          secondary="Cerrado"
-                        />
-                      </ListItem>
-                    </List>
-                    <Box sx={{ mt: 3 }}>
-                      <ActionButton
-                        variant="contained"
-                        fullWidth
-                        startIcon={<CalendarToday />}
-                        onClick={handleBookingClick}
+                  </Box>
+                </Stack>
+              </Paper>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} lg={8}>
+                  <SectionCard
+                    sx={{
+                      borderRadius: 3,
+                      border: '1px solid #e8ecf1',
+                      boxShadow: '0 4px 24px rgba(39, 47, 80, 0.06)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+                      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 3 }}>
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 2,
+                            bgcolor: '#085946',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 800,
+                            fontSize: '1rem',
+                          }}
+                        >
+                          1
+                        </Box>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', lineHeight: 1.2 }}>
+                            Selecciona el día
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Desliza horizontalmente en móvil
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Box
                         sx={{
-                          background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-                          color: 'white',
-                          '&:hover': {
-                            background: 'linear-gradient(135deg, #0d7a5f 0%, #085946 100%)'
-                          }
+                          display: 'flex',
+                          gap: 1.25,
+                          overflowX: 'auto',
+                          pb: 1,
+                          mb: 1,
+                          mx: { xs: -0.5, md: 0 },
+                          px: { xs: 0.5, md: 0 },
+                          scrollbarWidth: 'thin',
+                          '&::-webkit-scrollbar': { height: 6 },
+                          '&::-webkit-scrollbar-thumb': {
+                            backgroundColor: 'rgba(8,89,70,0.25)',
+                            borderRadius: 3,
+                          },
                         }}
                       >
-                        Agendar Cita
-                      </ActionButton>
-                    </Box>
-                  </CardContent>
-                </SectionCard>
+                        {nextTwoWeeksDates.map((ds) => {
+                          const selected = pickDate === ds;
+                          const d = new Date(`${ds}T12:00:00`);
+                          const isToday =
+                            ds === new Date().toISOString().slice(0, 10);
+                          return (
+                            <Paper
+                              key={ds}
+                              component="button"
+                              type="button"
+                              aria-pressed={selected}
+                              aria-label={`Elegir ${d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}`}
+                              onClick={() => setPickDate(ds)}
+                              elevation={0}
+                              sx={{
+                                flex: '0 0 auto',
+                                minWidth: 76,
+                                py: 1.75,
+                                px: 1,
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                                appearance: 'none',
+                                WebkitAppearance: 'none',
+                                border: '2px solid',
+                                borderColor: selected ? '#085946' : 'transparent',
+                                bgcolor: selected ? 'rgba(8, 89, 70, 0.09)' : '#f8fafc',
+                                borderRadius: 2.5,
+                                transition: 'all 0.2s ease',
+                                boxShadow: selected ? '0 4px 14px rgba(8, 89, 70, 0.18)' : 'none',
+                                '&:hover': {
+                                  borderColor: '#71A095',
+                                  bgcolor: 'rgba(8, 89, 70, 0.05)',
+                                  transform: 'translateY(-2px)',
+                                },
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  display: 'block',
+                                  fontWeight: 700,
+                                  color: selected ? '#085946' : 'text.secondary',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: 0.06,
+                                  fontSize: '0.65rem',
+                                }}
+                              >
+                                {d.toLocaleDateString('es-CO', { weekday: 'short' }).replace('.', '')}
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: '1.65rem',
+                                  fontWeight: 800,
+                                  lineHeight: 1.1,
+                                  color: selected ? '#085946' : '#272F50',
+                                  my: 0.25,
+                                }}
+                              >
+                                {d.getDate()}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                {d.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '')}
+                              </Typography>
+                              {isToday ? (
+                                <Chip label="Hoy" size="small" sx={{ mt: 0.75, height: 20, fontSize: '0.65rem', bgcolor: '#e8f5f1' }} />
+                              ) : (
+                                <Box sx={{ height: 28 }} />
+                              )}
+                            </Paper>
+                          );
+                        })}
+                      </Box>
+
+                      <Divider sx={{ my: 3 }} />
+
+                      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 2,
+                            bgcolor: pickDate ? '#272F50' : 'grey.300',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 800,
+                            fontSize: '1rem',
+                          }}
+                        >
+                          2
+                        </Box>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', lineHeight: 1.2 }}>
+                            Elige la hora
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {pickDate
+                              ? new Date(`${pickDate}T12:00:00`).toLocaleDateString('es-CO', {
+                                  weekday: 'long',
+                                  day: 'numeric',
+                                  month: 'long',
+                                })
+                              : 'Primero selecciona un día'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Box
+                        sx={{
+                          p: 2.5,
+                          borderRadius: 2.5,
+                          bgcolor: '#f4f7f6',
+                          border: '1px solid #e3ebe8',
+                          minHeight: 132,
+                        }}
+                      >
+                        {slotsLoading ? (
+                          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+                            <CircularProgress size={36} thickness={4} sx={{ color: '#085946' }} />
+                          </Box>
+                        ) : slots.length === 0 ? (
+                          <Box sx={{ textAlign: 'center', py: 3 }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                              No hay cupos libres este día.
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Prueba otro día en la franja superior.
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Grid container spacing={1.25}>
+                            {slots.map((t) => {
+                              const active = pickSlot === t;
+                              return (
+                                <Grid item xs={4} sm={3} md={2} key={t}>
+                                  <Button
+                                    fullWidth
+                                    variant={active ? 'contained' : 'outlined'}
+                                    onClick={() => setPickSlot(t)}
+                                    sx={{
+                                      py: 1.25,
+                                      borderRadius: 2,
+                                      textTransform: 'none',
+                                      fontWeight: 700,
+                                      fontSize: '0.95rem',
+                                      borderColor: active ? '#085946' : '#cfd8d4',
+                                      color: active ? '#fff' : '#272F50',
+                                      bgcolor: active ? '#085946' : '#fff',
+                                      boxShadow: active ? '0 4px 12px rgba(8,89,70,0.25)' : 'none',
+                                      '&:hover': {
+                                        borderColor: '#085946',
+                                        bgcolor: active ? '#064a3a' : 'rgba(8,89,70,0.06)',
+                                      },
+                                    }}
+                                  >
+                                    {t}
+                                  </Button>
+                                </Grid>
+                              );
+                            })}
+                          </Grid>
+                        )}
+                      </Box>
+
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          mt: 3,
+                          p: 2,
+                          borderRadius: 2.5,
+                          bgcolor: 'rgba(8, 89, 70, 0.06)',
+                          border: '1px dashed rgba(8, 89, 70, 0.25)',
+                        }}
+                      >
+                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }} justifyContent="space-between">
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                              Tu selección
+                            </Typography>
+                            <Typography variant="subtitle1" fontWeight={700} color="#272F50">
+                              {pickDate && pickSlot
+                                ? `${new Date(`${pickDate}T12:00:00`).toLocaleDateString('es-CO', {
+                                    weekday: 'long',
+                                    day: 'numeric',
+                                    month: 'long',
+                                  })} · ${pickSlot}`
+                                : 'Completa día y hora para continuar'}
+                            </Typography>
+                          </Box>
+                          <ActionButton
+                            variant="contained"
+                            endIcon={<ArrowForward />}
+                            onClick={handleBookingClick}
+                            disabled={!pickDate || !pickSlot}
+                            sx={{
+                              px: 3,
+                              background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+                              color: 'white',
+                              '&:hover': {
+                                background: 'linear-gradient(135deg, #064a3a 0%, #085946 100%)',
+                              },
+                              '&.Mui-disabled': { bgcolor: 'grey.300', color: 'grey.500' },
+                            }}
+                          >
+                            Siguiente: tus datos
+                          </ActionButton>
+                        </Stack>
+                      </Paper>
+                    </CardContent>
+                  </SectionCard>
+                </Grid>
+
+                <Grid item xs={12} lg={4}>
+                  <Stack spacing={2.5}>
+                    <SectionCard
+                      sx={{
+                        borderRadius: 3,
+                        border: '1px solid #e8ecf1',
+                        boxShadow: '0 4px 20px rgba(39, 47, 80, 0.05)',
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>
+                          Antes de venir
+                        </Typography>
+                        <Stack spacing={1.5}>
+                          {[
+                            {
+                              icon: <AttachMoney sx={{ color: '#085946' }} />,
+                              title: 'Costos y pagos',
+                              body: consultationInfo.costos,
+                              defaultOpen: true,
+                            },
+                            {
+                              icon: <MenuBook sx={{ color: '#085946' }} />,
+                              title: 'Preparación',
+                              body: consultationInfo.preparacion,
+                            },
+                            {
+                              icon: <Business sx={{ color: '#085946' }} />,
+                              title: 'Contacto del centro',
+                              body: consultationInfo.contactoCentro,
+                            },
+                          ].map((item, idx) => (
+                            <Accordion
+                              key={item.title}
+                              defaultExpanded={item.defaultOpen}
+                              disableGutters
+                              elevation={0}
+                              sx={{
+                                border: '1px solid #e8ecf1',
+                                borderRadius: '12px !important',
+                                overflow: 'hidden',
+                                '&:before': { display: 'none' },
+                              }}
+                            >
+                              <AccordionSummary
+                                expandIcon={<ExpandMore sx={{ color: '#085946' }} />}
+                                sx={{
+                                  minHeight: 52,
+                                  px: 1.5,
+                                  bgcolor: idx === 0 ? 'rgba(8,89,70,0.04)' : 'transparent',
+                                  '& .MuiAccordionSummary-content': { my: 1.25, alignItems: 'center', gap: 1.25 },
+                                }}
+                              >
+                                {item.icon}
+                                <Typography fontWeight={700} color="#272F50" sx={{ fontSize: '0.95rem' }}>
+                                  {item.title}
+                                </Typography>
+                              </AccordionSummary>
+                              <AccordionDetails sx={{ px: 2, pt: 0, pb: 2 }}>
+                                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.65 }}>
+                                  {item.body}
+                                </Typography>
+                              </AccordionDetails>
+                            </Accordion>
+                          ))}
+                        </Stack>
+                      </CardContent>
+                    </SectionCard>
+
+                    <SectionCard
+                      sx={{
+                        borderRadius: 3,
+                        border: '1px solid #e8ecf1',
+                        background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+                          <Schedule sx={{ color: '#085946' }} />
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50' }}>
+                            Horario habitual
+                          </Typography>
+                        </Stack>
+                        <Stack spacing={1.25} divider={<Divider flexItem sx={{ borderStyle: 'dashed' }} />}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" fontWeight={700} letterSpacing={0.04}>
+                              LUNES A VIERNES
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600} color="#272F50">
+                              {professional.schedule.monday}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" fontWeight={700} letterSpacing={0.04}>
+                              SÁBADO
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600} color="#272F50">
+                              {professional.schedule.saturday}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" fontWeight={700} letterSpacing={0.04}>
+                              DOMINGO
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600} color="#272F50">
+                              {professional.schedule.sunday}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </CardContent>
+                    </SectionCard>
+                  </Stack>
+                </Grid>
               </Grid>
-            </Grid>
+            </Box>
           )}
 
           {/* Pestaña 3: Multimedia */}
@@ -815,7 +1270,10 @@ const ProfessionalProfilePage = () => {
                 <Typography variant="h4" gutterBottom fontWeight="bold" color="#085946">
                   Videos Educativos
                 </Typography>
-                <ImageList cols={{ xs: 1, sm: 2, md: 3 }} rowHeight={200} gap={16}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  En el perfil público se publican como máximo <strong>2 videos</strong> y <strong>3 fotos</strong>.
+                </Typography>
+                <ImageList cols={2} rowHeight={200} gap={16}>
                   {videos.map((video) => (
                     <ImageListItem key={video.id} sx={{ cursor: 'pointer' }} onClick={() => handleVideoClick(video)}>
                       <img
@@ -844,8 +1302,8 @@ const ProfessionalProfilePage = () => {
                 <Typography variant="h4" gutterBottom fontWeight="bold" color="#085946">
                   Galería de Fotos
                 </Typography>
-                <ImageList cols={{ xs: 1, sm: 2, md: 3 }} rowHeight={200} gap={16}>
-                  {photos.map((photo) => (
+                <ImageList cols={3} rowHeight={200} gap={16}>
+                  {photos.slice(0, 3).map((photo) => (
                     <ImageListItem key={photo.id}>
                       <img
                         src={photo.img}
@@ -864,101 +1322,8 @@ const ProfessionalProfilePage = () => {
             </Grid>
           )}
 
-          {/* Pestaña 4: Hablemos */}
+          {/* Pestaña 4: Preguntas */}
           {selectedTab === 3 && (
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={4}>
-                <SectionCard>
-                  <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
-                      Chat Directo
-                    </Typography>
-                    <Typography variant="body1" paragraph>
-                      ¿Tienes una pregunta específica? Chatea directamente con el Dr. {nameFromId}.
-                    </Typography>
-                    <ActionButton
-                      variant="contained"
-                      fullWidth
-                      startIcon={<QuestionAnswer />}
-                      onClick={handleChatClick}
-                      sx={{
-                        background: 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)',
-                        color: 'white',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%)'
-                        }
-                      }}
-                    >
-                      Iniciar Chat
-                    </ActionButton>
-                  </CardContent>
-                </SectionCard>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <SectionCard>
-                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                    <Typography variant="h2" sx={{ mb: 2, fontWeight: 900, color: '#085946' }}>
-                      {professional.rating}
-                    </Typography>
-                    <Rating value={professional.rating} precision={0.1} readOnly size="large" />
-                    <Typography variant="h6" sx={{ mt: 2, fontWeight: 600, color: '#085946' }}>
-                      Calificación Promedio
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Basado en {professional.reviews} reseñas
-                    </Typography>
-                  </CardContent>
-                </SectionCard>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <SectionCard>
-                  <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
-                      Opiniones de Nuestros Pacientes
-                    </Typography>
-                    <Stack spacing={2}>
-                      <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                          <Avatar sx={{ width: 32, height: 32 }}>MG</Avatar>
-                          <Typography variant="body2" fontWeight="bold">María González</Typography>
-                        </Box>
-                        <Rating value={5} readOnly size="small" />
-                        <Typography variant="caption" color="text.secondary">Hace 2 semanas</Typography>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          Excelente atención. El Dr. {nameFromId} es muy profesional y me ayudó mucho con mi problema auditivo. Muy recomendado.
-                        </Typography>
-                      </Box>
-                      <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                          <Avatar sx={{ width: 32, height: 32 }}>CR</Avatar>
-                          <Typography variant="body2" fontWeight="bold">Carlos Rodríguez</Typography>
-                        </Box>
-                        <Rating value={5} readOnly size="small" />
-                        <Typography variant="caption" color="text.secondary">Hace 1 mes</Typography>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          Muy buen diagnóstico y tratamiento. El consultorio es moderno y la atención es personalizada.
-                        </Typography>
-                      </Box>
-                      <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                          <Avatar sx={{ width: 32, height: 32 }}>AM</Avatar>
-                          <Typography variant="body2" fontWeight="bold">Ana Martínez</Typography>
-                        </Box>
-                        <Rating value={5} readOnly size="small" />
-                        <Typography variant="caption" color="text.secondary">Hace 3 semanas</Typography>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          El Dr. {nameFromId} es muy paciente y explica todo muy bien. Me siento muy satisfecha con el tratamiento.
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </CardContent>
-                </SectionCard>
-              </Grid>
-            </Grid>
-          )}
-
-          {/* Pestaña 5: Preguntas */}
-          {selectedTab === 4 && (
             <Grid container spacing={4}>
               <Grid item xs={12} md={6}>
                 <SectionCard>
@@ -1073,130 +1438,99 @@ const ProfessionalProfilePage = () => {
             </Grid>
           )}
 
-          {/* Pestaña 6: Aliados */}
-          {selectedTab === 5 && (
+          {/* Pestaña 5: Aliados (solo categorías con contenido) */}
+          {selectedTab === 4 && (
             <Box>
               <Typography variant="h4" gutterBottom fontWeight="bold" color="#085946">
-                Nuestros Aliados Comerciales
+                Aliados
               </Typography>
-              <Typography variant="body1" paragraph sx={{ mb: 4 }}>
-                Trabajamos con las mejores marcas del mercado para garantizar la mejor calidad en audífonos e implantes cocleares.
+              <Typography variant="body1" paragraph sx={{ mb: 3 }}>
+                Marcas y proveedores con los que trabaja el profesional o centro. Solo se muestran categorías que tienen al menos un aliado.
               </Typography>
-              <Grid container spacing={3}>
-                {[
-                  { name: 'Phonak', description: 'Audífonos de alta tecnología', image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=200&fit=crop' },
-                  { name: 'Oticon', description: 'Soluciones auditivas innovadoras', image: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=300&h=200&fit=crop' },
-                  { name: 'Starkey', description: 'Audífonos personalizados', image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=200&fit=crop' },
-                  { name: 'Cochlear', description: 'Implantes cocleares', image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=200&fit=crop' },
-                  { name: 'Med-El', description: 'Tecnología de implantes', image: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=300&h=200&fit=crop' },
-                  { name: 'Advanced Bionics', description: 'Sistemas de implantes', image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=200&fit=crop' }
-                ].map((partner, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <SectionCard>
-                      <img
-                        src={partner.image}
-                        alt={partner.name}
-                        style={{ 
-                          width: '100%', 
-                          height: 150, 
-                          objectFit: 'cover',
-                          borderTopLeftRadius: '8px',
-                          borderTopRightRadius: '8px'
-                        }}
-                      />
-                      <CardContent>
-                        <Typography variant="h6" fontWeight="bold" gutterBottom>
-                          {partner.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {partner.description}
-                        </Typography>
-                      </CardContent>
-                    </SectionCard>
-                  </Grid>
-                ))}
-              </Grid>
+              {allySections.length === 0 ? (
+                <Typography color="text.secondary">Aún no hay aliados publicados en esta ficha.</Typography>
+              ) : (
+                allySections.map((cat) => (
+                  <Box key={cat.key} sx={{ mb: 4 }}>
+                    <Typography variant="h5" sx={{ mb: 2, fontWeight: 700, color: '#272F50' }}>
+                      {cat.title}
+                    </Typography>
+                    <Grid container spacing={3}>
+                      {(alliesByCategory[cat.key] || []).map((partner) => (
+                        <Grid item xs={12} sm={6} md={4} key={partner.name}>
+                          <SectionCard>
+                            {partner.image ? (
+                              <img
+                                src={partner.image}
+                                alt={partner.name}
+                                style={{
+                                  width: '100%',
+                                  height: 150,
+                                  objectFit: 'cover',
+                                  borderTopLeftRadius: '8px',
+                                  borderTopRightRadius: '8px',
+                                }}
+                              />
+                            ) : null}
+                            <CardContent>
+                              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                                {partner.name}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {partner.description}
+                              </Typography>
+                            </CardContent>
+                          </SectionCard>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                ))
+              )}
             </Box>
           )}
 
-          {/* Pestaña 7: Estudios Profesionales */}
-          {selectedTab === 6 && (
+          {/* Pestaña 6: Estudios (solo categorías con contenido) */}
+          {selectedTab === 5 && (
             <Box>
               <Typography variant="h4" gutterBottom fontWeight="bold" color="#085946">
-                Estudios y Certificaciones
+                Estudios y formación
               </Typography>
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                {[
-                  { title: 'Médico Cirujano', institution: 'Universidad Nacional de Colombia', period: '2005-2011' },
-                  { title: 'Especialización en Otorrinolaringología', institution: 'Universidad de los Andes', period: '2012-2016' },
-                  { title: 'Fellowship en Cirugía Endoscópica', institution: 'Hospital Johns Hopkins', period: '2017' }
-                ].map((study, index) => (
-                  <Grid item xs={12} md={4} key={index}>
-                    <SectionCard>
-                      <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                          <Typography variant="h6" fontWeight="bold" color="#085946">
-                            {study.title}
-                          </Typography>
-                          <Box sx={{ 
-                            width: 40, 
-                            height: 40, 
-                            bgcolor: 'grey.100', 
-                            borderRadius: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <Typography variant="caption" color="text.secondary">?</Typography>
-                          </Box>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          {study.institution}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {study.period}
-                        </Typography>
-                      </CardContent>
-                    </SectionCard>
-                  </Grid>
-                ))}
-              </Grid>
-
-              <Typography variant="h4" gutterBottom fontWeight="bold" color="#085946">
-                Premios y Reconocimientos
+              <Typography variant="body1" paragraph sx={{ mb: 3 }}>
+                Trayectoria académica y actualización. Solo se listan categorías con información cargada.
               </Typography>
-              <Grid container spacing={3}>
-                {[
-                  { title: 'Mejor Otorrinolaringólogo del Año', institution: 'Asociación Colombiana de Otorrinolaringología' },
-                  { title: 'Premio a la Excelencia Médica', institution: 'Ministerio de Salud' }
-                ].map((award, index) => (
-                  <Grid item xs={12} md={6} key={index}>
-                    <SectionCard>
-                      <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <Typography variant="h6" fontWeight="bold" color="#085946">
-                            {award.title}
-                          </Typography>
-                          <Box sx={{ 
-                            width: 40, 
-                            height: 40, 
-                            bgcolor: 'grey.100', 
-                            borderRadius: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <Typography variant="caption" color="text.secondary">?</Typography>
-                          </Box>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                          {award.institution}
-                        </Typography>
-                      </CardContent>
-                    </SectionCard>
-                  </Grid>
-                ))}
-              </Grid>
+              {studySections.length === 0 ? (
+                <Typography color="text.secondary">No hay estudios publicados en esta ficha.</Typography>
+              ) : (
+                studySections.map((cat) => (
+                  <Box key={cat.key} sx={{ mb: 4 }}>
+                    <Typography variant="h5" sx={{ mb: 2, fontWeight: 700, color: '#272F50' }}>
+                      {cat.title}
+                    </Typography>
+                    <Grid container spacing={3}>
+                      {(studiesByCategory[cat.key] || []).map((study, index) => (
+                        <Grid item xs={12} md={4} key={`${cat.key}-${index}`}>
+                          <SectionCard>
+                            <CardContent sx={{ p: 3 }}>
+                              <Typography variant="h6" fontWeight="bold" color="#085946" gutterBottom>
+                                {study.title}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                {study.institution}
+                              </Typography>
+                              {study.period ? (
+                                <Typography variant="caption" color="text.secondary">
+                                  {study.period}
+                                </Typography>
+                              ) : null}
+                            </CardContent>
+                          </SectionCard>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                ))
+              )}
             </Box>
           )}
         </Box>
@@ -1204,81 +1538,79 @@ const ProfessionalProfilePage = () => {
 
       {/* Diálogos */}
       <Dialog open={bookingDialog} onClose={() => setBookingDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Agendar Cita con {professional.name}</DialogTitle>
+        <DialogTitle>Confirmar cita con {professional.name}</DialogTitle>
         <DialogContent>
-          <Stack spacing={3} sx={{ mt: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Fecha: <strong>{pickDate}</strong> · Hora: <strong>{pickSlot || '—'}</strong>
+          </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Al confirmar, se registra la cita en el sistema. Se enviará aviso al correo del paciente y al del profesional
+            (registro en consola del servidor hasta configurar SMTP).
+          </Alert>
+          <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="Nombre completo"
               fullWidth
               variant="outlined"
+              value={bookingName}
+              onChange={(e) => setBookingName(e.target.value)}
+              required
             />
             <TextField
               label="Teléfono"
               fullWidth
               variant="outlined"
+              value={bookingPhone}
+              onChange={(e) => setBookingPhone(e.target.value)}
+              required
             />
             <TextField
               label="Email"
               fullWidth
               variant="outlined"
               type="email"
+              value={bookingEmail}
+              onChange={(e) => setBookingEmail(e.target.value)}
+              required
             />
             <FormControl fullWidth>
               <InputLabel>Motivo de consulta</InputLabel>
-              <Select label="Motivo de consulta">
-                <MenuItem value="evaluacion">Evaluación auditiva</MenuItem>
-                <MenuItem value="audifonos">Adaptación de audífonos</MenuItem>
-                <MenuItem value="revision">Revisión general</MenuItem>
-                <MenuItem value="otro">Otro</MenuItem>
+              <Select
+                label="Motivo de consulta"
+                value={bookingReason}
+                onChange={(e) => setBookingReason(e.target.value)}
+              >
+                <MenuItem value="Evaluación auditiva">Evaluación auditiva</MenuItem>
+                <MenuItem value="Adaptación de audífonos">Adaptación de audífonos</MenuItem>
+                <MenuItem value="Revisión general">Revisión general</MenuItem>
+                <MenuItem value="Otro">Otro</MenuItem>
               </Select>
             </FormControl>
-            <TextField
-              label="Fecha preferida"
-              fullWidth
-              variant="outlined"
-              type="date"
-            />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setBookingDialog(false)}>Cancelar</Button>
-          <Button variant="contained" sx={{ bgcolor: '#085946' }}>
-            Confirmar Cita
+          <Button
+            variant="contained"
+            sx={{ bgcolor: '#085946' }}
+            onClick={handleConfirmBooking}
+            disabled={bookingSubmitting}
+          >
+            {bookingSubmitting ? 'Guardando…' : 'Confirmar cita'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={chatDialog} onClose={() => setChatDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Contactar a {professional.name}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 2 }}>
-            <TextField
-              label="Nombre completo"
-              fullWidth
-              variant="outlined"
-            />
-            <TextField
-              label="Email"
-              fullWidth
-              variant="outlined"
-              type="email"
-            />
-            <TextField
-              label="Mensaje"
-              fullWidth
-              variant="outlined"
-              multiline
-              rows={4}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setChatDialog(false)}>Cancelar</Button>
-          <Button variant="contained" sx={{ bgcolor: '#085946' }}>
-            Enviar Mensaje
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={8000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
       <Footer />
     </>

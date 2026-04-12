@@ -43,14 +43,15 @@ export const formatProcedencia = (procedencia, agendamientoManualTipo = null) =>
 };
 
 /**
- * Obtiene todas las opciones de procedencia disponibles (para landing)
+ * Obtiene todas las opciones de procedencia disponibles (para landing / agendamiento público).
+ * Nota: "Referido médico" en UI usa value `visita-medica`; en métricas y formatProcedencia sigue contándose como "Visita Médica".
  * @returns {Array} Array de objetos {value, label}
  */
 export const getProcedenciaOptions = () => {
   return [
     { value: 'leads-marketing-digital', label: 'Leads Marketing Digital' },
     { value: 'leads-marketing-offline', label: 'Leads Marketing Offline' },
-    { value: 'visita-medica', label: 'Visita Médica' },
+    { value: 'visita-medica', label: 'Referido médico' },
     { value: 'renovacion', label: 'Renovación' },
     { value: 'recomendacion', label: 'Recomendación' },
     { value: 'sitio-web', label: 'Sitio Web' },

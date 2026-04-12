@@ -49,7 +49,8 @@ const savePatientRecords = (records) => {
  */
 export const getPatientRecords = (patientEmail) => {
   const allRecords = getAllPatientRecords();
-  return allRecords[patientEmail] || [];
+  const key = (patientEmail || '').trim().toLowerCase();
+  return allRecords[key] || [];
 };
 
 /**
@@ -78,6 +79,10 @@ export const addPatientRecord = (patientEmail, recordData) => {
     nextSteps,
     appointmentType, // tipo de cita: primera-vez, adaptacion, prueba-audifonos, etc.
     formData, // datos del formulario de historia clínica según tipo de cita
+    diagnosticos, // diagnósticos o problemas clínicos (evolución)
+    pronostico, // pronóstico
+    tratamiento, // tratamiento e indicaciones
+    signosVitales, // { ta, fc, fr, temp, peso } opcional
   } = recordData;
 
   if (!patientEmail || !type || !title) {
@@ -111,6 +116,10 @@ export const addPatientRecord = (patientEmail, recordData) => {
     nextSteps: nextSteps || null,
     appointmentType: appointmentType || null,
     formData: formData && typeof formData === 'object' ? formData : null,
+    diagnosticos: diagnosticos || null,
+    pronostico: pronostico || null,
+    tratamiento: tratamiento || null,
+    signosVitales: signosVitales && typeof signosVitales === 'object' ? signosVitales : null,
   };
 
   const allRecords = getAllPatientRecords();
@@ -147,7 +156,8 @@ export const addPatientRecord = (patientEmail, recordData) => {
  * @returns {Object} {success: boolean, record: Object|null, error: string|null}
  */
 export const recordConsultation = (patientEmail, appointmentId, consultationData) => {
-  return addPatientRecord(patientEmail, {
+  const key = (patientEmail || '').trim().toLowerCase();
+  return addPatientRecord(key, {
     type: 'consultation',
     title: 'Consulta Realizada',
     description: `Consulta realizada el ${new Date().toLocaleDateString('es-ES')}`,
@@ -158,7 +168,46 @@ export const recordConsultation = (patientEmail, appointmentId, consultationData
     nextSteps: consultationData.nextSteps || '',
     appointmentType: consultationData.appointmentType || null,
     formData: consultationData.formData && typeof consultationData.formData === 'object' ? consultationData.formData : null,
+    diagnosticos: consultationData.diagnosticos || null,
+    pronostico: consultationData.pronostico || null,
+    tratamiento: consultationData.tratamiento || null,
+    signosVitales: consultationData.signosVitales && typeof consultationData.signosVitales === 'object' ? consultationData.signosVitales : null,
   });
+};
+
+/**
+ * Actualiza una consulta existente (solo la última, por restricción de edición).
+ * @param {string} patientEmail - Email del paciente
+ * @param {string} recordId - ID del registro a actualizar
+ * @param {Object} consultationData - Datos actualizados
+ * @returns {Object} {success: boolean, record: Object|null, error: string|null}
+ */
+export const updateConsultation = (patientEmail, recordId, consultationData) => {
+  const key = (patientEmail || '').trim().toLowerCase();
+  const allRecords = getAllPatientRecords();
+  const records = allRecords[key] || [];
+  const idx = records.findIndex((r) => r.id === recordId && r.type === 'consultation');
+  if (idx < 0) {
+    return { success: false, record: null, error: 'Consulta no encontrada' };
+  }
+  const existing = records[idx];
+  const updatedRecord = {
+    ...existing,
+    consultationNotes: consultationData.notes ?? existing.consultationNotes,
+    hearingLoss: consultationData.hearingLoss ?? existing.hearingLoss,
+    nextSteps: consultationData.nextSteps ?? existing.nextSteps,
+    appointmentType: consultationData.appointmentType ?? existing.appointmentType,
+    formData: consultationData.formData && typeof consultationData.formData === 'object' ? consultationData.formData : existing.formData,
+    diagnosticos: consultationData.diagnosticos ?? existing.diagnosticos,
+    pronostico: consultationData.pronostico ?? existing.pronostico,
+    tratamiento: consultationData.tratamiento ?? existing.tratamiento,
+    signosVitales: consultationData.signosVitales && typeof consultationData.signosVitales === 'object' ? consultationData.signosVitales : existing.signosVitales,
+  };
+  records[idx] = updatedRecord;
+  allRecords[key] = records;
+  return savePatientRecords(allRecords)
+    ? { success: true, record: updatedRecord, error: null }
+    : { success: false, record: null, error: 'Error al actualizar' };
 };
 
 /**

@@ -160,8 +160,8 @@ const EcommercePage = () => {
   return (
     <>
       <Helmet>
-        <title>Tienda de Audífonos - OirConecta | Productos de Calidad</title>
-        <meta name="description" content="Encuentra los mejores audífonos y accesorios en nuestra tienda. Marcas reconocidas como Phonak, Oticon y Starkey. Envío gratis en Colombia." />
+        <title>Tienda - OírConecta | Catálogo orientativo</title>
+        <meta name="description" content="Referencia de productos y accesorios. Compra y garantías según disponibilidad de la red y cada proveedor." />
         <meta name="keywords" content="audífonos, tienda, Phonak, Oticon, Starkey, accesorios, Colombia" />
         <link rel="canonical" href="https://oirconecta.com/ecommerce" />
       </Helmet>
@@ -177,7 +177,7 @@ const EcommercePage = () => {
             color: '#085946',
             mb: 6
           }}>
-            Tienda de Audífonos
+            Tienda (referencia)
           </Typography>
 
           <Typography variant="h5" component="p" sx={{
@@ -187,8 +187,8 @@ const EcommercePage = () => {
             maxWidth: '800px',
             mx: 'auto'
           }}>
-            Descubre nuestra selección de audífonos de alta calidad y accesorios esenciales.
-            Marcas reconocidas mundialmente con garantía y soporte técnico especializado.
+            Ejemplos de productos y accesorios que suelen ofrecerse en el ecosistema auditivo. Precios, stock, envío y
+            garantía dependen del profesional o centro de la red con el que cierres la compra o adaptación.
           </Typography>
 
           {/* Filtros y Búsqueda */}

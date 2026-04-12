@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FaStar, FaUserMd, FaUpload, FaFileExcel, FaDownload, FaTrash, FaInstagram, FaFacebook, FaGlobe } from 'react-icons/fa';
+import { useSearchParams } from 'react-router-dom';
+import { FaStar, FaUserMd, FaUpload, FaFileExcel, FaDownload, FaTrash } from 'react-icons/fa';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SearchEngine from '../components/SearchEngine';
 import { normalizeForSearch } from '../utils/textUtils';
+import { recordMatchesProfesion, PROFESION_LABEL_TODAS, profesionesParaListing } from '../utils/profesionFilter';
+import { POLIZAS_COLOMBIA, POLIZA_LABEL_TODAS } from '../config/polizasColombia';
+import { slugForAudiologaList } from '../utils/professionalSlug';
+import ProfessionalListCard from '../components/professionals/ProfessionalListCard';
 
 // Usar datos reales de audiólogas
 
 const AudiologasPage = () => {
-  const navigate = useNavigate();
   const [audiologas, setAudiologas] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [selectedSpecialty, setSelectedSpecialty] = useState('');
+  const [selectedProfesion, setSelectedProfesion] = useState(PROFESION_LABEL_TODAS);
   const [selectedPoliza, setSelectedPoliza] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [uploadStatus, setUploadStatus] = useState('Base de datos vacía (0 audiólogas)');
@@ -27,9 +30,17 @@ const AudiologasPage = () => {
   useEffect(() => {
     const q = searchParams.get('q') || '';
     const ciudad = searchParams.get('ciudad') || '';
+    const profesion = searchParams.get('profesion') || '';
+    const poliza = searchParams.get('poliza') || '';
     if (q || ciudad) {
       setSearchTerm(q);
       setSelectedCity(ciudad);
+    }
+    if (profesion) {
+      setSelectedProfesion(profesion);
+    }
+    if (poliza) {
+      setSelectedPoliza(poliza);
     }
   }, [searchParams]);
 
@@ -105,47 +116,33 @@ const AudiologasPage = () => {
       const cityMatch = !selectedCity || selectedCity === 'Todas las ciudades' ||
         normalizeForSearch(audiologa.ciudad) === cityNorm;
 
-      // Filtro por especialidad
-      const specialtyMatch = !selectedSpecialty || selectedSpecialty === 'Todas las especialidades' ||
-        audiologa.especialidad === selectedSpecialty || audiologa.profesion === selectedSpecialty || audiologa.titulo === selectedSpecialty;
+      const profesionMatch = recordMatchesProfesion(audiologa, selectedProfesion);
 
-      // Filtro por prepagada
-      const polizaMatch = !selectedPoliza || selectedPoliza === 'Todas las pólizas' ||
-        (audiologa.prepagadas && audiologa.prepagadas.includes(selectedPoliza));
+      const polizaMatch =
+        !selectedPoliza ||
+        selectedPoliza === POLIZA_LABEL_TODAS ||
+        !audiologa.prepagadas?.length ||
+        audiologa.prepagadas.includes(selectedPoliza);
 
-      return searchMatch && cityMatch && specialtyMatch && polizaMatch;
+      return searchMatch && cityMatch && profesionMatch && polizaMatch;
     });
-  }, [audiologas, searchTerm, selectedCity, selectedSpecialty, selectedPoliza]);
-
-  // Función para manejar el clic en una tarjeta de profesional
-  const handleProfessionalClick = (audiologa) => {
-    console.log('🖱️ Clic en audióloga:', audiologa.nombre);
-    const professionalId = audiologa.nombre
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '') // Solo letras, números y espacios
-      .replace(/\s+/g, '-') // Reemplazar espacios con guiones
-      .replace(/-+/g, '-') // Reemplazar múltiples guiones con uno solo
-      .replace(/^-|-$/g, ''); // Remover guiones del inicio y final
-    console.log('🆔 ID generado:', professionalId);
-    console.log('🧭 Navegando a:', `/profesionales/audiologos/${professionalId}`);
-    
-    navigate(`/profesionales/audiologos/${professionalId}`);
-  };
+  }, [audiologas, searchTerm, selectedCity, selectedProfesion, selectedPoliza]);
 
   // Función para manejar filtros del SearchEngine
   const handleSearchFilter = (filters) => {
     console.log('AudiologasPage - Filtros recibidos:', filters);
     const newSearchTerm = filters.query || '';
     const newCity = filters.ciudad || '';
-    const newSpecialty = filters.especialidad || '';
-    const newPoliza = filters.poliza || '';
+    const newProfesion = filters.profesion || filters.especialidad || PROFESION_LABEL_TODAS;
+    const newPoliza =
+      !filters.poliza || filters.poliza === POLIZA_LABEL_TODAS ? '' : filters.poliza;
     
     // Solo resetear la página si realmente cambiaron los filtros
     if (newSearchTerm !== searchTerm || newCity !== selectedCity || 
-        newSpecialty !== selectedSpecialty || newPoliza !== selectedPoliza) {
+        newProfesion !== selectedProfesion || newPoliza !== selectedPoliza) {
       setSearchTerm(newSearchTerm);
       setSelectedCity(newCity);
-      setSelectedSpecialty(newSpecialty);
+      setSelectedProfesion(newProfesion || PROFESION_LABEL_TODAS);
       setSelectedPoliza(newPoliza);
       setCurrentPage(1); // Resetear a la primera página solo cuando cambian los filtros
     }
@@ -216,11 +213,13 @@ const AudiologasPage = () => {
           onFilter={handleSearchFilter} 
           isProfessionalPage={true}
           ciudades={ciudades}
-          especialidades={['Audióloga']}
-          polizas={[]}
+          profesiones={profesionesParaListing('audiologia')}
+          polizas={POLIZAS_COLOMBIA}
           initialFilters={{
             query: searchParams.get('q') || '',
             ciudad: searchParams.get('ciudad') || '',
+            profesion: searchParams.get('profesion') || '',
+            poliza: searchParams.get('poliza') || '',
           }}
         />
       </div>
@@ -243,236 +242,13 @@ const AudiologasPage = () => {
         {paginationData.currentAudiologas.length > 0 ? (
           <>
             <div className="cards-grid">
-              {paginationData.currentAudiologas.map((audiologa, idx) => (
-                <div 
-                  key={idx} 
-                  className="professional-card"
-                  onClick={() => handleProfessionalClick(audiologa)}
-                  style={{ 
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    transform: 'translateY(0)',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 8px 25px rgba(8, 89, 70, 0.2)'
-                    }
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-8px)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(8, 89, 70, 0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '';
-                  }}
-                >
-                  <div className="card-header">
-                    <div className="card-image-container">
-                      <div className="card-image">
-                        {/* Placeholder para imagen */}
-                      </div>
-                    </div>
-                    <div className="verified-badge">
-                      <FaStar size={12} />
-                      Verificada
-                    </div>
-                  </div>
-                  <div className="card-content">
-                    <div className="specialty-badge">
-                      Audióloga
-                    </div>
-                    <h3 className="professional-name">
-                      <b>{audiologa.nombre}</b>
-                    </h3>
-                    <div className="location-info">
-                      <span style={{ fontWeight: 'bold' }}>{audiologa.ciudad}</span>
-                    </div>
-
-                    {/* Datos de contacto */}
-                    <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                      <div style={{ fontSize: '12px', color: '#86899C', marginBottom: '4px' }}>
-                        Teléfono: {audiologa.telefono}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#86899C', marginBottom: '4px' }}>
-                        Email: {audiologa.email || 'No disponible'}
-                      </div>
-                    </div>
-
-                    {/* Prepagadas */}
-                    {audiologa.prepagadas && audiologa.prepagadas.length > 0 && (
-                      <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: '600', color: '#272F50' }}>Prepagadas aceptadas</span>
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center' }}>
-                          {audiologa.prepagadas.slice(0, 3).map((prepagada, index) => (
-                            <span
-                              key={index}
-                              style={{
-                                background: 'rgba(8, 89, 70, 0.1)',
-                                color: '#085946',
-                                padding: '2px 6px',
-                                borderRadius: '12px',
-                                fontSize: '10px',
-                                fontWeight: '500'
-                              }}
-                            >
-                              {prepagada}
-                            </span>
-                          ))}
-                          {audiologa.prepagadas.length > 3 && (
-                            <span
-                              style={{
-                                background: '#f3f4f6',
-                                color: '#86899C',
-                                padding: '2px 6px',
-                                borderRadius: '12px',
-                                fontSize: '10px',
-                                fontWeight: '500'
-                              }}
-                            >
-                              +{audiologa.prepagadas.length - 3} más
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Servicios */}
-                    {audiologa.servicios && audiologa.servicios.length > 0 && (
-                      <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: '600', color: '#272F50' }}>Servicios principales</span>
-                        </div>
-                        <div style={{ 
-                          display: 'flex', 
-                          flexWrap: 'wrap', 
-                          gap: '4px', 
-                          justifyContent: 'center',
-                          maxHeight: '60px',
-                          overflow: 'hidden'
-                        }}>
-                          {audiologa.servicios.slice(0, 3).map((servicio, index) => (
-                            <span
-                              key={index}
-                              style={{
-                                fontSize: '9px',
-                                padding: '2px 6px',
-                                backgroundColor: 'rgba(8, 89, 70, 0.1)',
-                                color: '#085946',
-                                borderRadius: '4px',
-                                fontWeight: '500',
-                                border: '1px solid rgba(8, 89, 70, 0.2)'
-                              }}
-                            >
-                              {servicio}
-                            </span>
-                          ))}
-                          {audiologa.servicios.length > 3 && (
-                            <span
-                              style={{
-                                fontSize: '9px',
-                                padding: '2px 6px',
-                                backgroundColor: '#f3f4f6',
-                                color: '#86899C',
-                                borderRadius: '4px',
-                                fontWeight: '500'
-                              }}
-                            >
-                              +{audiologa.servicios.length - 3} más
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-
-
-                    <div className="action-buttons">
-                      <button className="btn-contact" style={{ marginBottom: '10px' }}>
-                        Agendar cita
-                      </button>
-                      <button className="btn-contact" style={{ marginBottom: '5px' }}>
-                        Llamar
-                      </button>
-                    </div>
-
-                    {/* Sección Contáctanos */}
-                    <div style={{
-                      textAlign: 'center',
-                      marginBottom: '5px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#272F50'
-                    }}>
-                      Contáctanos
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      gap: '12px',
-                      padding: '8px 0'
-                    }}>
-                      <a
-                        href="#"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: '#085946',
-                          textDecoration: 'none',
-                          padding: '8px',
-                          borderRadius: '50%',
-                          background: 'rgba(8, 89, 70, 0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.3s ease'
-                        }}
-                        aria-label="Instagram"
-                      >
-                        <FaInstagram size={16} />
-                      </a>
-                      <a
-                        href="#"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: '#085946',
-                          textDecoration: 'none',
-                          padding: '8px',
-                          borderRadius: '50%',
-                          background: 'rgba(8, 89, 70, 0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.3s ease'
-                        }}
-                        aria-label="Facebook"
-                      >
-                        <FaFacebook size={16} />
-                      </a>
-                      <a
-                        href="#"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: '#085946',
-                          textDecoration: 'none',
-                          padding: '8px',
-                          borderRadius: '50%',
-                          background: 'rgba(8, 89, 70, 0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.3s ease'
-                        }}
-                        aria-label="Página web"
-                      >
-                        <FaGlobe size={16} />
-                      </a>
-                    </div>
-                  </div>
-                </div>
+              {paginationData.currentAudiologas.map((audiologa) => (
+                <ProfessionalListCard
+                  key={audiologa.id || slugForAudiologaList(audiologa.nombre)}
+                  professional={audiologa}
+                  roleLabel="Audióloga"
+                  toProfile={`/profesionales/audiologos/${slugForAudiologaList(audiologa.nombre)}`}
+                />
               ))}
             </div>
 
@@ -550,7 +326,7 @@ const AudiologasPage = () => {
               onClick={() => {
                 setSearchTerm('');
                 setSelectedCity('');
-                setSelectedSpecialty('');
+                setSelectedProfesion(PROFESION_LABEL_TODAS);
                 setSelectedPoliza('');
                 setCurrentPage(1);
               }}

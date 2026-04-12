@@ -5,8 +5,13 @@
 
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { hashPassword } = require('../src/utils/password');
 
 const prisma = new PrismaClient();
+
+/** Cuenta demo del directorio público (no es usuario CRM). Ver README o consola del seed para la contraseña. */
+const DIRECTORY_DEMO_EMAIL = 'directorio.demo@oirconecta.com';
+const DIRECTORY_DEMO_PASSWORD = 'DemoDirect2026!';
 
 async function main() {
   console.log('🌱 Iniciando seed de la base de datos...\n');
@@ -21,28 +26,31 @@ async function main() {
     where: { email: adminEmail },
   });
 
-  if (existingAdmin) {
-    console.log(`✅ Usuario admin ya existe: ${adminEmail}`);
-  } else {
-    // Crear usuario administrador
-    const hashedPassword = await bcrypt.hash(adminPassword, 12);
-    
-    const admin = await prisma.user.create({
-      data: {
-        email: adminEmail,
-        password: hashedPassword,
-        nombre: adminNombre,
-        role: 'ADMIN',
-        activo: true,
-      },
-    });
+  const usersToCreate = [
+    { email: adminEmail, password: adminPassword, nombre: adminNombre, role: 'ADMIN' },
+    { email: 'recepcion@oirconecta.com', password: 'Recepcion123!', nombre: 'Recepción', role: 'RECEPCION' },
+    { email: 'audiologa@oirconecta.com', password: 'Audiologa123!', nombre: 'Audióloga', role: 'AUDIOLOGA' },
+  ];
 
-    console.log(`✅ Usuario admin creado:`);
-    console.log(`   Email: ${admin.email}`);
-    console.log(`   Nombre: ${admin.nombre}`);
-    console.log(`   Role: ${admin.role}`);
-    console.log(`   Password: ${adminPassword} (¡cambiar en producción!)\n`);
+  for (const u of usersToCreate) {
+    const existing = await prisma.user.findUnique({ where: { email: u.email } });
+    if (existing) {
+      console.log(`✅ Usuario ya existe: ${u.email} (${u.role})`);
+    } else {
+      const hashedPassword = await bcrypt.hash(u.password, 12);
+      const user = await prisma.user.create({
+        data: {
+          email: u.email,
+          password: hashedPassword,
+          nombre: u.nombre,
+          role: u.role,
+          activo: true,
+        },
+      });
+      console.log(`✅ Usuario creado: ${user.email} | ${user.nombre} | ${u.role} | Password: ${u.password}`);
+    }
   }
+  console.log('');
 
   // Crear campañas de marketing de ejemplo
   const existingCampaigns = await prisma.campaign.count();
@@ -93,6 +101,62 @@ async function main() {
   } else {
     console.log(`✅ Ya existen ${existingCampaigns} campañas de marketing`);
   }
+
+  // Cuenta demo del directorio público (login en /login-directorio → panel Mi directorio).
+  // Si el email ya existía (registro manual u otro seed), se restablece la contraseña demo para que el acceso sea predecible.
+  const hashedDirDemo = await hashPassword(DIRECTORY_DEMO_PASSWORD);
+  let dirDemoAccount = await prisma.directoryAccount.findUnique({
+    where: { email: DIRECTORY_DEMO_EMAIL },
+  });
+  if (!dirDemoAccount) {
+    dirDemoAccount = await prisma.directoryAccount.create({
+      data: {
+        email: DIRECTORY_DEMO_EMAIL,
+        password: hashedDirDemo,
+        nombre: 'Profesional Demo Directorio',
+        activo: true,
+      },
+    });
+    await prisma.directoryProfile.create({
+      data: {
+        accountId: dirDemoAccount.id,
+        status: 'APPROVED',
+        nombreConsultorio: 'Consultorio Demo Oír Conecta',
+        profesion: 'Audiología',
+        polizasAceptadas: ['Sura', 'Sanitas'],
+        photoUrls: [],
+      },
+    });
+    console.log(`\n✅ Cuenta demo DIRECTORIO creada:`);
+  } else {
+    await prisma.directoryAccount.update({
+      where: { email: DIRECTORY_DEMO_EMAIL },
+      data: {
+        password: hashedDirDemo,
+        nombre: 'Profesional Demo Directorio',
+        activo: true,
+      },
+    });
+    const existingProf = await prisma.directoryProfile.findUnique({
+      where: { accountId: dirDemoAccount.id },
+    });
+    if (!existingProf) {
+      await prisma.directoryProfile.create({
+        data: {
+          accountId: dirDemoAccount.id,
+          status: 'APPROVED',
+          nombreConsultorio: 'Consultorio Demo Oír Conecta',
+          profesion: 'Audiología',
+          polizasAceptadas: ['Sura', 'Sanitas'],
+          photoUrls: [],
+        },
+      });
+    }
+    console.log(`\n✅ Cuenta demo DIRECTORIO sincronizada (contraseña restablecida a la demo):`);
+  }
+  console.log(`   Email:    ${DIRECTORY_DEMO_EMAIL}`);
+  console.log(`   Password: ${DIRECTORY_DEMO_PASSWORD}`);
+  console.log('   (Acceso: /login-directorio. No uses esta cuenta en producción.)');
 
   console.log('\n🎉 Seed completado exitosamente!');
 }

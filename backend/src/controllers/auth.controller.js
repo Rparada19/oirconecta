@@ -66,9 +66,32 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+const listUsers = async (req, res, next) => {
+  try {
+    const users = await authService.listUsers();
+    res.json({ success: true, data: users });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateUser = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, error: 'Solo administradores pueden actualizar usuarios' });
+    }
+    const user = await authService.updateUser(req.params.id, req.body);
+    res.json({ success: true, data: user });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   login,
   register,
   me,
   changePassword,
+  listUsers,
+  updateUser,
 };

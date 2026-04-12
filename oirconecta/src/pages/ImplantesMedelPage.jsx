@@ -28,7 +28,7 @@ import {
 import { styled } from '@mui/material/styles';
 
 // Imágenes
-const medelLogo = '/logos/marcas/MED-EL-logo.png';
+const medelLogo = '/logos/marcas/MED-EL_Logo.jpg';
 
 // Styled Components - Minimalista
 const HeroSection = styled(Box)(({ theme }) => ({

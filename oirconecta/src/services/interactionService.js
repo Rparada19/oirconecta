@@ -1,142 +1,250 @@
-// Servicio para gestionar todas las interacciones con pacientes (llamadas, mensajes, correos, recordatorios)
+/**
+ * Servicio de interacciones CRM: API (backend) con fallback a localStorage.
+ */
+
+import { api } from './apiClient';
 
 const INTERACTIONS_KEY = 'oirconecta_patient_interactions';
 
-/**
- * Obtiene todas las interacciones
- * @returns {Object} Objeto con email como clave y array de interacciones como valor
- */
-export const getAllInteractions = () => {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return {};
-  }
-
+const getAllLocal = () => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return {};
   try {
     const data = localStorage.getItem(INTERACTIONS_KEY);
-    if (data) {
-      return JSON.parse(data);
-    }
-    return {};
-  } catch (error) {
-    console.error('Error al obtener interacciones:', error);
+    return data ? JSON.parse(data) : {};
+  } catch {
     return {};
   }
 };
 
-/**
- * Guarda todas las interacciones
- * @param {Object} interactions - Objeto con interacciones
- * @returns {boolean} true si se guardó correctamente
- */
-const saveInteractions = (interactions) => {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return false;
-  }
-
+const saveLocal = (interactions) => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return false;
   try {
     localStorage.setItem(INTERACTIONS_KEY, JSON.stringify(interactions));
-    // Disparar evento personalizado para actualización en tiempo real
     window.dispatchEvent(new CustomEvent('interactionsUpdated'));
     return true;
-  } catch (error) {
-    console.error('Error al guardar interacciones:', error);
+  } catch {
     return false;
   }
 };
 
 /**
- * Obtiene las interacciones de un paciente específico
- * @param {string} patientEmail - Email del paciente
- * @returns {Array} Array de interacciones del paciente
+ * Lista interacciones del paciente (async).
+ * Combina datos de API con localStorage para mostrar también seguimientos guardados localmente si la API falló.
+ * @param {string} patientEmail
+ * @returns {Promise<Array>}
  */
-export const getPatientInteractions = (patientEmail) => {
-  const allInteractions = getAllInteractions();
-  return allInteractions[patientEmail] || [];
+export const getPatientInteractions = async (patientEmail) => {
+  const localList = getAllLocal()[patientEmail] || [];
+  try {
+    const { data, error } = await api.get(`/api/interactions?patientEmail=${encodeURIComponent(patientEmail || '')}`);
+    if (error || !data?.data) return localList;
+    const apiList = Array.isArray(data.data) ? data.data : [];
+    const apiIds = new Set(apiList.map((i) => i.id));
+    const localOnly = localList.filter((i) => !apiIds.has(i.id));
+    const merged = [...apiList, ...localOnly].sort(
+      (a, b) => new Date(b.occurredAt || b.createdAt || 0) - new Date(a.occurredAt || a.createdAt || 0)
+    );
+    return merged;
+  } catch {
+    return localList;
+  }
 };
 
 /**
- * Agrega una interacción a un paciente
- * @param {string} patientEmail - Email del paciente
- * @param {Object} interactionData - Datos de la interacción
- * @returns {Object} {success: boolean, interaction: Object|null, error: string|null}
+ * Métricas CRM del paciente (async): totales y últimas fechas.
+ * @param {string} patientEmail
+ * @returns {Promise<{ totalLlamadas, totalMensajes, totalCorreos, totalVisitas, totalCitas, ultimaLlamada, ultimoMensaje, ultimoCorreo, ultimaVisita }>}
  */
-export const addInteraction = (patientEmail, interactionData) => {
+export const getPatientInteractionsMetrics = async (patientEmail) => {
+  try {
+    const { data, error } = await api.get(`/api/interactions/metrics?patientEmail=${encodeURIComponent(patientEmail || '')}`);
+    if (error || !data?.data) return computeMetricsLocal(patientEmail);
+    return data.data;
+  } catch {
+    return computeMetricsLocal(patientEmail);
+  }
+};
+
+function computeMetricsLocal(patientEmail) {
+  const list = getAllLocal()[patientEmail] || [];
+  const byType = (t) => list.filter((i) => i.type === t);
+  const last = (t) => {
+    const arr = byType(t);
+    if (arr.length === 0) return null;
+    const d = arr.sort((a, b) => new Date(b.occurredAt || b.createdAt) - new Date(a.occurredAt || a.createdAt))[0];
+    return d?.occurredAt || d?.createdAt || null;
+  };
+  return {
+    totalLlamadas: byType('call').length,
+    totalMensajes: byType('message').length,
+    totalCorreos: byType('email').length,
+    totalVisitas: byType('visit').length,
+    totalRecordatorios: byType('reminder').length,
+    totalSeguimientoConsumibles: byType('follow_up_consumables').length,
+    ultimaLlamada: last('call'),
+    ultimoMensaje: last('message'),
+    ultimoCorreo: last('email'),
+    ultimaVisita: last('visit'),
+  };
+}
+
+/**
+ * Acciones del día: alertas que requieren atención (consumibles vencidos/próximos, garantías en reclamación, recordatorios hoy).
+ * @param {number} daysAhead - Días hacia adelante para considerar "próximo" en consumibles
+ * @returns {Promise<Array<{ id, type, kind, title, description, patientEmail, patientName, dueDate?, metadata? }>>}
+ */
+export const getDailyActions = async (daysAhead = 7) => {
+  try {
+    const { data, error } = await api.get(`/api/interactions/daily-actions?daysAhead=${daysAhead}`);
+    if (error || !data?.data) return [];
+    return Array.isArray(data.data) ? data.data : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Métricas de acciones del día: activas, vencidas, cumplidas
+ */
+export const getDailyActionsMetrics = async (daysAhead = 7) => {
+  try {
+    const { data, error } = await api.get(`/api/interactions/daily-actions-metrics?daysAhead=${daysAhead}`);
+    if (error || !data?.data) return { activas: 0, vencidas: 0, cumplidas: 0, total: 0 };
+    return data.data;
+  } catch {
+    return { activas: 0, vencidas: 0, cumplidas: 0, total: 0 };
+  }
+};
+
+/**
+ * Métricas de acciones del día para un paciente específico: activas, vencidas, cumplidas
+ */
+export const getDailyActionsMetricsByPatient = async (patientEmail, daysAhead = 7) => {
+  if (!patientEmail) return { activas: 0, vencidas: 0, cumplidas: 0, total: 0 };
+  try {
+    const params = new URLSearchParams({ daysAhead, patientEmail });
+    const { data, error } = await api.get(`/api/interactions/daily-actions-metrics?${params}`);
+    if (error || !data?.data) return { activas: 0, vencidas: 0, cumplidas: 0, total: 0 };
+    return data.data;
+  } catch {
+    return { activas: 0, vencidas: 0, cumplidas: 0, total: 0 };
+  }
+};
+
+/**
+ * Listar usuarios del centro (para dropdown Responsable)
+ */
+export const getListUsers = async () => {
+  try {
+    const { data, error } = await api.get('/api/auth/users');
+    if (error || !data?.data) return [];
+    return Array.isArray(data.data) ? data.data : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Agregar interacción (async).
+ */
+export const addInteraction = async (patientEmail, interactionData) => {
   const {
-    type, // 'call', 'message', 'email', 'reminder', 'appointment', 'other'
-    title,
-    description,
-    duration, // Para llamadas (minutos)
-    direction, // 'inbound' o 'outbound' para llamadas
-    channel, // 'phone', 'whatsapp', 'sms', 'email', 'system'
-    status, // 'completed', 'missed', 'scheduled', 'sent', 'failed'
-    scheduledDate, // Para recordatorios y llamadas programadas
-    scheduledTime,
-    relatedAppointmentId,
-    relatedProductId,
-    metadata, // Objeto con datos adicionales según el tipo
+    type, title, description, channel, status, direction, duration,
+    scheduledDate, scheduledTime, relatedAppointmentId, relatedMaintenanceId, metadata,
   } = interactionData;
 
   if (!patientEmail || !type || !title) {
-    return {
-      success: false,
-      interaction: null,
-      error: 'Email, tipo y título son obligatorios',
-    };
+    return { success: false, interaction: null, error: 'Email, tipo y título son obligatorios' };
   }
 
-  const interaction = {
-    id: `interaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  const payload = {
     patientEmail,
     type,
     title,
     description: description || '',
-    duration: duration || null,
-    direction: direction || 'outbound',
-    channel: channel || 'phone',
+    channel: channel || null,
     status: status || 'completed',
+    direction: direction || null,
+    duration: duration != null ? duration : null,
+    occurredAt: interactionData.occurredAt || new Date().toISOString(),
     scheduledDate: scheduledDate || null,
     scheduledTime: scheduledTime || null,
     relatedAppointmentId: relatedAppointmentId || null,
-    relatedProductId: relatedProductId || null,
-    metadata: metadata || {},
-    createdAt: new Date().toISOString(),
-    createdBy: 'system', // En el futuro podría ser el usuario actual
+    relatedMaintenanceId: relatedMaintenanceId || null,
+    metadata: metadata && typeof metadata === 'object' ? metadata : {},
   };
 
-  const allInteractions = getAllInteractions();
-  if (!allInteractions[patientEmail]) {
-    allInteractions[patientEmail] = [];
+  try {
+    const { data, error } = await api.post('/api/interactions', payload);
+    if (error || !data?.data) {
+      return { success: false, interaction: null, error: error || 'Error al registrar en el servidor' };
+    }
+    return { success: true, interaction: data.data, error: null };
+  } catch (err) {
+    const msg = /fetch|network|failed to fetch/i.test(String(err?.message))
+      ? 'No se pudo conectar con el servidor. Comprueba que el backend esté en marcha (ej. http://localhost:3001).'
+      : (err?.message || 'Error de conexión');
+    return { success: false, interaction: null, error: msg };
   }
-  allInteractions[patientEmail].push(interaction);
-  
-  // Ordenar por fecha de creación (más reciente primero)
-  allInteractions[patientEmail].sort((a, b) => {
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
+}
 
-  if (saveInteractions(allInteractions)) {
-    return {
-      success: true,
-      interaction,
-      error: null,
-    };
-  } else {
-    return {
-      success: false,
-      interaction: null,
-      error: 'Error al guardar la interacción',
-    };
+/**
+ * Obtener una interacción por ID (para editar / añadir comentarios).
+ */
+export const getInteractionById = async (interactionId) => {
+  try {
+    const { data, error } = await api.get(`/api/interactions/${interactionId}`);
+    if (error || !data?.data) return null;
+    return data.data;
+  } catch {
+    return null;
   }
 };
 
 /**
- * Registra una llamada
- * @param {string} patientEmail - Email del paciente
- * @param {Object} callData - Datos de la llamada
- * @returns {Object} {success: boolean, interaction: Object|null, error: string|null}
+ * Actualizar interacción (async).
  */
-export const recordCall = (patientEmail, callData) => {
-  return addInteraction(patientEmail, {
+export const updateInteraction = async (patientEmail, interactionId, updates) => {
+  try {
+    const { data, error } = await api.patch(`/api/interactions/${interactionId}`, updates);
+    if (error || !data?.data) return updateInteractionLocal(patientEmail, interactionId, updates);
+    return { success: true, interaction: data.data, error: null };
+  } catch {
+    return updateInteractionLocal(patientEmail, interactionId, updates);
+  }
+};
+
+function updateInteractionLocal(patientEmail, interactionId, updates) {
+  const all = getAllLocal();
+  if (!all[patientEmail]) return { success: false, interaction: null, error: 'Paciente no encontrado' };
+  const idx = all[patientEmail].findIndex((i) => i.id === interactionId);
+  if (idx === -1) return { success: false, interaction: null, error: 'Interacción no encontrada' };
+  all[patientEmail][idx] = { ...all[patientEmail][idx], ...updates, updatedAt: new Date().toISOString() };
+  return saveLocal(all) ? { success: true, interaction: all[patientEmail][idx], error: null } : { success: false, interaction: null, error: 'Error al actualizar' };
+}
+
+/**
+ * Eliminar interacción (async).
+ */
+export const deleteInteraction = async (patientEmail, interactionId) => {
+  try {
+    const { error } = await api.delete(`/api/interactions/${interactionId}`);
+    if (error) return deleteInteractionLocal(patientEmail, interactionId);
+    return { success: true, error: null };
+  } catch {
+    return deleteInteractionLocal(patientEmail, interactionId);
+  }
+};
+
+function deleteInteractionLocal(patientEmail, interactionId) {
+  const all = getAllLocal();
+  if (!all[patientEmail]) return { success: false, error: 'Paciente no encontrado' };
+  all[patientEmail] = all[patientEmail].filter((i) => i.id !== interactionId);
+  return saveLocal(all) ? { success: true, error: null } : { success: false, error: 'Error al eliminar' };
+}
+
+export const recordCall = (patientEmail, callData) =>
+  addInteraction(patientEmail, {
     type: 'call',
     title: `Llamada ${callData.direction === 'inbound' ? 'Entrante' : 'Saliente'}`,
     description: callData.notes || '',
@@ -147,70 +255,33 @@ export const recordCall = (patientEmail, callData) => {
     scheduledDate: callData.scheduledDate || null,
     scheduledTime: callData.scheduledTime || null,
     relatedAppointmentId: callData.relatedAppointmentId || null,
-    metadata: {
-      phoneNumber: callData.phoneNumber || '',
-      outcome: callData.outcome || '', // 'answered', 'no-answer', 'busy', 'voicemail'
-      notes: callData.notes || '',
-    },
+    metadata: { phoneNumber: callData.phoneNumber || '', outcome: callData.outcome || '', notes: callData.notes || '' },
   });
-};
 
-/**
- * Registra un mensaje (SMS, WhatsApp)
- * @param {string} patientEmail - Email del paciente
- * @param {Object} messageData - Datos del mensaje
- * @returns {Object} {success: boolean, interaction: Object|null, error: string|null}
- */
-export const recordMessage = (patientEmail, messageData) => {
-  return addInteraction(patientEmail, {
+export const recordMessage = (patientEmail, messageData) =>
+  addInteraction(patientEmail, {
     type: 'message',
     title: `Mensaje ${messageData.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}`,
     description: messageData.content || '',
     channel: messageData.channel || 'sms',
     status: messageData.status || 'sent',
     relatedAppointmentId: messageData.relatedAppointmentId || null,
-    metadata: {
-      phoneNumber: messageData.phoneNumber || '',
-      content: messageData.content || '',
-      template: messageData.template || null,
-    },
+    metadata: { phoneNumber: messageData.phoneNumber || '', content: messageData.content || '', template: messageData.template || null },
   });
-};
 
-/**
- * Registra un correo electrónico
- * @param {string} patientEmail - Email del paciente
- * @param {Object} emailData - Datos del correo
- * @returns {Object} {success: boolean, interaction: Object|null, error: string|null}
- */
-export const recordEmail = (patientEmail, emailData) => {
-  return addInteraction(patientEmail, {
+export const recordEmail = (patientEmail, emailData) =>
+  addInteraction(patientEmail, {
     type: 'email',
     title: emailData.subject || 'Correo Electrónico',
     description: emailData.body || '',
     channel: 'email',
     status: emailData.status || 'sent',
     relatedAppointmentId: emailData.relatedAppointmentId || null,
-    relatedProductId: emailData.relatedProductId || null,
-    metadata: {
-      to: emailData.to || patientEmail,
-      from: emailData.from || '',
-      subject: emailData.subject || '',
-      body: emailData.body || '',
-      attachments: emailData.attachments || [],
-      template: emailData.template || null,
-    },
+    metadata: { to: emailData.to || patientEmail, subject: emailData.subject || '', body: emailData.body || '' },
   });
-};
 
-/**
- * Registra un recordatorio
- * @param {string} patientEmail - Email del paciente
- * @param {Object} reminderData - Datos del recordatorio
- * @returns {Object} {success: boolean, interaction: Object|null, error: string|null}
- */
-export const recordReminder = (patientEmail, reminderData) => {
-  return addInteraction(patientEmail, {
+export const recordReminder = (patientEmail, reminderData) =>
+  addInteraction(patientEmail, {
     type: 'reminder',
     title: reminderData.title || 'Recordatorio',
     description: reminderData.description || '',
@@ -220,21 +291,15 @@ export const recordReminder = (patientEmail, reminderData) => {
     scheduledTime: reminderData.scheduledTime,
     relatedAppointmentId: reminderData.relatedAppointmentId || null,
     metadata: {
-      reminderType: reminderData.reminderType || 'appointment', // 'appointment', 'maintenance', 'follow-up'
+      reminderType: reminderData.reminderType || 'appointment',
       sent: reminderData.sent || false,
       sentAt: reminderData.sentAt || null,
+      responsibleName: reminderData.responsibleName || null,
     },
   });
-};
 
-/**
- * Registra un agendamiento
- * @param {string} patientEmail - Email del paciente
- * @param {Object} appointmentData - Datos del agendamiento
- * @returns {Object} {success: boolean, interaction: Object|null, error: string|null}
- */
-export const recordAppointmentInteraction = (patientEmail, appointmentData) => {
-  return addInteraction(patientEmail, {
+export const recordAppointmentInteraction = (patientEmail, appointmentData) =>
+  addInteraction(patientEmail, {
     type: 'appointment',
     title: appointmentData.title || 'Cita Agendada',
     description: appointmentData.description || '',
@@ -243,87 +308,8 @@ export const recordAppointmentInteraction = (patientEmail, appointmentData) => {
     scheduledDate: appointmentData.scheduledDate,
     scheduledTime: appointmentData.scheduledTime,
     relatedAppointmentId: appointmentData.relatedAppointmentId || null,
-    metadata: {
-      action: appointmentData.action || 'created', // 'created', 'rescheduled', 'cancelled', 'completed'
-      oldDate: appointmentData.oldDate || null,
-      oldTime: appointmentData.oldTime || null,
-    },
+    metadata: { action: appointmentData.action || 'created', oldDate: appointmentData.oldDate || null, oldTime: appointmentData.oldTime || null },
   });
-};
 
-/**
- * Actualiza el estado de una interacción
- * @param {string} patientEmail - Email del paciente
- * @param {string} interactionId - ID de la interacción
- * @param {Object} updates - Campos a actualizar
- * @returns {Object} {success: boolean, interaction: Object|null, error: string|null}
- */
-export const updateInteraction = (patientEmail, interactionId, updates) => {
-  const allInteractions = getAllInteractions();
-  if (!allInteractions[patientEmail]) {
-    return {
-      success: false,
-      interaction: null,
-      error: 'Paciente no encontrado',
-    };
-  }
-
-  const interactionIndex = allInteractions[patientEmail].findIndex(i => i.id === interactionId);
-  if (interactionIndex === -1) {
-    return {
-      success: false,
-      interaction: null,
-      error: 'Interacción no encontrada',
-    };
-  }
-
-  allInteractions[patientEmail][interactionIndex] = {
-    ...allInteractions[patientEmail][interactionIndex],
-    ...updates,
-    updatedAt: new Date().toISOString(),
-  };
-
-  if (saveInteractions(allInteractions)) {
-    return {
-      success: true,
-      interaction: allInteractions[patientEmail][interactionIndex],
-      error: null,
-    };
-  } else {
-    return {
-      success: false,
-      interaction: null,
-      error: 'Error al actualizar la interacción',
-    };
-  }
-};
-
-/**
- * Elimina una interacción
- * @param {string} patientEmail - Email del paciente
- * @param {string} interactionId - ID de la interacción
- * @returns {Object} {success: boolean, error: string|null}
- */
-export const deleteInteraction = (patientEmail, interactionId) => {
-  const allInteractions = getAllInteractions();
-  if (!allInteractions[patientEmail]) {
-    return {
-      success: false,
-      error: 'Paciente no encontrado',
-    };
-  }
-
-  allInteractions[patientEmail] = allInteractions[patientEmail].filter(i => i.id !== interactionId);
-
-  if (saveInteractions(allInteractions)) {
-    return {
-      success: true,
-      error: null,
-    };
-  } else {
-    return {
-      success: false,
-      error: 'Error al eliminar la interacción',
-    };
-  }
-};
+/** Solo local: todas las interacciones (compatibilidad) */
+export const getAllInteractions = () => getAllLocal();

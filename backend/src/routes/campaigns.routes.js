@@ -35,10 +35,10 @@ router.get(
   campaignsController.getById
 );
 
-// POST /api/campaigns - Crear campaña
+// POST /api/campaigns - Crear campaña (Admin en clínica grande, Audióloga cuando es dueña)
 router.post(
   '/',
-  authorize('ADMIN'),
+  authorize('ADMIN', 'AUDIOLOGA', 'VENDEDOR'),
   [
     body('nombre').notEmpty().withMessage('Nombre requerido'),
     body('tipo').notEmpty().withMessage('Tipo requerido'),
@@ -54,7 +54,7 @@ router.post(
 // PUT /api/campaigns/:id - Actualizar campaña
 router.put(
   '/:id',
-  authorize('ADMIN'),
+  authorize('ADMIN', 'AUDIOLOGA', 'VENDEDOR'),
   [
     param('id').isUUID(),
     body('nombre').optional().notEmpty(),
@@ -67,7 +67,7 @@ router.put(
 // DELETE /api/campaigns/:id - Eliminar campaña
 router.delete(
   '/:id',
-  authorize('ADMIN'),
+  authorize('ADMIN', 'AUDIOLOGA', 'VENDEDOR'),
   [param('id').isUUID()],
   validateRequest,
   campaignsController.remove

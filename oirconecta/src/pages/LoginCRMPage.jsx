@@ -23,11 +23,12 @@ import { useAuth } from '../context/AuthContext';
 
 const LoginCRMPage = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/portal-crm', { replace: true });
-  }, [isAuthenticated, navigate]);
+    if (!isAuthenticated || !user) return;
+    navigate('/portal-crm', { replace: true });
+  }, [isAuthenticated, user, navigate]);
   const [formData, setFormData] = useState({
     email: '',
     password: '',

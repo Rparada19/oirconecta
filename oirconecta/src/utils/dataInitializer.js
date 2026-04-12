@@ -1,8 +1,21 @@
-// Inicializador de datos para cargar archivos JSON al localStorage
-import audiologasData from '../data/bdatos_audiologas.json';
-import otologosData from '../data/bdatos_otologos.json';
-import fonoaudiologosData from '../data/bdatos_fonoaudiologos.json';
-import otorrinolaringologosData from '../data/bdatos_otorrinolaringologos.json';
+// Inicializador de datos: solo import() dinámico (evita inflar el JS inicial y dejar la pantalla en "Cargando…").
+
+/** Sube este valor cuando cambien los JSON del directorio para forzar recarga desde archivo (evita caché vieja en localStorage). */
+export const DIRECTORY_DATA_VERSION = '2026-04-11-muestras-4'
+
+const DIRECTORY_VERSION_KEY = 'oirconecta_directory_data_version'
+
+const DIRECTORY_STORAGE_KEYS = [
+  'audiologas_data',
+  'audiologasData',
+  'audiologas_original_data',
+  'otologos_data',
+  'otologosData',
+  'fonoaudiologos_data',
+  'fonoaudiologosData',
+  'otorrinolaringologos_data',
+  'otorrinolaringologosData',
+]
 
 // Función para inicializar todos los datos
 export const initializeData = () => {
@@ -14,6 +27,15 @@ export const initializeData = () => {
   console.log('🚀 Inicializando datos de la aplicación...');
   
   try {
+    const storedVersion = localStorage.getItem(DIRECTORY_VERSION_KEY)
+    if (storedVersion !== DIRECTORY_DATA_VERSION) {
+      DIRECTORY_STORAGE_KEYS.forEach((k) => localStorage.removeItem(k))
+      localStorage.setItem(DIRECTORY_VERSION_KEY, DIRECTORY_DATA_VERSION)
+      console.log(
+        '📦 Versión de datos del directorio actualizada; se volverán a cargar los JSON (antes había datos en caché).'
+      )
+    }
+
     // Verificar si ya hay datos en localStorage
     const existingAudiologas = localStorage.getItem('audiologas_data') || localStorage.getItem('audiologasData');
     const existingOtologos = localStorage.getItem('otologos_data') || localStorage.getItem('otologosData');
@@ -145,14 +167,8 @@ export const clearAllData = () => {
   }
   
   try {
-    const keys = [
-      'audiologas_data', 'audiologasData',
-      'otologos_data', 'otologosData',
-      'fonoaudiologos_data', 'fonoaudiologosData',
-      'otorrinolaringologos_data', 'otorrinolaringologosData'
-    ];
-    
-    keys.forEach(key => localStorage.removeItem(key));
+    DIRECTORY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key))
+    localStorage.removeItem(DIRECTORY_VERSION_KEY)
     console.log('🧹 Todos los datos del localStorage han sido limpiados');
   } catch (error) {
     console.error('❌ Error al limpiar datos:', error);

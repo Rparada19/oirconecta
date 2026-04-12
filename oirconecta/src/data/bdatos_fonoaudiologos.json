@@ -1,1 +1,34 @@
-[] 
+[
+  {
+    "id": "muestra_fonoaudiologia_1",
+    "nombre": "Dra. Muestra Fonoaudiología",
+    "especialidad": "Fonoaudióloga",
+    "titulo": "Fonoaudióloga",
+    "ciudad": "Medellín",
+    "departamento": "Antioquia",
+    "telefono": "604-5550200",
+    "celular": "3005550201",
+    "email": "muestra.fonoaudiologia@oirconecta.demo",
+    "direccion": "Carrera demo 45 # 10-20",
+    "sitioWeb": "",
+    "horarios": "Lunes a viernes 9:00 – 18:00",
+    "subespecialidades": ["Voz", "Lenguaje"],
+    "servicios": ["Evaluación de voz", "Rehabilitación del lenguaje", "Deglución"],
+    "hospitales": ["Consultorio de muestra OírConecta"],
+    "certificaciones": ["Ejemplo demostrativo"],
+    "experiencia": "Profesional de muestra para la especialidad de fonoaudiología (datos ficticios).",
+    "idiomas": ["Español"],
+    "resena": "Tarjeta de ejemplo; sustituir por información real del profesional.",
+    "calificacion": "5.0",
+    "pacientes": 0,
+    "foto": "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=400&fit=crop",
+    "agenda": [
+      { "dia": "Martes", "horas": ["08:00", "09:00"] },
+      { "dia": "Jueves", "horas": ["15:00", "16:00"] }
+    ],
+    "disponible": true,
+    "destacado": true,
+    "createdAt": "2026-04-11T00:00:00.000Z",
+    "updatedAt": "2026-04-11T00:00:00.000Z"
+  }
+]

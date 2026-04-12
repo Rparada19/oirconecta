@@ -44,6 +44,7 @@ const login = async (email, password) => {
       email: user.email,
       nombre: user.nombre,
       role: user.role,
+      professionalConfigId: user.professionalConfigId || undefined,
     },
   };
 };
@@ -137,8 +138,39 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   return true;
 };
 
+/**
+ * Listar usuarios del centro (para asignar responsables en CRM / acciones del día)
+ */
+const listUsers = async () => {
+  const users = await prisma.user.findMany({
+    where: { activo: true },
+    select: { id: true, nombre: true, email: true, role: true, professionalConfigId: true },
+    orderBy: { nombre: 'asc' },
+  });
+  return users;
+};
+
+/**
+ * Actualizar usuario (solo ADMIN). Permite asignar professionalConfigId a audióloga.
+ */
+const updateUser = async (userId, data) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    const err = new Error('Usuario no encontrado');
+    err.statusCode = 404;
+    throw err;
+  }
+  return prisma.user.update({
+    where: { id: userId },
+    data: { professionalConfigId: data.professionalConfigId ?? null },
+    select: { id: true, email: true, nombre: true, role: true, professionalConfigId: true },
+  });
+};
+
 module.exports = {
   login,
   register,
   changePassword,
+  listUsers,
+  updateUser,
 };

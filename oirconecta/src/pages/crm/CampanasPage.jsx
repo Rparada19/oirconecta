@@ -32,9 +32,13 @@ import {
   CalendarToday,
 } from '@mui/icons-material';
 import { getCampaigns, createCampaign, MARCAS } from '../../services/campaignService';
+import { useAuth } from '../../context/AuthContext';
+import { canManageCampaigns } from '../../utils/rolePermissions';
 
 const CampanasPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canEdit = canManageCampaigns(user?.role);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [campaigns, setCampaignsState] = useState([]);
   const [createLoading, setCreateLoading] = useState(false);
@@ -118,20 +122,22 @@ const CampanasPage = () => {
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => setCreateDialogOpen(true)}
-                sx={{
-                  bgcolor: '#ffffff',
-                  color: '#085946',
-                  '&:hover': {
-                    bgcolor: '#f5f5f5',
-                  },
-                }}
-              >
-                Nueva Campaña
-              </Button>
+              {canEdit && (
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => setCreateDialogOpen(true)}
+                  sx={{
+                    bgcolor: '#ffffff',
+                    color: '#085946',
+                    '&:hover': {
+                      bgcolor: '#f5f5f5',
+                    },
+                  }}
+                >
+                  Nueva Campaña
+                </Button>
+              )}
               <Button
                 variant="outlined"
                 startIcon={<ArrowBack />}
@@ -274,12 +280,16 @@ const CampanasPage = () => {
                       <IconButton size="small" sx={{ color: '#085946' }}>
                         <Visibility />
                       </IconButton>
-                      <IconButton size="small" sx={{ color: '#085946' }}>
-                        <Edit />
-                      </IconButton>
-                      <IconButton size="small" sx={{ color: '#c62828' }}>
-                        <Delete />
-                      </IconButton>
+                      {canEdit && (
+                        <>
+                          <IconButton size="small" sx={{ color: '#085946' }}>
+                            <Edit />
+                          </IconButton>
+                          <IconButton size="small" sx={{ color: '#c62828' }}>
+                            <Delete />
+                          </IconButton>
+                        </>
+                      )}
                     </Box>
                   </Box>
                   <Grid container spacing={3}>

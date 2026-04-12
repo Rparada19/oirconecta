@@ -51,6 +51,7 @@ const authenticate = async (req, res, next) => {
         nombre: true,
         role: true,
         activo: true,
+        professionalConfigId: true,
       },
     });
 
@@ -127,6 +128,7 @@ const optionalAuth = async (req, res, next) => {
           nombre: true,
           role: true,
           activo: true,
+          professionalConfigId: true,
         },
       });
 

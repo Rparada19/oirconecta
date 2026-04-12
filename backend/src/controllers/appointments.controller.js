@@ -6,8 +6,8 @@ const appointmentsService = require('../services/appointments.service');
 
 const getAll = async (req, res, next) => {
   try {
-    const { fecha, estado, page = 1, limit = 50 } = req.query;
-    const result = await appointmentsService.getAll({ fecha, estado, page: parseInt(page), limit: parseInt(limit) });
+    const { fecha, estado, patientEmail, page = 1, limit = 50 } = req.query;
+    const result = await appointmentsService.getAll({ fecha, estado, patientEmail, page: parseInt(page), limit: parseInt(limit) });
     
     res.json({
       success: true,

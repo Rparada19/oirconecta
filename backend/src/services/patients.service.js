@@ -7,9 +7,11 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 /**
- * Obtener todos los pacientes
+ * Obtener todos los pacientes.
+ * - Si appointmentProfessionalId está definido (audióloga con profesional asignado): solo pacientes con cita asignada a ese profesional.
+ * - Si createdByUserId está definido (audióloga sin profesional de cita): solo pacientes con venta creada por ese usuario.
  */
-const getAll = async ({ search, page = 1, limit = 50 }) => {
+const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointmentProfessionalId }) => {
   const where = {};
 
   if (search) {
@@ -19,6 +21,12 @@ const getAll = async ({ search, page = 1, limit = 50 }) => {
       { telefono: { contains: search } },
       { numeroDocumento: { contains: search } },
     ];
+  }
+
+  if (appointmentProfessionalId) {
+    where.appointments = { some: { professionalId: appointmentProfessionalId } };
+  } else if (createdByUserId) {
+    where.sales = { some: { createdById: createdByUserId } };
   }
 
   const [patients, total] = await Promise.all([
@@ -146,6 +154,44 @@ const update = async (id, data) => {
   });
 };
 
+/**
+ * Verificar si el paciente tiene al menos una venta creada por el usuario (para acceso de audióloga).
+ */
+const patientHasSalesByUser = async (patientId, userId) => {
+  const count = await prisma.sale.count({
+    where: { patientId, createdById: userId },
+  });
+  return count > 0;
+};
+
+/**
+ * Verificar si el paciente tiene al menos una cita asignada al profesional (para acceso de audióloga por cita).
+ */
+const patientHasAppointmentsForProfessional = async (patientId, professionalId) => {
+  const count = await prisma.appointment.count({
+    where: { patientId, professionalId },
+  });
+  return count > 0;
+};
+
+/**
+ * Reasignar paciente a otro profesional (todas sus ventas pasan a createdById = newProfessionalId).
+ * Solo ADMIN.
+ */
+const reassignToProfessional = async (patientId, newProfessionalId) => {
+  const patient = await prisma.patient.findUnique({ where: { id: patientId } });
+  if (!patient) {
+    const err = new Error('Paciente no encontrado');
+    err.statusCode = 404;
+    throw err;
+  }
+  const result = await prisma.sale.updateMany({
+    where: { patientId },
+    data: { createdById: newProfessionalId },
+  });
+  return { patient, updatedSalesCount: result.count };
+};
+
 module.exports = {
   getAll,
   getStats,
@@ -153,4 +199,7 @@ module.exports = {
   getFullProfile,
   create,
   update,
+  patientHasSalesByUser,
+  patientHasAppointmentsForProfessional,
+  reassignToProfessional,
 };

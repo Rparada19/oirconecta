@@ -25,6 +25,23 @@ const generateToken = (user) => {
 };
 
 /**
+ * Token solo para cuentas del directorio (`DirectoryAccount`).
+ */
+const generateDirectoryToken = (account) => {
+  return jwt.sign(
+    {
+      typ: 'directory',
+      directoryAccountId: account.id,
+      email: account.email,
+    },
+    config.directoryJwt.secret,
+    {
+      expiresIn: config.directoryJwt.expiresIn,
+    }
+  );
+};
+
+/**
  * Verifica y decodifica un token JWT
  * @param {string} token - Token JWT
  * @returns {Object} Payload decodificado
@@ -44,6 +61,7 @@ const decodeToken = (token) => {
 
 module.exports = {
   generateToken,
+  generateDirectoryToken,
   verifyToken,
   decodeToken,
 };

@@ -6,6 +6,23 @@
 import { api } from './apiClient';
 
 /**
+ * Obtiene la lista de pacientes desde la API.
+ * @param {{ search?: string, page?: number, limit?: number }} [opts]
+ * @returns {Promise<{ patients: Array, pagination: Object }>}
+ */
+export async function getPatients(opts = {}) {
+  const params = new URLSearchParams();
+  if (opts.search) params.set('search', opts.search);
+  if (opts.page) params.set('page', String(opts.page));
+  params.set('limit', String(opts.limit || 200));
+  const { data, error } = await api.get(`/api/patients?${params.toString()}`);
+  if (error) return { patients: [], pagination: { page: 1, limit: 200, total: 0, pages: 0 } };
+  const list = data?.data?.patients ?? [];
+  const pagination = data?.data?.pagination ?? { page: 1, limit: 200, total: list.length, pages: 1 };
+  return { patients: list, pagination };
+}
+
+/**
  * Busca paciente por email exacto.
  * @param {string} email
  * @returns {Promise<{ id: string, nombre: string, email: string, telefono: string } | null>}

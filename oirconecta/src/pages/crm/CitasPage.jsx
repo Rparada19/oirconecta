@@ -95,7 +95,7 @@ import {
 } from '../../services/patientRecordService';
 import { recordAppointmentInteraction } from '../../services/interactionService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
-import { getConfig, getSedes, getConsultoriosFlat } from '../../services/configService';
+import { getConfig, getSedes, getConsultoriosFlat, getAppointmentReasons } from '../../services/configService';
 import DateSelector from '../../components/appointments/DateSelector';
 import DaySchedulePanel from '../../components/appointments/DaySchedulePanel';
 import TimeSelector from '../../components/appointments/TimeSelector';
@@ -134,6 +134,7 @@ const CitasPage = () => {
   const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
   const [addCommentDialogOpen, setAddCommentDialogOpen] = useState(false);
   const [patientProfileDialogOpen, setPatientProfileDialogOpen] = useState(false);
+  const [patientProfileOpenEvolucionar, setPatientProfileOpenEvolucionar] = useState(false);
   const [patientRecords, setPatientRecords] = useState([]);
   
   // Estados para formularios
@@ -141,6 +142,12 @@ const CitasPage = () => {
     notes: '',
     hearingLoss: false,
     nextSteps: '',
+    motivoConsulta: '',
+    estadoAudifonos: '',
+    consejosConclusiones: '',
+    proximaCitaFecha: '',
+    proximaCitaHora: '',
+    proximaCitaProfesional: '',
   });
   const [cancellationReason, setCancellationReason] = useState('');
   const [noShowReason, setNoShowReason] = useState('');
@@ -351,11 +358,21 @@ const CitasPage = () => {
       if (statusResult.success) {
         const patientResult = await updateAppointmentStatus(selectedAppointment.id, 'patient');
         
-        // Registrar consulta
+        // Registrar consulta (incluye motivoConsulta, estadoAudifonos, consejosConclusiones en formData)
         const recordResult = recordConsultation(
           selectedAppointment.patientEmail,
           selectedAppointment.id,
-          consultationData
+          {
+            notes: consultationData.notes,
+            hearingLoss: consultationData.hearingLoss,
+            nextSteps: consultationData.nextSteps,
+            appointmentType: consultationData.motivoConsulta || selectedAppointment?.reason || selectedAppointment?.appointmentType || null,
+            formData: {
+              motivoConsulta: consultationData.motivoConsulta || null,
+              estadoAudifonos: consultationData.estadoAudifonos || null,
+              consejosConclusiones: consultationData.consejosConclusiones || null,
+            },
+          }
         );
         
         // Inicializar perfil de paciente si no existe
@@ -390,11 +407,46 @@ const CitasPage = () => {
         });
         
         if (recordResult.success) {
+          // Si se indicó próxima cita, crearla
+          if (consultationData.proximaCitaFecha && consultationData.proximaCitaHora) {
+            try {
+              const createResult = await createAppointment({
+                date: consultationData.proximaCitaFecha,
+                time: consultationData.proximaCitaHora,
+                patientName: selectedAppointment.patientName,
+                patientEmail: selectedAppointment.patientEmail,
+                patientPhone: selectedAppointment.patientPhone,
+                reason: 'Control / Próxima cita',
+                procedencia: selectedAppointment.procedencia || 'visita-medica',
+                appointmentType: 'control',
+                professionalId: consultationData.proximaCitaProfesional || selectedAppointment.professionalId || undefined,
+              });
+              if (createResult.success) {
+                showSnackbar('Consulta registrada y próxima cita agendada.', 'success');
+              } else {
+                showSnackbar(createResult.error || 'Consulta registrada. Error al agendar próxima cita.', 'warning');
+              }
+            } catch (e) {
+              showSnackbar('Consulta registrada. Error al agendar próxima cita.', 'warning');
+            }
+          } else {
+            showSnackbar('Consulta registrada exitosamente. El paciente ahora aparece en la sección de Pacientes.', 'success');
+          }
           await loadData();
           setConsultationDialogOpen(false);
-          setConsultationData({ notes: '', hearingLoss: false, nextSteps: '' });
+          setDetailDialogOpen(false);
+          setConsultationData({
+            notes: '',
+            hearingLoss: false,
+            nextSteps: '',
+            motivoConsulta: '',
+            estadoAudifonos: '',
+            consejosConclusiones: '',
+            proximaCitaFecha: '',
+            proximaCitaHora: '',
+            proximaCitaProfesional: '',
+          });
           setSelectedAppointment(null);
-          showSnackbar('Consulta registrada exitosamente. El paciente ahora aparece en la sección de Pacientes.', 'success');
         }
       }
     }
@@ -816,10 +868,11 @@ const CitasPage = () => {
   const canceladasCount = appointments.filter((a) => a.status === 'cancelled').length;
   const totalCount = agendadasCount + asistidasCount + noAsistidasCount + canceladasCount;
 
-  // Obtener citas del día seleccionado en el calendario (con filtros)
+  // Obtener citas del día seleccionado en la agenda (con filtros).
+  // Citas reagendadas no ocupan espacio: se excluyen para liberar el slot original.
   const getAppointmentsForDate = (date) => {
     const dateStr = date.toISOString().split('T')[0];
-    let list = appointments.filter(apt => apt.date === dateStr);
+    let list = appointments.filter((apt) => apt.date === dateStr && apt.status !== 'rescheduled');
     if (calendarFilters.professionalId) {
       list = list.filter((apt) => apt.professionalId === calendarFilters.professionalId);
     }
@@ -912,10 +965,10 @@ const CitasPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
               <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 0.5 }}>
-                Gestión de Citas
+                Gestión de Agenda
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Administra todas las citas agendadas
+                Administra la agenda de citas
               </Typography>
             </Box>
             <Button
@@ -1054,7 +1107,7 @@ const CitasPage = () => {
             }}
           >
             <Tab icon={<List />} iconPosition="start" label="Lista de Citas" value="list" />
-            <Tab icon={<CalendarToday />} iconPosition="start" label="Calendario" value="calendar" />
+            <Tab icon={<CalendarToday />} iconPosition="start" label="Agenda" value="calendar" />
             <Tab icon={<Event />} iconPosition="start" label="Estadísticas" value="stats" />
           </Tabs>
         </Card>
@@ -1414,7 +1467,7 @@ const CitasPage = () => {
                 <CardContent sx={{ p: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                      Calendario
+                      Agenda
                     </Typography>
                     <Button
                       size="small"
@@ -1431,7 +1484,7 @@ const CitasPage = () => {
                     onDateSelect={(date) => setCalendarDate(new Date(date + 'T00:00:00'))}
                     datesWithCounts={appointments.reduce((acc, apt) => {
                       const d = apt.date;
-                      if (d && apt.status !== 'cancelled') acc[d] = (acc[d] || 0) + 1;
+                      if (d && apt.status !== 'cancelled' && apt.status !== 'rescheduled') acc[d] = (acc[d] || 0) + 1;
                       return acc;
                     }, {})}
                     allowAllDates
@@ -1936,6 +1989,59 @@ const CitasPage = () => {
 
               {/* Columna Derecha - Línea de Tiempo con Tabs */}
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#f8fafc' }}>
+                {/* Paso 1: ¿Asistió o no? — solo para citas pendientes (agendada) */}
+                {['confirmed', 'rescheduled'].includes(selectedAppointment?.status) && (
+                  <Paper sx={{ m: 2, p: 3, bgcolor: '#e8f5e9', border: '2px solid #085946', borderRadius: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>
+                      ¿El paciente asistió a la cita?
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="contained"
+                        size="large"
+                        startIcon={<CheckCircle />}
+                        onClick={() => {
+                          const esPrimeraVez = !(patientRecords || []).some((r) => r.type === 'consultation');
+                          const aptType = selectedAppointment?.appointmentType || selectedAppointment?.reason || '';
+                          const esCitaPrimeraVez = String(aptType).toLowerCase().includes('primera') || aptType === 'primera-vez';
+                          if (esPrimeraVez || esCitaPrimeraVez) {
+                            setDetailDialogOpen(false);
+                            setPatientProfileDialogOpen(true);
+                            setPatientProfileOpenEvolucionar(true);
+                          } else {
+                            setConsultationData({
+                              notes: '',
+                              hearingLoss: false,
+                              nextSteps: '',
+                              motivoConsulta: selectedAppointment?.reason || selectedAppointment?.appointmentType || '',
+                              estadoAudifonos: '',
+                              consejosConclusiones: '',
+                              proximaCitaFecha: '',
+                              proximaCitaHora: '',
+                              proximaCitaProfesional: '',
+                            });
+                            setConsultationDialogOpen(true);
+                          }
+                        }}
+                        sx={{ bgcolor: '#2e7d32', '&:hover': { bgcolor: '#1b5e20' } }}
+                      >
+                        Asistió
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        color="error"
+                        startIcon={<Cancel />}
+                        onClick={() => {
+                          setDetailDialogOpen(false);
+                          setNoShowDialogOpen(true);
+                        }}
+                      >
+                        No asistió
+                      </Button>
+                    </Box>
+                  </Paper>
+                )}
                 {/* Tabs */}
                 <Box sx={{ borderBottom: '1px solid #e0e0e0', bgcolor: '#ffffff' }}>
                   <Tabs
@@ -2332,19 +2438,29 @@ const CitasPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog de Consulta (Marcar como Asistida) */}
+      {/* Dialog de Consulta (Marcar como Asistida) — Evolucionar */}
       <Dialog
         open={consultationDialogOpen}
         onClose={() => {
           setConsultationDialogOpen(false);
-          setConsultationData({ notes: '', hearingLoss: false, nextSteps: '' });
+          setConsultationData({
+            notes: '',
+            hearingLoss: false,
+            nextSteps: '',
+            motivoConsulta: '',
+            estadoAudifonos: '',
+            consejosConclusiones: '',
+            proximaCitaFecha: '',
+            proximaCitaHora: '',
+            proximaCitaProfesional: '',
+          });
           setSelectedAppointment(null);
         }}
         maxWidth="md"
         fullWidth
       >
         <DialogTitle sx={{ bgcolor: '#085946', color: '#ffffff', fontWeight: 700 }}>
-          Registrar Consulta
+          Evolucionar Consulta
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           {selectedAppointment ? (
@@ -2352,6 +2468,28 @@ const CitasPage = () => {
               <Alert severity="info" sx={{ mb: 3 }}>
                 Registrando consulta para {selectedAppointment.patientName} - {formatDate(selectedAppointment.date)} {formatTime(selectedAppointment.time)}
               </Alert>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Motivo de Consulta
+                </Typography>
+                <FormControl fullWidth size="small" sx={{ mt: 0.5 }}>
+                  <InputLabel>Tipo de cita</InputLabel>
+                  <Select
+                    value={consultationData.motivoConsulta || selectedAppointment?.reason || selectedAppointment?.appointmentType || ''}
+                    label="Tipo de cita"
+                    onChange={(e) => setConsultationData({ ...consultationData, motivoConsulta: e.target.value })}
+                  >
+                    {(() => {
+                      const reasons = getAppointmentReasons() || [];
+                      const yaEsPaciente = (patientRecords || []).some((r) => r.type === 'consultation');
+                      const list = yaEsPaciente ? reasons.filter((m) => m.value !== 'primera-vez') : reasons;
+                      return list.map((m) => (
+                        <SelectMenuItem key={m.value} value={m.value}>{m.label || m.value}</SelectMenuItem>
+                      ));
+                    })()}
+                  </Select>
+                </FormControl>
+              </Box>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
                   Notas de la Consulta
@@ -2368,6 +2506,47 @@ const CitasPage = () => {
                     borderRadius: '4px',
                     fontFamily: 'inherit',
                     fontSize: '0.875rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </Box>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Estado de los Audífonos
+                </Typography>
+                <TextareaAutosize
+                  minRows={2}
+                  placeholder="Estado de los audífonos (si aplica)..."
+                  value={consultationData.estadoAudifonos}
+                  onChange={(e) => setConsultationData({ ...consultationData, estadoAudifonos: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '4px',
+                    fontFamily: 'inherit',
+                    fontSize: '0.875rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </Box>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Consejos o Conclusiones
+                </Typography>
+                <TextareaAutosize
+                  minRows={3}
+                  placeholder="Consejos, conclusiones o recomendaciones..."
+                  value={consultationData.consejosConclusiones}
+                  onChange={(e) => setConsultationData({ ...consultationData, consejosConclusiones: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '4px',
+                    fontFamily: 'inherit',
+                    fontSize: '0.875rem',
+                    boxSizing: 'border-box',
                   }}
                 />
               </Box>
@@ -2399,9 +2578,54 @@ const CitasPage = () => {
                     borderRadius: '4px',
                     fontFamily: 'inherit',
                     fontSize: '0.875rem',
+                    boxSizing: 'border-box',
                   }}
                 />
               </Box>
+              <Paper sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
+                <Typography variant="body2" sx={{ mb: 2, fontWeight: 600 }}>
+                  Agendar Próxima Cita
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="Fecha"
+                      value={consultationData.proximaCitaFecha}
+                      onChange={(e) => setConsultationData({ ...consultationData, proximaCitaFecha: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      type="time"
+                      label="Hora"
+                      value={consultationData.proximaCitaHora}
+                      onChange={(e) => setConsultationData({ ...consultationData, proximaCitaHora: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Profesional</InputLabel>
+                      <Select
+                        value={consultationData.proximaCitaProfesional || ''}
+                        label="Profesional"
+                        onChange={(e) => setConsultationData({ ...consultationData, proximaCitaProfesional: e.target.value })}
+                      >
+                        <SelectMenuItem value="">Sin asignar</SelectMenuItem>
+                        {profesionales.map((p) => (
+                          <SelectMenuItem key={p.id} value={p.id}>{p.nombre || 'Sin nombre'}</SelectMenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Paper>
             </Box>
           ) : (
             <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -2415,7 +2639,17 @@ const CitasPage = () => {
           <Button
             onClick={() => {
               setConsultationDialogOpen(false);
-              setConsultationData({ notes: '', hearingLoss: false, nextSteps: '' });
+              setConsultationData({
+                notes: '',
+                hearingLoss: false,
+                nextSteps: '',
+                motivoConsulta: '',
+                estadoAudifonos: '',
+                consejosConclusiones: '',
+                proximaCitaFecha: '',
+                proximaCitaHora: '',
+                proximaCitaProfesional: '',
+              });
             }}
             variant="outlined"
           >
@@ -2987,9 +3221,12 @@ const CitasPage = () => {
       {/* Dialog de Perfil del Paciente */}
       <PatientProfileDialog
         open={patientProfileDialogOpen}
-        onClose={() => setPatientProfileDialogOpen(false)}
+        onClose={() => { setPatientProfileDialogOpen(false); setPatientProfileOpenEvolucionar(false); }}
         appointment={selectedAppointment}
-        readOnly={true}
+        lead={null}
+        readOnly={patientProfileOpenEvolucionar ? false : true}
+        openEvolucionarOnMount={patientProfileOpenEvolucionar}
+        evolucionarForcePrimeraVez={patientProfileOpenEvolucionar}
       />
 
 

@@ -16,14 +16,15 @@ datasource db {
 // ===========================================
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  nombre    String
-  role      Role     @default(ADMIN)
-  activo    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  email                String   @unique
+  password             String
+  nombre               String
+  role                 Role     @default(ADMIN)
+  activo               Boolean  @default(true)
+  professionalConfigId String?  // ID del profesional en config (para audióloga: filtrar pacientes por cita asignada)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   // Relaciones
   leadsCreados    Lead[]        @relation("LeadCreatedBy")
@@ -33,6 +34,136 @@ model User {
   blockedSlotsApproved  BlockedSlot[] @relation("BlockedSlotApprovedBy")
 
   @@map("users")
+}
+
+/// Cuenta del directorio público (negocio aparte del CRM; no referencia a `User`).
+model DirectoryAccount {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nombre    String
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile DirectoryProfile?
+
+  @@map("directory_accounts")
+}
+
+/// Ficha listable en el directorio (moderada por un admin del CRM; sin FK a `User`).
+model DirectoryProfile {
+  id        String   @id @default(uuid())
+  accountId String   @unique
+  account   DirectoryAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  status DirectoryProfileStatus @default(PENDING)
+
+  /// Persona natural (profesional) o jurídica (centro). No exponer `documentoIdentidad` en la API pública.
+  personaTipo         DirectoryPersonaTipo @default(NATURAL)
+  /// Cédula (natural) o NIT (jurídica). Solo titular / moderación; no va en la tarjeta pública.
+  documentoIdentidad  String?
+  direccionPublica    String?
+  telefonoPublico     String?
+  emailPublico        String?
+  /// Imagen ancha tipo banner (distinta de fotos de perfil / galería).
+  bannerUrl             String?
+  /// URL de la foto de perfil (listados y hero); si falta, puede usarse la primera de `photoUrls`.
+  fotoPerfilUrl         String?
+  /// Incrustar mapa: URL del iframe que genera Google Maps al compartir → «Insertar mapa» (embed).
+  googleMapsEmbedUrl    String?  @db.Text
+  /// Enlace «Abrir en Google Maps» (opcional, URL corta del lugar).
+  googleMapsLugarUrl    String?
+  perfilVisitas        Int      @default(0)
+  /// Clics en enlaces WhatsApp desde la ficha pública (métrica automática).
+  whatsappClickCount   Int      @default(0)
+  /// Contadores legacy (JSON); las métricas principales son automáticas (`directoryStats` en API).
+  estadisticasCitas    Json?
+  /// Contenido de blog (producto de pago); tramo público opcional vía página de ficha.
+  blogMarkdown         String?  @db.Text
+  liveChatUrl          String?
+  /// Encabezados opcionales por sección (JSON flexible).
+  titulosSecciones     Json?
+  /// Si existe: profesional vinculado a la ficha de un centro (persona jurídica).
+  parentProfileId      String?
+  parentProfile        DirectoryProfile?  @relation("DirectoryCentroProfesionales", fields: [parentProfileId], references: [id], onDelete: SetNull)
+  profesionalesCentro  DirectoryProfile[] @relation("DirectoryCentroProfesionales")
+
+  nombreConsultorio String?
+  profesion          String?
+  polizasAceptadas   String[] @default([])
+  /// Texto público en primera persona (MASCULINO | FEMENINO). Solo aplica a persona natural; null = redacción neutra.
+  generoFicha        String?
+
+  workplaces DirectoryWorkplace[]
+  inquiries  DirectoryInquiry[]
+  appointmentsFromDirectory Appointment[] @relation("AppointmentDirectoryProfile")
+
+  allies       Json?
+  studies      Json?
+  videoUrls    String[] @default([])
+  photoUrls    String[] @default([])
+  availability Json?
+  consultation Json?
+
+  reviewedAt          DateTime?
+  /// Id del usuario CRM que moderó (solo trazabilidad; sin relación Prisma al modelo User).
+  reviewedByCrmUserId String?
+  rejectionReason     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentProfileId])
+  @@map("directory_profiles")
+}
+
+model DirectoryWorkplace {
+  id           String           @id @default(uuid())
+  profileId    String
+  profile      DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  nombreCentro String
+  direccion    String?
+  ciudad       String?
+  telefono     String?
+  esPrincipal  Boolean          @default(false)
+  orden        Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([profileId])
+  @@index([ciudad])
+  @@map("directory_workplaces")
+}
+
+/// Mensaje enviado desde el formulario de la ficha pública (buzón del titular en Mi directorio).
+model DirectoryInquiry {
+  id        String   @id @default(uuid())
+  profileId String
+  profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  nombre   String
+  email    String
+  telefono String
+  mensaje  String? @db.Text
+
+  status DirectoryInquiryStatus @default(NEW)
+  readAt      DateTime?
+  respondedAt DateTime?
+  ownerNote   String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, createdAt])
+  @@index([profileId, status])
+  @@map("directory_inquiries")
+}
+
+enum DirectoryInquiryStatus {
+  NEW
+  READ
+  ARCHIVED
 }
 
 // ===========================================
@@ -68,6 +199,19 @@ enum Role {
   AUDIOLOGA
   RECEPCION
   SOLO_LECTURA
+  PROFESIONAL_WEB
+}
+
+enum DirectoryProfileStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DirectoryPersonaTipo {
+  NATURAL
+  JURIDICA
 }
 
 // ===========================================
@@ -142,6 +286,10 @@ model Patient {
   // Datos clínicos generales
   tienePerdidaAuditiva     Boolean  @default(false)
   
+  // Historia clínica y anamnesis (diligencia en primera consulta)
+  anamnesisClinica         Json?    // motivoConsulta, sintomasAuditivos, antecedentes, desarrollo, resultadosEvaluacion, etc.
+  anamnesisSocial          Json?    // estadoCivil, ocupacion, nivelEducativo, contextoFamiliar, contextoLaboral, habitos, etc.
+  
   // Relación con lead original
   leadId                   String?  @unique
   lead                     Lead?    @relation(fields: [leadId], references: [id])
@@ -151,11 +299,74 @@ model Patient {
   quotes                   Quote[]
   sales                    Sale[]
   consultations            Consultation[]
+  maintenances             Maintenance[]
+  interactions             Interaction[]
   
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 
   @@map("patients")
+}
+
+// ===========================================
+// MANTENIMIENTOS (servicios / garantía / revisión)
+// ===========================================
+
+model Maintenance {
+  id                    String    @id @default(uuid())
+  patientId              String
+  patient                Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type                  String     // cleaning, repair, adjustment, battery-replacement, check-up, other
+  productId             String?
+  scheduledDate         DateTime
+  scheduledTime         String?    // HH:mm
+  completedDate         DateTime?
+  completedTime         String?
+  status                String     @default("en_proceso") // en_proceso, realizado, enviado_a_garantia, enviado_a_revision
+  description           String?
+  workPerformed         String?
+  cost                  Float      @default(0)
+  notes                 String?
+  nextMaintenanceDate   DateTime?
+  relatedAppointmentId  String?
+  processSteps          Json?      // [{ date, action, note }]
+  metadata              Json?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  @@index([patientId])
+  @@index([scheduledDate])
+  @@map("maintenances")
+}
+
+// ===========================================
+// INTERACCIONES CRM (llamadas, mensajes, correos, visitas, seguimiento consumibles)
+// ===========================================
+
+model Interaction {
+  id                    String    @id @default(uuid())
+  patientId             String
+  patient               Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type                  String    // call, message, email, visit, reminder, follow_up_consumables, follow_up_garantia, appointment, other
+  channel               String?   // phone, whatsapp, sms, email, in_person, system
+  title                 String
+  description           String?
+  status                String    @default("completed") // completed, sent, scheduled, missed, failed
+  direction             String?   // inbound, outbound (llamadas)
+  duration              Int?      // minutos (llamadas)
+  occurredAt            DateTime  @default(now())
+  scheduledDate         DateTime?
+  scheduledTime         String?
+  relatedAppointmentId  String?
+  relatedMaintenanceId  String?
+  metadata              Json?     // outcome, phoneNumber, consumable type (pilas/filtros/tubos), quantity, nextRecommendationDate, etc.
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([patientId])
+  @@index([occurredAt])
+  @@index([type])
+  @@map("interactions")
 }
 
 // ===========================================
@@ -184,6 +395,13 @@ model Appointment {
   
   // Profesional (ID desde configuración del centro)
   professionalId String?
+
+  /// Si la cita se originó desde la ficha pública del directorio (métrica automática).
+  directoryProfileId String?
+  directoryProfile   DirectoryProfile? @relation("AppointmentDirectoryProfile", fields: [directoryProfileId], references: [id], onDelete: SetNull)
+
+  /// Correo del profesional para notificar agendamiento desde perfil público
+  professionalNotifyEmail String?
   
   // Creado por
   createdById   String?
@@ -196,6 +414,7 @@ model Appointment {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
+  @@index([directoryProfileId])
   @@map("appointments")
 }
 

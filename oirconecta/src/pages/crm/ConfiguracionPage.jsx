@@ -159,6 +159,7 @@ const ConfiguracionPage = () => {
           <Tab icon={<Person />} iconPosition="start" label="Profesionales" />
           <Tab icon={<Build />} iconPosition="start" label="Servicios" />
           <Tab icon={<ShoppingCart />} iconPosition="start" label="Marketplace" />
+          <Tab icon={<Edit />} iconPosition="start" label="Documentos y consentimientos" />
         </Tabs>
 
         {/* 1. Horarios */}
@@ -692,6 +693,43 @@ const ConfiguracionPage = () => {
                   setConfig((prev) => ({ ...prev, marketplace: { ...prev.marketplace, serviciosFacturables: list } }));
                 }}>Agregar servicio facturable</Button>
               </Box>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 9. Documentos y consentimientos informados */}
+        {activeTab === 8 && (
+          <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 3, mb: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>Documentos y consentimientos informados</Typography>
+              <Typography variant="body2" sx={{ color: '#86899C', mb: 3 }}>
+                Suba aquí las plantillas PDF de cada tipo de consentimiento. Esas plantillas estarán disponibles para el centro; en cada perfil de paciente el usuario firma y asigna la firma a los tipos que correspondan. Las firmas se guardan en la historia clínica del paciente.
+              </Typography>
+              {['Consentimiento de protección y uso de datos', 'Autorización para toma de impresiones', 'Uso de imagen y datos para fines publicitarios', 'Grabación de audio y video en consulta'].map((tipo) => (
+                <Paper key={tipo} variant="outlined" sx={{ p: 2, mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>{tipo}</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                    <Button size="small" variant="outlined" component="label" startIcon={<Upload />}>
+                      {config.consentimientosPlantillas?.[tipo] ? 'Reemplazar PDF' : 'Subir PDF'}
+                      <input type="file" hidden accept=".pdf,application/pdf" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const r = new FileReader();
+                        r.onload = () => {
+                          setConfig((p) => ({ ...p, consentimientosPlantillas: { ...(p.consentimientosPlantillas || {}), [tipo]: r.result } }));
+                        };
+                        r.readAsDataURL(file);
+                      }} />
+                    </Button>
+                    {config.consentimientosPlantillas?.[tipo] && (
+                      <>
+                        <Chip label="PDF cargado" size="small" color="success" />
+                        <Button size="small" color="error" onClick={() => setConfig((p) => ({ ...p, consentimientosPlantillas: { ...(p.consentimientosPlantillas || {}), [tipo]: null } }))}>Quitar</Button>
+                      </>
+                    )}
+                  </Box>
+                </Paper>
+              ))}
             </CardContent>
           </Card>
         )}

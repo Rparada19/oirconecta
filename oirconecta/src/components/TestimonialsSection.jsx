@@ -1,294 +1,156 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Avatar,
-  Rating,
-  Button,
-  Stack,
-  Chip
-} from '@mui/material';
-import {
-  FormatQuote,
-  Star,
-  ArrowBack,
-  ArrowForward,
-  VerifiedUser
-} from '@mui/icons-material';
+import React from 'react';
+import { Box, Container, Typography, Grid, Card, CardContent, Avatar, Rating, Chip } from '@mui/material';
+import { FormatQuote, VerifiedUser } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
-const SectionContainer = styled(Box)(() => ({
-  padding: '64px 0',
-  background: 'linear-gradient(135deg, #f8fafc 0%, #f0f4f3 100%)'
+const SectionContainer = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(10, 0),
+  background: 'linear-gradient(180deg, #eef3f1 0%, #f4f7f6 100%)',
 }));
 
-const TestimonialCard = styled(Card)(() => ({
+const TestimonialCard = styled(Card)(({ theme }) => ({
   height: '100%',
-  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-  cursor: 'pointer',
-  background: 'white',
+  background: theme.palette.background.paper,
+  border: '1px solid rgba(39, 47, 80, 0.08)',
+  boxShadow: 'none',
+  borderRadius: theme.shape.borderRadius * 1.25,
+  transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
   '&:hover': {
-    transform: 'translateY(-8px)',
-    boxShadow: '0 12px 24px rgba(8, 89, 70, 0.15)'
-  }
+    boxShadow: '0 10px 32px rgba(30, 36, 56, 0.08)',
+    borderColor: 'rgba(8, 89, 70, 0.12)',
+  },
 }));
 
 const QuoteIcon = styled(FormatQuote)(() => ({
-  fontSize: '3rem',
+  fontSize: '2.25rem',
   color: '#085946',
-  opacity: 0.3,
+  opacity: 0.18,
   position: 'absolute',
-  top: '16px',
-  right: '16px'
+  top: 18,
+  right: 18,
 }));
 
-const TestimonialsSection = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+/** Tres historias con foco emocional; sustituir por casos reales autorizados cuando existan. */
+const STORIES = [
+  {
+    id: 1,
+    name: 'Elena, 68',
+    place: 'Bogotá',
+    tag: 'Volvió a disfrutar las reuniones',
+    rating: 5,
+    text:
+      'Me daba pena decir “¿me lo repites?”. Hoy vuelvo a reírme con mis nietos en la mesa. No fue magia: fue encontrar a alguien que me explicó con paciencia y me acompañó en cada ajuste.',
+    image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+  },
+  {
+    id: 2,
+    name: 'Andrés, 45',
+    place: 'Medellín',
+    tag: 'Dejó de evitar el teléfono',
+    rating: 5,
+    text:
+      'Trabajo con clientes todo el día. Estaba agotado de adivinar palabras por llamada. Pedir ayuda me quitó un peso: entendí qué pasaba y qué podía hacer, sin sentirme “viejo”.',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+  },
+  {
+    id: 3,
+    name: 'Lucía, 52',
+    place: 'Cali',
+    tag: 'Recuperó confianza',
+    rating: 5,
+    text:
+      'Tenía miedo de que me dijeran que “era normal”. Me escucharon de verdad. Hoy entiendo mi oído y me siento dueña de mis decisiones, con calma.',
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+  },
+];
 
-  const testimonials = [
-    {
-      id: 1,
-      name: 'María Elena Rodríguez',
-      age: 65,
-      location: 'Bogotá',
-      rating: 5,
-      service: 'Audífonos',
-      testimonial: 'Después de años de dificultades para escuchar, OírConecta me cambió la vida. Los audífonos que me adaptaron son increíbles, puedo escuchar claramente en todas las situaciones. El Dr. González fue muy profesional y paciente.',
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-      verified: true,
-      date: 'Hace 2 meses'
-    },
-    {
-      id: 2,
-      name: 'Carlos Andrés López',
-      age: 42,
-      location: 'Medellín',
-      rating: 5,
-      service: 'Implante Coclear',
-      testimonial: 'El proceso del implante coclear fue mucho más fácil de lo que esperaba. Todo el equipo médico fue excelente, desde la evaluación inicial hasta la rehabilitación. Ahora puedo escuchar sonidos que había olvidado.',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      verified: true,
-      date: 'Hace 6 meses'
-    },
-    {
-      id: 3,
-      name: 'Ana Sofía Martínez',
-      age: 28,
-      location: 'Cali',
-      rating: 5,
-      service: 'Evaluación Auditiva',
-      testimonial: 'Excelente atención y profesionalismo. La evaluación fue muy completa y me explicaron todo detalladamente. Recomiendo totalmente OírConecta para cualquier problema auditivo.',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-      verified: true,
-      date: 'Hace 1 mes'
-    },
-    {
-      id: 4,
-      name: 'Roberto Jiménez',
-      age: 55,
-      location: 'Barranquilla',
-      rating: 5,
-      service: 'Audífonos',
-      testimonial: 'Increíble experiencia. Los audífonos son de alta tecnología y el servicio post-venta es excepcional. Me siento mucho más seguro y confiado en mi día a día.',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      verified: true,
-      date: 'Hace 3 meses'
-    },
-    {
-      id: 5,
-      name: 'Laura Patricia Gómez',
-      age: 38,
-      location: 'Bucaramanga',
-      rating: 5,
-      service: 'Terapia del Habla',
-      testimonial: 'La terapia del habla con la Dra. Martínez fue fundamental para mi recuperación después del implante. Es una profesional muy dedicada y los resultados fueron excelentes.',
-      image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
-      verified: true,
-      date: 'Hace 4 meses'
-    },
-    {
-      id: 6,
-      name: 'Jorge Luis Herrera',
-      age: 70,
-      location: 'Pereira',
-      rating: 5,
-      service: 'Mantenimiento',
-      testimonial: 'El servicio de mantenimiento es muy profesional. Me ayudan a mantener mis audífonos en perfecto estado y siempre están disponibles para cualquier consulta.',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-      verified: true,
-      date: 'Hace 1 semana'
-    }
-  ];
-
-  // Estadísticas removidas
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 3) % testimonials.length);
-  };
-
-  const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 3 + testimonials.length) % testimonials.length);
-  };
-
-  const visibleTestimonials = testimonials.slice(currentIndex, currentIndex + 3);
-
+export default function TestimonialsSection() {
   return (
-    <section aria-label="Testimonios de pacientes">
+    <section aria-label="Historias de personas como tú">
       <SectionContainer>
         <Container maxWidth="lg">
-          {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography 
-              component="h2"
-              variant="h3" 
-              sx={{ 
-                fontWeight: 700,
-                color: '#085946',
-                mb: 2
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Chip
+              label="Historias con corazón"
+              sx={{
+                mb: 2,
+                bgcolor: 'rgba(8, 89, 70, 0.08)',
+                color: 'primary.main',
+                fontWeight: 600,
+                border: '1px solid rgba(8, 89, 70, 0.15)',
               }}
-            >
-              Lo que dicen nuestros pacientes
+            />
+            <Typography component="h2" variant="h3" sx={{ fontWeight: 800, color: 'primary.main', mb: 2, lineHeight: 1.15 }}>
+              “Por fin me entendieron”
             </Typography>
-            <Typography 
+            <Typography
               component="p"
-              variant="h6" 
-              sx={{ 
-                color: '#86899C',
-                maxWidth: '600px',
+              variant="body1"
+              sx={{
+                color: 'text.secondary',
+                maxWidth: 640,
                 mx: 'auto',
-                lineHeight: 1.6
+                lineHeight: 1.65,
+                fontSize: '1.0625rem',
+                mb: 1,
               }}
             >
-              Historias reales de personas que han mejorado su calidad de vida con nosotros
+              Relatos de ejemplo que muestran el tono que queremos para Oír Conecta: cercanía, alivio y decisiones con calma.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 560, mx: 'auto', lineHeight: 1.65 }}>
+              Cuando tengas casos reales autorizados, reemplazan estos textos y la confianza sube otro nivel.
             </Typography>
           </Box>
 
-          {/* Estadísticas removidas */}
-
-          {/* Testimonios */}
-          <Grid container spacing={4} sx={{ mb: 6 }}>
-            {visibleTestimonials.map((testimonial) => (
-              <Grid item xs={12} md={4} key={testimonial.id}>
+          <Grid container spacing={3}>
+            {STORIES.map((t) => (
+              <Grid item xs={12} md={4} key={t.id}>
                 <TestimonialCard>
-                  <CardContent sx={{ p: 4, position: 'relative' }}>
+                  <CardContent sx={{ p: { xs: 3, sm: 3.5 }, position: 'relative', minHeight: 280 }}>
                     <QuoteIcon />
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                      <Avatar
-                        src={testimonial.image}
-                        alt={`${testimonial.name} - ${testimonial.service}`}
-                        sx={{ width: 60, height: 60, mr: 2 }}
-                      />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Avatar src={t.image} alt="" sx={{ width: 52, height: 52, mr: 1.5 }} />
                       <Box>
-                        <Typography 
-                          component="h3"
-                          variant="h6" 
-                          sx={{ 
-                            fontWeight: 600,
-                            color: '#272F50'
-                          }}
-                        >
-                          {testimonial.name}
+                        <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                          {t.name}
                         </Typography>
-                        <Typography 
-                          component="p"
-                          variant="body2" 
-                          sx={{ color: '#86899C' }}
-                        >
-                          {testimonial.age} años • {testimonial.location}
+                        <Typography variant="caption" color="text.secondary">
+                          {t.place}
                         </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                          <Chip
-                            label={testimonial.service}
-                            size="small"
-                            sx={{
-                              bgcolor: '#f0f4f3',
-                              color: '#085946',
-                              fontSize: '0.75rem'
-                            }}
-                          />
-                          {testimonial.verified && (
-                            <VerifiedUser sx={{ color: '#085946', fontSize: 16 }} />
-                          )}
-                        </Box>
                       </Box>
                     </Box>
-                    
-                    <Rating 
-                      value={testimonial.rating} 
-                      readOnly 
-                      sx={{ mb: 2 }}
+
+                    <Chip
+                      label={t.tag}
+                      size="small"
+                      sx={{ mb: 1.5, fontWeight: 600, bgcolor: 'rgba(8, 89, 70, 0.08)', color: 'primary.main' }}
                     />
-                    
-                    <Typography 
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+                      <Rating value={t.rating} readOnly size="small" />
+                      <VerifiedUser sx={{ fontSize: 18, color: 'primary.main', opacity: 0.6 }} aria-hidden />
+                    </Box>
+
+                    <Typography
                       component="blockquote"
-                      variant="body1" 
-                      sx={{ 
-                        mb: 3, 
-                        lineHeight: 1.6, 
-                        fontStyle: 'italic',
-                        color: '#272F50'
+                      variant="body1"
+                      sx={{
+                        lineHeight: 1.65,
+                        color: 'text.primary',
+                        fontSize: '1.0625rem',
+                        m: 0,
+                        fontStyle: 'normal',
                       }}
                     >
-                      "{testimonial.testimonial}"
-                    </Typography>
-                    
-                    <Typography 
-                      component="time"
-                      variant="caption" 
-                      sx={{ color: '#86899C' }}
-                    >
-                      {testimonial.date}
+                      “{t.text}”
                     </Typography>
                   </CardContent>
                 </TestimonialCard>
               </Grid>
             ))}
           </Grid>
-
-          {/* Navegación */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-              aria-label="Testimonios anteriores"
-              sx={{
-                borderColor: '#085946',
-                color: '#085946',
-                '&:hover': {
-                  borderColor: '#272F50',
-                  bgcolor: 'rgba(8, 89, 70, 0.04)'
-                }
-              }}
-            >
-              <ArrowBack />
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={handleNext}
-              disabled={currentIndex + 3 >= testimonials.length}
-              aria-label="Siguientes testimonios"
-              sx={{
-                borderColor: '#085946',
-                color: '#085946',
-                '&:hover': {
-                  borderColor: '#272F50',
-                  bgcolor: 'rgba(8, 89, 70, 0.04)'
-                }
-              }}
-            >
-              <ArrowForward />
-            </Button>
-          </Box>
         </Container>
       </SectionContainer>
     </section>
   );
-};
-
-export default TestimonialsSection; 
+}

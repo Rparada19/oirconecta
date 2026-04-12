@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Container, Box, Typography, Stepper, Step, StepLabel, Paper, Alert, Button, Grid } from '@mui/material';
 import { CalendarToday, AccessTime, VerifiedUser, CheckCircle } from '@mui/icons-material';
 import Header from '../components/Header';
@@ -12,8 +13,9 @@ import { getAvailableTimeSlots, createAppointment } from '../services/appointmen
 const steps = ['Fecha', 'Hora', 'Datos del Paciente', 'Confirmación'];
 
 const AgendamientoPage = () => {
-  console.log('AgendamientoPage renderizado');
-  
+  const [searchParams] = useSearchParams();
+  const directoryProfileIdFromUrl = searchParams.get('desdeDirectorio');
+
   const [activeStep, setActiveStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -89,6 +91,7 @@ const AgendamientoPage = () => {
       time: selectedTime,
       ...patientData,
       durationMinutes: 50,
+      directoryProfileId: directoryProfileIdFromUrl || undefined,
     });
     setIsLoading(false);
     if (result.success) {
@@ -199,7 +202,7 @@ const AgendamientoPage = () => {
                   color: '#ffffff',
                 }}
               >
-                Agenda tu Cita Médica
+                Agenda tu valoración
               </Typography>
               
               <Typography
@@ -212,7 +215,8 @@ const AgendamientoPage = () => {
                   fontSize: { xs: '1.2rem', md: '1.6rem' },
                 }}
               >
-                Reserva tu consulta con nuestros especialistas en audición de forma rápida y sencilla
+                Solicita un cupo a través de OírConecta. La atención la brinda el equipo o profesional asociado a este
+                canal de agendamiento.
               </Typography>
 
               {/* Características rápidas */}
@@ -221,7 +225,7 @@ const AgendamientoPage = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CheckCircle sx={{ fontSize: 20, color: '#71A095' }} />
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      Disponible 24/7
+                      Solicitud en línea
                     </Typography>
                   </Box>
                 </Grid>

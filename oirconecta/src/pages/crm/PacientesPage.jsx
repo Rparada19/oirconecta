@@ -35,6 +35,7 @@ import {
   LocationOn,
 } from '@mui/icons-material';
 import { getAllAppointments } from '../../services/appointmentService';
+import { getPatients } from '../../services/patientService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
 import PatientProfileDialog from '../../components/patient/PatientProfileDialog';
 
@@ -48,90 +49,89 @@ const PacientesPage = () => {
   const [patientProfileDialogOpen, setPatientProfileDialogOpen] = useState(false);
 
   useEffect(() => {
-    const loadPatients = async () => {
+    const loadPatientsList = async () => {
+      const emailNorm = (e) => (e || '').trim().toLowerCase();
+
+      const fromApi = await getPatients({ limit: 500 }).catch((err) => {
+        console.warn('[PacientesPage] getPatients error:', err);
+        return { patients: [] };
+      });
+      const apiPatients = fromApi.patients || [];
+      const apiList = apiPatients.map((p) => ({
+        id: p.id,
+        nombre: p.nombre,
+        email: p.email,
+        telefono: p.telefono || '',
+        totalCitas: 0,
+        ultimaCita: '',
+        procedencia: p.procedencia || 'visita-medica',
+        primeraCita: '',
+      }));
+
       const allAppointments = await getAllAppointments();
-      const patientAppointments = allAppointments.filter(
-        (apt) => apt.status === 'patient'
-      );
-      
-      console.log('[PacientesPage] Citas con estado "patient":', patientAppointments.length);
-      
+      const patientAppointments = allAppointments.filter((apt) => apt.status === 'patient');
       setAppointments(patientAppointments);
-      
-      // Crear lista única de pacientes (solo los marcados explícitamente como paciente)
-      const uniquePatients = [];
-      const patientMap = new Map();
-      
+      const byEmailFromApts = new Map();
       patientAppointments.forEach((apt) => {
-        if (!patientMap.has(apt.patientEmail)) {
-          patientMap.set(apt.patientEmail, {
+        const email = emailNorm(apt.patientEmail);
+        if (!email) return;
+        if (!byEmailFromApts.has(email)) {
+          byEmailFromApts.set(email, {
             id: apt.patientEmail,
             nombre: apt.patientName,
             email: apt.patientEmail,
-            telefono: apt.patientPhone,
+            telefono: apt.patientPhone || '',
             totalCitas: 1,
             ultimaCita: apt.date,
             procedencia: apt.procedencia || 'visita-medica',
             primeraCita: apt.date,
           });
         } else {
-          const patient = patientMap.get(apt.patientEmail);
-          patient.totalCitas += 1;
-          if (new Date(apt.date) > new Date(patient.ultimaCita)) {
-            patient.ultimaCita = apt.date;
-          }
-          if (new Date(apt.date) < new Date(patient.primeraCita)) {
-            patient.primeraCita = apt.date;
-          }
+          const row = byEmailFromApts.get(email);
+          row.totalCitas += 1;
+          if (new Date(apt.date) > new Date(row.ultimaCita)) row.ultimaCita = apt.date;
+          if (new Date(apt.date) < new Date(row.primeraCita)) row.primeraCita = apt.date;
         }
       });
-      
-      const patientsList = Array.from(patientMap.values());
-      console.log('[PacientesPage] Total pacientes únicos:', patientsList.length);
-      setPatients(patientsList);
+      const fromAppointments = Array.from(byEmailFromApts.values());
+
+      const seen = new Set(apiList.map((p) => emailNorm(p.email)));
+      fromAppointments.forEach((p) => {
+        if (!seen.has(emailNorm(p.email))) {
+          seen.add(emailNorm(p.email));
+          apiList.push(p);
+        }
+      });
+      setPatients(apiList);
     };
-    
-    loadPatients();
-    
-    // Escuchar cambios en localStorage
-    const handleStorageChange = (e) => {
-      if (e.key === 'oirconecta_appointments' || !e.key) {
-        console.log('[PacientesPage] Cambio detectado en localStorage, recargando...');
-        setTimeout(() => {
-          loadPatients();
-        }, 100);
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    const interval = setInterval(loadPatients, 30000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
+
+    loadPatientsList();
+    const interval = setInterval(loadPatientsList, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const filteredPatients = patients.filter(
-    (patient) =>
-      patient.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.telefono.includes(searchTerm)
+    (patient) => {
+      const term = (searchTerm || '').toLowerCase().trim();
+      if (!term) return true;
+      return (
+        (patient.nombre || '').toLowerCase().includes(term) ||
+        (patient.email || '').toLowerCase().includes(term) ||
+        (patient.telefono || '').includes(searchTerm) ||
+        (patient.numeroDocumento || '').includes(searchTerm)
+      );
+    }
   );
 
-  const handleViewDetails = (patient) => {
-    console.log('[PacientesPage] handleViewDetails llamado para:', patient);
+  const handleViewDetails = async (patient) => {
     setSelectedPatient(patient);
-    
-    // Buscar la cita más reciente del paciente para pasarla al perfil
-    const patientAppointmentsList = appointments.filter((apt) => apt.patientEmail === patient.email);
-    
-    console.log('[PacientesPage] Citas encontradas para el paciente:', patientAppointmentsList.length);
-    
+    let patientAppointmentsList = appointments.filter((apt) => (apt.patientEmail || '').toLowerCase() === (patient.email || '').toLowerCase());
+    if (patientAppointmentsList.length === 0) {
+      const byEmail = await getAllAppointments({ patientEmail: patient.email });
+      patientAppointmentsList = byEmail;
+    }
     if (patientAppointmentsList.length > 0) {
-      // Ordenar por fecha más reciente y tomar la primera
-      const sortedAppointments = patientAppointmentsList.sort((a, b) => {
+      const sortedAppointments = [...patientAppointmentsList].sort((a, b) => {
         const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
         const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
         return dateB - dateA;
@@ -214,7 +214,7 @@ const PacientesPage = () => {
           <CardContent sx={{ p: 3 }}>
             <TextField
               fullWidth
-              placeholder="Buscar pacientes por nombre, email o teléfono..."
+              placeholder="Buscar por nombre, cédula o teléfono..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{

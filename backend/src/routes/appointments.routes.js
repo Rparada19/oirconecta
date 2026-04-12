@@ -28,6 +28,9 @@ router.post(
     body('patientName').notEmpty().withMessage('patientName es requerido'),
     body('patientEmail').notEmpty().withMessage('patientEmail es requerido'),
     body('patientPhone').notEmpty().withMessage('patientPhone es requerido'),
+    body('professionalNotifyEmail').optional().isEmail(),
+    body('professionalDisplayName').optional().isString(),
+    body('directoryProfileId').optional().isUUID(),
   ],
   validateRequest,
   appointmentsController.createPublic
@@ -42,8 +45,9 @@ router.get(
   [
     query('fecha').optional().isISO8601(),
     query('estado').optional().isIn(['CONFIRMED', 'COMPLETED', 'NO_SHOW', 'CANCELLED', 'RESCHEDULED', 'PATIENT']),
+    query('patientEmail').optional().isEmail(),
     query('page').optional().isInt({ min: 1 }),
-    query('limit').optional().isInt({ min: 1, max: 100 }),
+    query('limit').optional().isInt({ min: 1, max: 500 }),
   ],
   validateRequest,
   appointmentsController.getAll

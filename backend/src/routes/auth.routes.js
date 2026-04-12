@@ -38,6 +38,12 @@ router.post(
 // GET /api/auth/me - Obtener usuario actual
 router.get('/me', authenticate, authController.me);
 
+// GET /api/auth/users - Listar usuarios del centro (responsables)
+router.get('/users', authenticate, authController.listUsers);
+
+// PATCH /api/auth/users/:id - Actualizar usuario (solo admin, p.ej. asignar professionalConfigId)
+router.patch('/users/:id', authenticate, authController.updateUser);
+
 // POST /api/auth/change-password - Cambiar contraseña
 router.post(
   '/change-password',

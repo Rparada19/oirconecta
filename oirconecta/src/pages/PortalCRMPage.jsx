@@ -17,70 +17,37 @@ import {
   ExitToApp,
   PersonAdd,
   Campaign,
+  NotificationsActive,
+  AssignmentTurnedIn,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getMenuForRole, MENU_KEYS } from '../utils/rolePermissions';
+
+const ALL_MENU_ITEMS = [
+  { key: MENU_KEYS.DASHBOARD, title: 'Dashboard', icon: <Dashboard />, description: 'Vista general del sistema', color: '#085946', path: '/portal-crm/dashboard' },
+  { key: MENU_KEYS.ACCIONES_DIA, title: 'Acciones del día', icon: <NotificationsActive />, description: 'Alertas: consumibles, garantías y recordatorios', color: '#e65100', path: '/portal-crm/acciones-dia' },
+  { key: MENU_KEYS.CITAS, title: 'Agenda', icon: <CalendarToday />, description: 'Gestionar agenda', color: '#0a6b56', path: '/portal-crm/citas' },
+  { key: MENU_KEYS.LEADS, title: 'Leads', icon: <PersonAdd />, description: 'Gestionar leads y prospectos', color: '#272F50', path: '/portal-crm/leads' },
+  { key: MENU_KEYS.PACIENTES, title: 'Pacientes', icon: <People />, description: 'Base de datos de pacientes', color: '#085946', path: '/portal-crm/pacientes' },
+  { key: MENU_KEYS.CAMPANAS, title: 'Campañas de Marketing', icon: <Campaign />, description: 'Gestionar campañas y promociones', color: '#0a6b56', path: '/portal-crm/campanas' },
+  { key: MENU_KEYS.REPORTES, title: 'Reportes', icon: <Assessment />, description: 'Estadísticas y reportes', color: '#272F50', path: '/portal-crm/reportes' },
+  { key: MENU_KEYS.DIRECTORIO_REVISION, title: 'Directorio público', icon: <AssignmentTurnedIn />, description: 'Revisar y aprobar fichas de profesionales', color: '#5c6bc0', path: '/portal-crm/directorio-revision' },
+  { key: MENU_KEYS.CONFIGURACION, title: 'Configuración', icon: <Settings />, description: 'Ajustes del sistema', color: '#085946', path: '/portal-crm/configuracion' },
+];
 
 const PortalCRMPage = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = () => {
     logout();
     navigate('/login-crm');
   };
 
-  const menuItems = [
-    {
-      title: 'Dashboard',
-      icon: <Dashboard />,
-      description: 'Vista general del sistema',
-      color: '#085946',
-      path: '/portal-crm/dashboard',
-    },
-    {
-      title: 'Citas',
-      icon: <CalendarToday />,
-      description: 'Gestionar citas agendadas',
-      color: '#0a6b56',
-      path: '/portal-crm/citas',
-    },
-    {
-      title: 'Leads',
-      icon: <PersonAdd />,
-      description: 'Gestionar leads y prospectos',
-      color: '#272F50',
-      path: '/portal-crm/leads',
-    },
-    {
-      title: 'Pacientes',
-      icon: <People />,
-      description: 'Base de datos de pacientes',
-      color: '#085946',
-      path: '/portal-crm/pacientes',
-    },
-    {
-      title: 'Campañas de Marketing',
-      icon: <Campaign />,
-      description: 'Gestionar campañas y promociones',
-      color: '#0a6b56',
-      path: '/portal-crm/campanas',
-    },
-    {
-      title: 'Reportes',
-      icon: <Assessment />,
-      description: 'Estadísticas y reportes',
-      color: '#272F50',
-      path: '/portal-crm/reportes',
-    },
-    {
-      title: 'Configuración',
-      icon: <Settings />,
-      description: 'Ajustes del sistema',
-      color: '#085946',
-      path: '/portal-crm/configuracion',
-    },
-  ];
+  const role = user?.role || 'RECEPCION';
+  const allowedKeys = getMenuForRole(role);
+  const menuItems = ALL_MENU_ITEMS.filter((item) => allowedKeys.includes(item.key));
 
   return (
     <Box
@@ -105,7 +72,7 @@ const PortalCRMPage = () => {
                 Portal CRM
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Panel de administración OírConecta
+                {user?.nombre && `${user.nombre} • `}Panel OírConecta
               </Typography>
             </Box>
             <Button

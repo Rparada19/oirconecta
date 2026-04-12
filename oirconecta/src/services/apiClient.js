@@ -67,8 +67,11 @@ export async function request(path, options = {}) {
     console.error('API request error:', err);
     const raw = err.message || '';
     const isNetwork = /load failed|failed to fetch|network error|err_connection_refused/i.test(raw);
+    const devHint =
+      import.meta.env.DEV &&
+      ` Comprueba que el backend esté en marcha${BASE_URL ? ` (${BASE_URL})` : ''}.`;
     const msg = isNetwork
-      ? 'No se pudo conectar con el servidor. Comprueba que el backend esté en marcha (http://localhost:3001).'
+      ? `No se pudo conectar con el servidor.${devHint || ' Comprueba tu conexión o inténtalo más tarde.'}`
       : raw || 'Error de conexión con el servidor';
     return { data: null, error: msg, status: 0 };
   }

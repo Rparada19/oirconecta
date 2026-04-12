@@ -335,6 +335,22 @@ export async function recordSale(patientEmail, saleData) {
 }
 
 /**
+ * Actualizar una venta (ej. metadata para marcar renovación gestionada).
+ * @param {string} saleId - UUID de la venta
+ * @param {Object} data - { metadata?, fechaFinGarantia?, notas?, ... }
+ * @returns {Promise<{ success: boolean, product?: object, error?: string }>}
+ */
+export async function updateSale(saleId, data) {
+  if (!saleId || !/^[0-9a-f-]{36}$/i.test(String(saleId))) {
+    return { success: false, product: null, error: 'ID de venta inválido' };
+  }
+  const { data: res, error } = await api.put(`/api/products/sales/${saleId}`, data);
+  if (error) return { success: false, product: null, error };
+  const s = res?.data;
+  return { success: !!s, product: s ? mapSaleToProduct(s) : null, error: s ? null : 'Error al actualizar venta' };
+}
+
+/**
  * @param {string} _patientEmail - No usado en API; se mantiene por compatibilidad.
  * @param {string} quoteId - UUID de la cotización
  * @param {Object} saleData - { fechaAdaptacion, fechaFinGarantia, fechaPrimerControl, fechaPrimerMantenimiento, notas }

@@ -28,7 +28,7 @@ import {
 import { styled } from '@mui/material/styles';
 
 // Imágenes
-const phonakLogo = '/logos/marcas/Phonak-logo.png';
+const phonakLogo = '/logos/marcas/Phonak-logo.jpg';
 
 // Styled Components - Minimalista
 const HeroSection = styled(Box)(({ theme }) => ({

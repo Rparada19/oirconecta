@@ -7,7 +7,7 @@ const { body, param, query } = require('express-validator');
 const router = express.Router();
 
 const patientsController = require('../controllers/patients.controller');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, authorize } = require('../middleware/auth');
 const validateRequest = require('../middleware/validateRequest');
 
 // Todas las rutas requieren autenticación
@@ -19,7 +19,7 @@ router.get(
   [
     query('search').optional(),
     query('page').optional().isInt({ min: 1 }),
-    query('limit').optional().isInt({ min: 1, max: 100 }),
+    query('limit').optional().isInt({ min: 1, max: 500 }),
   ],
   validateRequest,
   patientsController.getAll
@@ -66,6 +66,18 @@ router.put(
   ],
   validateRequest,
   patientsController.update
+);
+
+// POST /api/patients/:id/reassign - Reasignar paciente a otro profesional (solo ADMIN)
+router.post(
+  '/:id/reassign',
+  authorize('ADMIN'),
+  [
+    param('id').isUUID(),
+    body('newProfessionalId').notEmpty().trim().withMessage('newProfessionalId requerido'),
+  ],
+  validateRequest,
+  patientsController.reassign
 );
 
 module.exports = router;

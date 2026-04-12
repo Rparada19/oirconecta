@@ -58,6 +58,10 @@ export const getPatientProfile = (patientEmail) => {
  * @param {Object} profileData - Datos del perfil
  * @returns {Object} {success: boolean, profile: Object|null, error: string|null}
  */
+/** Genera un código único de historia clínica (para asignar a perfiles que no lo tengan). */
+export const generateCodigoHistoriaClinica = () =>
+  'HC-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+
 export const savePatientProfile = (patientEmail, profileData) => {
   if (!patientEmail) {
     return {
@@ -70,9 +74,13 @@ export const savePatientProfile = (patientEmail, profileData) => {
   const allProfiles = getAllPatientProfiles();
   const existingProfile = allProfiles[patientEmail] || {};
 
+  const codigo = (profileData.codigoHistoriaClinica || existingProfile.codigoHistoriaClinica) ||
+    generateCodigoHistoriaClinica();
+
   const profile = {
     ...existingProfile,
     ...profileData,
+    codigoHistoriaClinica: codigo,
     patientEmail,
     updatedAt: new Date().toISOString(),
     createdAt: existingProfile.createdAt || new Date().toISOString(),
@@ -120,8 +128,13 @@ export const initializePatientProfile = (sourceData) => {
     };
   }
 
+  /** Código único de historia clínica por paciente (ej. HC-A1B2C3D-XY12) */
+  const generateCodigoHC = () =>
+    'HC-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+
   // Crear nuevo perfil con datos básicos
   const profile = {
+    codigoHistoriaClinica: generateCodigoHC(),
     // Datos demográficos básicos
     nombre: sourceData.patientName || sourceData.nombre || '',
     email: email,
@@ -165,6 +178,22 @@ export const initializePatientProfile = (sourceData) => {
       antecedentesFamiliares: {
         hipoacusia: { presente: false, familiar: '', grado: '' },
         otrasPatologias: [],
+      },
+      factoresRiesgoAuditivo: {
+        ototoxicidad: { presente: false, medicamentos: '', duracion: '', observaciones: '' },
+        enfermedadesInfecciosas: { meningitis: false, sifilis: false, tuberculosis: false, vih: false, otros: '' },
+        enfermedadesSistemicas: { diabetes: false, insuficienciaRenal: false, colagenopatias: false, otros: '' },
+        bajoPesoNacimiento: false,
+      },
+      impactoFuncional: '',
+      resultadoConsulta: '',
+      resultadosEvaluacion: {
+        otoscopia: '',
+        audiometria: { od: {}, oi: {}, observaciones: '' },
+        logoaudiometria: '',
+        impedanciometria: '',
+        pruebaAudifonos: '',
+        examenesConAudifonos: '',
       },
       desarrollo: {
         embarazo: { normal: true, complicaciones: '' },

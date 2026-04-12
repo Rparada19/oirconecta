@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 import { Box, Typography, Button, Breadcrumbs, Link, Grid, Card, TextField, Checkbox, FormControlLabel, MenuItem, Select, InputLabel, FormControl, Container } from '@mui/material';
 
 // Imágenes de ejemplo para Unitron
-const unitronLogo = '/logos/marcas/Unitron-logo.png';
+const unitronLogo = '/logos/marcas/unitron-logo.svg';
 const heroImg = 'https://www.unitron.com/content/dam/unitron/global/products/blu/blu-hero.jpg';
 const unitronProduct1 = 'https://www.unitron.com/content/dam/unitron/global/products/blu/blu-product.png';
 const unitronProduct2 = 'https://www.unitron.com/content/dam/unitron/global/products/discover-next/discover-next-product.png';

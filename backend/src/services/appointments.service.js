@@ -16,8 +16,12 @@ const DEFAULT_SLOTS = [
 /**
  * Obtener todas las citas
  */
-const getAll = async ({ fecha, estado, page = 1, limit = 50 }) => {
+const getAll = async ({ fecha, estado, patientEmail, page = 1, limit = 50 }) => {
   const where = {};
+
+  if (patientEmail) {
+    where.patientEmail = (patientEmail || '').trim().toLowerCase();
+  }
 
   if (fecha) {
     const startOfDay = new Date(fecha);
@@ -197,7 +201,17 @@ const create = async (data, createdById) => {
   const fecha = new Date(data.fecha);
   fecha.setHours(0, 0, 0, 0);
 
-  return prisma.appointment.create({
+  let directoryProfileId = null;
+  if (data.directoryProfileId != null && String(data.directoryProfileId).trim()) {
+    const did = String(data.directoryProfileId).trim();
+    const dp = await prisma.directoryProfile.findFirst({
+      where: { id: did, status: 'APPROVED' },
+      select: { id: true },
+    });
+    if (dp) directoryProfileId = dp.id;
+  }
+
+  const appointment = await prisma.appointment.create({
     data: {
       fecha,
       hora: data.hora,
@@ -208,6 +222,10 @@ const create = async (data, createdById) => {
       tipoConsulta: data.tipoConsulta,
       durationMinutes: data.durationMinutes != null ? parseInt(data.durationMinutes, 10) : null,
       professionalId: data.professionalId || null,
+      directoryProfileId,
+      professionalNotifyEmail: data.professionalNotifyEmail
+        ? String(data.professionalNotifyEmail).trim().toLowerCase()
+        : null,
       patientId: data.patientId,
       patientName: data.patientName,
       patientEmail: data.patientEmail?.toLowerCase(),
@@ -218,6 +236,17 @@ const create = async (data, createdById) => {
       patient: true,
     },
   });
+
+  try {
+    const { sendBookingConfirmations } = require('./email.service');
+    await sendBookingConfirmations(appointment, {
+      professionalName: data.professionalDisplayName || undefined,
+    });
+  } catch (e) {
+    console.error('[appointments.create] email notify:', e.message);
+  }
+
+  return appointment;
 };
 
 /**

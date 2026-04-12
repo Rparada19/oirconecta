@@ -11,7 +11,8 @@ const productsService = require('../services/products.service');
 const getAllQuotes = async (req, res, next) => {
   try {
     const { patientId, estado } = req.query;
-    const quotes = await productsService.getAllQuotes({ patientId, estado });
+    const createdByUserId = req.user.role === 'ADMIN' ? undefined : req.user.id;
+    const quotes = await productsService.getAllQuotes({ patientId, estado, createdByUserId });
     
     res.json({
       success: true,
@@ -101,7 +102,8 @@ const convertQuoteToSale = async (req, res, next) => {
 const getAllSales = async (req, res, next) => {
   try {
     const { patientId, categoria } = req.query;
-    const sales = await productsService.getAllSales({ patientId, categoria });
+    const createdByUserId = req.user.role === 'ADMIN' ? undefined : req.user.id;
+    const sales = await productsService.getAllSales({ patientId, categoria, createdByUserId });
     
     res.json({
       success: true,

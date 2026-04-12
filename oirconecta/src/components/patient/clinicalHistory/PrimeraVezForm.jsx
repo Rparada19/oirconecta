@@ -45,6 +45,18 @@ const defaultAnamnesisClinica = () => ({
     otros: '',
   },
   antecedentesFamiliares: { hipoacusia: { presente: false, familiar: '', grado: '' }, otrasPatologias: [] },
+  factoresRiesgoAuditivo: {
+    ototoxicidad: { presente: false, medicamentos: '', duracion: '', observaciones: '' },
+    enfermedadesInfecciosas: { meningitis: false, sifilis: false, tuberculosis: false, vih: false, otros: '' },
+    enfermedadesSistemicas: { diabetes: false, insuficienciaRenal: false, colagenopatias: false, otros: '' },
+    bajoPesoNacimiento: false,
+  },
+  impactoFuncional: '',
+  resultadoConsulta: '',
+  resultadosEvaluacion: {
+    otoscopia: '', audiometria: { od: {}, oi: {}, observaciones: '' }, logoaudiometria: '',
+    impedanciometria: '', pruebaAudifonos: '', examenesConAudifonos: '',
+  },
   desarrollo: {
     embarazo: { normal: true, complicaciones: '' },
     parto: { normal: true, tipo: '', complicaciones: '' },
@@ -65,7 +77,7 @@ const FRECUENCIAS = [250, 500, 1000, 2000, 4000, 8000];
 
 /**
  * Formulario completo de historia clínica: Cita primera vez
- * 1. Anamnesis clínica (completa)
+ * 1. Anamnesis clínica (motivo, síntomas, antecedentes — se diligencia en la primera consulta)
  * 2. Anamnesis social (completa)
  * 3. Audiograma
  * 4. Otoscopia, impedanciometría
@@ -107,10 +119,15 @@ const PrimeraVezForm = ({ data = {}, onChange, onNuevaCotizacion }) => {
         Historia clínica — Cita primera vez (completa)
       </Typography>
 
-      {/* 1. Anamnesis clínica */}
+      {/* 1. Anamnesis clínica — se diligencia en la primera consulta */}
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMore />}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>1. Anamnesis clínica</Typography>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>1. Anamnesis clínica</Typography>
+            <Typography variant="caption" sx={{ display: 'block', color: '#64748b', mt: 0.25 }}>
+              Se diligencia en la primera consulta
+            </Typography>
+          </Box>
         </AccordionSummary>
         <AccordionDetails>
           <Grid container spacing={2}>
@@ -156,14 +173,26 @@ const PrimeraVezForm = ({ data = {}, onChange, onNuevaCotizacion }) => {
             <Grid item xs={12}>
               <TextField fullWidth multiline minRows={2} label="Desarrollo (embarazo, parto, motor, lenguaje)" value={ac.desarrolloResumen || [ac.desarrollo?.embarazo?.complicaciones, ac.desarrollo?.parto?.complicaciones, ac.desarrollo?.desarrolloMotor?.observaciones, ac.desarrollo?.desarrolloLenguaje?.observaciones].filter(Boolean).join(' | ')} onChange={(e) => setAc({ desarrolloResumen: e.target.value })} />
             </Grid>
+            <Grid item xs={12}>
+              <Typography variant="overline">Factores de riesgo auditivo</Typography>
+              <TextField fullWidth multiline minRows={1} sx={{ mt: 0.5 }} label="Ototoxicidad, enfermedades infecciosas/sistémicas, bajo peso al nacer" value={ac.factoresRiesgoResumen || ''} onChange={(e) => setAc({ factoresRiesgoResumen: e.target.value })} placeholder="Ej: Uso de gentamicina 2 semanas, diabetes" />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField fullWidth multiline minRows={2} label="Impacto funcional y calidad de vida" value={ac.impactoFuncional || ''} onChange={(e) => setAc({ impactoFuncional: e.target.value })} placeholder="Efecto en comunicación, participación social, actividades diarias..." />
+            </Grid>
           </Grid>
         </AccordionDetails>
       </Accordion>
 
-      {/* 2. Anamnesis social */}
-      <Accordion>
+      {/* 2. Anamnesis social — se diligencia en la primera consulta */}
+      <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMore />}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>2. Anamnesis social</Typography>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>2. Anamnesis social</Typography>
+            <Typography variant="caption" sx={{ display: 'block', color: '#64748b', mt: 0.25 }}>
+              Se diligencia en la primera consulta
+            </Typography>
+          </Box>
         </AccordionSummary>
         <AccordionDetails>
           <Grid container spacing={2}>

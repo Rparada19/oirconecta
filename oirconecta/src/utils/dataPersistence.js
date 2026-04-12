@@ -1,5 +1,4 @@
-// Sistema de persistencia de datos para audiólogas
-// Este archivo asegura que los 235 datos originales siempre estén disponibles
+// Sistema de persistencia de datos para audiólogas (JSON + localStorage).
 
 import audiologasData from '../data/bdatos_audiologas.json';
 

@@ -86,10 +86,14 @@ export const unblockTimeSlot = (blockId) => {
 // --- API ---
 
 /**
+ * @param {{ patientEmail?: string }} [opts] - Si patientEmail, devuelve solo citas de ese paciente
  * @returns {Promise<Array>}
  */
-export async function getAllAppointments() {
-  const { data, error } = await api.get('/api/appointments?limit=100');
+export async function getAllAppointments(opts = {}) {
+  const params = new URLSearchParams();
+  params.set('limit', String(opts.patientEmail ? 500 : 500));
+  if (opts.patientEmail) params.set('patientEmail', (opts.patientEmail || '').trim().toLowerCase());
+  const { data, error } = await api.get(`/api/appointments?${params.toString()}`);
   if (error) return [];
   const list = data?.data?.appointments ?? [];
   return list.map(toFrontend);
@@ -111,7 +115,21 @@ export async function getAppointmentById(appointmentId) {
  * @returns {Promise<{ success: boolean, appointment?: Object, error?: string }>}
  */
 export async function createAppointment(appointmentData) {
-  const { date, time, patientName, patientEmail, patientPhone, reason, procedencia, appointmentType, durationMinutes, professionalId } = appointmentData;
+  const {
+    date,
+    time,
+    patientName,
+    patientEmail,
+    patientPhone,
+    reason,
+    procedencia,
+    appointmentType,
+    durationMinutes,
+    professionalId,
+    professionalNotifyEmail,
+    professionalDisplayName,
+    directoryProfileId,
+  } = appointmentData;
   if (!date || !time || !patientName || !patientEmail || !patientPhone) {
     return { success: false, appointment: null, error: 'Todos los campos son obligatorios' };
   }
@@ -123,6 +141,8 @@ export async function createAppointment(appointmentData) {
     fecha: date.includes('T') ? date : `${date}T12:00:00.000Z`,
     hora: time,
     professionalId: professionalId || undefined,
+    professionalNotifyEmail: professionalNotifyEmail || undefined,
+    professionalDisplayName: professionalDisplayName || undefined,
     patientName,
     patientEmail: (patientEmail || '').trim().toLowerCase(),
     patientPhone,
@@ -130,6 +150,7 @@ export async function createAppointment(appointmentData) {
     procedencia: validarYNormalizarProcedencia(procedencia || 'visita-medica'),
     tipoConsulta: appointmentType || null,
     durationMinutes: durationMinutes != null ? durationMinutes : undefined,
+    directoryProfileId: directoryProfileId || undefined,
   };
   const { data, error } = await api.post('/api/appointments', payload);
   if (error) return { success: false, appointment: null, error };

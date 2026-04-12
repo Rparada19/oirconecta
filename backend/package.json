@@ -4,10 +4,14 @@
   "description": "Backend API para OirConecta CRM",
   "main": "src/index.js",
   "scripts": {
+    "postinstall": "prisma generate",
+    "predev": "prisma generate",
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
+    "db:reset": "prisma db push --force-reset --accept-data-loss && node prisma/seed.js",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio"
   },
@@ -21,7 +25,8 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.16"
   },
   "devDependencies": {
     "nodemon": "^3.0.3",

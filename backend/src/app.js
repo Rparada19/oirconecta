@@ -24,9 +24,9 @@ app.use(helmet());
 // CORS (en dev aceptar localhost y 127.0.0.1)
 const corsOrigins = config.nodeEnv === 'development'
   ? ['http://localhost:5174', 'http://127.0.0.1:5174', 'http://localhost:5173', 'http://127.0.0.1:5173']
-  : config.frontendUrl;
+  : config.frontendOrigins;
 app.use(cors({
-  origin: Array.isArray(corsOrigins) ? corsOrigins : [corsOrigins],
+  origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
