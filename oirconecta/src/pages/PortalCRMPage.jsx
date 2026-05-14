@@ -18,7 +18,7 @@ import {
   PersonAdd,
   Campaign,
   NotificationsActive,
-  AssignmentTurnedIn,
+  ShoppingBag,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -32,7 +32,7 @@ const ALL_MENU_ITEMS = [
   { key: MENU_KEYS.PACIENTES, title: 'Pacientes', icon: <People />, description: 'Base de datos de pacientes', color: '#085946', path: '/portal-crm/pacientes' },
   { key: MENU_KEYS.CAMPANAS, title: 'Campañas de Marketing', icon: <Campaign />, description: 'Gestionar campañas y promociones', color: '#0a6b56', path: '/portal-crm/campanas' },
   { key: MENU_KEYS.REPORTES, title: 'Reportes', icon: <Assessment />, description: 'Estadísticas y reportes', color: '#272F50', path: '/portal-crm/reportes' },
-  { key: MENU_KEYS.DIRECTORIO_REVISION, title: 'Directorio público', icon: <AssignmentTurnedIn />, description: 'Revisar y aprobar fichas de profesionales', color: '#5c6bc0', path: '/portal-crm/directorio-revision' },
+  { key: MENU_KEYS.PRODUCTOS, title: 'Productos', icon: <ShoppingBag />, description: 'Catálogo de productos para cotización y facturación', color: '#5c6bc0', path: '/portal-crm/productos' },
   { key: MENU_KEYS.CONFIGURACION, title: 'Configuración', icon: <Settings />, description: 'Ajustes del sistema', color: '#085946', path: '/portal-crm/configuracion' },
 ];
 

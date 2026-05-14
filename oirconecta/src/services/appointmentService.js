@@ -29,6 +29,8 @@ const toFrontend = (a) => {
     date: dateStr,
     time: a.hora,
     reason: a.motivo || '',
+    tipoConsulta: a.tipoConsulta || null,
+    appointmentType: a.tipoConsulta || null,
     status: STATUS_MAP[a.estado] || (a.estado || '').toLowerCase(),
     patientName: a.patientName,
     patientEmail: a.patientEmail,

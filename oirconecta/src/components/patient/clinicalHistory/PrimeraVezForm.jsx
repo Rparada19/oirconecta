@@ -87,9 +87,10 @@ const FRECUENCIAS = [250, 500, 1000, 2000, 4000, 8000];
  * 8. Conclusiones
  * 9. Botón nueva cotización
  */
-const PrimeraVezForm = ({ data = {}, onChange, onNuevaCotizacion }) => {
+const PrimeraVezForm = ({ data = {}, onChange, onNuevaCotizacion, lockedMotivoConsulta = '' }) => {
   const ac = { ...defaultAnamnesisClinica(), ...(data.anamnesisClinica || {}) };
   const as = { ...defaultAnamnesisSocial(), ...(data.anamnesisSocial || {}) };
+  const isMotivoLocked = Boolean(lockedMotivoConsulta && String(lockedMotivoConsulta).trim());
   const audiograma = data.audiograma || { od: {}, oi: {}, observaciones: '' };
   const otoscopiaImpedancia = data.otoscopiaImpedanciometria ?? '';
   const logoaudiometria = data.logoaudiometria ?? '';
@@ -132,7 +133,16 @@ const PrimeraVezForm = ({ data = {}, onChange, onNuevaCotizacion }) => {
         <AccordionDetails>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <TextField fullWidth label="Motivo de consulta" multiline minRows={2} value={ac.motivoConsulta} onChange={(e) => setAc({ motivoConsulta: e.target.value })} />
+              <TextField
+                fullWidth
+                label="Motivo de consulta"
+                multiline
+                minRows={2}
+                value={isMotivoLocked ? String(lockedMotivoConsulta).trim() : ac.motivoConsulta}
+                onChange={(e) => { if (!isMotivoLocked) setAc({ motivoConsulta: e.target.value }); }}
+                disabled={isMotivoLocked}
+                helperText={isMotivoLocked ? 'Motivo fijado según el agendamiento de la cita.' : ''}
+              />
             </Grid>
             <Grid item xs={12}><Typography variant="overline">Síntomas auditivos</Typography></Grid>
             <Grid item xs={12} md={6}>
@@ -168,10 +178,10 @@ const PrimeraVezForm = ({ data = {}, onChange, onNuevaCotizacion }) => {
               <TextField fullWidth multiline minRows={2} label="Antecedentes ORL (otitis, traumatismo, exposición a ruido, otros)" value={ac.antecedentesOtorrinolaringologicos.otros || ''} onChange={(e) => setAntecedentesORL('otros', e.target.value)} />
             </Grid>
             <Grid item xs={12}>
-              <TextField fullWidth multiline minRows={1} label="Antecedentes familiares (hipoacusia, otros)" value={ac.antecedentesFamiliares.hipoacusia?.familiar ? `${ac.antecedentesFamiliares.hipoacusia.familiar} - ${ac.antecedentesFamiliares.hipoacusia.grado}` : ''} onChange={(e) => setAc({ antecedentesFamiliares: { ...ac.antecedentesFamiliares, hipoacusia: { presente: true, familiar: e.target.value.split(' - ')[0]||'', grado: e.target.value.split(' - ')[1]||'' } } })} />
+              <TextField fullWidth multiline minRows={2} label="Desarrollo (embarazo, parto, motor, lenguaje)" value={ac.desarrolloResumen || [ac.desarrollo?.embarazo?.complicaciones, ac.desarrollo?.parto?.complicaciones, ac.desarrollo?.desarrolloMotor?.observaciones, ac.desarrollo?.desarrolloLenguaje?.observaciones].filter(Boolean).join(' | ')} onChange={(e) => setAc({ desarrolloResumen: e.target.value })} />
             </Grid>
             <Grid item xs={12}>
-              <TextField fullWidth multiline minRows={2} label="Desarrollo (embarazo, parto, motor, lenguaje)" value={ac.desarrolloResumen || [ac.desarrollo?.embarazo?.complicaciones, ac.desarrollo?.parto?.complicaciones, ac.desarrollo?.desarrolloMotor?.observaciones, ac.desarrollo?.desarrolloLenguaje?.observaciones].filter(Boolean).join(' | ')} onChange={(e) => setAc({ desarrolloResumen: e.target.value })} />
+              <TextField fullWidth multiline minRows={1} label="Antecedentes familiares (hipoacusia, otros)" value={ac.antecedentesFamiliares.hipoacusia?.familiar ? `${ac.antecedentesFamiliares.hipoacusia.familiar} - ${ac.antecedentesFamiliares.hipoacusia.grado}` : ''} onChange={(e) => setAc({ antecedentesFamiliares: { ...ac.antecedentesFamiliares, hipoacusia: { presente: true, familiar: e.target.value.split(' - ')[0]||'', grado: e.target.value.split(' - ')[1]||'' } } })} />
             </Grid>
             <Grid item xs={12}>
               <Typography variant="overline">Factores de riesgo auditivo</Typography>

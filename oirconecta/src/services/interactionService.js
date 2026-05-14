@@ -138,7 +138,7 @@ export const getListUsers = async () => {
   try {
     const { data, error } = await api.get('/api/auth/users');
     if (error || !data?.data) return [];
-    return Array.isArray(data.data) ? data.data : [];
+    return (Array.isArray(data.data) ? data.data : []).filter((u) => u.activo !== false);
   } catch {
     return [];
   }

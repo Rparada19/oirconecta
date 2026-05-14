@@ -45,7 +45,7 @@ import CampanasPage from './pages/crm/CampanasPage';
 import ReportesPage from './pages/crm/ReportesPage';
 import ConfiguracionPage from './pages/crm/ConfiguracionPage';
 import AccionesDiaPage from './pages/crm/AccionesDiaPage';
-import DirectoryReviewPage from './pages/crm/DirectoryReviewPage';
+import ProductosPage from './pages/crm/ProductosPage';
 import MiDirectorioPage from './pages/directorio/MiDirectorioPage';
 import LoginDirectorioPage from './pages/LoginDirectorioPage';
 import RegistroProfesionalPage from './pages/RegistroProfesionalPage';
@@ -164,7 +164,7 @@ export default function App() {
           <Route path="/portal-crm/campanas" element={<ProtectedRoute><CampanasPage /></ProtectedRoute>} />
           <Route path="/portal-crm/reportes" element={<ProtectedRoute><ReportesPage /></ProtectedRoute>} />
           <Route path="/portal-crm/configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />
-          <Route path="/portal-crm/directorio-revision" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><DirectoryReviewPage /></ProtectedRouteByRole>} />
+          <Route path="/portal-crm/productos" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ProductosPage /></ProtectedRouteByRole>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

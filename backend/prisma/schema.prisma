@@ -465,8 +465,28 @@ model Campaign {
   estado            CampaignStatus @default(ACTIVA)
   fechaInicio       DateTime
   fechaFin          DateTime
-  fabricante        String?        // Marca asociada
+  fabricante        String?        // Marca de audífonos asociada
   descuentoAprobado Float          @default(0)
+
+  /// Proveedor / distribuidor de la promoción
+  proveedorNombre      String?
+  /// Referencia válida para aplicar el descuento (texto libre)
+  referenciaDescuento  String?      @db.Text
+  /// Tecnología válida en el descuento
+  tecnologiaDescuento  String?      @db.Text
+  /// BATERIA | RECARGABLE | AMBOS
+  alimentacionAudifono String?
+  /// UNO = solo 1 audífono | DOS = solo par (2) | UNO_O_DOS = aplica a 1 o 2
+  validezCantidadAudifonos String?
+  /// TOTAL_VENTA = % sobre todas las unidades | SEGUNDO_AUDIFONO = % solo sobre el 2.º audífono
+  aplicacionDescuento   String?
+  /// IDs de productos del catálogo CRM (`config.marketplace.productos`, localStorage)
+  catalogProductIds     String[]     @default([])
+  /// TODAS | texto de plataforma del catálogo (misma marca)
+  plataformaCampana     String?
+  descripcion           String?      @db.Text
+  incluye               String?      @db.Text
+  noIncluye             String?      @db.Text
   
   // Métricas
   destinatarios     Int            @default(0)
@@ -517,7 +537,7 @@ model Quote {
   
   // Campaña
   campaignId      String?
-  campaign        Campaign?   @relation(fields: [campaignId], references: [id])
+  campaign        Campaign?   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   
   // Paciente
   patientId       String
@@ -590,7 +610,7 @@ model Sale {
   
   // Campaña (audífonos)
   campaignId            String?
-  campaign              Campaign?    @relation(fields: [campaignId], references: [id])
+  campaign              Campaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   
   // Para consultas
   descripcionConsulta   String?

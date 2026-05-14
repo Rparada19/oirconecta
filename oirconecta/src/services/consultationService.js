@@ -37,3 +37,20 @@ export async function createConsultation(payload) {
     return { success: false, error: e?.message || 'Error al registrar consulta' };
   }
 }
+
+/**
+ * Actualizar consulta existente (evolución / corrección)
+ * @param {string} id - id de la consulta en la API
+ * @param {Object} payload - { notes?, hearingLoss?, nextSteps?, formData? }
+ */
+export async function patchConsultation(id, payload) {
+  if (!id) return { success: false, error: 'Id de consulta requerido' };
+  try {
+    const { data, error } = await api.patch(`/api/consultations/${encodeURIComponent(id)}`, payload);
+    if (error) return { success: false, error: error.message || 'Error al actualizar consulta' };
+    return { success: true, data: data?.data };
+  } catch (e) {
+    console.error('[consultationService] patchConsultation:', e);
+    return { success: false, error: e?.message || 'Error al actualizar consulta' };
+  }
+}

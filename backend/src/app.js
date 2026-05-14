@@ -21,10 +21,11 @@ const app = express();
 // Helmet para cabeceras de seguridad
 app.use(helmet());
 
-// CORS (en dev aceptar localhost y 127.0.0.1)
-const corsOrigins = config.nodeEnv === 'development'
-  ? ['http://localhost:5174', 'http://127.0.0.1:5174', 'http://localhost:5173', 'http://127.0.0.1:5173']
-  : config.frontendOrigins;
+// CORS (en dev: puertos configurables vía CORS_DEV_PORTS / CORS_DEV_ORIGINS)
+const corsOrigins =
+  config.nodeEnv === 'development'
+    ? config.developmentCorsOriginUrls()
+    : config.frontendOrigins;
 app.use(cors({
   origin: corsOrigins,
   credentials: true,
@@ -70,6 +71,18 @@ app.get('/health', (req, res) => {
     message: 'OirConecta API está funcionando',
     timestamp: new Date().toISOString(),
     environment: config.nodeEnv,
+  });
+});
+
+// Raíz: muchos usuarios abren solo el host/puerto; sin esto siempre era 404.
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'OirConecta API — el backend no tiene interfaz web; usa estas rutas',
+    try: {
+      health: '/health',
+      apiIndex: '/api',
+    },
   });
 });
 

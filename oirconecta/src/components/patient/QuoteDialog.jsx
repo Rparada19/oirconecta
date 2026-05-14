@@ -19,7 +19,16 @@ import {
 } from '@mui/material';
 import { Save, Close, Delete, Image as ImageIcon } from '@mui/icons-material';
 import { createQuote, updateQuote } from '../../services/productService';
-import { getCampaigns, MARCAS } from '../../services/campaignService';
+import {
+  getCampaigns,
+  MARCAS,
+  labelValidezCantidadAudifonos,
+  detalleValidezSegundoAudifono,
+  labelAplicacionDescuento,
+  detalleAplicacionDescuento,
+  aplicacionDescuentoNorm,
+  computeAudifonosCampaignTotal,
+} from '../../services/campaignService';
 
 const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData, quoteId, editQuote }) => {
   const isEdit = Boolean(quoteId && editQuote);
@@ -89,10 +98,15 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData, quot
     : [];
   const selectedCampaign = campaigns.find((c) => String(c.id) === String(formData.campaignId));
   const discount = selectedCampaign ? (selectedCampaign.descuentoAprobado ?? 0) : 0;
-  const subtotal = formData.unitPrice * formData.quantity;
-  const discountAmount = (subtotal * discount) / 100;
-  const valuePerUnit = formData.unitPrice > 0 ? formData.unitPrice * (1 - discount / 100) : 0;
-  const totalValue = valuePerUnit * formData.quantity;
+  const aplicacion = selectedCampaign ? aplicacionDescuentoNorm(selectedCampaign.aplicacionDescuento) : 'TOTAL_VENTA';
+  const lineaCampana = computeAudifonosCampaignTotal({
+    unitPrice: formData.unitPrice,
+    quantity: formData.quantity,
+    discountPercent: discount,
+    aplicacionDescuento: aplicacion,
+  });
+  const totalValue = lineaCampana.total;
+  const valuePerUnit = lineaCampana.averagePerUnit;
 
   const handleChange = (field) => (e) => {
     const value = e.target.value;
@@ -180,6 +194,7 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData, quot
           selectedCampaign?.fechaInicio && selectedCampaign?.fechaFin
             ? `${selectedCampaign.fechaInicio} - ${selectedCampaign.fechaFin}`
             : '',
+        campaignAplicacionDescuento: selectedCampaign ? aplicacion : null,
         images: imageData,
         patientName: formData.patientName,
         patientEmail: emailToUse,
@@ -373,6 +388,25 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData, quot
                   size="small"
                 />
               </Grid>
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  <strong>Válido para el segundo audífono / par:</strong>{' '}
+                  {selectedCampaign.validezCantidadAudifonos ? (
+                    <>
+                      {labelValidezCantidadAudifonos(selectedCampaign.validezCantidadAudifonos)}.{' '}
+                      {detalleValidezSegundoAudifono(selectedCampaign.validezCantidadAudifonos)}
+                    </>
+                  ) : (
+                    'La campaña no indica si aplica al segundo audífono o solo al par; revise las condiciones con administración.'
+                  )}
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  <strong>Cómo se aplica el % de descuento:</strong> {labelAplicacionDescuento(selectedCampaign.aplicacionDescuento)}.{' '}
+                  {detalleAplicacionDescuento(selectedCampaign.aplicacionDescuento)}
+                </Typography>
+              </Grid>
             </>
           )}
 
@@ -510,6 +544,12 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData, quot
               fullWidth
               label="Valor por unidad"
               value={valuePerUnit > 0 ? valuePerUnit.toLocaleString() : '0'}
+              helperText={
+                lineaCampana.breakdown ||
+                (selectedCampaign && lineaCampana.sinDescuentoPorUnidad && discount > 0
+                  ? 'Con esta campaña el descuento solo afecta al 2.º audífono; con 1 unidad no reduce el total.'
+                  : '')
+              }
               InputProps={{ readOnly: true, startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
             />
           </Grid>

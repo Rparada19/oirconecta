@@ -95,6 +95,7 @@ import {
 } from '../../services/patientRecordService';
 import { recordAppointmentInteraction } from '../../services/interactionService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
+import { getAgendaProcedenciaOTipoCita, getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
 import { getConfig, getSedes, getConsultoriosFlat, getAppointmentReasons } from '../../services/configService';
 import DateSelector from '../../components/appointments/DateSelector';
 import DaySchedulePanel from '../../components/appointments/DaySchedulePanel';
@@ -263,6 +264,30 @@ const CitasPage = () => {
     setAnchorEl(null);
   };
 
+  /** Misma evolución que en Historia clínica del paciente: abre perfil y diálogo Evolucionar. */
+  function openClinicalEvolutionFromAgenda({ closeDetail = false } = {}) {
+    const apt = selectedAppointment;
+    if (!apt?.patientEmail?.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Error: La cita no tiene email del paciente',
+        severity: 'error',
+      });
+      return false;
+    }
+    const email = apt.patientEmail.trim().toLowerCase();
+    try {
+      setPatientRecords(getPatientRecords(email) || []);
+    } catch (e) {
+      console.error('[CitasPage] openClinicalEvolutionFromAgenda:', e);
+      setPatientRecords([]);
+    }
+    if (closeDetail) setDetailDialogOpen(false);
+    setPatientProfileDialogOpen(true);
+    setPatientProfileOpenEvolucionar(true);
+    return true;
+  }
+
   const handleViewDetails = () => {
     try {
       if (selectedAppointment) {
@@ -302,11 +327,10 @@ const CitasPage = () => {
   const handleUpdateStatus = async (newStatus) => {
     if (selectedAppointment) {
       if (newStatus === 'completed') {
-        // Abrir dialog de consulta
-        setConsultationDialogOpen(true);
+        openClinicalEvolutionFromAgenda({ closeDetail: false });
         closeMenuOnly();
+        return;
       } else if (newStatus === 'no-show') {
-        // Abrir dialog de no asistida
         setNoShowDialogOpen(true);
         closeMenuOnly();
       } else if (newStatus === 'patient') {
@@ -1200,7 +1224,7 @@ const CitasPage = () => {
                         <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Paciente</TableCell>
                         <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Fecha</TableCell>
                         <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Hora</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Procedencia</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Procedencia / tipo</TableCell>
                         <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Estado</TableCell>
                         <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Historial</TableCell>
                         <TableCell sx={{ fontWeight: 700, color: '#272F50' }} align="center">
@@ -1255,7 +1279,7 @@ const CitasPage = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                               <Source sx={{ fontSize: 14, color: '#085946' }} />
                               <Typography variant="caption" sx={{ color: '#272F50', fontWeight: 500 }}>
-                                {formatProcedencia(appointment.procedencia)}
+                                {getAgendaProcedenciaOTipoCita(appointment)}
                               </Typography>
                             </Box>
                           </TableCell>
@@ -1698,7 +1722,13 @@ const CitasPage = () => {
         
         {/* 2. Marcar Asistencia */}
         <MenuItem onClick={() => handleUpdateStatus('completed')}>
-          <CheckCircle sx={{ mr: 1, fontSize: 20, color: '#085946' }} /> Marcar Asistencia
+          <CheckCircle sx={{ mr: 1, fontSize: 20, color: '#085946' }} />
+          <Box>
+            <Typography variant="body2">Marcar asistencia</Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+              Abre historia clínica para evolucionar la consulta
+            </Typography>
+          </Box>
         </MenuItem>
         
         {/* 3. Marcar No Asistencia */}
@@ -1992,8 +2022,14 @@ const CitasPage = () => {
                 {/* Paso 1: ¿Asistió o no? — solo para citas pendientes (agendada) */}
                 {['confirmed', 'rescheduled'].includes(selectedAppointment?.status) && (
                   <Paper sx={{ m: 2, p: 3, bgcolor: '#e8f5e9', border: '2px solid #085946', borderRadius: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>
                       ¿El paciente asistió a la cita?
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#272F50', mb: 2 }}>
+                      <strong>Tipo de cita:</strong> {getTipoCitaLabelSolo(selectedAppointment)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 2 }}>
+                      Al confirmar asistencia se abrirá la historia clínica para evolucionar la consulta (mismo formulario que en el perfil del paciente → Historia clínica).
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                       <Button
@@ -2001,27 +2037,7 @@ const CitasPage = () => {
                         size="large"
                         startIcon={<CheckCircle />}
                         onClick={() => {
-                          const esPrimeraVez = !(patientRecords || []).some((r) => r.type === 'consultation');
-                          const aptType = selectedAppointment?.appointmentType || selectedAppointment?.reason || '';
-                          const esCitaPrimeraVez = String(aptType).toLowerCase().includes('primera') || aptType === 'primera-vez';
-                          if (esPrimeraVez || esCitaPrimeraVez) {
-                            setDetailDialogOpen(false);
-                            setPatientProfileDialogOpen(true);
-                            setPatientProfileOpenEvolucionar(true);
-                          } else {
-                            setConsultationData({
-                              notes: '',
-                              hearingLoss: false,
-                              nextSteps: '',
-                              motivoConsulta: selectedAppointment?.reason || selectedAppointment?.appointmentType || '',
-                              estadoAudifonos: '',
-                              consejosConclusiones: '',
-                              proximaCitaFecha: '',
-                              proximaCitaHora: '',
-                              proximaCitaProfesional: '',
-                            });
-                            setConsultationDialogOpen(true);
-                          }
+                          openClinicalEvolutionFromAgenda({ closeDetail: true });
                         }}
                         sx={{ bgcolor: '#2e7d32', '&:hover': { bgcolor: '#1b5e20' } }}
                       >
@@ -3226,7 +3242,7 @@ const CitasPage = () => {
         lead={null}
         readOnly={patientProfileOpenEvolucionar ? false : true}
         openEvolucionarOnMount={patientProfileOpenEvolucionar}
-        evolucionarForcePrimeraVez={patientProfileOpenEvolucionar}
+        evolucionarForcePrimeraVez={false}
       />
 
 

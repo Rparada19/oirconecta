@@ -33,42 +33,138 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableContainer,
+  CircularProgress,
 } from '@mui/material';
 import {
-  Settings,
   ArrowBack,
   Save,
   Schedule,
-  Notifications,
   Business,
   CalendarToday,
   Add,
   Delete,
-  MeetingRoom,
   Person,
   LocationOn,
-  ShoppingCart,
   Build,
   Upload,
   ExpandMore,
   ExpandLess,
   Edit,
+  ManageAccounts,
+  ChevronLeft,
+  ChevronRight,
 } from '@mui/icons-material';
 import { getConfig, saveConfig, addAppointmentReason, removeAppointmentReason, DEFAULT_APPOINTMENT_REASONS } from '../../services/configService';
+import { etiquetaProductoCatalogo } from '../../utils/marketplaceProduct';
+import { useAuth } from '../../context/AuthContext';
+import { fetchCrmUsers, createCrmUser, updateCrmUser } from '../../services/crmUserService';
+import { ROLES } from '../../utils/rolePermissions';
+
+const ROLE_LABELS = {
+  [ROLES.ADMIN]: 'Administrador',
+  [ROLES.RECEPCION]: 'Recepción',
+  [ROLES.AUDIOLOGA]: 'Audióloga',
+  [ROLES.VENDEDOR]: 'Vendedor',
+  [ROLES.SOLO_LECTURA]: 'Solo lectura',
+  PROFESIONAL_WEB: 'Profesional web',
+};
+
+const ASSIGNABLE_ROLES = [ROLES.ADMIN, ROLES.RECEPCION, ROLES.AUDIOLOGA, ROLES.VENDEDOR, ROLES.SOLO_LECTURA, 'PROFESIONAL_WEB'];
 
 const DIAS_SEMANA = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
 const DIAS_LABEL = { lunes: 'Lunes', martes: 'Martes', miercoles: 'Miércoles', jueves: 'Jueves', viernes: 'Viernes', sabado: 'Sábado', domingo: 'Domingo' };
 
+const CONFIG_TAB_COUNT = 8;
+
 const ConfiguracionPage = () => {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const [config, setConfig] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const [newMotivo, setNewMotivo] = useState({ label: '', duration: 30 });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  const [crmUsers, setCrmUsers] = useState([]);
+  const [crmUsersLoading, setCrmUsersLoading] = useState(false);
+  const [userDialogOpen, setUserDialogOpen] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({
+    nombre: '',
+    email: '',
+    password: '',
+    role: ROLES.RECEPCION,
+  });
+
   useEffect(() => {
     setConfig(getConfig());
   }, []);
+
+  const loadCrmUsers = async () => {
+    setCrmUsersLoading(true);
+    const res = await fetchCrmUsers();
+    setCrmUsersLoading(false);
+    if (res.success) setCrmUsers(res.users);
+    else {
+      setSnackbar({ open: true, message: res.error || 'No se pudieron cargar los usuarios', severity: 'error' });
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 6) loadCrmUsers();
+  }, [activeTab]);
+
+  const goPrevTab = () => setActiveTab((t) => (t - 1 + CONFIG_TAB_COUNT) % CONFIG_TAB_COUNT);
+  const goNextTab = () => setActiveTab((t) => (t + 1) % CONFIG_TAB_COUNT);
+
+  const handleOpenNewUser = () => {
+    setNewUserForm({ nombre: '', email: '', password: '', role: ROLES.RECEPCION });
+    setUserDialogOpen(true);
+  };
+
+  const handleCreateUserSubmit = async () => {
+    if (!newUserForm.nombre?.trim() || !newUserForm.email?.trim() || !newUserForm.password || newUserForm.password.length < 8) {
+      setSnackbar({ open: true, message: 'Complete nombre, email y contraseña (mínimo 8 caracteres).', severity: 'warning' });
+      return;
+    }
+    const res = await createCrmUser({
+      nombre: newUserForm.nombre.trim(),
+      email: newUserForm.email.trim().toLowerCase(),
+      password: newUserForm.password,
+      role: newUserForm.role,
+    });
+    if (res.success) {
+      setSnackbar({ open: true, message: 'Usuario creado correctamente', severity: 'success' });
+      setUserDialogOpen(false);
+      loadCrmUsers();
+    } else {
+      setSnackbar({ open: true, message: res.error || 'Error al crear usuario', severity: 'error' });
+    }
+  };
+
+  const handleUpdateUserRole = async (id, role) => {
+    const res = await updateCrmUser(id, { role });
+    if (res.success) {
+      setSnackbar({ open: true, message: 'Rol actualizado', severity: 'success' });
+      loadCrmUsers();
+    } else {
+      setSnackbar({ open: true, message: res.error || 'No se pudo actualizar el rol', severity: 'error' });
+    }
+  };
+
+  const handleUpdateUserActivo = async (id, activo) => {
+    const res = await updateCrmUser(id, { activo });
+    if (res.success) {
+      setSnackbar({ open: true, message: activo ? 'Usuario activado' : 'Usuario desactivado', severity: 'success' });
+      loadCrmUsers();
+    } else {
+      setSnackbar({ open: true, message: res.error || 'No se pudo actualizar el estado', severity: 'error' });
+    }
+  };
 
   const handleSave = () => {
     const res = saveConfig(config);
@@ -150,15 +246,25 @@ const ConfiguracionPage = () => {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+          <IconButton aria-label="Sección anterior" onClick={goPrevTab} size="small" sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+            <ChevronLeft />
+          </IconButton>
+          <IconButton aria-label="Sección siguiente" onClick={goNextTab} size="small" sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+            <ChevronRight />
+          </IconButton>
+          <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+            Use las flechas o las pestañas para moverse entre secciones
+          </Typography>
+        </Box>
+        <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
           <Tab icon={<Schedule />} iconPosition="start" label="Horarios" />
           <Tab icon={<CalendarToday />} iconPosition="start" label="Citas" />
-          <Tab icon={<Notifications />} iconPosition="start" label="Notificaciones" />
           <Tab icon={<Business />} iconPosition="start" label="Empresa" />
           <Tab icon={<LocationOn />} iconPosition="start" label="Sedes" />
           <Tab icon={<Person />} iconPosition="start" label="Profesionales" />
           <Tab icon={<Build />} iconPosition="start" label="Servicios" />
-          <Tab icon={<ShoppingCart />} iconPosition="start" label="Marketplace" />
+          <Tab icon={<ManageAccounts />} iconPosition="start" label="Usuarios y roles" />
           <Tab icon={<Edit />} iconPosition="start" label="Documentos y consentimientos" />
         </Tabs>
 
@@ -240,23 +346,8 @@ const ConfiguracionPage = () => {
           </Card>
         )}
 
-        {/* 3. Notificaciones */}
+        {/* 3. Empresa */}
         {activeTab === 2 && (
-          <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 3, mb: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 3 }}>Notificaciones</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <FormControlLabel control={<Switch checked={config.notificaciones?.notificacionesEmail} onChange={handleChange('notificaciones')('notificacionesEmail')} color="primary" />} label="Notificaciones por Email" />
-                <FormControlLabel control={<Switch checked={config.notificaciones?.notificacionesSMS} onChange={handleChange('notificaciones')('notificacionesSMS')} color="primary" />} label="Notificaciones por SMS" />
-                <FormControlLabel control={<Switch checked={config.notificaciones?.recordatorioCita} onChange={handleChange('notificaciones')('recordatorioCita')} color="primary" />} label="Recordatorio de Citas" />
-                <FormControlLabel control={<Switch checked={config.notificaciones?.confirmacionAutomatica} onChange={handleChange('notificaciones')('confirmacionAutomatica')} color="primary" />} label="Confirmación Automática" />
-              </Box>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 4. Empresa */}
-        {activeTab === 3 && (
           <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 3, mb: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 3 }}>Información de la Empresa</Typography>
@@ -278,8 +369,8 @@ const ConfiguracionPage = () => {
           </Card>
         )}
 
-        {/* 5. Sedes (con consultorios y profesionales habilitados) */}
-        {activeTab === 4 && (
+        {/* 4. Sedes (con consultorios y profesionales habilitados) */}
+        {activeTab === 3 && (
           <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 3, mb: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>Sedes</Typography>
@@ -377,8 +468,8 @@ const ConfiguracionPage = () => {
           </Card>
         )}
 
-        {/* 6. Profesionales */}
-        {activeTab === 5 && (
+        {/* 5. Profesionales */}
+        {activeTab === 4 && (
           <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 3, mb: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>Profesionales</Typography>
@@ -526,11 +617,11 @@ const ConfiguracionPage = () => {
                           setConfig((prev) => ({ ...prev, profesionales: prof }));
                         }} renderValue={(sel) => {
                           const prods = (config.marketplace?.productos || []);
-                          return prods.filter((x) => sel.includes(x.id)).map((x) => x.nombre).join(', ') || 'Ninguno';
+                          return prods.filter((x) => sel.includes(x.id)).map((x) => etiquetaProductoCatalogo(x)).join(', ') || 'Ninguno';
                         }}
                         >
                           {(config.marketplace?.productos || []).map((x) => (
-                            <MenuItem key={x.id} value={x.id}>{x.nombre}</MenuItem>
+                            <MenuItem key={x.id} value={x.id}>{etiquetaProductoCatalogo(x)}</MenuItem>
                           ))}
                         </Select>
                       </FormControl>
@@ -566,8 +657,8 @@ const ConfiguracionPage = () => {
           </Card>
         )}
 
-        {/* 7. Servicios */}
-        {activeTab === 6 && (
+        {/* 6. Servicios */}
+        {activeTab === 5 && (
           <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 3, mb: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>Servicios</Typography>
@@ -599,106 +690,105 @@ const ConfiguracionPage = () => {
           </Card>
         )}
 
-        {/* 8. Marketplace */}
-        {activeTab === 7 && (
+        {/* 7. Usuarios y roles (API) */}
+        {activeTab === 6 && (
           <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 3, mb: 3 }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>Marketplace</Typography>
-              <Typography variant="body2" sx={{ color: '#86899C', mb: 3 }}>Productos y servicios que se facturan.</Typography>
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Productos</Typography>
-                {(config.marketplace?.productos || []).map((prod, i) => (
-                  <Paper key={prod.id} variant="outlined" sx={{ p: 2, mb: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{prod.nombre || `Producto ${i + 1}`}</Typography>
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        <FormControlLabel control={<Switch size="small" checked={!!prod.activo} onChange={(e) => {
-                          const prods = [...(config.marketplace?.productos || [])];
-                          prods[i] = { ...prods[i], activo: e.target.checked };
-                          setConfig((prev) => ({ ...prev, marketplace: { ...prev.marketplace, productos: prods } }));
-                        }} />} label="Activo" />
-                        <IconButton size="small" color="error" onClick={() => {
-                          const prods = (config.marketplace?.productos || []).filter((_, idx) => idx !== i);
-                          setConfig((prev) => ({ ...prev, marketplace: { ...prev.marketplace, productos: prods } }));
-                        }}><Delete fontSize="small" /></IconButton>
-                      </Box>
-                    </Box>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Nombre" value={prod.nombre || ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], nombre: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Marca" value={prod.marca || ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], marca: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Tecnología" value={prod.tecnologia || ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], tecnologia: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Plataforma" value={prod.plataforma || ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], plataforma: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12} sm={4}><TextField fullWidth size="small" type="number" label="Valor unitario" value={prod.valorUnitario ?? ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], valorUnitario: e.target.value ? Number(e.target.value) : null }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12} sm={4}><TextField fullWidth size="small" type="number" label="Valor total" value={prod.valorTotal ?? ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], valorTotal: e.target.value ? Number(e.target.value) : null }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12} sm={4}><TextField fullWidth size="small" type="number" label="Años de garantía" value={prod.anosGarantia ?? ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], anosGarantia: e.target.value ? Number(e.target.value) : null }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Proveedor" value={prod.proveedor || ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], proveedor: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12}><TextField fullWidth size="small" label="Descripción" multiline rows={2} value={prod.descripcion || ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], descripcion: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12}><TextField fullWidth size="small" label="Modo de uso" multiline rows={2} value={prod.modoUso || ''} onChange={(e) => { const prods = [...(config.marketplace?.productos || [])]; prods[i] = { ...prods[i], modoUso: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }} /></Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>Imágenes</Typography>
-                        <Button size="small" variant="outlined" component="label">Cargar imagen
-                          <input type="file" hidden accept="image/*" multiple onChange={(e) => {
-                            const files = e.target.files;
-                            if (files?.length) {
-                              const readers = Array.from(files).map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); }));
-                              Promise.all(readers).then((urls) => {
-                                const prods = [...(config.marketplace?.productos || [])];
-                                prods[i] = { ...prods[i], imagenes: [...(prods[i].imagenes || []), ...urls] };
-                                setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } }));
-                              });
-                            }
-                          }} />
-                        </Button>
-                        {(prod.imagenes || []).length > 0 && (
-                          <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
-                            {(prod.imagenes || []).map((img, ii) => (
-                              <Box key={ii} sx={{ position: 'relative' }}>
-                                <Box component="img" src={img} alt="" sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }} />
-                                <IconButton size="small" sx={{ position: 'absolute', top: -8, right: -8, bgcolor: '#fff', '&:hover': { bgcolor: '#fff' } }} onClick={() => { const prods = [...(config.marketplace?.productos || [])]; prods[i].imagenes = (prods[i].imagenes || []).filter((_, idx) => idx !== ii); setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, productos: prods } })); }}><Delete fontSize="small" color="error" /></IconButton>
-                              </Box>
-                            ))}
-                          </Box>
-                        )}
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                ))}
-                <Button startIcon={<Add />} variant="outlined" size="small" onClick={() => {
-                  const prods = [...(config.marketplace?.productos || []), { id: `prod_${Date.now()}`, nombre: '', descripcion: '', tecnologia: '', plataforma: '', marca: '', valorUnitario: null, valorTotal: null, imagenes: [], anosGarantia: null, modoUso: '', proveedor: '', activo: true }];
-                  setConfig((prev) => ({ ...prev, marketplace: { ...prev.marketplace, productos: prods } }));
-                }}>Agregar producto</Button>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 3 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 0.5 }}>Usuarios del CRM</Typography>
+                  <Typography variant="body2" sx={{ color: '#86899C', maxWidth: 640 }}>
+                    Cree cuentas para su equipo y asigne el rol correspondiente. Solo los administradores pueden gestionar usuarios. Las contraseñas deben cumplir las reglas de seguridad del servidor.
+                  </Typography>
+                </Box>
+                <Button variant="contained" startIcon={<Add />} onClick={handleOpenNewUser} sx={{ bgcolor: '#085946', fontWeight: 600 }}>
+                  Nuevo usuario
+                </Button>
               </Box>
-              <Box>
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Servicios facturables</Typography>
-                {(config.marketplace?.serviciosFacturables || []).map((svc, i) => (
-                  <Paper key={svc.id} variant="outlined" sx={{ p: 2, mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{svc.nombre || `Servicio ${i + 1}`}</Typography>
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        <FormControlLabel control={<Switch size="small" checked={!!svc.activo} onChange={(e) => { const list = [...(config.marketplace?.serviciosFacturables || [])]; list[i] = { ...list[i], activo: e.target.checked }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, serviciosFacturables: list } })); }} />} label="Activo" />
-                        <IconButton size="small" color="error" onClick={() => { const list = (config.marketplace?.serviciosFacturables || []).filter((_, idx) => idx !== i); setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, serviciosFacturables: list } })); }}><Delete fontSize="small" /></IconButton>
-                      </Box>
-                    </Box>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Nombre de servicio" value={svc.nombre || ''} onChange={(e) => { const list = [...(config.marketplace?.serviciosFacturables || [])]; list[i] = { ...list[i], nombre: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, serviciosFacturables: list } })); }} /></Grid>
-                      <Grid item xs={12} sm={3}><TextField fullWidth size="small" type="number" label="Valor unitario" value={svc.valorUnitario ?? ''} onChange={(e) => { const list = [...(config.marketplace?.serviciosFacturables || [])]; list[i] = { ...list[i], valorUnitario: e.target.value ? Number(e.target.value) : null }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, serviciosFacturables: list } })); }} /></Grid>
-                      <Grid item xs={12} sm={3}><TextField fullWidth size="small" type="number" label="Valor total" value={svc.valorTotal ?? ''} onChange={(e) => { const list = [...(config.marketplace?.serviciosFacturables || [])]; list[i] = { ...list[i], valorTotal: e.target.value ? Number(e.target.value) : null }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, serviciosFacturables: list } })); }} /></Grid>
-                      <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Garantía" value={svc.garantia || ''} onChange={(e) => { const list = [...(config.marketplace?.serviciosFacturables || [])]; list[i] = { ...list[i], garantia: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, serviciosFacturables: list } })); }} /></Grid>
-                      <Grid item xs={12}><TextField fullWidth size="small" label="Descripción" multiline rows={2} value={svc.descripcion || ''} onChange={(e) => { const list = [...(config.marketplace?.serviciosFacturables || [])]; list[i] = { ...list[i], descripcion: e.target.value }; setConfig((p) => ({ ...p, marketplace: { ...p.marketplace, serviciosFacturables: list } })); }} /></Grid>
+
+              {crmUsersLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#085946' }} /></Box>
+              ) : (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: 'rgba(8, 89, 70, 0.06)' }}>
+                        <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Rol</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }} align="center">Activo</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {crmUsers.map((u) => (
+                        <TableRow key={u.id} hover>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{u.nombre}</Typography>
+                            {authUser?.id === u.id && <Chip size="small" label="Usted" sx={{ ml: 1, height: 22 }} color="primary" variant="outlined" />}
+                          </TableCell>
+                          <TableCell><Typography variant="body2" color="text.secondary">{u.email}</Typography></TableCell>
+                          <TableCell sx={{ minWidth: 200 }}>
+                            <FormControl size="small" fullWidth>
+                              <Select
+                                value={u.role || ROLES.RECEPCION}
+                                onChange={(e) => handleUpdateUserRole(u.id, e.target.value)}
+                              >
+                                {ASSIGNABLE_ROLES.map((r) => (
+                                  <MenuItem key={r} value={r}>{ROLE_LABELS[r] || r}</MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Switch
+                              checked={u.activo !== false}
+                              onChange={(e) => handleUpdateUserActivo(u.id, e.target.checked)}
+                              color="success"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+
+              <Dialog open={userDialogOpen} onClose={() => setUserDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ fontWeight: 700, color: '#272F50' }}>Nuevo usuario</DialogTitle>
+                <DialogContent sx={{ pt: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <TextField fullWidth required label="Nombre completo" value={newUserForm.nombre} onChange={(e) => setNewUserForm((p) => ({ ...p, nombre: e.target.value }))} />
                     </Grid>
-                  </Paper>
-                ))}
-                <Button startIcon={<Add />} variant="outlined" size="small" onClick={() => {
-                  const list = [...(config.marketplace?.serviciosFacturables || []), { id: `svcf_${Date.now()}`, nombre: '', valorUnitario: null, valorTotal: null, garantia: '', descripcion: '', activo: true }];
-                  setConfig((prev) => ({ ...prev, marketplace: { ...prev.marketplace, serviciosFacturables: list } }));
-                }}>Agregar servicio facturable</Button>
-              </Box>
+                    <Grid item xs={12}>
+                      <TextField fullWidth required type="email" label="Email (inicio de sesión)" value={newUserForm.email} onChange={(e) => setNewUserForm((p) => ({ ...p, email: e.target.value }))} />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField fullWidth required type="password" label="Contraseña inicial" helperText="Mínimo 8 caracteres" value={newUserForm.password} onChange={(e) => setNewUserForm((p) => ({ ...p, password: e.target.value }))} autoComplete="new-password" />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <FormControl fullWidth>
+                        <InputLabel>Rol</InputLabel>
+                        <Select label="Rol" value={newUserForm.role} onChange={(e) => setNewUserForm((p) => ({ ...p, role: e.target.value }))}>
+                          {ASSIGNABLE_ROLES.map((r) => (
+                            <MenuItem key={r} value={r}>{ROLE_LABELS[r] || r}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  </Grid>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                  <Button onClick={() => setUserDialogOpen(false)}>Cancelar</Button>
+                  <Button variant="contained" onClick={handleCreateUserSubmit} sx={{ bgcolor: '#085946' }}>Crear usuario</Button>
+                </DialogActions>
+              </Dialog>
             </CardContent>
           </Card>
         )}
 
-        {/* 9. Documentos y consentimientos informados */}
-        {activeTab === 8 && (
+        {/* 8. Documentos y consentimientos informados */}
+        {activeTab === 7 && (
           <Card sx={{ border: '1px solid rgba(8, 89, 70, 0.1)', borderRadius: 3, mb: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 2 }}>Documentos y consentimientos informados</Typography>

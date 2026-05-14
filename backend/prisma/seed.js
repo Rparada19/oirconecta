@@ -26,16 +26,25 @@ async function main() {
     where: { email: adminEmail },
   });
 
+  // Tres cuentas demo con rol ADMIN: mismo acceso al CRM (API y rutas solo-ADMIN).
   const usersToCreate = [
     { email: adminEmail, password: adminPassword, nombre: adminNombre, role: 'ADMIN' },
-    { email: 'recepcion@oirconecta.com', password: 'Recepcion123!', nombre: 'Recepción', role: 'RECEPCION' },
-    { email: 'audiologa@oirconecta.com', password: 'Audiologa123!', nombre: 'Audióloga', role: 'AUDIOLOGA' },
+    { email: 'recepcion@oirconecta.com', password: 'Recepcion123!', nombre: 'Recepción', role: 'ADMIN' },
+    { email: 'audiologa@oirconecta.com', password: 'Audiologa123!', nombre: 'Audióloga', role: 'ADMIN' },
   ];
 
   for (const u of usersToCreate) {
     const existing = await prisma.user.findUnique({ where: { email: u.email } });
     if (existing) {
-      console.log(`✅ Usuario ya existe: ${u.email} (${u.role})`);
+      if (existing.role !== u.role) {
+        await prisma.user.update({
+          where: { email: u.email },
+          data: { role: u.role },
+        });
+        console.log(`✅ Usuario ${u.email}: rol actualizado → ${u.role} (acceso total CRM)`);
+      } else {
+        console.log(`✅ Usuario ya existe: ${u.email} (${existing.role})`);
+      }
     } else {
       const hashedPassword = await bcrypt.hash(u.password, 12);
       const user = await prisma.user.create({
@@ -47,7 +56,7 @@ async function main() {
           activo: true,
         },
       });
-      console.log(`✅ Usuario creado: ${user.email} | ${user.nombre} | ${u.role} | Password: ${u.password}`);
+      console.log(`✅ Usuario creado: ${user.email} | ${user.nombre} | ${user.role} | Password: ${u.password}`);
     }
   }
   console.log('');

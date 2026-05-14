@@ -32,6 +32,33 @@ const getActive = async (req, res, next) => {
   }
 };
 
+const getStats = async (req, res, next) => {
+  try {
+    const stats = await campaignsService.getStats(req.params.id);
+    if (!stats) {
+      return res.status(404).json({
+        success: false,
+        error: 'Campaña no encontrada',
+      });
+    }
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getDashboard = async (req, res, next) => {
+  try {
+    const data = await campaignsService.getDashboard();
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getById = async (req, res, next) => {
   try {
     const campaign = await campaignsService.getById(req.params.id);
@@ -94,6 +121,8 @@ const remove = async (req, res, next) => {
 module.exports = {
   getAll,
   getActive,
+  getStats,
+  getDashboard,
   getById,
   create,
   update,

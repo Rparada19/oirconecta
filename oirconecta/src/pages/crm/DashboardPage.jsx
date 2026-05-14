@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -42,6 +42,7 @@ import {
   Refresh,
   Person,
   LocationOn,
+  EventAvailable,
 } from '@mui/icons-material';
 import { api } from '../../services/apiClient';
 import { getAllAppointments } from '../../services/appointmentService';
@@ -50,6 +51,7 @@ import { formatProcedencia, getProcedenciaOptions, getProcedenciaOptionsCRM } fr
 import { normalizarProcedencia } from '../../utils/procedenciaNormalizer';
 import { getAllPatientProducts } from '../../services/productService';
 import { getConfig } from '../../services/configService';
+import { getDailyActionsMetrics } from '../../services/interactionService';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -61,6 +63,7 @@ const DashboardPage = () => {
   const [ventasTab, setVentasTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [actionMetrics, setActionMetrics] = useState({ activas: 0, vencidas: 0, cumplidas: 0, total: 0 });
 
   const loadAllData = async () => {
     setLoadError(null);
@@ -74,11 +77,18 @@ const DashboardPage = () => {
         return;
       }
 
-      const [aptRes, leadsRes, prodRes] = await Promise.allSettled([
+      const [aptRes, leadsRes, prodRes, metricsRes] = await Promise.allSettled([
         getAllAppointments(),
         getAllLeadsCombined(),
         getAllPatientProducts(),
+        getDailyActionsMetrics(7),
       ]);
+
+      if (metricsRes.status === 'fulfilled' && metricsRes.value) {
+        setActionMetrics(metricsRes.value);
+      } else {
+        setActionMetrics({ activas: 0, vencidas: 0, cumplidas: 0, total: 0 });
+      }
 
       if (aptRes.status === 'fulfilled') {
         setAppointments([...(aptRes.value || [])]);
@@ -102,6 +112,9 @@ const DashboardPage = () => {
       if (prodRes.status === 'rejected') {
         console.error('[Dashboard] Error productos:', prodRes.reason);
         errors.push('productos');
+      }
+      if (metricsRes.status === 'rejected') {
+        console.error('[Dashboard] Error métricas acciones:', metricsRes.reason);
       }
       if (errors.length) {
         setLoadError(
@@ -207,6 +220,18 @@ const DashboardPage = () => {
   const citasFiltradas = getCitasByPeriodo();
   const today = new Date().toISOString().split('T')[0];
   const citasHoy = appointments.filter((apt) => apt.date === today && apt.status === 'confirmed').length;
+
+  const citasProximas48h = useMemo(() => {
+    const now = new Date();
+    const limit = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    return appointments.filter((a) => {
+      if (!a?.date || a.status === 'cancelled') return false;
+      const timePart = String(a.time || '12:00').slice(0, 5);
+      const dt = new Date(`${a.date}T${timePart}:00`);
+      if (Number.isNaN(dt.getTime())) return false;
+      return dt >= now && dt <= limit && ['confirmed', 'patient'].includes(a.status);
+    }).length;
+  }, [appointments]);
 
   // Estadísticas de pacientes según filtro
   const getPacientesStats = () => {
@@ -487,6 +512,79 @@ const DashboardPage = () => {
       )}
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            mb: 4,
+            borderRadius: 3,
+            border: '1px solid rgba(8, 89, 70, 0.12)',
+            background: 'linear-gradient(135deg, rgba(8, 89, 70, 0.06) 0%, rgba(39, 47, 80, 0.05) 100%)',
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>
+            Operación centrada en el paciente
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
+            Combine la agenda con las alertas del CRM: un contacto oportuno antes de la cita y el seguimiento de consumibles y garantías reducen cancelaciones y mejoran la continuidad asistencial.
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card variant="outlined" sx={{ height: '100%', borderRadius: 2 }}>
+                <CardContent sx={{ py: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <EventAvailable sx={{ color: '#1565c0' }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50' }}>Citas próximas (48 h)</Typography>
+                  </Box>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#085946' }}>{citasProximas48h}</Typography>
+                  <Typography variant="caption" color="text.secondary">Confirmadas o en sala</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card variant="outlined" sx={{ height: '100%', borderRadius: 2 }}>
+                <CardContent sx={{ py: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Schedule sx={{ color: '#2e7d32' }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50' }}>Citas confirmadas hoy</Typography>
+                  </Box>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#085946' }}>{citasHoy}</Typography>
+                  <Typography variant="caption" color="text.secondary">Revise agenda y perfiles</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card variant="outlined" sx={{ height: '100%', borderRadius: 2 }}>
+                <CardContent sx={{ py: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Assessment sx={{ color: '#e65100' }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50' }}>Acciones CRM (7 días)</Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ color: '#86899C' }}>
+                    Activas: <strong>{actionMetrics.activas}</strong> · Vencidas: <strong>{actionMetrics.vencidas}</strong> · Cumplidas: <strong>{actionMetrics.cumplidas}</strong>
+                  </Typography>
+                  <Button size="small" variant="contained" onClick={() => navigate('/portal-crm/acciones-dia')} sx={{ mt: 1, bgcolor: '#085946' }}>
+                    Ir a Acciones del día
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card variant="outlined" sx={{ height: '100%', borderRadius: 2 }}>
+                <CardContent sx={{ py: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>Buenas prácticas</Typography>
+                  <Typography variant="body2" sx={{ color: '#86899C', fontSize: '0.85rem' }}>
+                    1) Confirmar cita y ruta de acceso. 2) Revisar perfil (historia, productos). 3) Resolver alertas vencidas primero.
+                  </Typography>
+                  <Button size="small" variant="outlined" sx={{ mt: 1, borderColor: '#272F50', color: '#272F50' }} onClick={() => navigate('/portal-crm/pacientes')}>
+                    Pacientes
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Paper>
+
         {/* Métricas Principales */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {/* Leads Totales */}

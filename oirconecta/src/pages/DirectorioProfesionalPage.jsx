@@ -1964,7 +1964,8 @@ export default function DirectorioProfesionalPage() {
               position: 'fixed',
               left: 0,
               right: 0,
-              bottom: 0,
+              /* -1px evita rendija de 1px entre la barra y el borde del viewport (se veía el fondo). */
+              bottom: -1,
               zIndex: 1200,
               width: '100%',
               maxWidth: '100%',
@@ -1979,8 +1980,6 @@ export default function DirectorioProfesionalPage() {
               borderTop: '1px solid rgba(8, 89, 70, 0.14)',
               borderBottom: 'none',
               boxShadow: 'none',
-              /* Evita rendija de 1px entre la barra y el borde del viewport (se veía el fondo de la página). */
-              bottom: -1,
               boxSizing: 'border-box',
             }}
           >

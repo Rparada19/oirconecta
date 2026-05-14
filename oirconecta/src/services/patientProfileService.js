@@ -244,3 +244,18 @@ export const initializePatientProfile = (sourceData) => {
 
   return savePatientProfile(email, profile);
 };
+
+/**
+ * Elimina por completo el perfil clínico guardado en localStorage para un email (solo uso administrador).
+ */
+export const deletePatientProfile = (patientEmail) => {
+  if (!patientEmail?.trim()) {
+    return { success: false, error: 'Email requerido' };
+  }
+  const all = getAllPatientProfiles();
+  const lower = patientEmail.trim().toLowerCase();
+  const matchKey = Object.keys(all).find((k) => k.toLowerCase() === lower);
+  if (!matchKey) return { success: true };
+  delete all[matchKey];
+  return savePatientProfiles(all) ? { success: true } : { success: false, error: 'Error al guardar' };
+};

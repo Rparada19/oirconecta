@@ -302,3 +302,36 @@ export const getRescheduleHistory = (appointmentId, patientEmail) => {
       (record.appointmentId === appointmentId || record.relatedAppointmentId === appointmentId)
   );
 };
+
+/**
+ * Elimina un registro del historial (consulta, nota, etc.) por id.
+ */
+export const deletePatientRecord = (patientEmail, recordId) => {
+  const key = (patientEmail || '').trim().toLowerCase();
+  if (!key || !recordId) {
+    return { success: false, error: 'Email e id de registro son obligatorios' };
+  }
+  const allRecords = getAllPatientRecords();
+  const records = allRecords[key] || [];
+  const next = records.filter((r) => r.id !== recordId);
+  if (next.length === records.length) {
+    return { success: false, error: 'Registro no encontrado' };
+  }
+  allRecords[key] = next;
+  return savePatientRecords(allRecords)
+    ? { success: true }
+    : { success: false, error: 'Error al guardar' };
+};
+
+/**
+ * Borra todos los registros de historial para un paciente (localStorage).
+ */
+export const clearAllPatientRecords = (patientEmail) => {
+  const key = (patientEmail || '').trim().toLowerCase();
+  if (!key) return { success: false, error: 'Email obligatorio' };
+  const allRecords = getAllPatientRecords();
+  allRecords[key] = [];
+  return savePatientRecords(allRecords)
+    ? { success: true }
+    : { success: false, error: 'Error al guardar' };
+};

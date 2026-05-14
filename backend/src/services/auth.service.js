@@ -53,7 +53,7 @@ const login = async (email, password) => {
  * Registrar nuevo usuario
  */
 const register = async (data) => {
-  const { email, password, nombre, role = 'ADMIN' } = data;
+  const { email, password, nombre, role = 'RECEPCION' } = data;
 
   // Validar fortaleza de contraseña
   const passwordValidation = validatePasswordStrength(password);
@@ -141,17 +141,18 @@ const changePassword = async (userId, currentPassword, newPassword) => {
 /**
  * Listar usuarios del centro (para asignar responsables en CRM / acciones del día)
  */
+const CRM_ROLES = ['ADMIN', 'VENDEDOR', 'AUDIOLOGA', 'RECEPCION', 'SOLO_LECTURA', 'PROFESIONAL_WEB'];
+
 const listUsers = async () => {
   const users = await prisma.user.findMany({
-    where: { activo: true },
-    select: { id: true, nombre: true, email: true, role: true, professionalConfigId: true },
+    select: { id: true, nombre: true, email: true, role: true, professionalConfigId: true, activo: true, createdAt: true },
     orderBy: { nombre: 'asc' },
   });
   return users;
 };
 
 /**
- * Actualizar usuario (solo ADMIN). Permite asignar professionalConfigId a audióloga.
+ * Actualizar usuario (solo ADMIN). Rol, activo, professionalConfigId.
  */
 const updateUser = async (userId, data) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -160,10 +161,47 @@ const updateUser = async (userId, data) => {
     err.statusCode = 404;
     throw err;
   }
+
+  const patch = {};
+  if ('professionalConfigId' in data) {
+    patch.professionalConfigId = data.professionalConfigId ?? null;
+  }
+  if (data.role !== undefined && data.role !== null && data.role !== '') {
+    if (!CRM_ROLES.includes(data.role)) {
+      const err = new Error('Rol inválido');
+      err.statusCode = 400;
+      throw err;
+    }
+    patch.role = data.role;
+  }
+  if (data.activo !== undefined) {
+    patch.activo = Boolean(data.activo);
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, nombre: true, role: true, professionalConfigId: true, activo: true },
+    });
+  }
+
+  if (user.role === 'ADMIN' && user.activo) {
+    const otherActiveAdmins = await prisma.user.count({
+      where: { role: 'ADMIN', activo: true, id: { not: userId } },
+    });
+    const becomesNonAdmin = patch.role !== undefined && patch.role !== 'ADMIN';
+    const becomesInactive = patch.activo === false;
+    if ((becomesNonAdmin || becomesInactive) && otherActiveAdmins < 1) {
+      const err = new Error('Debe existir al menos otro administrador activo antes de cambiar este usuario');
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
   return prisma.user.update({
     where: { id: userId },
-    data: { professionalConfigId: data.professionalConfigId ?? null },
-    select: { id: true, email: true, nombre: true, role: true, professionalConfigId: true },
+    data: patch,
+    select: { id: true, email: true, nombre: true, role: true, professionalConfigId: true, activo: true },
   });
 };
 

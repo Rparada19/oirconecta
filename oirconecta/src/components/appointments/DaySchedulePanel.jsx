@@ -17,6 +17,7 @@ import {
 import { Schedule, Block, CheckCircle } from '@mui/icons-material';
 import { getAvailableTimeSlots } from '../../services/appointmentService';
 import { getAppointmentDuration } from '../../utils/appointmentDurations';
+import { getAgendaProcedenciaOTipoCita } from '../../utils/agendaDisplayUtils';
 
 const ALL_SLOTS = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
@@ -210,8 +211,11 @@ const DaySchedulePanel = ({
                             <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b', mb: 0.5 }}>
                               {appointment.patientName}
                             </Typography>
+                            <Typography variant="caption" sx={{ display: 'block', color: '#475569', mb: 0.5, fontWeight: 500 }}>
+                              {getAgendaProcedenciaOTipoCita(appointment)}
+                            </Typography>
                             {(appointment.reason || appointment.motivo) && (
-                              <Typography variant="caption" sx={{ display: 'block', color: '#475569', mb: 0.5 }}>
+                              <Typography variant="caption" sx={{ display: 'block', color: '#64748b', mb: 0.25 }}>
                                 {appointment.reason || appointment.motivo}
                               </Typography>
                             )}

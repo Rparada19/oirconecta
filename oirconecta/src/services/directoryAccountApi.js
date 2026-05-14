@@ -2,7 +2,9 @@
  * API del directorio público: token y rutas separadas del CRM (`apiClient`).
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { getApiBaseUrl } from '../utils/apiBaseUrl';
+
+const BASE_URL = getApiBaseUrl();
 export const DIRECTORY_TOKEN_KEY = 'oirconecta_directory_token';
 
 export function getDirectoryToken() {

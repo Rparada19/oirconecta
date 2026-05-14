@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -108,7 +108,15 @@ function muiSystemImportsRollupRewrite() {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, __dirname, '')
+  const apiProxyTarget = (env.VITE_API_PROXY_TARGET || 'http://localhost:3001').replace(/\/$/, '')
+  const devServerPort = parseInt(
+    process.env.VITE_DEV_PORT || env.VITE_DEV_PORT || '5174',
+    10
+  )
+
+  return {
   plugins: [muiIconsUseEsmEntries(), muiSystemImportsRollupRewrite(), react()],
   build: {
     sourcemap: false,
@@ -117,12 +125,13 @@ export default defineConfig(({ mode }) => ({
     drop: mode === 'production' ? ['debugger'] : [],
   },
   server: {
-    port: 5174,
+    port: Number.isFinite(devServerPort) ? devServerPort : 5174,
     // `host: true` escanea todas las interfaces; en algunos macOS/Node falla al arrancar
     // (uv_interface_addresses) y el servidor no llega a quedar escuchando → ERR_CONNECTION_REFUSED.
     // Para oír en la red local: VITE_LISTEN_ALL=1 npm run dev
     host: process.env.VITE_LISTEN_ALL === '1',
-    strictPort: false,
+    // Si defines VITE_DEV_PORT (p. ej. `npm run dev` en la raíz), falla en vez de saltar a otro puerto (evita romper CORS).
+    strictPort: Boolean(process.env.VITE_DEV_PORT || env.VITE_DEV_PORT),
     open: true,
     // Evitar que el navegador cachee en desarrollo (ver siempre cambios recientes)
     headers: {
@@ -147,7 +156,7 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },
@@ -164,6 +173,8 @@ export default defineConfig(({ mode }) => ({
       'prop-types',
       'react-is',
       '@mui/system',
+      // Miles de ESM sueltos en dev → EMFILE; forzar pre-bundle (ver comentario arriba en server).
+      '@mui/icons-material',
       // @mui/icons-material (CJS) hace require("@mui/material/utils"); sin pre-bundle de
       // ese subpath → "Dynamic require … is not supported" en el chunk de iconos.
       '@mui/material/utils',
@@ -177,4 +188,5 @@ export default defineConfig(({ mode }) => ({
     dedupe: ['@mui/material', '@mui/system', '@emotion/react', '@emotion/styled'],
     alias: muiSystemImportAliases(),
   },
-}))
+}
+})

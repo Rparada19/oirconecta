@@ -2,6 +2,25 @@
  * OirConecta Backend - Configuración centralizada
  */
 
+/** Orígenes CORS en desarrollo (localhost + 127.0.0.1). `CORS_DEV_PORTS`: lista de puertos separados por coma. */
+function developmentCorsOriginUrls() {
+  const defaults = '5173,5174,5175,5176,5177,5178,5180,5181,5182,5200';
+  const ports = (process.env.CORS_DEV_PORTS || defaults)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const origins = [];
+  for (const port of ports) {
+    if (!/^\d+$/.test(port)) continue;
+    origins.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
+  }
+  const extras = (process.env.CORS_DEV_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return [...new Set([...origins, ...extras])];
+}
+
 const config = {
   // Entorno
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -35,6 +54,8 @@ const config = {
     email: process.env.ADMIN_EMAIL || 'admin@oirconecta.com',
     password: process.env.ADMIN_PASSWORD || 'Admin123!',
   },
+
+  developmentCorsOriginUrls,
 };
 
 // Validar configuración requerida en producción

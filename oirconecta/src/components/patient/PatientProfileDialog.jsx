@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -82,11 +82,11 @@ import {
   ArrowDropDown,
   Add,
 } from '@mui/icons-material';
-import * as XLSX from 'xlsx';
 import html2pdf from 'html2pdf.js';
-import { getPatientProfile, savePatientProfile, initializePatientProfile, generateCodigoHistoriaClinica } from '../../services/patientProfileService';
+import { getPatientProfile, savePatientProfile, initializePatientProfile, generateCodigoHistoriaClinica, deletePatientProfile } from '../../services/patientProfileService';
 import { getAllAppointments } from '../../services/appointmentService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
+import { getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
 import { getPatientInteractions, getPatientInteractionsMetrics, getDailyActionsMetricsByPatient, addInteraction, updateInteraction, getListUsers } from '../../services/interactionService';
 import { getPatientProducts, convertQuoteToSale, getQuoteHistory } from '../../services/productService';
 import {
@@ -105,22 +105,66 @@ import DateSelector from '../appointments/DateSelector';
 import TimeSelector from '../appointments/TimeSelector';
 import { getAvailableTimeSlots, createAppointment, updateAppointmentStatus } from '../../services/appointmentService';
 import { getConfig } from '../../services/configService';
-import { getPatientRecords, recordConsultation, updateConsultation } from '../../services/patientRecordService';
-import { getConsultationsByEmail, createConsultation } from '../../services/consultationService';
+import { getPatientRecords, recordConsultation, updateConsultation, deletePatientRecord, clearAllPatientRecords } from '../../services/patientRecordService';
+import { getConsultationsByEmail, createConsultation, patchConsultation } from '../../services/consultationService';
 import { recordReminder } from '../../services/interactionService';
 import { useAuth } from '../../context/AuthContext';
-import { canAddAndInvoiceProducts, canEditClinicalHistory, canEditClinicalHistoryAfterFirstVisit, canEditAnamnesisAfterFilled, canEditDatosGenerales } from '../../utils/rolePermissions';
+import { canAddAndInvoiceProducts, canEditClinicalHistory, canEditClinicalHistoryAfterFirstVisit, canEditAnamnesisAfterFilled, canEditDatosGenerales, canAdminClinicalHistory, canManagePatientConsentSignatures, canUsePatientCrmTabForms } from '../../utils/rolePermissions';
+
+/** Contenedor y acordeones — pestaña Historia clínica */
+const HC_PAGE_SX = {
+  borderRadius: 3,
+  background: 'linear-gradient(165deg, #e8eef6 0%, #f4f7fa 38%, #ffffff 100%)',
+  border: '1px solid rgba(8, 89, 70, 0.1)',
+  p: { xs: 2, sm: 2.5, md: 3 },
+};
+
+const HC_ACC_SX = {
+  mb: 1.5,
+  borderRadius: 2,
+  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
+  border: '1px solid rgba(8, 89, 70, 0.12)',
+  bgcolor: '#fff',
+  '&:before': { display: 'none' },
+};
+
+const HC_ACC_SUM_SX = {
+  px: 2,
+  py: 1.5,
+  minHeight: 54,
+  bgcolor: 'rgba(8, 89, 70, 0.05)',
+  '&:hover': { bgcolor: 'rgba(8, 89, 70, 0.09)' },
+};
+
+const HC_ACC_DET_SX = {
+  px: 2,
+  py: 2.25,
+  bgcolor: '#fafbfd',
+  borderTop: '1px solid rgba(8, 89, 70, 0.08)',
+};
 
 const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = false, openEvolucionarOnMount = false, evolucionarForcePrimeraVez = false }) => {
   const { user } = useAuth();
   const canSales = canAddAndInvoiceProducts(user?.role); // RECEPCIÓN puede agregar productos y facturar
-  const readOnlyDatosGenerales = readOnly || !canEditDatosGenerales(user?.role); // Solo ADMIN puede editar datos generales
+  const readOnlyDatosGenerales = readOnly || !canEditDatosGenerales(user?.role);
+  const canConsentAdmin = canManagePatientConsentSignatures(user?.role);
+  const canCrmForms = canUsePatientCrmTabForms(user?.role, readOnly);
+  /** Barra superior "Editar/Guardar" del perfil: persiste anamnesis parcial; recepción usa solo "Guardar Información" por sección. */
+  const showGlobalPerfilSaveBar = canEditClinicalHistory(user?.role) || canAdminClinicalHistory(user?.role);
   const [activeTab, setActiveTab] = useState(0);
   const [appointmentsSubTab, setAppointmentsSubTab] = useState(0); // 0: Historial, 1: Agendar Cita (Nueva cita eliminada: evolución solo desde agenda del día)
   const [isEditing, setIsEditing] = useState(false);
   const [patientProfile, setPatientProfile] = useState(null);
   const [patientAppointments, setPatientAppointments] = useState([]);
   const [patientConsultations, setPatientConsultations] = useState([]);
+  const citasAsistidasSinEvolucion = useMemo(
+    () => patientAppointments.filter(
+      (a) =>
+        (a.status === 'completed' || a.status === 'patient') &&
+        !patientConsultations.some((c) => c.appointmentId === a.id),
+    ),
+    [patientAppointments, patientConsultations],
+  );
   const [patientInteractions, setPatientInteractions] = useState([]);
   const [crmMetrics, setCrmMetrics] = useState(null);
   const [patientAlertMetrics, setPatientAlertMetrics] = useState({ activas: 0, vencidas: 0, cumplidas: 0 });
@@ -221,9 +265,10 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   const [editConsultaDialogOpen, setEditConsultaDialogOpen] = useState(false);
   const [editConsultaData, setEditConsultaData] = useState({ notes: '', diagnosticos: '', pronostico: '', tratamiento: '', nextSteps: '' });
 
-  // Menú Exportar historia clínica (PDF / Excel)
+  // Menú Exportar historia clínica (PDF)
   const [anchorElExportarHC, setAnchorElExportarHC] = useState(null);
   const [anchorElExportarInformes, setAnchorElExportarInformes] = useState(null);
+  const [anchorExportPerfil, setAnchorExportPerfil] = useState(null);
 
   // Apertura de historia clínica y contador de minutos
   const [historiaAbiertaAt, setHistoriaAbiertaAt] = useState(null);
@@ -348,8 +393,14 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
       || check(fd?.nivelEducativo) || (fd?.contextoFamiliar && (check(fd.contextoFamiliar?.composicionFamiliar) || check(fd.contextoFamiliar?.apoyoFamiliar)))
       || (fd?.contextoLaboral && check(fd.contextoLaboral?.tipoTrabajo)) || check(fd?.contextoSocial);
   })();
-  const readOnlyClinical = readOnly || (hasFirstVisit ? !canEditClinicalHistoryAfterFirstVisit(user?.role) : !canEditClinicalHistory(user?.role));
-  const readOnlyAnamnesis = readOnly || (isAnamnesisFilled ? !canEditAnamnesisAfterFilled(user?.role) : !canEditClinicalHistory(user?.role));
+  const readOnlyClinical =
+    readOnly ||
+    (!canAdminClinicalHistory(user?.role) &&
+      (hasFirstVisit ? !canEditClinicalHistoryAfterFirstVisit(user?.role) : !canEditClinicalHistory(user?.role)));
+  const readOnlyAnamnesis =
+    readOnly ||
+    (!canAdminClinicalHistory(user?.role) &&
+      (isAnamnesisFilled ? !canEditAnamnesisAfterFilled(user?.role) : !canEditClinicalHistory(user?.role)));
   const readOnlyHistoriaClinica = readOnlyClinical || readOnlyAnamnesis;
 
   useEffect(() => {
@@ -364,7 +415,17 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     if (!open || !openEvolucionarOnMount || !appointment) return;
     const timer = setTimeout(() => {
       setEvolucionarAppointment(appointment);
-      setEvolucionarData({ notes: '', hearingLoss: false, nextSteps: '', formData: {}, diagnosticos: '', pronostico: '', tratamiento: '', signosVitales: {} });
+      const motivo = (appointment.reason || '').trim();
+      setEvolucionarData({
+        notes: '',
+        hearingLoss: false,
+        nextSteps: '',
+        formData: motivo ? { anamnesisClinica: { motivoConsulta: motivo } } : {},
+        diagnosticos: '',
+        pronostico: '',
+        tratamiento: '',
+        signosVitales: {},
+      });
       setEvolucionarPrimeraVezStep('form'); // Ir directo al formulario: usuario ya confirmó Asistió en CitasPage
       setEvolucionarDialogOpen(true);
     }, 600);
@@ -905,11 +966,43 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   };
 
   // Nueva Cita: Evolucionar abre el diálogo de evolución; al guardar se marca como asistida y se registra la consulta
-  const handleOpenEvolucionar = (apt) => {
+  const handleOpenEvolucionar = (apt, prefillConsultation = null) => {
     setEvolucionarAppointment(apt);
-    setEvolucionarData({ notes: '', hearingLoss: false, nextSteps: '', formData: {}, diagnosticos: '', pronostico: '', tratamiento: '', signosVitales: {} });
+    const motivoAgenda = (apt.reason || '').trim();
     const aptType = apt.appointmentType ?? appointmentTypes.find((t) => t.label === apt.reason)?.value ?? null;
-    setEvolucionarPrimeraVezStep(aptType === 'primera-vez' ? 'asistencia' : 'form');
+    const yaAsistida = apt.status === 'completed' || apt.status === 'patient';
+
+    if (prefillConsultation) {
+      setEvolucionarData({
+        notes: prefillConsultation.consultationNotes || '',
+        hearingLoss: prefillConsultation.hearingLoss ?? false,
+        nextSteps: prefillConsultation.nextSteps || '',
+        formData: (() => {
+          const fd = prefillConsultation.formData && typeof prefillConsultation.formData === 'object' ? { ...prefillConsultation.formData } : {};
+          if (motivoAgenda && aptType === 'primera-vez') {
+            fd.anamnesisClinica = { ...(fd.anamnesisClinica || {}), motivoConsulta: motivoAgenda };
+          }
+          return fd;
+        })(),
+        diagnosticos: prefillConsultation.diagnosticos || '',
+        pronostico: prefillConsultation.pronostico || '',
+        tratamiento: prefillConsultation.tratamiento || '',
+        signosVitales: prefillConsultation.signosVitales && typeof prefillConsultation.signosVitales === 'object' ? { ...prefillConsultation.signosVitales } : {},
+      });
+    } else {
+      setEvolucionarData({
+        notes: '',
+        hearingLoss: false,
+        nextSteps: '',
+        formData: motivoAgenda && aptType === 'primera-vez' ? { anamnesisClinica: { motivoConsulta: motivoAgenda } } : {},
+        diagnosticos: '',
+        pronostico: '',
+        tratamiento: '',
+        signosVitales: {},
+      });
+    }
+    const irDirectoAlFormulario = yaAsistida || evolucionarForcePrimeraVez || aptType !== 'primera-vez' || Boolean(prefillConsultation);
+    setEvolucionarPrimeraVezStep(irDirectoAlFormulario ? 'form' : 'asistencia');
     setEvolucionarDialogOpen(true);
   };
 
@@ -933,29 +1026,23 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     setEvolucionarPrimeraVezStep('form');
   };
 
-  // Exportar historial de citas (solo historial, no historia clínica) a Excel
-  const handleExportarHistorialCitas = () => {
+  // Exportar historial de citas → PDF
+  const handleExportarHistorialCitas = async ({ showSnackbar: showSnack = true } = {}) => {
     const labelPorEstado = (s) => ({ confirmed: 'Agendada', completed: 'Asistida', 'no-show': 'No asistida', rescheduled: 'Re-agendada', cancelled: 'Cancelada', patient: 'Paciente' }[s] || s);
+    const nombrePaciente = (formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 30);
+    const nombreMostrar = escapeHtmlPdf(formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente');
+    const codigo = escapeHtmlPdf(formData.codigoHistoriaClinica || '—');
     const filas = [...patientAppointments]
       .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))
       .map((apt) => {
         const tieneEvolucion = patientConsultations.some((c) => c.appointmentId === apt.id);
-        return {
-          Fecha: new Date(apt.date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-          Hora: apt.time,
-          Paciente: apt.patientName || '',
-          'Motivo / Tipo': apt.reason || '',
-          Estado: labelPorEstado(apt.status),
-          Procedencia: apt.procedencia ? formatProcedencia(apt.procedencia) : '',
-          'Tiene evolución registrada': tieneEvolucion ? 'Sí' : 'No',
-        };
-      });
-    const hoja = XLSX.utils.json_to_sheet(filas);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, 'Historial de citas');
-    const nombrePaciente = (formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 30);
-    XLSX.writeFile(libro, `Historial_citas_${nombrePaciente}_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    setSnackbar({ open: true, message: 'Historial de citas exportado correctamente.', severity: 'success' });
+        return `<tr><td>${escapeHtmlPdf(new Date(apt.date + 'T00:00:00').toLocaleDateString('es-ES'))}</td><td>${escapeHtmlPdf(apt.time)}</td><td>${escapeHtmlPdf(apt.reason || '')}</td><td>${escapeHtmlPdf(labelPorEstado(apt.status))}</td><td>${escapeHtmlPdf(apt.procedencia ? formatProcedencia(apt.procedencia) : '')}</td><td>${tieneEvolucion ? 'Sí' : 'No'}</td></tr>`;
+      })
+      .join('');
+    const fechaHora = new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'medium' });
+    const inner = `<h1 style="color:#085946;">Historial de citas</h1><p><strong>Paciente:</strong> ${nombreMostrar} &nbsp; <strong>Código HC:</strong> ${codigo}</p><p style="font-size:10px;color:#666;">Exportado: ${escapeHtmlPdf(fechaHora)} · ${escapeHtmlPdf(getUsuarioExportador())}</p><table border="1" cellpadding="5" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#f0f4f3;"><th>Fecha</th><th>Hora</th><th>Motivo</th><th>Estado</th><th>Procedencia</th><th>Evolución</th></tr></thead><tbody>${filas || '<tr><td colspan="6">Sin citas registradas.</td></tr>'}</tbody></table>`;
+    await downloadPdfFromHtmlFragment(`Historial_citas_${nombrePaciente}_${new Date().toISOString().slice(0, 10)}.pdf`, inner);
+    if (showSnack) setSnackbar({ open: true, message: 'Historial de citas exportado en PDF.', severity: 'success' });
   };
 
   // Menú Exportar historia clínica: abrir/cerrar
@@ -963,6 +1050,42 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   const handleCloseExportarHC = () => setAnchorElExportarHC(null);
   const handleOpenExportarInformes = (event) => setAnchorElExportarInformes(event.currentTarget);
   const handleCloseExportarInformes = () => setAnchorElExportarInformes(null);
+  const handleOpenExportPerfil = (event) => setAnchorExportPerfil(event.currentTarget);
+  const handleCloseExportPerfil = () => setAnchorExportPerfil(null);
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  const escapeHtmlPdf = (t) => String(t ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const downloadPdfFromHtmlFragment = async (filename, innerHtml) => {
+    const wrap = document.createElement('div');
+    wrap.style.padding = '12px';
+    wrap.style.fontFamily = 'system-ui, Segoe UI, sans-serif';
+    wrap.style.fontSize = '11px';
+    wrap.style.color = '#1a1a1a';
+    wrap.innerHTML = innerHtml;
+    document.body.appendChild(wrap);
+    try {
+      await html2pdf()
+        .set({
+          margin: [10, 10, 10, 10],
+          filename,
+          image: { type: 'jpeg', quality: 0.92 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        })
+        .from(wrap)
+        .save();
+    } finally {
+      document.body.removeChild(wrap);
+    }
+  };
+
+  const isConsultationApiId = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
   // Usuario que exporta (logueado en CRM); clave usada en LoginCRMPage
   const getUsuarioExportador = () => (typeof localStorage !== 'undefined' && localStorage.getItem('oirconecta_crm_user')) || '—';
@@ -1056,76 +1179,25 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     setSnackbar({ open: true, message: 'Se abrió el informe. Use Imprimir → Guardar como PDF.', severity: 'info' });
   };
 
-  // Exportar historia clínica completa como Excel (paciente + todas las consultas; incluye fecha/hora y usuario exportador)
-  const handleExportarHistoriaClinicaExcel = () => {
-    handleCloseExportarHC();
+  const labelTipoProducto = (t) => ({ quote: 'Cotización', sale: 'Venta', adaptation: 'Adaptación' }[t] || t || '—');
+
+  const buildAndDownloadHistoriaClinicaPdf = async ({ closeMenus = true, showSnackbar: showSnack = true } = {}) => {
+    if (closeMenus) {
+      handleCloseExportarHC();
+      setAnchorExportPerfil(null);
+    }
     const fechaHoraExportacion = new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'medium' });
     const usuarioExportador = getUsuarioExportador();
     const nombrePaciente = (formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 30);
-    const libro = XLSX.utils.book_new();
-    const doc = typeof formData.documentoIdentidad === 'object' ? formData.documentoIdentidad : { tipo: '', numero: String(formData.documentoIdentidad || '') };
-    const ce = Array.isArray(formData.contactoEmergencia) ? formData.contactoEmergencia : [];
-    // Hoja 1: Datos del paciente (incluye fecha/hora, usuario exportador y todos los datos registrados)
-    const datosPaciente = [
-      { Campo: 'Código Historia Clínica', Valor: formData.codigoHistoriaClinica || '—' },
-      { Campo: 'Fecha y hora de exportación', Valor: fechaHoraExportacion },
-      { Campo: 'Exportado por (usuario)', Valor: usuarioExportador },
-      { Campo: 'Nombre', Valor: formData.nombre || appointment?.patientName || lead?.nombre || '' },
-      { Campo: 'Email', Valor: formData.email || appointment?.patientEmail || lead?.email || '' },
-      { Campo: 'Teléfono', Valor: formData.telefono || appointment?.patientPhone || lead?.telefono || '' },
-      { Campo: 'Dirección', Valor: formData.direccion || '' },
-      { Campo: 'Ciudad', Valor: formData.ciudad || '' },
-      { Campo: 'Fecha nacimiento', Valor: formData.fechaNacimiento || '' },
-      { Campo: 'Género', Valor: formData.genero || '' },
-      { Campo: 'Documento (tipo)', Valor: doc.tipo || '' },
-      { Campo: 'Documento (número)', Valor: doc.numero || '' },
-      { Campo: 'Documento (lugar expedición)', Valor: doc.lugarExpedicion || '' },
-      { Campo: 'Contacto emergencia 1', Valor: ce[0] ? [ce[0].nombre, ce[0].telefono, ce[0].correo, ce[0].parentesco].filter(Boolean).join(' · ') : '' },
-      { Campo: 'Contacto emergencia 2', Valor: ce[1] ? [ce[1].nombre, ce[1].telefono, ce[1].correo, ce[1].parentesco].filter(Boolean).join(' · ') : '' },
-      { Campo: 'Motivo consulta', Valor: formData.motivoConsulta || '' },
-      { Campo: 'Observaciones generales', Valor: formData.observacionesGenerales || '' },
-      { Campo: 'Estado civil', Valor: formData.estadoCivil || '' },
-      { Campo: 'Ocupación', Valor: formData.ocupacion || '' },
-      { Campo: 'Nivel educativo', Valor: formData.nivelEducativo || '' },
-    ];
-    XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(datosPaciente), 'Datos del paciente');
-    // Hoja 2: Todas las consultas registradas (cada fila = una consulta con todos sus datos)
-    const labelTipo = (t) => ({ 'primera-vez': 'Primera vez', adaptacion: 'Adaptación', 'prueba-audifonos': 'Prueba audífonos', 'entrega-mantenimiento': 'Entrega/mantenimiento', revision: 'Revisión', examenes: 'Exámenes', control: 'Control' }[t] || t || '—');
-    const consultasOrdenadas = [...patientConsultations].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    const filasConsultas = consultasOrdenadas.map((c) => {
-      const apt = patientAppointments.find((a) => a.id === c.appointmentId);
-      return {
-        Fecha: c.date ? new Date(c.date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '',
-        Hora: apt?.time || '',
-        Tipo: labelTipo(c.appointmentType),
-        Notas: c.consultationNotes || '',
-        'Pérdida auditiva': c.hearingLoss ? 'Sí' : 'No',
-        'Próximos pasos': c.nextSteps || '',
-        'Historia clínica (formData)': c.formData && typeof c.formData === 'object' ? JSON.stringify(c.formData, null, 2) : '',
-      };
-    });
-    XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(filasConsultas.length ? filasConsultas : [{ Fecha: '', Hora: '', Tipo: 'Sin consultas registradas.', Notas: '', 'Pérdida auditiva': '', 'Próximos pasos': '', 'Historia clínica (formData)': '' }]), 'Consultas');
-    // Hoja 3: Perfil completo (JSON) por si se necesita todo el dato crudo
-    const perfilCompleto = [{ 'Fecha y hora de exportación': fechaHoraExportacion, 'Exportado por (usuario)': usuarioExportador, 'Perfil (JSON)': JSON.stringify(formData, null, 2) }];
-    XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(perfilCompleto), 'Perfil completo');
-    XLSX.writeFile(libro, `Historia_clinica_${nombrePaciente}_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    setSnackbar({ open: true, message: 'Historia clínica exportada en Excel.', severity: 'success' });
-  };
-
-  // Exportar historia clínica completa como PDF (logo + fecha/hora + usuario exportador + todos los datos y consultas)
-  const handleExportarHistoriaClinicaPDF = async () => {
-    handleCloseExportarHC();
-    const fechaHoraExportacion = new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'medium' });
-    const usuarioExportador = getUsuarioExportador();
     const labelTipo = (t) => ({ 'primera-vez': 'Primera vez', adaptacion: 'Adaptación', 'prueba-audifonos': 'Prueba audífonos', 'entrega-mantenimiento': 'Entrega/mantenimiento', revision: 'Revisión', examenes: 'Exámenes', control: 'Control' }[t] || t || '—');
     const consultasOrdenadas = [...patientConsultations].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     const bloqueConsultas = consultasOrdenadas.map((c, i) => {
       const apt = patientAppointments.find((a) => a.id === c.appointmentId);
       const fd = c.formData && typeof c.formData === 'object' ? c.formData : {};
-      const formDataStr = Object.keys(fd).length ? Object.entries(fd).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`).join('<br/>') : '—';
-      return `<div style="margin-top:16px; padding:12px; border:1px solid #ddd; border-radius:8px;"><strong>Consulta ${i + 1}</strong> — ${c.date || ''} ${apt?.time || ''} — ${labelTipo(c.appointmentType)}<br/>
-        Notas: ${(c.consultationNotes || '—')}<br/>Pérdida auditiva: ${c.hearingLoss ? 'Sí' : 'No'}<br/>Próximos pasos: ${(c.nextSteps || '—')}<br/>
-        <details open><summary>Historia clínica (formData)</summary><pre style="margin:8px 0; white-space:pre-wrap; font-size:12px;">${formDataStr}</pre></details></div>`;
+      const formDataStr = escapeHtmlPdf(JSON.stringify(fd, null, 2));
+      return `<div style="margin-top:12px;padding:10px;border:1px solid #ddd;border-radius:6px;"><strong>Consulta ${i + 1}</strong> — ${escapeHtmlPdf(c.date || '')} ${escapeHtmlPdf(apt?.time || '')} — ${escapeHtmlPdf(labelTipo(c.appointmentType))}<br/>
+        <strong>Notas:</strong> ${escapeHtmlPdf(c.consultationNotes || '—')}<br/><strong>Pérdida auditiva:</strong> ${c.hearingLoss ? 'Sí' : 'No'}<br/><strong>Próximos pasos:</strong> ${escapeHtmlPdf(c.nextSteps || '—')}<br/>
+        <pre style="margin:6px 0;white-space:pre-wrap;font-size:9px;">${formDataStr || '—'}</pre></div>`;
     }).join('');
     let logoDataUrl = '';
     try {
@@ -1141,49 +1213,92 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
       }
     } catch (_) {}
     const logoImg = logoDataUrl
-      ? `<img src="${logoDataUrl}" alt="OirConecta" style="max-width:280px; max-height:80px; height:auto; object-fit:contain; display:block; margin:0 auto;" />`
+      ? `<img src="${logoDataUrl}" alt="Logo" style="max-width:240px;max-height:72px;display:block;margin:0 auto 8px;" />`
       : '';
     const doc = typeof formData.documentoIdentidad === 'object' ? formData.documentoIdentidad : { tipo: '', numero: String(formData.documentoIdentidad || '') };
     const ce = Array.isArray(formData.contactoEmergencia) ? formData.contactoEmergencia : [];
-    const codigoHC = formData.codigoHistoriaClinica || '—';
+    const codigoHC = escapeHtmlPdf(formData.codigoHistoriaClinica || '—');
     const datosPacienteHtml = `
       <p><strong>Código Historia Clínica:</strong> ${codigoHC}</p>
-      <p><strong>Nombre:</strong> ${formData.nombre || appointment?.patientName || lead?.nombre || '—'}</p>
-      <p><strong>Email:</strong> ${formData.email || appointment?.patientEmail || lead?.email || '—'}</p>
-      <p><strong>Teléfono:</strong> ${formData.telefono || appointment?.patientPhone || lead?.telefono || '—'}</p>
-      <p><strong>Dirección:</strong> ${formData.direccion || '—'}</p>
-      <p><strong>Ciudad:</strong> ${formData.ciudad || '—'}</p>
-      <p><strong>Fecha nacimiento:</strong> ${formData.fechaNacimiento || '—'}</p>
-      <p><strong>Género:</strong> ${formData.genero || '—'}</p>
-      <p><strong>Documento (tipo):</strong> ${doc.tipo || '—'}</p>
-      <p><strong>Documento (número):</strong> ${doc.numero || '—'}</p>
-      <p><strong>Contacto emergencia 1:</strong> ${ce[0] ? [ce[0].nombre, ce[0].telefono, ce[0].parentesco].filter(Boolean).join(' · ') || '—' : '—'}</p>
-      <p><strong>Contacto emergencia 2:</strong> ${ce[1] ? [ce[1].nombre, ce[1].telefono, ce[1].parentesco].filter(Boolean).join(' · ') || '—' : '—'}</p>
-      <p><strong>Motivo consulta:</strong> ${formData.motivoConsulta || '—'}</p>
-      <p><strong>Estado civil:</strong> ${formData.estadoCivil || '—'}</p>
-      <p><strong>Ocupación:</strong> ${formData.ocupacion || '—'}</p>
-      <p><strong>Nivel educativo:</strong> ${formData.nivelEducativo || '—'}</p>
-      <p><strong>Observaciones generales:</strong> ${formData.observacionesGenerales || '—'}</p>`;
-    const footerPdf = `<div id="footer-pdf" style="margin-top:32px; padding:12px 0; border-top:1px solid #ddd; font-size:11px; color:#666;">
-      <strong>Hora de descarga:</strong> ${fechaHoraExportacion} &nbsp;|&nbsp; <strong>Perfil de descarga:</strong> ${usuarioExportador}
-    </div>`;
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Historia clínica</title>
-<style>@media print { #footer-pdf { position: fixed; bottom: 0; left: 0; right: 0; padding: 8px 24px; font-size: 10px; color: #666; background: #f5f5f5; } body { padding-bottom: 40px !important; } }</style></head>
-<body style="font-family:system-ui; padding:24px; max-width:800px; margin:0 auto;">
-      <div style="text-align:center; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid #085946;">${logoImg}
-        <p style="margin:12px 0 0; font-size:14px; color:#085946; font-weight:600;">Código HC: ${codigoHC}</p>
-        <p style="margin:4px 0 0; font-size:13px; color:#272F50;">Exportado el: ${fechaHoraExportacion} · Exportado por: ${usuarioExportador}</p>
-      </div>
-      <h1 style="color:#085946;">Historia clínica</h1>
-      <h2>Datos del paciente</h2>${datosPacienteHtml}
-      <h2>Consultas registradas (${consultasOrdenadas.length})</h2>${bloqueConsultas || '<p>Sin consultas registradas.</p>'}
-      ${footerPdf}
-      <p style="margin-top:16px; color:#999; font-size:11px;">Use Archivo → Imprimir → Guardar como PDF. El pie de página incluirá hora y perfil de descarga en cada página.</p>
-      </body></html>`;
-    const w = window.open('', '_blank');
-    w.document.write(html);
-    w.document.close();
-    setSnackbar({ open: true, message: 'Se abrió la historia clínica en una nueva ventana. Use Imprimir → Guardar como PDF.', severity: 'info' });
+      <p><strong>Nombre:</strong> ${escapeHtmlPdf(formData.nombre || appointment?.patientName || lead?.nombre || '—')}</p>
+      <p><strong>Email:</strong> ${escapeHtmlPdf(formData.email || appointment?.patientEmail || lead?.email || '—')}</p>
+      <p><strong>Teléfono:</strong> ${escapeHtmlPdf(formData.telefono || appointment?.patientPhone || lead?.telefono || '—')}</p>
+      <p><strong>Dirección:</strong> ${escapeHtmlPdf(formData.direccion || '—')}</p>
+      <p><strong>Ciudad:</strong> ${escapeHtmlPdf(formData.ciudad || '—')}</p>
+      <p><strong>Fecha nacimiento:</strong> ${escapeHtmlPdf(formData.fechaNacimiento || '—')}</p>
+      <p><strong>Género:</strong> ${escapeHtmlPdf(formData.genero || '—')}</p>
+      <p><strong>Documento:</strong> ${escapeHtmlPdf(doc.tipo || '')} ${escapeHtmlPdf(doc.numero || '')}</p>
+      <p><strong>Contacto emergencia 1:</strong> ${escapeHtmlPdf(ce[0] ? [ce[0].nombre, ce[0].telefono, ce[0].parentesco].filter(Boolean).join(' · ') : '—')}</p>
+      <p><strong>Contacto emergencia 2:</strong> ${escapeHtmlPdf(ce[1] ? [ce[1].nombre, ce[1].telefono, ce[1].parentesco].filter(Boolean).join(' · ') : '—')}</p>
+      <p><strong>Motivo consulta (historia):</strong> ${escapeHtmlPdf(formData.motivoConsulta || '—')}</p>
+      <p><strong>Observaciones generales:</strong> ${escapeHtmlPdf(formData.observacionesGenerales || '—')}</p>`;
+    const anamnesisJson = escapeHtmlPdf(JSON.stringify({
+      estadoCivil: formData.estadoCivil,
+      ocupacion: formData.ocupacion,
+      nivelEducativo: formData.nivelEducativo,
+      contextoFamiliar: formData.contextoFamiliar,
+      contextoLaboral: formData.contextoLaboral,
+      contextoSocial: formData.contextoSocial,
+      habitos: formData.habitos,
+    }, null, 2));
+    const inner = `<div style="text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #085946;">${logoImg}
+      <p style="margin:8px 0 0;font-size:13px;color:#085946;font-weight:600;">Historia clínica</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#272F50;">${escapeHtmlPdf(fechaHoraExportacion)} · ${escapeHtmlPdf(usuarioExportador)}</p></div>
+      <h2 style="color:#085946;font-size:14px;">Datos generales</h2>${datosPacienteHtml}
+      <h2 style="color:#085946;font-size:14px;margin-top:14px;">Anamnesis social</h2><pre style="white-space:pre-wrap;font-size:9px;background:#f8fafc;padding:8px;border-radius:6px;">${anamnesisJson}</pre>
+      <h2 style="color:#085946;font-size:14px;margin-top:14px;">Consultas / evoluciones (${consultasOrdenadas.length})</h2>${bloqueConsultas || '<p>Sin consultas registradas.</p>'}`;
+    await downloadPdfFromHtmlFragment(`Historia_clinica_${nombrePaciente}_${new Date().toISOString().slice(0, 10)}.pdf`, inner);
+    if (showSnack) setSnackbar({ open: true, message: 'Historia clínica exportada en PDF.', severity: 'success' });
+  };
+
+  const handleExportarHistoriaClinicaPdf = () => buildAndDownloadHistoriaClinicaPdf({ closeMenus: true, showSnackbar: true });
+
+  const handleExportarHistoricoProductosPdf = async ({ showSnackbar: showSnack = true } = {}) => {
+    const nombrePaciente = (formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 30);
+    const nombreMostrar = escapeHtmlPdf(formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente');
+    const codigo = escapeHtmlPdf(formData.codigoHistoriaClinica || '—');
+    const fechaHora = new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'medium' });
+    const fmtFecha = (d) => (d ? escapeHtmlPdf(new Date(d).toLocaleDateString('es-ES')) : '—');
+    const fmtMoney = (n) => (n != null && n !== '' ? escapeHtmlPdf(`$${Number(n).toLocaleString('es-ES')}`) : '—');
+    const filas = [...(patientProducts || [])]
+      .map((p) => `<tr><td>${escapeHtmlPdf(labelTipoProducto(p.type))}</td><td>${escapeHtmlPdf(p.productName || '—')}</td><td>${escapeHtmlPdf(p.brand || p.marca || '—')}</td><td>${escapeHtmlPdf(p.model || '—')}</td><td>${escapeHtmlPdf(p.quantity ?? '—')}</td><td>${fmtMoney(p.unitPrice)}</td><td>${fmtMoney(p.totalPrice)}</td><td>${escapeHtmlPdf(p.status || '—')}</td><td>${fmtFecha(p.quoteDate)}</td><td>${fmtFecha(p.saleDate)}</td><td>${fmtFecha(p.adaptationDate)}</td><td>${fmtFecha(p.warrantyEndDate)}</td><td>${escapeHtmlPdf(p.notes || '—')}</td></tr>`)
+      .join('');
+    const inner = `<h1 style="color:#085946;">Histórico de productos</h1><p><strong>Paciente:</strong> ${nombreMostrar} &nbsp; <strong>Código HC:</strong> ${codigo}</p><p style="font-size:10px;color:#666;">Exportado: ${escapeHtmlPdf(fechaHora)} · ${escapeHtmlPdf(getUsuarioExportador())}</p><table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:8px;"><thead><tr style="background:#f0f4f3;"><th>Tipo</th><th>Producto</th><th>Marca</th><th>Modelo</th><th>Cant.</th><th>V. unit.</th><th>V. total</th><th>Estado</th><th>Cotiz.</th><th>Venta</th><th>Adapt.</th><th>Garantía</th><th>Notas</th></tr></thead><tbody>${filas || '<tr><td colspan="13">Sin registros de productos, cotizaciones o ventas.</td></tr>'}</tbody></table>`;
+    await downloadPdfFromHtmlFragment(`Historico_productos_${nombrePaciente}_${new Date().toISOString().slice(0, 10)}.pdf`, inner);
+    if (showSnack) setSnackbar({ open: true, message: 'Histórico de productos exportado en PDF.', severity: 'success' });
+  };
+
+  const handleExportarHistoricoMantenimientosPdf = async ({ showSnackbar: showSnack = true } = {}) => {
+    const nombrePaciente = (formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 30);
+    const nombreMostrar = escapeHtmlPdf(formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente');
+    const codigo = escapeHtmlPdf(formData.codigoHistoriaClinica || '—');
+    const fechaHora = new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'medium' });
+    const tipoLabel = (t) => (t === 'cleaning' ? 'Limpieza' : t === 'repair' ? 'Reparación' : t === 'adjustment' ? 'Ajuste' : t === 'battery-replacement' ? 'Cambio de batería' : t === 'check-up' ? 'Revisión' : t || '—');
+    const filas = [...(patientMaintenances || [])]
+      .sort((a, b) => String(b.scheduledDate).localeCompare(String(a.scheduledDate)))
+      .map((m) => {
+        const estado = MAINTENANCE_STATUSES.find((s) => s.value === m.status)?.label || m.status || '—';
+        const fecha = m.scheduledDate ? escapeHtmlPdf(new Date(m.scheduledDate + (String(m.scheduledDate).includes('T') ? '' : 'T12:00:00')).toLocaleDateString('es-ES')) : '—';
+        return `<tr><td>${fecha}</td><td>${escapeHtmlPdf(m.scheduledTime || '—')}</td><td>${escapeHtmlPdf(tipoLabel(m.type))}</td><td>${escapeHtmlPdf(estado)}</td><td>${escapeHtmlPdf(m.description || '—')}</td><td>${m.cost != null ? escapeHtmlPdf(String(m.cost)) : '—'}</td><td>${m.nextMaintenanceDate ? escapeHtmlPdf(new Date(m.nextMaintenanceDate).toLocaleDateString('es-ES')) : '—'}</td></tr>`;
+      })
+      .join('');
+    const inner = `<h1 style="color:#085946;">Histórico de mantenimientos</h1><p><strong>Paciente:</strong> ${nombreMostrar} &nbsp; <strong>Código HC:</strong> ${codigo}</p><p style="font-size:10px;color:#666;">Exportado: ${escapeHtmlPdf(fechaHora)} · ${escapeHtmlPdf(getUsuarioExportador())}</p><table border="1" cellpadding="5" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#f0f4f3;"><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Descripción</th><th>Costo</th><th>Próximo</th></tr></thead><tbody>${filas || '<tr><td colspan="7">Sin mantenimientos registrados.</td></tr>'}</tbody></table>`;
+    await downloadPdfFromHtmlFragment(`Historico_mantenimientos_${nombrePaciente}_${new Date().toISOString().slice(0, 10)}.pdf`, inner);
+    if (showSnack) setSnackbar({ open: true, message: 'Histórico de mantenimientos exportado en PDF.', severity: 'success' });
+  };
+
+  const handleExportarTodoHistorialPaciente = async () => {
+    setAnchorExportPerfil(null);
+    handleCloseExportarHC();
+    handleCloseExportarInformes();
+    await buildAndDownloadHistoriaClinicaPdf({ closeMenus: false, showSnackbar: false });
+    await sleep(450);
+    await handleExportarHistorialCitas({ showSnackbar: false });
+    await sleep(400);
+    await handleExportarHistoricoProductosPdf({ showSnackbar: false });
+    await sleep(400);
+    await handleExportarHistoricoMantenimientosPdf({ showSnackbar: false });
+    setSnackbar({ open: true, message: 'Se descargaron varios archivos PDF (historia clínica, citas, productos y mantenimientos). Revise su carpeta de descargas.', severity: 'success' });
   };
 
   const handleSaveEvolucionar = async () => {
@@ -1195,58 +1310,96 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     }
     const derivedAptType = evolucionarAppointment.appointmentType ?? appointmentTypes.find((t) => t.label === evolucionarAppointment.reason)?.value ?? null;
     const aptType = evolucionarForcePrimeraVez ? 'primera-vez' : derivedAptType;
-    const statusResult = await updateAppointmentStatus(evolucionarAppointment.id, 'completed');
-    if (statusResult.success) {
-      // Primera vez: usar datos mergeados (perfil + ediciones del formulario) para la consulta y el perfil
-      let formDataToSave = evolucionarData.formData && Object.keys(evolucionarData.formData).length ? evolucionarData.formData : null;
-      if (aptType === 'primera-vez') {
-        let currentProfile = getPatientProfile(email);
-        if (!currentProfile) {
-          const initResult = initializePatientProfile(evolucionarAppointment);
-          currentProfile = initResult.profile;
-        }
-        const pac = currentProfile.anamnesisClinica || {};
-        const pas = currentProfile.anamnesisSocial || {};
-        const res = pac.resultadosEvaluacion || {};
-        const fd = evolucionarData.formData || {};
-        const ac = fd.anamnesisClinica || {};
-        const as = fd.anamnesisSocial || {};
-        formDataToSave = {
-          anamnesisClinica: { ...pac, ...ac },
-          anamnesisSocial: { ...pas, ...as },
-          audiograma: (fd.audiograma && (Object.keys(fd.audiograma.od || {}).length || Object.keys(fd.audiograma.oi || {}).length)) ? fd.audiograma : (res.audiometria || { od: {}, oi: {}, observaciones: '' }),
-          otoscopiaImpedanciometria: fd.otoscopiaImpedanciometria ?? res.otoscopia ?? res.impedanciometria ?? '',
-          logoaudiometria: fd.logoaudiometria ?? res.logoaudiometria ?? '',
-          pruebasAudifonos: fd.pruebasAudifonos ?? res.pruebaAudifonos ?? '',
-          informeMedico: fd.informeMedico ?? '',
-          conclusiones: fd.conclusiones ?? pac.resultadoConsulta ?? '',
-        };
-      }
+    const motivoAgenda = (evolucionarAppointment.reason || '').trim();
+    const alreadyCompleted = evolucionarAppointment.status === 'completed' || evolucionarAppointment.status === 'patient';
 
-      // Guardar en localStorage (siempre, como respaldo)
-      recordConsultation(email, evolucionarAppointment.id, {
+    if (!alreadyCompleted) {
+      const statusResult = await updateAppointmentStatus(evolucionarAppointment.id, 'completed');
+      if (!statusResult.success) {
+        setSnackbar({ open: true, message: statusResult.error || 'Error al actualizar estado de la cita.', severity: 'error' });
+        return;
+      }
+    }
+
+    let formDataToSave = evolucionarData.formData && Object.keys(evolucionarData.formData).length ? evolucionarData.formData : null;
+    if (aptType === 'primera-vez') {
+      let currentProfile = getPatientProfile(email);
+      if (!currentProfile) {
+        const initResult = initializePatientProfile(evolucionarAppointment);
+        currentProfile = initResult.profile;
+      }
+      const pac = currentProfile.anamnesisClinica || {};
+      const pas = currentProfile.anamnesisSocial || {};
+      const res = pac.resultadosEvaluacion || {};
+      const fd = evolucionarData.formData || {};
+      const ac = fd.anamnesisClinica || {};
+      const as = fd.anamnesisSocial || {};
+      formDataToSave = {
+        anamnesisClinica: { ...pac, ...ac, ...(motivoAgenda ? { motivoConsulta: motivoAgenda } : {}) },
+        anamnesisSocial: { ...pas, ...as },
+        audiograma: (fd.audiograma && (Object.keys(fd.audiograma.od || {}).length || Object.keys(fd.audiograma.oi || {}).length)) ? fd.audiograma : (res.audiometria || { od: {}, oi: {}, observaciones: '' }),
+        otoscopiaImpedanciometria: fd.otoscopiaImpedanciometria ?? res.otoscopia ?? res.impedanciometria ?? '',
+        logoaudiometria: fd.logoaudiometria ?? res.logoaudiometria ?? '',
+        pruebasAudifonos: fd.pruebasAudifonos ?? res.pruebaAudifonos ?? '',
+        informeMedico: fd.informeMedico ?? '',
+        conclusiones: fd.conclusiones ?? pac.resultadoConsulta ?? '',
+      };
+    }
+
+    const formDataWithEvolucion = formDataToSave && typeof formDataToSave === 'object'
+      ? {
+          ...formDataToSave,
+          diagnosticos: evolucionarData.diagnosticos?.trim() || null,
+          pronostico: evolucionarData.pronostico?.trim() || null,
+          tratamiento: evolucionarData.tratamiento?.trim() || null,
+          signosVitales: evolucionarData.signosVitales && typeof evolucionarData.signosVitales === 'object' && Object.keys(evolucionarData.signosVitales).length ? evolucionarData.signosVitales : null,
+        }
+      : {
+          diagnosticos: evolucionarData.diagnosticos?.trim() || null,
+          pronostico: evolucionarData.pronostico?.trim() || null,
+          tratamiento: evolucionarData.tratamiento?.trim() || null,
+          signosVitales: evolucionarData.signosVitales && typeof evolucionarData.signosVitales === 'object' && Object.keys(evolucionarData.signosVitales).length ? evolucionarData.signosVitales : null,
+        };
+
+    const recordPayload = {
+      notes: evolucionarData.notes,
+      hearingLoss: evolucionarData.hearingLoss,
+      nextSteps: evolucionarData.nextSteps,
+      appointmentType: aptType,
+      formData: formDataToSave,
+      diagnosticos: evolucionarData.diagnosticos?.trim() || null,
+      pronostico: evolucionarData.pronostico?.trim() || null,
+      tratamiento: evolucionarData.tratamiento?.trim() || null,
+      signosVitales: evolucionarData.signosVitales && typeof evolucionarData.signosVitales === 'object' && Object.keys(evolucionarData.signosVitales).length ? evolucionarData.signosVitales : null,
+    };
+
+    const existing = patientConsultations.find((c) => c.appointmentId === evolucionarAppointment.id);
+
+    if (existing && isConsultationApiId(existing.id)) {
+      const patchRes = await patchConsultation(existing.id, {
         notes: evolucionarData.notes,
         hearingLoss: evolucionarData.hearingLoss,
         nextSteps: evolucionarData.nextSteps,
-        appointmentType: aptType,
-        formData: formDataToSave,
-        diagnosticos: evolucionarData.diagnosticos?.trim() || null,
-        pronostico: evolucionarData.pronostico?.trim() || null,
-        tratamiento: evolucionarData.tratamiento?.trim() || null,
-        signosVitales: evolucionarData.signosVitales && typeof evolucionarData.signosVitales === 'object' && Object.keys(evolucionarData.signosVitales).length ? evolucionarData.signosVitales : null,
+        formData: formDataWithEvolucion,
       });
-
-      // Guardar en API / base de datos
-      const formDataWithEvolucion = formDataToSave && typeof formDataToSave === 'object'
-        ? {
-            ...formDataToSave,
-            diagnosticos: evolucionarData.diagnosticos?.trim() || null,
-            pronostico: evolucionarData.pronostico?.trim() || null,
-            tratamiento: evolucionarData.tratamiento?.trim() || null,
-            signosVitales: evolucionarData.signosVitales && typeof evolucionarData.signosVitales === 'object' && Object.keys(evolucionarData.signosVitales).length ? evolucionarData.signosVitales : null,
-          }
-        : formDataToSave;
-      await createConsultation({
+      if (!patchRes.success) {
+        setSnackbar({ open: true, message: patchRes.error || 'Error al actualizar la consulta en el servidor.', severity: 'error' });
+        return;
+      }
+      const locals = getPatientRecords(email) || [];
+      const localRow = locals.find((r) => r.type === 'consultation' && r.appointmentId === evolucionarAppointment.id);
+      if (localRow?.id) {
+        updateConsultation(email, localRow.id, recordPayload);
+      }
+    } else if (existing?.id) {
+      const upd = updateConsultation(email, existing.id, recordPayload);
+      if (!upd.success) {
+        setSnackbar({ open: true, message: upd.error || 'Error al actualizar el respaldo local.', severity: 'error' });
+        return;
+      }
+    } else {
+      recordConsultation(email, evolucionarAppointment.id, recordPayload);
+      const createRes = await createConsultation({
         appointmentId: evolucionarAppointment.id,
         patientEmail: email,
         notes: evolucionarData.notes,
@@ -1255,62 +1408,67 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
         appointmentType: aptType,
         formData: formDataWithEvolucion,
       });
-
-      // Cita primera vez: sincronizar historia clínica y anamnesis social al perfil
-      if (aptType === 'primera-vez' && formDataToSave) {
-        let currentProfile = getPatientProfile(email);
-        if (!currentProfile) {
-          const initResult = initializePatientProfile(evolucionarAppointment);
-          currentProfile = initResult.profile;
-        }
-        const fd = formDataToSave;
-        const ac = fd.anamnesisClinica || {};
-        const as = fd.anamnesisSocial || {};
-        const profileData = {
-          ...currentProfile,
-          anamnesisClinica: {
-            ...(currentProfile.anamnesisClinica || {}),
-            motivoConsulta: ac.motivoConsulta ?? currentProfile.anamnesisClinica?.motivoConsulta ?? '',
-            sintomasAuditivos: ac.sintomasAuditivos ?? currentProfile.anamnesisClinica?.sintomasAuditivos ?? {},
-            antecedentesMedicos: ac.antecedentesMedicos ?? currentProfile.anamnesisClinica?.antecedentesMedicos ?? {},
-            antecedentesOtorrinolaringologicos: ac.antecedentesOtorrinolaringologicos ?? currentProfile.anamnesisClinica?.antecedentesOtorrinolaringologicos ?? {},
-            antecedentesFamiliares: ac.antecedentesFamiliares ?? currentProfile.anamnesisClinica?.antecedentesFamiliares ?? {},
-            factoresRiesgoAuditivo: ac.factoresRiesgoAuditivo ?? currentProfile.anamnesisClinica?.factoresRiesgoAuditivo ?? {},
-            impactoFuncional: ac.impactoFuncional ?? currentProfile.anamnesisClinica?.impactoFuncional ?? '',
-            resultadoConsulta: ac.resultadoConsulta ?? fd.conclusiones ?? fd.informeMedico ?? currentProfile.anamnesisClinica?.resultadoConsulta ?? '',
-            desarrollo: ac.desarrollo ?? currentProfile.anamnesisClinica?.desarrollo ?? {},
-            resultadosEvaluacion: {
-              ...(currentProfile.anamnesisClinica?.resultadosEvaluacion || {}),
-              otoscopia: fd.otoscopiaImpedanciometria ?? currentProfile.anamnesisClinica?.resultadosEvaluacion?.otoscopia ?? '',
-              audiometria: fd.audiograma && (fd.audiograma.od || fd.audiograma.oi || fd.audiograma.observaciones) ? { od: fd.audiograma.od || {}, oi: fd.audiograma.oi || {}, observaciones: fd.audiograma.observaciones || '' } : (currentProfile.anamnesisClinica?.resultadosEvaluacion?.audiometria || { od: {}, oi: {}, observaciones: '' }),
-              logoaudiometria: fd.logoaudiometria ?? currentProfile.anamnesisClinica?.resultadosEvaluacion?.logoaudiometria ?? '',
-              impedanciometria: fd.otoscopiaImpedanciometria ?? currentProfile.anamnesisClinica?.resultadosEvaluacion?.impedanciometria ?? '',
-              pruebaAudifonos: fd.pruebasAudifonos ?? currentProfile.anamnesisClinica?.resultadosEvaluacion?.pruebaAudifonos ?? '',
-              examenesConAudifonos: currentProfile.anamnesisClinica?.resultadosEvaluacion?.examenesConAudifonos ?? '',
-            },
-          },
-          anamnesisSocial: {
-            ...(currentProfile.anamnesisSocial || {}),
-            estadoCivil: as.estadoCivil ?? currentProfile.anamnesisSocial?.estadoCivil ?? '',
-            ocupacion: as.ocupacion ?? currentProfile.anamnesisSocial?.ocupacion ?? '',
-            nivelEducativo: as.nivelEducativo ?? currentProfile.anamnesisSocial?.nivelEducativo ?? '',
-            contextoFamiliar: as.contextoFamiliar ?? currentProfile.anamnesisSocial?.contextoFamiliar ?? {},
-            contextoLaboral: as.contextoLaboral ?? currentProfile.anamnesisSocial?.contextoLaboral ?? {},
-            contextoSocial: as.contextoSocial ?? currentProfile.anamnesisSocial?.contextoSocial ?? {},
-            habitos: as.habitos ?? currentProfile.anamnesisSocial?.habitos ?? {},
-          },
-        };
-        savePatientProfile(email, profileData);
+      if (!createRes.success) {
+        setSnackbar({ open: true, message: createRes.error || 'La evolución quedó en este navegador; revise la conexión con el servidor.', severity: 'warning' });
       }
-
-      await loadPatientData();
-      setEvolucionarDialogOpen(false);
-      setEvolucionarAppointment(null);
-      setEvolucionarData({ notes: '', hearingLoss: false, nextSteps: '', formData: {}, diagnosticos: '', pronostico: '', tratamiento: '', signosVitales: {} });
-      setSnackbar({ open: true, message: 'Evolución registrada y cita marcada como asistida.', severity: 'success' });
-    } else {
-      setSnackbar({ open: true, message: statusResult.error || 'Error al guardar.', severity: 'error' });
     }
+
+    if (aptType === 'primera-vez' && formDataToSave) {
+      let currentProfile = getPatientProfile(email);
+      if (!currentProfile) {
+        const initResult = initializePatientProfile(evolucionarAppointment);
+        currentProfile = initResult.profile;
+      }
+      const fd = formDataToSave;
+      const ac = fd.anamnesisClinica || {};
+      const as = fd.anamnesisSocial || {};
+      const profileData = {
+        ...currentProfile,
+        anamnesisClinica: {
+          ...(currentProfile.anamnesisClinica || {}),
+          motivoConsulta: motivoAgenda || ac.motivoConsulta || currentProfile.anamnesisClinica?.motivoConsulta || '',
+          sintomasAuditivos: ac.sintomasAuditivos ?? currentProfile.anamnesisClinica?.sintomasAuditivos ?? {},
+          antecedentesMedicos: ac.antecedentesMedicos ?? currentProfile.anamnesisClinica?.antecedentesMedicos ?? {},
+          antecedentesOtorrinolaringologicos: ac.antecedentesOtorrinolaringologicos ?? currentProfile.anamnesisClinica?.antecedentesOtorrinolaringologicos ?? {},
+          antecedentesFamiliares: ac.antecedentesFamiliares ?? currentProfile.anamnesisClinica?.antecedentesFamiliares ?? {},
+          factoresRiesgoAuditivo: ac.factoresRiesgoAuditivo ?? currentProfile.anamnesisClinica?.factoresRiesgoAuditivo ?? {},
+          impactoFuncional: ac.impactoFuncional ?? currentProfile.anamnesisClinica?.impactoFuncional ?? '',
+          resultadoConsulta: ac.resultadoConsulta ?? fd.conclusiones ?? fd.informeMedico ?? currentProfile.anamnesisClinica?.resultadoConsulta ?? '',
+          desarrollo: ac.desarrollo ?? currentProfile.anamnesisClinica?.desarrollo ?? {},
+          resultadosEvaluacion: {
+            ...(currentProfile.anamnesisClinica?.resultadosEvaluacion || {}),
+            otoscopia: fd.otoscopiaImpedanciometria ?? currentProfile.anamnesisClinica?.resultadosEvaluacion?.otoscopia ?? '',
+            audiometria: fd.audiograma && (fd.audiograma.od || fd.audiograma.oi || fd.audiograma.observaciones) ? { od: fd.audiograma.od || {}, oi: fd.audiograma.oi || {}, observaciones: fd.audiograma.observaciones || '' } : (currentProfile.anamnesisClinica?.resultadosEvaluacion?.audiometria || { od: {}, oi: {}, observaciones: '' }),
+            logoaudiometria: fd.logoaudiometria ?? currentProfile.anamnesisClinica?.resultadosEvaluacion?.logoaudiometria ?? '',
+            impedanciometria: fd.otoscopiaImpedanciometria ?? currentProfile.anamnesisClinica?.resultadosEvaluacion?.impedanciometria ?? '',
+            pruebaAudifonos: fd.pruebasAudifonos ?? currentProfile.anamnesisClinica?.resultadosEvaluacion?.pruebaAudifonos ?? '',
+            examenesConAudifonos: currentProfile.anamnesisClinica?.resultadosEvaluacion?.examenesConAudifonos ?? '',
+          },
+        },
+        anamnesisSocial: {
+          ...(currentProfile.anamnesisSocial || {}),
+          estadoCivil: as.estadoCivil ?? currentProfile.anamnesisSocial?.estadoCivil ?? '',
+          ocupacion: as.ocupacion ?? currentProfile.anamnesisSocial?.ocupacion ?? '',
+          nivelEducativo: as.nivelEducativo ?? currentProfile.anamnesisSocial?.nivelEducativo ?? '',
+          contextoFamiliar: as.contextoFamiliar ?? currentProfile.anamnesisSocial?.contextoFamiliar ?? {},
+          contextoLaboral: as.contextoLaboral ?? currentProfile.anamnesisSocial?.contextoLaboral ?? {},
+          contextoSocial: as.contextoSocial ?? currentProfile.anamnesisSocial?.contextoSocial ?? {},
+          habitos: as.habitos ?? currentProfile.anamnesisSocial?.habitos ?? {},
+        },
+      };
+      savePatientProfile(email, profileData);
+    }
+
+    await loadPatientData();
+    setEvolucionarDialogOpen(false);
+    setEvolucionarAppointment(null);
+    setEvolucionarData({ notes: '', hearingLoss: false, nextSteps: '', formData: {}, diagnosticos: '', pronostico: '', tratamiento: '', signosVitales: {} });
+    setEvolucionarPrimeraVezStep('asistencia');
+    setSnackbar({
+      open: true,
+      message: alreadyCompleted ? 'Evolución guardada en la historia clínica.' : 'Evolución registrada y cita marcada como asistida.',
+      severity: 'success',
+    });
   };
 
   const handleOpenEditConsulta = (sel) => {
@@ -1354,6 +1512,60 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   // Calcular displayEmail antes de usarlo en las funciones
   const getPatientEmail = () => {
     return formData.email || appointment?.patientEmail || lead?.email || '';
+  };
+
+  const handleDeleteConsultaRecord = async () => {
+    const sel = histConsultaSeleccionada;
+    if (!sel?.consultation?.id || !canAdminClinicalHistory(user?.role)) return;
+    if (!window.confirm('¿Eliminar esta evolución/consulta del historial del paciente? Esta acción no se puede deshacer.')) return;
+    const email = getPatientEmail().trim().toLowerCase();
+    if (!email) {
+      setSnackbar({ open: true, message: 'No se encontró el email del paciente.', severity: 'error' });
+      return;
+    }
+    const result = deletePatientRecord(email, sel.consultation.id);
+    if (result.success) {
+      await loadPatientData();
+      setHistConsultaDetalleOpen(false);
+      setHistConsultaSeleccionada(null);
+      setSnackbar({ open: true, message: 'Registro eliminado.', severity: 'success' });
+    } else {
+      setSnackbar({ open: true, message: result.error || 'No se pudo eliminar.', severity: 'error' });
+    }
+  };
+
+  const handleAdminClearAllRecords = async () => {
+    if (!canAdminClinicalHistory(user?.role)) return;
+    const email = getPatientEmail().trim().toLowerCase();
+    if (!email) {
+      setSnackbar({ open: true, message: 'No se encontró el email del paciente.', severity: 'error' });
+      return;
+    }
+    if (!window.confirm('¿Borrar TODOS los registros de historial (evoluciones, notas, cancelaciones, etc.) de este paciente?')) return;
+    const result = clearAllPatientRecords(email);
+    if (result.success) {
+      await loadPatientData();
+      setSnackbar({ open: true, message: 'Historial de registros vaciado.', severity: 'success' });
+    } else {
+      setSnackbar({ open: true, message: result.error || 'Error.', severity: 'error' });
+    }
+  };
+
+  const handleAdminDeleteProfileStorage = async () => {
+    if (!canAdminClinicalHistory(user?.role)) return;
+    const email = getPatientEmail().trim();
+    if (!email) {
+      setSnackbar({ open: true, message: 'No se encontró el email del paciente.', severity: 'error' });
+      return;
+    }
+    if (!window.confirm('¿Eliminar el perfil clínico guardado en este navegador para este paciente (anamnesis y datos del perfil en local)? Esta acción no se puede deshacer.')) return;
+    const result = deletePatientProfile(email);
+    if (result.success) {
+      await loadPatientData();
+      setSnackbar({ open: true, message: 'Perfil local eliminado. Puede volver a crear datos desde cero.', severity: 'success' });
+    } else {
+      setSnackbar({ open: true, message: result.error || 'Error al eliminar perfil.', severity: 'error' });
+    }
   };
 
   const handleQuoteSuccess = async (product) => {
@@ -1522,7 +1734,9 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
         if (ce && typeof ce === 'object') return [ce, empty()];
         return [empty(), empty()];
       })(),
-      consentimientosFirmados: formData.consentimientosFirmados ?? currentProfile.consentimientosFirmados ?? [],
+      consentimientosFirmados: canConsentAdmin
+        ? (formData.consentimientosFirmados ?? currentProfile.consentimientosFirmados ?? [])
+        : (currentProfile?.consentimientosFirmados ?? []),
       codigoHistoriaClinica: (formData.codigoHistoriaClinica || currentProfile.codigoHistoriaClinica) || generateCodigoHistoriaClinica(),
     };
 
@@ -1729,7 +1943,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
 
   const handleSignatureStart = (e) => {
     e.preventDefault();
-    if (readOnly) return;
+    if (readOnly || !canConsentAdmin) return;
     const coords = getCoords(e);
     if (coords) {
       lastPointRef.current = coords;
@@ -1738,7 +1952,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   };
   const handleSignatureMove = (e) => {
     e.preventDefault();
-    if (!isDrawing || readOnly) return;
+    if (!isDrawing || readOnly || !canConsentAdmin) return;
     const coords = getCoords(e);
     const canvas = signatureCanvasRef.current;
     if (!coords || !canvas) return;
@@ -1758,6 +1972,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   };
 
   const handleClearSignature = () => {
+    if (!canConsentAdmin) return;
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -1765,6 +1980,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   };
 
   const handleAsignarFirmaAConsentimientos = () => {
+    if (!canConsentAdmin) return;
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
     const firmaBase64 = canvas.toDataURL('image/png');
@@ -1896,6 +2112,8 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
             </Box>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
+            {showGlobalPerfilSaveBar && (
+            <>
             {isEditing ? (
               <>
                 <Button
@@ -1923,6 +2141,70 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                 Editar
               </Button>
             )}
+            </>
+            )}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<FileDownload />}
+              onClick={handleOpenExportPerfil}
+              sx={{ bgcolor: '#272F50', '&:hover': { bgcolor: '#085946' } }}
+              aria-controls={anchorExportPerfil ? 'menu-exportar-perfil' : undefined}
+              aria-haspopup="true"
+              aria-expanded={Boolean(anchorExportPerfil)}
+            >
+              Exportar historial
+            </Button>
+            <Menu
+              id="menu-exportar-perfil"
+              anchorEl={anchorExportPerfil}
+              open={Boolean(anchorExportPerfil)}
+              onClose={handleCloseExportPerfil}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <MenuItem
+                onClick={() => {
+                  handleCloseExportPerfil();
+                  void buildAndDownloadHistoriaClinicaPdf({ closeMenus: false, showSnackbar: true });
+                }}
+              >
+                <ListItemIcon><FileDownload fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Historia clínica (PDF)" secondary="Datos generales, anamnesis social, consultas" />
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseExportPerfil();
+                  void handleExportarHistorialCitas();
+                }}
+              >
+                <ListItemIcon><FileDownload fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Histórico de citas" secondary="PDF" />
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseExportPerfil();
+                  void handleExportarHistoricoProductosPdf();
+                }}
+              >
+                <ListItemIcon><FileDownload fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Histórico de productos" secondary="Cotizaciones, ventas, adaptaciones (PDF)" />
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseExportPerfil();
+                  void handleExportarHistoricoMantenimientosPdf();
+                }}
+              >
+                <ListItemIcon><FileDownload fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Histórico de mantenimientos" secondary="PDF" />
+              </MenuItem>
+              <Divider />
+              <MenuItem onClick={() => { void handleExportarTodoHistorialPaciente(); }}>
+                <ListItemIcon><Assessment fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Exportar todo" secondary="Varios archivos PDF seguidos" />
+              </MenuItem>
+            </Menu>
             <Button onClick={onClose} variant="outlined" size="small">
               Cerrar
             </Button>
@@ -2157,7 +2439,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                           <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
                             Conectar cámara o subir imagen
                           </Typography>
-                          {!readOnly && (
+                          {!readOnlyDatosGenerales && (
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
                               <Button variant="contained" startIcon={<CameraAlt />} onClick={handleStartCamera} sx={{ bgcolor: '#085946' }} size="small">
                                 Tomar fotografía
@@ -2184,7 +2466,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                       </Button>
                     )}
                   </CardContent>
-                  {!readOnly && (
+                  {!readOnlyDatosGenerales && (
                     <Box sx={{ px: 2, pb: 2, display: 'flex', justifyContent: 'flex-end' }}>
                       <Button variant="contained" startIcon={<Save />} onClick={handleSaveDatosGenerales} sx={{ bgcolor: '#085946' }}>
                         Guardar Información
@@ -2209,7 +2491,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                       <strong>¿Dónde subir las plantillas de consentimiento?</strong><br/>
                       Portal CRM → <strong>Configuración</strong> → pestaña <strong>&quot;Documentos y consentimientos&quot;</strong>. Ahí puede subir un PDF por cada tipo (Adaptación, Prueba de audífonos, etc.). Esas plantillas están disponibles para el centro; cuando el paciente firma aquí, la firma se asigna al tipo elegido y se guarda en la historia del paciente al hacer &quot;Guardar Información&quot;.
                     </Alert>
-                    {!readOnlyDatosGenerales && (
+                    {canConsentAdmin && !readOnly && (
                       <>
                         <Typography variant="subtitle2" sx={{ color: '#272F50', mb: 1 }}>
                           1. Firma del paciente
@@ -2238,7 +2520,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                               width: '100%',
                               height: 160,
                               display: 'block',
-                              cursor: readOnlyDatosGenerales ? 'default' : 'crosshair',
+                              cursor: readOnly || !canConsentAdmin ? 'default' : 'crosshair',
                             }}
                           />
                         </Box>
@@ -2320,7 +2602,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                                   {c.fecha ? new Date(c.fecha).toLocaleDateString('es-CL') : '-'}
                                 </Typography>
                               </Box>
-                              {!readOnly && (
+                              {canConsentAdmin && !readOnly && (
                                 <IconButton size="small" color="error" onClick={() => handleRemoveConsentimiento(c.id)} aria-label="Eliminar firma">
                                   <DeleteOutline fontSize="small" />
                                 </IconButton>
@@ -2331,7 +2613,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                       </Box>
                     )}
                   </CardContent>
-                  {!readOnly && (formData.consentimientosFirmados || []).length > 0 && (
+                  {canConsentAdmin && !readOnly && (formData.consentimientosFirmados || []).length > 0 && (
                     <Box sx={{ px: 2, pb: 2, display: 'flex', justifyContent: 'flex-end' }}>
                       <Button variant="contained" startIcon={<Save />} onClick={handleSaveDatosGenerales} sx={{ bgcolor: '#085946' }}>
                         Guardar Información
@@ -2423,7 +2705,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                                   label="Nombre"
                                   value={c.nombre ?? ''}
                                   onChange={(e) => handleContactoEmergenciaChange(idx, 'nombre', e.target.value)}
-                                  disabled={readOnly}
+                                  disabled={readOnlyDatosGenerales}
                                 />
                               </Grid>
                               <Grid item xs={12} sm={6} md={3}>
@@ -2432,7 +2714,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                                   label="Teléfono"
                                   value={c.telefono ?? ''}
                                   onChange={(e) => handleContactoEmergenciaChange(idx, 'telefono', e.target.value)}
-                                  disabled={readOnly}
+                                  disabled={readOnlyDatosGenerales}
                                 />
                               </Grid>
                               <Grid item xs={12} sm={6} md={3}>
@@ -2442,7 +2724,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                                   type="email"
                                   value={c.correo ?? ''}
                                   onChange={(e) => handleContactoEmergenciaChange(idx, 'correo', e.target.value)}
-                                  disabled={readOnly}
+                                  disabled={readOnlyDatosGenerales}
                                 />
                               </Grid>
                               <Grid item xs={12} sm={6} md={3}>
@@ -2452,7 +2734,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                                   value={c.parentesco ?? ''}
                                   onChange={(e) => handleContactoEmergenciaChange(idx, 'parentesco', e.target.value)}
                                   placeholder="Ej: Cónyuge, Hijo(a), Padre, Madre..."
-                                  disabled={readOnly}
+                                  disabled={readOnlyDatosGenerales}
                                 />
                               </Grid>
                             </Grid>
@@ -2460,7 +2742,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                         );
                       })}
                     </CardContent>
-                    {!readOnly && (
+                    {!readOnlyDatosGenerales && (
                       <Box sx={{ px: 2, pb: 2, display: 'flex', justifyContent: 'flex-end' }}>
                         <Button
                           variant="contained"
@@ -2480,26 +2762,115 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
 
           {/* Tab 1: Historia Clínica */}
           {activeTab === 1 && (
-            <Box>
+            <Box sx={HC_PAGE_SX}>
+              <Paper
+                elevation={0}
+                sx={{
+                  mb: 3,
+                  p: 2.5,
+                  borderRadius: 2,
+                  border: '1px solid rgba(8, 89, 70, 0.14)',
+                  background: 'linear-gradient(120deg, rgba(8, 89, 70, 0.07) 0%, rgba(39, 47, 80, 0.06) 100%)',
+                }}
+              >
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: 2,
+                        bgcolor: '#085946',
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 14px rgba(8, 89, 70, 0.35)',
+                      }}
+                    >
+                      <LocalHospital sx={{ fontSize: 28 }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="h5" sx={{ fontWeight: 800, color: '#272F50', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                        Historia clínica
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 560, mt: 0.5 }}>
+                        Anamnesis clínica, antecedentes y exploración. Despliegue cada bloque para avanzar de forma ordenada; al final puede guardar los cambios.
+                      </Typography>
+                    </Box>
+                  </Box>
+                  {readOnlyHistoriaClinica ? (
+                    <Chip label="Solo lectura" size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+                  ) : (
+                    <Chip label="Edición habilitada" size="small" color="success" variant="outlined" sx={{ fontWeight: 600, borderWidth: 2 }} />
+                  )}
+                </Box>
+              </Paper>
+
               {/* Registro de Evoluciones (ley: cada consulta debe evolucionar la historia) */}
-              {patientConsultations.length > 0 && (
-                <Card sx={{ mb: 3, border: '2px solid #085946' }}>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: '#085946' }}>
-                      Registro de Evoluciones
+              {(patientConsultations.length > 0 || citasAsistidasSinEvolucion.length > 0) && (
+                <Card sx={{ mb: 3, borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(8, 89, 70, 0.14)', boxShadow: '0 8px 28px rgba(8, 89, 70, 0.1)' }}>
+                  <Box sx={{ px: 2.5, py: 1.5, background: 'linear-gradient(90deg, #085946 0%, #0a6b56 100%)' }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Assignment sx={{ fontSize: 20 }} />
+                      Registro de evoluciones
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
-                      Por ley colombiana, cada consulta debe registrar la evolución de la historia clínica. Las evoluciones se generan al marcar una cita como asistida desde la pestaña Citas.
+                  </Box>
+                  <CardContent sx={{ pt: 2 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                      Por normativa, cada cita asistida debe registrar evolución en la historia. Puede hacerlo aquí o desde <strong>Agenda (CRM → Citas)</strong> al marcar asistencia en la cita. Las entradas se generan al guardar desde Evolucionar.
                     </Typography>
-                    <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
-                      {[...patientConsultations].sort((a, b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00'))).map((c) => (
-                        <Paper key={c.id} sx={{ p: 1.5, mb: 1, bgcolor: '#f8fafc', cursor: 'pointer', '&:hover': { bgcolor: '#e8f5e9' } }} onClick={() => { setHistConsultaSeleccionada({ consultation: c, appointment: patientAppointments.find((a) => a.id === c.appointmentId) || {} }); setHistConsultaDetalleOpen(true); }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{c.date} {c.time || ''}</Typography>
-                            <Typography variant="caption" sx={{ color: '#085946' }}>Ver detalle</Typography>
+                    <Box sx={{ maxHeight: 260, overflowY: 'auto', pr: 0.5 }}>
+                      {citasAsistidasSinEvolucion.map((apt) => (
+                        <Paper
+                          key={`pendiente-${apt.id}`}
+                          elevation={0}
+                          sx={{
+                            p: 1.75,
+                            mb: 1.25,
+                            borderRadius: 1.5,
+                            border: '1px dashed rgba(8, 89, 70, 0.35)',
+                            bgcolor: '#fffef5',
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: '#272F50' }}>
+                                {new Date(apt.date + 'T00:00:00').toLocaleDateString('es-ES')} {apt.time || ''}
+                                {apt.reason ? ` · ${apt.reason}` : ''}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: 'warning.dark', display: 'block', mt: 0.5 }}>
+                                Cita asistida sin evolución registrada
+                              </Typography>
+                            </Box>
+                            <Button size="small" variant="contained" sx={{ bgcolor: '#085946' }} onClick={() => handleOpenEvolucionar(apt)}>
+                              Evolucionar
+                            </Button>
                           </Box>
-                          <Typography variant="caption" sx={{ color: '#86899C', display: 'block' }} noWrap>{c.consultationNotes || '—'}</Typography>
-                          {c.diagnosticos && <Typography variant="caption" sx={{ color: '#272F50', display: 'block' }} noWrap><strong>Dx:</strong> {c.diagnosticos}</Typography>}
+                        </Paper>
+                      ))}
+                      {[...patientConsultations].sort((a, b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00'))).map((c) => (
+                        <Paper
+                          key={c.id}
+                          elevation={0}
+                          sx={{
+                            p: 1.75,
+                            mb: 1.25,
+                            borderRadius: 1.5,
+                            border: '1px solid rgba(8, 89, 70, 0.12)',
+                            bgcolor: '#fff',
+                            cursor: 'pointer',
+                            transition: '0.2s ease',
+                            '&:hover': { borderColor: '#085946', boxShadow: '0 2px 12px rgba(8, 89, 70, 0.12)' },
+                          }}
+                          onClick={() => { setHistConsultaSeleccionada({ consultation: c, appointment: patientAppointments.find((a) => a.id === c.appointmentId) || {} }); setHistConsultaDetalleOpen(true); }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#272F50' }}>{c.date} {c.time || ''}</Typography>
+                            <Chip size="small" label="Ver detalle" sx={{ bgcolor: 'rgba(8, 89, 70, 0.1)', color: '#085946', fontWeight: 600 }} />
+                          </Box>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }} noWrap>{c.consultationNotes || '—'}</Typography>
+                          {c.diagnosticos && <Typography variant="caption" sx={{ color: '#272F50', display: 'block', mt: 0.25 }} noWrap><strong>Dx:</strong> {c.diagnosticos}</Typography>}
                         </Paper>
                       ))}
                     </Box>
@@ -2507,10 +2878,32 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                 </Card>
               )}
 
-              <Card sx={{ mb: 3 }}>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: '#272F50' }}>
-                    Motivo de Consulta
+              {canAdminClinicalHistory(user?.role) && !readOnly && (
+                <Alert severity="warning" sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                    Administración de historia clínica (solo administrador)
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    Puede vaciar el historial de registros de este paciente en este navegador o eliminar el perfil clínico guardado en local (anamnesis y datos del formulario).
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    <Button size="small" variant="outlined" color="warning" onClick={handleAdminClearAllRecords}>
+                      Vaciar historial de registros
+                    </Button>
+                    <Button size="small" variant="outlined" color="error" onClick={handleAdminDeleteProfileStorage}>
+                      Eliminar perfil clínico (local)
+                    </Button>
+                  </Box>
+                </Alert>
+              )}
+
+              <Card sx={{ mb: 3, borderRadius: 2, border: '1px solid rgba(8, 89, 70, 0.12)', boxShadow: '0 2px 10px rgba(15, 23, 42, 0.05)' }}>
+                <CardContent sx={{ p: 2.5 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 0.5, fontWeight: 700, color: '#272F50' }}>
+                    Motivo de consulta
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
+                    Motivo principal que motiva la valoración audiológica.
                   </Typography>
                   <TextField
                     fullWidth
@@ -2520,18 +2913,19 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                     onChange={(e) => handleFieldChange(null, 'motivoConsulta', e.target.value)}
                     placeholder="Describa el motivo principal de la consulta..."
                     disabled={readOnlyHistoriaClinica}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' } }}
                   />
                 </CardContent>
               </Card>
 
               {/* Síntomas Auditivos */}
-              <Accordion defaultExpanded>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Accordion defaultExpanded elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
                     Síntomas Auditivos
                   </Typography>
                 </AccordionSummary>
-                <AccordionDetails>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
                   <Grid container spacing={3}>
                     {/* Hipoacusia */}
                     <Grid item xs={12}>
@@ -2794,13 +3188,13 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
               </Accordion>
 
               {/* Antecedentes Médicos */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
                     Antecedentes Médicos
                   </Typography>
                 </AccordionSummary>
-                <AccordionDetails>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
                       <TextField
@@ -2867,13 +3261,13 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
               </Accordion>
 
               {/* Antecedentes Otorrinolaringológicos */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
                     Antecedentes Otorrinolaringológicos
                   </Typography>
                 </AccordionSummary>
-                <AccordionDetails>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
                       <Paper sx={{ p: 2, bgcolor: '#f8fafc' }}>
@@ -3068,242 +3462,14 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                 </AccordionDetails>
               </Accordion>
 
-              {/* Antecedentes Familiares */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Antecedentes Familiares
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <Paper sx={{ p: 2, bgcolor: '#f8fafc' }}>
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={formData.antecedentesFamiliares.hipoacusia.presente}
-                              onChange={(e) => handleNestedFieldChange('antecedentesFamiliares', 'hipoacusia', 'presente', e.target.checked)}
-                              disabled={readOnlyHistoriaClinica}
-                            />
-                          }
-                          label="Hipoacusia Familiar"
-                        />
-                        {formData.antecedentesFamiliares.hipoacusia.presente && (
-                          <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Familiar"
-                                value={formData.antecedentesFamiliares.hipoacusia.familiar}
-                                onChange={(e) => handleNestedFieldChange('antecedentesFamiliares', 'hipoacusia', 'familiar', e.target.value)}
-                                placeholder="Ej: Padre, abuelo"
-                                disabled={readOnlyHistoriaClinica}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Grado"
-                                value={formData.antecedentesFamiliares.hipoacusia.grado}
-                                onChange={(e) => handleNestedFieldChange('antecedentesFamiliares', 'hipoacusia', 'grado', e.target.value)}
-                                placeholder="Ej: Moderada"
-                                disabled={readOnlyHistoriaClinica}
-                              />
-                            </Grid>
-                          </Grid>
-                        )}
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        multiline
-                        rows={2}
-                        label="Otras Patologías Familiares"
-                        value={formData.antecedentesFamiliares.otrasPatologias.join(', ')}
-                        onChange={(e) => handleFieldChange('antecedentesFamiliares', 'otrasPatologias', e.target.value.split(', ').filter(p => p.trim()))}
-                        placeholder="Ej: Diabetes, Hipertensión (separar por comas)"
-                        disabled={readOnlyHistoriaClinica}
-                      />
-                    </Grid>
-                  </Grid>
-                </AccordionDetails>
-              </Accordion>
-
-              {/* Factores de Riesgo Auditivo (Ley colombiana y especialidad audiológica) */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Factores de Riesgo Auditivo
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
-                    Factores asociados a hipoacusia y patologías del oído según evidencia clínica.
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                      <Paper sx={{ p: 2, bgcolor: '#fff8e1' }}>
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={formData.factoresRiesgoAuditivo?.ototoxicidad?.presente ?? false}
-                              onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'ototoxicidad', 'presente', e.target.checked)}
-                              disabled={readOnlyHistoriaClinica}
-                            />
-                          }
-                          label="Ototoxicidad (aminoglucósidos, diuréticos de asa, quimioterápicos, etc.)"
-                        />
-                        {(formData.factoresRiesgoAuditivo?.ototoxicidad?.presente) && (
-                          <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12} sm={6}>
-                              <TextField fullWidth label="Medicamentos" value={formData.factoresRiesgoAuditivo.ototoxicidad.medicamentos || ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'ototoxicidad', 'medicamentos', e.target.value)} placeholder="Ej: Gentamicina, Furosemida" disabled={readOnlyHistoriaClinica} />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField fullWidth label="Duración / Período" value={formData.factoresRiesgoAuditivo.ototoxicidad.duracion || ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'ototoxicidad', 'duracion', e.target.value)} placeholder="Ej: 2 semanas, 2020" disabled={readOnlyHistoriaClinica} />
-                            </Grid>
-                            <Grid item xs={12}>
-                              <TextField fullWidth multiline rows={2} label="Observaciones" value={formData.factoresRiesgoAuditivo.ototoxicidad.observaciones || ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'ototoxicidad', 'observaciones', e.target.value)} disabled={readOnlyHistoriaClinica} />
-                            </Grid>
-                          </Grid>
-                        )}
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Enfermedades Infecciosas</Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {['meningitis', 'sifilis', 'tuberculosis', 'vih'].map((k) => (
-                          <FormControlLabel key={k} control={<Switch checked={formData.factoresRiesgoAuditivo?.enfermedadesInfecciosas?.[k] ?? false} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'enfermedadesInfecciosas', k, e.target.checked)} disabled={readOnlyHistoriaClinica} size="small" />} label={k === 'vih' ? 'VIH' : k.charAt(0).toUpperCase() + k.slice(1)} />
-                        ))}
-                      </Box>
-                      <TextField fullWidth size="small" label="Otros" value={formData.factoresRiesgoAuditivo?.enfermedadesInfecciosas?.otros ?? ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'enfermedadesInfecciosas', 'otros', e.target.value)} sx={{ mt: 1 }} disabled={readOnlyHistoriaClinica} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Enfermedades Sistémicas</Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {['diabetes', 'insuficienciaRenal', 'colagenopatias'].map((k) => (
-                          <FormControlLabel key={k} control={<Switch checked={formData.factoresRiesgoAuditivo?.enfermedadesSistemicas?.[k] ?? false} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'enfermedadesSistemicas', k, e.target.checked)} disabled={readOnlyHistoriaClinica} size="small" />} label={k === 'insuficienciaRenal' ? 'Insuf. Renal' : k === 'colagenopatias' ? 'Colagenopatías' : 'Diabetes'} />
-                        ))}
-                      </Box>
-                      <TextField fullWidth size="small" label="Otros" value={formData.factoresRiesgoAuditivo?.enfermedadesSistemicas?.otros ?? ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'enfermedadesSistemicas', 'otros', e.target.value)} sx={{ mt: 1 }} disabled={readOnlyHistoriaClinica} />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <FormControlLabel control={<Switch checked={formData.factoresRiesgoAuditivo?.bajoPesoNacimiento ?? false} onChange={(e) => handleFieldChange('factoresRiesgoAuditivo', 'bajoPesoNacimiento', e.target.checked)} disabled={readOnlyHistoriaClinica} />} label="Bajo peso al nacer (&lt; 2.500 g)" />
-                    </Grid>
-                  </Grid>
-                </AccordionDetails>
-              </Accordion>
-
-              {/* Impacto Funcional */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Impacto Funcional y Calidad de Vida
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
-                    Efecto en la comunicación, participación social y actividades diarias.
-                  </Typography>
-                  <TextField fullWidth multiline rows={4} value={formData.impactoFuncional || ''} onChange={(e) => handleFieldChange(null, 'impactoFuncional', e.target.value)} placeholder="Describa cómo la condición auditiva afecta la vida del paciente: dificultades en reuniones, uso del teléfono, relaciones familiares, trabajo, ocio, etc." disabled={readOnlyHistoriaClinica} />
-                </AccordionDetails>
-              </Accordion>
-
-              {/* Resultado de la consulta */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    1. Resultados de la primera consulta
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <TextField fullWidth multiline rows={3} value={formData.resultadoConsulta || ''} onChange={(e) => handleFieldChange(null, 'resultadoConsulta', e.target.value)} placeholder="Resumen del resultado o conclusión principal de la consulta..." disabled={readOnlyHistoriaClinica} />
-                </AccordionDetails>
-              </Accordion>
-
-              {/* Resultados de evaluación: otoscopia, audiometría, logoaudiometría, impedanciometría */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    2. Resultados de evaluación
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Otoscopia</Typography>
-                      <TextField fullWidth multiline rows={3} value={formData.resultadosEvaluacion?.otoscopia || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'otoscopia', e.target.value)} placeholder="Hallazgos de otoscopia (conducto auditivo externo, membrana timpánica OD/OI)..." disabled={readOnlyHistoriaClinica} />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Audiometría tonal</Typography>
-                      <Table size="small" sx={{ mb: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
-                        <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell sx={{ fontWeight: 600 }}>Frecuencia (Hz)</TableCell>{[250, 500, 1000, 2000, 4000, 8000].map((f) => <TableCell key={f} align="center">{f}</TableCell>)}</TableRow></TableHead>
-                        <TableBody>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>OD (dB HL)</TableCell>
-                            {[250, 500, 1000, 2000, 4000, 8000].map((f) => (
-                              <TableCell key={f} align="center">
-                                <TextField type="number" size="small" inputProps={{ min: -10, max: 120 }} sx={{ width: 52 }} value={formData.resultadosEvaluacion?.audiometria?.od?.[f] ?? formData.resultadosEvaluacion?.audiometria?.od?.[String(f)] ?? ''} onChange={(e) => { const aud = formData.resultadosEvaluacion?.audiometria || { od: {}, oi: {}, observaciones: '' }; handleFieldChange('resultadosEvaluacion', 'audiometria', { ...aud, od: { ...(aud.od || {}), [String(f)]: e.target.value } }); }} disabled={readOnlyHistoriaClinica} />
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>OI (dB HL)</TableCell>
-                            {[250, 500, 1000, 2000, 4000, 8000].map((f) => (
-                              <TableCell key={f} align="center">
-                                <TextField type="number" size="small" inputProps={{ min: -10, max: 120 }} sx={{ width: 52 }} value={formData.resultadosEvaluacion?.audiometria?.oi?.[f] ?? formData.resultadosEvaluacion?.audiometria?.oi?.[String(f)] ?? ''} onChange={(e) => { const aud = formData.resultadosEvaluacion?.audiometria || { od: {}, oi: {}, observaciones: '' }; handleFieldChange('resultadosEvaluacion', 'audiometria', { ...aud, oi: { ...(aud.oi || {}), [String(f)]: e.target.value } }); }} disabled={readOnlyHistoriaClinica} />
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                      <TextField fullWidth size="small" multiline rows={1} value={formData.resultadosEvaluacion?.audiometria?.observaciones || ''} onChange={(e) => { const aud = formData.resultadosEvaluacion?.audiometria || { od: {}, oi: {}, observaciones: '' }; handleFieldChange('resultadosEvaluacion', 'audiometria', { ...aud, observaciones: e.target.value }); }} placeholder="Observaciones (vía aérea/ósea, máscara)" disabled={readOnlyHistoriaClinica} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Logoaudiometría</Typography>
-                      <TextField fullWidth multiline rows={4} value={formData.resultadosEvaluacion?.logoaudiometria || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'logoaudiometria', e.target.value)} placeholder="SRT, discriminación, listas de palabras OD/OI..." disabled={readOnlyHistoriaClinica} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Impedanciometría</Typography>
-                      <TextField fullWidth multiline rows={4} value={formData.resultadosEvaluacion?.impedanciometria || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'impedanciometria', e.target.value)} placeholder="Compliance, presión, curva timpanométrica (A, B, C), reflexos estapediales..." disabled={readOnlyHistoriaClinica} />
-                    </Grid>
-                  </Grid>
-                </AccordionDetails>
-              </Accordion>
-
-              {/* Resultado prueba de audífonos */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    3. Resultado prueba de audífonos
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <TextField fullWidth multiline rows={4} value={formData.resultadosEvaluacion?.pruebaAudifonos || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'pruebaAudifonos', e.target.value)} placeholder="Resultados de pruebas con audífonos de prueba: ganancia funcional, umbrales en campo libre, satisfacción, ajustes realizados..." disabled={readOnlyHistoriaClinica} />
-                </AccordionDetails>
-              </Accordion>
-
-              {/* Resultado exámenes con audífonos */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    4. Resultado de exámenes con audífonos
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <TextField fullWidth multiline rows={4} value={formData.resultadosEvaluacion?.examenesConAudifonos || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'examenesConAudifonos', e.target.value)} placeholder="Audiometría con auxiliar, discriminación con audífonos, mediciones en campo libre, REAL-E, etc." disabled={readOnlyHistoriaClinica} />
-                </AccordionDetails>
-              </Accordion>
-
-              {/* Desarrollo */}
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {/* Desarrollo (junto a antecedentes familiares en el flujo clínico) */}
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
                     Desarrollo
                   </Typography>
                 </AccordionSummary>
-                <AccordionDetails>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <Paper sx={{ p: 2, bgcolor: '#f8fafc' }}>
@@ -3433,6 +3599,234 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
                       </Paper>
                     </Grid>
                   </Grid>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Antecedentes Familiares */}
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
+                    Antecedentes Familiares
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Paper sx={{ p: 2, bgcolor: '#f8fafc' }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={formData.antecedentesFamiliares.hipoacusia.presente}
+                              onChange={(e) => handleNestedFieldChange('antecedentesFamiliares', 'hipoacusia', 'presente', e.target.checked)}
+                              disabled={readOnlyHistoriaClinica}
+                            />
+                          }
+                          label="Hipoacusia Familiar"
+                        />
+                        {formData.antecedentesFamiliares.hipoacusia.presente && (
+                          <Grid container spacing={2} sx={{ mt: 1 }}>
+                            <Grid item xs={12} sm={6}>
+                              <TextField
+                                fullWidth
+                                label="Familiar"
+                                value={formData.antecedentesFamiliares.hipoacusia.familiar}
+                                onChange={(e) => handleNestedFieldChange('antecedentesFamiliares', 'hipoacusia', 'familiar', e.target.value)}
+                                placeholder="Ej: Padre, abuelo"
+                                disabled={readOnlyHistoriaClinica}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <TextField
+                                fullWidth
+                                label="Grado"
+                                value={formData.antecedentesFamiliares.hipoacusia.grado}
+                                onChange={(e) => handleNestedFieldChange('antecedentesFamiliares', 'hipoacusia', 'grado', e.target.value)}
+                                placeholder="Ej: Moderada"
+                                disabled={readOnlyHistoriaClinica}
+                              />
+                            </Grid>
+                          </Grid>
+                        )}
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={2}
+                        label="Otras Patologías Familiares"
+                        value={formData.antecedentesFamiliares.otrasPatologias.join(', ')}
+                        onChange={(e) => handleFieldChange('antecedentesFamiliares', 'otrasPatologias', e.target.value.split(', ').filter(p => p.trim()))}
+                        placeholder="Ej: Diabetes, Hipertensión (separar por comas)"
+                        disabled={readOnlyHistoriaClinica}
+                      />
+                    </Grid>
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Factores de Riesgo Auditivo (Ley colombiana y especialidad audiológica) */}
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
+                    Factores de Riesgo Auditivo
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
+                  <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
+                    Factores asociados a hipoacusia y patologías del oído según evidencia clínica.
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <Paper sx={{ p: 2, bgcolor: '#fff8e1' }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={formData.factoresRiesgoAuditivo?.ototoxicidad?.presente ?? false}
+                              onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'ototoxicidad', 'presente', e.target.checked)}
+                              disabled={readOnlyHistoriaClinica}
+                            />
+                          }
+                          label="Ototoxicidad (aminoglucósidos, diuréticos de asa, quimioterápicos, etc.)"
+                        />
+                        {(formData.factoresRiesgoAuditivo?.ototoxicidad?.presente) && (
+                          <Grid container spacing={2} sx={{ mt: 1 }}>
+                            <Grid item xs={12} sm={6}>
+                              <TextField fullWidth label="Medicamentos" value={formData.factoresRiesgoAuditivo.ototoxicidad.medicamentos || ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'ototoxicidad', 'medicamentos', e.target.value)} placeholder="Ej: Gentamicina, Furosemida" disabled={readOnlyHistoriaClinica} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <TextField fullWidth label="Duración / Período" value={formData.factoresRiesgoAuditivo.ototoxicidad.duracion || ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'ototoxicidad', 'duracion', e.target.value)} placeholder="Ej: 2 semanas, 2020" disabled={readOnlyHistoriaClinica} />
+                            </Grid>
+                            <Grid item xs={12}>
+                              <TextField fullWidth multiline rows={2} label="Observaciones" value={formData.factoresRiesgoAuditivo.ototoxicidad.observaciones || ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'ototoxicidad', 'observaciones', e.target.value)} disabled={readOnlyHistoriaClinica} />
+                            </Grid>
+                          </Grid>
+                        )}
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Enfermedades Infecciosas</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {['meningitis', 'sifilis', 'tuberculosis', 'vih'].map((k) => (
+                          <FormControlLabel key={k} control={<Switch checked={formData.factoresRiesgoAuditivo?.enfermedadesInfecciosas?.[k] ?? false} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'enfermedadesInfecciosas', k, e.target.checked)} disabled={readOnlyHistoriaClinica} size="small" />} label={k === 'vih' ? 'VIH' : k.charAt(0).toUpperCase() + k.slice(1)} />
+                        ))}
+                      </Box>
+                      <TextField fullWidth size="small" label="Otros" value={formData.factoresRiesgoAuditivo?.enfermedadesInfecciosas?.otros ?? ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'enfermedadesInfecciosas', 'otros', e.target.value)} sx={{ mt: 1 }} disabled={readOnlyHistoriaClinica} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Enfermedades Sistémicas</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {['diabetes', 'insuficienciaRenal', 'colagenopatias'].map((k) => (
+                          <FormControlLabel key={k} control={<Switch checked={formData.factoresRiesgoAuditivo?.enfermedadesSistemicas?.[k] ?? false} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'enfermedadesSistemicas', k, e.target.checked)} disabled={readOnlyHistoriaClinica} size="small" />} label={k === 'insuficienciaRenal' ? 'Insuf. Renal' : k === 'colagenopatias' ? 'Colagenopatías' : 'Diabetes'} />
+                        ))}
+                      </Box>
+                      <TextField fullWidth size="small" label="Otros" value={formData.factoresRiesgoAuditivo?.enfermedadesSistemicas?.otros ?? ''} onChange={(e) => handleNestedFieldChange('factoresRiesgoAuditivo', 'enfermedadesSistemicas', 'otros', e.target.value)} sx={{ mt: 1 }} disabled={readOnlyHistoriaClinica} />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <FormControlLabel control={<Switch checked={formData.factoresRiesgoAuditivo?.bajoPesoNacimiento ?? false} onChange={(e) => handleFieldChange('factoresRiesgoAuditivo', 'bajoPesoNacimiento', e.target.checked)} disabled={readOnlyHistoriaClinica} />} label="Bajo peso al nacer (&lt; 2.500 g)" />
+                    </Grid>
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Impacto Funcional */}
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
+                    Impacto Funcional y Calidad de Vida
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
+                  <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
+                    Efecto en la comunicación, participación social y actividades diarias.
+                  </Typography>
+                  <TextField fullWidth multiline rows={4} value={formData.impactoFuncional || ''} onChange={(e) => handleFieldChange(null, 'impactoFuncional', e.target.value)} placeholder="Describa cómo la condición auditiva afecta la vida del paciente: dificultades en reuniones, uso del teléfono, relaciones familiares, trabajo, ocio, etc." disabled={readOnlyHistoriaClinica} />
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Resultado de la consulta */}
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
+                    1. Resultados de la primera consulta
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
+                  <TextField fullWidth multiline rows={3} value={formData.resultadoConsulta || ''} onChange={(e) => handleFieldChange(null, 'resultadoConsulta', e.target.value)} placeholder="Resumen del resultado o conclusión principal de la consulta..." disabled={readOnlyHistoriaClinica} />
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Resultados de evaluación: otoscopia, audiometría, logoaudiometría, impedanciometría */}
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
+                    2. Resultados de evaluación
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Otoscopia</Typography>
+                      <TextField fullWidth multiline rows={3} value={formData.resultadosEvaluacion?.otoscopia || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'otoscopia', e.target.value)} placeholder="Hallazgos de otoscopia (conducto auditivo externo, membrana timpánica OD/OI)..." disabled={readOnlyHistoriaClinica} />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Audiometría tonal</Typography>
+                      <Table size="small" sx={{ mb: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                        <TableHead><TableRow sx={{ bgcolor: '#f8fafc' }}><TableCell sx={{ fontWeight: 600 }}>Frecuencia (Hz)</TableCell>{[250, 500, 1000, 2000, 4000, 8000].map((f) => <TableCell key={f} align="center">{f}</TableCell>)}</TableRow></TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 600 }}>OD (dB HL)</TableCell>
+                            {[250, 500, 1000, 2000, 4000, 8000].map((f) => (
+                              <TableCell key={f} align="center">
+                                <TextField type="number" size="small" inputProps={{ min: -10, max: 120 }} sx={{ width: 52 }} value={formData.resultadosEvaluacion?.audiometria?.od?.[f] ?? formData.resultadosEvaluacion?.audiometria?.od?.[String(f)] ?? ''} onChange={(e) => { const aud = formData.resultadosEvaluacion?.audiometria || { od: {}, oi: {}, observaciones: '' }; handleFieldChange('resultadosEvaluacion', 'audiometria', { ...aud, od: { ...(aud.od || {}), [String(f)]: e.target.value } }); }} disabled={readOnlyHistoriaClinica} />
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 600 }}>OI (dB HL)</TableCell>
+                            {[250, 500, 1000, 2000, 4000, 8000].map((f) => (
+                              <TableCell key={f} align="center">
+                                <TextField type="number" size="small" inputProps={{ min: -10, max: 120 }} sx={{ width: 52 }} value={formData.resultadosEvaluacion?.audiometria?.oi?.[f] ?? formData.resultadosEvaluacion?.audiometria?.oi?.[String(f)] ?? ''} onChange={(e) => { const aud = formData.resultadosEvaluacion?.audiometria || { od: {}, oi: {}, observaciones: '' }; handleFieldChange('resultadosEvaluacion', 'audiometria', { ...aud, oi: { ...(aud.oi || {}), [String(f)]: e.target.value } }); }} disabled={readOnlyHistoriaClinica} />
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                      <TextField fullWidth size="small" multiline rows={1} value={formData.resultadosEvaluacion?.audiometria?.observaciones || ''} onChange={(e) => { const aud = formData.resultadosEvaluacion?.audiometria || { od: {}, oi: {}, observaciones: '' }; handleFieldChange('resultadosEvaluacion', 'audiometria', { ...aud, observaciones: e.target.value }); }} placeholder="Observaciones (vía aérea/ósea, máscara)" disabled={readOnlyHistoriaClinica} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Logoaudiometría</Typography>
+                      <TextField fullWidth multiline rows={4} value={formData.resultadosEvaluacion?.logoaudiometria || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'logoaudiometria', e.target.value)} placeholder="SRT, discriminación, listas de palabras OD/OI..." disabled={readOnlyHistoriaClinica} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Impedanciometría</Typography>
+                      <TextField fullWidth multiline rows={4} value={formData.resultadosEvaluacion?.impedanciometria || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'impedanciometria', e.target.value)} placeholder="Compliance, presión, curva timpanométrica (A, B, C), reflexos estapediales..." disabled={readOnlyHistoriaClinica} />
+                    </Grid>
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Resultado prueba de audífonos */}
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
+                    3. Resultado prueba de audífonos
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
+                  <TextField fullWidth multiline rows={4} value={formData.resultadosEvaluacion?.pruebaAudifonos || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'pruebaAudifonos', e.target.value)} placeholder="Resultados de pruebas con audífonos de prueba: ganancia funcional, umbrales en campo libre, satisfacción, ajustes realizados..." disabled={readOnlyHistoriaClinica} />
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Resultado exámenes con audífonos */}
+              <Accordion elevation={0} sx={HC_ACC_SX}>
+                <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#272F50' }}>
+                    4. Resultado de exámenes con audífonos
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={HC_ACC_DET_SX}>
+                  <TextField fullWidth multiline rows={4} value={formData.resultadosEvaluacion?.examenesConAudifonos || ''} onChange={(e) => handleFieldChange('resultadosEvaluacion', 'examenesConAudifonos', e.target.value)} placeholder="Audiometría con auxiliar, discriminación con audífonos, mediciones en campo libre, REAL-E, etc." disabled={readOnlyHistoriaClinica} />
                 </AccordionDetails>
               </Accordion>
               {!readOnlyClinical && (
@@ -3907,7 +4301,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
               </Box>
 
               {/* Registrar actividad: llamadas, correos, WhatsApp, SMS, visitas */}
-              {(canSales || !readOnly) && (
+              {canCrmForms && (
                 <Box sx={{ mb: 3, p: 2, bgcolor: '#e3f2fd', borderRadius: 2, border: '1px solid #1976d2' }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1565c0', mb: 1.5 }}>Registrar actividad (llamadas, correos, WhatsApp, SMS, visitas)</Typography>
                   <Grid container spacing={2}>
@@ -4010,7 +4404,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
               )}
 
               {/* Seguimiento pilas, filtros, tubos */}
-              {(canSales || !readOnly) && (
+              {canCrmForms && (
                 <Box sx={{ mb: 3, p: 2, bgcolor: '#f0f7f5', borderRadius: 2, border: '1px solid #085946' }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#085946', mb: 1.5 }}>Seguimiento: pilas, filtros, tubos</Typography>
                   <Grid container spacing={1.5}>
@@ -4098,7 +4492,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
               )}
 
               {/* Seguimiento garantías del producto */}
-              {(canSales || !readOnly) && (
+              {canCrmForms && (
                 <Box sx={{ mb: 3, p: 2, bgcolor: '#fff8e1', borderRadius: 2, border: '1px solid #f9a825' }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#e65100', mb: 1.5 }}>Seguimiento: garantías del producto</Typography>
                   <Grid container spacing={1.5}>
@@ -4981,13 +5375,9 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                       >
-                        <MenuItem onClick={handleExportarHistoriaClinicaExcel}>
+                        <MenuItem onClick={() => { void handleExportarHistoriaClinicaPdf(); }}>
                           <ListItemIcon><FileDownload fontSize="small" /></ListItemIcon>
-                          <ListItemText>Exportar como Excel</ListItemText>
-                        </MenuItem>
-                        <MenuItem onClick={handleExportarHistoriaClinicaPDF}>
-                          <ListItemIcon><FileDownload fontSize="small" /></ListItemIcon>
-                          <ListItemText>Exportar como PDF</ListItemText>
+                          <ListItemText>Descargar PDF (historia completa)</ListItemText>
                         </MenuItem>
                       </Menu>
                       <Button
@@ -5034,20 +5424,16 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                         {todasLasCitas.map((apt) => {
                           const consultation = patientConsultations.find((c) => c.appointmentId === apt.id);
                           const tieneInfo = !!consultation;
+                          const puedeEvolucionar = !readOnly && apt.status !== 'cancelled' && apt.status !== 'no-show' && apt.status !== 'rescheduled';
+                          const faltaEvolucion = (apt.status === 'completed' || apt.status === 'patient' || apt.status === 'confirmed') && !tieneInfo;
                           return (
                             <Card
                               key={apt.id}
                               sx={{
                                 mb: 2,
-                                cursor: tieneInfo ? 'pointer' : 'default',
                                 transition: 'all 0.2s',
-                                opacity: tieneInfo ? 1 : 0.85,
-                                ...(tieneInfo && { '&:hover': { boxShadow: 3, bgcolor: 'rgba(8, 89, 70, 0.04)' } }),
+                                ...(tieneInfo && { '&:hover': { boxShadow: 2, bgcolor: 'rgba(8, 89, 70, 0.03)' } }),
                               }}
-                              onClick={tieneInfo ? () => {
-                                setHistConsultaSeleccionada({ consultation, appointment: apt });
-                                setHistConsultaDetalleOpen(true);
-                              } : undefined}
                             >
                               <CardContent>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: 1 }}>
@@ -5067,9 +5453,35 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                                   </Box>
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                                     <Chip label={labelPorEstado(apt.status)} size="small" color={colorPorEstado(apt.status)} />
-                                    {tieneInfo && <Visibility sx={{ color: '#085946', fontSize: 20 }} titleAccess="Ver detalle" />}
+                                    {tieneInfo && (
+                                      <IconButton
+                                        size="small"
+                                        aria-label="Ver evolución"
+                                        sx={{ color: '#085946' }}
+                                        onClick={() => {
+                                          setHistConsultaSeleccionada({ consultation, appointment: apt });
+                                          setHistConsultaDetalleOpen(true);
+                                        }}
+                                      >
+                                        <Visibility fontSize="small" />
+                                      </IconButton>
+                                    )}
                                   </Box>
                                 </Box>
+                                {puedeEvolucionar && (
+                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }} onClick={(e) => e.stopPropagation()}>
+                                    {faltaEvolucion && (
+                                      <Button size="small" variant="contained" sx={{ bgcolor: '#085946' }} onClick={() => handleOpenEvolucionar(apt)}>
+                                        Evolucionar consulta
+                                      </Button>
+                                    )}
+                                    {tieneInfo && (
+                                      <Button size="small" variant="outlined" color="primary" onClick={() => handleOpenEvolucionar(apt, consultation)}>
+                                        Editar evolución
+                                      </Button>
+                                    )}
+                                  </Box>
+                                )}
                               </CardContent>
                             </Card>
                           );
@@ -5256,7 +5668,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
       </DialogContent>
 
       <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0', bgcolor: '#f8fafc' }}>
-        {isEditing && (
+        {showGlobalPerfilSaveBar && isEditing && (
           <Button
             startIcon={<Save />}
             onClick={handleSave}
@@ -5640,7 +6052,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
           )}
         </DialogContent>
         <DialogActions>
-          {timelineDetailItem?.type === 'interaction' && timelineDetailItem?.interaction && !timelineEditMode && (
+          {timelineDetailItem?.type === 'interaction' && timelineDetailItem?.interaction && !timelineEditMode && canCrmForms && (
             <Button
               onClick={() => {
                 setTimelineEditForm({ title: timelineDetailItem.title, description: timelineDetailItem.interaction?.description || '' });
@@ -6029,8 +6441,17 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
           {evolucionarAppointment ? (
             <Box>
               <Alert severity="info" sx={{ mb: 3 }}>
-                {evolucionarAppointment.patientName} • {new Date(evolucionarAppointment.date + 'T00:00:00').toLocaleDateString('es-ES')} {evolucionarAppointment.time}
-                {evolucionarAppointment.reason && ` • ${evolucionarAppointment.reason}`}
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {evolucionarAppointment.patientName} · {new Date(evolucionarAppointment.date + 'T00:00:00').toLocaleDateString('es-ES')} {evolucionarAppointment.time}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1, fontWeight: 700, color: '#272F50' }}>
+                  Tipo de cita: {getTipoCitaLabelSolo(evolucionarAppointment)}
+                </Typography>
+                {evolucionarAppointment.reason && (
+                  <Typography variant="caption" sx={{ display: 'block', mt: 0.75, color: 'text.secondary' }}>
+                    Motivo / detalle agenda: {evolucionarAppointment.reason}
+                  </Typography>
+                )}
               </Alert>
               {(() => {
                 const derivedAptType = evolucionarAppointment.appointmentType ?? appointmentTypes.find((t) => t.label === evolucionarAppointment.reason)?.value ?? null;
@@ -6098,6 +6519,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                       <Box sx={{ mb: 3 }}>
                         <ClinicalHistoryForm
                           data={getFormDataForPrimeraVez()}
+                          lockedMotivoConsulta={isPrimeraVez ? (evolucionarAppointment.reason || '').trim() : ''}
                           onChange={(field, value) => setEvolucionarData((prev) => ({ ...prev, formData: { ...(prev.formData || {}), [field]: value } }))}
                           onNuevaCotizacion={canSales && isPrimeraVez ? () => { setEvolucionarDialogOpen(false); setEvolucionarAppointment(null); setEvolucionarData({ notes: '', hearingLoss: false, nextSteps: '', formData: {}, diagnosticos: '', pronostico: '', tratamiento: '', signosVitales: {} }); setEvolucionarPrimeraVezStep('asistencia'); setEditQuoteId(null); setEditQuoteData(null); setQuoteDialogOpen(true); } : undefined}
                         />
@@ -6212,7 +6634,9 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                 sx={{ bgcolor: '#085946' }}
                 startIcon={<CheckCircle />}
               >
-                Guardar y marcar como asistida
+                {evolucionarAppointment && (evolucionarAppointment.status === 'completed' || evolucionarAppointment.status === 'patient')
+                  ? 'Guardar evolución'
+                  : 'Guardar y marcar como asistida'}
               </Button>
             </>
           )}
@@ -6308,8 +6732,8 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                       const hasData = FREC.some((f) => (aud.od && (aud.od[f] ?? aud.od[String(f)])) != null && (aud.od[f] ?? aud.od[String(f)]) !== '') || FREC.some((f) => (aud.oi && (aud.oi[f] ?? aud.oi[String(f)])) != null && (aud.oi[f] ?? aud.oi[String(f)]) !== '') || aud.observaciones;
                       return (
                         <Accordion key={key} defaultExpanded={hasData} sx={{ mb: 1 }}>
-                          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{title}</Typography></AccordionSummary>
-                          <AccordionDetails>
+                          <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}><Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{title}</Typography></AccordionSummary>
+                          <AccordionDetails sx={HC_ACC_DET_SX}>
                             {hasData ? (
                               <>
                                 <Table size="small" sx={{ mb: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
@@ -6329,8 +6753,8 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                     const text = typeof out === 'string' ? out : (out && typeof out === 'object' && key !== 'audiograma' ? null : null);
                     return (
                       <Accordion key={key} defaultExpanded={!!(text || (key === 'conclusiones'))} sx={{ mb: 1 }}>
-                        <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{title}</Typography></AccordionSummary>
-                        <AccordionDetails>
+                        <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}><Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{title}</Typography></AccordionSummary>
+                        <AccordionDetails sx={HC_ACC_DET_SX}>
                           <Typography variant="body2" sx={{ color: '#272F50', whiteSpace: 'pre-wrap' }}>{text || '—'}</Typography>
                         </AccordionDetails>
                       </Accordion>
@@ -6355,8 +6779,8 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                     if (v == null || v === '') return null;
                     return (
                       <Accordion key={key} defaultExpanded={key === 'motivoControl' || key === 'conclusiones'} sx={{ mb: 1 }}>
-                        <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{title}</Typography></AccordionSummary>
-                        <AccordionDetails>
+                        <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}><Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{title}</Typography></AccordionSummary>
+                        <AccordionDetails sx={HC_ACC_DET_SX}>
                           <Typography variant="body2" sx={{ color: '#272F50', whiteSpace: 'pre-wrap' }}>{String(v)}</Typography>
                         </AccordionDetails>
                       </Accordion>
@@ -6391,8 +6815,8 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                     if (isBool) { if (v !== true && v !== false) return null; } else if (v == null || v === '') return null;
                     return (
                       <Accordion key={key} defaultExpanded={key === 'motivoSeguimiento' || key === 'conclusiones'} sx={{ mb: 1 }}>
-                        <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{title}</Typography></AccordionSummary>
-                        <AccordionDetails>
+                        <AccordionSummary expandIcon={<ExpandMore />} sx={HC_ACC_SUM_SX}><Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{title}</Typography></AccordionSummary>
+                        <AccordionDetails sx={HC_ACC_DET_SX}>
                           <Typography variant="body2" sx={{ color: '#272F50', whiteSpace: 'pre-wrap' }}>{isBool ? (v ? 'Sí' : 'No') : String(v)}</Typography>
                         </AccordionDetails>
                       </Accordion>
@@ -6428,12 +6852,18 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
           {histConsultaSeleccionada?.consultation && canEditClinicalHistory(user?.role) && (() => {
             const ultima = [...(patientConsultations || [])].sort((a, b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')))[0];
             const esUltima = ultima && histConsultaSeleccionada.consultation.id === ultima.id;
-            return esUltima ? (
+            const puedeEditar = canAdminClinicalHistory(user?.role) || esUltima;
+            return puedeEditar ? (
               <Button startIcon={<Edit />} variant="outlined" onClick={() => handleOpenEditConsulta(histConsultaSeleccionada)} sx={{ borderColor: '#085946', color: '#085946' }}>
-                Editar última consulta
+                {canAdminClinicalHistory(user?.role) ? 'Editar esta consulta' : 'Editar última consulta'}
               </Button>
             ) : null;
           })()}
+          {histConsultaSeleccionada?.consultation && canAdminClinicalHistory(user?.role) && (
+            <Button startIcon={<DeleteOutline />} color="error" variant="outlined" onClick={handleDeleteConsultaRecord}>
+              Eliminar del historial
+            </Button>
+          )}
           <Button onClick={() => { setHistConsultaDetalleOpen(false); setHistConsultaSeleccionada(null); }} variant="contained" sx={{ bgcolor: '#085946' }}>
             Cerrar
           </Button>
@@ -6442,7 +6872,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
 
       {/* Diálogo Editar última consulta */}
       <Dialog open={editConsultaDialogOpen} onClose={() => setEditConsultaDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#085946', color: '#fff', fontWeight: 700 }}>Editar última consulta</DialogTitle>
+        <DialogTitle sx={{ bgcolor: '#085946', color: '#fff', fontWeight: 700 }}>Editar consulta</DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <TextField fullWidth multiline rows={2} label="Notas" value={editConsultaData.notes} onChange={(e) => setEditConsultaData((p) => ({ ...p, notes: e.target.value }))} sx={{ mb: 2 }} />
           <TextField fullWidth multiline rows={2} label="Diagnósticos" value={editConsultaData.diagnosticos} onChange={(e) => setEditConsultaData((p) => ({ ...p, diagnosticos: e.target.value }))} sx={{ mb: 2 }} />

@@ -29,7 +29,7 @@ router.post(
     body('email').isEmail().withMessage('Email inválido'),
     body('password').isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres'),
     body('nombre').notEmpty().withMessage('Nombre requerido'),
-    body('role').optional().isIn(['ADMIN', 'VENDEDOR', 'AUDIOLOGA', 'RECEPCION', 'SOLO_LECTURA']),
+    body('role').optional().isIn(['ADMIN', 'VENDEDOR', 'AUDIOLOGA', 'RECEPCION', 'SOLO_LECTURA', 'PROFESIONAL_WEB']),
   ],
   validateRequest,
   authController.register
@@ -41,8 +41,18 @@ router.get('/me', authenticate, authController.me);
 // GET /api/auth/users - Listar usuarios del centro (responsables)
 router.get('/users', authenticate, authController.listUsers);
 
-// PATCH /api/auth/users/:id - Actualizar usuario (solo admin, p.ej. asignar professionalConfigId)
-router.patch('/users/:id', authenticate, authController.updateUser);
+// PATCH /api/auth/users/:id - Actualizar usuario (solo admin: rol, activo, professionalConfigId)
+router.patch(
+  '/users/:id',
+  authenticate,
+  [
+    body('professionalConfigId').optional({ nullable: true }),
+    body('role').optional().isIn(['ADMIN', 'VENDEDOR', 'AUDIOLOGA', 'RECEPCION', 'SOLO_LECTURA', 'PROFESIONAL_WEB']),
+    body('activo').optional().isBoolean(),
+  ],
+  validateRequest,
+  authController.updateUser
+);
 
 // POST /api/auth/change-password - Cambiar contraseña
 router.post(

@@ -3,7 +3,9 @@
  * Usa VITE_API_URL y envía el token JWT en las peticiones autenticadas.
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { getApiBaseUrl } from '../utils/apiBaseUrl';
+
+const BASE_URL = getApiBaseUrl();
 const TOKEN_KEY = 'oirconecta_crm_token';
 
 export const getToken = () => {
@@ -69,7 +71,7 @@ export async function request(path, options = {}) {
     const isNetwork = /load failed|failed to fetch|network error|err_connection_refused/i.test(raw);
     const devHint =
       import.meta.env.DEV &&
-      ` Comprueba que el backend esté en marcha${BASE_URL ? ` (${BASE_URL})` : ''}.`;
+      ` Comprueba que el backend esté en marcha${BASE_URL ? ` (${BASE_URL})` : ' (proxy /api → puerto 3001)'}.`;
     const msg = isNetwork
       ? `No se pudo conectar con el servidor.${devHint || ' Comprueba tu conexión o inténtalo más tarde.'}`
       : raw || 'Error de conexión con el servidor';

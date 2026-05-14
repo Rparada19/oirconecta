@@ -46,8 +46,10 @@ import {
   getInteractionById,
   updateInteraction,
 } from '../../services/interactionService';
+import { getAllAppointments } from '../../services/appointmentService';
 
 const typeLabels = {
+  cita_agenda: 'Citas y preparación de atención',
   consumibles: 'Seguimiento consumibles',
   garantia: 'Garantía',
   reminder: 'Recordatorio',
@@ -62,6 +64,7 @@ const kindLabels = {
 };
 
 const typeColors = {
+  cita_agenda: '#1565c0',
   consumibles: '#2e7d32',
   garantia: '#e65100',
   reminder: '#ff9800',
@@ -74,6 +77,7 @@ const AccionesDiaPage = () => {
   const { user } = useAuth();
   const [actions, setActions] = useState([]);
   const [metrics, setMetrics] = useState({ activas: 0, vencidas: 0, cumplidas: 0, total: 0 });
+  const [citasAgendaCount, setCitasAgendaCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [daysAhead] = useState(7);
@@ -91,11 +95,48 @@ const AccionesDiaPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const [list, m] = await Promise.all([
+      const [list, m, apptsRes] = await Promise.all([
         getDailyActions(daysAhead),
         getDailyActionsMetrics(daysAhead),
+        getAllAppointments().catch(() => []),
       ]);
-      setActions(list);
+      const appts = Array.isArray(apptsRes) ? apptsRes : [];
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const horizon = new Date(todayStart);
+      horizon.setDate(horizon.getDate() + daysAhead);
+      horizon.setHours(23, 59, 59, 999);
+      const todayStr = todayStart.toISOString().slice(0, 10);
+      const citaSynthetic = appts
+        .filter((apt) => {
+          if (!apt?.date || apt.status === 'cancelled') return false;
+          const d = new Date(`${apt.date}T12:00:00`);
+          return d >= todayStart && d <= horizon && ['confirmed', 'patient'].includes(apt.status);
+        })
+        .map((apt) => ({
+          id: `cita-${apt.id}`,
+          type: 'cita_agenda',
+          kind: apt.date === todayStr ? 'hoy' : 'proximo',
+          dueDate: apt.date,
+          title: `Preparar atención: ${apt.reason || 'Cita agendada'}`,
+          description: `Hora ${apt.time || '—'}. Contacto previo, confirmación de asistencia y revisión de documentación o estudios pendientes mejoran la experiencia del paciente.`,
+          patientEmail: apt.patientEmail,
+          patientName: apt.patientName,
+          patientPhone: apt.patientPhone,
+          resolvedAt: null,
+          comments: [],
+          responsibleName: null,
+          _synthetic: true,
+          _appointment: apt,
+        }));
+      setCitasAgendaCount(citaSynthetic.length);
+      const combined = [...citaSynthetic, ...(list || [])].sort((a, b) => {
+        const da = a.dueDate ? new Date(a.dueDate + 'T12:00:00').getTime() : 0;
+        const db = b.dueDate ? new Date(b.dueDate + 'T12:00:00').getTime() : 0;
+        if (da !== db) return da - db;
+        return String(a.id).localeCompare(String(b.id));
+      });
+      setActions(combined);
       setMetrics(m || { activas: 0, vencidas: 0, cumplidas: 0, total: 0 });
     } catch (e) {
       setError(e?.message || 'Error al cargar acciones');
@@ -115,6 +156,7 @@ const AccionesDiaPage = () => {
 
   const handleAddComment = async () => {
     if (!detailAction || !commentText.trim()) return;
+    if (detailAction._synthetic || String(detailAction.id || '').startsWith('cita-')) return;
     setSavingComment(true);
     try {
       const full = await getInteractionById(detailAction.id);
@@ -142,6 +184,7 @@ const AccionesDiaPage = () => {
 
   const handleMarkResolved = async () => {
     if (!detailAction) return;
+    if (detailAction._synthetic || String(detailAction.id || '').startsWith('cita-')) return;
     setSavingResolve(true);
     try {
       const full = await getInteractionById(detailAction.id);
@@ -158,6 +201,7 @@ const AccionesDiaPage = () => {
   };
 
   const byType = {
+    cita_agenda: actions.filter((a) => a.type === 'cita_agenda'),
     consumibles: actions.filter((a) => a.type === 'consumibles'),
     garantia: actions.filter((a) => a.type === 'garantia'),
     reminder: actions.filter((a) => a.type === 'reminder'),
@@ -202,7 +246,7 @@ const AccionesDiaPage = () => {
                 Acciones del día
               </Typography>
               <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-                Alertas del sistema: consumibles, garantías y recordatorios
+                Citas próximas (preparación de atención), seguimiento de consumibles, garantías y recordatorios
               </Typography>
             </Box>
           </Box>
@@ -224,6 +268,12 @@ const AccionesDiaPage = () => {
               <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                 <Typography variant="caption" sx={{ color: '#b71c1c' }}>Alertas vencidas</Typography>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: '#272F50' }}>{metrics.vencidas}</Typography>
+              </CardContent>
+            </Card>
+            <Card sx={{ flex: 1, minWidth: 100, bgcolor: '#e8eaf6', borderLeft: 4, borderColor: '#3949ab' }}>
+              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Typography variant="caption" sx={{ color: '#283593' }}>Citas en ventana</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: '#272F50' }}>{citasAgendaCount}</Typography>
               </CardContent>
             </Card>
             <Card sx={{ flex: 1, minWidth: 100, bgcolor: '#e3f2fd', borderLeft: 4, borderColor: '#1565c0' }}>
@@ -306,11 +356,12 @@ const AccionesDiaPage = () => {
           </Card>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {[['consumibles', byType.consumibles], ['garantia', byType.garantia], ['reminder', byType.reminder]].map(([type, list]) =>
+            {[['cita_agenda', byType.cita_agenda], ['consumibles', byType.consumibles], ['garantia', byType.garantia], ['reminder', byType.reminder]].map(([type, list]) =>
               list.length > 0 ? (
                 <Card key={type} sx={{ borderLeft: 4, borderColor: typeColors[type] }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      {type === 'cita_agenda' && <Event sx={{ color: typeColors[type] }} />}
                       {type === 'consumibles' && <Build sx={{ color: typeColors[type] }} />}
                       {type === 'garantia' && <Assignment sx={{ color: typeColors[type] }} />}
                       {type === 'reminder' && <CalendarToday sx={{ color: typeColors[type] }} />}
@@ -326,11 +377,31 @@ const AccionesDiaPage = () => {
                           disablePadding
                           secondaryAction={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <IconButton size="small" onClick={() => setDetailAction(a)} title="Ver detalle y comentarios">
+                              <IconButton size="small" onClick={() => setDetailAction(a)} title="Ver detalle">
                                 <CommentIcon fontSize="small" />
                               </IconButton>
                               {!a.resolvedAt && (
-                                <Chip size="small" label={a.kind === 'vencido' ? 'Vencido' : a.kind === 'reclamacion' ? 'Reclamación' : a.kind === 'vencida' ? 'Vencida' : 'Próximo'} color={a.kind === 'vencido' || a.kind === 'vencida' ? 'error' : 'default'} />
+                                <Chip
+                                  size="small"
+                                  label={
+                                    a.type === 'cita_agenda'
+                                      ? (a.kind === 'hoy' ? 'Hoy' : 'Próxima')
+                                      : a.kind === 'vencido'
+                                        ? 'Vencido'
+                                        : a.kind === 'reclamacion'
+                                          ? 'Reclamación'
+                                          : a.kind === 'vencida'
+                                            ? 'Vencida'
+                                            : 'Próximo'
+                                  }
+                                  color={
+                                    a.type === 'cita_agenda'
+                                      ? (a.kind === 'hoy' ? 'primary' : 'default')
+                                      : a.kind === 'vencido' || a.kind === 'vencida'
+                                        ? 'error'
+                                        : 'default'
+                                  }
+                                />
                               )}
                               {a.resolvedAt && <Chip size="small" icon={<CheckCircle />} label="Cumplida" color="success" />}
                             </Box>
@@ -381,44 +452,61 @@ const AccionesDiaPage = () => {
                     </Link>
                   </>
                 )}
-                {' · Responsable: '}{detailAction.responsibleName || '—'}
+                {detailAction.type !== 'cita_agenda' && (
+                  <>{' · Responsable: '}{detailAction.responsibleName || '—'}</>
+                )}
               </Typography>
               {detailAction.description && <Typography variant="body2" sx={{ mb: 1 }}>{detailAction.description}</Typography>}
-              <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>Comentarios</Typography>
-              <List dense>
-                {(detailAction.comments || []).map((c, i) => (
-                  <ListItem key={i}>
-                    <ListItemText
-                      primary={c.text}
-                      secondary={`${c.author} · ${c.date ? new Date(c.date).toLocaleString('es-ES') : ''}`}
-                    />
-                  </ListItem>
-                ))}
-                {(detailAction.comments || []).length === 0 && (
-                  <ListItem><ListItemText secondary="Sin comentarios" /></ListItem>
-                )}
-              </List>
-              {!detailAction.resolvedAt && (
+
+              {(detailAction._synthetic || detailAction.type === 'cita_agenda' || String(detailAction.id || '').startsWith('cita-')) ? (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Esta entrada proviene de la agenda. Para reprogramar o cambiar estado use el módulo <strong>Agenda</strong>. Antes de la cita conviene confirmar asistencia, recordar documentación y revisar si el paciente tiene pendientes en CRM (consumibles o garantía).
+                </Alert>
+              ) : (
                 <>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Nuevo comentario"
-                    multiline
-                    rows={2}
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    sx={{ mt: 1 }}
-                  />
-                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                    <Button variant="contained" size="small" onClick={handleAddComment} disabled={!commentText.trim() || savingComment} sx={{ bgcolor: '#085946' }}>
-                      {savingComment ? 'Guardando…' : 'Agregar comentario'}
-                    </Button>
-                    <Button variant="outlined" size="small" color="success" startIcon={<CheckCircle />} onClick={handleMarkResolved} disabled={savingResolve}>
-                      {savingResolve ? 'Guardando…' : 'Marcar cumplida'}
-                    </Button>
-                  </Box>
+                  <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>Comentarios</Typography>
+                  <List dense>
+                    {(detailAction.comments || []).map((c, i) => (
+                      <ListItem key={i}>
+                        <ListItemText
+                          primary={c.text}
+                          secondary={`${c.author} · ${c.date ? new Date(c.date).toLocaleString('es-ES') : ''}`}
+                        />
+                      </ListItem>
+                    ))}
+                    {(detailAction.comments || []).length === 0 && (
+                      <ListItem><ListItemText secondary="Sin comentarios" /></ListItem>
+                    )}
+                  </List>
+                  {!detailAction.resolvedAt && (
+                    <>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Nuevo comentario"
+                        multiline
+                        rows={2}
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        sx={{ mt: 1 }}
+                      />
+                      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                        <Button variant="contained" size="small" onClick={handleAddComment} disabled={!commentText.trim() || savingComment} sx={{ bgcolor: '#085946' }}>
+                          {savingComment ? 'Guardando…' : 'Agregar comentario'}
+                        </Button>
+                        <Button variant="outlined" size="small" color="success" startIcon={<CheckCircle />} onClick={handleMarkResolved} disabled={savingResolve}>
+                          {savingResolve ? 'Guardando…' : 'Marcar cumplida'}
+                        </Button>
+                      </Box>
+                    </>
+                  )}
                 </>
+              )}
+
+              {(detailAction._synthetic || detailAction.type === 'cita_agenda' || String(detailAction.id || '').startsWith('cita-')) && (
+                <Button fullWidth variant="outlined" sx={{ mb: 1, borderColor: '#272F50', color: '#272F50' }} onClick={() => { navigate('/portal-crm/citas'); setDetailAction(null); setCommentText(''); }}>
+                  Ir a Agenda (citas)
+                </Button>
               )}
               <Button fullWidth sx={{ mt: 2 }} onClick={() => { openPatient(detailAction.patientEmail); setDetailAction(null); }}>
                 Ver perfil del paciente

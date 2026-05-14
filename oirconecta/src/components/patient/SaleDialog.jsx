@@ -22,7 +22,16 @@ import {
 } from '@mui/material';
 import { Save, Close, Add, Delete, Image as ImageIcon } from '@mui/icons-material';
 import { recordSale } from '../../services/productService';
-import { getCampaigns, MARCAS } from '../../services/campaignService';
+import {
+  getCampaigns,
+  MARCAS,
+  labelValidezCantidadAudifonos,
+  detalleValidezSegundoAudifono,
+  labelAplicacionDescuento,
+  detalleAplicacionDescuento,
+  aplicacionDescuentoNorm,
+  computeAudifonosCampaignTotal,
+} from '../../services/campaignService';
 import { getConfig } from '../../services/configService';
 
 const TIPOS_ACCESORIO = [
@@ -109,9 +118,15 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
   const campaignsByBrand = audifonos.brand ? campaigns.filter((c) => (c.fabricante || '').trim() === audifonos.brand) : [];
   const selectedCampaign = campaigns.find((c) => String(c.id) === String(audifonos.campaignId));
   const discountAud = selectedCampaign ? (selectedCampaign.descuentoAprobado ?? 0) : 0;
-  const subtotalAud = audifonos.unitPrice * audifonos.quantity;
-  const valuePerUnitAud = audifonos.unitPrice > 0 ? audifonos.unitPrice * (1 - discountAud / 100) : 0;
-  const totalAudifonos = valuePerUnitAud * audifonos.quantity;
+  const aplicacionAud = selectedCampaign ? aplicacionDescuentoNorm(selectedCampaign.aplicacionDescuento) : 'TOTAL_VENTA';
+  const lineaCampanaAud = computeAudifonosCampaignTotal({
+    unitPrice: audifonos.unitPrice,
+    quantity: audifonos.quantity,
+    discountPercent: discountAud,
+    aplicacionDescuento: aplicacionAud,
+  });
+  const totalAudifonos = lineaCampanaAud.total;
+  const valuePerUnitAud = lineaCampanaAud.averagePerUnit;
   const accessoriesTotal = accessories.reduce((s, a) => s + (a.price || 0), 0);
   const totalAudifonosConExtras = totalAudifonos + (audifonos.facturarConsulta ? audifonos.valorConsulta : 0) + accessoriesTotal;
 
@@ -293,6 +308,7 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
         campaignNombre: selectedCampaign?.nombre || '',
         fabricante: selectedCampaign?.fabricante || '',
         campaignVigencia: selectedCampaign?.fechaInicio && selectedCampaign?.fechaFin ? `${selectedCampaign.fechaInicio} - ${selectedCampaign.fechaFin}` : '',
+        campaignAplicacionDescuento: selectedCampaign ? aplicacionAud : null,
         images: imageData,
         firstControlDate: audifonos.firstControlDate || null,
         firstMaintenanceDate: audifonos.firstMaintenanceDate || null,
@@ -672,6 +688,25 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
                   <Grid item xs={12} sm={4}>
                     <TextField fullWidth label="Fecha de vigencia" value={formatDateRange(selectedCampaign.fechaInicio, selectedCampaign.fechaFin)} InputProps={{ readOnly: true }} size="small" />
                   </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      <strong>Válido para el segundo audífono / par:</strong>{' '}
+                      {selectedCampaign.validezCantidadAudifonos ? (
+                        <>
+                          {labelValidezCantidadAudifonos(selectedCampaign.validezCantidadAudifonos)}.{' '}
+                          {detalleValidezSegundoAudifono(selectedCampaign.validezCantidadAudifonos)}
+                        </>
+                      ) : (
+                        'La campaña no indica si aplica al segundo audífono o solo al par; revise las condiciones con administración.'
+                      )}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      <strong>Cómo se aplica el % de descuento:</strong> {labelAplicacionDescuento(selectedCampaign.aplicacionDescuento)}.{' '}
+                      {detalleAplicacionDescuento(selectedCampaign.aplicacionDescuento)}
+                    </Typography>
+                  </Grid>
                 </>
               )}
 
@@ -748,7 +783,18 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
                 <TextField fullWidth label="Descuento aprobado (%)" value={selectedCampaign ? discountAud : 0} InputProps={{ readOnly: true, endAdornment: <Typography sx={{ ml: 1 }}>%</Typography> }} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Valor por unidad" value={valuePerUnitAud > 0 ? valuePerUnitAud.toLocaleString() : '0'} InputProps={{ readOnly: true, startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }} />
+                <TextField
+                  fullWidth
+                  label="Valor por unidad"
+                  value={valuePerUnitAud > 0 ? valuePerUnitAud.toLocaleString() : '0'}
+                  helperText={
+                    lineaCampanaAud.breakdown ||
+                    (selectedCampaign && lineaCampanaAud.sinDescuentoPorUnidad && discountAud > 0
+                      ? 'Con esta campaña el descuento solo afecta al 2.º audífono; con 1 unidad no reduce el total.'
+                      : '')
+                  }
+                  InputProps={{ readOnly: true, startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth label="Valor total audífonos" value={totalAudifonos > 0 ? totalAudifonos.toLocaleString() : '0'} InputProps={{ readOnly: true, startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }} />

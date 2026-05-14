@@ -7,6 +7,8 @@
  * - Profesionales: atados a consultorio(s), con horarios por sede/consultorio, CV, servicios/productos
  */
 
+import { sortProductosPorMarcaCatalog } from '../utils/marketplaceProduct';
+
 const CONFIG_KEY = 'oirconecta_config';
 
 const DEFAULT_APPOINTMENT_REASONS = [
@@ -138,6 +140,34 @@ function migrateConfig(parsed) {
       return prof;
     });
   }
+  migrated.marketplace = migrated.marketplace || { productos: [], serviciosFacturables: [] };
+  migrated.marketplace.productos = sortProductosPorMarcaCatalog(
+    (migrated.marketplace.productos || []).map((p) => {
+    const { valorUnitario, valorTotal, ...rest0 } = p;
+    let v = rest0.valor;
+    if (v != null && v !== '') {
+      const n = Number(v);
+      v = Number.isFinite(n) ? n : null;
+    } else if (valorUnitario != null && valorUnitario !== '') {
+      const n = Number(valorUnitario);
+      v = Number.isFinite(n) ? n : null;
+    } else if (valorTotal != null && valorTotal !== '') {
+      const n = Number(valorTotal);
+      v = Number.isFinite(n) ? n : null;
+    } else {
+      v = null;
+    }
+    return {
+      ...rest0,
+      valor: v,
+      fichasTecnicas: Array.isArray(p.fichasTecnicas) ? p.fichasTecnicas : [],
+      alimentacionAudifono:
+        p.alimentacionAudifono && ['BATERIA', 'RECARGABLE', 'AMBOS'].includes(p.alimentacionAudifono)
+          ? p.alimentacionAudifono
+          : '',
+    };
+  }),
+  );
   return migrated;
 }
 
