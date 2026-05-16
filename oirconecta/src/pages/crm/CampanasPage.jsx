@@ -442,43 +442,41 @@ const CampanasPage = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)' }}>
-      <Box
-        sx={{
-          background: 'linear-gradient(135deg, #085946 0%, #272F50 100%)',
-          color: '#ffffff',
-          py: 3,
-          boxShadow: '0 4px 20px rgba(8, 89, 70, 0.2)',
-        }}
-      >
-        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
-            <Box sx={{ minWidth: 0, flex: '1 1 240px', maxWidth: '100%' }}>
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 0.5, wordBreak: 'break-word' }}>
-                Campañas de marketing
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4f2 0%, #f8fafc 100%)' }}>
+      <Box sx={{
+        position: 'relative', overflow: 'hidden',
+        background: 'radial-gradient(ellipse 80% 60% at 5% 50%, rgba(13,122,92,0.38) 0%, transparent 55%),' +
+          'linear-gradient(135deg, #063c2c 0%, #085946 40%, #1a2240 75%, #272F50 100%)',
+        color: '#fff', pt: 4, pb: 4,
+      }}>
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, px: { xs: 2, sm: 3 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            <Box>
+              <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.5rem' }, fontWeight: 900,
+                letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff' }}>
+                Campañas de{' '}
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  Marketing
+                </Box>
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                Administración CRM: campañas por marca, vigencias, cotizaciones y ventas asociadas.
+              <Typography sx={{ mt: 0.75, color: 'rgba(255,255,255,0.68)', fontSize: '0.9375rem' }}>
+                Campañas por marca, vigencias, cotizaciones y ventas asociadas
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', flexShrink: 0 }}>
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
               {canEdit && (
-                <Button
-                  variant="contained"
-                  startIcon={<Add />}
-                  onClick={openCreate}
-                  sx={{ bgcolor: '#ffffff', color: '#085946', '&:hover': { bgcolor: '#f5f5f5' } }}
-                >
+                <Button startIcon={<Add />} onClick={openCreate}
+                  sx={{ color: '#085946', fontWeight: 700, px: 2.5, py: 1.25, borderRadius: '12px',
+                    background: '#fff', '&:hover': { background: 'rgba(255,255,255,0.90)' } }}>
                   Nueva campaña
                 </Button>
               )}
-              <Button
-                variant="outlined"
-                startIcon={<ArrowBack />}
-                onClick={() => navigate('/portal-crm')}
-                sx={{ borderColor: '#ffffff', color: '#ffffff', '&:hover': { borderColor: '#ffffff', bgcolor: 'rgba(255, 255, 255, 0.1)' } }}
-              >
-                Volver
+              <Button startIcon={<ArrowBack />} onClick={() => navigate('/portal-crm')}
+                sx={{ color: '#fff', fontWeight: 700, px: 2.5, py: 1.25, borderRadius: '12px',
+                  border: '1.5px solid rgba(255,255,255,0.30)', background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(10px)',
+                  '&:hover': { background: 'rgba(255,255,255,0.18)' } }}>
+                Portal
               </Button>
             </Box>
           </Box>
