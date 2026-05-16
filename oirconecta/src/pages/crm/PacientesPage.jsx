@@ -161,268 +161,177 @@ const PacientesPage = () => {
     setPatientProfileDialogOpen(true);
   };
 
+  const avgCitas = patients.length > 0 ? Math.round(appointments.length / patients.length) : 0;
+
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)' }}>
-      {/* Header */}
-      <Box
-        sx={{
-          background: 'linear-gradient(135deg, #085946 0%, #272F50 100%)',
-          color: '#ffffff',
-          py: 3,
-          boxShadow: '0 4px 20px rgba(8, 89, 70, 0.2)',
-        }}
-      >
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4f2 0%, #f8fafc 100%)' }}>
+      {/* Hero Header */}
+      <Box sx={{
+        position: 'relative', overflow: 'hidden',
+        background: 'radial-gradient(ellipse 80% 60% at 5% 50%, rgba(13,122,92,0.38) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 60% 80% at 95% 20%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(135deg, #063c2c 0%, #085946 40%, #1a2240 75%, #272F50 100%)',
+        color: '#fff', pt: 4, pb: 4,
+      }}>
+        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.25, pointerEvents: 'none',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 0.5 }}>
-                Base de Datos de Pacientes
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
+                borderRadius: '20px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 1.5 }}>
+                <People sx={{ fontSize: 14, color: 'rgba(255,255,255,0.80)' }} />
+                <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.80)' }}>PACIENTES</Typography>
+              </Box>
+              <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.5rem' }, fontWeight: 900,
+                letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff' }}>
+                Base de Datos de{' '}
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  Pacientes
+                </Box>
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              <Typography sx={{ mt: 0.75, color: 'rgba(255,255,255,0.68)', fontSize: '0.9375rem' }}>
                 Gestiona la información de todos los pacientes
               </Typography>
             </Box>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBack />}
-              onClick={() => navigate('/portal-crm')}
-              sx={{
-                borderColor: '#ffffff',
-                color: '#ffffff',
-                '&:hover': {
-                  borderColor: '#ffffff',
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
-                },
-              }}
-            >
-              Volver
+            <Button startIcon={<ArrowBack />} onClick={() => navigate('/portal-crm')}
+              sx={{ color: '#fff', fontWeight: 700, fontSize: '0.9375rem', px: 2.5, py: 1.25,
+                borderRadius: '12px', border: '1.5px solid rgba(255,255,255,0.30)',
+                background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(10px)',
+                '&:hover': { background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.50)' } }}>
+              Portal
             </Button>
           </Box>
         </Container>
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Búsqueda */}
-        <Card
-          sx={{
-            mb: 3,
-            border: '1px solid rgba(8, 89, 70, 0.1)',
-            borderRadius: 3,
-            boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <TextField
-              fullWidth
-              placeholder="Buscar por nombre, cédula o teléfono..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search sx={{ color: '#085946' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: '#085946',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#085946',
-                  },
-                },
-              }}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Estadísticas */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={4}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                textAlign: 'center',
-                p: 2,
-              }}
-            >
-              <Typography variant="h4" sx={{ color: '#085946', fontWeight: 700 }}>
-                {patients.length}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C' }}>
-                Total de Pacientes
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                textAlign: 'center',
-                p: 2,
-              }}
-            >
-              <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700 }}>
-                {appointments.length}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C' }}>
-                Citas como Paciente
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                textAlign: 'center',
-                p: 2,
-              }}
-            >
-              <Typography variant="h4" sx={{ color: '#0a6b56', fontWeight: 700 }}>
-                {patients.length > 0
-                  ? Math.round(
-                      appointments.length / patients.length
-                    )
-                  : 0}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C' }}>
-                Promedio Citas/Paciente
-              </Typography>
-            </Card>
-          </Grid>
+        {/* Stats */}
+        <Grid container spacing={2.5} sx={{ mb: 3 }}>
+          {[
+            { label: 'Total Pacientes', value: patients.length, gradient: 'linear-gradient(135deg,#0d7a5c,#085946)', glow: 'rgba(8,89,70,0.22)', icon: People },
+            { label: 'Citas como Paciente', value: appointments.length, gradient: 'linear-gradient(135deg,#0284c7,#0369a1)', glow: 'rgba(2,132,199,0.22)', icon: People },
+            { label: 'Promedio Citas/Paciente', value: avgCitas, gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)', glow: 'rgba(124,58,237,0.22)', icon: People },
+          ].map((stat) => (
+            <Grid item xs={12} sm={4} key={stat.label}>
+              <Box sx={{ p: 3, borderRadius: '20px',
+                background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.70)',
+                boxShadow: '0 2px 16px rgba(8,89,70,0.06)',
+                transition: 'all 0.28s ease',
+                '&:hover': { transform: 'translateY(-4px)', boxShadow: `0 14px 36px ${stat.glow}` },
+                display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ width: 52, height: 52, borderRadius: '14px', background: stat.gradient,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  boxShadow: `0 6px 20px ${stat.glow}` }}>
+                  <stat.icon sx={{ color: '#fff', fontSize: 24 }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontWeight: 900, fontSize: '2rem', color: '#0f1923', letterSpacing: '-0.04em', lineHeight: 1 }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568', fontWeight: 600 }}>{stat.label}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+          ))}
         </Grid>
 
-        {/* Tabla de Pacientes */}
-        <Card
-          sx={{
-            border: '1px solid rgba(8, 89, 70, 0.1)',
-            borderRadius: 3,
-            boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-          }}
-        >
-          <CardContent sx={{ p: 0 }}>
-            {filteredPatients.length > 0 ? (
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Paciente</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Contacto</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Procedencia</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Total Citas</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Última Cita</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }} align="right">
-                        Acciones
+        {/* Search */}
+        <Box sx={{ mb: 3, p: 2.5, borderRadius: '18px',
+          background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.70)',
+          boxShadow: '0 2px 12px rgba(8,89,70,0.06)' }}>
+          <TextField fullWidth placeholder="Buscar por nombre, cédula o teléfono..."
+            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{ startAdornment: (<InputAdornment position="start"><Search sx={{ color: '#085946' }} /></InputAdornment>) }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px',
+              '&:hover fieldset': { borderColor: '#085946' },
+              '&.Mui-focused fieldset': { borderColor: '#085946' } } }} />
+        </Box>
+
+        {/* Table */}
+        <Box sx={{ borderRadius: '22px', overflow: 'hidden',
+          background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.70)',
+          boxShadow: '0 2px 16px rgba(8,89,70,0.07)' }}>
+          {filteredPatients.length > 0 ? (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'rgba(8,89,70,0.04)' }}>
+                    {['Paciente','Contacto','Procedencia','Total Citas','Última Cita',''].map((h) => (
+                      <TableCell key={h} align={h === '' ? 'right' : 'left'}
+                        sx={{ fontWeight: 700, color: '#272F50', fontSize: '0.75rem',
+                          letterSpacing: '0.06em', textTransform: 'uppercase', py: 1.75, border: 'none' }}>{h}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredPatients.map((patient) => (
+                    <TableRow key={patient.id}
+                      sx={{ '&:hover': { bgcolor: 'rgba(8,89,70,0.025)' }, '& td': { border: 'none', py: 1.5 } }}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar sx={{ width: 38, height: 38, bgcolor: '#085946', fontWeight: 700, fontSize: '0.9rem' }}>
+                            {patient.nombre.charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: '#0f1923' }}>{patient.nombre}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box>
+                          <Typography sx={{ fontSize: '0.8rem', color: '#4a5568', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Email sx={{ fontSize: 12 }} />{patient.email}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.8rem', color: '#4a5568', display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                            <Phone sx={{ fontSize: 12 }} />{patient.telefono}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip label={formatProcedencia(patient.procedencia)} size="small"
+                          sx={{ bgcolor: 'rgba(8,89,70,0.08)', color: '#085946', fontWeight: 600, borderRadius: '8px', fontSize: '0.75rem' }} />
+                      </TableCell>
+                      <TableCell>
+                        <Chip label={patient.totalCitas} size="small"
+                          sx={{ bgcolor: 'rgba(8,89,70,0.10)', color: '#085946', fontWeight: 800, borderRadius: '8px', fontSize: '0.875rem', minWidth: 32 }} />
+                      </TableCell>
+                      <TableCell>
+                        <Typography sx={{ fontSize: '0.875rem', color: '#4a5568' }}>
+                          {new Date(patient.ultimaCita + 'T00:00:00').toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" onClick={() => handleViewDetails(patient)}
+                          sx={{ color: '#085946', borderRadius: '10px', bgcolor: 'rgba(8,89,70,0.08)',
+                            '&:hover': { bgcolor: 'rgba(8,89,70,0.16)' } }}>
+                          <Visibility sx={{ fontSize: 18 }} />
+                        </IconButton>
                       </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredPatients.map((patient) => (
-                      <TableRow key={patient.id} hover>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Avatar
-                              sx={{
-                                width: 40,
-                                height: 40,
-                                bgcolor: '#085946',
-                                fontSize: '1rem',
-                              }}
-                            >
-                              {patient.nombre.charAt(0).toUpperCase()}
-                            </Avatar>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {patient.nombre}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Box>
-                            <Typography variant="caption" sx={{ display: 'block', color: '#86899C' }}>
-                              <Email sx={{ fontSize: 12, mr: 0.5, verticalAlign: 'middle' }} />
-                              {patient.email}
-                            </Typography>
-                            <Typography variant="caption" sx={{ display: 'block', color: '#86899C' }}>
-                              <Phone sx={{ fontSize: 12, mr: 0.5, verticalAlign: 'middle' }} />
-                              {patient.telefono}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={formatProcedencia(patient.procedencia)}
-                            size="small"
-                            sx={{
-                              bgcolor: '#f0f4f3',
-                              color: '#085946',
-                              fontWeight: 500,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={patient.totalCitas}
-                            size="small"
-                            sx={{
-                              bgcolor: '#e8f5e9',
-                              color: '#085946',
-                              fontWeight: 600,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {new Date(patient.ultimaCita + 'T00:00:00').toLocaleDateString('es-ES', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleViewDetails(patient)}
-                            sx={{ color: '#085946' }}
-                          >
-                            <Visibility />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 8 }}>
-                <People sx={{ fontSize: 64, color: '#86899C', mb: 2, opacity: 0.5 }} />
-                <Typography variant="h6" sx={{ color: '#272F50', mb: 1 }}>
-                  No se encontraron pacientes
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#86899C' }}>
-                  {searchTerm
-                    ? 'Intenta ajustar los términos de búsqueda'
-                    : 'No hay pacientes registrados aún'}
-                </Typography>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <People sx={{ fontSize: 56, color: 'rgba(8,89,70,0.15)', mb: 2 }} />
+              <Typography sx={{ fontWeight: 700, fontSize: '1.0625rem', color: '#272F50', mb: 0.5 }}>
+                No se encontraron pacientes
+              </Typography>
+              <Typography sx={{ color: '#86899C', fontSize: '0.875rem' }}>
+                {searchTerm ? 'Intenta ajustar los términos de búsqueda' : 'No hay pacientes registrados aún'}
+              </Typography>
+            </Box>
+          )}
+        </Box>
       </Container>
 
-      {/* Dialog de Perfil Completo del Paciente */}
       <PatientProfileDialog
         open={patientProfileDialogOpen}
-        onClose={() => {
-          setPatientProfileDialogOpen(false);
-          setSelectedPatient(null);
-          setSelectedAppointment(null);
-        }}
+        onClose={() => { setPatientProfileDialogOpen(false); setSelectedPatient(null); setSelectedAppointment(null); }}
         appointment={selectedAppointment}
       />
     </Box>
