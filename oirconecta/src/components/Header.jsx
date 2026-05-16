@@ -86,26 +86,30 @@ const mobileFlatLinks = [
 
 const CustomMenu = styled(Menu)(() => ({
   '& .MuiPaper-root': {
-    backgroundColor: '#ffffff',
-    color: '#1e2438',
-    borderRadius: 16,
-    boxShadow: '0 12px 40px rgba(30, 36, 56, 0.12)',
-    minWidth: 260,
+    background: 'rgba(255,255,255,0.92)',
+    backdropFilter: 'blur(24px) saturate(1.8)',
+    WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
+    color: '#0f1923',
+    borderRadius: 18,
+    boxShadow: '0 16px 48px rgba(8,89,70,0.16), 0 4px 12px rgba(8,89,70,0.08)',
+    minWidth: 240,
     marginTop: 10,
     padding: '8px 0',
-    border: '1px solid rgba(8, 89, 70, 0.08)',
+    border: '1px solid rgba(255,255,255,0.75)',
   },
   '& .MuiMenuItem-root': {
-    color: '#1e2438',
+    color: '#0f1923',
     fontWeight: 500,
-    fontSize: '1rem',
+    fontSize: '0.9375rem',
     borderRadius: 10,
     margin: '2px 8px',
-    padding: '10px 18px',
-    minHeight: 44,
+    padding: '9px 16px',
+    minHeight: 40,
+    transition: 'all 0.15s ease',
     '&:hover': {
-      backgroundColor: 'rgba(8, 89, 70, 0.06)',
+      backgroundColor: 'rgba(8,89,70,0.07)',
       color: '#085946',
+      paddingLeft: 20,
     },
   },
 }));
@@ -147,16 +151,18 @@ const Header = () => {
         onClick={(e) => handleMenuClick(e, menu.type)}
         endIcon={<ArrowDropDownIcon sx={{ opacity: 0.65 }} />}
         sx={{
-          fontWeight: 500,
-          px: 1.5,
+          fontWeight: 600,
+          px: 1.75,
           py: 0.75,
-          minHeight: 44,
-          borderRadius: 2,
-          color: 'text.primary',
+          minHeight: 40,
+          borderRadius: '10px',
+          color: '#0f1923',
           fontSize: '0.9375rem',
+          letterSpacing: '-0.005em',
+          transition: 'all 0.2s ease',
           '&:hover': {
-            backgroundColor: 'rgba(8, 89, 70, 0.06)',
-            color: 'primary.main',
+            backgroundColor: 'rgba(8,89,70,0.07)',
+            color: '#085946',
           },
         }}
       >
@@ -184,9 +190,11 @@ const Header = () => {
       position="fixed"
       elevation={0}
       sx={{
-        bgcolor: 'rgba(255, 255, 255, 0.94)',
-        backdropFilter: 'blur(14px)',
-        borderBottom: '1px solid rgba(8, 89, 70, 0.07)',
+        background: 'rgba(255,255,255,0.78)',
+        backdropFilter: 'blur(28px) saturate(2)',
+        WebkitBackdropFilter: 'blur(28px) saturate(2)',
+        borderBottom: '1px solid rgba(8,89,70,0.08)',
+        boxShadow: '0 1px 24px rgba(8,89,70,0.07)',
         zIndex: theme.zIndex.appBar,
       }}
     >
@@ -196,7 +204,7 @@ const Header = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           px: { xs: 2, sm: 3, md: 4 },
-          minHeight: { xs: 64, sm: 68 },
+          minHeight: { xs: 64, sm: 70 },
           maxWidth: 1440,
           mx: 'auto',
           width: '100%',
