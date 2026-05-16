@@ -182,7 +182,7 @@ export const addInteraction = async (patientEmail, interactionData) => {
     return { success: true, interaction: data.data, error: null };
   } catch (err) {
     const msg = /fetch|network|failed to fetch/i.test(String(err?.message))
-      ? 'No se pudo conectar con el servidor. Comprueba que el backend esté en marcha (ej. http://localhost:3001).'
+      ? 'No se pudo conectar con el servidor. Comprueba que el backend esté en marcha.'
       : (err?.message || 'Error de conexión');
     return { success: false, interaction: null, error: msg };
   }

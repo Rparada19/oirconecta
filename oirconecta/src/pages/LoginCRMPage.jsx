@@ -1,23 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Container,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  InputAdornment,
-  IconButton,
-  Alert,
-  CircularProgress,
+  Box, TextField, Button, Typography,
+  InputAdornment, IconButton, Alert, CircularProgress,
 } from '@mui/material';
 import {
-  Person,
-  Lock,
-  Visibility,
-  VisibilityOff,
-  Login as LoginIcon,
+  Person, Lock, Visibility, VisibilityOff, Login as LoginIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -29,157 +17,152 @@ const LoginCRMPage = () => {
     if (!isAuthenticated || !user) return;
     navigate('/portal-crm', { replace: true });
   }, [isAuthenticated, user, navigate]);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (field) => (event) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: event.target.value,
-    }));
+  const handleChange = (field) => (e) => {
+    setFormData((p) => ({ ...p, [field]: e.target.value }));
     setError('');
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError('');
     setIsLoading(true);
-
     if (!formData.email?.trim() || !formData.password) {
       setError('Por favor, ingresa email y contraseña');
       setIsLoading(false);
       return;
     }
-
     const result = await login(formData.email.trim(), formData.password);
     setIsLoading(false);
-
-    if (result.success) {
-      navigate('/portal-crm');
-    } else {
-      setError(result.error || 'Error al iniciar sesión');
-    }
-  };
-
-  const handleTogglePassword = () => {
-    setShowPassword((prev) => !prev);
+    if (result.success) navigate('/portal-crm');
+    else setError(result.error || 'Error al iniciar sesión');
   };
 
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #085946 0%, #0a6b56 50%, #272F50 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
         overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-          opacity: 0.3,
-        },
+        background:
+          'radial-gradient(ellipse at 20% 40%, rgba(13,122,92,0.45) 0%, transparent 55%),' +
+          'radial-gradient(ellipse at 80% 70%, rgba(39,47,80,0.50) 0%, transparent 55%),' +
+          'linear-gradient(145deg, #064a3a 0%, #085946 40%, #272F50 100%)',
       }}
     >
-      <Container maxWidth="sm">
-        <Paper
-          elevation={24}
+      {/* Decorative circles */}
+      {[
+        { size: 480, top: '-15%', right: '-10%', opacity: 0.07 },
+        { size: 320, bottom: '-10%', left: '-8%',  opacity: 0.06 },
+        { size: 180, top: '30%',   left: '5%',    opacity: 0.05 },
+      ].map((c, i) => (
+        <Box
+          key={i}
           sx={{
-            p: { xs: 4, md: 6 },
-            borderRadius: 4,
-            backgroundColor: '#ffffff',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            position: 'relative',
-            overflow: 'hidden',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: 'linear-gradient(90deg, #085946 0%, #272F50 100%)',
-            },
+            position: 'absolute',
+            width:  c.size,
+            height: c.size,
+            borderRadius: '50%',
+            border: `1.5px solid rgba(255,255,255,${c.opacity + 0.06})`,
+            ...(c.top    ? { top:    c.top }    : {}),
+            ...(c.bottom ? { bottom: c.bottom } : {}),
+            ...(c.left   ? { left:   c.left }   : {}),
+            ...(c.right  ? { right:  c.right }  : {}),
+            pointerEvents: 'none',
           }}
-        >
-          {/* Logo y Título */}
+        />
+      ))}
+
+      {/* Card */}
+      <Box
+        sx={{
+          width: '100%',
+          maxWidth: 440,
+          mx: 2,
+          borderRadius: '28px',
+          background: 'rgba(255,255,255,0.90)',
+          backdropFilter: 'blur(32px) saturate(2)',
+          WebkitBackdropFilter: 'blur(32px) saturate(2)',
+          border: '1px solid rgba(255,255,255,0.75)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.28), 0 8px 24px rgba(0,0,0,0.12)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Top accent bar */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 4,
+            background: 'linear-gradient(90deg, #0d7a5c 0%, #085946 50%, #272F50 100%)',
+            borderRadius: '28px 28px 0 0',
+          }}
+        />
+
+        <Box sx={{ p: { xs: 4, sm: 5 }, pt: { xs: 5, sm: 5.5 } }}>
+          {/* Icon + title */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Box
               sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #085946 0%, #272F50 100%)',
-                mb: 2,
-                boxShadow: '0 8px 24px rgba(8, 89, 70, 0.3)',
+                width: 72,
+                height: 72,
+                borderRadius: '20px',
+                background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #272F50 100%)',
+                mb: 2.5,
+                boxShadow: '0 8px 28px rgba(8,89,70,0.40)',
               }}
             >
-              <LoginIcon sx={{ fontSize: 40, color: '#ffffff' }} />
+              <LoginIcon sx={{ fontSize: 34, color: '#ffffff' }} />
             </Box>
             <Typography
               variant="h4"
-              component="h1"
-              sx={{
-                color: '#272F50',
-                fontWeight: 700,
-                mb: 1,
-              }}
+              sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#0f1923', mb: 0.75 }}
             >
               Acceso CRM
             </Typography>
-            <Typography variant="body1" sx={{ color: '#86899C' }}>
-              Ingresa tus credenciales para acceder al panel de administración
+            <Typography variant="body2" sx={{ color: '#4a5568' }}>
+              Ingresa tus credenciales para continuar
             </Typography>
           </Box>
 
-          {/* Formulario */}
+          {/* Form */}
           <Box component="form" onSubmit={handleSubmit}>
             {error && (
-              <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+              <Alert severity="error" sx={{ mb: 3, borderRadius: '12px' }} onClose={() => setError('')}>
                 {error}
               </Alert>
             )}
 
             <TextField
               fullWidth
-              label="Email"
+              label="Correo electrónico"
               placeholder="admin@oirconecta.com"
               type="email"
               value={formData.email}
               onChange={handleChange('email')}
               required
               autoComplete="email"
+              sx={{ mb: 2.5 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Person sx={{ color: '#085946' }} />
+                    <Person sx={{ color: '#085946', fontSize: 20 }} />
                   </InputAdornment>
                 ),
-              }}
-              sx={{
-                mb: 3,
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: '#085946',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#085946',
-                  },
-                },
               }}
             />
 
@@ -191,34 +174,22 @@ const LoginCRMPage = () => {
               onChange={handleChange('password')}
               required
               autoComplete="current-password"
+              sx={{ mb: 3.5 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock sx={{ color: '#085946' }} />
+                    <Lock sx={{ color: '#085946', fontSize: 20 }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleTogglePassword}
-                      edge="end"
-                      sx={{ color: '#085946' }}
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    <IconButton onClick={() => setShowPassword((p) => !p)} edge="end" size="small">
+                      {showPassword
+                        ? <VisibilityOff sx={{ fontSize: 20, color: '#4a5568' }} />
+                        : <Visibility    sx={{ fontSize: 20, color: '#4a5568' }} />}
                     </IconButton>
                   </InputAdornment>
                 ),
-              }}
-              sx={{
-                mb: 4,
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: '#085946',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#085946',
-                  },
-                },
               }}
             />
 
@@ -228,38 +199,18 @@ const LoginCRMPage = () => {
               variant="contained"
               size="large"
               disabled={isLoading}
-              sx={{
-                bgcolor: '#085946',
-                py: 1.5,
-                fontSize: '1.1rem',
-                fontWeight: 700,
-                borderRadius: 2,
-                textTransform: 'none',
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.3)',
-                '&:hover': {
-                  bgcolor: '#272F50',
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 20px rgba(8, 89, 70, 0.4)',
-                },
-                '&:disabled': {
-                  bgcolor: '#A1AFB5',
-                },
-                transition: 'all 0.3s ease',
-              }}
-              startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
+              startIcon={isLoading ? <CircularProgress size={18} color="inherit" /> : <LoginIcon />}
+              sx={{ py: 1.5, fontSize: '1rem' }}
             >
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {isLoading ? 'Iniciando sesión…' : 'Iniciar sesión'}
             </Button>
           </Box>
 
-          {/* Información adicional */}
-          <Box sx={{ mt: 4, textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: '#86899C' }}>
-              Sistema de administración OírConecta
-            </Typography>
-          </Box>
-        </Paper>
-      </Container>
+          <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: '#4a5568', mt: 3.5 }}>
+            Sistema de administración · OírConecta
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 };
