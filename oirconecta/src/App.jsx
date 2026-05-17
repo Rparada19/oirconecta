@@ -1,74 +1,89 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { buildTheme } from './theme';
 import { BrowserRouter as Router, Routes, Route, Link as RouterLink } from 'react-router-dom';
 import HomePage from './pages/HomePage';
-import NosotrosPage from './pages/NosotrosPage';
-import ServiciosPage from './pages/ServiciosPage';
-import AudifonosPage from './pages/AudifonosPage';
-import ImplantesPage from './pages/ImplantesPage';
-import ContactoPage from './pages/ContactoPage';
-import EcommercePage from './pages/EcommercePage';
-import AdminPage from './pages/AdminPage';
-import AudifonosWidexPage from './pages/AudifonosWidexPage';
-import AudifonosOticonPage from './pages/AudifonosOticonPage';
-import AudifonosSigniaPage from './pages/AudifonosSigniaPage';
-import AudifonosPhonakPage from './pages/AudifonosPhonakPage';
-import AudifonosResoundPage from './pages/AudifonosResoundPage';
-import AudifonosStarkeyPage from './pages/AudifonosStarkeyPage';
-import AudifonosBeltonePage from './pages/AudifonosBeltonePage';
-import AudifonosRextonPage from './pages/AudifonosRextonPage';
-import AudifonosAudioservicePage from './pages/AudifonosAudioservicePage';
-import AudifonosBernafonPage from './pages/AudifonosBernafonPage';
-import AudifonosHansatonPage from './pages/AudifonosHansatonPage';
-import AudifonosSonicPage from './pages/AudifonosSonicPage';
-import AudifonosUnitronPage from './pages/AudifonosUnitronPage';
-import ImplantesCochlearPage from './pages/ImplantesCochlearPage';
-import ImplantesAdvancedBionicsPage from './pages/ImplantesAdvancedBionicsPage';
-import ImplantesMedelPage from './pages/ImplantesMedelPage';
-import ProfessionalProfileDemoPage from './pages/ProfessionalProfileDemoPage';
-import ProfessionalProfilePage from './pages/ProfessionalProfilePage';
-import OtologosPage from './pages/OtologosPage';
-import AudiologasPage from './pages/AudiologasPage';
-import AgendamientoPage from './pages/AgendamientoPage';
-import LegalPage from './pages/LegalPage';
-import LoginCRMPage from './pages/LoginCRMPage';
-import PortalCRMPage from './pages/PortalCRMPage';
-import DashboardPage from './pages/crm/DashboardPage';
-import CitasPage from './pages/crm/CitasPage';
-import LeadsPage from './pages/crm/LeadsPage';
-import PacientesPage from './pages/crm/PacientesPage';
-import CampanasPage from './pages/crm/CampanasPage';
-import ReportesPage from './pages/crm/ReportesPage';
-import ConfiguracionPage from './pages/crm/ConfiguracionPage';
-import AccionesDiaPage from './pages/crm/AccionesDiaPage';
-import ProductosPage from './pages/crm/ProductosPage';
-import MiDirectorioPage from './pages/directorio/MiDirectorioPage';
-import LoginDirectorioPage from './pages/LoginDirectorioPage';
-import ProfesionalLayout from './pages/profesional/ProfesionalLayout';
-import ProfesionalDashboardPage from './pages/profesional/ProfesionalDashboardPage';
-import ProfesionalPerfilPage from './pages/profesional/ProfesionalPerfilPage';
-import ProfesionalConsultasPage from './pages/profesional/ProfesionalConsultasPage';
-import ProfesionalServiciosPage from './pages/profesional/ProfesionalServiciosPage';
-import AdminLoginPage from './pages/admin/AdminLoginPage';
-import AdminLayout from './pages/admin/AdminLayout';
-import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import AdminBlogPage from './pages/admin/AdminBlogPage';
-import AdminProfesionalesPage from './pages/admin/AdminProfesionalesPage';
-import AdminMarketplacePage from './pages/admin/AdminMarketplacePage';
-import RegistroProfesionalPage from './pages/RegistroProfesionalPage';
-import DirectorioResultadosPage from './pages/DirectorioResultadosPage';
-import DirectorioListadoPage from './pages/DirectorioListadoPage';
-import DirectorioProfesionSlugPage from './pages/DirectorioProfesionSlugPage';
-import DirectorioProfesionalPage from './pages/DirectorioProfesionalPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/crm/ProtectedRoute';
 import ProtectedRouteByRole from './components/crm/ProtectedRouteByRole';
 import ProtectedDirectoryRoute from './components/directorio/ProtectedDirectoryRoute';
-import './utils/clearAllData'; // Carga la función global clearAllOirConectaData()
+import './utils/clearAllData';
+
+// Páginas públicas (lazy)
+const NosotrosPage = lazy(() => import('./pages/NosotrosPage'));
+const ServiciosPage = lazy(() => import('./pages/ServiciosPage'));
+const AudifonosPage = lazy(() => import('./pages/AudifonosPage'));
+const ImplantesPage = lazy(() => import('./pages/ImplantesPage'));
+const ContactoPage = lazy(() => import('./pages/ContactoPage'));
+const EcommercePage = lazy(() => import('./pages/EcommercePage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const LegalPage = lazy(() => import('./pages/LegalPage'));
+const AgendamientoPage = lazy(() => import('./pages/AgendamientoPage'));
+const OtologosPage = lazy(() => import('./pages/OtologosPage'));
+const AudiologasPage = lazy(() => import('./pages/AudiologasPage'));
+const RegistroProfesionalPage = lazy(() => import('./pages/RegistroProfesionalPage'));
+
+// Audífonos por marca (lazy)
+const AudifonosWidexPage = lazy(() => import('./pages/AudifonosWidexPage'));
+const AudifonosOticonPage = lazy(() => import('./pages/AudifonosOticonPage'));
+const AudifonosSigniaPage = lazy(() => import('./pages/AudifonosSigniaPage'));
+const AudifonosPhonakPage = lazy(() => import('./pages/AudifonosPhonakPage'));
+const AudifonosResoundPage = lazy(() => import('./pages/AudifonosResoundPage'));
+const AudifonosStarkeyPage = lazy(() => import('./pages/AudifonosStarkeyPage'));
+const AudifonosBeltonePage = lazy(() => import('./pages/AudifonosBeltonePage'));
+const AudifonosRextonPage = lazy(() => import('./pages/AudifonosRextonPage'));
+const AudifonosAudioservicePage = lazy(() => import('./pages/AudifonosAudioservicePage'));
+const AudifonosBernafonPage = lazy(() => import('./pages/AudifonosBernafonPage'));
+const AudifonosHansatonPage = lazy(() => import('./pages/AudifonosHansatonPage'));
+const AudifonosSonicPage = lazy(() => import('./pages/AudifonosSonicPage'));
+const AudifonosUnitronPage = lazy(() => import('./pages/AudifonosUnitronPage'));
+const ImplantesCochlearPage = lazy(() => import('./pages/ImplantesCochlearPage'));
+const ImplantesAdvancedBionicsPage = lazy(() => import('./pages/ImplantesAdvancedBionicsPage'));
+const ImplantesMedelPage = lazy(() => import('./pages/ImplantesMedelPage'));
+
+// Directorio público (lazy)
+const ProfessionalProfileDemoPage = lazy(() => import('./pages/ProfessionalProfileDemoPage'));
+const ProfessionalProfilePage = lazy(() => import('./pages/ProfessionalProfilePage'));
+const DirectorioResultadosPage = lazy(() => import('./pages/DirectorioResultadosPage'));
+const DirectorioListadoPage = lazy(() => import('./pages/DirectorioListadoPage'));
+const DirectorioProfesionSlugPage = lazy(() => import('./pages/DirectorioProfesionSlugPage'));
+const DirectorioProfesionalPage = lazy(() => import('./pages/DirectorioProfesionalPage'));
+
+// Autenticaciones (lazy)
+const LoginCRMPage = lazy(() => import('./pages/LoginCRMPage'));
+const LoginDirectorioPage = lazy(() => import('./pages/LoginDirectorioPage'));
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
+
+// Portal CRM (lazy)
+const PortalCRMPage = lazy(() => import('./pages/PortalCRMPage'));
+const DashboardPage = lazy(() => import('./pages/crm/DashboardPage'));
+const CitasPage = lazy(() => import('./pages/crm/CitasPage'));
+const LeadsPage = lazy(() => import('./pages/crm/LeadsPage'));
+const PacientesPage = lazy(() => import('./pages/crm/PacientesPage'));
+const CampanasPage = lazy(() => import('./pages/crm/CampanasPage'));
+const ReportesPage = lazy(() => import('./pages/crm/ReportesPage'));
+const ConfiguracionPage = lazy(() => import('./pages/crm/ConfiguracionPage'));
+const AccionesDiaPage = lazy(() => import('./pages/crm/AccionesDiaPage'));
+const ProductosPage = lazy(() => import('./pages/crm/ProductosPage'));
+const MiDirectorioPage = lazy(() => import('./pages/directorio/MiDirectorioPage'));
+
+// Portal Profesional (lazy)
+const ProfesionalLayout = lazy(() => import('./pages/profesional/ProfesionalLayout'));
+const ProfesionalDashboardPage = lazy(() => import('./pages/profesional/ProfesionalDashboardPage'));
+const ProfesionalPerfilPage = lazy(() => import('./pages/profesional/ProfesionalPerfilPage'));
+const ProfesionalConsultasPage = lazy(() => import('./pages/profesional/ProfesionalConsultasPage'));
+const ProfesionalServiciosPage = lazy(() => import('./pages/profesional/ProfesionalServiciosPage'));
+
+// Portal Admin (lazy)
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminBlogPage = lazy(() => import('./pages/admin/AdminBlogPage'));
+const AdminProfesionalesPage = lazy(() => import('./pages/admin/AdminProfesionalesPage'));
+const AdminMarketplacePage = lazy(() => import('./pages/admin/AdminMarketplacePage'));
 
 const theme = buildTheme(createTheme);
 
@@ -101,12 +116,21 @@ function NotFound() {
   );
 }
 
+function PageLoader() {
+  return (
+    <Box sx={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <CircularProgress size={40} thickness={4} />
+    </Box>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router basename={routerBasename()}>
         <AuthProvider>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<HomePage />} />
 
@@ -196,6 +220,7 @@ export default function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
         </AuthProvider>
       </Router>
     </ThemeProvider>

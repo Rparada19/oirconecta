@@ -3,12 +3,14 @@
 // ===========================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["crm", "directory", "public_site"]
 }
 
 // ===========================================
@@ -34,6 +36,7 @@ model User {
   blockedSlotsApproved  BlockedSlot[] @relation("BlockedSlotApprovedBy")
 
   @@map("users")
+  @@schema("crm")
 }
 
 /// Cuenta del directorio público (negocio aparte del CRM; no referencia a `User`).
@@ -49,6 +52,7 @@ model DirectoryAccount {
   profile DirectoryProfile?
 
   @@map("directory_accounts")
+  @@schema("directory")
 }
 
 /// Ficha listable en el directorio (moderada por un admin del CRM; sin FK a `User`).
@@ -118,6 +122,7 @@ model DirectoryProfile {
 
   @@index([parentProfileId])
   @@map("directory_profiles")
+  @@schema("directory")
 }
 
 model DirectoryWorkplace {
@@ -136,6 +141,7 @@ model DirectoryWorkplace {
   @@index([profileId])
   @@index([ciudad])
   @@map("directory_workplaces")
+  @@schema("directory")
 }
 
 /// Mensaje enviado desde el formulario de la ficha pública (buzón del titular en Mi directorio).
@@ -160,12 +166,15 @@ model DirectoryInquiry {
   @@index([profileId, createdAt])
   @@index([profileId, status])
   @@map("directory_inquiries")
+  @@schema("directory")
 }
 
 enum DirectoryInquiryStatus {
   NEW
   READ
   ARCHIVED
+
+  @@schema("directory")
 }
 
 // ===========================================
@@ -187,12 +196,15 @@ model BlockedSlot {
   updatedAt     DateTime          @updatedAt
 
   @@map("blocked_slots")
+  @@schema("crm")
 }
 
 enum BlockedSlotStatus {
   PENDING
   APPROVED
   REJECTED
+
+  @@schema("crm")
 }
 
 enum Role {
@@ -202,6 +214,8 @@ enum Role {
   RECEPCION
   SOLO_LECTURA
   PROFESIONAL_WEB
+
+  @@schema("crm")
 }
 
 enum DirectoryProfileStatus {
@@ -209,11 +223,15 @@ enum DirectoryProfileStatus {
   PENDING
   APPROVED
   REJECTED
+
+  @@schema("directory")
 }
 
 enum DirectoryPersonaTipo {
   NATURAL
   JURIDICA
+
+  @@schema("directory")
 }
 
 // ===========================================
@@ -251,6 +269,7 @@ model Lead {
   updatedAt                DateTime    @updatedAt
 
   @@map("leads")
+  @@schema("crm")
 }
 
 enum LeadEstado {
@@ -261,6 +280,8 @@ enum LeadEstado {
   CONVERTIDO
   PERDIDO
   PACIENTE
+
+  @@schema("crm")
 }
 
 // ===========================================
@@ -308,6 +329,7 @@ model Patient {
   updatedAt                DateTime @updatedAt
 
   @@map("patients")
+  @@schema("crm")
 }
 
 // ===========================================
@@ -339,6 +361,7 @@ model Maintenance {
   @@index([patientId])
   @@index([scheduledDate])
   @@map("maintenances")
+  @@schema("crm")
 }
 
 // ===========================================
@@ -369,6 +392,7 @@ model Interaction {
   @@index([occurredAt])
   @@index([type])
   @@map("interactions")
+  @@schema("crm")
 }
 
 // ===========================================
@@ -418,6 +442,7 @@ model Appointment {
 
   @@index([directoryProfileId])
   @@map("appointments")
+  @@schema("crm")
 }
 
 enum AppointmentStatus {
@@ -427,6 +452,8 @@ enum AppointmentStatus {
   CANCELLED
   RESCHEDULED
   PATIENT
+
+  @@schema("crm")
 }
 
 // ===========================================
@@ -454,6 +481,7 @@ model Consultation {
   updatedAt        DateTime    @updatedAt
 
   @@map("consultations")
+  @@schema("crm")
 }
 
 // ===========================================
@@ -503,12 +531,15 @@ model Campaign {
   updatedAt         DateTime       @updatedAt
 
   @@map("campaigns")
+  @@schema("crm")
 }
 
 enum CampaignStatus {
   ACTIVA
   PAUSADA
   FINALIZADA
+
+  @@schema("crm")
 }
 
 // ===========================================
@@ -556,6 +587,7 @@ model Quote {
   updatedAt       DateTime    @updatedAt
 
   @@map("quotes")
+  @@schema("crm")
 }
 
 // Historial de cotizaciones (versiones anteriores al editar)
@@ -568,6 +600,7 @@ model QuoteHistory {
 
   @@index([quoteId])
   @@map("quote_history")
+  @@schema("crm")
 }
 
 enum QuoteStatus {
@@ -575,6 +608,8 @@ enum QuoteStatus {
   APPROVED
   REJECTED
   CONVERTED
+
+  @@schema("crm")
 }
 
 // ===========================================
@@ -637,12 +672,15 @@ model Sale {
   updatedAt             DateTime     @updatedAt
 
   @@map("sales")
+  @@schema("crm")
 }
 
 enum SaleCategory {
   HEARING_AID  // Audífonos
   SERVICE      // Consulta
   ACCESSORY    // Accesorio
+
+  @@schema("crm")
 }
 
 // ===========================================
@@ -668,12 +706,15 @@ model BlogPost {
   @@index([estado, publishedAt])
   @@index([categoria])
   @@map("blog_posts")
+  @@schema("public_site")
 }
 
 enum BlogPostStatus {
   BORRADOR
   PUBLICADO
   ARCHIVADO
+
+  @@schema("public_site")
 }
 
 // ===========================================
@@ -700,10 +741,13 @@ model MarketplaceListing {
   @@index([profileId])
   @@index([categoria, estado])
   @@map("marketplace_listings")
+  @@schema("directory")
 }
 
 enum MarketplaceListingStatus {
   ACTIVO
   PAUSADO
   VENCIDO
+
+  @@schema("directory")
 }
