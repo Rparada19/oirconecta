@@ -23,7 +23,7 @@ import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlin
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { api, getToken } from '../../services/apiClient';
+import { adminFetch, getAdminToken } from './adminAuth';
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.90)',
@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
   const [marketplace, setMarketplace] = useState([]);
 
   useEffect(() => {
-    const token = getToken();
+    const token = getAdminToken();
     if (!token) { navigate('/login-crm', { replace: true }); return; }
     fetchAll();
   }, []);
@@ -114,9 +114,9 @@ export default function AdminDashboardPage() {
     setLoading(true);
     setError(null);
     const [profRes, blogRes, mktRes] = await Promise.all([
-      api.get('/api/directory/admin/profiles'),
-      api.get('/api/blog/admin/all?estado=PUBLICADO'),
-      api.get('/api/marketplace/admin/all?estado=ACTIVO'),
+      adminFetch('/api/directory/admin/profiles'),
+      adminFetch('/api/blog/admin/all?estado=PUBLICADO'),
+      adminFetch('/api/marketplace/admin/all?estado=ACTIVO'),
     ]);
     if (profRes.error && blogRes.error && mktRes.error) {
       setError('No se pudieron cargar los datos. Verifica tu conexión.');
@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
   const [loadingBlog, setLoadingBlog] = useState(true);
   useEffect(() => {
     (async () => {
-      const res = await api.get('/api/blog/admin/all');
+      const res = await adminFetch('/api/blog/admin/all');
       setAllBlogPosts(res.data?.data || res.data || []);
       setLoadingBlog(false);
     })();

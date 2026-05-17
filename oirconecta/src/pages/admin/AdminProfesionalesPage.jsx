@@ -29,7 +29,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
-import { api, getToken } from '../../services/apiClient';
+import { adminFetch, getAdminToken } from './adminAuth';
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.90)',
@@ -92,7 +92,7 @@ export default function AdminProfesionalesPage() {
   const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
 
   useEffect(() => {
-    const token = getToken();
+    const token = getAdminToken();
     if (!token) { navigate('/login-crm', { replace: true }); return; }
     fetchProfiles();
   }, []);
@@ -100,7 +100,7 @@ export default function AdminProfesionalesPage() {
   const fetchProfiles = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await api.get('/api/directory/admin/profiles');
+    const { data, error: err } = await adminFetch('/api/directory/admin/profiles');
     if (err) setError(err);
     else setProfiles(data?.data || data || []);
     setLoading(false);
@@ -125,7 +125,7 @@ export default function AdminProfesionalesPage() {
       ? { status: 'REJECTED', rejectionReason: rejectionReason.trim() }
       : { status: 'APPROVED' };
     const accountId = selected.accountId || selected._id || selected.id;
-    const res = await api.patch(`/api/directory/admin/profiles/${accountId}`, body);
+    const res = await adminFetch(`/api/directory/admin/profiles/${accountId}`, { method: 'PATCH', body: JSON.stringify(body) });
     setActionLoading(false);
     if (res.error) {
       setSnack({ open: true, msg: `Error: ${res.error}`, severity: 'error' });

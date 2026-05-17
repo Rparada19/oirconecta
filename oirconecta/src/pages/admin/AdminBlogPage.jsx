@@ -34,7 +34,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { api, getToken } from '../../services/apiClient';
+import { adminFetch, getAdminToken } from './adminAuth';
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.90)',
@@ -108,7 +108,7 @@ export default function AdminBlogPage() {
   const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
 
   useEffect(() => {
-    const token = getToken();
+    const token = getAdminToken();
     if (!token) { navigate('/login-crm', { replace: true }); return; }
     fetchPosts();
   }, []);
@@ -116,7 +116,7 @@ export default function AdminBlogPage() {
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await api.get('/api/blog/admin/all');
+    const { data, error: err } = await adminFetch('/api/blog/admin/all');
     if (err) setError(err);
     else setPosts(data?.data || data || []);
     setLoading(false);
@@ -177,9 +177,9 @@ export default function AdminBlogPage() {
     };
     let res;
     if (editingPost) {
-      res = await api.patch(`/api/blog/${editingPost._id || editingPost.id}`, payload);
+      res = await adminFetch(`/api/blog/${editingPost._id || editingPost.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
     } else {
-      res = await api.post('/api/blog', payload);
+      res = await adminFetch('/api/blog', { method: 'POST', body: JSON.stringify(payload) });
     }
     setSaving(false);
     if (res.error) {
@@ -194,7 +194,7 @@ export default function AdminBlogPage() {
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const res = await api.delete(`/api/blog/${deleteTarget._id || deleteTarget.id}`);
+    const res = await adminFetch(`/api/blog/${deleteTarget._id || deleteTarget.id}`, { method: 'DELETE' });
     setDeleting(false);
     setDeleteTarget(null);
     if (res.error) {

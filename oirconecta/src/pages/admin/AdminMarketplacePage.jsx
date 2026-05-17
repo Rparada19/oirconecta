@@ -31,7 +31,7 @@ import StarIcon from '@mui/icons-material/Star';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { api, getToken } from '../../services/apiClient';
+import { adminFetch, getAdminToken } from './adminAuth';
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.90)',
@@ -84,7 +84,7 @@ export default function AdminMarketplacePage() {
   const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
 
   useEffect(() => {
-    const token = getToken();
+    const token = getAdminToken();
     if (!token) { navigate('/login-crm', { replace: true }); return; }
     fetchServices();
   }, []);
@@ -92,7 +92,7 @@ export default function AdminMarketplacePage() {
   const fetchServices = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await api.get('/api/marketplace/admin/all');
+    const { data, error: err } = await adminFetch('/api/marketplace/admin/all');
     if (err) setError(err);
     else setServices(data?.data || data || []);
     setLoading(false);
@@ -106,7 +106,7 @@ export default function AdminMarketplacePage() {
     const id = item._id || item.id;
     setActionLoading(id);
     const newFeatured = !(item.destacado || item.featured);
-    const res = await api.patch(`/api/marketplace/admin/${id}`, { destacado: newFeatured });
+    const res = await adminFetch(`/api/marketplace/admin/${id}`, { method: 'PATCH', body: JSON.stringify({ destacado: newFeatured }) });
     setActionLoading(null);
     if (res.error) {
       setSnack({ open: true, msg: `Error: ${res.error}`, severity: 'error' });
@@ -122,7 +122,7 @@ export default function AdminMarketplacePage() {
     const currentStatus = (item.estado || item.status || '').toUpperCase();
     const isActive = ['ACTIVO', 'ACTIVE'].includes(currentStatus);
     const newStatus = isActive ? 'PAUSADO' : 'ACTIVO';
-    const res = await api.patch(`/api/marketplace/admin/${id}`, { estado: newStatus });
+    const res = await adminFetch(`/api/marketplace/admin/${id}`, { method: 'PATCH', body: JSON.stringify({ estado: newStatus }) });
     setActionLoading(null);
     if (res.error) {
       setSnack({ open: true, msg: `Error: ${res.error}`, severity: 'error' });
@@ -136,7 +136,7 @@ export default function AdminMarketplacePage() {
     if (!deleteTarget) return;
     setDeleting(true);
     const id = deleteTarget._id || deleteTarget.id;
-    const res = await api.delete(`/api/marketplace/admin/${id}`);
+    const res = await adminFetch(`/api/marketplace/admin/${id}`, { method: 'DELETE' });
     setDeleting(false);
     setDeleteTarget(null);
     if (res.error) {

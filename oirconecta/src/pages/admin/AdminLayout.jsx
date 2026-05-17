@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -19,7 +19,7 @@ import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { clearToken } from '../../services/apiClient';
+import { getAdminToken, clearAdminToken, getAdminUser } from './adminAuth';
 
 const SIDEBAR_WIDTH = 240;
 
@@ -39,19 +39,16 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  useEffect(() => {
+    if (!getAdminToken()) navigate('/admin-login', { replace: true });
+  }, [navigate]);
+
   const handleLogout = () => {
-    clearToken();
-    localStorage.removeItem('oirconecta_crm_user');
-    navigate('/login-crm', { replace: true });
+    clearAdminToken();
+    navigate('/admin-login', { replace: true });
   };
 
-  // Resolve user from localStorage
-  let user = null;
-  try {
-    const raw = localStorage.getItem('oirconecta_crm_user');
-    if (raw) user = JSON.parse(raw);
-  } catch {}
-
+  const user = getAdminUser();
   const userName = user?.nombre || user?.name || user?.email || 'Admin';
   const userInitial = userName.charAt(0).toUpperCase();
 

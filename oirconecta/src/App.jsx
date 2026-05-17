@@ -53,6 +53,7 @@ import ProfesionalDashboardPage from './pages/profesional/ProfesionalDashboardPa
 import ProfesionalPerfilPage from './pages/profesional/ProfesionalPerfilPage';
 import ProfesionalConsultasPage from './pages/profesional/ProfesionalConsultasPage';
 import ProfesionalServiciosPage from './pages/profesional/ProfesionalServiciosPage';
+import AdminLoginPage from './pages/admin/AdminLoginPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminBlogPage from './pages/admin/AdminBlogPage';
@@ -184,8 +185,9 @@ export default function App() {
             <Route path="consultas" element={<ProfesionalConsultasPage />} />
           </Route>
 
-          {/* Portal Administración del sitio */}
-          <Route path="/portal-admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+          {/* Portal Administración del sitio — auth independiente del CRM */}
+          <Route path="/admin-login" element={<AdminLoginPage />} />
+          <Route path="/portal-admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardPage />} />
             <Route path="blog" element={<AdminBlogPage />} />
             <Route path="profesionales" element={<AdminProfesionalesPage />} />
