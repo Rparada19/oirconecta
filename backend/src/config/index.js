@@ -44,7 +44,7 @@ const config = {
   },
 
   // Orígenes del front para CORS (producción: varios separados por coma, ej. https://app.com,https://www.app.com)
-  frontendOrigins: (process.env.FRONTEND_URL || 'http://localhost:5174')
+  frontendOrigins: (process.env.FRONTEND_URL || 'https://oirconecta.com,https://www.oirconecta.com,http://localhost:5174,http://localhost:5173')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
