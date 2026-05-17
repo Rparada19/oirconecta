@@ -48,6 +48,16 @@ import AccionesDiaPage from './pages/crm/AccionesDiaPage';
 import ProductosPage from './pages/crm/ProductosPage';
 import MiDirectorioPage from './pages/directorio/MiDirectorioPage';
 import LoginDirectorioPage from './pages/LoginDirectorioPage';
+import ProfesionalLayout from './pages/profesional/ProfesionalLayout';
+import ProfesionalDashboardPage from './pages/profesional/ProfesionalDashboardPage';
+import ProfesionalPerfilPage from './pages/profesional/ProfesionalPerfilPage';
+import ProfesionalConsultasPage from './pages/profesional/ProfesionalConsultasPage';
+import ProfesionalServiciosPage from './pages/profesional/ProfesionalServiciosPage';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminBlogPage from './pages/admin/AdminBlogPage';
+import AdminProfesionalesPage from './pages/admin/AdminProfesionalesPage';
+import AdminMarketplacePage from './pages/admin/AdminMarketplacePage';
 import RegistroProfesionalPage from './pages/RegistroProfesionalPage';
 import DirectorioResultadosPage from './pages/DirectorioResultadosPage';
 import DirectorioListadoPage from './pages/DirectorioListadoPage';
@@ -165,6 +175,22 @@ export default function App() {
           <Route path="/portal-crm/reportes" element={<ProtectedRoute><ReportesPage /></ProtectedRoute>} />
           <Route path="/portal-crm/configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />
           <Route path="/portal-crm/productos" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ProductosPage /></ProtectedRouteByRole>} />
+
+          {/* Portal del Profesional (directorio) */}
+          <Route path="/portal-profesional" element={<ProfesionalLayout />}>
+            <Route index element={<ProfesionalDashboardPage />} />
+            <Route path="perfil" element={<ProfesionalPerfilPage />} />
+            <Route path="servicios" element={<ProfesionalServiciosPage />} />
+            <Route path="consultas" element={<ProfesionalConsultasPage />} />
+          </Route>
+
+          {/* Portal Administración del sitio */}
+          <Route path="/portal-admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="blog" element={<AdminBlogPage />} />
+            <Route path="profesionales" element={<AdminProfesionalesPage />} />
+            <Route path="marketplace" element={<AdminMarketplacePage />} />
+          </Route>
 
           <Route path="*" element={<NotFound />} />
         </Routes>

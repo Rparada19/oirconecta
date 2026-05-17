@@ -31,7 +31,7 @@ export default function LoginDirectorioPage() {
 
   useEffect(() => {
     if (getDirectoryToken()) {
-      navigate('/mi-directorio', { replace: true });
+      navigate('/portal-profesional', { replace: true });
     }
   }, [navigate]);
 
@@ -68,7 +68,7 @@ export default function LoginDirectorioPage() {
       return;
     }
     setDirectoryToken(token);
-    navigate('/mi-directorio', { replace: true });
+    navigate('/portal-profesional', { replace: true });
   };
 
   return (
