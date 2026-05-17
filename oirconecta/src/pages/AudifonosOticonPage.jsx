@@ -1,316 +1,229 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { 
-  Box, 
-  Typography, 
-  Button, 
-  Breadcrumbs, 
-  Link, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Container,
-  Chip,
-  Stack
-} from '@mui/material';
-import { 
-  ArrowForward, 
-  CheckCircle, 
-  Bluetooth,
-  BatteryChargingFull,
-  Smartphone,
-  Hearing,
-  Psychology
-} from '@mui/icons-material';
+import { Box, Typography, Button, Grid, Container, Chip, Stack } from '@mui/material';
+import { ArrowForward, CheckCircle, Bluetooth, BatteryChargingFull, Smartphone, Hearing, Psychology } from '@mui/icons-material';
 
-// Imágenes
-const oticonLogo = '/logos/marcas/Oticon-logo.png.webp';
+const BRAND = {
+  nombre: 'Oticon',
+  logo: '/logos/marcas/Oticon-logo.png.webp',
+  eslogan: 'BrainHearing™',
+  descripcion: 'La experiencia auditiva debe tener en cuenta cada necesidad única. Descubre una audición más natural y clara con nuestros audífonos inteligentes diseñados para trabajar con tu cerebro.',
+  rating: '4.7',
+  gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
+  glow: 'rgba(39,47,80,0.40)',
+};
+
+const productos = [
+  { nombre: 'Real™', categoria: 'RIC', descripcion: 'Audífono inteligente con BrainHearing™', caracteristicas: ['BrainHearing™ Technology', 'Bluetooth 5.0', 'Batería recargable 24h', 'App Oticon ON'], destacado: true },
+  { nombre: 'More™', categoria: 'BTE', descripcion: 'Máximo rendimiento con tecnología avanzada', caracteristicas: ['Polk Audio Integration', 'Conectividad universal', 'Batería de larga duración', 'Control por voz'], destacado: false },
+  { nombre: 'OPN S™', categoria: 'RIC', descripcion: 'Diseño discreto con conectividad total', caracteristicas: ['Diseño ultra-discreto', 'Conectividad avanzada', 'Audio streaming directo', 'Resistente al agua'], destacado: false },
+];
+
+const tecnologias = [
+  { icon: Psychology, titulo: 'BrainHearing™', descripcion: 'Tecnología que imita el procesamiento natural del cerebro', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth 5.0 y streaming directo', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Batería Inteligente', descripcion: 'Hasta 24 horas de uso continuo', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
+  { icon: Smartphone, titulo: 'App Oticon ON', descripcion: 'Control personalizado desde tu móvil', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
+];
 
 const AudifonosOticonPage = () => {
-  const productos = [
-    {
-      nombre: 'Real™',
-      categoria: 'RIC',
-      descripcion: 'Audífono inteligente con BrainHearing™',
-      caracteristicas: [
-        'BrainHearing™ Technology',
-        'Bluetooth 5.0',
-        'Batería recargable 24h',
-        'App Oticon ON'
-      ],
-      precio: 'Desde $2.800.000'
-    },
-    {
-      nombre: 'More™',
-      categoria: 'BTE',
-      descripcion: 'Máximo rendimiento con tecnología avanzada',
-      caracteristicas: [
-        'Polk Audio Integration',
-        'Conectividad universal',
-        'Batería de larga duración',
-        'Control por voz'
-      ],
-      precio: 'Desde $3.500.000'
-    },
-    {
-      nombre: 'OPN S™',
-      categoria: 'RIC',
-      descripcion: 'Diseño discreto con conectividad total',
-      caracteristicas: [
-        'Diseño ultra-discreto',
-        'Conectividad avanzada',
-        'Audio streaming directo',
-        'Resistente al agua'
-      ],
-      precio: 'Desde $2.600.000'
-    }
-  ];
-
-  const tecnologias = [
-    {
-      icon: <Psychology />,
-      titulo: 'BrainHearing™',
-      descripcion: 'Tecnología que imita el procesamiento natural del cerebro'
-    },
-    {
-      icon: <Bluetooth />,
-      titulo: 'Conectividad Total',
-      descripcion: 'Bluetooth 5.0 y streaming directo'
-    },
-    {
-      icon: <BatteryChargingFull />,
-      titulo: 'Batería Inteligente',
-      descripcion: 'Hasta 24 horas de uso continuo'
-    },
-    {
-      icon: <Smartphone />,
-      titulo: 'App Oticon ON',
-      descripcion: 'Control personalizado desde tu móvil'
-    }
-  ];
-
+  const navigate = useNavigate();
   return (
     <>
       <Helmet>
-        <title>Audífonos Oticon - OirConecta | Tecnología BrainHearing™</title>
+        <title>Audífonos Oticon - OírConecta | Tecnología BrainHearing™</title>
         <meta name="description" content="Descubre los audífonos Oticon con tecnología BrainHearing™. Real, More y OPN S con conectividad Bluetooth y diseño discreto." />
-        <meta name="keywords" content="audífonos oticon, brain hearing, real, more, opn s, Colombia" />
         <link rel="canonical" href="https://oirconecta.com/audifonos/oticon" />
       </Helmet>
-
       <Header />
 
-      {/* Hero Section - Estilo ReSound */}
-      <Box sx={{ 
-        background: '#ffffff', 
-        py: 12,
-        position: 'relative',
-        overflow: 'hidden'
+      {/* ── HERO ── */}
+      <Box sx={{
+        position: 'relative', overflow: 'hidden', minHeight: { xs: 'auto', md: '80vh' },
+        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        background:
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(8,89,70,0.45) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #1a1f38 0%, #272F50 35%, #0a3d2e 70%, #085946 100%)',
+        color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={8} alignItems="center">
+        {/* Grain */}
+        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.40, pointerEvents: 'none',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
+        {/* Decorative circles */}
+        {[{ s: 500, top: '-15%', right: '-8%' }, { s: 300, bottom: '5%', left: '-5%' }].map((c, i) => (
+          <Box key={i} sx={{ position: 'absolute', width: c.s, height: c.s, borderRadius: '50%',
+            border: '1px solid rgba(255,255,255,0.06)', top: c.top, bottom: c.bottom, right: c.right, left: c.left, pointerEvents: 'none' }} />
+        ))}
+
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+          <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
-              <Breadcrumbs sx={{ mb: 4, color: '#666' }}>
-                <Link href="/" color="inherit">Inicio</Link>
-                <Link href="/audifonos" color="inherit">Audífonos</Link>
-                <Typography color="text.primary">Oticon</Typography>
-              </Breadcrumbs>
-              
-              <Box sx={{ mb: 4 }}>
-                <img 
-                  src={oticonLogo} 
-                  alt="Oticon Logo" 
-                  style={{ 
-                    height: 80,
-                    marginBottom: 24
-                  }} 
-                />
+              {/* Breadcrumb chip */}
+              <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+                <Chip label="Inicio" size="small" onClick={() => navigate('/')}
+                  sx={{ bgcolor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer', fontWeight: 600 }} />
+                <Chip label="Audífonos" size="small" onClick={() => navigate('/audifonos')}
+                  sx={{ bgcolor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer', fontWeight: 600 }} />
+                <Chip label="Oticon" size="small"
+                  sx={{ bgcolor: 'rgba(255,255,255,0.20)', color: '#fff', border: '1px solid rgba(255,255,255,0.30)', fontWeight: 700 }} />
               </Box>
-              
-              <Typography variant="h2" fontWeight={700} sx={{ mb: 3, color: '#333', lineHeight: 1.2 }}>
-                Audífonos Oticon
+
+              {/* Logo */}
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 1.5,
+                borderRadius: '18px', background: 'rgba(255,255,255,0.95)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.20)', mb: 3 }}>
+                <img src={BRAND.logo} alt="Oticon" style={{ height: 48, objectFit: 'contain' }} />
+              </Box>
+
+              <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
+                letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
+                Audífonos{' '}
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #a5b4fc 0%, #c4b5fd 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  Oticon
+                </Box>
               </Typography>
-              
-              <Typography variant="h4" fontWeight={500} sx={{ mb: 4, color: '#085946' }}>
-                Tecnología BrainHearing™
+              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#a5b4fc', mb: 2.5, letterSpacing: '-0.01em' }}>
+                {BRAND.eslogan}
               </Typography>
-              
-              <Typography variant="h6" sx={{ mb: 6, color: '#666', lineHeight: 1.6, fontWeight: 400 }}>
-                La experiencia auditiva debe tener en cuenta cada necesidad única. 
-                Descubre una audición más natural y clara con nuestros audífonos inteligentes.
+              <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, mb: 4, maxWidth: 480 }}>
+                {BRAND.descripcion}
               </Typography>
-              
-              <Stack direction="row" spacing={3}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  endIcon={<ArrowForward />}
-                  sx={{
-                    background: '#085946',
-                    px: 6,
-                    py: 2,
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    borderRadius: 2,
-                    '&:hover': {
-                      background: '#0d7a5f',
-                    }
-                  }}
-                >
-                  Ver Productos
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <Button variant="contained" size="large" endIcon={<ArrowForward />}
+                  onClick={() => navigate('/agendar')}
+                  sx={{ borderRadius: '14px', fontWeight: 800, px: 3.5, py: 1.75, fontSize: '1rem',
+                    bgcolor: '#fff', color: '#272F50',
+                    boxShadow: '0 8px 28px rgba(0,0,0,0.20)',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)', boxShadow: '0 12px 36px rgba(0,0,0,0.28)' },
+                    transition: 'all 0.25s ease' }}>
+                  Solicitar cita
                 </Button>
-                <Button
-                  variant="outlined"
-                  size="large"
-                  sx={{
-                    borderColor: '#085946',
-                    color: '#085946',
-                    px: 6,
-                    py: 2,
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    borderRadius: 2,
-                    '&:hover': {
-                      borderColor: '#0d7a5f',
-                      color: '#0d7a5f',
-                    }
-                  }}
-                >
-                  Solicitar Cita
+                <Button variant="outlined" size="large" onClick={() => navigate('/contacto')}
+                  sx={{ borderRadius: '14px', fontWeight: 700, px: 3, py: 1.625, fontSize: '1rem',
+                    borderColor: 'rgba(255,255,255,0.40)', color: '#fff',
+                    backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.08)',
+                    '&:hover': { borderColor: 'rgba(255,255,255,0.70)', background: 'rgba(255,255,255,0.15)' } }}>
+                  Más información
                 </Button>
               </Stack>
             </Grid>
-            
+
+            {/* Right — visual brand card */}
             <Grid item xs={12} md={6}>
-              <Box sx={{ 
-                position: 'relative',
-                height: 500,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                {/* Imagen principal con efecto moderno */}
-                <Box
-                  sx={{
-                    width: 400,
-                    height: 400,
-                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: -20,
-                      left: -20,
-                      right: -20,
-                      bottom: -20,
-                      background: 'linear-gradient(135deg, rgba(8, 89, 70, 0.1) 0%, rgba(8, 89, 70, 0.05) 100%)',
-                      borderRadius: '50%',
-                      zIndex: -1
-                    }
-                  }}
-                >
-                  <Psychology sx={{ fontSize: 150, color: '#085946' }} />
-                </Box>
-                
-                {/* Elementos decorativos flotantes */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 50,
-                    right: 50,
-                    width: 80,
-                    height: 80,
-                    background: '#085946',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    boxShadow: '0 10px 30px rgba(8, 89, 70, 0.3)'
-                  }}
-                >
-                  <Bluetooth sx={{ fontSize: 40 }} />
-                </Box>
-                
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: 80,
-                    left: 30,
-                    width: 60,
-                    height: 60,
-                    background: '#085946',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    boxShadow: '0 10px 30px rgba(8, 89, 70, 0.3)'
-                  }}
-                >
-                  <BatteryChargingFull sx={{ fontSize: 30 }} />
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Box sx={{ borderRadius: '28px', overflow: 'hidden', width: '100%', maxWidth: 440,
+                  background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.20)',
+                  boxShadow: '0 32px 80px rgba(0,0,0,0.30)', p: 4 }}>
+                  {/* Brand logo large */}
+                  <Box sx={{ borderRadius: '20px', bgcolor: '#fff', p: 3, mb: 3, textAlign: 'center' }}>
+                    <img src={BRAND.logo} alt="Oticon" style={{ height: 80, objectFit: 'contain' }} />
+                  </Box>
+                  {/* Stats */}
+                  <Grid container spacing={2}>
+                    {[
+                      { value: BRAND.rating, label: 'Rating' },
+                      { value: `${productos.length}`, label: 'Modelos' },
+                      { value: '24h', label: 'Batería máx.' },
+                      { value: 'BT 5.0', label: 'Conectividad' },
+                    ].map((s) => (
+                      <Grid item xs={6} key={s.label}>
+                        <Box sx={{ borderRadius: '14px', p: 2, background: 'rgba(255,255,255,0.10)',
+                          border: '1px solid rgba(255,255,255,0.15)', textAlign: 'center' }}>
+                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#a5b4fc', letterSpacing: '-0.02em' }}>{s.value}</Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>{s.label}</Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
                 </Box>
               </Box>
             </Grid>
           </Grid>
         </Container>
+
+        {/* Wave bottom */}
+        <Box sx={{ position: 'relative', mt: { xs: 6, md: 8 }, lineHeight: 0, flexShrink: 0 }}>
+          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', width: '100%' }}>
+            <path d="M0 80L48 66C96 53 192 26 288 20C384 13 480 26 576 33C672 40 768 40 864 33C960 26 1056 13 1152 13C1248 13 1344 26 1392 33L1440 40V80H0Z" fill="#f4f9f7"/>
+          </svg>
+        </Box>
       </Box>
 
-      {/* Tecnologías - Estilo ReSound */}
-      <Box sx={{ py: 12, background: '#f8f9fa' }}>
+      {/* ── PRODUCTOS ── */}
+      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#f4f9f7' }}>
         <Container maxWidth="lg">
-          <Typography variant="h3" textAlign="center" fontWeight={700} sx={{ mb: 8, color: '#333' }}>
-            Tecnología Avanzada
-          </Typography>
-          
-          <Grid container spacing={6}>
-            {tecnologias.map((tech, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Box sx={{ 
-                  textAlign: 'center', 
-                  p: 4,
-                  background: 'white',
-                  borderRadius: 3,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                  height: '100%',
-                  transition: 'transform 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
-                  }
+          <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
+            <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
+              letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
+              Línea de{' '}
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                productos
+              </Box>
+            </Typography>
+            <Typography sx={{ fontSize: '1rem', color: '#4a5568', maxWidth: 520, mx: 'auto' }}>
+              Modelos disponibles a través de los especialistas de la red OírConecta
+            </Typography>
+          </Box>
+
+          <Grid container spacing={3}>
+            {productos.map((p, i) => (
+              <Grid item xs={12} sm={6} md={4} key={i}>
+                <Box sx={{ height: '100%', borderRadius: '22px', overflow: 'hidden', bgcolor: '#fff',
+                  boxShadow: '0 2px 20px rgba(39,47,80,0.08)', border: '1px solid rgba(39,47,80,0.08)',
+                  display: 'flex', flexDirection: 'column',
+                  transition: 'all 0.28s ease',
+                  '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(39,47,80,0.15)' },
+                  position: 'relative',
                 }}>
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      mx: 'auto',
-                      mb: 3,
-                      background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      boxShadow: '0 8px 25px rgba(8, 89, 70, 0.3)'
-                    }}
-                  >
-                    {tech.icon}
+                  {p.destacado && (
+                    <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 2,
+                      px: 1.5, py: 0.5, borderRadius: '8px',
+                      background: 'linear-gradient(135deg, #272F50, #085946)',
+                      boxShadow: '0 4px 12px rgba(39,47,80,0.35)' }}>
+                      <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Destacado</Typography>
+                    </Box>
+                  )}
+                  {/* Product banner */}
+                  <Box sx={{ height: 140, background: BRAND.gradient, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                    <Typography sx={{ position: 'absolute', right: 8, bottom: -8, fontSize: '4rem',
+                      fontWeight: 900, color: 'rgba(255,255,255,0.10)', letterSpacing: '-0.04em', userSelect: 'none' }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </Typography>
+                    <Hearing sx={{ color: 'rgba(255,255,255,0.90)', fontSize: 56 }} />
                   </Box>
-                  <Typography variant="h5" fontWeight={600} sx={{ mb: 2, color: '#333' }}>
-                    {tech.titulo}
-                  </Typography>
-                  <Typography variant="body1" color="#666" sx={{ lineHeight: 1.6 }}>
-                    {tech.descripcion}
-                  </Typography>
+
+                  <Box sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      <Chip label={p.categoria} size="small" sx={{ fontWeight: 700, fontSize: '0.7rem',
+                        bgcolor: 'rgba(39,47,80,0.08)', color: '#272F50', border: '1px solid rgba(39,47,80,0.18)' }} />
+                    </Box>
+                    <Typography sx={{ fontWeight: 800, fontSize: '1.0625rem', color: '#0f1923', mb: 0.75 }}>{p.nombre}</Typography>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.6, mb: 2, flexGrow: 1 }}>{p.descripcion}</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 2.5 }}>
+                      {p.caracteristicas.slice(0, 3).map((c) => (
+                        <Box key={c} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CheckCircle sx={{ fontSize: 15, color: '#085946' }} />
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568' }}>{c}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                    <Button variant="contained" fullWidth onClick={() => navigate('/agendar')}
+                      sx={{ borderRadius: '12px', fontWeight: 700,
+                        background: 'linear-gradient(135deg, #272F50, #085946)',
+                        boxShadow: '0 4px 14px rgba(39,47,80,0.25)',
+                        '&:hover': { boxShadow: '0 6px 20px rgba(39,47,80,0.35)' } }}>
+                      Solicitar información
+                    </Button>
+                  </Box>
                 </Box>
               </Grid>
             ))}
@@ -318,193 +231,86 @@ const AudifonosOticonPage = () => {
         </Container>
       </Box>
 
-      {/* Productos - Estilo ReSound */}
-      <Box sx={{ py: 12, background: 'white' }}>
+      {/* ── TECNOLOGÍAS ── */}
+      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#fff' }}>
         <Container maxWidth="lg">
-          <Typography variant="h3" textAlign="center" fontWeight={700} sx={{ mb: 8, color: '#333' }}>
-            Nuestros Productos
-          </Typography>
-          
-          <Grid container spacing={6}>
-            {productos.map((producto, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Card sx={{ 
-                  height: '100%',
-                  border: 'none',
-                  borderRadius: 3,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
-                  }
-                }}>
-                  <Box
-                    sx={{
-                      height: 250,
-                      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    <Psychology sx={{ fontSize: 120, color: '#085946' }} />
-                    
-                    {/* Elemento decorativo */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 20,
-                        right: 20,
-                        width: 50,
-                        height: 50,
-                        background: 'rgba(8, 89, 70, 0.1)',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <Bluetooth sx={{ fontSize: 24, color: '#085946' }} />
+          <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
+            <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
+              letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
+              Tecnología{' '}
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                avanzada
+              </Box>
+            </Typography>
+            <Typography sx={{ fontSize: '1rem', color: '#4a5568', maxWidth: 480, mx: 'auto' }}>
+              Innovación que se traduce en mejor calidad de vida
+            </Typography>
+          </Box>
+          <Grid container spacing={3}>
+            {tecnologias.map((t) => {
+              const Icon = t.icon;
+              return (
+                <Grid item xs={12} sm={6} md={3} key={t.titulo}>
+                  <Box sx={{ borderRadius: '22px', p: 3, height: '100%', textAlign: 'center',
+                    background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(39,47,80,0.08)', boxShadow: '0 2px 16px rgba(39,47,80,0.07)',
+                    transition: 'all 0.28s ease',
+                    '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(39,47,80,0.14)' } }}>
+                    <Box sx={{ width: 64, height: 64, borderRadius: '18px', background: t.gradient,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2,
+                      boxShadow: '0 8px 20px rgba(39,47,80,0.25)' }}>
+                      <Icon sx={{ color: '#fff', fontSize: 30 }} />
                     </Box>
+                    <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#0f1923', mb: 1 }}>{t.titulo}</Typography>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.65 }}>{t.descripcion}</Typography>
                   </Box>
-                  
-                  <CardContent sx={{ p: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                      <Chip 
-                        label={producto.categoria} 
-                        size="small" 
-                        sx={{ 
-                          background: '#085946',
-                          color: 'white',
-                          fontWeight: 600,
-                          mr: 2,
-                          borderRadius: 2
-                        }} 
-                      />
-                    </Box>
-                    
-                    <Typography variant="h5" fontWeight={600} color="#333" sx={{ mb: 2 }}>
-                      {producto.nombre}
-                    </Typography>
-                    
-                    <Typography variant="body1" color="#666" sx={{ mb: 4, lineHeight: 1.6 }}>
-                      {producto.descripcion}
-                    </Typography>
-                    
-                    <Box sx={{ mb: 4 }}>
-                      {producto.caracteristicas.map((caracteristica, idx) => (
-                        <Box key={idx} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <CheckCircle sx={{ fontSize: 18, color: '#085946', mr: 2 }} />
-                          <Typography variant="body2" color="#666" fontWeight={500}>
-                            {caracteristica}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="h5" fontWeight={700} color="#085946">
-                        {producto.precio}
-                      </Typography>
-                      <Button
-                        variant="outlined"
-                        endIcon={<ArrowForward />}
-                        sx={{
-                          borderColor: '#085946',
-                          color: '#085946',
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          px: 3,
-                          py: 1.5,
-                          borderRadius: 2,
-                          '&:hover': {
-                            background: '#085946',
-                            color: 'white',
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 15px rgba(8, 89, 70, 0.3)',
-                          }
-                        }}
-                      >
-                        Ver Detalles
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                </Grid>
+              );
+            })}
           </Grid>
         </Container>
       </Box>
 
-      {/* CTA Section - Estilo ReSound */}
-      <Box sx={{ 
-        py: 12, 
-        background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)', 
-        color: 'white',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative', zIndex: 2 }}>
-          <Typography variant="h3" fontWeight={700} sx={{ mb: 4 }}>
-            ¿Listo para una audición más natural?
+      {/* ── CTA BANNER ── */}
+      <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 8, md: 12 },
+        background:
+          'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(39,47,80,0.60) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(8,89,70,0.45) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #1a1f38 0%, #272F50 40%, #0a3d2e 80%, #085946 100%)',
+        color: '#fff' }}>
+        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
+        <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+          <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
+            letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
+            ¿Listo para escuchar{' '}
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #a5b4fc 0%, #c4b5fd 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              mejor?
+            </Box>
           </Typography>
-          <Typography variant="h6" sx={{ mb: 6, fontWeight: 400, opacity: 0.9, lineHeight: 1.6 }}>
-            Actúe ya. Podemos ayudarle a buscar un audioprotesista en su zona.
+          <Typography sx={{ fontSize: '1.125rem', color: 'rgba(255,255,255,0.78)', mb: 5, maxWidth: 500, mx: 'auto', lineHeight: 1.65 }}>
+            Un especialista de la red te orienta sobre los modelos Oticon que mejor se adaptan a tu caso.
           </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            endIcon={<ArrowForward />}
-            sx={{
-              background: 'white',
-              color: '#085946',
-              px: 8,
-              py: 3,
-              fontSize: '1.2rem',
-              fontWeight: 700,
-              textTransform: 'none',
-              borderRadius: 3,
-              boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
-              '&:hover': {
-                background: '#f8f9fa',
-                color: '#0d7a5f',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 12px 40px rgba(0,0,0,0.3)',
-              }
-            }}
-          >
-            Buscar un audioprotesista
-          </Button>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+            <Button variant="contained" size="large" endIcon={<ArrowForward />}
+              onClick={() => navigate('/agendar')}
+              sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75,
+                bgcolor: '#fff', color: '#272F50',
+                boxShadow: '0 8px 28px rgba(0,0,0,0.25)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)' },
+                transition: 'all 0.25s ease' }}>
+              Agendar valoración
+            </Button>
+            <Button variant="outlined" size="large" onClick={() => navigate('/audifonos')}
+              sx={{ borderRadius: '14px', fontWeight: 700, px: 4, py: 1.625,
+                borderColor: 'rgba(255,255,255,0.40)', color: '#fff',
+                '&:hover': { borderColor: 'rgba(255,255,255,0.70)', bgcolor: 'rgba(255,255,255,0.08)' } }}>
+              Ver más marcas
+            </Button>
+          </Stack>
         </Container>
-        
-        {/* Elementos decorativos de fondo */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -50,
-            right: -50,
-            width: 200,
-            height: 200,
-            background: 'rgba(255,255,255,0.1)',
-            borderRadius: '50%',
-            zIndex: 1
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: -100,
-            left: -100,
-            width: 300,
-            height: 300,
-            background: 'rgba(255,255,255,0.05)',
-            borderRadius: '50%',
-            zIndex: 1
-          }}
-        />
       </Box>
 
       <Footer />

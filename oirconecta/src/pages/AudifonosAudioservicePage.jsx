@@ -1,429 +1,339 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { Box, Typography, Button, Breadcrumbs, Link, Grid, Card, TextField, Checkbox, FormControlLabel, MenuItem, Select, InputLabel, FormControl, Container } from '@mui/material';
+import { Box, Typography, Button, Grid, Container, Chip, Stack } from '@mui/material';
+import { ArrowForward, CheckCircle, Bluetooth, BatteryChargingFull, Smartphone, Hearing } from '@mui/icons-material';
 
-// Imágenes de ejemplo para Audioservice
-const audioserviceLogo = '/logos/marcas/Audio-service-logo.png';
-const heroImg = 'https://www.audioservice.com/-/media/images/audioserviceus/products/nexus/nexus-hero.jpg';
-const audioserviceProduct1 = 'https://www.audioservice.com/-/media/images/audioserviceus/products/nexus/nexus-product.png';
-const audioserviceProduct2 = 'https://www.audioservice.com/-/media/images/audioserviceus/products/connect/connect-product.png';
-const audioserviceProduct3 = 'https://www.audioservice.com/-/media/images/audioserviceus/products/air/air-product.png';
+const BRAND = {
+  nombre: 'Audio Service',
+  logo: '/logos/marcas/Audio-service-logo.png',
+  eslogan: 'Claridad europea',
+  descripcion: 'Audífonos con tecnología de procesamiento avanzado, recargables y conectividad total para una experiencia auditiva personalizada. Audio Service integra precisión europea con innovación auditiva.',
+  rating: '4.7',
+  gradient: 'linear-gradient(135deg, #1a3d4a 0%, #272F50 100%)',
+  glow: 'rgba(26,61,74,0.40)',
+};
 
 const productos = [
   {
     nombre: 'Audioservice Nexus',
-    imagen: audioserviceProduct1,
     categoria: 'RIC',
-    caracteristicas: [
-      'Tecnología de procesamiento avanzado',
-      'Recargable y resistente al agua',
-      'Conectividad Bluetooth',
-      'App Audioservice Smart'
-    ],
-    tamanos: 'Mini, Estándar',
-    tecnologias: 'Nexus AI, Bluetooth, Recargable',
-  },
-  {
-    nombre: 'Audioservice Connect',
-    imagen: audioserviceProduct2,
-    categoria: 'BTE',
-    caracteristicas: [
-      'Sonido natural y claro',
-      'Recargable',
-      'App Audioservice Smart',
-      'Diseño elegante y discreto'
-    ],
-    tamanos: 'Mini, Estándar',
-    tecnologias: 'Connect, Recargable, App',
-  },
-  {
-    nombre: 'Audioservice Air',
-    imagen: audioserviceProduct3,
-    categoria: 'ITE',
-    caracteristicas: [
-      'Diseño personalizado',
-      'Conectividad avanzada',
-      'App Audioservice Smart',
-      'Sonido potente y natural'
-    ],
-    tamanos: 'Mini, Estándar',
-    tecnologias: 'Air, Bluetooth, App',
-  },
-];
-
-const categorias = [
-  {
-    nombre: 'RIC',
-    titulo: 'Receptor-en-el-canal',
-    descripcion: 'Audífonos discretos y potentes, ideales para la mayoría de las pérdidas auditivas.',
-    imagen: audioserviceProduct1,
-    cta: 'Descubra',
-    url: 'https://www.audioservice.com/es/audifonos'
-  },
-  {
-    nombre: 'BTE',
-    titulo: 'Detrás de la oreja',
-    descripcion: 'Audífonos robustos y cómodos, recomendados para pérdidas auditivas de moderadas a profundas.',
-    imagen: audioserviceProduct2,
-    cta: 'Descubra',
-    url: 'https://www.audioservice.com/es/audifonos'
-  },
-  {
-    nombre: 'ITE',
-    titulo: 'En-el-oído',
-    descripcion: 'Audífonos personalizados que se adaptan al canal auditivo, casi invisibles.',
-    imagen: audioserviceProduct3,
-    cta: 'Descubra',
-    url: 'https://www.audioservice.com/es/audifonos'
-  }
-];
-
-const modelos = [
-  {
-    nombre: 'Audioservice Nexus',
     descripcion: 'Audífono con tecnología de procesamiento avanzado, recargable y control total desde la app.',
-    imagen: audioserviceProduct1,
-    url: 'https://www.audioservice.com/es/audifonos/nexus'
+    caracteristicas: ['Nexus AI Processing', 'Bluetooth conectado', 'Batería recargable', 'App Audioservice Smart'],
+    destacado: true,
   },
   {
     nombre: 'Audioservice Connect',
+    categoria: 'BTE',
     descripcion: 'Sonido natural y claro con diseño elegante y discreto.',
-    imagen: audioserviceProduct2,
-    url: 'https://www.audioservice.com/es/audifonos/connect'
+    caracteristicas: ['Sonido natural', 'Recargable', 'App Audioservice Smart', 'Diseño discreto'],
+    destacado: false,
   },
   {
     nombre: 'Audioservice Air',
+    categoria: 'ITE',
     descripcion: 'Diseño personalizado, conectividad avanzada y sonido potente.',
-    imagen: audioserviceProduct3,
-    url: 'https://www.audioservice.com/es/audifonos/air'
-  }
+    caracteristicas: ['Diseño personalizado', 'Conectividad avanzada', 'App Audioservice Smart', 'Sonido potente'],
+    destacado: false,
+  },
 ];
 
-const beneficios = [
-  'Tecnología de procesamiento avanzado para mejor audición.',
-  'Recargables y resistentes al agua.',
-  'Conectividad Bluetooth y app Audioservice Smart.',
-  'Soluciones personalizadas y discretas.',
-  'Sonido natural y claro en cualquier ambiente.',
-  'App Audioservice Smart para control total.',
-  'Diseño elegante y discreto.',
-  'Compatibilidad con accesorios Audioservice.'
+const tecnologias = [
+  { icon: Hearing, titulo: 'Nexus AI', descripcion: 'Procesamiento avanzado para audición clara y natural', gradient: 'linear-gradient(135deg, #1a3d4a 0%, #272F50 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a todos tus dispositivos', gradient: 'linear-gradient(135deg, #272F50 0%, #1a3d4a 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Batería Recargable', descripcion: 'Comodidad sin pilas, siempre listo para usar', gradient: 'linear-gradient(135deg, #3a5f70 0%, #272F50 100%)' },
+  { icon: Smartphone, titulo: 'App Smart', descripcion: 'Control personalizado de tus audífonos desde el móvil', gradient: 'linear-gradient(135deg, #1a3d4a 0%, #1e2a5e 100%)' },
 ];
 
-const accesorios = [
-  {
-    nombre: 'Audioservice TV Streamer',
-    descripcion: 'Transmite el sonido de la TV directamente a los audífonos.',
-    icono: '📺',
-    url: '/contacto'
-  },
-  {
-    nombre: 'Audioservice Remote Microphone',
-    descripcion: 'Micrófono inalámbrico para conversaciones en ambientes ruidosos.',
-    icono: '🎤',
-    url: '/contacto'
-  },
-  {
-    nombre: 'App Audioservice Smart',
-    descripcion: 'Control total de los audífonos desde el móvil.',
-    icono: '📱',
-    url: '/contacto'
-  }
-];
-
-const accesoriosDetallados = [
-  {
-    nombre: 'Cargador Audioservice',
-    descripcion: 'Cargador rápido y elegante para audífonos recargables Audioservice.',
-    icono: '🔋',
-    url: '/contacto'
-  },
-  {
-    nombre: 'Micrófono remoto',
-    descripcion: 'Mejora la audición en ambientes ruidosos.',
-    icono: '🎙️',
-    url: '/contacto'
-  },
-  {
-    nombre: 'Pilas y consumibles',
-    descripcion: 'Pilas y repuestos originales Audioservice.',
-    icono: '🔋',
-    url: '/contacto'
-  }
-];
-
-export default function AudifonosAudioservicePage() {
-  const [productoInteres, setProductoInteres] = useState(productos[0].nombre);
-  const [tipoConsulta, setTipoConsulta] = useState('Información');
-  const [aceptaTerminos, setAceptaTerminos] = useState(false);
-  const [aceptaInfo, setAceptaInfo] = useState(false);
-
+const AudifonosAudioservicePage = () => {
+  const navigate = useNavigate();
   return (
     <>
+      <Helmet>
+        <title>Audífonos Audio Service - OírConecta | Claridad europea</title>
+        <meta name="description" content="Descubre los audífonos Audio Service con tecnología avanzada. Nexus, Connect y Air con conectividad Bluetooth y diseño discreto." />
+        <link rel="canonical" href="https://oirconecta.com/audifonos/audioservice" />
+      </Helmet>
       <Header />
-      <Box sx={{ bgcolor: '#f8fafc', minHeight: '100vh', pt: 12, pb: 0 }}>
-        <Container maxWidth="lg">
-          {/* HERO SECTION */}
-          <Box sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 6,
-            mb: 8,
-            p: { xs: 2, md: 4 },
-            borderRadius: 6,
-            boxShadow: '0 8px 32px rgba(8,89,70,0.10)',
-            background: 'linear-gradient(120deg, #fff 60%, #e6f4ee 100%)'
-          }}>
-            <Box sx={{ flex: 1, minWidth: 300 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <img src={audioserviceLogo} alt="Audioservice Logo" style={{ height: 60, marginRight: 18 }} />
-                <Typography variant="h3" fontWeight={800} color="#272F50" sx={{ letterSpacing: -1 }}>
-                  Descubre Audioservice en Oir Conecta
-                </Typography>
+
+      {/* ── HERO ── */}
+      <Box sx={{
+        position: 'relative', overflow: 'hidden', minHeight: { xs: 'auto', md: '80vh' },
+        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        background:
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(26,61,74,0.55) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.65) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #0d2230 0%, #1a3d4a 35%, #1e2a4a 70%, #272F50 100%)',
+        color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
+      }}>
+        {/* Grain */}
+        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.40, pointerEvents: 'none',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
+        {/* Decorative circles */}
+        {[{ s: 500, top: '-15%', right: '-8%' }, { s: 300, bottom: '5%', left: '-5%' }].map((c, i) => (
+          <Box key={i} sx={{ position: 'absolute', width: c.s, height: c.s, borderRadius: '50%',
+            border: '1px solid rgba(255,255,255,0.06)', top: c.top, bottom: c.bottom, right: c.right, left: c.left, pointerEvents: 'none' }} />
+        ))}
+
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+          <Grid container spacing={6} alignItems="center">
+            <Grid item xs={12} md={6}>
+              {/* Breadcrumb chip */}
+              <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+                <Chip label="Inicio" size="small" onClick={() => navigate('/')}
+                  sx={{ bgcolor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer', fontWeight: 600 }} />
+                <Chip label="Audífonos" size="small" onClick={() => navigate('/audifonos')}
+                  sx={{ bgcolor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer', fontWeight: 600 }} />
+                <Chip label="Audio Service" size="small"
+                  sx={{ bgcolor: 'rgba(255,255,255,0.20)', color: '#fff', border: '1px solid rgba(255,255,255,0.30)', fontWeight: 700 }} />
               </Box>
-              <Typography variant="h5" color="#272F50" mb={3} fontWeight={400}>
-                Audífonos con tecnología de procesamiento avanzado, recargables y conectividad total para una experiencia auditiva personalizada.
-              </Typography>
-              <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
-                <Link underline="hover" color="inherit" href="/">
-                  Inicio
-                </Link>
-                <Link underline="hover" color="inherit" href="/audifonos">
-                  Audífonos
-                </Link>
-                <Typography color="#272F50">Audioservice</Typography>
-              </Breadcrumbs>
-              <Button variant="contained" size="large" sx={{ mt: 1, px: 5, py: 1.5, fontWeight: 700, fontSize: 18, borderRadius: 3, bgcolor: '#005B9F', boxShadow: '0 2px 8px rgba(8,89,70,0.10)' }} href="#formulario">
-                Solicitar Información
-              </Button>
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 320, display: 'flex', justifyContent: 'center' }}>
-              <img src={heroImg} alt="Audífono Audioservice principal" style={{ width: '100%', maxWidth: 420, borderRadius: 32, boxShadow: '0 8px 32px rgba(8,89,70,0.10)' }} />
-            </Box>
-          </Box>
 
-          {/* PROPUESTA DE VALOR Y MISIÓN */}
-          <Box sx={{ mb: 8, textAlign: 'center' }}>
-            <Typography variant="h2" fontWeight={800} color="#272F50" mb={2}>
-              Audición inteligente con Audioservice
-            </Typography>
-            <Typography variant="h5" color="#085946" mb={2}>
-              Audioservice integra tecnología de procesamiento avanzado, conectividad y diseño para que vivas cada momento con claridad y confianza.
-            </Typography>
-            <Typography variant="h6" color="#272F50" fontWeight={600}>
-              Nexus, Connect y app Audioservice Smart para cada necesidad auditiva.
-            </Typography>
-          </Box>
+              {/* Logo */}
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 1.5,
+                borderRadius: '18px', background: 'rgba(255,255,255,0.95)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.20)', mb: 3 }}>
+                <img src={BRAND.logo} alt="Audio Service" style={{ height: 48, objectFit: 'contain' }} />
+              </Box>
 
-          {/* CATEGORÍAS DE AUDÍFONOS */}
-          <Box sx={{ mb: 8 }}>
-            <Typography variant="h4" fontWeight={700} color="#272F50" mb={4} textAlign="center">
-              Categorías de audífonos Audioservice
-            </Typography>
-            <Grid container spacing={4} justifyContent="center">
-              {categorias.map((cat, idx) => (
-                <Grid item xs={12} sm={6} md={4} key={idx}>
-                  <Card sx={{ borderRadius: 6, boxShadow: '0 4px 24px rgba(8,89,70,0.10)', p: 2, bgcolor: '#fff', minHeight: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src={cat.imagen} alt={cat.nombre} style={{ height: 90, marginBottom: 18 }} />
-                    <Typography variant="h6" fontWeight={700} color="#272F50" mb={1}>{cat.titulo}</Typography>
-                    <Typography variant="body2" color="#085946" mb={2} textAlign="center">{cat.descripcion}</Typography>
-                    <Button variant="outlined" href={cat.url} target="_blank" sx={{ borderColor: '#005B9F', color: '#005B9F', fontWeight: 600, borderRadius: 2 }}>{cat.cta}</Button>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-
-          {/* MODELOS DESTACADOS */}
-          <Box sx={{ mb: 8 }}>
-            <Typography variant="h4" fontWeight={700} color="#272F50" mb={4} textAlign="center">
-              Modelos destacados
-            </Typography>
-            <Grid container spacing={4} justifyContent="center">
-              {modelos.map((mod, idx) => (
-                <Grid item xs={12} sm={6} md={4} key={idx}>
-                  <Card sx={{ borderRadius: 6, boxShadow: '0 4px 24px rgba(8,89,70,0.10)', p: 2, bgcolor: '#fff', minHeight: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src={mod.imagen} alt={mod.nombre} style={{ height: 90, marginBottom: 18 }} />
-                    <Typography variant="h6" fontWeight={700} color="#272F50" mb={1}>{mod.nombre}</Typography>
-                    <Typography variant="body2" color="#085946" mb={2} textAlign="center">{mod.descripcion}</Typography>
-                    <Button variant="outlined" href={mod.url} target="_blank" sx={{ borderColor: '#005B9F', color: '#005B9F', fontWeight: 600, borderRadius: 2 }}>Ver más</Button>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-
-          {/* BENEFICIOS Y TECNOLOGÍAS (CARRUSEL) */}
-          <Box sx={{ mb: 8, p: { xs: 2, md: 4 }, borderRadius: 6, bgcolor: '#fff', boxShadow: '0 2px 16px rgba(8,89,70,0.06)' }}>
-            <Typography variant="h4" fontWeight={700} color="#272F50" mb={4} textAlign="center">
-              Beneficios y tecnologías Audioservice
-            </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                overflowX: 'auto',
-                gap: 3,
-                scrollSnapType: 'x mandatory',
-                pb: 2,
-                px: 1,
-                '::-webkit-scrollbar': { display: 'none' }
-              }}
-            >
-              {beneficios.map((benef, idx) => (
-                <Box
-                  key={idx}
-                  sx={{
-                    minWidth: { xs: 260, sm: 320 },
-                    maxWidth: 340,
-                    flex: '0 0 auto',
-                    bgcolor: '#f8fafc',
-                    borderRadius: 4,
-                    p: 3,
-                    boxShadow: '0 1px 8px rgba(8,89,70,0.06)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 18,
-                    color: '#272F50',
-                    scrollSnapAlign: 'center',
-                    textAlign: 'center',
-                    transition: 'background 0.3s, color 0.3s',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      bgcolor: '#005B9F',
-                      color: '#fff',
-                    },
-                  }}
-                >
-                  {benef}
+              <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
+                letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
+                Audífonos{' '}
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  Audio Service
                 </Box>
-              ))}
-            </Box>
-          </Box>
+              </Typography>
+              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#93c5fd', mb: 2.5, letterSpacing: '-0.01em' }}>
+                {BRAND.eslogan}
+              </Typography>
+              <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, mb: 4, maxWidth: 480 }}>
+                {BRAND.descripcion}
+              </Typography>
 
-          {/* ACCESORIOS Y APPS */}
-          <Box sx={{ mb: 8 }}>
-            <Typography variant="h4" fontWeight={700} color="#272F50" mb={4} textAlign="center">
-              Accesorios y aplicaciones Audioservice
-            </Typography>
-            <Grid container spacing={4} justifyContent="center">
-              {accesorios.map((acc, idx) => (
-                <Grid item xs={12} sm={6} md={4} key={idx}>
-                  <Card sx={{ borderRadius: 6, boxShadow: '0 4px 24px rgba(8,89,70,0.10)', p: 2, bgcolor: '#fff', minHeight: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <Typography fontSize={40} mb={1}>{acc.icono}</Typography>
-                    <Typography variant="h6" fontWeight={700} color="#272F50" mb={1}>{acc.nombre}</Typography>
-                    <Typography variant="body2" color="#085946" mb={2} textAlign="center">{acc.descripcion}</Typography>
-                    <Button variant="outlined" href={acc.url} sx={{ borderColor: '#005B9F', color: '#005B9F', fontWeight: 600, borderRadius: 2 }}>Más información</Button>
-                  </Card>
-                </Grid>
-              ))}
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <Button variant="contained" size="large" endIcon={<ArrowForward />}
+                  onClick={() => navigate('/agendar')}
+                  sx={{ borderRadius: '14px', fontWeight: 800, px: 3.5, py: 1.75, fontSize: '1rem',
+                    bgcolor: '#fff', color: '#1a3d4a',
+                    boxShadow: '0 8px 28px rgba(0,0,0,0.20)',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)', boxShadow: '0 12px 36px rgba(0,0,0,0.28)' },
+                    transition: 'all 0.25s ease' }}>
+                  Solicitar cita
+                </Button>
+                <Button variant="outlined" size="large" onClick={() => navigate('/contacto')}
+                  sx={{ borderRadius: '14px', fontWeight: 700, px: 3, py: 1.625, fontSize: '1rem',
+                    borderColor: 'rgba(255,255,255,0.40)', color: '#fff',
+                    backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.08)',
+                    '&:hover': { borderColor: 'rgba(255,255,255,0.70)', background: 'rgba(255,255,255,0.15)' } }}>
+                  Más información
+                </Button>
+              </Stack>
             </Grid>
-          </Box>
 
-          {/* ACCESORIOS DETALLADOS AUDIOSERVICE */}
-          <Box sx={{ mb: 8 }}>
-            <Typography variant="h4" fontWeight={700} color="#272F50" mb={4} textAlign="center">
-              Accesorios oficiales Audioservice
-            </Typography>
-            <Grid container spacing={4} justifyContent="center">
-              {accesoriosDetallados.map((acc, idx) => (
-                <Grid item xs={12} sm={6} md={4} key={idx}>
-                  <Card sx={{ borderRadius: 6, boxShadow: '0 4px 24px rgba(8,89,70,0.10)', p: 2, bgcolor: '#fff', minHeight: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <Typography fontSize={40} mb={1}>{acc.icono}</Typography>
-                    <Typography variant="h6" fontWeight={700} color="#272F50" mb={1}>{acc.nombre}</Typography>
-                    <Typography variant="body2" color="#085946" mb={2} textAlign="center">{acc.descripcion}</Typography>
-                    <Button variant="outlined" href={acc.url} sx={{ borderColor: '#005B9F', color: '#005B9F', fontWeight: 600, borderRadius: 2 }}>Más información</Button>
-                  </Card>
-                </Grid>
-              ))}
+            {/* Right — visual brand card */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Box sx={{ borderRadius: '28px', overflow: 'hidden', width: '100%', maxWidth: 440,
+                  background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.20)',
+                  boxShadow: '0 32px 80px rgba(0,0,0,0.30)', p: 4 }}>
+                  {/* Brand logo large */}
+                  <Box sx={{ borderRadius: '20px', bgcolor: '#fff', p: 3, mb: 3, textAlign: 'center' }}>
+                    <img src={BRAND.logo} alt="Audio Service" style={{ height: 80, objectFit: 'contain' }} />
+                  </Box>
+                  {/* Stats */}
+                  <Grid container spacing={2}>
+                    {[
+                      { value: BRAND.rating, label: 'Rating' },
+                      { value: `${productos.length}`, label: 'Modelos' },
+                      { value: '30h', label: 'Batería máx.' },
+                      { value: 'BT 5.0', label: 'Conectividad' },
+                    ].map((s) => (
+                      <Grid item xs={6} key={s.label}>
+                        <Box sx={{ borderRadius: '14px', p: 2, background: 'rgba(255,255,255,0.10)',
+                          border: '1px solid rgba(255,255,255,0.15)', textAlign: 'center' }}>
+                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#93c5fd', letterSpacing: '-0.02em' }}>{s.value}</Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>{s.label}</Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              </Box>
             </Grid>
-          </Box>
+          </Grid>
+        </Container>
 
-          {/* PRUEBA DE AUDICIÓN ONLINE */}
-          <Box sx={{ mb: 8, textAlign: 'center' }}>
-            <Button variant="contained" size="large" href="https://www.audioservice.com/es/audifonos/hearing-test" target="_blank" sx={{ bgcolor: '#005B9F', px: 6, py: 2, fontWeight: 700, fontSize: 20, borderRadius: 3, boxShadow: '0 2px 8px rgba(8,89,70,0.10)' }}>
-              Realizar prueba de audición online
-            </Button>
-          </Box>
+        {/* Wave bottom */}
+        <Box sx={{ position: 'relative', mt: { xs: 6, md: 8 }, lineHeight: 0, flexShrink: 0 }}>
+          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', width: '100%' }}>
+            <path d="M0 80L48 66C96 53 192 26 288 20C384 13 480 26 576 33C672 40 768 40 864 33C960 26 1056 13 1152 13C1248 13 1344 26 1392 33L1440 40V80H0Z" fill="#f0f4f8"/>
+          </svg>
+        </Box>
+      </Box>
 
-          {/* ENLACES ÚTILES */}
-          <Box sx={{ mb: 8, textAlign: 'center' }}>
-            <Typography variant="body2" color="#085946" mb={2}>
-              Más información y recursos oficiales:
+      {/* ── PRODUCTOS ── */}
+      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#f0f4f8' }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
+            <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
+              letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
+              Línea de{' '}
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #1a3d4a 0%, #272F50 100%)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                productos
+              </Box>
             </Typography>
-            <Button variant="text" href="https://www.audioservice.com/es/audifonos" target="_blank" sx={{ color: '#005B9F', fontWeight: 600, fontSize: 16 }}>
-              Página oficial de audífonos Audioservice
-            </Button>
+            <Typography sx={{ fontSize: '1rem', color: '#4a5568', maxWidth: 520, mx: 'auto' }}>
+              Modelos disponibles a través de los especialistas de la red OírConecta
+            </Typography>
           </Box>
 
-          {/* FORMULARIO DE CONTACTO */}
-          <Box id="formulario" sx={{ mb: 8, p: { xs: 2, md: 4 }, borderRadius: 6, bgcolor: '#fff', boxShadow: '0 2px 16px rgba(8,89,70,0.06)' }}>
-            <Typography variant="h4" fontWeight={700} color="#272F50" mb={4} textAlign="center">
-              Solicitar información sobre Audioservice
-            </Typography>
-            <Box component="form" sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="Nombre" fullWidth required variant="outlined" />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="Email" type="email" fullWidth required variant="outlined" />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="Teléfono" fullWidth required variant="outlined" />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="Ciudad" fullWidth required variant="outlined" />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Producto de interés</InputLabel>
-                    <Select value={productoInteres} onChange={e => setProductoInteres(e.target.value)} label="Producto de interés">
-                      {productos.map((prod, idx) => (
-                        <MenuItem value={prod.nombre} key={idx}>{prod.nombre}</MenuItem>
+          <Grid container spacing={3}>
+            {productos.map((p, i) => (
+              <Grid item xs={12} sm={6} md={4} key={i}>
+                <Box sx={{ height: '100%', borderRadius: '22px', overflow: 'hidden', bgcolor: '#fff',
+                  boxShadow: '0 2px 20px rgba(26,61,74,0.08)', border: '1px solid rgba(26,61,74,0.08)',
+                  display: 'flex', flexDirection: 'column',
+                  transition: 'all 0.28s ease',
+                  '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(26,61,74,0.15)' },
+                  position: 'relative',
+                }}>
+                  {p.destacado && (
+                    <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 2,
+                      px: 1.5, py: 0.5, borderRadius: '8px',
+                      background: 'linear-gradient(135deg,#1a3d4a,#272F50)',
+                      boxShadow: '0 4px 12px rgba(26,61,74,0.35)' }}>
+                      <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Destacado</Typography>
+                    </Box>
+                  )}
+                  {/* Product banner */}
+                  <Box sx={{ height: 140, background: BRAND.gradient, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                    <Typography sx={{ position: 'absolute', right: 8, bottom: -8, fontSize: '4rem',
+                      fontWeight: 900, color: 'rgba(255,255,255,0.10)', letterSpacing: '-0.04em', userSelect: 'none' }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </Typography>
+                    <Hearing sx={{ color: 'rgba(255,255,255,0.90)', fontSize: 56 }} />
+                  </Box>
+
+                  <Box sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      <Chip label={p.categoria} size="small" sx={{ fontWeight: 700, fontSize: '0.7rem',
+                        bgcolor: 'rgba(26,61,74,0.08)', color: '#1a3d4a', border: '1px solid rgba(26,61,74,0.18)' }} />
+                    </Box>
+                    <Typography sx={{ fontWeight: 800, fontSize: '1.0625rem', color: '#0f1923', mb: 0.75 }}>{p.nombre}</Typography>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.6, mb: 2, flexGrow: 1 }}>{p.descripcion}</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 2.5 }}>
+                      {p.caracteristicas.slice(0, 3).map((c) => (
+                        <Box key={c} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CheckCircle sx={{ fontSize: 15, color: '#1a3d4a' }} />
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568' }}>{c}</Typography>
+                        </Box>
                       ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Tipo de consulta</InputLabel>
-                    <Select value={tipoConsulta} onChange={e => setTipoConsulta(e.target.value)} label="Tipo de consulta">
-                      <MenuItem value="Información">Información</MenuItem>
-                      <MenuItem value="Cotización">Cotización</MenuItem>
-                      <MenuItem value="Cita">Cita</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField label="Mensaje" multiline rows={3} fullWidth variant="outlined" />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={<Checkbox checked={aceptaTerminos} onChange={e => setAceptaTerminos(e.target.checked)} />}
-                    label="Acepto términos de Oir Conecta"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox checked={aceptaInfo} onChange={e => setAceptaInfo(e.target.checked)} />}
-                    label="Deseo recibir información de Oir Conecta"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Button variant="contained" color="primary" size="large" sx={{ bgcolor: '#005B9F', borderRadius: 3, fontWeight: 700, fontSize: 18, px: 5, py: 1.5 }}>
-                    Enviar solicitud
-                  </Button>
-                </Grid>
+                    </Box>
+                    <Button variant="contained" fullWidth onClick={() => navigate('/agendar')}
+                      sx={{ borderRadius: '12px', fontWeight: 700,
+                        background: 'linear-gradient(135deg,#1a3d4a,#272F50)',
+                        boxShadow: '0 4px 14px rgba(26,61,74,0.25)',
+                        '&:hover': { boxShadow: '0 6px 20px rgba(26,61,74,0.35)' } }}>
+                      Solicitar información
+                    </Button>
+                  </Box>
+                </Box>
               </Grid>
-            </Box>
-          </Box>
+            ))}
+          </Grid>
         </Container>
       </Box>
-      
+
+      {/* ── TECNOLOGÍAS ── */}
+      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#fff' }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
+            <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
+              letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
+              Tecnología{' '}
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #1a3d4a 0%, #272F50 100%)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                avanzada
+              </Box>
+            </Typography>
+            <Typography sx={{ fontSize: '1rem', color: '#4a5568', maxWidth: 480, mx: 'auto' }}>
+              Innovación que se traduce en mejor calidad de vida
+            </Typography>
+          </Box>
+          <Grid container spacing={3}>
+            {tecnologias.map((t) => {
+              const Icon = t.icon;
+              return (
+                <Grid item xs={12} sm={6} md={3} key={t.titulo}>
+                  <Box sx={{ borderRadius: '22px', p: 3, height: '100%', textAlign: 'center',
+                    background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(26,61,74,0.08)', boxShadow: '0 2px 16px rgba(26,61,74,0.07)',
+                    transition: 'all 0.28s ease',
+                    '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(26,61,74,0.14)' } }}>
+                    <Box sx={{ width: 64, height: 64, borderRadius: '18px', background: t.gradient,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2,
+                      boxShadow: '0 8px 20px rgba(26,61,74,0.25)' }}>
+                      <Icon sx={{ color: '#fff', fontSize: 30 }} />
+                    </Box>
+                    <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#0f1923', mb: 1 }}>{t.titulo}</Typography>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.65 }}>{t.descripcion}</Typography>
+                  </Box>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* ── CTA BANNER ── */}
+      <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 8, md: 12 },
+        background:
+          'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(26,61,74,0.50) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(39,47,80,0.60) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #0d2230 0%, #1a3d4a 40%, #1e2a4a 80%, #272F50 100%)',
+        color: '#fff' }}>
+        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
+        <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+          <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
+            letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
+            ¿Listo para escuchar{' '}
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              mejor?
+            </Box>
+          </Typography>
+          <Typography sx={{ fontSize: '1.125rem', color: 'rgba(255,255,255,0.78)', mb: 5, maxWidth: 500, mx: 'auto', lineHeight: 1.65 }}>
+            Un especialista de la red te orienta sobre los modelos Audio Service que mejor se adaptan a tu caso.
+          </Typography>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+            <Button variant="contained" size="large" endIcon={<ArrowForward />}
+              onClick={() => navigate('/agendar')}
+              sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75,
+                bgcolor: '#fff', color: '#1a3d4a',
+                boxShadow: '0 8px 28px rgba(0,0,0,0.25)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)' },
+                transition: 'all 0.25s ease' }}>
+              Agendar valoración
+            </Button>
+            <Button variant="outlined" size="large" onClick={() => navigate('/audifonos')}
+              sx={{ borderRadius: '14px', fontWeight: 700, px: 4, py: 1.625,
+                borderColor: 'rgba(255,255,255,0.40)', color: '#fff',
+                '&:hover': { borderColor: 'rgba(255,255,255,0.70)', bgcolor: 'rgba(255,255,255,0.08)' } }}>
+              Ver más marcas
+            </Button>
+          </Stack>
+        </Container>
+      </Box>
+
       <Footer />
     </>
   );
-} 
+};
+
+export default AudifonosAudioservicePage;

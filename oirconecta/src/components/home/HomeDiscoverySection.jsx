@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Container, Typography, Grid, Card, CardActionArea, CardContent, Stack, Chip } from '@mui/material';
+import { Box, Container, Typography, Grid } from '@mui/material';
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import GraphicEqOutlinedIcon from '@mui/icons-material/GraphicEqOutlined';
 import CoPresentOutlinedIcon from '@mui/icons-material/CoPresentOutlined';
@@ -10,93 +10,131 @@ const tiles = [
   {
     kicker: 'Audífonos',
     title: 'Descubrir marcas y estilos',
-    text: 'Orientación para comparar con calma, sin sensación de catálogo frío.',
+    text: 'Orientación para comparar con calma. 13 marcas explicadas sin sensación de catálogo frío.',
     to: '/audifonos',
     icon: GraphicEqOutlinedIcon,
-    accent: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+    gradient: 'linear-gradient(160deg, #063c2c 0%, #085946 50%, #0d7a5f 100%)',
+    stat: '13+',
+    statLabel: 'marcas',
   },
   {
-    kicker: 'Implantes',
+    kicker: 'Implantes cocleares',
     title: 'Explorar opciones cocleares',
-    text: 'Rutas y fabricantes, explicados como primer paso —no como venta cerrada.',
+    text: 'Rutas y fabricantes líderes, explicados como primer paso — no como venta cerrada.',
     to: '/implantes',
     icon: CoPresentOutlinedIcon,
-    accent: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
+    gradient: 'linear-gradient(160deg, #1a1f38 0%, #272F50 50%, #1a3d5c 100%)',
+    stat: '3',
+    statLabel: 'fabricantes',
   },
   {
     kicker: 'Referencia y tienda',
     title: 'Precios orientativos y accesorios',
-    text: 'Transparencia para conversar mejor con tu especialista; lo clínico sigue siendo personal.',
+    text: 'Transparencia para conversar mejor con tu especialista. Lo clínico sigue siendo personal.',
     to: '/ecommerce',
     icon: StorefrontOutlinedIcon,
-    accent: 'linear-gradient(135deg, #71A095 0%, #1e2438 100%)',
+    gradient: 'linear-gradient(160deg, #2d4a44 0%, #71A095 50%, #085946 100%)',
+    stat: '100+',
+    statLabel: 'productos',
   },
 ];
 
 export default function HomeDiscoverySection() {
   return (
-    <Box component="section" aria-labelledby="heading-explorar" sx={{ py: { xs: 7, md: 9 }, bgcolor: 'background.default' }}>
+    <Box component="section" aria-labelledby="heading-explorar"
+      sx={{ py: { xs: 8, md: 12 }, background: 'linear-gradient(180deg, #f4f9f7 0%, #fff 100%)' }}>
       <Container maxWidth="lg">
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
-          <Chip label="Exploración guiada" size="small" sx={{ fontWeight: 600, bgcolor: 'rgba(8, 89, 70, 0.1)', color: 'primary.main' }} />
-        </Stack>
-        <Typography id="heading-explorar" component="h2" variant="h3" sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.02em' }}>
-          Explorar con intención
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: { xs: 4, md: 5 }, maxWidth: 680, lineHeight: 1.65, fontSize: '1.0625rem' }}>
-          Aquí no “compras en un clic”. Te acercamos a marcas, dispositivos y contexto para que llegues a tu cita sabiendo qué preguntar.
-        </Typography>
+        {/* Header */}
+        <Box sx={{ mb: { xs: 6, md: 8 } }}>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 0.75,
+            borderRadius: '20px', background: 'rgba(8,89,70,0.08)', border: '1px solid rgba(8,89,70,0.15)', mb: 2.5 }}>
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#085946' }}>
+              Exploración guiada
+            </Typography>
+          </Box>
+          <Typography id="heading-explorar" component="h2"
+            sx={{ fontSize: { xs: '2rem', md: '3rem' }, fontWeight: 900, letterSpacing: '-0.03em',
+              lineHeight: 1.1, color: '#0f1923', mb: 1.5, maxWidth: 700 }}>
+            Explora con{' '}
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              intención
+            </Box>
+          </Typography>
+          <Typography sx={{ fontSize: '1.0625rem', color: '#4a5568', maxWidth: 580, lineHeight: 1.65 }}>
+            Aquí no "compras en un clic". Te acercamos a marcas, dispositivos y contexto para que llegues a tu cita sabiendo qué preguntar.
+          </Typography>
+        </Box>
 
+        {/* Large graphic tiles */}
         <Grid container spacing={3}>
           {tiles.map((t) => {
             const Icon = t.icon;
             return (
               <Grid item xs={12} md={4} key={t.to}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    height: '100%',
-                    borderRadius: 3,
-                    overflow: 'hidden',
-                    border: '1px solid',
-                    borderColor: 'rgba(39, 47, 80, 0.08)',
-                    transition: 'box-shadow 0.2s ease, transform 0.2s ease',
-                    '&:hover': { boxShadow: '0 14px 44px rgba(30, 36, 56, 0.1)', transform: 'translateY(-2px)' },
-                  }}
-                >
-                  <CardActionArea component={RouterLink} to={t.to} sx={{ height: '100%', alignItems: 'stretch' }}>
-                    <Box sx={{ height: 6, background: t.accent }} aria-hidden />
-                    <CardContent sx={{ p: { xs: 2.5, sm: 3 }, height: '100%' }}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: 2,
-                            bgcolor: 'rgba(8, 89, 70, 0.08)',
-                            color: 'primary.main',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                          aria-hidden
-                        >
-                          <Icon />
-                        </Box>
-                        <ArrowOutwardRoundedIcon sx={{ color: 'text.secondary', opacity: 0.7 }} aria-hidden />
-                      </Stack>
-                      <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 700, letterSpacing: '0.1em' }}>
+                <Box component={RouterLink} to={t.to} sx={{
+                  display: 'block', textDecoration: 'none', height: '100%',
+                  borderRadius: '24px', overflow: 'hidden',
+                  background: t.gradient,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                  transition: 'all 0.32s cubic-bezier(0.4,0,0.2,1)',
+                  '&:hover': { transform: 'translateY(-8px)', boxShadow: '0 24px 60px rgba(0,0,0,0.28)' },
+                  '&:hover .arrow-icon': { transform: 'translate(4px,-4px)' },
+                  position: 'relative',
+                }}>
+                  {/* Grain overlay */}
+                  <Box sx={{ position: 'absolute', inset: 0, opacity: 0.3, pointerEvents: 'none',
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E")` }} />
+
+                  {/* Stat watermark */}
+                  <Typography sx={{
+                    position: 'absolute', right: 20, top: 20,
+                    fontSize: '4.5rem', fontWeight: 900, letterSpacing: '-0.04em',
+                    color: 'rgba(255,255,255,0.10)', lineHeight: 1, userSelect: 'none',
+                  }}>
+                    {t.stat}
+                  </Typography>
+
+                  <Box sx={{ p: { xs: 3, md: 3.5 }, position: 'relative', zIndex: 1, minHeight: 300,
+                    display: 'flex', flexDirection: 'column' }}>
+                    {/* Kicker */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 'auto' }}>
+                      <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em',
+                        textTransform: 'uppercase', color: 'rgba(255,255,255,0.70)' }}>
                         {t.kicker}
                       </Typography>
-                      <Typography component="h3" variant="h6" sx={{ fontWeight: 700, mt: 0.5, mb: 1.5 }}>
+                      <ArrowOutwardRoundedIcon className="arrow-icon"
+                        sx={{ color: 'rgba(255,255,255,0.70)', fontSize: 20, transition: 'transform 0.2s ease' }} />
+                    </Box>
+
+                    {/* Icon */}
+                    <Box sx={{ width: 64, height: 64, borderRadius: '20px',
+                      background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      backdropFilter: 'blur(10px)', my: 3 }}>
+                      <Icon sx={{ color: '#fff', fontSize: 32 }} />
+                    </Box>
+
+                    {/* Title & text */}
+                    <Box>
+                      <Typography sx={{ fontWeight: 900, fontSize: '1.375rem', color: '#fff',
+                        letterSpacing: '-0.02em', lineHeight: 1.2, mb: 1.5 }}>
                         {t.title}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.65 }}>
+                      <Typography sx={{ fontSize: '0.9375rem', color: 'rgba(255,255,255,0.80)',
+                        lineHeight: 1.65, mb: 2.5 }}>
                         {t.text}
                       </Typography>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
+                      {/* Stat badge */}
+                      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1,
+                        px: 1.5, py: 0.625, borderRadius: '10px',
+                        background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}>
+                        <Typography sx={{ fontWeight: 900, fontSize: '1.125rem', color: '#fff' }}>{t.stat}</Typography>
+                        <Typography sx={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.80)', fontWeight: 600 }}>{t.statLabel}</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
               </Grid>
             );
           })}
