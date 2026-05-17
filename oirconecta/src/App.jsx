@@ -185,7 +185,7 @@ export default function App() {
           </Route>
 
           {/* Portal Administración del sitio */}
-          <Route path="/portal-admin" element={<AdminLayout />}>
+          <Route path="/portal-admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
             <Route index element={<AdminDashboardPage />} />
             <Route path="blog" element={<AdminBlogPage />} />
             <Route path="profesionales" element={<AdminProfesionalesPage />} />

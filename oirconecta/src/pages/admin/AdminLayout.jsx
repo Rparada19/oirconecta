@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Outlet, useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -19,7 +19,7 @@ import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { getToken, clearToken } from '../../services/apiClient';
+import { clearToken } from '../../services/apiClient';
 
 const SIDEBAR_WIDTH = 240;
 
@@ -38,13 +38,6 @@ const navItems = [
 export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      navigate('/login-crm', { replace: true });
-    }
-  }, [navigate]);
 
   const handleLogout = () => {
     clearToken();
