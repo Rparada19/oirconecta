@@ -75,7 +75,10 @@ export default function LoginDirectorioPage() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #085946 0%, #0a6b56 50%, #272F50 100%)',
+        background:
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.42) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #063c2c 0%, #085946 35%, #1a2240 70%, #272F50 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -83,7 +86,9 @@ export default function LoginDirectorioPage() {
       }}
     >
       <Container maxWidth="sm">
-        <Paper elevation={6} sx={{ p: { xs: 3, sm: 4 }, borderRadius: 2 }}>
+        <Paper elevation={0} sx={{ p: { xs: 3, sm: 4 }, borderRadius: '22px',
+          background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255,255,255,0.80)', boxShadow: '0 20px 60px rgba(0,0,0,0.20)' }}>
           <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 700, color: '#085946' }}>
             Directorio — acceso profesionales
           </Typography>

@@ -439,40 +439,125 @@ const DashboardPage = () => {
     }
   };
 
+  const KPI_CARDS = [
+    {
+      label: 'Leads Totales',
+      value: leads.length,
+      icon: TrendingUp,
+      gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+      glow: 'rgba(249,115,22,0.22)',
+      action: { label: 'Ver Leads', path: '/portal-crm/leads' },
+    },
+    {
+      label: 'Citas Totales',
+      value: citasFiltradas.length,
+      icon: CalendarToday,
+      gradient: 'linear-gradient(135deg, #0d7a5c 0%, #085946 100%)',
+      glow: 'rgba(8,89,70,0.22)',
+      filter: (
+        <FormControl fullWidth size="small" sx={{ mt: 1.5 }}>
+          <Select value={citasPeriodo} onChange={(e) => setCitasPeriodo(e.target.value)}
+            sx={{ borderRadius: '10px', fontSize: '0.8125rem',
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(8,89,70,0.25)' } }}>
+            <MenuItem value="day">Hoy</MenuItem>
+            <MenuItem value="week">Esta Semana</MenuItem>
+            <MenuItem value="month">Este Mes</MenuItem>
+            <MenuItem value="year">Este Año</MenuItem>
+          </Select>
+        </FormControl>
+      ),
+    },
+    {
+      label: 'Citas Hoy',
+      value: citasHoy,
+      icon: Schedule,
+      gradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+      glow: 'rgba(2,132,199,0.22)',
+    },
+    {
+      label: 'Pacientes',
+      value: getPacientesStats(),
+      icon: People,
+      gradient: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
+      glow: 'rgba(124,58,237,0.22)',
+      filter: (
+        <FormControl fullWidth size="small" sx={{ mt: 1.5 }}>
+          <Select value={pacientesFiltro} onChange={(e) => setPacientesFiltro(e.target.value)}
+            sx={{ borderRadius: '10px', fontSize: '0.8125rem',
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(124,58,237,0.25)' } }}>
+            <MenuItem value="todos">Todos</MenuItem>
+            <MenuItem value="agendados">Agendados</MenuItem>
+            <MenuItem value="atendidos">Atendidos</MenuItem>
+            <MenuItem value="no-atendidos">No Atendidos</MenuItem>
+            <MenuItem value="cancelados">Cancelados</MenuItem>
+          </Select>
+        </FormControl>
+      ),
+    },
+    {
+      label: 'Tasa Confirmación',
+      value: `${appointments.length > 0 ? Math.round((appointments.filter(a => a.status === 'confirmed').length / appointments.length) * 100) : 0}%`,
+      icon: TrendingUp,
+      gradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+      glow: 'rgba(5,150,105,0.22)',
+    },
+    {
+      label: 'Leads Agendados',
+      value: leads.filter(l => l.estado === 'agendado').length,
+      icon: People,
+      gradient: 'linear-gradient(135deg, #db2777 0%, #be185d 100%)',
+      glow: 'rgba(219,39,119,0.22)',
+      sub: `${leads.filter(l => l.estado === 'nuevo').length} nuevos`,
+    },
+  ];
+
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)' }}>
-      {/* Header */}
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4f2 0%, #f8fafc 100%)' }}>
+      {/* Hero Header */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #085946 0%, #272F50 100%)',
-          color: '#ffffff',
-          py: 3,
-          boxShadow: '0 4px 20px rgba(8, 89, 70, 0.2)',
+          position: 'relative',
+          overflow: 'hidden',
+          background:
+            'radial-gradient(ellipse 80% 60% at 5% 50%, rgba(13,122,92,0.38) 0%, transparent 55%),' +
+            'radial-gradient(ellipse 60% 80% at 95% 20%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+            'linear-gradient(135deg, #063c2c 0%, #085946 40%, #1a2240 75%, #272F50 100%)',
+          color: '#fff',
+          pt: 4, pb: 4,
         }}
       >
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* Grain overlay */}
+        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.3, pointerEvents: 'none',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 0.5 }}>
-                Dashboard
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
+                borderRadius: '20px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)',
+                mb: 1.5 }}>
+                <Assessment sx={{ fontSize: 14, color: 'rgba(255,255,255,0.80)' }} />
+                <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.80)' }}>
+                  PANEL DE CONTROL
+                </Typography>
+              </Box>
+              <Typography component="h1" sx={{ fontSize: { xs: '2rem', md: '2.75rem' }, fontWeight: 900,
+                letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff' }}>
+                Dashboard{' '}
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  CRM
+                </Box>
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Vista general del sistema
+              <Typography sx={{ mt: 0.75, color: 'rgba(255,255,255,0.68)', fontSize: '0.9375rem' }}>
+                Vista general del sistema · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
               </Typography>
             </Box>
-            <Button
-              variant="outlined"
-              onClick={() => navigate('/portal-crm')}
-              sx={{
-                borderColor: '#ffffff',
-                color: '#ffffff',
-                '&:hover': {
-                  borderColor: '#ffffff',
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
-                },
-              }}
-            >
-              Volver al Portal
+            <Button onClick={() => navigate('/portal-crm')}
+              sx={{ color: '#fff', fontWeight: 700, fontSize: '0.9375rem', px: 2.5, py: 1.25,
+                borderRadius: '12px', border: '1.5px solid rgba(255,255,255,0.30)',
+                background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(10px)',
+                '&:hover': { background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.50)' } }}>
+              ← Portal
             </Button>
           </Box>
         </Container>
@@ -480,15 +565,7 @@ const DashboardPage = () => {
 
       {loadError && (
         <Container maxWidth="lg" sx={{ pt: 2 }}>
-          <Alert
-            severity="error"
-            action={
-              <Button color="inherit" size="small" onClick={loadAllData}>
-                Reintentar
-              </Button>
-            }
-            sx={{ mb: 2 }}
-          >
+          <Alert severity="error" action={<Button color="inherit" size="small" onClick={loadAllData}>Reintentar</Button>} sx={{ mb: 2, borderRadius: '14px' }}>
             {loadError}
           </Alert>
         </Container>
@@ -496,510 +573,231 @@ const DashboardPage = () => {
 
       {!loading && !loadError && appointments.length === 0 && leads.length === 0 && Object.keys(products).length === 0 && (
         <Container maxWidth="lg" sx={{ pt: 2 }}>
-          <Alert severity="info" sx={{ mb: 2 }}>
+          <Alert severity="info" sx={{ mb: 2, borderRadius: '14px' }}>
             No hay citas, leads ni ventas aún. Crea registros en <strong>Citas</strong>, <strong>Leads</strong> o <strong>Cotizaciones/Ventas</strong> desde el portal CRM.
           </Alert>
         </Container>
       )}
 
       {loading && (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, py: 2 }}>
-          <CircularProgress size={24} />
-          <Typography variant="body2" color="text.secondary">
-            Cargando datos…
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, py: 4 }}>
+          <CircularProgress size={28} sx={{ color: '#085946' }} />
+          <Typography sx={{ color: '#4a5568', fontWeight: 500 }}>Cargando datos…</Typography>
         </Box>
       )}
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper
-          elevation={0}
+        {/* Ops strip */}
+        <Box
           sx={{
-            p: 3,
-            mb: 4,
-            borderRadius: 3,
-            border: '1px solid rgba(8, 89, 70, 0.12)',
-            background: 'linear-gradient(135deg, rgba(8, 89, 70, 0.06) 0%, rgba(39, 47, 80, 0.05) 100%)',
+            p: 3, mb: 4, borderRadius: '22px',
+            background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(8,89,70,0.10)',
+            boxShadow: '0 2px 20px rgba(8,89,70,0.07)',
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>
-            Operación centrada en el paciente
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
-            Combine la agenda con las alertas del CRM: un contacto oportuno antes de la cita y el seguimiento de consumibles y garantías reducen cancelaciones y mejoran la continuidad asistencial.
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+            <Box sx={{ width: 36, height: 36, borderRadius: '10px',
+              background: 'linear-gradient(135deg, #0d7a5c, #085946)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Assessment sx={{ color: '#fff', fontSize: 18 }} />
+            </Box>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.0625rem', color: '#0f1923', letterSpacing: '-0.02em' }}>
+              Operación centrada en el paciente
+            </Typography>
+          </Box>
+          <Typography sx={{ color: '#4a5568', fontSize: '0.9rem', mb: 2.5, lineHeight: 1.6 }}>
+            Contacto oportuno + seguimiento de consumibles y garantías reduce cancelaciones y mejora la continuidad asistencial.
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ height: '100%', borderRadius: 2 }}>
-                <CardContent sx={{ py: 2 }}>
+            {[
+              { icon: EventAvailable, label: 'Citas próximas (48 h)', value: citasProximas48h, sub: 'Confirmadas o en sala', color: '#0284c7', gradient: 'linear-gradient(135deg,#0284c7,#0369a1)' },
+              { icon: Schedule, label: 'Citas confirmadas hoy', value: citasHoy, sub: 'Revisar agenda y perfiles', color: '#085946', gradient: 'linear-gradient(135deg,#0d7a5c,#085946)' },
+            ].map((item) => (
+              <Grid item xs={12} sm={6} md={3} key={item.label}>
+                <Box sx={{ p: 2, borderRadius: '14px', background: 'rgba(8,89,70,0.04)', border: '1px solid rgba(8,89,70,0.08)', height: '100%' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <EventAvailable sx={{ color: '#1565c0' }} />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50' }}>Citas próximas (48 h)</Typography>
+                    <item.icon sx={{ color: item.color, fontSize: 18 }} />
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', color: '#272F50' }}>{item.label}</Typography>
                   </Box>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#085946' }}>{citasProximas48h}</Typography>
-                  <Typography variant="caption" color="text.secondary">Confirmadas o en sala</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ height: '100%', borderRadius: 2 }}>
-                <CardContent sx={{ py: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Schedule sx={{ color: '#2e7d32' }} />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50' }}>Citas confirmadas hoy</Typography>
-                  </Box>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#085946' }}>{citasHoy}</Typography>
-                  <Typography variant="caption" color="text.secondary">Revise agenda y perfiles</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ height: '100%', borderRadius: 2 }}>
-                <CardContent sx={{ py: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Assessment sx={{ color: '#e65100' }} />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50' }}>Acciones CRM (7 días)</Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ color: '#86899C' }}>
-                    Activas: <strong>{actionMetrics.activas}</strong> · Vencidas: <strong>{actionMetrics.vencidas}</strong> · Cumplidas: <strong>{actionMetrics.cumplidas}</strong>
-                  </Typography>
-                  <Button size="small" variant="contained" onClick={() => navigate('/portal-crm/acciones-dia')} sx={{ mt: 1, bgcolor: '#085946' }}>
-                    Ir a Acciones del día
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ height: '100%', borderRadius: 2 }}>
-                <CardContent sx={{ py: 2 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>Buenas prácticas</Typography>
-                  <Typography variant="body2" sx={{ color: '#86899C', fontSize: '0.85rem' }}>
-                    1) Confirmar cita y ruta de acceso. 2) Revisar perfil (historia, productos). 3) Resolver alertas vencidas primero.
-                  </Typography>
-                  <Button size="small" variant="outlined" sx={{ mt: 1, borderColor: '#272F50', color: '#272F50' }} onClick={() => navigate('/portal-crm/pacientes')}>
-                    Pacientes
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Paper>
-
-        {/* Métricas Principales */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {/* Leads Totales */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 2,
-                      bgcolor: '#fff3e0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <TrendingUp sx={{ color: '#e65100', fontSize: 28 }} />
-                  </Box>
+                  <Typography sx={{ fontWeight: 900, fontSize: '2rem', color: item.color, lineHeight: 1, letterSpacing: '-0.03em' }}>{item.value}</Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: '#86899C', mt: 0.5 }}>{item.sub}</Typography>
                 </Box>
-                <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 1 }}>
-                  {leads.length}
+              </Grid>
+            ))}
+            <Grid item xs={12} sm={6} md={3}>
+              <Box sx={{ p: 2, borderRadius: '14px', background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.15)', height: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Assessment sx={{ color: '#f97316', fontSize: 18 }} />
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', color: '#272F50' }}>Acciones CRM (7 días)</Typography>
+                </Box>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568', mb: 1.5 }}>
+                  Activas: <strong>{actionMetrics.activas}</strong> · Vencidas: <strong style={{ color: '#e65100' }}>{actionMetrics.vencidas}</strong> · Cumplidas: <strong style={{ color: '#085946' }}>{actionMetrics.cumplidas}</strong>
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#86899C', fontWeight: 500, mb: 2 }}>
-                  Leads Totales
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  onClick={() => navigate('/portal-crm/leads')}
-                  sx={{
-                    borderColor: '#085946',
-                    color: '#085946',
-                    '&:hover': {
-                      borderColor: '#085946',
-                      bgcolor: '#f0f4f3',
-                    },
-                  }}
-                >
-                  Ver Leads
+                <Button size="small" variant="contained" onClick={() => navigate('/portal-crm/acciones-dia')}
+                  sx={{ borderRadius: '8px', fontWeight: 700, fontSize: '0.75rem', py: 0.75,
+                    background: 'linear-gradient(135deg,#f97316,#ea580c)', boxShadow: '0 4px 12px rgba(249,115,22,0.30)',
+                    '&:hover': { boxShadow: '0 6px 18px rgba(249,115,22,0.40)' } }}>
+                  Ir a Acciones del día
                 </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Citas Totales con Filtro */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 2,
-                      bgcolor: '#e8f5e9',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <CalendarToday sx={{ color: '#085946', fontSize: 28 }} />
-                  </Box>
-                </Box>
-                <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 1 }}>
-                  {citasFiltradas.length}
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Box sx={{ p: 2, borderRadius: '14px', background: 'rgba(39,47,80,0.04)', border: '1px solid rgba(39,47,80,0.10)', height: '100%' }}>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', color: '#272F50', mb: 1 }}>Buenas prácticas</Typography>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568', lineHeight: 1.6, mb: 1.5 }}>
+                  1) Confirmar cita. 2) Revisar perfil (historia, productos). 3) Resolver alertas vencidas primero.
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#86899C', fontWeight: 500, mb: 2 }}>
-                  Citas Totales
-                </Typography>
-                <FormControl fullWidth size="small">
-                  <Select
-                    value={citasPeriodo}
-                    onChange={(e) => setCitasPeriodo(e.target.value)}
-                    sx={{
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#085946',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#085946',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#085946',
-                      },
-                    }}
-                  >
-                    <MenuItem value="day">Hoy</MenuItem>
-                    <MenuItem value="week">Esta Semana</MenuItem>
-                    <MenuItem value="month">Este Mes</MenuItem>
-                    <MenuItem value="year">Este Año</MenuItem>
-                  </Select>
-                </FormControl>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Citas Hoy */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 2,
-                    bgcolor: '#f0f4f3',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <Schedule sx={{ color: '#0a6b56', fontSize: 28 }} />
-                </Box>
-                <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 0.5 }}>
-                  {citasHoy}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#86899C', fontWeight: 500 }}>
-                  Citas Hoy
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Pacientes con Filtro */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 2,
-                    bgcolor: '#f5f5f5',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <People sx={{ color: '#272F50', fontSize: 28 }} />
-                </Box>
-                <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 1 }}>
-                  {getPacientesStats()}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#86899C', fontWeight: 500, mb: 2 }}>
+                <Button size="small" variant="outlined" onClick={() => navigate('/portal-crm/pacientes')}
+                  sx={{ borderRadius: '8px', fontWeight: 700, fontSize: '0.75rem', borderColor: '#272F50', color: '#272F50',
+                    '&:hover': { borderColor: '#085946', color: '#085946' } }}>
                   Pacientes
-                </Typography>
-                <FormControl fullWidth size="small">
-                  <Select
-                    value={pacientesFiltro}
-                    onChange={(e) => setPacientesFiltro(e.target.value)}
-                    sx={{
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#085946',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#085946',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#085946',
-                      },
-                    }}
-                  >
-                    <MenuItem value="todos">Todos</MenuItem>
-                    <MenuItem value="agendados">Agendados</MenuItem>
-                    <MenuItem value="atendidos">Atendidos</MenuItem>
-                    <MenuItem value="no-atendidos">No Atendidos</MenuItem>
-                    <MenuItem value="cancelados">Cancelados</MenuItem>
-                  </Select>
-                </FormControl>
-              </CardContent>
-            </Card>
+                </Button>
+              </Box>
+            </Grid>
           </Grid>
+        </Box>
 
-          {/* Tasa de Confirmación */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 2,
-                    bgcolor: '#e8f5e9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <TrendingUp sx={{ color: '#085946', fontSize: 28 }} />
-                </Box>
-                <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 0.5 }}>
-                  {appointments.length > 0
-                    ? Math.round(
-                        (appointments.filter((apt) => apt.status === 'confirmed').length /
-                          appointments.length) *
-                          100
-                      )
-                    : 0}
-                  %
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#86899C', fontWeight: 500 }}>
-                  Tasa Confirmación
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Leads por Estado - Resumen Rápido */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 2,
-                    bgcolor: '#e3f2fd',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <People sx={{ color: '#1976d2', fontSize: 28 }} />
-                </Box>
-                <Typography variant="h3" sx={{ color: '#272F50', fontWeight: 700, mb: 0.5 }}>
-                  {leads.filter(l => l.estado === 'agendado').length}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#86899C', fontWeight: 500, mb: 1 }}>
-                  Leads Agendados
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#86899C' }}>
-                  {leads.filter(l => l.estado === 'nuevo').length} nuevos
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Accesos Rápidos Mejorados */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={6}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-              onClick={() => navigate('/portal-crm/citas')}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600, mb: 1 }}>
-                      Gestionar Citas
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
-                      Ver y administrar todas las citas: agendadas, asistidas, no asistidas y canceladas
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      <Chip label="Agendadas" size="small" sx={{ bgcolor: '#e8f5e9', color: '#085946' }} />
-                      <Chip label="Asistidas" size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
-                      <Chip label="No Asistidas" size="small" sx={{ bgcolor: '#fff3e0', color: '#e65100' }} />
-                      <Chip label="Canceladas" size="small" sx={{ bgcolor: '#ffebee', color: '#c62828' }} />
-                    </Box>
-                  </Box>
-                  <ArrowForward sx={{ color: '#085946', fontSize: 32 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Card
-              sx={{
-                border: '1px solid rgba(8, 89, 70, 0.1)',
-                borderRadius: 3,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(8, 89, 70, 0.15)',
-                },
-              }}
-              onClick={() => navigate('/portal-crm/pacientes')}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600, mb: 1 }}>
-                      Ver Pacientes
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
-                      Pacientes atendidos y no atendidos (estos aparecen como LEADS)
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      <Chip label="Atendidos" size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
-                      <Chip label="Leads" size="small" sx={{ bgcolor: '#fff3e0', color: '#e65100' }} />
-                    </Box>
-                  </Box>
-                  <ArrowForward sx={{ color: '#085946', fontSize: 32 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Citas Recientes - Semana Anterior */}
-        <Card
-          sx={{
-            mb: 4,
-            border: '1px solid rgba(8, 89, 70, 0.1)',
-            borderRadius: 3,
-            boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h5" sx={{ color: '#272F50', fontWeight: 700 }}>
-                Citas Recientes (Semana Anterior)
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => navigate('/portal-crm/citas')}
+        {/* KPI Cards */}
+        <Grid container spacing={2.5} sx={{ mb: 4 }}>
+          {KPI_CARDS.map((kpi) => (
+            <Grid item xs={12} sm={6} md={4} key={kpi.label}>
+              <Box
                 sx={{
-                  borderColor: '#085946',
-                  color: '#085946',
+                  height: '100%', borderRadius: '22px',
+                  background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.70)',
+                  boxShadow: '0 2px 16px rgba(8,89,70,0.07)',
+                  p: 3, position: 'relative', overflow: 'hidden',
+                  transition: 'all 0.28s cubic-bezier(0.4,0,0.2,1)',
                   '&:hover': {
-                    borderColor: '#085946',
-                    bgcolor: '#f0f4f3',
+                    transform: 'translateY(-5px)',
+                    boxShadow: `0 16px 40px ${kpi.glow}, 0 4px 12px rgba(0,0,0,0.05)`,
                   },
+                  cursor: kpi.action ? 'pointer' : 'default',
+                }}
+                onClick={kpi.action ? () => navigate(kpi.action.path) : undefined}
+              >
+                {/* Number watermark */}
+                <Typography aria-hidden sx={{ position: 'absolute', top: 12, right: 16,
+                  fontSize: '4rem', fontWeight: 900, letterSpacing: '-0.05em',
+                  color: 'rgba(8,89,70,0.04)', lineHeight: 1, userSelect: 'none' }}>
+                  {String(KPI_CARDS.indexOf(kpi) + 1).padStart(2, '0')}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2.5 }}>
+                  <Box sx={{ width: 52, height: 52, borderRadius: '14px',
+                    background: kpi.gradient, color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: `0 6px 20px ${kpi.glow}`, flexShrink: 0 }}>
+                    <kpi.icon sx={{ fontSize: 26 }} />
+                  </Box>
+                  {kpi.action && (
+                    <Box sx={{ width: 28, height: 28, borderRadius: '8px',
+                      background: 'rgba(8,89,70,0.07)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ArrowForward sx={{ fontSize: 16, color: '#085946' }} />
+                    </Box>
+                  )}
+                </Box>
+                <Typography sx={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f1923',
+                  letterSpacing: '-0.04em', lineHeight: 1, mb: 0.5 }}>
+                  {kpi.value}
+                </Typography>
+                <Typography sx={{ fontWeight: 600, fontSize: '0.9375rem', color: '#4a5568', mb: kpi.filter || kpi.sub ? 1.5 : 0 }}>
+                  {kpi.label}
+                </Typography>
+                {kpi.sub && <Typography sx={{ fontSize: '0.8125rem', color: '#86899C' }}>{kpi.sub}</Typography>}
+                {kpi.filter}
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Quick Access */}
+        <Grid container spacing={2.5} sx={{ mb: 4 }}>
+          {[
+            {
+              title: 'Gestionar Citas', desc: 'Ver y administrar todas las citas: agendadas, asistidas, no asistidas y canceladas',
+              path: '/portal-crm/citas', gradient: 'linear-gradient(135deg,#0d7a5c,#085946)',
+              chips: [
+                { label: 'Agendadas', color: '#085946', bg: 'rgba(8,89,70,0.10)' },
+                { label: 'Asistidas', color: '#0284c7', bg: 'rgba(2,132,199,0.10)' },
+                { label: 'No Asistidas', color: '#f97316', bg: 'rgba(249,115,22,0.10)' },
+                { label: 'Canceladas', color: '#dc2626', bg: 'rgba(220,38,38,0.10)' },
+              ],
+            },
+            {
+              title: 'Ver Pacientes', desc: 'Pacientes atendidos y no atendidos — los no atendidos aparecen como LEADS en el sistema',
+              path: '/portal-crm/pacientes', gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)',
+              chips: [
+                { label: 'Atendidos', color: '#0284c7', bg: 'rgba(2,132,199,0.10)' },
+                { label: 'Leads', color: '#f97316', bg: 'rgba(249,115,22,0.10)' },
+              ],
+            },
+          ].map((item) => (
+            <Grid item xs={12} md={6} key={item.title}>
+              <Box
+                onClick={() => navigate(item.path)}
+                sx={{
+                  p: 3, borderRadius: '22px', cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.70)',
+                  boxShadow: '0 2px 16px rgba(8,89,70,0.07)',
+                  transition: 'all 0.28s cubic-bezier(0.4,0,0.2,1)',
+                  '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 16px 40px rgba(8,89,70,0.14)' },
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2,
                 }}
               >
+                <Box sx={{ flex: 1 }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: '1.125rem', color: '#0f1923', letterSpacing: '-0.02em', mb: 0.75 }}>
+                    {item.title}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.6, mb: 2 }}>
+                    {item.desc}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {item.chips.map((c) => (
+                      <Chip key={c.label} label={c.label} size="small"
+                        sx={{ bgcolor: c.bg, color: c.color, fontWeight: 600, fontSize: '0.75rem', borderRadius: '8px' }} />
+                    ))}
+                  </Box>
+                </Box>
+                <Box sx={{ width: 44, height: 44, borderRadius: '14px', flexShrink: 0,
+                  background: item.gradient,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 6px 18px rgba(8,89,70,0.20)' }}>
+                  <ArrowForward sx={{ color: '#fff', fontSize: 22 }} />
+                </Box>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Citas Recientes */}
+        <Box
+          sx={{
+            mb: 4, borderRadius: '22px',
+            background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.70)',
+            boxShadow: '0 2px 16px rgba(8,89,70,0.07)',
+            overflow: 'hidden',
+          }}
+        >
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: '12px',
+                  background: 'linear-gradient(135deg,#0d7a5c,#085946)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CalendarToday sx={{ color: '#fff', fontSize: 18 }} />
+                </Box>
+                <Typography sx={{ fontWeight: 800, fontSize: '1.125rem', color: '#0f1923', letterSpacing: '-0.02em' }}>
+                  Citas Recientes — Semana Anterior
+                </Typography>
+              </Box>
+              <Button variant="outlined" size="small" onClick={() => navigate('/portal-crm/citas')}
+                sx={{ borderRadius: '10px', fontWeight: 700, borderColor: '#085946', color: '#085946', fontSize: '0.8125rem',
+                  '&:hover': { borderColor: '#085946', bgcolor: 'rgba(8,89,70,0.06)' } }}>
                 Ver Todas
               </Button>
             </Box>
@@ -1007,11 +805,11 @@ const DashboardPage = () => {
               <TableContainer>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Paciente</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Fecha</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Hora</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#272F50' }}>Estado</TableCell>
+                    <TableRow sx={{ bgcolor: 'rgba(8,89,70,0.04)' }}>
+                      {['Paciente','Fecha','Hora','Estado'].map((h) => (
+                        <TableCell key={h} sx={{ fontWeight: 700, color: '#272F50', fontSize: '0.8125rem',
+                          letterSpacing: '0.04em', textTransform: 'uppercase', py: 1.5, border: 'none' }}>{h}</TableCell>
+                      ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1020,19 +818,20 @@ const DashboardPage = () => {
                         ? appointments.find((a) => a.id === appointment.rescheduledToId)
                         : null;
                       return (
-                        <TableRow key={appointment.id} hover>
+                        <TableRow key={appointment.id}
+                          sx={{ '&:hover': { bgcolor: 'rgba(8,89,70,0.03)' }, '& td': { border: 'none', py: 1.5 } }}>
                           <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Avatar sx={{ width: 32, height: 32, bgcolor: '#085946', fontSize: '0.875rem' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Avatar sx={{ width: 36, height: 36, bgcolor: '#085946', fontSize: '0.9rem', fontWeight: 700 }}>
                                 {(appointment.patientName || ' ').charAt(0).toUpperCase()}
                               </Avatar>
                               <Box>
-                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: '#0f1923' }}>
                                   {appointment.patientName || '—'}
                                 </Typography>
                                 {rescheduledTo && (
-                                  <Typography variant="caption" sx={{ color: '#7b1fa2', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    <Refresh sx={{ fontSize: 12 }} />
+                                  <Typography sx={{ fontSize: '0.75rem', color: '#7b1fa2', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <Refresh sx={{ fontSize: 11 }} />
                                     Re-agendada: {new Date(rescheduledTo.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} {formatTime(rescheduledTo.time)}
                                   </Typography>
                                 )}
@@ -1040,17 +839,12 @@ const DashboardPage = () => {
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">
-                              {new Date(appointment.date + 'T00:00:00').toLocaleDateString('es-ES', {
-                                weekday: 'short',
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                            <Typography sx={{ fontSize: '0.875rem', color: '#4a5568' }}>
+                              {new Date(appointment.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">{formatTime(appointment.time)}</Typography>
+                            <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', fontWeight: 600 }}>{formatTime(appointment.time)}</Typography>
                           </TableCell>
                           <TableCell>{getStatusChip(appointment.status)}</TableCell>
                         </TableRow>
@@ -1060,27 +854,32 @@ const DashboardPage = () => {
                 </Table>
               </TableContainer>
             ) : (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <CalendarToday sx={{ fontSize: 64, color: '#86899C', mb: 2, opacity: 0.5 }} />
-                <Typography variant="body1" sx={{ color: '#86899C' }}>
-                  No hay citas en la semana anterior
-                </Typography>
+              <Box sx={{ textAlign: 'center', py: 6 }}>
+                <CalendarToday sx={{ fontSize: 56, color: 'rgba(8,89,70,0.15)', mb: 2 }} />
+                <Typography sx={{ color: '#86899C', fontWeight: 500 }}>No hay citas en la semana anterior</Typography>
               </Box>
             )}
-          </CardContent>
-        </Card>
+          </Box>
+        </Box>
 
-        {/* Sección de Ventas */}
-        <Card
+        {/* Ventas */}
+        <Box
           sx={{
-            border: '1px solid rgba(8, 89, 70, 0.1)',
-            borderRadius: 3,
-            boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
+            borderRadius: '22px',
+            background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.70)',
+            boxShadow: '0 2px 16px rgba(8,89,70,0.07)',
+            overflow: 'hidden',
           }}
         >
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h5" sx={{ color: '#272F50', fontWeight: 700 }}>
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+              <Box sx={{ width: 40, height: 40, borderRadius: '12px',
+                background: 'linear-gradient(135deg,#059669,#047857)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AttachMoney sx={{ color: '#fff', fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontWeight: 800, fontSize: '1.125rem', color: '#0f1923', letterSpacing: '-0.02em' }}>
                 Ventas y Facturación
               </Typography>
             </Box>
@@ -1092,16 +891,9 @@ const DashboardPage = () => {
               scrollButtons="auto"
               sx={{
                 mb: 3,
-                '& .MuiTab-root': {
-                  color: '#86899C',
-                  '&.Mui-selected': {
-                    color: '#085946',
-                    fontWeight: 600,
-                  },
-                },
-                '& .MuiTabs-indicator': {
-                  bgcolor: '#085946',
-                },
+                '& .MuiTab-root': { color: '#86899C', fontWeight: 600, fontSize: '0.875rem',
+                  '&.Mui-selected': { color: '#085946', fontWeight: 700 } },
+                '& .MuiTabs-indicator': { bgcolor: '#085946', height: 3, borderRadius: '2px' },
               }}
             >
               <Tab label="Resumen" />
@@ -1112,78 +904,46 @@ const DashboardPage = () => {
             </Tabs>
 
             {ventasTab === 0 && (
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Hearing sx={{ color: '#085946' }} />
-                      <Typography variant="body2" sx={{ color: '#86899C' }}>
-                        Audífonos Vendidos
+              <Grid container spacing={2}>
+                {[
+                  { icon: Hearing, label: 'Audífonos Vendidos', value: ventasData.audifonosVendidos, gradient: 'linear-gradient(135deg,#0d7a5c,#085946)', glow: 'rgba(8,89,70,0.20)' },
+                  { icon: AttachMoney, label: 'Valor Facturado', value: formatCurrency(ventasData.valorFacturado), gradient: 'linear-gradient(135deg,#059669,#047857)', glow: 'rgba(5,150,105,0.20)' },
+                  { icon: ShoppingCart, label: 'Audífonos Cotizados', value: ventasData.audifonosCotizados, gradient: 'linear-gradient(135deg,#0284c7,#0369a1)', glow: 'rgba(2,132,199,0.20)' },
+                  { icon: TrendingUp, label: 'Oportunidades', value: formatCurrency(ventasData.valoresCotizadosPendientes), gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)', glow: 'rgba(124,58,237,0.20)' },
+                ].map((item) => (
+                  <Grid item xs={12} sm={6} md={3} key={item.label}>
+                    <Box sx={{ p: 2.5, borderRadius: '16px', background: 'rgba(8,89,70,0.04)',
+                      border: '1px solid rgba(8,89,70,0.08)',
+                      transition: 'all 0.22s ease',
+                      '&:hover': { boxShadow: `0 8px 24px ${item.glow}`, transform: 'translateY(-3px)' } }}>
+                      <Box sx={{ width: 40, height: 40, borderRadius: '12px',
+                        background: item.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        mb: 1.5, boxShadow: `0 4px 14px ${item.glow}` }}>
+                        <item.icon sx={{ color: '#fff', fontSize: 20 }} />
+                      </Box>
+                      <Typography sx={{ fontSize: '0.75rem', color: '#86899C', fontWeight: 600,
+                        letterSpacing: '0.04em', textTransform: 'uppercase', mb: 0.5 }}>{item.label}</Typography>
+                      <Typography sx={{ fontWeight: 900, fontSize: '1.75rem', color: '#0f1923', letterSpacing: '-0.03em' }}>
+                        {item.value}
                       </Typography>
                     </Box>
-                    <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700 }}>
-                      {ventasData.audifonosVendidos}
-                    </Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <AttachMoney sx={{ color: '#085946' }} />
-                      <Typography variant="body2" sx={{ color: '#86899C' }}>
-                        Valor Facturado
-                      </Typography>
-                    </Box>
-                    <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 700 }}>
-                      {formatCurrency(ventasData.valorFacturado)}
-                    </Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <ShoppingCart sx={{ color: '#0a6b56' }} />
-                      <Typography variant="body2" sx={{ color: '#86899C' }}>
-                        Audífonos Cotizados
-                      </Typography>
-                    </Box>
-                    <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700 }}>
-                      {ventasData.audifonosCotizados}
-                    </Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <TrendingUp sx={{ color: '#272F50' }} />
-                      <Typography variant="body2" sx={{ color: '#86899C' }}>
-                        Oportunidades
-                      </Typography>
-                    </Box>
-                    <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 700 }}>
-                      {formatCurrency(ventasData.valoresCotizadosPendientes)}
-                    </Typography>
-                  </Card>
-                </Grid>
+                  </Grid>
+                ))}
               </Grid>
             )}
 
             {ventasTab === 1 && (
               <Box>
-                <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600, mb: 2 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#272F50', mb: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                   Audífonos por Marca
                 </Typography>
                 <Grid container spacing={2}>
                   {Object.entries(ventasData.audifonosPorMarca).map(([marca, cantidad]) => (
                     <Grid item xs={12} sm={6} md={4} key={marca}>
-                      <Card sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
-                        <Typography variant="body2" sx={{ color: '#86899C', mb: 0.5 }}>
-                          {marca}
-                        </Typography>
-                        <Typography variant="h5" sx={{ color: '#085946', fontWeight: 700 }}>
-                          {cantidad}
-                        </Typography>
-                      </Card>
+                      <Box sx={{ p: 2.5, borderRadius: '14px', background: 'rgba(8,89,70,0.04)', border: '1px solid rgba(8,89,70,0.08)' }}>
+                        <Typography sx={{ fontSize: '0.8125rem', color: '#86899C', mb: 0.5 }}>{marca}</Typography>
+                        <Typography sx={{ fontWeight: 900, fontSize: '2rem', color: '#085946', letterSpacing: '-0.03em' }}>{cantidad}</Typography>
+                      </Box>
                     </Grid>
                   ))}
                 </Grid>
@@ -1193,78 +953,54 @@ const DashboardPage = () => {
             {ventasTab === 2 && (() => {
               const totalFacturacion = ventasData.facturacionAudifonos + ventasData.facturacionConsultas + ventasData.facturacionAccesorios;
               const pct = (v) => totalFacturacion > 0 ? Math.round((v / totalFacturacion) * 1000) / 10 : 0;
-              const participacion = [
-                { label: 'Audífonos', value: ventasData.facturacionAudifonos, icon: Hearing, color: '#085946' },
-                { label: 'Consultas', value: ventasData.facturacionConsultas, icon: CalendarToday, color: '#085946' },
-                { label: 'Accesorios', value: ventasData.facturacionAccesorios, icon: ShoppingCart, color: '#0a6b56' },
+              const rubros = [
+                { label: 'Audífonos', value: ventasData.facturacionAudifonos, icon: Hearing, gradient: 'linear-gradient(135deg,#0d7a5c,#085946)', glow: 'rgba(8,89,70,0.20)', bar: '#085946' },
+                { label: 'Consultas', value: ventasData.facturacionConsultas, icon: CalendarToday, gradient: 'linear-gradient(135deg,#0284c7,#0369a1)', glow: 'rgba(2,132,199,0.20)', bar: '#0284c7' },
+                { label: 'Accesorios', value: ventasData.facturacionAccesorios, icon: ShoppingCart, gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)', glow: 'rgba(124,58,237,0.20)', bar: '#7c3aed' },
               ];
               return (
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                   <Grid item xs={12}>
-                    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: 'rgba(8, 89, 70, 0.2)', bgcolor: 'rgba(8, 89, 70, 0.04)' }}>
-                      <Typography variant="subtitle2" sx={{ color: '#272F50', fontWeight: 600, mb: 1.5 }}>% de participación por rubro</Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-                        {participacion.map(({ label, value, icon: Icon, color }) => (
-                          <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Icon sx={{ color, fontSize: 20 }} />
-                            <Typography variant="body2" sx={{ color: '#272F50' }}>{label}:</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#085946' }}>{pct(value)}%</Typography>
+                    <Box sx={{ p: 2.5, borderRadius: '14px', background: 'rgba(8,89,70,0.04)', border: '1px solid rgba(8,89,70,0.08)', mb: 0.5 }}>
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', color: '#272F50', mb: 1.5 }}>Participación por rubro</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 1.5 }}>
+                        {rubros.map(({ label, value, bar }) => (
+                          <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            <Box sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: bar }} />
+                            <Typography sx={{ fontSize: '0.8125rem', color: '#272F50' }}>{label}:</Typography>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', color: bar }}>{pct(value)}%</Typography>
                           </Box>
                         ))}
                         {totalFacturacion > 0 && (
-                          <Typography variant="caption" sx={{ color: '#86899C', ml: 1 }}>
-                            Total: {formatCurrency(totalFacturacion)}
-                          </Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#86899C' }}>Total: {formatCurrency(totalFacturacion)}</Typography>
                         )}
                       </Box>
                       {totalFacturacion > 0 && (
-                        <Box sx={{ display: 'flex', height: 8, borderRadius: 1, overflow: 'hidden', mt: 1.5 }}>
-                          <Box sx={{ width: `${pct(ventasData.facturacionAudifonos)}%`, bgcolor: '#085946' }} />
-                          <Box sx={{ width: `${pct(ventasData.facturacionConsultas)}%`, bgcolor: '#0a6b56' }} />
-                          <Box sx={{ width: `${pct(ventasData.facturacionAccesorios)}%`, bgcolor: '#2e7d6e' }} />
+                        <Box sx={{ display: 'flex', height: 10, borderRadius: '5px', overflow: 'hidden' }}>
+                          {rubros.map(({ label, value, bar }) => (
+                            <Box key={label} sx={{ width: `${pct(value)}%`, bgcolor: bar, transition: 'width 0.5s ease' }} />
+                          ))}
                         </Box>
                       )}
-                    </Paper>
+                    </Box>
                   </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Card sx={{ bgcolor: '#f8fafc', p: 3, borderRadius: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                        <Hearing sx={{ color: '#085946' }} />
-                        <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600 }}>
-                          Facturación por Audífonos
+                  {rubros.map((item) => (
+                    <Grid item xs={12} md={4} key={item.label}>
+                      <Box sx={{ p: 2.5, borderRadius: '16px', background: 'rgba(8,89,70,0.04)', border: '1px solid rgba(8,89,70,0.08)',
+                        transition: 'all 0.22s ease', '&:hover': { boxShadow: `0 8px 24px ${item.glow}`, transform: 'translateY(-3px)' } }}>
+                        <Box sx={{ width: 40, height: 40, borderRadius: '12px', background: item.gradient,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1.5, boxShadow: `0 4px 14px ${item.glow}` }}>
+                          <item.icon sx={{ color: '#fff', fontSize: 20 }} />
+                        </Box>
+                        <Typography sx={{ fontSize: '0.75rem', color: '#86899C', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', mb: 0.5 }}>
+                          Facturación {item.label}
+                        </Typography>
+                        <Typography sx={{ fontWeight: 900, fontSize: '1.625rem', color: '#0f1923', letterSpacing: '-0.03em' }}>
+                          {formatCurrency(item.value)}
                         </Typography>
                       </Box>
-                      <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700 }}>
-                        {formatCurrency(ventasData.facturacionAudifonos)}
-                      </Typography>
-                    </Card>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Card sx={{ bgcolor: '#f8fafc', p: 3, borderRadius: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                        <CalendarToday sx={{ color: '#085946' }} />
-                        <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600 }}>
-                          Facturación por Consultas
-                        </Typography>
-                      </Box>
-                      <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700 }}>
-                        {formatCurrency(ventasData.facturacionConsultas)}
-                      </Typography>
-                    </Card>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Card sx={{ bgcolor: '#f8fafc', p: 3, borderRadius: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                        <ShoppingCart sx={{ color: '#0a6b56' }} />
-                        <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600 }}>
-                          Facturación por Accesorios
-                        </Typography>
-                      </Box>
-                      <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700 }}>
-                        {formatCurrency(ventasData.facturacionAccesorios)}
-                      </Typography>
-                    </Card>
-                  </Grid>
+                    </Grid>
+                  ))}
                 </Grid>
               );
             })()}
@@ -1274,7 +1010,7 @@ const DashboardPage = () => {
               const entries = Object.entries(ventasData.ventasPorProfesional || {});
               return (
                 <Box>
-                  <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600, mb: 2 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#272F50', mb: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Ventas por Profesional
                   </Typography>
                   <Grid container spacing={2}>
@@ -1283,24 +1019,22 @@ const DashboardPage = () => {
                       const nombre = profId === '_sin_asignar' ? 'Sin asignar' : (prof?.nombre || profId);
                       return (
                         <Grid item xs={12} sm={6} md={4} key={profId}>
-                          <Card sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
+                          <Box sx={{ p: 2.5, borderRadius: '14px', background: 'rgba(8,89,70,0.04)', border: '1px solid rgba(8,89,70,0.08)' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                              <Person sx={{ color: '#085946', fontSize: 20 }} />
-                              <Typography variant="body2" sx={{ color: '#86899C' }}>
-                                {nombre}
-                              </Typography>
+                              <Person sx={{ color: '#085946', fontSize: 18 }} />
+                              <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568', fontWeight: 600 }}>{nombre}</Typography>
                             </Box>
-                            <Typography variant="h5" sx={{ color: '#085946', fontWeight: 700 }}>
+                            <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#085946', letterSpacing: '-0.03em' }}>
                               {formatCurrency(valor)}
                             </Typography>
-                          </Card>
+                          </Box>
                         </Grid>
                       );
                     })}
                   </Grid>
                   {entries.length === 0 && (
-                    <Typography variant="body2" sx={{ color: '#86899C' }}>
-                      No hay ventas con profesional asignado. Las ventas se asignan al registrar la venta.
+                    <Typography sx={{ color: '#86899C', fontSize: '0.875rem' }}>
+                      No hay ventas con profesional asignado.
                     </Typography>
                   )}
                 </Box>
@@ -1312,7 +1046,7 @@ const DashboardPage = () => {
               const entries = Object.entries(ventasData.ventasPorSede || {});
               return (
                 <Box>
-                  <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600, mb: 2 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#272F50', mb: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Ventas por Sede
                   </Typography>
                   <Grid container spacing={2}>
@@ -1321,86 +1055,64 @@ const DashboardPage = () => {
                       const nombre = sedeId === '_sin_asignar' ? 'Sin asignar' : (sede?.nombre || sedeId);
                       return (
                         <Grid item xs={12} sm={6} md={4} key={sedeId}>
-                          <Card sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
+                          <Box sx={{ p: 2.5, borderRadius: '14px', background: 'rgba(8,89,70,0.04)', border: '1px solid rgba(8,89,70,0.08)' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                              <LocationOn sx={{ color: '#085946', fontSize: 20 }} />
-                              <Typography variant="body2" sx={{ color: '#86899C' }}>
-                                {nombre}
-                              </Typography>
+                              <LocationOn sx={{ color: '#085946', fontSize: 18 }} />
+                              <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568', fontWeight: 600 }}>{nombre}</Typography>
                             </Box>
-                            <Typography variant="h5" sx={{ color: '#085946', fontWeight: 700 }}>
+                            <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#085946', letterSpacing: '-0.03em' }}>
                               {formatCurrency(valor)}
                             </Typography>
-                          </Card>
+                          </Box>
                         </Grid>
                       );
                     })}
                   </Grid>
                   {entries.length === 0 && (
-                    <Typography variant="body2" sx={{ color: '#86899C' }}>
-                      No hay ventas con sede asignada. Las ventas se asignan al registrar la venta.
+                    <Typography sx={{ color: '#86899C', fontSize: '0.875rem' }}>
+                      No hay ventas con sede asignada.
                     </Typography>
                   )}
                 </Box>
               );
             })()}
-          </CardContent>
-        </Card>
+          </Box>
+        </Box>
 
-        {/* Pacientes por Procedencia con Funnel */}
-        <Card
+        {/* Pacientes por Procedencia */}
+        <Box
           sx={{
-            mt: 4,
-            border: '1px solid rgba(8, 89, 70, 0.1)',
-            borderRadius: 3,
-            boxShadow: '0 4px 16px rgba(8, 89, 70, 0.1)',
+            mt: 4, borderRadius: '22px',
+            background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.70)',
+            boxShadow: '0 2px 16px rgba(8,89,70,0.07)',
+            overflow: 'hidden',
           }}
         >
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h5" sx={{ color: '#272F50', fontWeight: 700 }}>
-                Pacientes por Procedencia
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<Refresh />}
-                  onClick={() => {
-                    console.log('[Dashboard] 🔄 Botón Actualizar presionado');
-                    loadAllData();
-                    // Forzar re-render después de un pequeño delay
-                    setTimeout(() => loadAllData(), 200);
-                  }}
-                  sx={{
-                    borderColor: '#085946',
-                    color: '#085946',
-                    '&:hover': {
-                      borderColor: '#0a6b56',
-                      bgcolor: 'rgba(8, 89, 70, 0.05)',
-                    },
-                  }}
-                >
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: '12px',
+                  background: 'linear-gradient(135deg,#272F50,#1a1f38)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <People sx={{ color: '#fff', fontSize: 18 }} />
+                </Box>
+                <Typography sx={{ fontWeight: 800, fontSize: '1.125rem', color: '#0f1923', letterSpacing: '-0.02em' }}>
+                  Pacientes por Procedencia
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                <Button variant="outlined" size="small" startIcon={<Refresh />}
+                  onClick={() => { loadAllData(); setTimeout(() => loadAllData(), 200); }}
+                  sx={{ borderRadius: '10px', fontWeight: 700, borderColor: '#085946', color: '#085946', fontSize: '0.8125rem',
+                    '&:hover': { borderColor: '#085946', bgcolor: 'rgba(8,89,70,0.06)' } }}>
                   Actualizar
                 </Button>
-                <FormControl size="small" sx={{ minWidth: 150 }}>
+                <FormControl size="small" sx={{ minWidth: 140 }}>
                   <InputLabel>Período</InputLabel>
-                  <Select
-                    value={citasPeriodo}
-                    label="Período"
-                    onChange={(e) => setCitasPeriodo(e.target.value)}
-                    sx={{
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#085946',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#085946',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#085946',
-                      },
-                    }}
-                  >
+                  <Select value={citasPeriodo} label="Período" onChange={(e) => setCitasPeriodo(e.target.value)}
+                    sx={{ borderRadius: '10px',
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(8,89,70,0.25)' } }}>
                     <MenuItem value="day">Hoy</MenuItem>
                     <MenuItem value="week">Esta Semana</MenuItem>
                     <MenuItem value="month">Este Mes</MenuItem>
@@ -1571,246 +1283,57 @@ const DashboardPage = () => {
                     // Mostrar TODAS las procedencias, incluso si están vacías
                     // Esto permite ver la estructura completa del funnel
 
+                    const funnelRows = [
+                      { label: 'Agendados', value: funnel.agendados, pct: 100, barColor: color, bg: `${color}12` },
+                      { label: 'Asistidos', value: funnel.asistidos, pct: funnel.agendados > 0 ? (funnel.asistidos / funnel.agendados) * 100 : 0, barColor: '#0284c7', bg: 'rgba(2,132,199,0.08)' },
+                      { label: 'No Asistidos', value: funnel.noAsistidos, pct: funnel.agendados > 0 ? (funnel.noAsistidos / funnel.agendados) * 100 : 0, barColor: '#f97316', bg: 'rgba(249,115,22,0.08)' },
+                      { label: 'Cancelados', value: funnel.cancelados, pct: funnel.agendados > 0 ? (funnel.cancelados / funnel.agendados) * 100 : 0, barColor: '#dc2626', bg: 'rgba(220,38,38,0.08)' },
+                      { label: 'Re-agendados', value: funnel.reAgendados, pct: funnel.agendados > 0 ? (funnel.reAgendados / funnel.agendados) * 100 : 0, barColor: '#7c3aed', bg: 'rgba(124,58,237,0.08)' },
+                    ];
                     return (
                       <Grid item xs={12} md={6} key={key}>
-                        <Card
+                        <Box
                           sx={{
-                            border: '1px solid rgba(8, 89, 70, 0.1)',
-                            borderRadius: 3,
-                            p: 3,
-                            height: '100%',
-                            transition: 'all 0.3s ease',
-                            '&:hover': {
-                              transform: 'translateY(-4px)',
-                              boxShadow: '0 8px 24px rgba(8, 89, 70, 0.15)',
-                            },
+                            p: 2.5, borderRadius: '18px', height: '100%',
+                            background: 'rgba(255,255,255,0.70)', backdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(255,255,255,0.60)',
+                            boxShadow: '0 2px 12px rgba(8,89,70,0.06)',
+                            transition: 'all 0.28s ease',
+                            '&:hover': { transform: 'translateY(-4px)', boxShadow: `0 12px 32px ${color}22` },
                           }}
                         >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                            <Box
-                              sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 2,
-                                bgcolor: `${color}15`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              <People sx={{ color: color, fontSize: 20 }} />
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                            <Box sx={{ width: 36, height: 36, borderRadius: '10px',
+                              background: `linear-gradient(135deg, ${color}, ${color}cc)`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <People sx={{ color: '#fff', fontSize: 18 }} />
                             </Box>
-                            <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 700 }}>
+                            <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#0f1923', letterSpacing: '-0.02em' }}>
                               {procedenciasLabels[key]}
                             </Typography>
                           </Box>
-
-                          {/* Funnel Visual */}
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                            {/* Agendados */}
-                            <Box
-                              sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                bgcolor: '#e8f5e9',
-                                borderLeft: `4px solid ${color}`,
-                                position: 'relative',
-                              }}
-                            >
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#272F50' }}>
-                                  Agendados
-                                </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: color }}>
-                                  {funnel.agendados}
-                                </Typography>
-                              </Box>
-                              {funnel.agendados > 0 && (
-                                <Box
-                                  sx={{
-                                    mt: 1,
-                                    height: 6,
-                                    bgcolor: '#ffffff',
-                                    borderRadius: 1,
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: '100%',
-                                      height: '100%',
-                                      bgcolor: color,
-                                    }}
-                                  />
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            {funnelRows.map((row) => (
+                              <Box key={row.label} sx={{ p: 1.5, borderRadius: '10px', bgcolor: row.bg, borderLeft: `3px solid ${row.barColor}` }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+                                  <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#272F50' }}>{row.label}</Typography>
+                                  <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: row.barColor, letterSpacing: '-0.02em' }}>{row.value}</Typography>
                                 </Box>
-                              )}
-                            </Box>
-
-                            {/* Asistidos */}
-                            <Box
-                              sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                bgcolor: '#e3f2fd',
-                                borderLeft: '4px solid #1976d2',
-                                ml: 2,
-                              }}
-                            >
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#272F50' }}>
-                                  Asistidos
-                                </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#1976d2' }}>
-                                  {funnel.asistidos}
-                                </Typography>
-                              </Box>
-                              {funnel.agendados > 0 && (
-                                <Box
-                                  sx={{
-                                    mt: 1,
-                                    height: 6,
-                                    bgcolor: '#ffffff',
-                                    borderRadius: 1,
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: `${(funnel.asistidos / funnel.agendados) * 100}%`,
-                                      height: '100%',
-                                      bgcolor: '#1976d2',
-                                    }}
-                                  />
+                                <Box sx={{ height: 5, bgcolor: 'rgba(255,255,255,0.60)', borderRadius: '3px', overflow: 'hidden' }}>
+                                  <Box sx={{ width: `${row.pct}%`, height: '100%', bgcolor: row.barColor, borderRadius: '3px', transition: 'width 0.5s ease' }} />
                                 </Box>
-                              )}
-                            </Box>
-
-                            {/* No Asistidos */}
-                            <Box
-                              sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                bgcolor: '#fff3e0',
-                                borderLeft: '4px solid #e65100',
-                                ml: 4,
-                              }}
-                            >
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#272F50' }}>
-                                  No Asistidos
-                                </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#e65100' }}>
-                                  {funnel.noAsistidos}
-                                </Typography>
                               </Box>
-                              {funnel.agendados > 0 && (
-                                <Box
-                                  sx={{
-                                    mt: 1,
-                                    height: 6,
-                                    bgcolor: '#ffffff',
-                                    borderRadius: 1,
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: `${(funnel.noAsistidos / funnel.agendados) * 100}%`,
-                                      height: '100%',
-                                      bgcolor: '#e65100',
-                                    }}
-                                  />
-                                </Box>
-                              )}
-                            </Box>
-
-                            {/* Cancelados */}
-                            <Box
-                              sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                bgcolor: '#ffebee',
-                                borderLeft: '4px solid #c62828',
-                                ml: 4,
-                              }}
-                            >
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#272F50' }}>
-                                  Cancelados
-                                </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#c62828' }}>
-                                  {funnel.cancelados}
-                                </Typography>
-                              </Box>
-                              {funnel.agendados > 0 && (
-                                <Box
-                                  sx={{
-                                    mt: 1,
-                                    height: 6,
-                                    bgcolor: '#ffffff',
-                                    borderRadius: 1,
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: `${(funnel.cancelados / funnel.agendados) * 100}%`,
-                                      height: '100%',
-                                      bgcolor: '#c62828',
-                                    }}
-                                  />
-                                </Box>
-                              )}
-                            </Box>
-
-                            {/* Re Agendados */}
-                            <Box
-                              sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                bgcolor: '#f3e5f5',
-                                borderLeft: '4px solid #7b1fa2',
-                                ml: 4,
-                              }}
-                            >
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#272F50' }}>
-                                  Re Agendados
-                                </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#7b1fa2' }}>
-                                  {funnel.reAgendados}
-                                </Typography>
-                              </Box>
-                              {funnel.agendados > 0 && (
-                                <Box
-                                  sx={{
-                                    mt: 1,
-                                    height: 6,
-                                    bgcolor: '#ffffff',
-                                    borderRadius: 1,
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: `${(funnel.reAgendados / funnel.agendados) * 100}%`,
-                                      height: '100%',
-                                      bgcolor: '#7b1fa2',
-                                    }}
-                                  />
-                                </Box>
-                              )}
-                            </Box>
+                            ))}
                           </Box>
-                        </Card>
+                        </Box>
                       </Grid>
                     );
                   })}
                 </Grid>
               );
             })()}
-          </CardContent>
-        </Card>
+          </Box>
+        </Box>
       </Container>
     </Box>
   );

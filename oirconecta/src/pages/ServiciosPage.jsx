@@ -67,39 +67,52 @@ const ServiciosPage = () => {
 
       <Header />
 
-      <Box
-        sx={{
-          background: 'linear-gradient(135deg, #085946 0%, #71A095 100%)',
-          color: 'white',
-          py: 8,
-          pt: { xs: 14, md: 16 },
-        }}
-      >
-        <Container maxWidth="lg">
-          <Typography variant="h2" component="h1" align="center" gutterBottom>
-            Servicios en la red OírConecta
+      {/* Hero */}
+      <Box sx={{
+        position: 'relative', overflow: 'hidden',
+        background: 'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.42) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #063c2c 0%, #085946 35%, #1a2240 70%, #272F50 100%)',
+        color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
+      }}>
+        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 2, py: 0.625,
+            borderRadius: '20px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 3 }}>
+            <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>
+              Red OírConecta
+            </Typography>
+          </Box>
+          <Typography component="h1" sx={{ fontSize: { xs: '2.25rem', md: '3.5rem' }, fontWeight: 900,
+            letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff', mb: 2.5 }}>
+            Servicios en{' '}
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              la red
+            </Box>
           </Typography>
-          <Typography variant="h5" align="center" sx={{ opacity: 0.95, maxWidth: 720, mx: 'auto' }}>
-            Estas líneas de servicio las ofrecen los profesionales y centros suscritos. Aquí las resumimos para orientarte;
-            el alcance exacto lo confirma cada especialista en consulta.
+          <Typography sx={{ fontSize: { xs: '1.0625rem', md: '1.25rem' }, color: 'rgba(255,255,255,0.80)',
+            maxWidth: 680, mx: 'auto', lineHeight: 1.6 }}>
+            Estas líneas de servicio las ofrecen los profesionales y centros suscritos. El alcance exacto lo confirma cada especialista en consulta.
           </Typography>
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Grid container spacing={4}>
+      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 10 } }}>
+        <Grid container spacing={3}>
           {servicios.map((servicio, index) => (
             <Grid item xs={12} md={6} lg={4} key={index}>
-              <Card
+              <Box
                 sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 24px rgba(8, 89, 70, 0.2)',
-                  },
+                  height: '100%', borderRadius: '22px',
+                  background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.70)',
+                  boxShadow: '0 2px 16px rgba(8,89,70,0.06)',
+                  display: 'flex', flexDirection: 'column',
+                  transition: 'all 0.28s cubic-bezier(0.4,0,0.2,1)',
+                  '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(8,89,70,0.14)' },
+                  overflow: 'hidden',
                 }}
               >
                 <MarketingCardMedia
@@ -108,34 +121,33 @@ const ServiciosPage = () => {
                   icon={servicio.icono}
                   gradient={servicio.gradient}
                 />
-                <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
-                  <Typography variant="body1" color="text.secondary" paragraph>
+                <Box sx={{ flexGrow: 1, p: 3, textAlign: 'center' }}>
+                  <Typography sx={{ color: '#4a5568', fontSize: '0.9375rem', lineHeight: 1.65, mb: 2.5 }}>
                     {servicio.descripcion}
                   </Typography>
-                  <Button
-                    variant="contained"
-                    sx={{
-                      mt: 1,
-                      background: 'linear-gradient(135deg, #085946 0%, #71A095 100%)',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
-                      },
-                    }}
-                    onClick={() => navigate('/contacto')}
-                  >
+                  <Button variant="contained" onClick={() => navigate('/contacto')}
+                    sx={{ borderRadius: '12px', fontWeight: 700, px: 3,
+                      background: 'linear-gradient(135deg,#0d7a5c,#085946)',
+                      boxShadow: '0 6px 18px rgba(8,89,70,0.25)',
+                      '&:hover': { boxShadow: '0 8px 24px rgba(8,89,70,0.35)' } }}>
                     Solicitar información
                   </Button>
-                </CardContent>
-              </Card>
+                </Box>
+              </Box>
             </Grid>
           ))}
         </Grid>
 
-        <Box sx={{ textAlign: 'center', mt: 6 }}>
-          <Typography variant="h6" gutterBottom sx={{ color: '#272F50' }}>
+        <Box sx={{ textAlign: 'center', mt: 8, p: 4, borderRadius: '22px',
+          background: 'rgba(8,89,70,0.05)', border: '1px solid rgba(8,89,70,0.12)' }}>
+          <Typography sx={{ fontWeight: 800, fontSize: '1.5rem', color: '#0f1923', letterSpacing: '-0.02em', mb: 1 }}>
             ¿Quieres una cita?
           </Typography>
-          <Button variant="outlined" size="large" onClick={() => navigate('/agendar')} sx={{ borderColor: '#085946', color: '#085946' }}>
+          <Typography sx={{ color: '#4a5568', mb: 3 }}>Agenda en línea con el profesional que prefieras</Typography>
+          <Button variant="outlined" size="large" onClick={() => navigate('/agendar')}
+            sx={{ borderRadius: '14px', fontWeight: 700, fontSize: '1rem', px: 4, py: 1.5,
+              borderColor: '#085946', color: '#085946', borderWidth: 2,
+              '&:hover': { borderWidth: 2, bgcolor: 'rgba(8,89,70,0.05)' } }}>
             Agendar en línea
           </Button>
         </Box>
