@@ -111,6 +111,8 @@ model DirectoryProfile {
   reviewedByCrmUserId String?
   rejectionReason     String?
 
+  listings    MarketplaceListing[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -641,4 +643,67 @@ enum SaleCategory {
   HEARING_AID  // Audífonos
   SERVICE      // Consulta
   ACCESSORY    // Accesorio
+}
+
+// ===========================================
+// BLOG / CONTENIDO EDITORIAL
+// ===========================================
+
+model BlogPost {
+  id          String         @id @default(uuid())
+  slug        String         @unique
+  titulo      String
+  resumen     String?        @db.Text
+  contenido   String         @db.Text
+  coverUrl    String?
+  categoria   String         @default("general")
+  tags        String[]       @default([])
+  estado      BlogPostStatus @default(BORRADOR)
+  destacado   Boolean        @default(false)
+  autorNombre String         @default("OírConecta")
+  publishedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([estado, publishedAt])
+  @@index([categoria])
+  @@map("blog_posts")
+}
+
+enum BlogPostStatus {
+  BORRADOR
+  PUBLICADO
+  ARCHIVADO
+}
+
+// ===========================================
+// MARKETPLACE — OFERTAS DE SERVICIOS
+// ===========================================
+
+model MarketplaceListing {
+  id            String                  @id @default(uuid())
+  profileId     String
+  profile       DirectoryProfile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  titulo        String
+  descripcion   String?                 @db.Text
+  categoria     String
+  precio        Float?
+  precioDesde   Float?
+  precioHasta   Float?
+  modalidad     String                  @default("presencial") // presencial, virtual, ambos
+  estado        MarketplaceListingStatus @default(ACTIVO)
+  imageUrls     String[]                @default([])
+  destacado     Boolean                 @default(false)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  @@index([profileId])
+  @@index([categoria, estado])
+  @@map("marketplace_listings")
+}
+
+enum MarketplaceListingStatus {
+  ACTIVO
+  PAUSADO
+  VENCIDO
 }

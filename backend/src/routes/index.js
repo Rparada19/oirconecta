@@ -17,6 +17,8 @@ const maintenancesRoutes = require('./maintenances.routes');
 const interactionsRoutes = require('./interactions.routes');
 const consultationsRoutes = require('./consultations.routes');
 const directoryRoutes = require('./directory.routes');
+const blogRoutes = require('./blog.routes');
+const marketplaceRoutes = require('./marketplace.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
@@ -30,6 +32,8 @@ router.use('/maintenances', maintenancesRoutes);
 router.use('/interactions', interactionsRoutes);
 router.use('/consultations', consultationsRoutes);
 router.use('/directory', directoryRoutes);
+router.use('/blog', blogRoutes);
+router.use('/marketplace', marketplaceRoutes);
 
 // Info de la API
 router.get('/', (req, res) => {
