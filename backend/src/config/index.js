@@ -55,6 +55,13 @@ const config = {
     password: process.env.ADMIN_PASSWORD || 'Admin123!',
   },
 
+  // Retail OírConecta: profesional asociado al consultorio propio.
+  // Si está vacío, /agendar opera en modo global (cualquier cita bloquea slot).
+  retail: {
+    professionalId: (process.env.RETAIL_PROFESSIONAL_ID || '').trim() || null,
+    professionalEmail: (process.env.RETAIL_PROFESSIONAL_EMAIL || '').trim().toLowerCase() || null,
+  },
+
   developmentCorsOriginUrls,
 };
 
