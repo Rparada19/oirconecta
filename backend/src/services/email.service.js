@@ -1,10 +1,14 @@
 /**
  * Notificaciones por correo al agendar cita.
- * Con SMTP_* en .env se envía con nodemailer; si no, en desarrollo se loguea el cuerpo y en producción solo un aviso (sin datos del paciente).
+ * Prioridad: RESEND_API_KEY (HTTPS, funciona en Render Free) → SMTP_* (nodemailer)
+ * → dev log. Render Free bloquea SMTP saliente; por eso Resend es la ruta real
+ * en producción.
  */
 
 const nodemailer = require('nodemailer');
 const config = require('../config');
+
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
 function formatAppointmentSummary(apt) {
   const fecha = apt.fecha instanceof Date ? apt.fecha.toISOString().slice(0, 10) : String(apt.fecha || '').slice(0, 10);
@@ -44,17 +48,50 @@ function getTransport() {
   return cachedTransport;
 }
 
+async function sendViaResend(from, to, subject, text) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from, to, subject, text }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error('[email] Resend HTTP', res.status, body.slice(0, 300));
+    }
+  } catch (e) {
+    console.error('[email] Resend failed:', e.message);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function deliver(to, subject, text) {
   const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+  // Prioridad 1: Resend API (HTTPS, no le afectan los bloqueos SMTP de Render Free)
+  if (process.env.RESEND_API_KEY && from) {
+    await sendViaResend(from, to, subject, text);
+    return;
+  }
+
+  // Prioridad 2: SMTP vía nodemailer (legacy / self-hosted)
   const transport = getTransport();
   if (transport && from) {
     await transport.sendMail({ from, to, subject, text });
     return;
   }
+
   const isProd = process.env.NODE_ENV === 'production';
   if (isProd) {
     // eslint-disable-next-line no-console
-    console.warn('[email] Correo no enviado (configure SMTP_HOST y SMTP_FROM):', subject);
+    console.warn('[email] Correo no enviado (configure RESEND_API_KEY o SMTP_HOST + SMTP_FROM):', subject);
   } else {
     // eslint-disable-next-line no-console
     console.log('[email → dev]', to, subject, '\n', text);
