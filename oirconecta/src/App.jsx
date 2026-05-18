@@ -52,6 +52,10 @@ const DirectorioResultadosPage = lazy(() => import('./pages/DirectorioResultados
 const DirectorioListadoPage = lazy(() => import('./pages/DirectorioListadoPage'));
 const DirectorioProfesionSlugPage = lazy(() => import('./pages/DirectorioProfesionSlugPage'));
 const DirectorioProfesionalPage = lazy(() => import('./pages/DirectorioProfesionalPage'));
+// F1: directorio Airbnb-grade
+const DirectorioAirbnbPage = lazy(() => import('./pages/DirectorioAirbnbPage'));
+const DirectorioCiudadPage = lazy(() => import('./pages/DirectorioCiudadPage'));
+const DirectorioProfesionPage = lazy(() => import('./pages/DirectorioProfesionPage'));
 
 // Autenticaciones (lazy)
 const LoginCRMPage = lazy(() => import('./pages/LoginCRMPage'));
@@ -162,8 +166,11 @@ export default function App() {
           <Route path="/profesionales/audiologos" element={<AudiologasPage />} />
           <Route path="/directorio/profesional/:profileId" element={<DirectorioProfesionalPage />} />
           <Route path="/directorio/listado" element={<DirectorioListadoPage />} />
-          <Route path="/directorio/profesion/:slug" element={<DirectorioProfesionSlugPage />} />
-          <Route path="/directorio" element={<DirectorioResultadosPage />} />
+          {/* F1: rutas nuevas tipo Airbnb. La legacy queda accesible en /directorio-clasico. */}
+          <Route path="/directorio/ciudad/:slug" element={<DirectorioCiudadPage />} />
+          <Route path="/directorio/profesion/:slug" element={<DirectorioProfesionPage />} />
+          <Route path="/directorio" element={<DirectorioAirbnbPage />} />
+          <Route path="/directorio-clasico" element={<DirectorioResultadosPage />} />
 
           {/* Ruta del perfil profesional demo */}
           <Route path="/profesional/demo" element={<ProfessionalProfileDemoPage />} />

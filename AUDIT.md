@@ -261,3 +261,75 @@ El schema declara `schemas = ["crm", "directory", "public_site"]` pero la DB en 
 ### Próxima fase
 
 Cuando confirmes que migraste multiSchema a prod sin incidentes, podemos arrancar **Fase 1: Directorio + Portal Profesional Airbnb-grade** (normalización profesiones, reseñas, ranking, flujo aprobación).
+
+---
+
+## 10. Fase 1 — Directorio Airbnb-grade (backend entregado, frontend pendiente)
+
+**Rama:** `fase-1-directorio`. Lista para PR cuando se aplique la migración SQL.
+
+### Modelos nuevos
+| Modelo | Para qué |
+|---|---|
+| `Profession` | Catálogo canónico (4 profesiones + sinónimos) |
+| `City` | Catálogo (15 ciudades de Colombia con coordenadas) |
+| `Review` | Reseñas con moderación (`PENDING/APPROVED/REJECTED/REPORTED`) |
+| `Report` | Reportes contra perfil o reseña |
+| `ProfileView` | Log de visitas (para `viewsCount30d` y "más consultados") |
+
+### Cambios en `DirectoryProfile`
+- `professionId` (FK → `professions`) + `cityId` (FK → `cities`).
+- Cache: `ratingAvg`, `reviewsCount`, `viewsCount30d`, `completeness` (0-100), `rankingScore`.
+- Destacados: `isFeatured`, `isSponsored`, `sponsoredUntil`.
+- Estado nuevo `NEEDS_CHANGES` + campo `needsChangesNote`.
+
+### Endpoints nuevos
+| Método | Ruta | Propósito |
+|---|---|---|
+| GET | `/api/directory/professions` | Catálogo público |
+| GET | `/api/directory/cities` | Catálogo público |
+| GET | `/api/directory/featured` | Destacados generales |
+| GET | `/api/directory/featured/by-city/:slug` | Por ciudad |
+| GET | `/api/directory/featured/by-profession/:slug` | Por profesión |
+| GET | `/api/directory/sponsored` | Placements pagados |
+| GET | `/api/directory/search-v2` | Búsqueda con `q`, `professionSlug`, `citySlug`, `modalidad`, `minRating`, `poliza`, `sort=ranking|rating|reviews|recent` |
+| POST | `/api/directory/profiles/:id/views` | Registrar visita |
+| POST | `/api/directory/profiles/:id/reviews` | Enviar reseña (público) |
+| GET | `/api/directory/profiles/:id/reviews` | Listar reseñas aprobadas |
+| POST | `/api/directory/reviews/:id/report` | Reportar reseña |
+| POST | `/api/directory/profiles/:id/report` | Reportar perfil |
+| GET | `/api/directory/admin/reviews` | Moderación (admin) |
+| PATCH | `/api/directory/admin/reviews/:id` | Aprobar/rechazar reseña |
+| GET | `/api/directory/admin/reports` | Lista de reportes |
+| PATCH | `/api/directory/admin/reports/:id` | Resolver/desestimar |
+| PATCH | `/api/directory/admin/profiles/:accountId` | Ahora acepta `status=NEEDS_CHANGES` + `needsChangesNote` |
+
+### Ranking
+[backend/src/services/ranking.service.js](backend/src/services/ranking.service.js)
+```
+rankingScore = 0.4 ratingNorm + 0.2 reviewsNorm + 0.2 completenessNorm + 0.1 viewsNorm + 0.1 activityNorm
+```
+Se recalcula al guardar perfil (en `updateMyDirectoryProfile`). Completeness se infiere de 12 señales del perfil.
+
+### Normalización de profesiones
+[backend/src/utils/normalizeProfesion.js](backend/src/utils/normalizeProfesion.js)
+- Catálogo en memoria + lookup en `professions.sinonimos`.
+- "Fonoaudióloga", "fono", "fonoaudiologa" → todos mapean a `slug=fonoaudiologo`.
+
+### Aplicar migración a prod
+La migración solo **agrega** tablas, columnas y enum — no mueve datos. Riesgo bajo.
+
+1. Backup branch en Neon (igual que F0 §9).
+2. `cd backend && DATABASE_URL='<URL_NEON_SIN_POOLER>' npx prisma migrate deploy`
+3. `DATABASE_URL='<URL_NEON_SIN_POOLER>' npx prisma generate`
+4. Reseed: `DATABASE_URL='<URL_NEON>' npx prisma db seed` (llena `professions` y `cities`).
+5. Render manual deploy.
+6. Smoke test: `curl https://oirconecta-api.onrender.com/api/directory/professions` debe devolver 4 items.
+
+### Frontend Fase 1 (pendiente, próxima sesión)
+- Portal profesional autoadministrable (fotos, horarios visual, servicios, completitud %).
+- Cards públicas tipo Airbnb (imagen, rating, ciudad, profesión, modalidad, "desde $").
+- Buscador con filtros (chips por profesión/ciudad, slider minRating, sort).
+- Página `/directorio/destacados`, `/directorio/ciudad/:slug`, `/directorio/profesion/:slug`.
+- Componente de reseñas (estrellas, formulario, lista).
+- Admin moderación (lista pendientes, botones aprobar/rechazar).

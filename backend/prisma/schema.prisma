@@ -90,13 +90,41 @@ model DirectoryProfile {
   profesionalesCentro  DirectoryProfile[] @relation("DirectoryCentroProfesionales")
 
   nombreConsultorio String?
+  /// Texto libre legacy (se mantiene durante backfill). Para búsqueda/ranking se usa `professionId`.
   profesion          String?
+  /// Profesión canónica (lookup `professions`). Se llena con `normalizeProfesion()` al guardar/registrar.
+  professionId       String?
+  profession         Profession? @relation(fields: [professionId], references: [id], onDelete: SetNull)
+  /// Ciudad principal canónica (lookup `cities`). El primer workplace puede sembrarlo si está vacío.
+  cityId             String?
+  city               City? @relation(fields: [cityId], references: [id], onDelete: SetNull)
   polizasAceptadas   String[] @default([])
   /// Texto público en primera persona (MASCULINO | FEMENINO). Solo aplica a persona natural; null = redacción neutra.
   generoFicha        String?
 
+  /// Cache: promedio de ratings de reviews APPROVED.
+  ratingAvg          Float    @default(0)
+  /// Cache: número de reviews APPROVED.
+  reviewsCount       Int      @default(0)
+  /// Cache: visitas en los últimos 30 días (recalculado por job/cron).
+  viewsCount30d      Int      @default(0)
+  /// 0-100: completitud del perfil (foto, bio, servicios, horarios, etc.). Recalculado al guardar.
+  completeness       Int      @default(0)
+  /// Score compuesto para ordenar resultados de búsqueda y secciones destacadas.
+  rankingScore       Float    @default(0)
+  /// Destacado manual por admin (badge "Destacado").
+  isFeatured         Boolean  @default(false)
+  /// Destacado pagado (aparece en /sponsored hasta `sponsoredUntil`).
+  isSponsored        Boolean  @default(false)
+  sponsoredUntil     DateTime?
+  /// Nota del admin cuando pide ajustes (status = NEEDS_CHANGES).
+  needsChangesNote   String?  @db.Text
+
   workplaces DirectoryWorkplace[]
   inquiries  DirectoryInquiry[]
+  reviews    Review[]
+  reports    Report[]
+  views      ProfileView[]
   appointmentsFromDirectory Appointment[] @relation("AppointmentDirectoryProfile")
 
   allies       Json?
@@ -117,6 +145,11 @@ model DirectoryProfile {
   updatedAt DateTime @updatedAt
 
   @@index([parentProfileId])
+  @@index([professionId])
+  @@index([cityId])
+  @@index([status, rankingScore])
+  @@index([isFeatured, rankingScore])
+  @@index([isSponsored, sponsoredUntil])
   @@map("directory_profiles")
 }
 
@@ -207,6 +240,7 @@ enum Role {
 enum DirectoryProfileStatus {
   DRAFT
   PENDING
+  NEEDS_CHANGES
   APPROVED
   REJECTED
 }
@@ -706,4 +740,186 @@ enum MarketplaceListingStatus {
   ACTIVO
   PAUSADO
   VENCIDO
+}
+
+// ===========================================
+// PROFESIONES (catálogo canónico con sinónimos)
+// ===========================================
+
+/// Catálogo de profesiones del directorio. `slug` es la forma canónica; `sinonimos` permite mapear variantes (femenino, abreviaturas, sin tilde) al mismo `slug` desde `normalizeProfesion()`.
+model Profession {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  nombre         String
+  nombreFemenino String?
+  /// Variantes que normalizan al mismo `slug` (sin acentos, lowercase). Ej: ["fono", "fonoaudiologa"].
+  sinonimos      String[] @default([])
+  descripcion    String?  @db.Text
+  iconUrl        String?
+  activo         Boolean  @default(true)
+  orden          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  profiles DirectoryProfile[]
+
+  @@map("professions")
+}
+
+// ===========================================
+// DEPARTAMENTOS (33 entidades territoriales de Colombia)
+// ===========================================
+
+/// Catálogo de departamentos. `codigoDane` es el código oficial DANE (string para preservar el cero a la izquierda).
+model Department {
+  id         String   @id @default(uuid())
+  slug       String   @unique
+  nombre     String
+  codigoDane String?  @unique
+  capital    String?
+  pais       String   @default("CO")
+  region     String?
+  orden      Int      @default(0)
+  activo     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  cities City[]
+
+  @@map("departments")
+}
+
+// ===========================================
+// MUNICIPIOS / CIUDADES (catálogo)
+// ===========================================
+
+/// Conserva el nombre `City` por compatibilidad con la API pública. En la práctica representa cualquier municipio del DANE.
+model City {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  nombre       String
+  /// Texto plano del departamento (cache para listados sin join).
+  departamento String?
+  /// FK al catálogo `departments` (oficial).
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  /// Código DANE del municipio (5 dígitos, ej. "05001" Medellín).
+  codigoDane   String?  @unique
+  /// Categoría DANE: capital_departamento | ciudad_grande | municipio | corregimiento.
+  categoria    String?
+  pais         String   @default("CO")
+  lat          Float?
+  lng          Float?
+  activo       Boolean  @default(true)
+  orden        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profiles DirectoryProfile[]
+
+  @@index([departmentId])
+  @@index([categoria])
+  @@map("cities")
+}
+
+// ===========================================
+// RESEÑAS (moderadas; solo APPROVED cuentan al ranking)
+// ===========================================
+
+model Review {
+  id        String   @id @default(uuid())
+  profileId String
+  profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  authorName  String
+  authorEmail String
+  authorPhone String?
+  rating      Int
+  comment     String? @db.Text
+
+  status               ReviewStatus @default(PENDING)
+  moderatedAt          DateTime?
+  moderatedByCrmUserId String?
+  moderationNote       String? @db.Text
+
+  /// Acumulado de reportes contra esta reseña (denuncias del público).
+  reportCount Int @default(0)
+  reportedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports Report[]
+
+  @@index([profileId, status])
+  @@index([profileId, createdAt])
+  @@map("reviews")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REPORTED
+}
+
+// ===========================================
+// REPORTES (contra perfil o reseña)
+// ===========================================
+
+model Report {
+  id String @id @default(uuid())
+
+  profileId String?
+  profile   DirectoryProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  reviewId String?
+  review   Review? @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  reporterName  String?
+  reporterEmail String?
+  /// informacion_incorrecta | comportamiento_inapropiado | spam | suplantacion | otro
+  motivo        String
+  detalle       String? @db.Text
+
+  status              ReportStatus @default(NEW)
+  resolvedAt          DateTime?
+  resolvedByCrmUserId String?
+  resolutionNote      String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, status])
+  @@index([reviewId, status])
+  @@map("reports")
+}
+
+enum ReportStatus {
+  NEW
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+// ===========================================
+// LOG DE VISITAS (para "más consultados")
+// ===========================================
+
+/// Una fila por visita a la ficha pública. Un job recalcula `DirectoryProfile.viewsCount30d` desde aquí.
+model ProfileView {
+  id        String   @id @default(uuid())
+  profileId String
+  profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  ip        String?
+  userAgent String?
+  referrer  String?
+  /// search | direct | featured | city_listing | profession_listing | sponsored
+  source    String?
+
+  viewedAt DateTime @default(now())
+
+  @@index([profileId, viewedAt])
+  @@map("profile_views")
 }

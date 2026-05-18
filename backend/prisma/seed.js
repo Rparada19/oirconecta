@@ -167,6 +167,120 @@ async function main() {
   console.log(`   Password: ${DIRECTORY_DEMO_PASSWORD}`);
   console.log('   (Acceso: /login-directorio. No uses esta cuenta en producción.)');
 
+  // ─────────────────────────────────────────────
+  // Profesiones canónicas (Fase 1: directorio)
+  // ─────────────────────────────────────────────
+  console.log('\n🩺 Sembrando profesiones canónicas...');
+  const PROFESSIONS = [
+    {
+      slug: 'fonoaudiologo',
+      nombre: 'Fonoaudiólogo',
+      nombreFemenino: 'Fonoaudióloga',
+      sinonimos: ['fonoaudiologa', 'fono', 'fonoaudiologia'],
+      descripcion:
+        'Profesional de la comunicación humana: evaluación, diagnóstico y rehabilitación de audición, voz, habla, lenguaje y deglución.',
+      orden: 1,
+    },
+    {
+      slug: 'audiologo',
+      nombre: 'Audiólogo',
+      nombreFemenino: 'Audióloga',
+      sinonimos: ['audiologa', 'audiologia'],
+      descripcion:
+        'Especialista en evaluación auditiva, adaptación de audífonos y rehabilitación de la pérdida auditiva.',
+      orden: 2,
+    },
+    {
+      slug: 'otologo',
+      nombre: 'Otólogo',
+      nombreFemenino: 'Otóloga',
+      sinonimos: ['otologa', 'otologia'],
+      descripcion:
+        'Médico especialista en enfermedades del oído (medio, interno) y cirugía otológica.',
+      orden: 3,
+    },
+    {
+      slug: 'otorrinolaringologo',
+      nombre: 'Otorrinolaringólogo',
+      nombreFemenino: 'Otorrinolaringóloga',
+      sinonimos: ['otorrinolaringologa', 'otorrino', 'orl', 'otorrinolaringologia'],
+      descripcion:
+        'Médico especialista en oído, nariz y garganta (ORL). Diagnóstico y tratamiento de patologías del área.',
+      orden: 4,
+    },
+  ];
+  for (const p of PROFESSIONS) {
+    await prisma.profession.upsert({
+      where: { slug: p.slug },
+      update: {
+        nombre: p.nombre,
+        nombreFemenino: p.nombreFemenino,
+        sinonimos: p.sinonimos,
+        descripcion: p.descripcion,
+        orden: p.orden,
+        activo: true,
+      },
+      create: p,
+    });
+  }
+  console.log(`   ${PROFESSIONS.length} profesiones canónicas sincronizadas.`);
+
+  // ─────────────────────────────────────────────
+  // Ciudades principales de Colombia
+  // ─────────────────────────────────────────────
+  // Departamentos y municipios de Colombia (33 + ~140 cabeceras y ciudades grandes)
+  // Para cargar los ~1100 municipios completos: ver `prisma/data/colombia.js#loadFromDaneCsv`.
+  // ─────────────────────────────────────────────
+  const { DEPARTMENTS, MUNICIPALITIES } = require('./data/colombia');
+
+  console.log('\n🇨🇴 Sembrando departamentos...');
+  for (const d of DEPARTMENTS) {
+    await prisma.department.upsert({
+      where: { slug: d.slug },
+      update: { ...d, activo: true },
+      create: d,
+    });
+  }
+  console.log(`   ${DEPARTMENTS.length} departamentos sincronizados.`);
+
+  console.log('\n🏙  Sembrando municipios...');
+  // Mapa slug→id para resolver FK departmentId.
+  const depIdBySlug = Object.fromEntries(
+    (await prisma.department.findMany({ select: { id: true, slug: true, nombre: true } })).map((d) => [
+      d.slug,
+      { id: d.id, nombre: d.nombre },
+    ])
+  );
+  let count = 0;
+  for (const m of MUNICIPALITIES) {
+    const dep = depIdBySlug[m.dep];
+    await prisma.city.upsert({
+      where: { slug: m.slug },
+      update: {
+        nombre: m.nombre,
+        departamento: dep ? dep.nombre : null,
+        departmentId: dep ? dep.id : null,
+        codigoDane: m.codigoDane || null,
+        categoria: m.cat,
+        lat: m.lat ?? null,
+        lng: m.lng ?? null,
+        activo: true,
+      },
+      create: {
+        slug: m.slug,
+        nombre: m.nombre,
+        departamento: dep ? dep.nombre : null,
+        departmentId: dep ? dep.id : null,
+        codigoDane: m.codigoDane || null,
+        categoria: m.cat,
+        lat: m.lat ?? null,
+        lng: m.lng ?? null,
+      },
+    });
+    count++;
+  }
+  console.log(`   ${count} municipios sincronizados.`);
+
   console.log('\n🎉 Seed completado exitosamente!');
 }
 
