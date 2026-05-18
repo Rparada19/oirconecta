@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 
@@ -35,7 +35,7 @@ router.get('/:slug', async (req, res) => {
 });
 
 // ── Admin: listar todos (incluyendo borradores) ──
-router.get('/admin/all', authenticateToken, async (req, res) => {
+router.get('/admin/all', authenticate, async (req, res) => {
   try {
     const { estado, limit = 50, offset = 0 } = req.query;
     const where = estado ? { estado } : {};
@@ -51,7 +51,7 @@ router.get('/admin/all', authenticateToken, async (req, res) => {
 });
 
 // ── Admin: crear post ──
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
     const { titulo, resumen, contenido, coverUrl, categoria, tags, estado, destacado, autorNombre, slug } = req.body;
     if (!titulo || !contenido) return res.status(400).json({ success: false, error: 'Título y contenido son requeridos' });
@@ -73,7 +73,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // ── Admin: actualizar post ──
-router.patch('/:id', authenticateToken, async (req, res) => {
+router.patch('/:id', authenticate, async (req, res) => {
   try {
     const { titulo, resumen, contenido, coverUrl, categoria, tags, estado, destacado, autorNombre } = req.body;
     const existing = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
@@ -96,7 +96,7 @@ router.patch('/:id', authenticateToken, async (req, res) => {
 });
 
 // ── Admin: eliminar post ──
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   try {
     await prisma.blogPost.delete({ where: { id: req.params.id } });
     res.json({ success: true, message: 'Post eliminado' });

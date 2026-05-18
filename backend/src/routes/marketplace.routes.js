@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
-const { authenticateToken, authenticateDirectoryAccount } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
+const { authenticateDirectoryAccount } = require('../middleware/directoryAuth');
 
 const prisma = new PrismaClient();
 
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
 });
 
 // ── Admin: todos los listings ──
-router.get('/admin/all', authenticateToken, async (req, res) => {
+router.get('/admin/all', authenticate, async (req, res) => {
   try {
     const { estado, limit = 50, offset = 0 } = req.query;
     const where = estado ? { estado } : {};
@@ -47,7 +48,7 @@ router.get('/admin/all', authenticateToken, async (req, res) => {
 });
 
 // ── Admin: destacar / cambiar estado ──
-router.patch('/admin/:id', authenticateToken, async (req, res) => {
+router.patch('/admin/:id', authenticate, async (req, res) => {
   try {
     const { estado, destacado } = req.body;
     const listing = await prisma.marketplaceListing.update({
@@ -59,7 +60,7 @@ router.patch('/admin/:id', authenticateToken, async (req, res) => {
 });
 
 // ── Admin: eliminar ──
-router.delete('/admin/:id', authenticateToken, async (req, res) => {
+router.delete('/admin/:id', authenticate, async (req, res) => {
   try {
     await prisma.marketplaceListing.delete({ where: { id: req.params.id } });
     res.json({ success: true });
@@ -69,7 +70,7 @@ router.delete('/admin/:id', authenticateToken, async (req, res) => {
 // ── Profesional: sus propios listings ──
 router.get('/me', authenticateDirectoryAccount, async (req, res) => {
   try {
-    const profile = await prisma.directoryProfile.findUnique({ where: { accountId: req.account.id } });
+    const profile = await prisma.directoryProfile.findUnique({ where: { accountId: req.directoryAccount.id } });
     if (!profile) return res.status(404).json({ success: false, error: 'Perfil no encontrado' });
     const listings = await prisma.marketplaceListing.findMany({
       where: { profileId: profile.id }, orderBy: { createdAt: 'desc' },
@@ -81,7 +82,7 @@ router.get('/me', authenticateDirectoryAccount, async (req, res) => {
 // ── Profesional: crear listing ──
 router.post('/me', authenticateDirectoryAccount, async (req, res) => {
   try {
-    const profile = await prisma.directoryProfile.findUnique({ where: { accountId: req.account.id } });
+    const profile = await prisma.directoryProfile.findUnique({ where: { accountId: req.directoryAccount.id } });
     if (!profile) return res.status(404).json({ success: false, error: 'Perfil no encontrado' });
     const { titulo, descripcion, categoria, precio, precioDesde, precioHasta, modalidad, imageUrls } = req.body;
     if (!titulo || !categoria) return res.status(400).json({ success: false, error: 'Título y categoría requeridos' });
@@ -97,7 +98,7 @@ router.post('/me', authenticateDirectoryAccount, async (req, res) => {
 // ── Profesional: actualizar listing ──
 router.patch('/me/:id', authenticateDirectoryAccount, async (req, res) => {
   try {
-    const profile = await prisma.directoryProfile.findUnique({ where: { accountId: req.account.id } });
+    const profile = await prisma.directoryProfile.findUnique({ where: { accountId: req.directoryAccount.id } });
     const listing = await prisma.marketplaceListing.findFirst({
       where: { id: req.params.id, profileId: profile?.id },
     });
@@ -112,7 +113,7 @@ router.patch('/me/:id', authenticateDirectoryAccount, async (req, res) => {
 // ── Profesional: eliminar listing ──
 router.delete('/me/:id', authenticateDirectoryAccount, async (req, res) => {
   try {
-    const profile = await prisma.directoryProfile.findUnique({ where: { accountId: req.account.id } });
+    const profile = await prisma.directoryProfile.findUnique({ where: { accountId: req.directoryAccount.id } });
     const listing = await prisma.marketplaceListing.findFirst({
       where: { id: req.params.id, profileId: profile?.id },
     });

@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /portal-crm/
+Disallow: /portal-admin/
+Disallow: /portal-profesional/
+Disallow: /admin/
+Disallow: /admin-login
+Disallow: /login-crm
+Disallow: /crm-login
+Disallow: /login-directorio
+Disallow: /mi-directorio
+
+Sitemap: https://oirconecta.com/sitemap.xml
