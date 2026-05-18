@@ -35,6 +35,11 @@ function getTransport() {
     auth: process.env.SMTP_USER
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS || '' }
       : undefined,
+    // Timeouts cortos: si Render bloquea SMTP (puerto 25/465 en free tier) o el
+    // host no responde, falla rápido en lugar de colgar 2+ minutos.
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
   return cachedTransport;
 }

@@ -237,14 +237,15 @@ const create = async (data, createdById) => {
     },
   });
 
-  try {
-    const { sendBookingConfirmations } = require('./email.service');
-    await sendBookingConfirmations(appointment, {
-      professionalName: data.professionalDisplayName || undefined,
-    });
-  } catch (e) {
+  // Envío de correos no debe bloquear la respuesta del POST. Si el SMTP cuelga
+  // (ej. Render bloquea puerto 465), la cita igual queda registrada y el paciente
+  // ve la confirmación inmediata; los emails se intentan en segundo plano.
+  const { sendBookingConfirmations } = require('./email.service');
+  sendBookingConfirmations(appointment, {
+    professionalName: data.professionalDisplayName || undefined,
+  }).catch((e) => {
     console.error('[appointments.create] email notify:', e.message);
-  }
+  });
 
   return appointment;
 };
