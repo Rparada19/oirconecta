@@ -767,14 +767,46 @@ model Profession {
 }
 
 // ===========================================
-// CIUDADES (catálogo)
+// DEPARTAMENTOS (33 entidades territoriales de Colombia)
 // ===========================================
 
+/// Catálogo de departamentos. `codigoDane` es el código oficial DANE (string para preservar el cero a la izquierda).
+model Department {
+  id         String   @id @default(uuid())
+  slug       String   @unique
+  nombre     String
+  codigoDane String?  @unique
+  capital    String?
+  pais       String   @default("CO")
+  region     String?
+  orden      Int      @default(0)
+  activo     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  cities City[]
+
+  @@map("departments")
+}
+
+// ===========================================
+// MUNICIPIOS / CIUDADES (catálogo)
+// ===========================================
+
+/// Conserva el nombre `City` por compatibilidad con la API pública. En la práctica representa cualquier municipio del DANE.
 model City {
   id           String   @id @default(uuid())
   slug         String   @unique
   nombre       String
+  /// Texto plano del departamento (cache para listados sin join).
   departamento String?
+  /// FK al catálogo `departments` (oficial).
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  /// Código DANE del municipio (5 dígitos, ej. "05001" Medellín).
+  codigoDane   String?  @unique
+  /// Categoría DANE: capital_departamento | ciudad_grande | municipio | corregimiento.
+  categoria    String?
   pais         String   @default("CO")
   lat          Float?
   lng          Float?
@@ -785,6 +817,8 @@ model City {
 
   profiles DirectoryProfile[]
 
+  @@index([departmentId])
+  @@index([categoria])
   @@map("cities")
 }
 

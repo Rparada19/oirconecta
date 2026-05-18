@@ -71,19 +71,66 @@ router.get('/professions', async (_req, res, next) => {
   }
 });
 
-// ── Catálogo de ciudades (público) ──
-router.get('/cities', async (_req, res, next) => {
+// ── Catálogo de departamentos (público) ──
+router.get('/departments', async (_req, res, next) => {
   try {
-    const items = await prisma.city.findMany({
+    const items = await prisma.department.findMany({
       where: { activo: true },
       orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
-      select: { id: true, slug: true, nombre: true, departamento: true },
+      select: {
+        id: true,
+        slug: true,
+        nombre: true,
+        codigoDane: true,
+        capital: true,
+        region: true,
+      },
     });
     res.json({ success: true, data: items });
   } catch (e) {
     next(e);
   }
 });
+
+// ── Catálogo de ciudades / municipios (público; opcionalmente filtrado por departamento) ──
+router.get(
+  '/cities',
+  [
+    query('departmentSlug').optional().isString().isLength({ max: 80 }),
+    query('categoria')
+      .optional()
+      .isIn(['capital_departamento', 'ciudad_grande', 'municipio', 'corregimiento']),
+    query('limit').optional().isInt({ min: 1, max: 2000 }),
+  ],
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const where = { activo: true };
+      if (req.query.departmentSlug) {
+        const dep = await prisma.department.findUnique({ where: { slug: req.query.departmentSlug } });
+        if (dep) where.departmentId = dep.id;
+      }
+      if (req.query.categoria) where.categoria = req.query.categoria;
+      const items = await prisma.city.findMany({
+        where,
+        orderBy: [{ categoria: 'asc' }, { orden: 'asc' }, { nombre: 'asc' }],
+        take: parseInt(req.query.limit || '500', 10),
+        select: {
+          id: true,
+          slug: true,
+          nombre: true,
+          departamento: true,
+          departmentId: true,
+          categoria: true,
+          codigoDane: true,
+        },
+      });
+      res.json({ success: true, data: items });
+    } catch (e) {
+      next(e);
+    }
+  }
+);
 
 // ── Destacados generales (mezcla isFeatured + top rankingScore) ──
 router.get(

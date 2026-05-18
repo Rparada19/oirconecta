@@ -228,32 +228,58 @@ async function main() {
   // ─────────────────────────────────────────────
   // Ciudades principales de Colombia
   // ─────────────────────────────────────────────
-  console.log('\n🏙  Sembrando ciudades...');
-  const CITIES = [
-    { slug: 'bogota', nombre: 'Bogotá', departamento: 'Cundinamarca', lat: 4.711, lng: -74.0721, orden: 1 },
-    { slug: 'medellin', nombre: 'Medellín', departamento: 'Antioquia', lat: 6.2442, lng: -75.5812, orden: 2 },
-    { slug: 'cali', nombre: 'Cali', departamento: 'Valle del Cauca', lat: 3.4516, lng: -76.532, orden: 3 },
-    { slug: 'barranquilla', nombre: 'Barranquilla', departamento: 'Atlántico', lat: 10.9685, lng: -74.7813, orden: 4 },
-    { slug: 'cartagena', nombre: 'Cartagena', departamento: 'Bolívar', lat: 10.391, lng: -75.4794, orden: 5 },
-    { slug: 'bucaramanga', nombre: 'Bucaramanga', departamento: 'Santander', lat: 7.1193, lng: -73.1227, orden: 6 },
-    { slug: 'pereira', nombre: 'Pereira', departamento: 'Risaralda', lat: 4.8133, lng: -75.6961, orden: 7 },
-    { slug: 'manizales', nombre: 'Manizales', departamento: 'Caldas', lat: 5.0689, lng: -75.5174, orden: 8 },
-    { slug: 'cucuta', nombre: 'Cúcuta', departamento: 'Norte de Santander', lat: 7.8939, lng: -72.5078, orden: 9 },
-    { slug: 'ibague', nombre: 'Ibagué', departamento: 'Tolima', lat: 4.4389, lng: -75.2322, orden: 10 },
-    { slug: 'santa-marta', nombre: 'Santa Marta', departamento: 'Magdalena', lat: 11.2408, lng: -74.199, orden: 11 },
-    { slug: 'villavicencio', nombre: 'Villavicencio', departamento: 'Meta', lat: 4.142, lng: -73.6266, orden: 12 },
-    { slug: 'armenia', nombre: 'Armenia', departamento: 'Quindío', lat: 4.5339, lng: -75.6811, orden: 13 },
-    { slug: 'neiva', nombre: 'Neiva', departamento: 'Huila', lat: 2.9273, lng: -75.2819, orden: 14 },
-    { slug: 'pasto', nombre: 'Pasto', departamento: 'Nariño', lat: 1.2136, lng: -77.2811, orden: 15 },
-  ];
-  for (const c of CITIES) {
-    await prisma.city.upsert({
-      where: { slug: c.slug },
-      update: { ...c, activo: true },
-      create: c,
+  // Departamentos y municipios de Colombia (33 + ~140 cabeceras y ciudades grandes)
+  // Para cargar los ~1100 municipios completos: ver `prisma/data/colombia.js#loadFromDaneCsv`.
+  // ─────────────────────────────────────────────
+  const { DEPARTMENTS, MUNICIPALITIES } = require('./data/colombia');
+
+  console.log('\n🇨🇴 Sembrando departamentos...');
+  for (const d of DEPARTMENTS) {
+    await prisma.department.upsert({
+      where: { slug: d.slug },
+      update: { ...d, activo: true },
+      create: d,
     });
   }
-  console.log(`   ${CITIES.length} ciudades sincronizadas.`);
+  console.log(`   ${DEPARTMENTS.length} departamentos sincronizados.`);
+
+  console.log('\n🏙  Sembrando municipios...');
+  // Mapa slug→id para resolver FK departmentId.
+  const depIdBySlug = Object.fromEntries(
+    (await prisma.department.findMany({ select: { id: true, slug: true, nombre: true } })).map((d) => [
+      d.slug,
+      { id: d.id, nombre: d.nombre },
+    ])
+  );
+  let count = 0;
+  for (const m of MUNICIPALITIES) {
+    const dep = depIdBySlug[m.dep];
+    await prisma.city.upsert({
+      where: { slug: m.slug },
+      update: {
+        nombre: m.nombre,
+        departamento: dep ? dep.nombre : null,
+        departmentId: dep ? dep.id : null,
+        codigoDane: m.codigoDane || null,
+        categoria: m.cat,
+        lat: m.lat ?? null,
+        lng: m.lng ?? null,
+        activo: true,
+      },
+      create: {
+        slug: m.slug,
+        nombre: m.nombre,
+        departamento: dep ? dep.nombre : null,
+        departmentId: dep ? dep.id : null,
+        codigoDane: m.codigoDane || null,
+        categoria: m.cat,
+        lat: m.lat ?? null,
+        lng: m.lng ?? null,
+      },
+    });
+    count++;
+  }
+  console.log(`   ${count} municipios sincronizados.`);
 
   console.log('\n🎉 Seed completado exitosamente!');
 }
