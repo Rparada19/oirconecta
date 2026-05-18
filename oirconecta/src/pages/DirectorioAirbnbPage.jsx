@@ -16,9 +16,9 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import DirectoryCardV2 from '../components/directorio/v2/DirectoryCardV2';
 import DirectoryCardSkeleton from '../components/directorio/v2/DirectoryCardSkeleton';
-import DirectorySearchBar from '../components/directorio/v2/DirectorySearchBar';
 import DirectoryFiltersDrawer from '../components/directorio/v2/DirectoryFiltersDrawer';
 import DirectoryActiveFilters from '../components/directorio/v2/DirectoryActiveFilters';
+import DirectoryHero from '../components/directorio/v2/DirectoryHero';
 
 import {
   fetchProfessions,
@@ -177,105 +177,17 @@ export default function DirectorioAirbnbPage() {
       </Helmet>
       <Header />
 
-      {/* Hero */}
-      <Box
-        sx={{
-          position: 'relative',
-          pt: { xs: 4, md: 8 },
-          pb: { xs: 4, md: 6 },
-          background: 'radial-gradient(circle at 20% 0%, rgba(8,89,70,0.10), transparent 55%), radial-gradient(circle at 90% 30%, rgba(39,47,80,0.10), transparent 50%)',
-        }}
-      >
-        <Container maxWidth="lg">
-          <Stack spacing={2} alignItems="center" textAlign="center" sx={{ mb: { xs: 3, md: 5 } }}>
-            <Chip
-              label="Directorio verificado"
-              sx={{
-                bgcolor: 'rgba(8,89,70,0.10)',
-                color: 'primary.main',
-                fontWeight: 700,
-                fontSize: 12,
-                letterSpacing: 0.5,
-              }}
-            />
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 800,
-                fontSize: { xs: 30, sm: 38, md: 48 },
-                lineHeight: 1.1,
-                maxWidth: 760,
-                color: 'text.primary',
-              }}
-            >
-              {heroTitle}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ color: 'text.secondary', maxWidth: 560, fontSize: { xs: 14, md: 16 } }}
-            >
-              Audiólogos, fonoaudiólogos y otorrinos con reseñas reales. Filtra por
-              ciudad, modalidad y calificación.
-            </Typography>
-          </Stack>
-
-          <DirectorySearchBar
-            value={qDraft}
-            onChange={setQDraft}
-            onSubmit={() => setFilters((f) => ({ ...f, q: qDraft }))}
-            onOpenFilters={() => setDrawerOpen(true)}
-            activeFilterCount={activeCount}
-          />
-
-          {/* Chips rápidos por profesión */}
-          {professions.length > 0 && (
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                mt: 3,
-                overflowX: 'auto',
-                pb: 1,
-                justifyContent: { md: 'center' },
-                px: { xs: 1, md: 0 },
-              }}
-            >
-              <Chip
-                label="Todos"
-                onClick={() => setFilters((f) => ({ ...f, professionSlug: undefined }))}
-                sx={{
-                  bgcolor: !filters.professionSlug ? 'primary.main' : 'background.paper',
-                  color: !filters.professionSlug ? '#fff' : 'text.primary',
-                  border: '1px solid',
-                  borderColor: !filters.professionSlug ? 'primary.main' : 'grey.200',
-                  fontWeight: 700,
-                  flexShrink: 0,
-                }}
-              />
-              {professions.map((p) => {
-                const sel = filters.professionSlug === p.slug;
-                return (
-                  <Chip
-                    key={p.slug}
-                    label={p.nombre + 's'}
-                    onClick={() =>
-                      setFilters((f) => ({ ...f, professionSlug: sel ? undefined : p.slug }))
-                    }
-                    sx={{
-                      bgcolor: sel ? 'primary.main' : 'background.paper',
-                      color: sel ? '#fff' : 'text.primary',
-                      border: '1px solid',
-                      borderColor: sel ? 'primary.main' : 'grey.200',
-                      fontWeight: 600,
-                      flexShrink: 0,
-                    }}
-                  />
-                );
-              })}
-            </Stack>
-          )}
-        </Container>
-      </Box>
+      <DirectoryHero
+        title={heroTitle === 'Encuentra al especialista auditivo ideal' ? undefined : heroTitle}
+        qDraft={qDraft}
+        setQDraft={setQDraft}
+        onSubmit={() => setFilters((f) => ({ ...f, q: qDraft }))}
+        onOpenFilters={() => setDrawerOpen(true)}
+        activeFilterCount={activeCount}
+        professions={professions}
+        selectedProfessionSlug={filters.professionSlug}
+        onProfessionToggle={(slug) => setFilters((f) => ({ ...f, professionSlug: slug }))}
+      />
 
       <Container maxWidth="lg" sx={{ pb: 10 }}>
         <DirectoryActiveFilters
