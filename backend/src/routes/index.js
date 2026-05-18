@@ -21,6 +21,7 @@ const directoryReviewsRoutes = require('./directoryReviews.routes');
 const directoryDiscoveryRoutes = require('./directoryDiscovery.routes');
 const blogRoutes = require('./blog.routes');
 const marketplaceRoutes = require('./marketplace.routes');
+const publicConfigRoutes = require('./publicConfig.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
@@ -39,6 +40,7 @@ router.use('/directory', directoryReviewsRoutes);
 router.use('/directory', directoryDiscoveryRoutes);
 router.use('/blog', blogRoutes);
 router.use('/marketplace', marketplaceRoutes);
+router.use('/public', publicConfigRoutes);
 
 // Info de la API
 router.get('/', (req, res) => {
@@ -68,6 +70,7 @@ router.get('/', (req, res) => {
       'directory-profile-whatsapp-stat': 'POST /api/directory/profiles/:profileId/stats/whatsapp',
       'directory-admin-profiles': 'GET /api/directory/admin/profiles',
       'directory-admin-profile-status': 'PATCH /api/directory/admin/profiles/:accountId',
+      'public-retail-config': 'GET /api/public/retail-config',
     },
   });
 });

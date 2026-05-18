@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Container, Box, Typography, Stepper, Step, StepLabel, Paper, Alert, Button, Grid } from '@mui/material';
 import { CalendarToday, AccessTime, VerifiedUser, CheckCircle } from '@mui/icons-material';
 import Header from '../components/Header';
@@ -9,17 +9,20 @@ import TimeSelector from '../components/appointments/TimeSelector';
 import PatientForm from '../components/appointments/PatientForm';
 import AppointmentConfirmation from '../components/appointments/AppointmentConfirmation';
 import { getAvailableTimeSlots, createAppointment } from '../services/appointmentService';
+import { api } from '../services/apiClient';
 
 const steps = ['Fecha', 'Hora', 'Datos del Paciente', 'Confirmación'];
 
 const AgendamientoPage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const directoryProfileIdFromUrl = searchParams.get('desdeDirectorio');
 
   const [activeStep, setActiveStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [availableTimes, setAvailableTimes] = useState([]);
+  const [retailProfessionalId, setRetailProfessionalId] = useState(null);
   const [patientData, setPatientData] = useState({
     patientName: '',
     patientEmail: '',
@@ -31,15 +34,30 @@ const AgendamientoPage = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // El professionalId del consultorio propio de OírConecta lo expone el backend
+  // (RETAIL_PROFESSIONAL_ID). /agendar lo usa para que la disponibilidad pública
+  // y la del CRM compartan el mismo calendario.
+  useEffect(() => {
+    let cancelled = false;
+    api.get('/api/public/retail-config', { skipAuth: true }).then(({ data, error }) => {
+      if (cancelled || error) return;
+      const id = data?.data?.professionalId || null;
+      if (id) setRetailProfessionalId(id);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     if (!selectedDate) {
       setAvailableTimes([]);
       setSelectedTime(null);
       return;
     }
-    getAvailableTimeSlots(selectedDate, '07:00', '18:00').then(setAvailableTimes);
+    getAvailableTimeSlots(selectedDate, '07:00', '18:00', retailProfessionalId).then(setAvailableTimes);
     setSelectedTime(null);
-  }, [selectedDate]);
+  }, [selectedDate, retailProfessionalId]);
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
@@ -91,6 +109,7 @@ const AgendamientoPage = () => {
       time: selectedTime,
       ...patientData,
       durationMinutes: 50,
+      professionalId: retailProfessionalId || undefined,
       directoryProfileId: directoryProfileIdFromUrl || undefined,
     });
     setIsLoading(false);
@@ -385,7 +404,11 @@ const AgendamientoPage = () => {
             )}
 
             {activeStep === 3 && appointment && (
-              <AppointmentConfirmation appointment={appointment} onReset={handleReset} />
+              <AppointmentConfirmation
+                appointment={appointment}
+                onReset={handleReset}
+                onContinue={() => navigate('/')}
+              />
             )}
 
             {/* Botones de navegación */}

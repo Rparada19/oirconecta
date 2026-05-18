@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, Paper, Button, Divider } from '@mui/material';
 import { CheckCircle, CalendarToday, AccessTime, Person, Email, Phone, Description } from '@mui/icons-material';
 
-const AppointmentConfirmation = ({ appointment, onReset }) => {
+const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     try {
@@ -167,21 +167,39 @@ const AppointmentConfirmation = ({ appointment, onReset }) => {
         </Typography>
       </Box>
 
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
+      <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, justifyContent: 'center', alignItems: 'center' }}>
         <Button
-          variant="contained"
+          variant="outlined"
           onClick={onReset}
           sx={{
-            bgcolor: '#085946',
-            '&:hover': {
-              bgcolor: '#272F50',
-            },
+            borderColor: '#085946',
+            borderWidth: 2,
+            color: '#085946',
+            '&:hover': { borderColor: '#085946', borderWidth: 2, bgcolor: '#f0f4f3' },
             px: 4,
             py: 1.5,
+            textTransform: 'none',
+            fontWeight: 600,
           }}
         >
           Agendar Otra Cita
         </Button>
+        {onContinue && (
+          <Button
+            variant="contained"
+            onClick={onContinue}
+            sx={{
+              bgcolor: '#085946',
+              '&:hover': { bgcolor: '#272F50' },
+              px: 4,
+              py: 1.5,
+              textTransform: 'none',
+              fontWeight: 700,
+            }}
+          >
+            Continuar Navegando
+          </Button>
+        )}
       </Box>
     </Box>
   );
