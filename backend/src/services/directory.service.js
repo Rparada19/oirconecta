@@ -7,6 +7,8 @@ const { hashPassword, comparePassword, validatePasswordStrength } = require('../
 const { generateDirectoryToken } = require('../utils/jwt');
 const { POLIZAS_COLOMBIA, PROFESIONES_DIRECTORIO } = require('../config/polizasColombia');
 const leadsService = require('./leads.service');
+const { normalizeProfesion } = require('../utils/normalizeProfesion');
+const { recalcRankingForProfile } = require('./ranking.service');
 
 const prisma = new PrismaClient();
 
@@ -451,12 +453,17 @@ async function updateMyDirectoryProfile(accountId, body) {
   if (body.profesion !== undefined) {
     if (body.profesion == null || body.profesion === '') {
       patch.profesion = null;
+      patch.professionId = null;
     } else if (!PROFESIONES_DIRECTORIO.includes(body.profesion)) {
       const err = new Error(`Profesión no válida. Use: ${PROFESIONES_DIRECTORIO.join(', ')}`);
       err.statusCode = 400;
       throw err;
     } else {
       patch.profesion = body.profesion;
+      // Mapeo canónico contra `professions` (F1). Si el seed aún no corrió,
+      // simplemente quedará null y se rellenará en la próxima edición.
+      const canonical = await normalizeProfesion(body.profesion, prisma);
+      patch.professionId = canonical ? canonical.id : null;
     }
   }
   if (body.polizasAceptadas !== undefined) {
@@ -494,7 +501,7 @@ async function updateMyDirectoryProfile(accountId, body) {
     data.status = 'PENDING';
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     await tx.directoryProfile.update({
       where: { accountId },
       data,
@@ -515,12 +522,37 @@ async function updateMyDirectoryProfile(accountId, body) {
         });
       }
     }
-    const updated = await tx.directoryProfile.findUnique({
+    // Si el workplace principal trae una ciudad y el perfil no tiene `cityId`,
+    // hacemos un seed best-effort contra la tabla `cities`.
+    if (workplaces !== null && workplaces.length) {
+      const main = workplaces.find((w) => w.esPrincipal) || workplaces[0];
+      if (main && main.ciudad) {
+        const cityRow = await tx.city.findFirst({
+          where: { nombre: { equals: main.ciudad, mode: 'insensitive' } },
+        });
+        if (cityRow) {
+          await tx.directoryProfile.update({
+            where: { accountId },
+            data: { cityId: cityRow.id },
+          });
+        }
+      }
+    }
+    return tx.directoryProfile.findUnique({
       where: { accountId },
       include: includeMeProfile,
     });
-    return wrapMeProfile(tx, updated);
   });
+
+  // Recalcular ranking fuera de la transacción (lectura amplia + escritura pequeña).
+  // Si falla el recalc no tumba el update: el cron/job de mantenimiento corregirá.
+  try {
+    await recalcRankingForProfile(prisma, existing.id);
+  } catch (e) {
+    console.warn('[directory] recalcRanking failed:', e.message);
+  }
+
+  return wrapMeProfile(prisma, result);
 }
 
 async function listForAdmin({ status } = {}) {
@@ -535,7 +567,7 @@ async function listForAdmin({ status } = {}) {
   });
 }
 
-async function setStatusByAdmin(accountId, { status, rejectionReason }, adminUserId) {
+async function setStatusByAdmin(accountId, { status, rejectionReason, needsChangesNote }, adminUserId) {
   const profile = await prisma.directoryProfile.findUnique({ where: { accountId } });
   if (!profile) {
     const err = new Error('Perfil no encontrado');
@@ -543,9 +575,15 @@ async function setStatusByAdmin(accountId, { status, rejectionReason }, adminUse
     throw err;
   }
 
-  const allowed = ['APPROVED', 'REJECTED', 'PENDING', 'DRAFT'];
+  const allowed = ['APPROVED', 'REJECTED', 'PENDING', 'DRAFT', 'NEEDS_CHANGES'];
   if (!allowed.includes(status)) {
     const err = new Error('Estado no válido');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (status === 'NEEDS_CHANGES' && !needsChangesNote) {
+    const err = new Error('Debes indicar qué cambios solicitas');
     err.statusCode = 400;
     throw err;
   }
@@ -555,6 +593,7 @@ async function setStatusByAdmin(accountId, { status, rejectionReason }, adminUse
     data: {
       status,
       rejectionReason: status === 'REJECTED' ? rejectionReason || null : null,
+      needsChangesNote: status === 'NEEDS_CHANGES' ? needsChangesNote : null,
       reviewedAt: new Date(),
       reviewedByCrmUserId: adminUserId || null,
     },

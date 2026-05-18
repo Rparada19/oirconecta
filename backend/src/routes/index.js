@@ -17,6 +17,8 @@ const maintenancesRoutes = require('./maintenances.routes');
 const interactionsRoutes = require('./interactions.routes');
 const consultationsRoutes = require('./consultations.routes');
 const directoryRoutes = require('./directory.routes');
+const directoryReviewsRoutes = require('./directoryReviews.routes');
+const directoryDiscoveryRoutes = require('./directoryDiscovery.routes');
 const blogRoutes = require('./blog.routes');
 const marketplaceRoutes = require('./marketplace.routes');
 
@@ -32,6 +34,9 @@ router.use('/maintenances', maintenancesRoutes);
 router.use('/interactions', interactionsRoutes);
 router.use('/consultations', consultationsRoutes);
 router.use('/directory', directoryRoutes);
+// Endpoints F1 (reseñas, reportes, descubrimiento) bajo el mismo prefijo `/directory`.
+router.use('/directory', directoryReviewsRoutes);
+router.use('/directory', directoryDiscoveryRoutes);
 router.use('/blog', blogRoutes);
 router.use('/marketplace', marketplaceRoutes);
 

@@ -140,7 +140,7 @@ router.get(
   '/admin/profiles',
   authenticate,
   authorize('ADMIN'),
-  [query('status').optional().isIn(['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'])],
+  [query('status').optional().isIn(['DRAFT', 'PENDING', 'NEEDS_CHANGES', 'APPROVED', 'REJECTED'])],
   validateRequest,
   directoryController.adminList
 );
@@ -151,8 +151,9 @@ router.patch(
   authorize('ADMIN'),
   [
     param('accountId').isUUID(),
-    body('status').isIn(['DRAFT', 'PENDING', 'APPROVED', 'REJECTED']),
-    body('rejectionReason').optional().isString(),
+    body('status').isIn(['DRAFT', 'PENDING', 'NEEDS_CHANGES', 'APPROVED', 'REJECTED']),
+    body('rejectionReason').optional().isString().isLength({ max: 4000 }),
+    body('needsChangesNote').optional().isString().isLength({ max: 4000 }),
   ],
   validateRequest,
   directoryController.adminSetStatus
