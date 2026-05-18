@@ -1,0 +1,42 @@
+# Render Blueprint para OírConecta.
+# - oirconecta-api: web service Node (backend Express), ya existente.
+# - oirconecta-web: static site (frontend Vite), nuevo. Sirve oirconecta.com.
+# Para crear/actualizar servicios desde este archivo: Render Dashboard → New +
+# → Blueprint → conecta este repo. Las env vars sensibles (DATABASE_URL,
+# JWT_SECRET, RESEND_API_KEY, SMTP_*) se siguen administrando en el dashboard.
+
+services:
+  - type: web
+    name: oirconecta-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm ci && npx prisma generate
+    startCommand: npm start
+    healthCheckPath: /api/public/retail-config
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  - type: web
+    name: oirconecta-web
+    runtime: static
+    rootDir: oirconecta
+    plan: free
+    branch: main
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_API_URL
+        value: https://oirconecta-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
