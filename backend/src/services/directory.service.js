@@ -7,6 +7,7 @@ const { hashPassword, comparePassword, validatePasswordStrength } = require('../
 const { generateDirectoryToken } = require('../utils/jwt');
 const { POLIZAS_COLOMBIA, PROFESIONES_DIRECTORIO } = require('../config/polizasColombia');
 const leadsService = require('./leads.service');
+const emailService = require('./email.service');
 const { normalizeProfesion } = require('../utils/normalizeProfesion');
 const { recalcRankingForProfile } = require('./ranking.service');
 
@@ -149,6 +150,13 @@ async function registerProfessional({ email, password, nombre, personaTipo, docu
   });
 
   const token = generateDirectoryToken(account);
+
+  // Correo de bienvenida (no bloquea la respuesta)
+  emailService.sendProfessionalWelcome({
+    email: account.email,
+    nombre: account.nombre,
+    nombreConsultorio: nc,
+  }).catch((e) => console.error('[email] bienvenida profesional:', e?.message));
 
   return {
     token,
@@ -588,7 +596,7 @@ async function setStatusByAdmin(accountId, { status, rejectionReason, needsChang
     throw err;
   }
 
-  return prisma.directoryProfile.update({
+  const updated = await prisma.directoryProfile.update({
     where: { accountId },
     data: {
       status,
@@ -602,6 +610,26 @@ async function setStatusByAdmin(accountId, { status, rejectionReason, needsChang
       workplaces: { orderBy: [{ esPrincipal: 'desc' }, { orden: 'asc' }] },
     },
   });
+
+  // Notificar al profesional según el nuevo estado
+  const acc = updated.account;
+  if (acc?.email) {
+    if (status === 'APPROVED') {
+      emailService.sendProfessionalApproved({
+        email: acc.email,
+        nombre: acc.nombre,
+        profileId: updated.id,
+      }).catch((e) => console.error('[email] aprobación profesional:', e?.message));
+    } else if (status === 'REJECTED' || status === 'NEEDS_CHANGES') {
+      emailService.sendProfessionalRejected({
+        email: acc.email,
+        nombre: acc.nombre,
+        rejectionReason: rejectionReason || needsChangesNote || null,
+      }).catch((e) => console.error('[email] rechazo profesional:', e?.message));
+    }
+  }
+
+  return updated;
 }
 
 /**
@@ -652,6 +680,23 @@ async function submitInquiryFromPublic(profileId, payload) {
     );
   } catch (e) {
     console.error('Lead CRM desde directorio no creado:', e?.message || e);
+  }
+
+  // Notificaciones por correo (no bloquean la respuesta)
+  const profEmail = profile.account?.email;
+  if (profEmail) {
+    emailService.sendNewInquiry({
+      professionalEmail: profEmail,
+      professionalName: profName,
+      inquiry: { nombre, email, telefono, mensaje: msg, tipoConsulta: payload.tipoConsulta },
+    }).catch((e) => console.error('[email] nueva consulta al profesional:', e?.message));
+  }
+  if (email) {
+    emailService.sendInquiryConfirmation({
+      visitorEmail: email,
+      visitorName: nombre,
+      professionalName: profName,
+    }).catch((e) => console.error('[email] confirmación al visitante:', e?.message));
   }
 
   return inquiry;
