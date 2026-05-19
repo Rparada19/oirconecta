@@ -35,16 +35,16 @@ const SECTIONS = [
 ];
 
 const SOCIALS = [
-  { icon: <Facebook sx={{ fontSize: 20 }} />,   label: 'Facebook' },
-  { icon: <Instagram sx={{ fontSize: 20 }} />,  label: 'Instagram' },
-  { icon: <LinkedIn sx={{ fontSize: 20 }} />,   label: 'LinkedIn' },
-  { icon: <YouTube sx={{ fontSize: 20 }} />,    label: 'YouTube' },
+  { icon: <Instagram sx={{ fontSize: 20 }} />, label: 'Instagram', href: 'https://instagram.com/oirconecta' },
+  { icon: <Facebook sx={{ fontSize: 20 }} />,  label: 'Facebook',  href: 'https://facebook.com/oirconecta' },
+  { icon: <LinkedIn sx={{ fontSize: 20 }} />,  label: 'LinkedIn',  href: 'https://linkedin.com/company/oirconecta' },
+  { icon: <YouTube sx={{ fontSize: 20 }} />,   label: 'YouTube',   href: 'https://youtube.com/@oirconecta' },
 ];
 
 const CONTACT = [
-  { icon: <Phone sx={{ fontSize: 16 }} />,       text: '+57 (1) 234-5678',       href: 'tel:+5712345678' },
-  { icon: <Email sx={{ fontSize: 16 }} />,       text: 'info@oirconecta.com',    href: 'mailto:info@oirconecta.com' },
-  { icon: <LocationOn sx={{ fontSize: 16 }} />,  text: 'Bogotá, Colombia',       href: null },
+  { icon: <Phone sx={{ fontSize: 16 }} />,       text: '+57 315 793 9569',                       href: 'tel:+573157939569' },
+  { icon: <Email sx={{ fontSize: 16 }} />,       text: 'conversemos@oirconecta.com',              href: 'mailto:conversemos@oirconecta.com' },
+  { icon: <LocationOn sx={{ fontSize: 16 }} />,  text: 'Cr 10 #96-25 Cons. 320 – Bog.',         href: 'https://maps.google.com/?q=Carrera+10+%2396-25+Bogota' },
 ];
 
 const Footer = () => (
@@ -83,8 +83,10 @@ const Footer = () => (
               {SOCIALS.map((s) => (
                 <IconButton
                   key={s.label}
-                  component={RouterLink}
-                  to="/contacto"
+                  component="a"
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={s.label}
                   size="small"
                   sx={{
@@ -161,14 +163,16 @@ const Footer = () => (
               {CONTACT.map((c) => (
                 <Box
                   key={c.text}
-                  component={c.href ? 'a' : 'div'}
-                  href={c.href || undefined}
+                  component="a"
+                  href={c.href}
+                  target={c.href?.startsWith('http') ? '_blank' : undefined}
+                  rel={c.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
                   sx={{
                     display: 'flex', alignItems: 'center', gap: 1.5,
                     color: 'rgba(255,255,255,0.65)',
                     textDecoration: 'none', fontSize: '0.875rem',
                     transition: 'color 0.15s ease',
-                    '&:hover': c.href ? { color: '#fff' } : {},
+                    '&:hover': { color: '#fff' },
                   }}
                 >
                   <Box sx={{ color: 'rgba(255,255,255,0.40)', flexShrink: 0 }}>{c.icon}</Box>
@@ -192,7 +196,7 @@ const Footer = () => (
           }}
         >
           <Typography sx={{ color: 'rgba(255,255,255,0.40)', fontSize: '0.875rem' }}>
-            © {new Date().getFullYear()} OírConecta · Bogotá, Colombia
+            © {new Date().getFullYear()} OírConecta · Bogotá, Colombia · @oirconecta
           </Typography>
           <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap>
             {['Términos', 'Privacidad', 'Cookies'].map((t, i) => (

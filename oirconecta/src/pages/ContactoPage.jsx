@@ -46,11 +46,11 @@ const ContactoPage = () => {
     const body = encodeURIComponent(
       `Nombre: ${nombre}\nEmail: ${email}\nTeléfono: ${telefono}\n\nMensaje:\n${mensaje}`
     );
-    window.location.href = `mailto:info@oirconecta.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:conversemos@oirconecta.com?subject=${subject}&body=${body}`;
 
     setSnackbar({
       open: true,
-      message: 'Se abrirá tu correo para enviar el mensaje a info@oirconecta.com.',
+      message: 'Se abrirá tu correo para enviar el mensaje a conversemos@oirconecta.com.',
       severity: 'success',
     });
     setFormData({
@@ -67,10 +67,10 @@ const ContactoPage = () => {
   };
 
   const contactInfo = [
-    { Icon: Phone, title: 'Teléfono', info: '+57 300 123 4567', description: 'Lunes a Viernes 8:00 AM - 6:00 PM', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)' },
-    { Icon: Email, title: 'Email', info: 'info@oirconecta.com', description: 'Respondemos en menos de 24 horas', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
-    { Icon: LocationOn, title: 'Oficina Principal', info: 'Bogotá, Colombia', description: 'Calle 123 #45-67, Oficina 901', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
-    { Icon: Schedule, title: 'Horario de Atención', info: 'Lunes a Viernes', description: '8:00 AM - 6:00 PM', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
+    { Icon: Phone, title: 'Teléfono / WhatsApp', info: '+57 315 793 9569', description: 'Lunes a Viernes 8:00 AM – 6:00 PM', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)' },
+    { Icon: Email, title: 'Correo electrónico', info: 'conversemos@oirconecta.com', description: 'Respondemos en menos de 24 horas', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
+    { Icon: LocationOn, title: 'Consultorio', info: 'Carrera 10 #96-25 Cons. 320', description: 'Edificio Centro Ejecutivo, Bogotá', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
+    { Icon: Schedule, title: 'Horario de Atención', info: 'Lunes a Viernes', description: '8:00 AM – 6:00 PM', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
   ];
 
   return (

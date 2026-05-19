@@ -72,6 +72,16 @@ const menuConfig = [
     type: 'profesionales',
     items: [...profesionesDirectorioMenuItems],
   },
+  {
+    label: 'Blog',
+    type: 'blog',
+    items: [
+      { label: 'Todos los artículos', to: '/blog' },
+      { label: 'Productos y tecnología', to: '/blog?categoria=productos' },
+      { label: 'Salud auditiva', to: '/blog?categoria=salud' },
+      { label: 'Estilo de vida', to: '/blog?categoria=estilo-de-vida' },
+    ],
+  },
 ];
 
 const mobileFlatLinks = [
@@ -81,6 +91,7 @@ const mobileFlatLinks = [
   { label: 'Audífonos', to: '/audifonos' },
   { label: 'Implantes', to: '/implantes' },
   ...profesionesDirectorioMenuItems,
+  { label: 'Blog', to: '/blog' },
   { label: 'Tienda', to: '/ecommerce' },
 ];
 

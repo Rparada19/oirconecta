@@ -26,6 +26,7 @@ const AgendamientoPage = lazy(() => import('./pages/AgendamientoPage'));
 const OtologosPage = lazy(() => import('./pages/OtologosPage'));
 const AudiologasPage = lazy(() => import('./pages/AudiologasPage'));
 const RegistroProfesionalPage = lazy(() => import('./pages/RegistroProfesionalPage'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
 
 // Audífonos por marca (lazy)
 const AudifonosWidexPage = lazy(() => import('./pages/AudifonosWidexPage'));
@@ -180,6 +181,7 @@ export default function App() {
           <Route path="/profesionales/audiologos/:id" element={<ProfessionalProfilePage />} />
           
           {/* Ruta de agendamiento */}
+          <Route path="/blog" element={<BlogPage />} />
           <Route path="/agendar" element={<AgendamientoPage />} />
           <Route path="/registro-profesional" element={<RegistroProfesionalPage />} />
           <Route path="/login-directorio" element={<LoginDirectorioPage />} />
