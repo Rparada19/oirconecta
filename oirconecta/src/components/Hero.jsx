@@ -180,22 +180,47 @@ const Hero = () => {
             </Button>
           </Stack>
 
-          <Button
+          <Box
             component={RouterLink}
             to="/agendar"
-            startIcon={<CalendarMonth sx={{ fontSize: 18 }} />}
             sx={{
-              color: 'rgba(255,255,255,0.80)',
-              fontWeight: 600,
-              fontSize: '0.9375rem',
-              px: 0,
-              textDecoration: 'underline',
-              textUnderlineOffset: 5,
-              '&:hover': { color: '#fff' },
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 2,
+              textDecoration: 'none',
+              px: 3,
+              py: 1.75,
+              borderRadius: '16px',
+              background: 'rgba(110,231,200,0.10)',
+              border: '1px solid rgba(110,231,200,0.28)',
+              backdropFilter: 'blur(12px)',
+              transition: 'all 0.22s ease',
+              '&:hover': {
+                background: 'rgba(110,231,200,0.18)',
+                border: '1px solid rgba(110,231,200,0.50)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 24px rgba(110,231,200,0.15)',
+              },
             }}
           >
-            Prefiero agendar una valoración
-          </Button>
+            <Box sx={{
+              width: 38, height: 38, borderRadius: '10px', flexShrink: 0,
+              background: 'linear-gradient(135deg, #085946, #0d7a5f)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(8,89,70,0.40)',
+            }}>
+              <CalendarMonth sx={{ fontSize: 20, color: '#6ee7c8' }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#6ee7c8', letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1 }}>
+                OírConecta · Bogotá
+              </Typography>
+              <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: '#fff', lineHeight: 1.3, mt: 0.25 }}>
+                Agenda una cita de valoración
+              </Typography>
+            </Box>
+            <ArrowForward sx={{ fontSize: 18, color: 'rgba(255,255,255,0.55)', ml: 'auto', flexShrink: 0 }} />
+          </Box>
 
           {/* Stats strip */}
           <Box
