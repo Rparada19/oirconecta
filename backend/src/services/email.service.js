@@ -19,7 +19,7 @@
 const SENDER_ENDPOINT  = 'https://api.sender.net/v2/emails';
 const RESEND_ENDPOINT  = 'https://api.resend.com/emails';
 const FROM_NAME        = 'OírConecta';
-const FROM_EMAIL       = process.env.EMAIL_FROM || 'conversemos@oirconecta.com';
+const FROM_EMAIL       = process.env.EMAIL_FROM || 'no-reply@oirconecta.com';
 const LOGO_URL         = 'https://oirconecta.com/logo-oirconecta.png';
 const SITE_URL         = 'https://oirconecta.com';
 
