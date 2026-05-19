@@ -438,6 +438,75 @@ async function sendContactFormNotification({ nombre, email, telefono, asunto, me
   await deliver({ to: internalEmail, toName: 'Equipo OírConecta', subject: `Contacto web: ${asunto || nombre} — OírConecta`, html });
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 9. RECORDATORIO DE CITA (5 días / 1 día / 5 horas antes)
+// ════════════════════════════════════════════════════════════════════════════
+async function sendAppointmentReminder({ email, nombre, fecha, hora, tipo, confirmUrl, rescheduleUrl }) {
+  const labels = { '5d': 'en 5 días', '1d': 'mañana', '5h': 'en 5 horas' };
+  const label = labels[tipo] || 'próximamente';
+
+  const html = baseTemplate({
+    preheader: `Recuerda tu cita de valoración ${label} — ${fecha} a las ${hora}.`,
+    title: `Recordatorio de cita — OírConecta`,
+    bodyHtml: [
+      h1(`Tu cita es ${label} 🗓️`),
+      p(`Hola <strong>${nombre || ''}</strong>, te recordamos que tienes una cita de valoración auditiva agendada en OírConecta.`),
+      highlight([
+        ['Fecha', fecha],
+        ['Hora',  hora],
+        ['Duración', '50 minutos'],
+        ['Consultorio', 'Carrera 10 #96-25 Cons. 320, Edificio Centro Ejecutivo, Bogotá'],
+      ]),
+      `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:24px 0;width:100%;">
+        <tr>
+          <td style="padding-right:12px;">
+            <a href="${confirmUrl}" style="display:inline-block;padding:13px 24px;background:linear-gradient(135deg,#085946,#0d7a5f);color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;">
+              ✓ Confirmar cita
+            </a>
+          </td>
+          <td>
+            <a href="${rescheduleUrl}" style="display:inline-block;padding:13px 24px;background:#f9fafb;color:#085946;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;border:1.5px solid #085946;">
+              ↺ Reagendar cita
+            </a>
+          </td>
+        </tr>
+      </table>`,
+      divider(),
+      p(`<span style="font-size:13px;color:#6b7280;">Para cancelar o más información: <a href="https://wa.me/573157939569">WhatsApp +57 315 793 9569</a> o <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a></span>`),
+    ].join(''),
+  });
+  await deliver({ to: email, toName: nombre, subject: `Recordatorio: tu cita es ${label} — OírConecta`, html });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 10. NOTIFICACIÓN DE REAGENDAMIENTO (a audiologa y admin)
+// ════════════════════════════════════════════════════════════════════════════
+async function sendRescheduledNotification({ to, patientName, oldFecha, oldHora, newFecha, newHora }) {
+  const html = baseTemplate({
+    preheader: `${patientName} reagendó su cita del ${oldFecha} al ${newFecha}.`,
+    title: 'Cita reagendada — OírConecta',
+    bodyHtml: [
+      h1('Cita reagendada por el paciente'),
+      p(`El paciente <strong>${patientName || '—'}</strong> seleccionó un nuevo horario desde el correo de recordatorio.`),
+      `<table cellpadding="0" cellspacing="0" role="presentation" style="width:100%;margin:20px 0;">
+        <tr>
+          <td style="width:48%;background:#fef2f2;border-radius:12px;padding:16px 20px;vertical-align:top;">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:0.08em;">Cita anterior</p>
+            <p style="margin:0;font-size:15px;color:#374151;font-weight:600;">${oldFecha} — ${oldHora}</p>
+          </td>
+          <td style="width:4%;"></td>
+          <td style="width:48%;background:#f0fdf4;border-radius:12px;padding:16px 20px;vertical-align:top;">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#085946;text-transform:uppercase;letter-spacing:0.08em;">Nueva cita</p>
+            <p style="margin:0;font-size:15px;color:#374151;font-weight:600;">${newFecha} — ${newHora}</p>
+          </td>
+        </tr>
+      </table>`,
+      btn('https://oirconecta.com/portal-crm/citas', 'Ver en el CRM'),
+    ].join(''),
+  });
+  await deliver({ to, subject: `Reagendamiento: ${patientName} — OírConecta`, html });
+}
+
 // ─── Exports ─────────────────────────────────────────────────────────────────
 module.exports = {
   sendBookingConfirmation,
@@ -448,6 +517,9 @@ module.exports = {
   sendInquiryConfirmation,
   sendPasswordReset,
   sendContactFormNotification,
+
+  sendAppointmentReminder,
+  sendRescheduledNotification,
 
   // Alias para compatibilidad con código anterior
   sendBookingConfirmations: sendBookingConfirmation,

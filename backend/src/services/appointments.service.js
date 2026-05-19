@@ -2,16 +2,31 @@
  * Servicio de citas
  */
 
+const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
+const { isColombianHoliday } = require('../utils/colombiaHolidays');
 
 const prisma = new PrismaClient();
 
-// Horarios disponibles por defecto
+// Slots: 50 min de consulta + 10 min de buffer = 1 cita por hora
+// Lun-Vie 08:00 – 16:00 (última cita; termina a las 16:50)
 const DEFAULT_SLOTS = [
-  '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-  '11:00', '11:30', '12:00', '14:00', '14:30', '15:00',
-  '15:30', '16:00', '16:30', '17:00', '17:30',
+  '08:00', '09:00', '10:00', '11:00',
+  '12:00', '13:00', '14:00', '15:00', '16:00',
 ];
+
+/** true si la fecha (YYYY-MM-DD) es inhábil (fin de semana o feriado CO) */
+function isNonWorkingDay(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dow = new Date(y, m - 1, d).getDay(); // 0=dom, 6=sab
+  if (dow === 0 || dow === 6) return true;
+  return isColombianHoliday(dateStr);
+}
+
+/** Genera un token seguro para reagendamiento */
+function generateRescheduleToken() {
+  return crypto.randomBytes(24).toString('hex');
+}
 
 /**
  * Obtener todas las citas
@@ -136,6 +151,12 @@ const slotInBlockRange = (slot, horaInicio, horaFin) => {
  */
 const getAvailableSlots = async (fecha, professionalId = null) => {
   const dateStr = typeof fecha === 'string' ? fecha.split('T')[0] : fecha;
+
+  // Rechazar días inhábiles (fin de semana o feriado colombiano)
+  if (isNonWorkingDay(dateStr)) {
+    return { fecha: dateStr, availableSlots: [], bookedSlots: [], nonWorking: true };
+  }
+
   const [y, m, d] = dateStr.split('-').map(Number);
   const startOfDay = new Date(y, m - 1, d, 0, 0, 0, 0);
   const endOfDay = new Date(y, m - 1, d, 23, 59, 59, 999);
@@ -220,7 +241,7 @@ const create = async (data, createdById) => {
       estado: 'CONFIRMED',
       notas: data.notas,
       tipoConsulta: data.tipoConsulta,
-      durationMinutes: data.durationMinutes != null ? parseInt(data.durationMinutes, 10) : null,
+      durationMinutes: 50,
       professionalId: data.professionalId || null,
       directoryProfileId,
       professionalNotifyEmail: data.professionalNotifyEmail
@@ -231,6 +252,7 @@ const create = async (data, createdById) => {
       patientEmail: data.patientEmail?.toLowerCase(),
       patientPhone: data.patientPhone,
       createdById,
+      rescheduleToken: generateRescheduleToken(),
     },
     include: {
       patient: true,
@@ -295,13 +317,138 @@ const cancel = async (id) => {
   });
 };
 
+/** Obtener cita por rescheduleToken (público) */
+const getByRescheduleToken = async (token) => {
+  return prisma.appointment.findUnique({
+    where: { rescheduleToken: token },
+    select: {
+      id: true, fecha: true, hora: true, motivo: true,
+      patientName: true, estado: true, rescheduleToken: true,
+    },
+  });
+};
+
+/** Confirmar cita desde email (sin enviar correo) */
+const confirmByToken = async (token) => {
+  const apt = await prisma.appointment.findUnique({ where: { rescheduleToken: token } });
+  if (!apt) throw Object.assign(new Error('Cita no encontrada'), { statusCode: 404 });
+  if (apt.estado === 'CANCELLED') throw Object.assign(new Error('La cita fue cancelada'), { statusCode: 400 });
+  return prisma.appointment.update({
+    where: { rescheduleToken: token },
+    data: { patientConfirmedAt: new Date() },
+  });
+};
+
+/** Reagendar cita desde email */
+const rescheduleByToken = async (token, newFecha, newHora) => {
+  const apt = await prisma.appointment.findUnique({ where: { rescheduleToken: token } });
+  if (!apt) throw Object.assign(new Error('Cita no encontrada'), { statusCode: 404 });
+  if (apt.estado === 'CANCELLED') throw Object.assign(new Error('La cita fue cancelada'), { statusCode: 400 });
+
+  const dateStr = String(newFecha).split('T')[0];
+  if (isNonWorkingDay(dateStr)) throw Object.assign(new Error('Fecha no hábil'), { statusCode: 400 });
+
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const fecha = new Date(y, m - 1, d, 0, 0, 0, 0);
+
+  const updated = await prisma.appointment.update({
+    where: { rescheduleToken: token },
+    data: {
+      fecha,
+      hora: newHora,
+      estado: 'RESCHEDULED',
+      rescheduleToken: generateRescheduleToken(), // nuevo token tras reagendar
+      reminder5dSentAt: null,
+      reminder1dSentAt: null,
+      reminder5hSentAt: null,
+      patientConfirmedAt: null,
+    },
+  });
+
+  // Notificar a audiologa y admin
+  const emailService = require('./email.service');
+  const config = require('../config');
+  const recipients = [config.retail.professionalEmail, config.admin.email].filter(Boolean);
+  for (const to of new Set(recipients)) {
+    emailService.sendRescheduledNotification({
+      to,
+      patientName: apt.patientName,
+      oldFecha: apt.fecha.toISOString().slice(0, 10),
+      oldHora: apt.hora,
+      newFecha: dateStr,
+      newHora,
+    }).catch((e) => console.error('[email] reagendamiento notif:', e?.message));
+  }
+
+  return updated;
+};
+
+/** Procesar recordatorios pendientes (llamado por cron externo) */
+const processReminders = async () => {
+  const now = new Date();
+  const emailService = require('./email.service');
+  const SITE_URL = 'https://oirconecta.com';
+  let sent = 0;
+
+  const upcoming = await prisma.appointment.findMany({
+    where: {
+      estado: { in: ['CONFIRMED', 'RESCHEDULED'] },
+      fecha: { gte: new Date(now.getTime() - 60 * 60 * 1000) }, // desde hace 1h
+    },
+  });
+
+  for (const apt of upcoming) {
+    if (!apt.patientEmail) continue;
+
+    const aptDateTime = new Date(apt.fecha);
+    const [h, min] = (apt.hora || '00:00').split(':').map(Number);
+    aptDateTime.setHours(h, min, 0, 0);
+
+    const diffMs = aptDateTime.getTime() - now.getTime();
+    const diffH = diffMs / (1000 * 60 * 60);
+    const diffD = diffH / 24;
+
+    const confirmUrl = `${SITE_URL}/agendar/confirmar?token=${apt.rescheduleToken}`;
+    const rescheduleUrl = `${SITE_URL}/agendar/reagendar?token=${apt.rescheduleToken}`;
+    const baseData = { email: apt.patientEmail, nombre: apt.patientName, fecha: apt.fecha.toISOString().slice(0, 10), hora: apt.hora, confirmUrl, rescheduleUrl };
+
+    // 5 días antes (entre 5d+2h y 5d-2h)
+    if (!apt.reminder5dSentAt && diffD >= 4.9 && diffD <= 5.1) {
+      await emailService.sendAppointmentReminder({ ...baseData, tipo: '5d' }).catch(() => {});
+      await prisma.appointment.update({ where: { id: apt.id }, data: { reminder5dSentAt: now } });
+      sent++;
+    }
+
+    // 1 día antes (entre 26h y 22h)
+    if (!apt.reminder1dSentAt && diffH >= 22 && diffH <= 26) {
+      await emailService.sendAppointmentReminder({ ...baseData, tipo: '1d' }).catch(() => {});
+      await prisma.appointment.update({ where: { id: apt.id }, data: { reminder1dSentAt: now } });
+      sent++;
+    }
+
+    // 5 horas antes (entre 5.5h y 4.5h)
+    if (!apt.reminder5hSentAt && diffH >= 4.5 && diffH <= 5.5) {
+      await emailService.sendAppointmentReminder({ ...baseData, tipo: '5h' }).catch(() => {});
+      await prisma.appointment.update({ where: { id: apt.id }, data: { reminder5hSentAt: now } });
+      sent++;
+    }
+  }
+
+  return { processed: upcoming.length, sent };
+};
+
 module.exports = {
   getAll,
   getStats,
   getAvailableSlots,
   getById,
+  getByRescheduleToken,
   create,
   update,
   updateStatus,
   cancel,
+  confirmByToken,
+  rescheduleByToken,
+  processReminders,
+  isNonWorkingDay,
 };

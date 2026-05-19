@@ -36,6 +36,21 @@ router.post(
   appointmentsController.createPublic
 );
 
+// ── Rutas públicas de token (confirm / reschedule) ──
+router.get('/reschedule/:token', appointmentsController.getRescheduleInfo);
+router.post('/confirm/:token',   appointmentsController.confirmByToken);
+router.post('/reschedule/:token',
+  [
+    body('fecha').notEmpty(),
+    body('hora').matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  ],
+  validateRequest,
+  appointmentsController.rescheduleByToken
+);
+
+// ── Cron: procesar recordatorios ──
+router.post('/process-reminders', appointmentsController.processReminders);
+
 // Rutas protegidas (requieren autenticación CRM)
 router.use(authenticate);
 

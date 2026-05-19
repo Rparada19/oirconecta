@@ -447,10 +447,18 @@ model Appointment {
   leads         Lead[]
   consultation  Consultation?
   
+  // Recordatorios y reagendamiento
+  rescheduleToken    String?   @unique  // token para reagendar desde email
+  reminder5dSentAt   DateTime?          // recordatorio 5 días antes
+  reminder1dSentAt   DateTime?          // recordatorio 1 día antes
+  reminder5hSentAt   DateTime?          // recordatorio 5 horas antes
+  patientConfirmedAt DateTime?          // confirmación del paciente por email
+
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
   @@index([directoryProfileId])
+  @@index([rescheduleToken])
   @@map("appointments")
 }
 

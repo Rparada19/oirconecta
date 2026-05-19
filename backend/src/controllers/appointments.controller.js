@@ -137,6 +137,40 @@ const cancel = async (req, res, next) => {
   }
 };
 
+const getRescheduleInfo = async (req, res, next) => {
+  try {
+    const apt = await appointmentsService.getByRescheduleToken(req.params.token);
+    if (!apt) return res.status(404).json({ success: false, error: 'Token inválido' });
+    res.json({ success: true, data: apt });
+  } catch (e) { next(e); }
+};
+
+const confirmByToken = async (req, res, next) => {
+  try {
+    await appointmentsService.confirmByToken(req.params.token);
+    res.json({ success: true, message: 'Cita confirmada' });
+  } catch (e) { next(e); }
+};
+
+const rescheduleByToken = async (req, res, next) => {
+  try {
+    const { fecha, hora } = req.body;
+    const updated = await appointmentsService.rescheduleByToken(req.params.token, fecha, hora);
+    res.json({ success: true, data: updated });
+  } catch (e) { next(e); }
+};
+
+const processReminders = async (req, res, next) => {
+  try {
+    const secret = process.env.CRON_SECRET;
+    if (secret && req.headers['x-cron-secret'] !== secret) {
+      return res.status(401).json({ success: false, error: 'No autorizado' });
+    }
+    const result = await appointmentsService.processReminders();
+    res.json({ success: true, ...result });
+  } catch (e) { next(e); }
+};
+
 module.exports = {
   getAll,
   getStats,
@@ -147,4 +181,8 @@ module.exports = {
   update,
   updateStatus,
   cancel,
+  getRescheduleInfo,
+  confirmByToken,
+  rescheduleByToken,
+  processReminders,
 };

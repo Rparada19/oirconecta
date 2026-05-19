@@ -28,6 +28,8 @@ const AudiologasPage = lazy(() => import('./pages/AudiologasPage'));
 const RegistroProfesionalPage = lazy(() => import('./pages/RegistroProfesionalPage'));
 const BlogPage = lazy(() => import('./pages/BlogPage'));
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage'));
+const ConfirmAppointmentPage = lazy(() => import('./pages/ConfirmAppointmentPage'));
+const RescheduleAppointmentPage = lazy(() => import('./pages/RescheduleAppointmentPage'));
 
 // Audífonos por marca (lazy)
 const AudifonosWidexPage = lazy(() => import('./pages/AudifonosWidexPage'));
@@ -185,6 +187,8 @@ export default function App() {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/agendar" element={<AgendamientoPage />} />
+          <Route path="/agendar/confirmar" element={<ConfirmAppointmentPage />} />
+          <Route path="/agendar/reagendar" element={<RescheduleAppointmentPage />} />
           <Route path="/registro-profesional" element={<RegistroProfesionalPage />} />
           <Route path="/login-directorio" element={<LoginDirectorioPage />} />
           <Route
