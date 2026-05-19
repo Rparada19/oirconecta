@@ -186,11 +186,16 @@ export default function AgendamientoPage() {
   const [error, setError] = useState(null);
   const [appointment, setAppointment] = useState(null);
 
-  // Obtener ID del profesional retail
+  // Obtener ID del profesional retail + warmup del servidor
   useEffect(() => {
+    // Ping al health check para despertar el servidor antes de que el usuario seleccione fecha
     fetch(`${API}/api/public/retail-config`)
       .then(r => r.json()).then(d => { if (d?.data?.professionalId) setRetailId(d.data.professionalId); })
       .catch(() => {});
+    // Precarga slots del día siguiente para que el servidor ya esté caliente
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    const pre = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
+    fetch(`${API}/api/appointments/available-slots?fecha=${pre}`).catch(() => {});
   }, []);
 
   // Cargar slots al seleccionar fecha
