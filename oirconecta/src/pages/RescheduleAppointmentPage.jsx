@@ -123,6 +123,7 @@ export default function RescheduleAppointmentPage() {
       .then(r => r.json())
       .then(d => {
         if (d.success && d.data?.availableSlots) setAvailableSlots(d.data.availableSlots);
+        else if (d.data?.nonWorking) setAvailableSlots([]);
         else setAvailableSlots([]);
       })
       .catch(() => setAvailableSlots([]))

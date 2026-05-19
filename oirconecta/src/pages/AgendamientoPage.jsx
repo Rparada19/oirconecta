@@ -202,7 +202,7 @@ export default function AgendamientoPage() {
     if (retailId) params.set('professionalId', retailId);
     fetch(`${API}/api/appointments/available-slots?${params}`)
       .then(r => r.json())
-      .then(d => setSlots(d.availableSlots || []))
+      .then(d => setSlots(d.data?.availableSlots || []))
       .catch(() => setSlots([...SLOTS]))
       .finally(() => setLoadingSlots(false));
   }, [selectedDate, retailId]);
