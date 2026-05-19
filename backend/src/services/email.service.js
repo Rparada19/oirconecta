@@ -192,15 +192,17 @@ async function deliver({ to, toName, subject, html, text }) {
 // ════════════════════════════════════════════════════════════════════════════
 async function sendBookingConfirmation(appointment, meta = {}) {
   const proName  = meta.professionalName || 'el profesional';
-  const fecha    = String(appointment.fecha || '').slice(0, 10);
+  const fechaRaw = String(appointment.fecha || '').slice(0, 10);
   const hora     = appointment.hora || '—';
   const paciente = appointment.patientName || 'Paciente';
   const motivo   = appointment.motivo || '—';
+  const [fy, fm, fd] = fechaRaw.split('-').map(Number);
+  const fecha = new Date(fy, fm - 1, fd).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   // ── Al paciente ──
   if (appointment.patientEmail) {
     const html = baseTemplate({
-      preheader: `Tu cita con ${proName} quedó confirmada para el ${fecha} a las ${hora}.`,
+      preheader: `Tu cita quedó confirmada para el ${fecha} a las ${hora}.`,
       title: 'Cita confirmada — OírConecta',
       bodyHtml: [
         h1('Tu cita está confirmada ✓'),
@@ -211,8 +213,8 @@ async function sendBookingConfirmation(appointment, meta = {}) {
           ['Hora',        hora],
           ['Motivo',      motivo],
         ]),
-        p('Si necesitas reprogramar o cancelar, contacta directamente al consultorio del profesional a través de su perfil en OírConecta.'),
-        btn(`${SITE_URL}/directorio`, 'Ver directorio de profesionales'),
+        p('Para reprogramar o cancelar tu cita llámanos al <a href="tel:+573157939569"><strong>+57 315 793 9569</strong></a> o escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.'),
+        btn(`${SITE_URL}/blog`, 'Leer artículos de salud auditiva'),
         divider(),
         p(`<span style="font-size:13px;color:#6b7280;">¿Preguntas? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a></span>`),
       ].join(''),
