@@ -134,6 +134,27 @@ model DirectoryProfile {
   availability Json?
   consultation Json?
 
+  /// Redes sociales { instagram, facebook, linkedin, youtube, tiktok, web }
+  redesSociales      Json?
+  /// Servicios ofrecidos [{ nombre, descripcion, precio, duracion }]
+  servicios          Json?
+  /// WhatsApp público (número con código de país, ej. 573157939569)
+  whatsappPublico    String?
+  /// Número de tarjeta profesional (RETHUS u otro registro oficial)
+  registroProfesional String?
+  /// Idiomas de atención
+  idiomas            String[] @default([])
+  /// Modalidad: presencial, virtual, domicilio
+  modalidadAtencion  String[] @default([])
+  /// Años de experiencia clínica
+  anosExperiencia    Int?
+  /// Población que atiende: adultos, niños, tercera edad
+  poblacionAtiende   String[] @default([])
+  /// Métodos de pago aceptados: efectivo, tarjeta, transferencia
+  metodoPago         String[] @default([])
+  /// Preguntas y respuestas frecuentes [{ pregunta, respuesta }]
+  qaList             Json?
+
   reviewedAt          DateTime?
   /// Id del usuario CRM que moderó (solo trazabilidad; sin relación Prisma al modelo User).
   reviewedByCrmUserId String?

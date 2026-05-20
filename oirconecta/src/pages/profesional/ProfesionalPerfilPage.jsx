@@ -1,27 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Grid,
-  Tabs,
-  Tab,
-  CircularProgress,
-  Alert,
-  Snackbar,
-  Chip,
-  IconButton,
-  Divider,
-  FormControlLabel,
-  Checkbox,
-  Stack,
+  Box, Card, CardContent, Typography, TextField, Button, Select, MenuItem,
+  FormControl, InputLabel, Grid, Tabs, Tab, CircularProgress, Alert, Snackbar,
+  Chip, IconButton, Divider, FormControlLabel, Checkbox, Stack,
 } from '@mui/material';
 import { AddOutlined, Close, SaveOutlined } from '@mui/icons-material';
 import { directoryApi } from '../../services/directoryAccountApi';
@@ -34,110 +15,153 @@ const glassCard = {
   border: '1px solid rgba(255,255,255,0.70)',
   boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
 };
+const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: '12px' } };
+const GREEN = '#085946';
 
-const POLIZAS = [
-  'Sura', 'Sanitas', 'Compensar', 'Nueva EPS', 'Coomeva',
-  'Colsanitas', 'Famisanar', 'Aliansalud', 'SOS', 'Particular', 'Otra',
-];
-
-const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-const DIAS_KEYS = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+const POLIZAS = ['Sura','Sanitas','Compensar','Nueva EPS','Coomeva','Colsanitas','Famisanar','Aliansalud','SOS','Particular','Otra'];
+const DIAS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const DIAS_KEYS = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+const MODALIDADES = ['Presencial','Virtual','Domicilio'];
+const POBLACIONES = ['Niños','Adultos','Tercera edad'];
+const PAGOS = ['Efectivo','Tarjeta','Transferencia','Daviplata','Nequi'];
+const IDIOMAS_LIST = ['Español','Inglés','Francés','Portugués','Lengua de señas'];
+const MARCAS_AUDIFONOS = ['Widex','Oticon','Signia','Phonak','ReSound','Starkey','Beltone','Rexton','Audioservice','Bernafon','Hansaton','Sonic','Unitron'];
+const MARCAS_IMPLANTES = ['Cochlear','Advanced Bionics','MED-EL'];
 
 function TabPanel({ children, value, index }) {
   return value === index ? <Box sx={{ pt: 3 }}>{children}</Box> : null;
 }
 
-function StringListField({ label, values, onChange }) {
-  function add() {
-    onChange([...values, '']);
-  }
-  function remove(i) {
-    onChange(values.filter((_, idx) => idx !== i));
-  }
-  function update(i, val) {
-    const next = [...values];
-    next[i] = val;
+function SectionTitle({ children }) {
+  return <Typography sx={{ fontWeight: 700, fontSize: 15, color: GREEN, mb: 2 }}>{children}</Typography>;
+}
+
+function ChipToggle({ options, selected, onChange }) {
+  const toggle = (opt) => {
+    const next = selected.includes(opt) ? selected.filter(x => x !== opt) : [...selected, opt];
     onChange(next);
-  }
+  };
+  return (
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      {options.map(opt => {
+        const on = selected.includes(opt);
+        return (
+          <Chip key={opt} label={opt} clickable onClick={() => toggle(opt)}
+            sx={{ fontWeight: 600, borderRadius: '10px',
+              bgcolor: on ? GREEN : 'rgba(8,89,70,0.08)',
+              color: on ? '#fff' : GREEN,
+              border: on ? `1px solid ${GREEN}` : '1px solid rgba(8,89,70,0.25)',
+              '&:hover': { bgcolor: on ? '#064a38' : 'rgba(8,89,70,0.14)' },
+            }} />
+        );
+      })}
+    </Box>
+  );
+}
+
+function StringListField({ label, placeholder, values, onChange }) {
   return (
     <Box>
-      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#041a12' }}>
-        {label}
-      </Typography>
+      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#041a12' }}>{label}</Typography>
       {values.map((v, i) => (
         <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1 }}>
-          <TextField
-            fullWidth
-            size="small"
-            value={v}
-            onChange={(e) => update(i, e.target.value)}
-            placeholder="https://..."
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-          />
-          <IconButton size="small" onClick={() => remove(i)} sx={{ color: '#EF4444' }}>
+          <TextField fullWidth size="small" value={v} placeholder={placeholder || 'https://...'}
+            onChange={e => { const n = [...values]; n[i] = e.target.value; onChange(n); }}
+            sx={fieldSx} />
+          <IconButton size="small" onClick={() => onChange(values.filter((_, idx) => idx !== i))} sx={{ color: '#EF4444' }}>
             <Close fontSize="small" />
           </IconButton>
         </Box>
       ))}
-      <Button
-        size="small"
-        startIcon={<AddOutlined />}
-        onClick={add}
-        sx={{ textTransform: 'none', color: '#085946', fontWeight: 600 }}
-      >
+      <Button size="small" startIcon={<AddOutlined />} onClick={() => onChange([...values, ''])}
+        sx={{ textTransform: 'none', color: GREEN, fontWeight: 600 }}>
         Agregar
       </Button>
     </Box>
   );
 }
 
+function ServiciosEditor({ servicios, onChange }) {
+  function add() { onChange([...servicios, { nombre: '', descripcion: '', precio: '', duracion: '' }]); }
+  function remove(i) { onChange(servicios.filter((_, idx) => idx !== i)); }
+  function update(i, field, val) { const n = servicios.map((s, idx) => idx === i ? { ...s, [field]: val } : s); onChange(n); }
+  return (
+    <Box>
+      {servicios.map((s, i) => (
+        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Servicio {i + 1}</Typography>
+            <IconButton size="small" onClick={() => remove(i)} sx={{ color: '#EF4444' }}><Close fontSize="small" /></IconButton>
+          </Box>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Nombre del servicio *" value={s.nombre} onChange={e => update(i, 'nombre', e.target.value)} sx={fieldSx} /></Grid>
+            <Grid item xs={6} sm={3}><TextField fullWidth size="small" label="Precio (COP)" value={s.precio} onChange={e => update(i, 'precio', e.target.value)} placeholder="Ej: 80000" sx={fieldSx} /></Grid>
+            <Grid item xs={6} sm={3}><TextField fullWidth size="small" label="Duración" value={s.duracion} onChange={e => update(i, 'duracion', e.target.value)} placeholder="Ej: 50 min" sx={fieldSx} /></Grid>
+            <Grid item xs={12}><TextField fullWidth size="small" label="Descripción" value={s.descripcion} onChange={e => update(i, 'descripcion', e.target.value)} multiline rows={2} sx={fieldSx} /></Grid>
+          </Grid>
+        </Card>
+      ))}
+      <Button startIcon={<AddOutlined />} onClick={add} variant="outlined" size="small"
+        sx={{ borderRadius: '10px', textTransform: 'none', borderColor: GREEN, color: GREEN, fontWeight: 700 }}>
+        + Agregar servicio
+      </Button>
+    </Box>
+  );
+}
+
+function QAEditor({ qaList, onChange }) {
+  function add() { onChange([...qaList, { pregunta: '', respuesta: '' }]); }
+  function remove(i) { onChange(qaList.filter((_, idx) => idx !== i)); }
+  function update(i, field, val) { const n = qaList.map((q, idx) => idx === i ? { ...q, [field]: val } : q); onChange(n); }
+  return (
+    <Box>
+      {qaList.map((q, i) => (
+        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Pregunta {i + 1}</Typography>
+            <IconButton size="small" onClick={() => remove(i)} sx={{ color: '#EF4444' }}><Close fontSize="small" /></IconButton>
+          </Box>
+          <Grid container spacing={2}>
+            <Grid item xs={12}><TextField fullWidth size="small" label="Pregunta" value={q.pregunta} onChange={e => update(i, 'pregunta', e.target.value)} sx={fieldSx} /></Grid>
+            <Grid item xs={12}><TextField fullWidth size="small" label="Respuesta" value={q.respuesta} onChange={e => update(i, 'respuesta', e.target.value)} multiline rows={3} sx={fieldSx} /></Grid>
+          </Grid>
+        </Card>
+      ))}
+      <Button startIcon={<AddOutlined />} onClick={add} variant="outlined" size="small"
+        sx={{ borderRadius: '10px', textTransform: 'none', borderColor: GREEN, color: GREEN, fontWeight: 700 }}>
+        + Agregar pregunta
+      </Button>
+    </Box>
+  );
+}
+
 function WorkplaceList({ workplaces, onChange }) {
-  function add() {
-    onChange([...workplaces, { nombreCentro: '', ciudad: '', direccion: '', telefono: '', esPrincipal: false }]);
-  }
-  function remove(i) {
-    onChange(workplaces.filter((_, idx) => idx !== i));
-  }
-  function update(i, field, val) {
-    const next = workplaces.map((w, idx) => (idx === i ? { ...w, [field]: val } : w));
-    onChange(next);
-  }
+  function add() { onChange([...workplaces, { nombreCentro: '', ciudad: '', direccion: '', telefono: '', esPrincipal: false }]); }
+  function remove(i) { onChange(workplaces.filter((_, idx) => idx !== i)); }
+  function update(i, field, val) { const n = workplaces.map((w, idx) => idx === i ? { ...w, [field]: val } : w); onChange(n); }
   return (
     <Box>
       {workplaces.map((w, i) => (
-        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.03)' }}>
+        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-            <Typography variant="body2" sx={{ fontWeight: 700, color: '#085946' }}>
-              Sede {i + 1}
-            </Typography>
-            <IconButton size="small" onClick={() => remove(i)} sx={{ color: '#EF4444' }}>
-              <Close fontSize="small" />
-            </IconButton>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Sede {i + 1}</Typography>
+            <IconButton size="small" onClick={() => remove(i)} sx={{ color: '#EF4444' }}><Close fontSize="small" /></IconButton>
           </Box>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth size="small" label="Nombre del centro" value={w.nombreCentro} onChange={(e) => update(i, 'nombreCentro', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }} />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth size="small" label="Ciudad" value={w.ciudad} onChange={(e) => update(i, 'ciudad', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }} />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth size="small" label="Dirección" value={w.direccion} onChange={(e) => update(i, 'direccion', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }} />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth size="small" label="Teléfono" value={w.telefono} onChange={(e) => update(i, 'telefono', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }} />
-            </Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Nombre del centro" value={w.nombreCentro} onChange={e => update(i, 'nombreCentro', e.target.value)} sx={fieldSx} /></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Ciudad" value={w.ciudad} onChange={e => update(i, 'ciudad', e.target.value)} sx={fieldSx} /></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Dirección" value={w.direccion} onChange={e => update(i, 'direccion', e.target.value)} sx={fieldSx} /></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Teléfono" value={w.telefono} onChange={e => update(i, 'telefono', e.target.value)} sx={fieldSx} /></Grid>
             <Grid item xs={12}>
               <FormControlLabel
-                control={<Checkbox checked={!!w.esPrincipal} onChange={(e) => update(i, 'esPrincipal', e.target.checked)} sx={{ color: '#085946', '&.Mui-checked': { color: '#085946' } }} />}
-                label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Sede principal</Typography>}
-              />
+                control={<Checkbox checked={!!w.esPrincipal} onChange={e => update(i, 'esPrincipal', e.target.checked)} sx={{ color: GREEN, '&.Mui-checked': { color: GREEN } }} />}
+                label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Sede principal</Typography>} />
             </Grid>
           </Grid>
         </Card>
       ))}
       <Button startIcon={<AddOutlined />} onClick={add} variant="outlined" size="small"
-        sx={{ borderRadius: '10px', textTransform: 'none', borderColor: '#085946', color: '#085946', fontWeight: 700 }}>
+        sx={{ borderRadius: '10px', textTransform: 'none', borderColor: GREEN, color: GREEN, fontWeight: 700 }}>
         + Agregar sede
       </Button>
     </Box>
@@ -146,53 +170,32 @@ function WorkplaceList({ workplaces, onChange }) {
 
 function DisponibilidadEditor({ disponibilidad, onChange }) {
   const [days, setDays] = useState(() => {
-    const result = {};
-    DIAS_KEYS.forEach((k) => {
-      result[k] = {
-        activo: !!(disponibilidad && disponibilidad[k]),
-        inicio: disponibilidad?.[k]?.inicio || '08:00',
-        fin: disponibilidad?.[k]?.fin || '17:00',
-      };
-    });
-    return result;
+    const r = {};
+    DIAS_KEYS.forEach(k => { r[k] = { activo: !!(disponibilidad && disponibilidad[k]), inicio: disponibilidad?.[k]?.inicio || '08:00', fin: disponibilidad?.[k]?.fin || '17:00' }; });
+    return r;
   });
-
   useEffect(() => {
-    const result = {};
-    DIAS_KEYS.forEach((k) => {
-      if (days[k].activo) result[k] = { inicio: days[k].inicio, fin: days[k].fin };
-    });
-    onChange(result);
+    const r = {};
+    DIAS_KEYS.forEach(k => { if (days[k].activo) r[k] = { inicio: days[k].inicio, fin: days[k].fin }; });
+    onChange(r);
   }, [days]);
-
-  function toggle(k) {
-    setDays((prev) => ({ ...prev, [k]: { ...prev[k], activo: !prev[k].activo } }));
-  }
-  function updateTime(k, field, val) {
-    setDays((prev) => ({ ...prev, [k]: { ...prev[k], [field]: val } }));
-  }
-
   return (
     <Box>
       {DIAS.map((d, i) => {
         const k = DIAS_KEYS[i];
         return (
           <Box key={k} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5, flexWrap: 'wrap' }}>
-            <FormControlLabel
-              sx={{ minWidth: 120 }}
-              control={<Checkbox checked={days[k].activo} onChange={() => toggle(k)} sx={{ color: '#085946', '&.Mui-checked': { color: '#085946' } }} />}
-              label={<Typography variant="body2" sx={{ fontWeight: 600 }}>{d}</Typography>}
-            />
-            {days[k].activo && (
-              <>
-                <TextField size="small" type="time" label="Desde" value={days[k].inicio}
-                  onChange={(e) => updateTime(k, 'inicio', e.target.value)}
-                  sx={{ width: 140, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }} InputLabelProps={{ shrink: true }} />
-                <TextField size="small" type="time" label="Hasta" value={days[k].fin}
-                  onChange={(e) => updateTime(k, 'fin', e.target.value)}
-                  sx={{ width: 140, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }} InputLabelProps={{ shrink: true }} />
-              </>
-            )}
+            <FormControlLabel sx={{ minWidth: 120 }}
+              control={<Checkbox checked={days[k].activo} onChange={() => setDays(p => ({ ...p, [k]: { ...p[k], activo: !p[k].activo } }))} sx={{ color: GREEN, '&.Mui-checked': { color: GREEN } }} />}
+              label={<Typography variant="body2" sx={{ fontWeight: 600 }}>{d}</Typography>} />
+            {days[k].activo && (<>
+              <TextField size="small" type="time" label="Desde" value={days[k].inicio}
+                onChange={e => setDays(p => ({ ...p, [k]: { ...p[k], inicio: e.target.value } }))}
+                sx={{ width: 140, ...fieldSx }} InputLabelProps={{ shrink: true }} />
+              <TextField size="small" type="time" label="Hasta" value={days[k].fin}
+                onChange={e => setDays(p => ({ ...p, [k]: { ...p[k], fin: e.target.value } }))}
+                sx={{ width: 140, ...fieldSx }} InputLabelProps={{ shrink: true }} />
+            </>)}
           </Box>
         );
       })}
@@ -200,7 +203,24 @@ function DisponibilidadEditor({ disponibilidad, onChange }) {
   );
 }
 
-const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: '12px' } };
+const EMPTY_FORM = {
+  nombreConsultorio: '', profesion: '', generoFicha: '', descripcion: '',
+  personaTipo: '', documentoIdentidad: '', registroProfesional: '', anosExperiencia: '',
+  telefonoPublico: '', whatsappPublico: '', emailPublico: '', direccionPublica: '',
+  fotoPerfilUrl: '', bannerUrl: '',
+  googleMapsEmbedUrl: '', googleMapsLugarUrl: '',
+  photoUrls: [], videoUrls: [],
+  redesSociales: { instagram: '', facebook: '', linkedin: '', youtube: '', tiktok: '', web: '' },
+  servicios: [],
+  allies: [], // marcas
+  polizasAceptadas: [],
+  idiomas: [], modalidadAtencion: [], poblacionAtiende: [], metodoPago: [],
+  studies: [], // estudios y reconocimientos [{ titulo, institucion, anio }]
+  workplaces: [],
+  availability: {},
+  qaList: [],
+  blogMarkdown: '',
+};
 
 export default function ProfesionalPerfilPage() {
   const [tab, setTab] = useState(0);
@@ -208,27 +228,7 @@ export default function ProfesionalPerfilPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [snack, setSnack] = useState({ open: false, msg: '', sev: 'success' });
-
-  const [form, setForm] = useState({
-    nombreConsultorio: '',
-    profesion: '',
-    genero: '',
-    descripcion: '',
-    tipoPersona: '',
-    documentoIdentidad: '',
-    telefonoPublico: '',
-    emailPublico: '',
-    direccionPublica: '',
-    fotoPerfil: '',
-    fotoBanner: '',
-    fotosAdicionales: [],
-    videos: [],
-    googleMapsEmbed: '',
-    googleMapsUrl: '',
-    polizasAceptadas: [],
-    workplaces: [],
-    disponibilidad: {},
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
 
   useEffect(() => {
     directoryApi.get(DIRECTORY_API.me).then(({ data, error: err }) => {
@@ -237,257 +237,266 @@ export default function ProfesionalPerfilPage() {
       setForm({
         nombreConsultorio: d.nombreConsultorio || '',
         profesion: d.profesion || '',
-        genero: d.genero || '',
+        generoFicha: d.generoFicha || '',
         descripcion: d.descripcion || '',
-        tipoPersona: d.tipoPersona || '',
+        personaTipo: d.personaTipo || '',
         documentoIdentidad: d.documentoIdentidad || '',
+        registroProfesional: d.registroProfesional || '',
+        anosExperiencia: d.anosExperiencia ?? '',
         telefonoPublico: d.telefonoPublico || '',
+        whatsappPublico: d.whatsappPublico || '',
         emailPublico: d.emailPublico || '',
         direccionPublica: d.direccionPublica || '',
-        fotoPerfil: d.fotoPerfil || '',
-        fotoBanner: d.fotoBanner || '',
-        fotosAdicionales: d.fotosAdicionales || [],
-        videos: d.videos || [],
-        googleMapsEmbed: d.googleMapsEmbed || '',
-        googleMapsUrl: d.googleMapsUrl || '',
+        fotoPerfilUrl: d.fotoPerfilUrl || '',
+        bannerUrl: d.bannerUrl || '',
+        googleMapsEmbedUrl: d.googleMapsEmbedUrl || '',
+        googleMapsLugarUrl: d.googleMapsLugarUrl || '',
+        photoUrls: d.photoUrls || [],
+        videoUrls: d.videoUrls || [],
+        redesSociales: d.redesSociales || { instagram: '', facebook: '', linkedin: '', youtube: '', tiktok: '', web: '' },
+        servicios: d.servicios || [],
+        allies: d.allies || [],
         polizasAceptadas: d.polizasAceptadas || [],
+        idiomas: d.idiomas || [],
+        modalidadAtencion: d.modalidadAtencion || [],
+        poblacionAtiende: d.poblacionAtiende || [],
+        metodoPago: d.metodoPago || [],
+        studies: d.studies || [],
         workplaces: d.workplaces || [],
-        disponibilidad: d.disponibilidad || {},
+        availability: d.availability || {},
+        qaList: d.qaList || [],
+        blogMarkdown: d.blogMarkdown || '',
       });
       setLoading(false);
     });
   }, []);
 
-  function field(key) {
-    return {
-      value: form[key],
-      onChange: (e) => setForm((prev) => ({ ...prev, [key]: e.target.value })),
-    };
-  }
-
-  function togglePoliza(pol) {
-    setForm((prev) => {
-      const arr = prev.polizasAceptadas.includes(pol)
-        ? prev.polizasAceptadas.filter((p) => p !== pol)
-        : [...prev.polizasAceptadas, pol];
-      return { ...prev, polizasAceptadas: arr };
-    });
-  }
+  function f(key) { return { value: form[key], onChange: e => setForm(p => ({ ...p, [key]: e.target.value })) }; }
+  function set(key, val) { setForm(p => ({ ...p, [key]: val })); }
+  function setRed(key, val) { setForm(p => ({ ...p, redesSociales: { ...p.redesSociales, [key]: val } })); }
 
   async function handleSave() {
-    setSaving(true);
-    setError('');
-    const { data, error: err } = await directoryApi.patch(DIRECTORY_API.me, form);
+    setSaving(true); setError('');
+    const payload = { ...form, anosExperiencia: form.anosExperiencia === '' ? null : Number(form.anosExperiencia) };
+    const { error: err } = await directoryApi.patch(DIRECTORY_API.me, payload);
     setSaving(false);
-    if (err) {
-      setError(err);
-      setSnack({ open: true, msg: `Error al guardar: ${err}`, sev: 'error' });
-    } else {
-      setSnack({ open: true, msg: 'Perfil actualizado correctamente', sev: 'success' });
-    }
+    if (err) { setError(err); setSnack({ open: true, msg: `Error: ${err}`, sev: 'error' }); }
+    else setSnack({ open: true, msg: 'Perfil actualizado correctamente', sev: 'success' });
   }
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress sx={{ color: '#085946' }} />
-      </Box>
-    );
-  }
+  const TABS = [
+    'Datos básicos','Contacto','Redes sociales','Servicios','Marcas',
+    'Aseguradoras','Estudios','Horarios','Galería','Preguntas','Blog',
+  ];
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress sx={{ color: GREEN }} /></Box>;
 
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: '#041a12', letterSpacing: '-0.5px' }}>
-          Mi perfil
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Edita la información que aparece en tu ficha pública del directorio
-        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 800, color: '#041a12', letterSpacing: '-0.5px' }}>Mi perfil</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Edita la información que aparece en tu ficha pública del directorio</Typography>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
 
       <Card elevation={0} sx={glassCard}>
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Tabs
-            value={tab}
-            onChange={(_, v) => setTab(v)}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{
-              mb: 0,
-              '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '0.875rem' },
-              '& .Mui-selected': { color: '#085946', fontWeight: 700 },
-              '& .MuiTabs-indicator': { bgcolor: '#085946' },
-            }}
-          >
-            <Tab label="Datos básicos" />
-            <Tab label="Fotos y media" />
-            <Tab label="Pólizas" />
-            <Tab label="Sedes" />
-            <Tab label="Disponibilidad" />
+          <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
+            sx={{ mb: 0, '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }, '& .Mui-selected': { color: GREEN, fontWeight: 700 }, '& .MuiTabs-indicator': { bgcolor: GREEN } }}>
+            {TABS.map((t, i) => <Tab key={i} label={t} />)}
           </Tabs>
-
           <Divider sx={{ mb: 0 }} />
 
-          {/* Tab 1: Datos básicos */}
+          {/* 0 — Datos básicos */}
           <TabPanel value={tab} index={0}>
             <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="Nombre / Consultorio / Centro *" {...f('nombreConsultorio')} sx={fieldSx} /></Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Nombre del consultorio / centro" {...field('nombreConsultorio')} sx={fieldSx} />
+                <FormControl fullWidth sx={fieldSx}>
+                  <InputLabel>Profesión</InputLabel>
+                  <Select value={form.profesion} label="Profesión" onChange={e => set('profesion', e.target.value)}>
+                    {['Audiólogo','Fonoaudiólogo','Otorrinolaringólogo','Otólogo'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+                  </Select>
+                </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Profesión" {...field('profesion')} sx={fieldSx} />
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth sx={fieldSx}>
+                  <InputLabel>Tipo de cuenta</InputLabel>
+                  <Select value={form.personaTipo} label="Tipo de cuenta" onChange={e => set('personaTipo', e.target.value)}>
+                    <MenuItem value="NATURAL">Profesional independiente</MenuItem>
+                    <MenuItem value="JURIDICA">Centro / Clínica / Empresa</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <FormControl fullWidth sx={fieldSx}>
                   <InputLabel>Género de la ficha</InputLabel>
-                  <Select value={form.genero} label="Género de la ficha" onChange={(e) => setForm((p) => ({ ...p, genero: e.target.value }))}>
-                    <MenuItem value="masculino">Masculino</MenuItem>
-                    <MenuItem value="femenino">Femenino</MenuItem>
-                    <MenuItem value="neutro">Neutro</MenuItem>
+                  <Select value={form.generoFicha} label="Género de la ficha" onChange={e => set('generoFicha', e.target.value)}>
+                    <MenuItem value="">Neutro</MenuItem>
+                    <MenuItem value="MASCULINO">Masculino</MenuItem>
+                    <MenuItem value="FEMENINO">Femenino</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth sx={fieldSx}>
-                  <InputLabel>Tipo de persona</InputLabel>
-                  <Select value={form.tipoPersona} label="Tipo de persona" onChange={(e) => setForm((p) => ({ ...p, tipoPersona: e.target.value }))}>
-                    <MenuItem value="NATURAL">Natural</MenuItem>
-                    <MenuItem value="JURIDICA">Jurídica</MenuItem>
-                  </Select>
-                </FormControl>
+              <Grid item xs={12} sm={4}><TextField fullWidth label="Años de experiencia" type="number" {...f('anosExperiencia')} sx={fieldSx} /></Grid>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="Cédula / NIT" {...f('documentoIdentidad')} sx={fieldSx} /></Grid>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="Tarjeta profesional (RETHUS)" {...f('registroProfesional')} placeholder="Ej: 25000-XXX" sx={fieldSx} /></Grid>
+              <Grid item xs={12}><TextField fullWidth multiline rows={4} label="Descripción pública *" {...f('descripcion')} sx={fieldSx} helperText="Escribe en primera persona. Sé específico sobre tu especialidad y enfoque." /></Grid>
+              <Grid item xs={12}>
+                <SectionTitle>Modalidad de atención</SectionTitle>
+                <ChipToggle options={MODALIDADES} selected={form.modalidadAtencion} onChange={v => set('modalidadAtencion', v)} />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth multiline rows={4} label="Descripción pública" {...field('descripcion')} sx={fieldSx} />
+                <SectionTitle>Población que atiendes</SectionTitle>
+                <ChipToggle options={POBLACIONES} selected={form.poblacionAtiende} onChange={v => set('poblacionAtiende', v)} />
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Documento de identidad" {...field('documentoIdentidad')} sx={fieldSx} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Teléfono público" {...field('telefonoPublico')} sx={fieldSx} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Email público" type="email" {...field('emailPublico')} sx={fieldSx} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Dirección pública" {...field('direccionPublica')} sx={fieldSx} />
+              <Grid item xs={12}>
+                <SectionTitle>Idiomas de atención</SectionTitle>
+                <ChipToggle options={IDIOMAS_LIST} selected={form.idiomas} onChange={v => set('idiomas', v)} />
               </Grid>
             </Grid>
           </TabPanel>
 
-          {/* Tab 2: Fotos y media */}
+          {/* 1 — Contacto */}
           <TabPanel value={tab} index={1}>
             <Grid container spacing={2.5}>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="URL foto de perfil" {...field('fotoPerfil')} sx={fieldSx} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="URL banner" {...field('fotoBanner')} sx={fieldSx} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="URL Google Maps embed" {...field('googleMapsEmbed')} sx={fieldSx} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="URL Google Maps lugar" {...field('googleMapsUrl')} sx={fieldSx} />
-              </Grid>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="Teléfono público" {...f('telefonoPublico')} placeholder="+57 300 000 0000" sx={fieldSx} /></Grid>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="WhatsApp (con código de país)" {...f('whatsappPublico')} placeholder="573157939569" sx={fieldSx} helperText="Solo números, sin espacios ni + (ej: 573157939569)" /></Grid>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="Email público" type="email" {...f('emailPublico')} sx={fieldSx} /></Grid>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="Dirección principal" {...f('direccionPublica')} sx={fieldSx} /></Grid>
+              <Grid item xs={12}><Divider sx={{ my: 1 }} /></Grid>
+              <Grid item xs={12}><TextField fullWidth label="Google Maps — iframe embed" {...f('googleMapsEmbedUrl')} multiline rows={3} sx={fieldSx} helperText='En Google Maps → Compartir → Insertar mapa → copia el iframe completo' /></Grid>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="Google Maps — enlace del lugar" {...f('googleMapsLugarUrl')} placeholder="https://maps.app.goo.gl/..." sx={fieldSx} /></Grid>
               <Grid item xs={12}>
-                <Divider sx={{ mb: 2 }} />
-                <StringListField
-                  label="Fotos adicionales"
-                  values={form.fotosAdicionales}
-                  onChange={(v) => setForm((p) => ({ ...p, fotosAdicionales: v }))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Divider sx={{ mb: 2 }} />
-                <StringListField
-                  label="Videos (URLs)"
-                  values={form.videos}
-                  onChange={(v) => setForm((p) => ({ ...p, videos: v }))}
-                />
+                <SectionTitle>Métodos de pago aceptados</SectionTitle>
+                <ChipToggle options={PAGOS} selected={form.metodoPago} onChange={v => set('metodoPago', v)} />
               </Grid>
             </Grid>
           </TabPanel>
 
-          {/* Tab 3: Pólizas */}
+          {/* 2 — Redes sociales */}
           <TabPanel value={tab} index={2}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Selecciona las pólizas de salud que aceptas en tu consultorio.
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {POLIZAS.map((pol) => {
-                const selected = form.polizasAceptadas.includes(pol);
-                return (
-                  <Chip
-                    key={pol}
-                    label={pol}
-                    clickable
-                    onClick={() => togglePoliza(pol)}
-                    sx={{
-                      fontWeight: 600,
-                      borderRadius: '10px',
-                      bgcolor: selected ? '#085946' : 'rgba(8,89,70,0.08)',
-                      color: selected ? '#fff' : '#085946',
-                      border: selected ? '1px solid #085946' : '1px solid rgba(8,89,70,0.25)',
-                      '&:hover': { bgcolor: selected ? '#064a38' : 'rgba(8,89,70,0.14)' },
-                    }}
-                  />
-                );
-              })}
-            </Box>
+            <Grid container spacing={2.5}>
+              {[
+                { key: 'instagram', label: 'Instagram', ph: 'https://instagram.com/tu_usuario' },
+                { key: 'facebook',  label: 'Facebook',  ph: 'https://facebook.com/tu_pagina' },
+                { key: 'linkedin',  label: 'LinkedIn',  ph: 'https://linkedin.com/in/tu_perfil' },
+                { key: 'youtube',   label: 'YouTube',   ph: 'https://youtube.com/@tu_canal' },
+                { key: 'tiktok',    label: 'TikTok',    ph: 'https://tiktok.com/@tu_usuario' },
+                { key: 'web',       label: 'Sitio web', ph: 'https://tu-sitio.com' },
+              ].map(({ key, label, ph }) => (
+                <Grid item xs={12} sm={6} key={key}>
+                  <TextField fullWidth label={label} value={form.redesSociales[key] || ''} onChange={e => setRed(key, e.target.value)} placeholder={ph} sx={fieldSx} />
+                </Grid>
+              ))}
+            </Grid>
           </TabPanel>
 
-          {/* Tab 4: Sedes */}
+          {/* 3 — Servicios */}
           <TabPanel value={tab} index={3}>
-            <WorkplaceList
-              workplaces={form.workplaces}
-              onChange={(v) => setForm((p) => ({ ...p, workplaces: v }))}
-            />
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Lista los servicios que ofreces. El precio es opcional.
+            </Typography>
+            <ServiciosEditor servicios={form.servicios} onChange={v => set('servicios', v)} />
           </TabPanel>
 
-          {/* Tab 5: Disponibilidad */}
+          {/* 4 — Marcas */}
           <TabPanel value={tab} index={4}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Marca los días en que atiendes y el horario correspondiente.
-            </Typography>
-            <DisponibilidadEditor
-              disponibilidad={form.disponibilidad}
-              onChange={(v) => setForm((p) => ({ ...p, disponibilidad: v }))}
-            />
+            <SectionTitle>Marcas de audífonos</SectionTitle>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Selecciona las marcas con las que trabajas</Typography>
+            <ChipToggle options={MARCAS_AUDIFONOS} selected={Array.isArray(form.allies) ? form.allies : []} onChange={v => set('allies', v)} />
+            <Divider sx={{ my: 3 }} />
+            <SectionTitle>Marcas de implantes</SectionTitle>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Aplica para ORL y Otólogos</Typography>
+            <ChipToggle options={MARCAS_IMPLANTES} selected={Array.isArray(form.allies) ? form.allies : []} onChange={v => set('allies', [...(Array.isArray(form.allies) ? form.allies.filter(a => !MARCAS_IMPLANTES.includes(a)) : []), ...v])} />
           </TabPanel>
+
+          {/* 5 — Aseguradoras */}
+          <TabPanel value={tab} index={5}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Selecciona las aseguradoras / EPS con las que trabajas.</Typography>
+            <ChipToggle options={POLIZAS} selected={form.polizasAceptadas} onChange={v => set('polizasAceptadas', v)} />
+          </TabPanel>
+
+          {/* 6 — Estudios y reconocimientos */}
+          <TabPanel value={tab} index={6}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Agrega tus títulos, especializaciones, certificaciones y reconocimientos.</Typography>
+            {(Array.isArray(form.studies) ? form.studies : []).map((s, i) => (
+              <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Estudio {i + 1}</Typography>
+                  <IconButton size="small" onClick={() => set('studies', form.studies.filter((_, idx) => idx !== i))} sx={{ color: '#EF4444' }}><Close fontSize="small" /></IconButton>
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Título / Certificación" value={s.titulo || ''} onChange={e => { const n = [...form.studies]; n[i] = { ...n[i], titulo: e.target.value }; set('studies', n); }} sx={fieldSx} /></Grid>
+                  <Grid item xs={12} sm={4}><TextField fullWidth size="small" label="Institución" value={s.institucion || ''} onChange={e => { const n = [...form.studies]; n[i] = { ...n[i], institucion: e.target.value }; set('studies', n); }} sx={fieldSx} /></Grid>
+                  <Grid item xs={12} sm={2}><TextField fullWidth size="small" label="Año" value={s.anio || ''} onChange={e => { const n = [...form.studies]; n[i] = { ...n[i], anio: e.target.value }; set('studies', n); }} sx={fieldSx} /></Grid>
+                </Grid>
+              </Card>
+            ))}
+            <Button startIcon={<AddOutlined />} onClick={() => set('studies', [...(Array.isArray(form.studies) ? form.studies : []), { titulo: '', institucion: '', anio: '' }])} variant="outlined" size="small"
+              sx={{ borderRadius: '10px', textTransform: 'none', borderColor: GREEN, color: GREEN, fontWeight: 700 }}>
+              + Agregar estudio
+            </Button>
+          </TabPanel>
+
+          {/* 7 — Horarios y sedes */}
+          <TabPanel value={tab} index={7}>
+            <SectionTitle>Horarios de atención</SectionTitle>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Marca los días en que atiendes y el horario correspondiente.</Typography>
+            <DisponibilidadEditor disponibilidad={form.availability} onChange={v => set('availability', v)} />
+            <Divider sx={{ my: 3 }} />
+            <SectionTitle>Sedes / Consultorios</SectionTitle>
+            <WorkplaceList workplaces={form.workplaces} onChange={v => set('workplaces', v)} />
+          </TabPanel>
+
+          {/* 8 — Galería */}
+          <TabPanel value={tab} index={8}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="Foto de perfil (URL)" {...f('fotoPerfilUrl')} sx={fieldSx} helperText="URL pública de tu foto profesional" /></Grid>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="Banner (URL)" {...f('bannerUrl')} sx={fieldSx} helperText="Imagen ancha para la cabecera de tu ficha" /></Grid>
+              <Grid item xs={12}><Divider /></Grid>
+              <Grid item xs={12}>
+                <StringListField label="Fotos adicionales (URLs)" placeholder="https://..." values={form.photoUrls} onChange={v => set('photoUrls', v)} />
+              </Grid>
+              <Grid item xs={12}><Divider /></Grid>
+              <Grid item xs={12}>
+                <StringListField label="Videos (URLs de YouTube o Vimeo)" placeholder="https://youtube.com/watch?v=..." values={form.videoUrls} onChange={v => set('videoUrls', v)} />
+              </Grid>
+            </Grid>
+          </TabPanel>
+
+          {/* 9 — Preguntas y respuestas */}
+          <TabPanel value={tab} index={9}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Responde las preguntas frecuentes de tus pacientes. Aparecen en tu ficha pública.
+            </Typography>
+            <QAEditor qaList={form.qaList} onChange={v => set('qaList', v)} />
+          </TabPanel>
+
+          {/* 10 — Blog */}
+          <TabPanel value={tab} index={10}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Escribe artículos en formato Markdown. Aparecen en tu ficha pública y pueden destacarse en el blog de OírConecta.
+            </Typography>
+            <TextField fullWidth multiline rows={16} label="Contenido (Markdown)" value={form.blogMarkdown}
+              onChange={e => set('blogMarkdown', e.target.value)} sx={fieldSx}
+              helperText="Usa ## para títulos, **negrita**, - para listas" />
+          </TabPanel>
+
         </CardContent>
       </Card>
 
-      {/* Save button */}
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={handleSave}
-          disabled={saving}
+        <Button variant="contained" size="large" onClick={handleSave} disabled={saving}
           startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveOutlined />}
-          sx={{
-            bgcolor: '#085946',
-            borderRadius: '12px',
-            fontWeight: 800,
-            textTransform: 'none',
-            px: 4,
-            '&:hover': { bgcolor: '#064a38' },
-          }}
-        >
+          sx={{ bgcolor: GREEN, borderRadius: '12px', fontWeight: 800, textTransform: 'none', px: 4, '&:hover': { bgcolor: '#064a38' } }}>
           {saving ? 'Guardando…' : 'Guardar cambios'}
         </Button>
       </Box>
 
-      <Snackbar
-        open={snack.open}
-        autoHideDuration={4000}
-        onClose={() => setSnack((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} sx={{ borderRadius: '12px', fontWeight: 600 }}>
+      <Snackbar open={snack.open} autoHideDuration={4000} onClose={() => setSnack(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={() => setSnack(s => ({ ...s, open: false }))} severity={snack.sev} sx={{ borderRadius: '12px', fontWeight: 600 }}>
           {snack.msg}
         </Alert>
       </Snackbar>

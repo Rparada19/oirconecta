@@ -365,6 +365,18 @@ async function updateMyDirectoryProfile(accountId, body) {
   if (body.videoUrls !== undefined) patch.videoUrls = clampMedia(body.videoUrls, MAX_VIDEOS);
   if (body.photoUrls !== undefined) patch.photoUrls = clampMedia(body.photoUrls, MAX_PHOTOS);
 
+  // Nuevos campos de perfil enriquecido
+  if (body.redesSociales !== undefined) patch.redesSociales = body.redesSociales;
+  if (body.servicios !== undefined) patch.servicios = body.servicios;
+  if (body.whatsappPublico !== undefined) patch.whatsappPublico = body.whatsappPublico == null || body.whatsappPublico === '' ? null : String(body.whatsappPublico).trim().slice(0, 20);
+  if (body.registroProfesional !== undefined) patch.registroProfesional = body.registroProfesional == null || body.registroProfesional === '' ? null : String(body.registroProfesional).trim().slice(0, 50);
+  if (body.idiomas !== undefined) patch.idiomas = Array.isArray(body.idiomas) ? body.idiomas.map(String) : [];
+  if (body.modalidadAtencion !== undefined) patch.modalidadAtencion = Array.isArray(body.modalidadAtencion) ? body.modalidadAtencion.map(String) : [];
+  if (body.anosExperiencia !== undefined) patch.anosExperiencia = body.anosExperiencia == null ? null : Math.max(0, parseInt(body.anosExperiencia) || 0);
+  if (body.poblacionAtiende !== undefined) patch.poblacionAtiende = Array.isArray(body.poblacionAtiende) ? body.poblacionAtiende.map(String) : [];
+  if (body.metodoPago !== undefined) patch.metodoPago = Array.isArray(body.metodoPago) ? body.metodoPago.map(String) : [];
+  if (body.qaList !== undefined) patch.qaList = body.qaList;
+
   if (body.personaTipo !== undefined) {
     patch.personaTipo = body.personaTipo === 'JURIDICA' ? 'JURIDICA' : 'NATURAL';
     if (patch.personaTipo === 'JURIDICA') {
