@@ -192,7 +192,9 @@ async function deliver({ to, toName, subject, html, text }) {
 // ════════════════════════════════════════════════════════════════════════════
 async function sendBookingConfirmation(appointment, meta = {}) {
   const proName  = meta.professionalName || 'el profesional';
-  const fechaRaw = String(appointment.fecha || '').slice(0, 10);
+  const fechaRaw = appointment.fecha instanceof Date
+    ? appointment.fecha.toISOString().slice(0, 10)
+    : String(appointment.fecha || '').slice(0, 10);
   const hora     = appointment.hora || '—';
   const paciente = appointment.patientName || 'Paciente';
   const motivo   = appointment.motivo || '—';
