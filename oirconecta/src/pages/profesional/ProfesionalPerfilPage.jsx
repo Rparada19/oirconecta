@@ -403,13 +403,21 @@ export default function ProfesionalPerfilPage() {
 
           {/* 4 — Marcas */}
           <TabPanel value={tab} index={4}>
-            <SectionTitle>Marcas de audífonos</SectionTitle>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Selecciona las marcas con las que trabajas</Typography>
-            <ChipToggle options={MARCAS_AUDIFONOS} selected={Array.isArray(form.allies) ? form.allies : []} onChange={v => set('allies', v)} />
+            <SectionTitle>Audífonos</SectionTitle>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Widex, Oticon, Signia, Phonak, ReSound, Starkey, Beltone, Rexton, Audioservice, Bernafon, Hansaton, Sonic, Unitron</Typography>
+            <ChipToggle
+              options={MARCAS_AUDIFONOS}
+              selected={(Array.isArray(form.allies) ? form.allies : []).filter(a => MARCAS_AUDIFONOS.includes(a))}
+              onChange={v => set('allies', [...v, ...(Array.isArray(form.allies) ? form.allies.filter(a => MARCAS_IMPLANTES.includes(a)) : [])])}
+            />
             <Divider sx={{ my: 3 }} />
-            <SectionTitle>Marcas de implantes</SectionTitle>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Aplica para ORL y Otólogos</Typography>
-            <ChipToggle options={MARCAS_IMPLANTES} selected={Array.isArray(form.allies) ? form.allies : []} onChange={v => set('allies', [...(Array.isArray(form.allies) ? form.allies.filter(a => !MARCAS_IMPLANTES.includes(a)) : []), ...v])} />
+            <SectionTitle>Implantes cocleares</SectionTitle>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Cochlear, Advanced Bionics, MED-EL</Typography>
+            <ChipToggle
+              options={MARCAS_IMPLANTES}
+              selected={(Array.isArray(form.allies) ? form.allies : []).filter(a => MARCAS_IMPLANTES.includes(a))}
+              onChange={v => set('allies', [...v, ...(Array.isArray(form.allies) ? form.allies.filter(a => MARCAS_AUDIFONOS.includes(a)) : [])])}
+            />
           </TabPanel>
 
           {/* 5 — Aseguradoras */}
