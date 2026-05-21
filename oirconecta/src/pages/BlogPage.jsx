@@ -12,19 +12,24 @@ import Footer from '../components/Footer';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
-const CATEGORIAS = [
-  { key: '', label: 'Todos' },
-  { key: 'productos', label: 'Productos y tecnología' },
-  { key: 'salud', label: 'Salud auditiva' },
-  { key: 'estilo-de-vida', label: 'Estilo de vida' },
-];
+// Color por sección canónica del blog (ver backend/src/config/blogSections.js).
+const SECTION_COLORS = {
+  guias: '#085946',
+  lanzamientos: '#0d7a5f',
+  comparativas: '#272F50',
+  tecnologia: '#71A095',
+  casos: '#b45309',
+  glosario: '#0284c7',
+  cuidados: '#6b21a8',
+  general: '#6b7280',
+};
 
 const PLACEHOLDER_POSTS = [
   {
     id: '1',
     titulo: 'Guía para elegir tu primer audífono',
     resumen: 'Conoce los factores clave para seleccionar el dispositivo que mejor se adapta a tu tipo de pérdida auditiva y estilo de vida.',
-    categoria: 'productos',
+    categoria: 'guias',
     autorNombre: 'OírConecta',
     publishedAt: '2025-04-10T00:00:00Z',
     coverUrl: null,
@@ -33,7 +38,7 @@ const PLACEHOLDER_POSTS = [
     id: '2',
     titulo: '¿Qué es la audiometría y cuándo hacerla?',
     resumen: 'La audiometría es la prueba de referencia para evaluar tu audición. Te explicamos en qué consiste y cada cuánto debes realizarla.',
-    categoria: 'salud',
+    categoria: 'glosario',
     autorNombre: 'OírConecta',
     publishedAt: '2025-03-22T00:00:00Z',
     coverUrl: null,
@@ -42,7 +47,7 @@ const PLACEHOLDER_POSTS = [
     id: '3',
     titulo: 'Vida con hipoacusia: consejos prácticos',
     resumen: 'Pequeños ajustes en el hogar, el trabajo y el entorno social que hacen una gran diferencia para quienes conviven con pérdida auditiva.',
-    categoria: 'estilo-de-vida',
+    categoria: 'cuidados',
     autorNombre: 'OírConecta',
     publishedAt: '2025-03-05T00:00:00Z',
     coverUrl: null,
@@ -55,12 +60,11 @@ function formatDate(iso) {
 }
 
 function CategoryColor(cat) {
-  const map = { productos: '#085946', salud: '#272F50', 'estilo-de-vida': '#71A095', general: '#6b7280' };
-  return map[cat] || map.general;
+  return SECTION_COLORS[cat] || SECTION_COLORS.general;
 }
 
-function PostCard({ post }) {
-  const catLabel = CATEGORIAS.find((c) => c.key === post.categoria)?.label || post.categoria;
+function PostCard({ post, sectionLabels = {} }) {
+  const catLabel = sectionLabels[post.categoria] || post.categoria;
   return (
     <Card
       component={RouterLink}
@@ -131,6 +135,25 @@ export default function BlogPage() {
   const categoriaParam = searchParams.get('categoria') || '';
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sections, setSections] = useState([]);
+
+  // Carga las secciones canónicas (con conteo) desde el backend.
+  useEffect(() => {
+    fetch(`${API}/api/blog/sections`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.data)) setSections(data.data);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Chips: "Todos" + secciones (las con contenido primero).
+  const chips = [{ key: '', label: 'Todos' }].concat(
+    [...sections]
+      .sort((a, b) => (b.count || 0) - (a.count || 0) || a.orden - b.orden)
+      .map((s) => ({ key: s.slug, label: s.nombre, count: s.count })),
+  );
+  const sectionLabels = Object.fromEntries(sections.map((s) => [s.slug, s.nombre]));
 
   useEffect(() => {
     setLoading(true);
@@ -195,10 +218,10 @@ export default function BlogPage() {
       <Box sx={{ borderBottom: '1px solid rgba(8,89,70,0.08)', bgcolor: '#fff', py: 2 }}>
         <Container maxWidth="lg">
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1 }}>
-            {CATEGORIAS.map((c) => (
+            {chips.map((c) => (
               <Chip
-                key={c.key}
-                label={c.label}
+                key={c.key || 'todos'}
+                label={c.count != null && c.key ? `${c.label} (${c.count})` : c.label}
                 clickable
                 onClick={() => handleCategoria(c.key)}
                 variant={categoriaParam === c.key ? 'filled' : 'outlined'}
@@ -231,7 +254,7 @@ export default function BlogPage() {
           <Grid container spacing={3}>
             {posts.map((post) => (
               <Grid item xs={12} sm={6} md={4} key={post.id}>
-                <PostCard post={post} />
+                <PostCard post={post} sectionLabels={sectionLabels} />
               </Grid>
             ))}
           </Grid>
