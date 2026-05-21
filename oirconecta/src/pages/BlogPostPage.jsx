@@ -7,6 +7,7 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import NewsletterCTA from '../components/NewsletterCTA';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
@@ -176,6 +177,7 @@ export default function BlogPostPage() {
             <Box sx={{ '& ul, & ol': { pl: 2 } }}>
               {renderContent(post.contenido || '')}
             </Box>
+            <NewsletterCTA source="blog-post" />
             <Divider sx={{ mt: 6, mb: 4 }} />
             <Button component={RouterLink} to="/blog" startIcon={<ArrowBackIcon />}
               variant="outlined" sx={{ borderRadius: '12px', borderColor: '#085946', color: '#085946', fontWeight: 600 }}>

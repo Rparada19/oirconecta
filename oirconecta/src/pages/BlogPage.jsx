@@ -9,6 +9,7 @@ import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import NewsletterPopup from '../components/NewsletterPopup';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
@@ -178,6 +179,7 @@ export default function BlogPage() {
 
   return (
     <Box component="main" sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+      <NewsletterPopup source="blog-popup" />
       <Header />
 
       {/* Hero */}
