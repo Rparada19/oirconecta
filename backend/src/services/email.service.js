@@ -512,9 +512,59 @@ async function sendRescheduledNotification({ to, patientName, oldFecha, oldHora,
 }
 
 // ─── Exports ─────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// NEWSLETTER — bienvenida y envío de edición
+// ════════════════════════════════════════════════════════════════════════════
+
+async function sendNewsletterWelcome({ email, nombre, unsubscribeUrl }) {
+  const bodyHtml =
+    h1(`¡Bienvenido a OírConecta, ${nombre || 'hola'}! 👂`) +
+    p('Gracias por suscribirte a nuestro boletín. Cada quince días te enviaremos información útil sobre salud auditiva, audífonos, implantes y novedades del sector — escrita en lenguaje claro.') +
+    p('Mientras tanto, puedes explorar profesionales verificados cerca de ti:') +
+    btn(`${SITE_URL}/directorio`, 'Explorar el directorio') +
+    divider() +
+    `<p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">Recibes este correo porque te suscribiste en oirconecta.com. Si no deseas seguir recibiéndolo, <a href="${unsubscribeUrl}" style="color:#6b7280;">cancela tu suscripción aquí</a>.</p>`;
+
+  const html = baseTemplate({
+    preheader: 'Gracias por suscribirte al boletín de OírConecta.',
+    title: 'Bienvenido a OírConecta',
+    bodyHtml,
+  });
+
+  return deliver({
+    to: email,
+    toName: nombre,
+    subject: '👂 Bienvenido al boletín de OírConecta',
+    html,
+    text: `Bienvenido a OírConecta, ${nombre || ''}. Te enviaremos información de salud auditiva cada 15 días. Cancela: ${unsubscribeUrl}`,
+  });
+}
+
+/**
+ * Envía una edición del boletín a un suscriptor, inyectando el pixel de
+ * apertura y reescribiendo el CTA para registrar el clic.
+ * @param {{ email, nombre, subject, preheader, contentHtml, pixelUrl, unsubscribeUrl }} args
+ */
+async function sendNewsletterEdition({ email, nombre, subject, preheader, contentHtml, pixelUrl, unsubscribeUrl }) {
+  const footer =
+    divider() +
+    `<p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">Recibes este correo porque te suscribiste en oirconecta.com. <a href="${unsubscribeUrl}" style="color:#6b7280;">Cancelar suscripción</a>.</p>`;
+  const pixel = pixelUrl
+    ? `<img src="${pixelUrl}" width="1" height="1" alt="" style="display:none;border:0;" />`
+    : '';
+  const html = baseTemplate({
+    preheader: preheader || '',
+    title: subject,
+    bodyHtml: contentHtml + footer + pixel,
+  });
+  return deliver({ to: email, toName: nombre, subject, html });
+}
+
 module.exports = {
   sendBookingConfirmation,
   sendProfessionalWelcome,
+  sendNewsletterWelcome,
+  sendNewsletterEdition,
   sendProfessionalApproved,
   sendProfessionalRejected,
   sendNewInquiry,

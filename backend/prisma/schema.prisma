@@ -952,3 +952,89 @@ model ProfileView {
   @@index([profileId, viewedAt])
   @@map("profile_views")
 }
+
+// ===========================================
+// NEWSLETTER (suscriptores + campañas + métricas de apertura)
+// ===========================================
+
+/// Suscriptor del boletín. `email` único. Las bajas se marcan con status, no se borran (trazabilidad).
+model NewsletterSubscriber {
+  id        String   @id @default(uuid())
+  nombre    String
+  email     String   @unique
+  telefono  String?
+  ciudad    String?
+  status    NewsletterSubscriberStatus @default(ACTIVE)
+  /// De dónde vino: home, blog, footer, popup, import, etc.
+  source    String?
+  /// Token para el enlace de baja (un solo valor por suscriptor).
+  unsubscribeToken String @unique @default(uuid())
+  welcomeSentAt    DateTime?
+  unsubscribedAt   DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sends NewsletterSend[]
+
+  @@index([status])
+  @@index([ciudad])
+  @@map("newsletter_subscribers")
+}
+
+enum NewsletterSubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+/// Una edición del boletín. Guarda el HTML enviado y contadores agregados para el panel admin.
+model NewsletterCampaign {
+  id          String   @id @default(uuid())
+  asunto      String
+  preheader   String?
+  htmlContent String   @db.Text
+  /// Post de blog asociado (opcional), si la campaña difunde un artículo.
+  blogPostId  String?
+  status      NewsletterCampaignStatus @default(DRAFT)
+  /// Contadores agregados (se actualizan al enviar y con el pixel de apertura).
+  recipientCount Int @default(0)
+  sentCount      Int @default(0)
+  openCount      Int @default(0)
+  clickCount     Int @default(0)
+  scheduledFor   DateTime?
+  sentAt         DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sends NewsletterSend[]
+
+  @@index([status, scheduledFor])
+  @@map("newsletter_campaigns")
+}
+
+enum NewsletterCampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+}
+
+/// Registro por (campaña, suscriptor): permite saber quién recibió, abrió y/o hizo clic.
+model NewsletterSend {
+  id           String   @id @default(uuid())
+  campaignId   String
+  campaign     NewsletterCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subscriberId String
+  subscriber   NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  status     String   @default("sent") // sent | delivered | opened | clicked | bounced | failed
+  openedAt   DateTime?
+  clickedAt  DateTime?
+  openCount  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@unique([campaignId, subscriberId])
+  @@index([campaignId, status])
+  @@map("newsletter_sends")
+}
