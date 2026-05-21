@@ -79,7 +79,8 @@ export default function ProfesionalConsultasPage() {
     const { data, error: err } = await directoryApi.get(DIRECTORY_API.meInquiries);
     setLoading(false);
     if (err) { setError(err); return; }
-    const list = data?.data || [];
+    const raw = data?.data;
+    const list = Array.isArray(raw) ? raw : (raw?.items || []);
     setInquiries(list);
     if (setNewInquiries) setNewInquiries(list.filter((i) => i.status === 'NEW').length);
   }

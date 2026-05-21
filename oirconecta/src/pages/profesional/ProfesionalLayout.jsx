@@ -78,7 +78,8 @@ export default function ProfesionalLayout() {
       if (data?.data) setProfile(data.data);
     });
     directoryApi.get(DIRECTORY_API.meInquiries).then(({ data }) => {
-      const inquiries = data?.data || [];
+      const raw = data?.data;
+      const inquiries = Array.isArray(raw) ? raw : (raw?.items || []);
       setNewInquiries(inquiries.filter((i) => i.status === 'NEW').length);
     });
   }, [navigate]);

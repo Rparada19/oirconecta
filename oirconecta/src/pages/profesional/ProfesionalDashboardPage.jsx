@@ -99,7 +99,8 @@ export default function ProfesionalDashboardPage() {
     ]).then(([meRes, inquiriesRes]) => {
       if (meRes.error) setError(meRes.error);
       else setProfile(meRes.data?.data || null);
-      setInquiries(inquiriesRes.data?.data || []);
+      const rawInq = inquiriesRes.data?.data;
+      setInquiries(Array.isArray(rawInq) ? rawInq : (rawInq?.items || []));
       setLoading(false);
     });
   }, []);
