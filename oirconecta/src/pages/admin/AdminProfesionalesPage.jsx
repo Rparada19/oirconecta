@@ -141,8 +141,9 @@ export default function AdminProfesionalesPage() {
   };
 
   const getName = (p) =>
-    p.displayName || p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || p.email || '—';
-  const getCity = (p) => p.workplaces?.[0]?.city || p.ciudad || '—';
+    p.nombreConsultorio || p.account?.nombre || p.displayName || p.name || p.account?.email || p.email || '—';
+  const getEmail = (p) => p.account?.email || p.email || '—';
+  const getCity = (p) => p.workplaces?.[0]?.ciudad || p.workplaces?.[0]?.city || p.ciudad || '—';
   const getStatus = (p) => STATUS_MAP[p.status] || { label: p.status || '—', color: 'default' };
 
   return (
@@ -228,7 +229,7 @@ export default function AdminProfesionalesPage() {
                           </Box>
                         </TableCell>
                         <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
-                          {p.email || '—'}
+                          {getEmail(p)}
                         </TableCell>
                         <TableCell sx={{ fontSize: '0.82rem' }}>
                           {p.profession || p.profesion || '—'}
@@ -310,10 +311,10 @@ export default function AdminProfesionalesPage() {
                 Datos personales
               </Typography>
               <InfoRow label="Nombre completo" value={getName(selected)} />
-              <InfoRow label="Email" value={selected.email} />
+              <InfoRow label="Email" value={getEmail(selected)} />
               <InfoRow label="Profesión" value={selected.profession || selected.profesion} />
-              <InfoRow label="Tipo de persona" value={selected.personType || selected.tipoPersona} />
-              <InfoRow label="Documento" value={selected.documentNumber || selected.documento} />
+              <InfoRow label="Tipo de persona" value={selected.personaTipo === 'JURIDICA' ? 'Centro / Empresa' : selected.personaTipo === 'NATURAL' ? 'Profesional' : (selected.personType || selected.tipoPersona)} />
+              <InfoRow label="Documento (Cédula / NIT)" value={selected.documentoIdentidad || selected.documentNumber || selected.documento} />
 
               {selected.workplaces?.length > 0 && (
                 <>
