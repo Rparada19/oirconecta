@@ -3,6 +3,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Box, Container, Grid, Typography, Link, IconButton, Divider, Stack } from '@mui/material';
 import { Facebook, Instagram, LinkedIn, YouTube, Email, Phone, LocationOn } from '@mui/icons-material';
 import { directoryProfesionToSlug } from '../utils/directoryPresentation';
+import NewsletterSignup from './NewsletterSignup';
 
 const SECTIONS = [
   {
@@ -68,6 +69,33 @@ const Footer = () => (
       }}
     >
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+        {/* Franja de suscripción al boletín */}
+        <Box
+          sx={{
+            mb: { xs: 6, md: 8 },
+            p: { xs: 3, md: 4 },
+            borderRadius: 4,
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 24 }, color: '#fff', mb: 0.5 }}>
+            Suscríbete a nuestro boletín
+          </Typography>
+          <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, mb: 2.5 }}>
+            Contenido de salud auditiva cada 15 días, en lenguaje claro. Sin spam.
+          </Typography>
+          <Box
+            sx={{
+              '& .MuiInputBase-root': { bgcolor: 'rgba(255,255,255,0.92)' },
+              '& .MuiFormLabel-root': { color: '#4a5568' },
+            }}
+          >
+            <NewsletterSignup source="footer" />
+          </Box>
+        </Box>
+
         <Grid container spacing={{ xs: 4, md: 6 }}>
           {/* Brand column */}
           <Grid item xs={12} md={4}>
