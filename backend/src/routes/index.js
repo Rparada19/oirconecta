@@ -22,6 +22,7 @@ const directoryDiscoveryRoutes = require('./directoryDiscovery.routes');
 const blogRoutes = require('./blog.routes');
 const marketplaceRoutes = require('./marketplace.routes');
 const publicConfigRoutes = require('./publicConfig.routes');
+const newsletterRoutes = require('./newsletter.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
@@ -41,6 +42,7 @@ router.use('/directory', directoryDiscoveryRoutes);
 router.use('/blog', blogRoutes);
 router.use('/marketplace', marketplaceRoutes);
 router.use('/public', publicConfigRoutes);
+router.use('/newsletter', newsletterRoutes);
 
 // Info de la API
 router.get('/', (req, res) => {

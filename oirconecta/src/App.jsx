@@ -92,6 +92,7 @@ const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage')
 const AdminBlogPage = lazy(() => import('./pages/admin/AdminBlogPage'));
 const AdminProfesionalesPage = lazy(() => import('./pages/admin/AdminProfesionalesPage'));
 const AdminMarketplacePage = lazy(() => import('./pages/admin/AdminMarketplacePage'));
+const AdminNewsletterPage = lazy(() => import('./pages/admin/AdminNewsletterPage'));
 
 const theme = buildTheme(createTheme);
 
@@ -231,6 +232,7 @@ export default function App() {
             <Route path="blog" element={<AdminBlogPage />} />
             <Route path="profesionales" element={<AdminProfesionalesPage />} />
             <Route path="marketplace" element={<AdminMarketplacePage />} />
+            <Route path="newsletter" element={<AdminNewsletterPage />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
