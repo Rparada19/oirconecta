@@ -23,6 +23,11 @@ import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlin
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import MailOutlinedIcon from '@mui/icons-material/MailOutlined';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import PhoneInTalkOutlinedIcon from '@mui/icons-material/PhoneInTalkOutlined';
+import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import { adminFetch, getAdminToken } from './adminAuth';
 
 const GLASS_CARD = {
@@ -58,7 +63,7 @@ const statusLabels = {
   ARCHIVADO: 'Archivado',
 };
 
-function StatCard({ icon, label, value, color, loading }) {
+function StatCard({ icon, label, value, color, loading, sub }) {
   return (
     <Card sx={{ ...GLASS_CARD, height: '100%' }}>
       <CardContent sx={{ p: 3 }}>
@@ -73,9 +78,16 @@ function StatCard({ icon, label, value, color, loading }) {
             {loading ? (
               <CircularProgress size={24} sx={{ color }} />
             ) : (
-              <Typography variant="h3" sx={{ fontWeight: 800, color: '#1a2035', lineHeight: 1 }}>
-                {value ?? '—'}
-              </Typography>
+              <>
+                <Typography variant="h3" sx={{ fontWeight: 800, color: '#1a2035', lineHeight: 1 }}>
+                  {value ?? '—'}
+                </Typography>
+                {sub != null && (
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mt: 0.75 }}>
+                    {sub}
+                  </Typography>
+                )}
+              </>
             )}
           </Box>
           <Avatar
@@ -103,6 +115,7 @@ export default function AdminDashboardPage() {
   const [profesionales, setProfesionales] = useState([]);
   const [posts, setPosts] = useState([]);
   const [marketplace, setMarketplace] = useState([]);
+  const [metrics, setMetrics] = useState(null);
 
   useEffect(() => {
     const token = getAdminToken();
@@ -113,10 +126,11 @@ export default function AdminDashboardPage() {
   const fetchAll = async () => {
     setLoading(true);
     setError(null);
-    const [profRes, blogRes, mktRes] = await Promise.all([
+    const [profRes, blogRes, mktRes, statsRes] = await Promise.all([
       adminFetch('/api/directory/admin/profiles'),
       adminFetch('/api/blog/admin/all?estado=PUBLICADO'),
       adminFetch('/api/marketplace/admin/all?estado=ACTIVO'),
+      adminFetch('/api/directory/admin/stats'),
     ]);
     if (profRes.error && blogRes.error && mktRes.error) {
       setError('No se pudieron cargar los datos. Verifica tu conexión.');
@@ -124,6 +138,7 @@ export default function AdminDashboardPage() {
     setProfesionales(profRes.data?.data || profRes.data || []);
     setPosts(blogRes.data?.data || blogRes.data || []);
     setMarketplace(mktRes.data?.data || mktRes.data || []);
+    if (statsRes?.data?.data) setMetrics(statsRes.data.data);
     setLoading(false);
   };
 
@@ -191,14 +206,107 @@ export default function AdminDashboardPage() {
         </Alert>
       )}
 
-      {/* Stat cards */}
+      {/* Métricas del directorio — este mes */}
+      <Typography variant="body2" sx={{ fontWeight: 700, color: '#085946', mb: 1.5, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+        Actividad del directorio · este mes
+      </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {stats.map((s) => (
-          <Grid item xs={12} sm={6} md={3} key={s.label}>
-            <StatCard {...s} loading={loading} />
-          </Grid>
-        ))}
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Visitantes" icon={<VisibilityOutlinedIcon />} color="#085946" loading={loading}
+            value={metrics?.visitas?.mes ?? 0}
+            sub={`${metrics?.visitas?.total ?? 0} en total`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Consultas enviadas" icon={<MailOutlinedIcon />} color="#3B82F6" loading={loading}
+            value={metrics?.consultas?.mes ?? 0}
+            sub={`${metrics?.consultas?.total ?? 0} en total`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Llamadas directas" icon={<PhoneInTalkOutlinedIcon />} color="#F59E0B" loading={loading}
+            value={metrics?.llamadas?.mes ?? 0}
+            sub={`${metrics?.llamadas?.total ?? 0} en total`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Clics WhatsApp" icon={<WhatsAppIcon />} color="#10B981" loading={loading}
+            value={metrics?.whatsapp?.mes ?? 0}
+            sub={`${metrics?.whatsapp?.total ?? 0} en total`}
+          />
+        </Grid>
       </Grid>
+
+      {/* Conversión + perfiles */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Conversión del mes" icon={<TrendingUpOutlinedIcon />} color="#272F50" loading={loading}
+            value={metrics ? `${metrics.conversionMes}%` : '—'}
+            sub="contactos / visitas"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Profesionales activos" icon={<PeopleOutlinedIcon />} color="#085946" loading={loading}
+            value={metrics?.perfiles?.aprobados ?? allProf.filter((p) => p.status === 'APPROVED').length}
+            sub={`+${metrics?.perfiles?.nuevosMes ?? 0} este mes`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Pendientes" icon={<HourglassEmptyOutlinedIcon />} color="#f59e0b" loading={loading}
+            value={metrics?.perfiles?.pendientes ?? pending.length}
+            sub="esperan revisión"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Servicios activos" icon={<StorefrontOutlinedIcon />} color="#272F50" loading={loading}
+            value={allMkt.length}
+            sub={`${allPosts.length} posts publicados`}
+          />
+        </Grid>
+      </Grid>
+
+      {/* Top profesionales más vistos */}
+      {metrics?.topProfiles?.length > 0 && (
+        <Card sx={{ ...GLASS_CARD, mb: 4 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a2035', mb: 2 }}>
+              Profesionales más vistos
+            </Typography>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    {['#', 'Nombre', 'Ciudad', 'Visitas', 'Contactos'].map((h) => (
+                      <TableCell key={h} sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.72rem', letterSpacing: '0.04em', textTransform: 'uppercase', border: 0, pb: 1 }}>
+                        {h}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {metrics.topProfiles.map((tp, i) => (
+                    <TableRow key={tp.id} sx={{ '&:hover': { background: 'rgba(8,89,70,0.04)' } }}>
+                      <TableCell sx={{ fontWeight: 800, color: '#085946', border: 0 }}>{i + 1}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem', border: 0 }}>{tp.nombre}</TableCell>
+                      <TableCell sx={{ fontSize: '0.82rem', color: 'text.secondary', border: 0 }}>{tp.ciudad || '—'}</TableCell>
+                      <TableCell sx={{ fontSize: '0.85rem', fontWeight: 700, border: 0 }}>{tp.visitas}</TableCell>
+                      <TableCell sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#10B981', border: 0 }}>{tp.contactos}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
 
       <Grid container spacing={3}>
         {/* Pending professionals */}

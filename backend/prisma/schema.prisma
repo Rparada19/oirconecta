@@ -77,6 +77,8 @@ model DirectoryProfile {
   perfilVisitas        Int      @default(0)
   /// Clics en enlaces WhatsApp desde la ficha pública (métrica automática).
   whatsappClickCount   Int      @default(0)
+  /// Clics en el teléfono (llamadas directas) desde la ficha pública (métrica automática).
+  callClickCount       Int      @default(0)
   /// Contadores legacy (JSON); las métricas principales son automáticas (`directoryStats` en API).
   estadisticasCitas    Json?
   /// Contenido de blog (producto de pago); tramo público opcional vía página de ficha.
@@ -125,6 +127,7 @@ model DirectoryProfile {
   reviews    Review[]
   reports    Report[]
   views      ProfileView[]
+  events     DirectoryEvent[]
   appointmentsFromDirectory Appointment[] @relation("AppointmentDirectoryProfile")
 
   allies       Json?
@@ -220,6 +223,19 @@ enum DirectoryInquiryStatus {
   NEW
   READ
   ARCHIVED
+}
+
+/// Eventos con fecha para métricas del directorio (WhatsApp, llamadas). Las visitas se registran en ProfileView.
+model DirectoryEvent {
+  id        String   @id @default(uuid())
+  profileId String
+  profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  type      String   // WHATSAPP | CALL
+  createdAt DateTime @default(now())
+
+  @@index([profileId, type, createdAt])
+  @@index([type, createdAt])
+  @@map("directory_events")
 }
 
 // ===========================================

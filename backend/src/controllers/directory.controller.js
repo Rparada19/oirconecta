@@ -97,6 +97,34 @@ const recordPublicWhatsappClick = async (req, res, next) => {
   }
 };
 
+const recordPublicCallClick = async (req, res, next) => {
+  try {
+    await directoryService.recordPublicCallClick(req.params.profileId);
+    return res.status(204).send();
+  } catch (e) {
+    if (e.statusCode === 404) return res.status(204).send();
+    next(e);
+  }
+};
+
+const getMyStats = async (req, res, next) => {
+  try {
+    const stats = await directoryService.getStatsForAccount(req.directoryAccount.id);
+    res.json({ success: true, data: stats });
+  } catch (e) {
+    next(e);
+  }
+};
+
+const getAdminStats = async (req, res, next) => {
+  try {
+    const stats = await directoryService.getAdminDirectoryStats();
+    res.json({ success: true, data: stats });
+  } catch (e) {
+    next(e);
+  }
+};
+
 const submitProfileInquiry = async (req, res, next) => {
   try {
     const { profileId } = req.params;
@@ -164,5 +192,8 @@ module.exports = {
   publicSearch,
   publicProfileById,
   recordPublicWhatsappClick,
+  recordPublicCallClick,
+  getMyStats,
+  getAdminStats,
   submitProfileInquiry,
 };

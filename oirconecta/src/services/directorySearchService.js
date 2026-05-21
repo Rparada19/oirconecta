@@ -48,3 +48,12 @@ export function trackDirectoryWhatsAppClick(profileId) {
     body: '{}',
   });
 }
+
+export function trackDirectoryCallClick(profileId) {
+  if (!profileId || typeof profileId !== 'string') return Promise.resolve();
+  return request(DIRECTORY_API.profileCallStat(profileId), {
+    method: 'POST',
+    skipAuth: true,
+    body: '{}',
+  });
+}

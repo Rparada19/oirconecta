@@ -54,6 +54,13 @@ router.post(
 );
 
 router.post(
+  '/profiles/:profileId/stats/call',
+  [param('profileId').isUUID()],
+  validateRequest,
+  directoryController.recordPublicCallClick
+);
+
+router.post(
   '/register',
   [
     body('email').isEmail(),
@@ -75,6 +82,7 @@ router.post(
 );
 
 router.get('/me', authenticateDirectoryAccount, directoryController.getMe);
+router.get('/me/stats', authenticateDirectoryAccount, directoryController.getMyStats);
 
 router.get(
   '/me/inquiries',
@@ -134,6 +142,13 @@ router.patch(
   ],
   validateRequest,
   directoryController.patchMe
+);
+
+router.get(
+  '/admin/stats',
+  authenticate,
+  authorize('ADMIN'),
+  directoryController.getAdminStats
 );
 
 router.get(

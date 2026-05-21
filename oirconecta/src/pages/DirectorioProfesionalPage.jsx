@@ -36,6 +36,7 @@ import {
   fetchDirectoryProfilePublic,
   submitDirectoryProfileInquiry,
   trackDirectoryWhatsAppClick,
+  trackDirectoryCallClick,
 } from '../services/directorySearchService';
 import { getWhatsAppHrefWithText } from '../config/publicSite';
 import { DEMO_PROFILE_MAP } from '../data/directoryDemoData';
@@ -401,6 +402,10 @@ export default function DirectorioProfesionalPage() {
 
   const onWhatsappTrack = useCallback(() => {
     trackDirectoryWhatsAppClick(profileId).catch(() => {});
+  }, [profileId]);
+
+  const onCallTrack = useCallback(() => {
+    trackDirectoryCallClick(profileId).catch(() => {});
   }, [profileId]);
 
   const telHref = useMemo(() => {
@@ -849,7 +854,7 @@ export default function DirectorioProfesionalPage() {
                     </Button>
                     {telHref ? (
                       <Button
-                        href={telHref}
+                        href={telHref} onClick={onCallTrack}
                         variant="text"
                         size="small"
                         startIcon={<Phone />}
@@ -1095,7 +1100,7 @@ export default function DirectorioProfesionalPage() {
                     WhatsApp
                   </Button>
                   {telHref ? (
-                    <Button href={telHref} variant="text" size="medium" startIcon={<Phone />} sx={{ fontWeight: 600, textTransform: 'none' }}>
+                    <Button href={telHref} onClick={onCallTrack} variant="text" size="medium" startIcon={<Phone />} sx={{ fontWeight: 600, textTransform: 'none' }}>
                       Llamar ahora
                     </Button>
                   ) : null}
@@ -1916,7 +1921,7 @@ export default function DirectorioProfesionalPage() {
                   </Button>
                   {telHref ? (
                     <Button
-                      href={telHref}
+                      href={telHref} onClick={onCallTrack}
                       variant="text"
                       size="medium"
                       startIcon={<Phone />}
@@ -2032,7 +2037,7 @@ export default function DirectorioProfesionalPage() {
                 </Button>
                 {telHref ? (
                   <Button
-                    href={telHref}
+                    href={telHref} onClick={onCallTrack}
                     variant="text"
                     size="small"
                     startIcon={<Phone />}

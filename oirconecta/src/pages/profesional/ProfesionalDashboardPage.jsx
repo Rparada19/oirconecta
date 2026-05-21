@@ -21,6 +21,7 @@ import {
   ArrowForward,
   InfoOutlined,
   ErrorOutline,
+  PhoneInTalkOutlined,
 } from '@mui/icons-material';
 import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
@@ -42,7 +43,7 @@ function statusChipConfig(status) {
   return map[status] || { label: status || '—', color: '#9CA3AF', bg: 'rgba(156,163,175,0.15)' };
 }
 
-function StatCard({ icon, label, value, iconBg, loading }) {
+function StatCard({ icon, label, value, sub, iconBg, loading }) {
   return (
     <Card elevation={0} sx={glassCard}>
       <CardContent sx={{ p: 3 }}>
@@ -55,9 +56,16 @@ function StatCard({ icon, label, value, iconBg, loading }) {
         {loading ? (
           <CircularProgress size={22} sx={{ color: '#085946' }} />
         ) : (
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#041a12', lineHeight: 1 }}>
-            {value ?? '—'}
-          </Typography>
+          <>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#041a12', lineHeight: 1 }}>
+              {value ?? '—'}
+            </Typography>
+            {sub != null && (
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mt: 0.75 }}>
+                {sub}
+              </Typography>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
@@ -89,6 +97,7 @@ export default function ProfesionalDashboardPage() {
   const { profile: ctxProfile } = useOutletContext() || {};
   const [profile, setProfile] = useState(null);
   const [inquiries, setInquiries] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -96,11 +105,13 @@ export default function ProfesionalDashboardPage() {
     Promise.all([
       directoryApi.get(DIRECTORY_API.me),
       directoryApi.get(DIRECTORY_API.meInquiries),
-    ]).then(([meRes, inquiriesRes]) => {
+      directoryApi.get(DIRECTORY_API.myStats),
+    ]).then(([meRes, inquiriesRes, statsRes]) => {
       if (meRes.error) setError(meRes.error);
       else setProfile(meRes.data?.data || null);
       const rawInq = inquiriesRes.data?.data;
       setInquiries(Array.isArray(rawInq) ? rawInq : (rawInq?.items || []));
+      if (statsRes?.data?.data) setStats(statsRes.data.data);
       setLoading(false);
     });
   }, []);
@@ -157,14 +168,27 @@ export default function ProfesionalDashboardPage() {
         </Alert>
       )}
 
-      {/* Stats */}
+      {/* Stats del mes */}
+      <Typography variant="body2" sx={{ fontWeight: 700, color: '#085946', mb: 1.5, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+        Este mes
+      </Typography>
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             icon={<VisibilityOutlined sx={{ color: '#085946' }} />}
             iconBg="rgba(8,89,70,0.10)"
             label="Visitas al perfil"
-            value={p?.perfilVisitas ?? 0}
+            value={stats?.visitas?.mes ?? 0}
+            sub={`${stats?.visitas?.total ?? p?.perfilVisitas ?? 0} en total`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            icon={<MailOutlined sx={{ color: '#3B82F6' }} />}
+            iconBg="rgba(59,130,246,0.10)"
+            label="Consultas enviadas"
+            value={stats?.consultas?.mes ?? 0}
+            sub={`${stats?.consultas?.total ?? inquiries.length} en total · ${newCount} nuevas`}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -172,17 +196,23 @@ export default function ProfesionalDashboardPage() {
             icon={<WhatsApp sx={{ color: '#10B981' }} />}
             iconBg="rgba(16,185,129,0.10)"
             label="Clics en WhatsApp"
-            value={p?.whatsappClickCount ?? 0}
+            value={stats?.whatsapp?.mes ?? 0}
+            sub={`${stats?.whatsapp?.total ?? p?.whatsappClickCount ?? 0} en total`}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            icon={<MailOutlined sx={{ color: '#3B82F6' }} />}
-            iconBg="rgba(59,130,246,0.10)"
-            label="Consultas nuevas"
-            value={newCount}
+            icon={<PhoneInTalkOutlined sx={{ color: '#F59E0B' }} />}
+            iconBg="rgba(245,158,11,0.12)"
+            label="Llamadas directas"
+            value={stats?.llamadas?.mes ?? 0}
+            sub={`${stats?.llamadas?.total ?? p?.callClickCount ?? 0} en total`}
           />
         </Grid>
+      </Grid>
+
+      {/* Estado del perfil */}
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card elevation={0} sx={glassCard}>
             <CardContent sx={{ p: 3 }}>

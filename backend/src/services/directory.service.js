@@ -285,6 +285,7 @@ async function getApprovedPublicProfileById(profileId) {
       where: { id: profileId },
       data: { perfilVisitas: { increment: 1 } },
     });
+    await tx.profileView.create({ data: { profileId, source: 'direct' } });
     return tx.directoryProfile.findFirst({
       where: { id: profileId, status: 'APPROVED' },
       include: includePublicDirectoryProfile,
@@ -828,12 +829,119 @@ async function recordPublicWhatsappClick(profileId) {
     where: { id: profileId },
     data: { whatsappClickCount: { increment: 1 } },
   });
+  await prisma.directoryEvent.create({ data: { profileId, type: 'WHATSAPP' } });
   return { ok: true };
+}
+
+/** Registra un click en el teléfono (llamada directa) desde la ficha pública. */
+async function recordPublicCallClick(profileId) {
+  const ok = await prisma.directoryProfile.findFirst({
+    where: { id: profileId, status: 'APPROVED' },
+    select: { id: true },
+  });
+  if (!ok) {
+    const err = new Error('Perfil no encontrado');
+    err.statusCode = 404;
+    throw err;
+  }
+  await prisma.directoryProfile.update({
+    where: { id: profileId },
+    data: { callClickCount: { increment: 1 } },
+  });
+  await prisma.directoryEvent.create({ data: { profileId, type: 'CALL' } });
+  return { ok: true };
+}
+
+/** Inicio del mes actual (para métricas "este mes"). */
+function startOfMonth() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+/** Métricas del profesional dueño de la cuenta. */
+async function getStatsForAccount(accountId) {
+  const profile = await prisma.directoryProfile.findUnique({
+    where: { accountId },
+    select: { id: true, perfilVisitas: true, whatsappClickCount: true, callClickCount: true },
+  });
+  if (!profile) {
+    const err = new Error('Perfil no encontrado');
+    err.statusCode = 404;
+    throw err;
+  }
+  const since = startOfMonth();
+  const pid = profile.id;
+  const [viewsMonth, inquiriesTotal, inquiriesMonth, waMonth, callMonth] = await Promise.all([
+    prisma.profileView.count({ where: { profileId: pid, viewedAt: { gte: since } } }),
+    prisma.directoryInquiry.count({ where: { profileId: pid } }),
+    prisma.directoryInquiry.count({ where: { profileId: pid, createdAt: { gte: since } } }),
+    prisma.directoryEvent.count({ where: { profileId: pid, type: 'WHATSAPP', createdAt: { gte: since } } }),
+    prisma.directoryEvent.count({ where: { profileId: pid, type: 'CALL', createdAt: { gte: since } } }),
+  ]);
+  return {
+    visitas: { mes: viewsMonth, total: profile.perfilVisitas },
+    consultas: { mes: inquiriesMonth, total: inquiriesTotal },
+    whatsapp: { mes: waMonth, total: profile.whatsappClickCount },
+    llamadas: { mes: callMonth, total: profile.callClickCount },
+  };
+}
+
+/** Métricas agregadas del directorio completo (panel admin). */
+async function getAdminDirectoryStats() {
+  const since = startOfMonth();
+  const [
+    profilesAgg, approvedCount, pendingCount, rejectedCount,
+    viewsMonth, inquiriesMonth, inquiriesTotal, waMonth, callMonth, newProfilesMonth, topProfilesRaw,
+  ] = await Promise.all([
+    prisma.directoryProfile.aggregate({ _sum: { perfilVisitas: true, whatsappClickCount: true, callClickCount: true } }),
+    prisma.directoryProfile.count({ where: { status: 'APPROVED' } }),
+    prisma.directoryProfile.count({ where: { status: 'PENDING' } }),
+    prisma.directoryProfile.count({ where: { status: 'REJECTED' } }),
+    prisma.profileView.count({ where: { viewedAt: { gte: since } } }),
+    prisma.directoryInquiry.count({ where: { createdAt: { gte: since } } }),
+    prisma.directoryInquiry.count(),
+    prisma.directoryEvent.count({ where: { type: 'WHATSAPP', createdAt: { gte: since } } }),
+    prisma.directoryEvent.count({ where: { type: 'CALL', createdAt: { gte: since } } }),
+    prisma.directoryProfile.count({ where: { createdAt: { gte: since } } }),
+    prisma.directoryProfile.findMany({
+      where: { status: 'APPROVED' },
+      orderBy: { perfilVisitas: 'desc' },
+      take: 5,
+      select: {
+        id: true, nombreConsultorio: true, perfilVisitas: true, whatsappClickCount: true, callClickCount: true,
+        account: { select: { nombre: true } },
+        workplaces: { take: 1, orderBy: [{ esPrincipal: 'desc' }, { orden: 'asc' }], select: { ciudad: true } },
+      },
+    }),
+  ]);
+
+  const totalContactosMes = inquiriesMonth + waMonth + callMonth;
+  const conversionMes = viewsMonth > 0 ? Math.round((totalContactosMes / viewsMonth) * 1000) / 10 : 0;
+  const topProfiles = topProfilesRaw.map((p) => ({
+    id: p.id,
+    nombre: p.nombreConsultorio || p.account?.nombre || 'Sin nombre',
+    ciudad: p.workplaces?.[0]?.ciudad || null,
+    visitas: p.perfilVisitas,
+    contactos: p.whatsappClickCount + p.callClickCount,
+  }));
+
+  return {
+    visitas: { mes: viewsMonth, total: profilesAgg._sum.perfilVisitas || 0 },
+    consultas: { mes: inquiriesMonth, total: inquiriesTotal },
+    whatsapp: { mes: waMonth, total: profilesAgg._sum.whatsappClickCount || 0 },
+    llamadas: { mes: callMonth, total: profilesAgg._sum.callClickCount || 0 },
+    perfiles: { aprobados: approvedCount, pendientes: pendingCount, rechazados: rejectedCount, nuevosMes: newProfilesMonth },
+    conversionMes,
+    topProfiles,
+  };
 }
 
 module.exports = {
   registerProfessional,
   loginDirectoryAccount,
+  recordPublicCallClick,
+  getStatsForAccount,
+  getAdminDirectoryStats,
   getApprovedPublicProfileById,
   getMyDirectoryProfile,
   updateMyDirectoryProfile,
