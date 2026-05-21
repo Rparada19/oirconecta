@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const { authenticate } = require('../middleware/auth');
+const { BLOG_SECTIONS, normalizeSection } = require('../config/blogSections');
 
 const prisma = new PrismaClient();
 
@@ -23,6 +24,23 @@ router.get('/', async (req, res) => {
     ]);
     res.json({ success: true, data: posts, total });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ── Público: secciones del blog con conteo de posts publicados ──
+// IMPORTANTE: debe ir ANTES de `/:slug` para que no lo capture esa ruta.
+router.get('/sections', async (_req, res) => {
+  try {
+    const grouped = await prisma.blogPost.groupBy({
+      by: ['categoria'],
+      where: { estado: 'PUBLICADO' },
+      _count: { _all: true },
+    });
+    const counts = Object.fromEntries(grouped.map((g) => [g.categoria, g._count._all]));
+    const data = BLOG_SECTIONS.map((s) => ({ ...s, count: counts[s.slug] || 0 }));
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 // ── Público: obtener post por slug ──
@@ -59,7 +77,7 @@ router.post('/', authenticate, async (req, res) => {
     const post = await prisma.blogPost.create({
       data: {
         slug: finalSlug, titulo, resumen, contenido, coverUrl,
-        categoria: categoria || 'general', tags: tags || [],
+        categoria: normalizeSection(categoria), tags: tags || [],
         estado: estado || 'BORRADOR', destacado: destacado || false,
         autorNombre: autorNombre || 'OírConecta',
         publishedAt: estado === 'PUBLICADO' ? new Date() : null,
@@ -85,7 +103,7 @@ router.patch('/:id', authenticate, async (req, res) => {
       data: {
         ...(titulo && { titulo }), ...(resumen !== undefined && { resumen }),
         ...(contenido && { contenido }), ...(coverUrl !== undefined && { coverUrl }),
-        ...(categoria && { categoria }), ...(tags && { tags }),
+        ...(categoria && { categoria: normalizeSection(categoria) }), ...(tags && { tags }),
         ...(estado && { estado }), ...(destacado !== undefined && { destacado }),
         ...(autorNombre && { autorNombre }),
         ...(!wasPublished && nowPublished ? { publishedAt: new Date() } : {}),

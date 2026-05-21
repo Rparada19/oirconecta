@@ -54,13 +54,16 @@ const HEADER_GRADIENT = {
 const statusColors = { PUBLICADO: 'success', BORRADOR: 'default', ARCHIVADO: 'secondary' };
 const statusLabels = { PUBLICADO: 'Publicado', BORRADOR: 'Borrador', ARCHIVADO: 'Archivado' };
 
+// Secciones canónicas del blog (alineado con backend/src/config/blogSections.js).
 const CATEGORIAS = [
+  { value: 'guias', label: 'Guías y educación' },
+  { value: 'lanzamientos', label: 'Nuevos lanzamientos' },
+  { value: 'comparativas', label: 'Comparativas' },
+  { value: 'tecnologia', label: 'Tecnología y novedades' },
+  { value: 'casos', label: 'Casos y testimonios' },
+  { value: 'glosario', label: 'Glosario auditivo' },
+  { value: 'cuidados', label: 'Mantenimiento y cuidados' },
   { value: 'general', label: 'General' },
-  { value: 'audifonos', label: 'Audífonos' },
-  { value: 'salud-auditiva', label: 'Salud Auditiva' },
-  { value: 'implantes', label: 'Implantes' },
-  { value: 'consejos', label: 'Consejos' },
-  { value: 'noticias', label: 'Noticias' },
 ];
 
 const EMPTY_FORM = {
