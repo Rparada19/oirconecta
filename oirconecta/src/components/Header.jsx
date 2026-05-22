@@ -77,9 +77,13 @@ const menuConfig = [
     type: 'blog',
     items: [
       { label: 'Todos los artículos', to: '/blog' },
-      { label: 'Productos y tecnología', to: '/blog?categoria=productos' },
-      { label: 'Salud auditiva', to: '/blog?categoria=salud' },
-      { label: 'Estilo de vida', to: '/blog?categoria=estilo-de-vida' },
+      { label: 'Guías y educación', to: '/blog?categoria=guias' },
+      { label: 'Nuevos lanzamientos', to: '/blog?categoria=lanzamientos' },
+      { label: 'Comparativas', to: '/blog?categoria=comparativas' },
+      { label: 'Tecnología y novedades', to: '/blog?categoria=tecnologia' },
+      { label: 'Casos y testimonios', to: '/blog?categoria=casos' },
+      { label: 'Glosario auditivo', to: '/blog?categoria=glosario' },
+      { label: 'Mantenimiento y cuidados', to: '/blog?categoria=cuidados' },
     ],
   },
 ];
