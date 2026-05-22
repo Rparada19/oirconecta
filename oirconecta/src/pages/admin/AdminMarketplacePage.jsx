@@ -32,6 +32,7 @@ import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { adminFetch, getAdminToken } from './adminAuth';
+import AdminShopProductsPanel from './AdminShopProductsPanel';
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.90)',
@@ -72,6 +73,7 @@ const formatPrice = (price, currency) => {
 
 export default function AdminMarketplacePage() {
   const navigate = useNavigate();
+  const [mainTab, setMainTab] = useState(0);
   const [tab, setTab] = useState(0);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -161,10 +163,28 @@ export default function AdminMarketplacePage() {
           Gestión de Marketplace
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Administra los servicios ofertados por profesionales
+          Servicios de profesionales y productos de la tienda OírConecta
         </Typography>
       </Box>
 
+      <Tabs
+        value={mainTab}
+        onChange={(_, v) => setMainTab(v)}
+        sx={{
+          mb: 3,
+          '& .MuiTab-root': { fontWeight: 700, fontSize: '0.9rem', textTransform: 'none' },
+          '& .Mui-selected': { color: '#085946' },
+          '& .MuiTabs-indicator': { backgroundColor: '#085946' },
+        }}
+      >
+        <Tab label="Servicios de profesionales" />
+        <Tab label="Productos (tienda)" />
+      </Tabs>
+
+      {mainTab === 1 ? (
+        <AdminShopProductsPanel />
+      ) : (
+      <>
       {error && (
         <Alert severity="error" sx={{ mb: 3, borderRadius: '12px' }}>
           {error}
@@ -310,6 +330,8 @@ export default function AdminMarketplacePage() {
           )}
         </CardContent>
       </Card>
+      </>
+      )}
 
       {/* Delete confirm */}
       <Dialog

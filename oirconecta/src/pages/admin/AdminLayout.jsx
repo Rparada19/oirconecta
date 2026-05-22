@@ -17,6 +17,7 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -34,6 +35,7 @@ const navItems = [
   { label: 'Blog', icon: <ArticleOutlinedIcon />, path: '/portal-admin/blog' },
   { label: 'Profesionales', icon: <PeopleOutlinedIcon />, path: '/portal-admin/profesionales' },
   { label: 'Marketplace', icon: <StorefrontOutlinedIcon />, path: '/portal-admin/marketplace' },
+  { label: 'Pedidos', icon: <ReceiptLongOutlinedIcon />, path: '/portal-admin/pedidos' },
   { label: 'Newsletter', icon: <MailOutlineRoundedIcon />, path: '/portal-admin/newsletter' },
 ];
 

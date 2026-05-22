@@ -1054,3 +1054,116 @@ model NewsletterSend {
   @@index([campaignId, status])
   @@map("newsletter_sends")
 }
+
+// ===========================================
+// TIENDA OIRCONECTA — productos propios (accesorios)
+// Venta directa de la empresa. NUNCA audífonos (prohibido por web en Colombia).
+// ===========================================
+
+model ShopProduct {
+  id          String          @id @default(uuid())
+  nombre      String
+  descripcion String?         @db.Text
+  categoria   ShopCategory
+  marca       String?
+  sku         String?
+  precio      Float
+  precioAntes Float?
+  stock       Int             @default(0)
+  activo      Boolean         @default(true)
+  destacado   Boolean         @default(false)
+  imageUrls   String[]        @default([])
+  orderItems  ShopOrderItem[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([categoria, activo])
+  @@index([destacado])
+  @@map("shop_products")
+}
+
+enum ShopCategory {
+  BATERIAS
+  FILTROS
+  OLIVAS
+  CONECTIVIDAD
+  ACCESORIOS
+}
+
+model ShopCustomer {
+  id           String       @id @default(uuid())
+  nombre       String
+  email        String
+  telefono     String
+  documento    String?
+  direccion    String?
+  ciudad       String?
+  departamento String?
+  notas        String?      @db.Text
+  orders       ShopOrder[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([email])
+  @@index([telefono])
+  @@map("shop_customers")
+}
+
+model ShopOrder {
+  id           String          @id @default(uuid())
+  numero       Int             @default(autoincrement())
+  customerId   String
+  customer     ShopCustomer    @relation(fields: [customerId], references: [id])
+  estado       ShopOrderStatus @default(PENDIENTE_PAGO)
+  items        ShopOrderItem[]
+
+  subtotal     Float
+  envio        Float           @default(0)
+  total        Float
+
+  // Snapshot de envío (la dirección puede cambiar entre pedidos)
+  envioNombre    String
+  envioTelefono  String
+  envioEmail     String
+  envioDireccion String
+  envioCiudad    String
+  envioDepartamento String?
+  envioNotas     String?       @db.Text
+
+  // Pago (abstracción de pasarela; se llena en F3)
+  metodoPago    String?
+  pagoProveedor String?
+  pagoRef       String?
+  pagoEstado    String?
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([estado])
+  @@index([customerId])
+  @@map("shop_orders")
+}
+
+enum ShopOrderStatus {
+  PENDIENTE_PAGO
+  PAGADO
+  EN_PREPARACION
+  ENVIADO
+  ENTREGADO
+  CANCELADO
+}
+
+model ShopOrderItem {
+  id            String       @id @default(uuid())
+  orderId       String
+  order         ShopOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String?
+  product       ShopProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  nombre        String
+  precioUnitario Float
+  cantidad      Int
+  subtotal      Float
+
+  @@index([orderId])
+  @@map("shop_order_items")
+}

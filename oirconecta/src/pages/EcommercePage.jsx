@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
+import { getApiBaseUrl } from '../utils/apiBaseUrl';
 import {
   Container,
   Typography,
@@ -29,93 +30,42 @@ import {
 } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import ShopCartDialog from '../components/shop/ShopCartDialog';
+
+// Accesorios de la tienda OírConecta. NUNCA audífonos (prohibido por web en Colombia).
+const CATEGORIAS = [
+  { value: 'BATERIAS', label: 'Baterías' },
+  { value: 'FILTROS', label: 'Filtros' },
+  { value: 'OLIVAS', label: 'Olivas' },
+  { value: 'CONECTIVIDAD', label: 'Conectividad' },
+  { value: 'ACCESORIOS', label: 'Accesorios' },
+];
+const categoriaLabel = (v) => CATEGORIAS.find((c) => c.value === v)?.label || v;
 
 const EcommercePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
   const [wishlist, setWishlist] = useState([]);
   const [cart, setCart] = useState([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const productos = [
-    {
-      id: 1,
-      name: 'Audífono Phonak Audeo Paradise',
-      price: 2500000,
-      originalPrice: 2800000,
-      rating: 4.8,
-      reviews: 124,
-      image: '/placeholder-audifono-1.jpg',
-      category: 'audifonos',
-      brand: 'Phonak',
-      features: ['Bluetooth', 'Resistente al agua', 'Batería recargable'],
-      inStock: true
-    },
-    {
-      id: 2,
-      name: 'Audífono Oticon More',
-      price: 2200000,
-      originalPrice: 2500000,
-      rating: 4.6,
-      reviews: 89,
-      image: '/placeholder-audifono-2.jpg',
-      category: 'audifonos',
-      brand: 'Oticon',
-      features: ['BrainHearing™', 'Conectividad inalámbrica', 'Diseño discreto'],
-      inStock: true
-    },
-    {
-      id: 3,
-      name: 'Pilas para Audífonos Rayovac',
-      price: 25000,
-      originalPrice: 30000,
-      rating: 4.5,
-      reviews: 256,
-      image: '/placeholder-pilas.jpg',
-      category: 'accesorios',
-      brand: 'Rayovac',
-      features: ['Larga duración', 'Tamaño 13', 'Pack de 6'],
-      inStock: true
-    },
-    {
-      id: 4,
-      name: 'Limpiador para Audífonos',
-      price: 45000,
-      originalPrice: 55000,
-      rating: 4.7,
-      reviews: 78,
-      image: '/placeholder-limpiador.jpg',
-      category: 'accesorios',
-      brand: 'Oticon',
-      features: ['Limpieza profunda', 'Seguro para dispositivos', 'Kit completo'],
-      inStock: true
-    },
-    {
-      id: 5,
-      name: 'Estuche Protector para Audífonos',
-      price: 35000,
-      originalPrice: 40000,
-      rating: 4.4,
-      reviews: 92,
-      image: '/placeholder-estuche.jpg',
-      category: 'accesorios',
-      brand: 'Universal',
-      features: ['Protección contra humedad', 'Diseño compacto', 'Material resistente'],
-      inStock: true
-    },
-    {
-      id: 6,
-      name: 'Audífono Starkey Evolv AI',
-      price: 2800000,
-      originalPrice: 3200000,
-      rating: 4.9,
-      reviews: 67,
-      image: '/placeholder-audifono-3.jpg',
-      category: 'audifonos',
-      brand: 'Starkey',
-      features: ['Tecnología Evolv AI', 'Conectividad Livio', 'Diseño personalizado'],
-      inStock: false
-    }
-  ];
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/shop/products`);
+        const json = await res.json();
+        if (active) setProductos(json?.data || []);
+      } catch {
+        if (active) setProductos([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-CO', {
@@ -134,8 +84,17 @@ const EcommercePage = () => {
   };
 
   const handleAddToCart = (product) => {
-    setCart([...cart, product]);
+    setCart((prev) => {
+      const existing = prev.find((it) => it.id === product.id);
+      if (existing) {
+        return prev.map((it) => (it.id === product.id ? { ...it, cantidad: it.cantidad + 1 } : it));
+      }
+      return [...prev, { ...product, cantidad: 1 }];
+    });
+    setCartOpen(true);
   };
+
+  const cartCount = cart.reduce((s, it) => s + it.cantidad, 0);
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -146,24 +105,53 @@ const EcommercePage = () => {
   const hasActiveFilters = searchTerm || category;
 
   const filteredProducts = useMemo(() => {
+    const term = searchTerm.toLowerCase();
     return productos.filter(product => {
-      const matchesSearch = !searchTerm ||
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.brand.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesCategory = !category || product.category === category;
-
+      const matchesSearch = !term ||
+        (product.nombre || '').toLowerCase().includes(term) ||
+        (product.marca || '').toLowerCase().includes(term);
+      const matchesCategory = !category || product.categoria === category;
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, category]);
+  }, [productos, searchTerm, category]);
+
+  // Tienda real: Product + Offer (precio COP, disponibilidad). Markup de ficha de
+  // comerciante válido para Google ahora que la venta está activa.
+  const catalogJsonLd = useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Accesorios auditivos — Tienda OírConecta',
+    itemListElement: productos.map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Product',
+        name: p.nombre,
+        ...(p.marca ? { brand: { '@type': 'Brand', name: p.marca } } : {}),
+        ...(p.sku ? { sku: p.sku } : {}),
+        category: categoriaLabel(p.categoria),
+        ...(p.descripcion ? { description: p.descripcion } : {}),
+        ...(p.imageUrls && p.imageUrls.length ? { image: p.imageUrls } : {}),
+        offers: {
+          '@type': 'Offer',
+          price: p.precio,
+          priceCurrency: 'COP',
+          availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          url: 'https://oirconecta.com/ecommerce',
+        },
+      },
+    })),
+  }), [productos]);
 
   return (
     <>
       <Helmet>
-        <title>Tienda - OírConecta | Catálogo orientativo</title>
-        <meta name="description" content="Referencia de productos y accesorios. Compra y garantías según disponibilidad de la red y cada proveedor." />
-        <meta name="keywords" content="audífonos, tienda, Phonak, Oticon, Starkey, accesorios, Colombia" />
+        <title>Tienda OírConecta | Baterías, filtros, olivas y accesorios auditivos</title>
+        <meta name="description" content="Tienda de accesorios para audífonos: baterías de todas las marcas, filtros, olivas y accesorios de conectividad. Envíos en Colombia." />
+        <meta name="keywords" content="baterías audífonos, filtros, olivas, accesorios auditivos, conectividad, Colombia" />
         <link rel="canonical" href="https://oirconecta.com/ecommerce" />
+        <script type="application/ld+json">{JSON.stringify(catalogJsonLd)}</script>
       </Helmet>
 
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -177,7 +165,7 @@ const EcommercePage = () => {
             color: '#085946',
             mb: 6
           }}>
-            Tienda (referencia)
+            Tienda OírConecta
           </Typography>
 
           <Typography variant="h5" component="p" sx={{
@@ -187,8 +175,7 @@ const EcommercePage = () => {
             maxWidth: '800px',
             mx: 'auto'
           }}>
-            Ejemplos de productos y accesorios que suelen ofrecerse en el ecosistema auditivo. Precios, stock, envío y
-            garantía dependen del profesional o centro de la red con el que cierres la compra o adaptación.
+            Baterías de todas las marcas, filtros, olivas y accesorios de conectividad para tus audífonos. Envíos en Colombia.
           </Typography>
 
           {/* Filtros y Búsqueda */}
@@ -219,8 +206,9 @@ const EcommercePage = () => {
                     label="Categoría"
                   >
                     <MenuItem value="">Todas las categorías</MenuItem>
-                    <MenuItem value="audifonos">Audífonos</MenuItem>
-                    <MenuItem value="accesorios">Accesorios</MenuItem>
+                    {CATEGORIAS.map((c) => (
+                      <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -252,8 +240,8 @@ const EcommercePage = () => {
                   <Typography variant="body2" color="text.secondary">
                     {filteredProducts.length} productos encontrados
                   </Typography>
-                  <Badge badgeContent={cart.length} color="primary">
-                    <IconButton>
+                  <Badge badgeContent={cartCount} color="primary">
+                    <IconButton onClick={() => setCartOpen(true)}>
                       <ShoppingCart />
                     </IconButton>
                   </Badge>
@@ -270,14 +258,14 @@ const EcommercePage = () => {
                   <CardMedia
                     component="img"
                     height="200"
-                    image={product.image}
-                    alt={product.name}
+                    image={(product.imageUrls && product.imageUrls[0]) || '/logo.png'}
+                    alt={product.nombre}
                     sx={{ objectFit: 'cover' }}
                   />
 
                   <CardContent sx={{ flexGrow: 1, p: 3 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                      <Chip label={product.brand} size="small" color="primary" />
+                      <Chip label={product.marca || categoriaLabel(product.categoria)} size="small" color="primary" />
                       <IconButton
                         size="small"
                         onClick={() => handleAddToWishlist(product.id)}
@@ -288,33 +276,20 @@ const EcommercePage = () => {
                     </Box>
 
                     <Typography variant="h6" component="h3" gutterBottom sx={{ fontWeight: 600 }}>
-                      {product.name}
+                      {product.nombre}
                     </Typography>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Rating value={product.rating} precision={0.1} size="small" readOnly />
-                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        ({product.reviews})
+                    {product.descripcion && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {product.descripcion}
                       </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 2 }}>
-                      {product.features.map((feature, index) => (
-                        <Chip
-                          key={index}
-                          label={feature}
-                          size="small"
-                          variant="outlined"
-                          sx={{ mr: 0.5, mb: 0.5 }}
-                        />
-                      ))}
-                    </Box>
+                    )}
 
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="h5" component="span" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                        {formatPrice(product.price)}
+                        {formatPrice(product.precio)}
                       </Typography>
-                      {product.originalPrice > product.price && (
+                      {product.precioAntes != null && product.precioAntes > product.precio && (
                         <Typography
                           variant="body2"
                           component="span"
@@ -324,7 +299,7 @@ const EcommercePage = () => {
                             ml: 1
                           }}
                         >
-                          {formatPrice(product.originalPrice)}
+                          {formatPrice(product.precioAntes)}
                         </Typography>
                       )}
                     </Box>
@@ -332,14 +307,14 @@ const EcommercePage = () => {
                     <Button
                       fullWidth
                       variant="contained"
-                      disabled={!product.inStock}
+                      disabled={product.stock <= 0}
                       onClick={() => handleAddToCart(product)}
                       sx={{
                         bgcolor: '#085946',
                         '&:hover': { bgcolor: '#272F50' }
                       }}
                     >
-                      {product.inStock ? 'Agregar al carrito' : 'Agotado'}
+                      {product.stock > 0 ? 'Agregar al carrito' : 'Agotado'}
                     </Button>
                   </CardContent>
                 </Card>
@@ -347,13 +322,13 @@ const EcommercePage = () => {
             ))}
           </Grid>
 
-          {filteredProducts.length === 0 && (
+          {!loading && filteredProducts.length === 0 && (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h5" color="text.secondary" gutterBottom>
-                No se encontraron productos
+                {productos.length === 0 ? 'Pronto tendremos productos disponibles' : 'No se encontraron productos'}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                Intenta ajustar tus filtros de búsqueda
+                {productos.length === 0 ? 'Estamos cargando el catálogo.' : 'Intenta ajustar tus filtros de búsqueda'}
               </Typography>
               <Button
                 variant="outlined"
@@ -374,6 +349,8 @@ const EcommercePage = () => {
             </Box>
           )}
         </Container>
+
+        <ShopCartDialog open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} setCart={setCart} />
 
         <Footer />
       </div>

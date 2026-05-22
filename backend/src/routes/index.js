@@ -21,6 +21,7 @@ const directoryReviewsRoutes = require('./directoryReviews.routes');
 const directoryDiscoveryRoutes = require('./directoryDiscovery.routes');
 const blogRoutes = require('./blog.routes');
 const marketplaceRoutes = require('./marketplace.routes');
+const shopRoutes = require('./shop.routes');
 const publicConfigRoutes = require('./publicConfig.routes');
 const newsletterRoutes = require('./newsletter.routes');
 
@@ -41,6 +42,7 @@ router.use('/directory', directoryReviewsRoutes);
 router.use('/directory', directoryDiscoveryRoutes);
 router.use('/blog', blogRoutes);
 router.use('/marketplace', marketplaceRoutes);
+router.use('/shop', shopRoutes);
 router.use('/public', publicConfigRoutes);
 router.use('/newsletter', newsletterRoutes);
 
