@@ -7,7 +7,7 @@ import { subscribeNewsletter } from '../services/newsletterService';
  * Formulario de suscripción al boletín. Reutilizable (footer, blog, home).
  * Captura nombre, email, teléfono y ciudad. `source` identifica de dónde vino.
  */
-export default function NewsletterSignup({ source = 'web', compact = false, title, subtitle }) {
+export default function NewsletterSignup({ source = 'web', compact = false, inline = false, title, subtitle }) {
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', ciudad: '' });
   const [state, setState] = useState('idle'); // idle | loading | done | error
   const [error, setError] = useState('');
@@ -16,14 +16,15 @@ export default function NewsletterSignup({ source = 'web', compact = false, titl
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.nombre.trim() || !form.email.trim()) {
-      setError('Nombre y correo son obligatorios.');
+    if (!form.email.trim() || (!inline && !form.nombre.trim())) {
+      setError(inline ? 'Ingresa tu correo.' : 'Nombre y correo son obligatorios.');
       return;
     }
     setState('loading');
     setError('');
     try {
-      const res = await subscribeNewsletter({ ...form, source });
+      const nombre = form.nombre.trim() || form.email.split('@')[0];
+      const res = await subscribeNewsletter({ ...form, nombre, source });
       if (res?.data?.success) {
         setState('done');
       } else {
@@ -45,6 +46,42 @@ export default function NewsletterSignup({ source = 'web', compact = false, titl
       >
         ¡Listo! Te enviamos un correo de bienvenida. Revisa tu bandeja (y la carpeta de spam por si acaso).
       </Alert>
+    );
+  }
+
+  if (inline) {
+    return (
+      <Box component="form" onSubmit={submit}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ alignItems: 'stretch' }}>
+          <TextField
+            label="Tu correo"
+            type="email"
+            value={form.email}
+            onChange={set('email')}
+            size="small"
+            required
+            fullWidth
+            sx={{ flex: 1, bgcolor: 'background.paper', borderRadius: 1 }}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={state === 'loading'}
+            sx={{
+              borderRadius: 999, textTransform: 'none', fontWeight: 800,
+              px: 3.5, whiteSpace: 'nowrap', flexShrink: 0,
+              bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' },
+            }}
+          >
+            {state === 'loading' ? 'Enviando…' : 'Suscribirme'}
+          </Button>
+        </Stack>
+        {error && (
+          <Typography variant="caption" sx={{ color: 'error.main', mt: 1, display: 'block' }}>
+            {error}
+          </Typography>
+        )}
+      </Box>
     );
   }
 

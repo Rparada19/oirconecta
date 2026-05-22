@@ -72,27 +72,36 @@ const Footer = () => (
         {/* Franja de suscripción al boletín */}
         <Box
           sx={{
-            mb: { xs: 6, md: 8 },
-            p: { xs: 3, md: 4 },
-            borderRadius: 4,
+            mb: { xs: 5, md: 6 },
+            p: { xs: 2.5, md: 3 },
+            borderRadius: 3,
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: { xs: 'flex-start', md: 'center' },
+            justifyContent: 'space-between',
+            gap: { xs: 2, md: 4 },
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.12)',
             backdropFilter: 'blur(6px)',
           }}
         >
-          <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 24 }, color: '#fff', mb: 0.5 }}>
-            Suscríbete a nuestro boletín
-          </Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, mb: 2.5 }}>
-            Contenido de salud auditiva cada 15 días, en lenguaje claro. Sin spam.
-          </Typography>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 800, fontSize: { xs: 17, md: 19 }, color: '#fff', mb: 0.25 }}>
+              Suscríbete a nuestro boletín
+            </Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 13.5 }}>
+              Salud auditiva cada 15 días, en lenguaje claro. Sin spam.
+            </Typography>
+          </Box>
           <Box
             sx={{
+              width: { xs: '100%', md: 420 },
+              flexShrink: 0,
               '& .MuiInputBase-root': { bgcolor: 'rgba(255,255,255,0.92)' },
               '& .MuiFormLabel-root': { color: '#4a5568' },
             }}
           >
-            <NewsletterSignup source="footer" />
+            <NewsletterSignup source="footer" inline />
           </Box>
         </Box>
 
