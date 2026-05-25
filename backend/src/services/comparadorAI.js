@@ -136,4 +136,74 @@ async function generarComparacion(candidatos, test) {
   return data;
 }
 
-module.exports = { generarComparacion, etiquetaDe };
+// ── Recomendador (sin candidatos): la IA sugiere opciones por conocimiento general ──
+const SYSTEM_RECO = [
+  'Eres un asesor audiológico independiente en Colombia. Un paciente no eligió marcas;',
+  'según su test (pérdida, estilo de vida, prioridad, presupuesto, destreza, conectividad)',
+  'recomienda 2 o 3 opciones de audífonos (marca/tecnología/plataforma o tipo) que le sirvan.',
+  'Reglas:',
+  '- Usa tu conocimiento general del mercado. NO afirmes precios exactos como hechos:',
+  '  da un rango aproximado y aclara que debe confirmarse con un profesional.',
+  '- Respeta el presupuesto declarado: prioriza opciones acordes.',
+  '- Considera el grado de pérdida para el consejo.',
+  '- Español de Colombia, claro y breve. Cierra invitando a agendar valoración para confirmar.',
+].join('\n');
+
+const SCHEMA_RECO = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    recomendaciones: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          opcion: { type: 'string' },
+          porque: { type: 'string' },
+          idealPara: { type: 'string' },
+          rangoPrecioAprox: { type: 'string' },
+        },
+        required: ['opcion', 'porque', 'idealPara', 'rangoPrecioAprox'],
+      },
+    },
+    consejoPorPerdida: { type: 'string' },
+    resumen: { type: 'string' },
+  },
+  required: ['recomendaciones', 'consejoPorPerdida', 'resumen'],
+};
+
+async function generarRecomendacion(test) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    const err = new Error('La recomendación con IA no está configurada (falta ANTHROPIC_API_KEY).');
+    err.statusCode = 503;
+    throw err;
+  }
+  const t = test || {};
+  const userPrompt = [
+    'Recomienda audífonos para este paciente según su test:',
+    `Grado de pérdida: ${t.perdida || 'no indicado'}`,
+    `Estilo de vida: ${t.estiloVida || 'no indicado'}`,
+    `Prioridad: ${t.prioridad || 'no indicada'}`,
+    `Presupuesto disponible: ${t.presupuestoCOP ? `${t.presupuestoCOP} COP` : (t.presupuesto || 'no indicado')}`,
+    `Destreza/manejo: ${t.destreza || 'no indicado'}`,
+    `Conectividad importante: ${t.conectividad || 'no indicado'}`,
+    '',
+    'Entrega 2 o 3 recomendaciones con rango de precio aproximado (aclarando que es referencial).',
+  ].join('\n');
+
+  const client = new Anthropic();
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 3072,
+    thinking: { type: 'adaptive' },
+    output_config: { effort: 'medium', format: { type: 'json_schema', schema: SCHEMA_RECO } },
+    system: [{ type: 'text', text: SYSTEM_RECO, cache_control: { type: 'ephemeral' } }],
+    messages: [{ role: 'user', content: userPrompt }],
+  });
+  const textBlock = response.content.find((b) => b.type === 'text');
+  if (!textBlock) throw new Error('Respuesta de IA vacía');
+  return JSON.parse(textBlock.text);
+}
+
+module.exports = { generarComparacion, generarRecomendacion, etiquetaDe };

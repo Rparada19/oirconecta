@@ -5,6 +5,7 @@ import Hero from '../components/Hero';
 import SearchEngine from '../components/SearchEngine';
 import HomeUserPathsSection from '../components/home/HomeUserPathsSection';
 import HomeDiscoverySection from '../components/home/HomeDiscoverySection';
+import HomeComparadorSection from '../components/home/HomeComparadorSection';
 import RecommendationOfMonthSection from '../components/RecommendationOfMonthSection';
 import HomeProfessionalsSpotlight from '../components/home/HomeProfessionalsSpotlight';
 import AuditionGuideSection from '../components/AuditionGuideSection';
@@ -22,6 +23,7 @@ export default function HomePage() {
       <Box id="busqueda-profesionales" sx={{ scrollMarginTop: 96 }}>
         <SearchEngine />
       </Box>
+      <HomeComparadorSection />
       <HomeDiscoverySection />
       <RecommendationOfMonthSection />
       <HomeProfessionalsSpotlight />

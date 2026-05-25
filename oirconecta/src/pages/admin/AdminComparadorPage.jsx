@@ -9,7 +9,27 @@ import {
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
+import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined';
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import * as XLSX from 'xlsx';
 import { adminFetch, getAdminToken } from './adminAuth';
+import { exportRowsToExcel, exportRowsToPdf } from '../../utils/adminExport';
+
+const IMPORT_COLS = ['marca', 'tecnologia', 'plataforma', 'modelo', 'precio', 'fortalezas', 'debilidades', 'uso', 'consejos', 'imageUrl', 'activo'];
+const parseBool = (v) => {
+  if (typeof v === 'boolean') return v;
+  return ['1', 'true', 'si', 'sí', 'x', 'activa', 'activo', 'verdadero'].includes(String(v ?? '').trim().toLowerCase());
+};
+const rowToFicha = (row) => {
+  const get = (k) => { const kk = Object.keys(row).find((x) => x.trim().toLowerCase() === k.toLowerCase()); return kk ? row[kk] : undefined; };
+  return {
+    marca: get('marca'), tecnologia: get('tecnologia'), plataforma: get('plataforma'),
+    modelo: get('modelo'), precio: get('precio'), fortalezas: get('fortalezas'),
+    debilidades: get('debilidades'), uso: get('uso'), consejos: get('consejos'),
+    imageUrl: get('imageUrl'), activo: get('activo') === undefined ? true : parseBool(get('activo')),
+  };
+};
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)', borderRadius: '22px',
@@ -41,6 +61,9 @@ export default function AdminComparadorPage() {
   const [leadView, setLeadView] = useState(null);
   const [nuevoSeg, setNuevoSeg] = useState('');
   const [segSaving, setSegSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [leadMarca, setLeadMarca] = useState('');
+  const fileRef = React.useRef(null);
   const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
 
   useEffect(() => {
@@ -80,6 +103,46 @@ export default function AdminComparadorPage() {
       setSnack({ open: true, msg: 'No se pudo guardar el seguimiento.', severity: 'error' });
     }
   }
+
+  const downloadTemplate = () => {
+    const ej = ['Phonak', 'Lumity', 'Audéo', 'L90', 4500000, '', '', '', '', '', 'si'];
+    const ws = XLSX.utils.aoa_to_sheet([IMPORT_COLS, ej]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Fichas');
+    XLSX.writeFile(wb, 'plantilla_comparador.xlsx');
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setImporting(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+      const fichas = rows.map(rowToFicha).filter((f) => f.marca && f.tecnologia && f.plataforma);
+      if (!fichas.length) { setSnack({ open: true, msg: 'El archivo no tiene filas válidas.', severity: 'error' }); setImporting(false); return; }
+      const { ok, data } = await adminFetch('/api/comparador/admin/bulk', { method: 'POST', body: JSON.stringify({ items: fichas }) });
+      if (!ok) setSnack({ open: true, msg: `Error: ${data?.error || 'no se pudo importar'}`, severity: 'error' });
+      else {
+        const { created, total, errors } = data.data;
+        setSnack({ open: true, msg: `Importadas ${created}/${total}.${errors?.length ? ` ${errors.length} con error.` : ''}`, severity: errors?.length ? 'warning' : 'success' });
+        if (errors?.length) console.warn('Errores import comparador:', errors);
+        fetchItems();
+      }
+    } catch (err) { setSnack({ open: true, msg: `No se pudo leer: ${err.message}`, severity: 'error' }); }
+    finally { setImporting(false); }
+  };
+
+  const marcasLead = [...new Set(leads.map((l) => l.marcaSugerida).filter(Boolean))].sort();
+  const leadsFiltrados = leadMarca ? leads.filter((l) => l.marcaSugerida === leadMarca) : leads;
+  const leadsToRows = (list) => list.map((l) => ({
+    Nombre: l.nombre, Teléfono: l.telefono, Email: l.email || '', Ciudad: l.ciudad || '',
+    'Opción sugerida': l.marcaSugerida || '', Estado: l.estado,
+    Seguimientos: Array.isArray(l.seguimientos) ? l.seguimientos.length : 0,
+    Fecha: l.createdAt ? new Date(l.createdAt).toLocaleDateString('es-CO') : '',
+  }));
 
   const openCreate = () => { setEditId(null); setForm(EMPTY); setDialogOpen(true); };
   const openEdit = (it) => {
@@ -126,10 +189,30 @@ export default function AdminComparadorPage() {
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>Fichas por marca / tecnología / plataforma con precios reales</Typography>
         </Box>
         {tab === 0 && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}
-            sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
-            Nueva ficha
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button variant="text" size="small" startIcon={<DownloadOutlinedIcon />} onClick={downloadTemplate} sx={{ color: '#085946' }}>Plantilla</Button>
+            <Button variant="outlined" startIcon={<UploadFileOutlinedIcon />} disabled={importing} onClick={() => fileRef.current?.click()}
+              sx={{ borderRadius: '10px', fontWeight: 700, borderColor: '#085946', color: '#085946' }}>
+              {importing ? 'Importando…' : 'Importar Excel'}
+            </Button>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls" hidden onChange={handleImportFile} />
+            <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}
+              sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+              Nueva ficha
+            </Button>
+          </Box>
+        )}
+        {tab === 1 && leads.length > 0 && (
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Select size="small" displayEmpty value={leadMarca} onChange={(e) => setLeadMarca(e.target.value)} sx={{ minWidth: 160 }}>
+              <MenuItem value="">Todas las marcas</MenuItem>
+              {marcasLead.map((m) => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+            </Select>
+            <Button variant="outlined" size="small" startIcon={<FileDownloadOutlinedIcon />} disabled={!leadsFiltrados.length}
+              onClick={() => exportRowsToExcel(leadsToRows(leadsFiltrados), `solicitudes_comparador${leadMarca ? '_' + leadMarca.replace(/\W+/g, '-') : ''}`, 'Solicitudes')}>Excel</Button>
+            <Button variant="outlined" size="small" startIcon={<FileDownloadOutlinedIcon />} disabled={!leadsFiltrados.length}
+              onClick={() => exportRowsToPdf(leadsToRows(leadsFiltrados), `solicitudes_comparador${leadMarca ? '_' + leadMarca.replace(/\W+/g, '-') : ''}`, `Solicitudes comparador${leadMarca ? ' — ' + leadMarca : ''}`)}>PDF</Button>
+          </Box>
         )}
       </Box>
 
@@ -157,7 +240,7 @@ export default function AdminComparadorPage() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {leads.map((l) => (
+                    {leadsFiltrados.map((l) => (
                       <TableRow key={l.id} sx={{ '&:hover': { background: 'rgba(8,89,70,0.03)' } }}>
                         <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>{l.nombre}</TableCell>
                         <TableCell sx={{ fontSize: '0.82rem' }}>{l.telefono}</TableCell>

@@ -19,6 +19,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { getWhatsAppHref } from '../config/publicSite';
 import { PROFESIONES_CATALOGO } from '../utils/profesionFilter';
 import { directoryProfesionToSlug } from '../utils/directoryPresentation';
@@ -262,18 +263,20 @@ const Header = () => {
                 </IconButton>
               </Tooltip>
               <Button
-                color="inherit"
+                variant="outlined"
                 onClick={() => navigate('/comparador')}
+                startIcon={<AutoAwesomeIcon sx={{ fontSize: 18 }} />}
                 sx={{
-                  fontWeight: 500,
-                  color: 'text.secondary',
-                  px: 1.5,
-                  minWidth: 0,
-                  fontSize: '0.9375rem',
-                  '&:hover': { color: 'primary.main', bgcolor: 'transparent' },
+                  fontWeight: 700,
+                  color: '#085946',
+                  borderColor: '#085946',
+                  borderRadius: '999px',
+                  px: 2,
+                  fontSize: '0.9rem',
+                  '&:hover': { borderColor: '#085946', bgcolor: 'rgba(8,89,70,0.07)' },
                 }}
               >
-                Comparador
+                Comparador IA
               </Button>
               <Button
                 color="inherit"

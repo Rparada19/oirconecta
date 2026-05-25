@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const { authenticate } = require('../middleware/auth');
-const { generarComparacion } = require('../services/comparadorAI');
+const { generarComparacion, generarRecomendacion } = require('../services/comparadorAI');
 const emailService = require('../services/email.service');
 
 const prisma = new PrismaClient();
@@ -70,6 +70,17 @@ router.post('/ai-compare', async (req, res) => {
       modelo: c.modelo,
     }));
     res.json({ success: true, data: { ...ia, precios } });
+  } catch (e) {
+    res.status(e.statusCode || 500).json({ success: false, error: e.message });
+  }
+});
+
+// ── Público: recomendación con IA (sin candidatos) ──
+router.post('/ai-recommend', async (req, res) => {
+  try {
+    const { test } = req.body || {};
+    const data = await generarRecomendacion(test);
+    res.json({ success: true, data });
   } catch (e) {
     res.status(e.statusCode || 500).json({ success: false, error: e.message });
   }
@@ -151,6 +162,47 @@ const sanitize = (b) => ({
   precio: b.precio !== undefined ? (b.precio === '' || b.precio == null ? null : Number(b.precio)) : undefined,
   imageUrl: b.imageUrl !== undefined ? (b.imageUrl || null) : undefined,
   activo: b.activo !== undefined ? !!b.activo : undefined,
+});
+
+// ── Admin: importación masiva de fichas ──
+router.post('/admin/bulk', authenticate, async (req, res) => {
+  try {
+    const { items } = req.body || {};
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, error: 'No se recibieron fichas' });
+    }
+    let created = 0;
+    const errors = [];
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      const fila = i + 2;
+      try {
+        if (!it.marca || !it.tecnologia || !it.plataforma) {
+          errors.push(`Fila ${fila}: faltan marca, tecnología o plataforma`);
+          continue;
+        }
+        await prisma.comparadorItem.create({
+          data: {
+            marca: String(it.marca).trim(),
+            tecnologia: String(it.tecnologia).trim(),
+            plataforma: String(it.plataforma).trim(),
+            modelo: it.modelo ? String(it.modelo).trim() : null,
+            fortalezas: it.fortalezas || null,
+            debilidades: it.debilidades || null,
+            uso: it.uso || null,
+            consejos: it.consejos || null,
+            precio: it.precio != null && it.precio !== '' ? Number(it.precio) : null,
+            imageUrl: it.imageUrl || null,
+            activo: it.activo !== undefined ? !!it.activo : true,
+          },
+        });
+        created++;
+      } catch (err) {
+        errors.push(`Fila ${fila}: ${err.message}`);
+      }
+    }
+    res.json({ success: true, data: { created, total: items.length, errors } });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 // ── Admin: crear ──
