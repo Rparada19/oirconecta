@@ -8,6 +8,18 @@ const prisma = new PrismaClient();
 
 const CATEGORIAS = ['BATERIAS', 'FILTROS', 'OLIVAS', 'CONECTIVIDAD', 'ACCESORIOS'];
 
+// Normaliza variantes: [{ nombre, precio?, stock? }]
+function normVariantes(input) {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((v) => ({
+      nombre: String(v?.nombre ?? '').trim(),
+      precio: v?.precio === '' || v?.precio == null ? null : Number(v.precio),
+      stock: v?.stock === '' || v?.stock == null ? null : parseInt(v.stock, 10),
+    }))
+    .filter((v) => v.nombre);
+}
+
 // ── Público: listar productos activos ──
 router.get('/products', async (req, res) => {
   try {
@@ -60,7 +72,7 @@ router.get('/admin/products', authenticate, async (req, res) => {
 // ── Admin: crear ──
 router.post('/admin/products', authenticate, async (req, res) => {
   try {
-    const { nombre, descripcion, categoria, marca, sku, precio, precioAntes, stock, activo, destacado, imageUrls } = req.body;
+    const { nombre, descripcion, categoria, marca, sku, precio, precioAntes, stock, activo, destacado, imageUrls, variantes } = req.body;
     if (!nombre || !categoria || precio == null) {
       return res.status(400).json({ success: false, error: 'Nombre, categoría y precio son requeridos' });
     }
@@ -76,6 +88,7 @@ router.post('/admin/products', authenticate, async (req, res) => {
         activo: activo !== undefined ? !!activo : true,
         destacado: !!destacado,
         imageUrls: Array.isArray(imageUrls) ? imageUrls : [],
+        variantes: normVariantes(variantes),
       },
     });
     res.status(201).json({ success: true, data: product });
@@ -98,8 +111,55 @@ router.patch('/admin/products/:id', authenticate, async (req, res) => {
     if (b.stock !== undefined) data.stock = parseInt(b.stock);
     if (b.activo !== undefined) data.activo = !!b.activo;
     if (b.destacado !== undefined) data.destacado = !!b.destacado;
+    if (b.variantes !== undefined) data.variantes = normVariantes(b.variantes);
     const product = await prisma.shopProduct.update({ where: { id: req.params.id }, data });
     res.json({ success: true, data: product });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ── Admin: importación masiva ──
+router.post('/admin/products/bulk', authenticate, async (req, res) => {
+  try {
+    const { products } = req.body || {};
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ success: false, error: 'No se recibieron productos' });
+    }
+    let created = 0;
+    const errors = [];
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i];
+      const fila = i + 2; // fila en el Excel (asumiendo encabezado en la 1)
+      try {
+        if (!p.nombre || !p.categoria || p.precio == null || p.precio === '') {
+          errors.push(`Fila ${fila}: faltan nombre, categoría o precio`);
+          continue;
+        }
+        if (!CATEGORIAS.includes(p.categoria)) {
+          errors.push(`Fila ${fila}: categoría inválida "${p.categoria}" (no se venden audífonos)`);
+          continue;
+        }
+        await prisma.shopProduct.create({
+          data: {
+            nombre: String(p.nombre).trim(),
+            descripcion: p.descripcion ? String(p.descripcion) : null,
+            categoria: p.categoria,
+            marca: p.marca ? String(p.marca).trim() : null,
+            sku: p.sku ? String(p.sku).trim() : null,
+            precio: Number(p.precio),
+            precioAntes: p.precioAntes != null && p.precioAntes !== '' ? Number(p.precioAntes) : null,
+            stock: p.stock != null && p.stock !== '' ? parseInt(p.stock, 10) : 0,
+            activo: p.activo !== undefined ? !!p.activo : true,
+            destacado: !!p.destacado,
+            imageUrls: Array.isArray(p.imageUrls) ? p.imageUrls : [],
+            variantes: normVariantes(p.variantes),
+          },
+        });
+        created++;
+      } catch (err) {
+        errors.push(`Fila ${fila}: ${err.message}`);
+      }
+    }
+    res.json({ success: true, data: { created, total: products.length, errors } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -140,10 +200,33 @@ router.post('/orders', async (req, res) => {
       if (!Number.isFinite(cantidad) || cantidad <= 0) {
         return res.status(400).json({ success: false, error: `Cantidad inválida para ${p.nombre}` });
       }
-      if (p.stock < cantidad) {
+
+      const variantes = Array.isArray(p.variantes) ? p.variantes : [];
+      let precio = p.precio;
+      let varNombre = null;
+      let usaVarStock = false;
+
+      if (variantes.length) {
+        if (!it.variante) {
+          return res.status(400).json({ success: false, error: `Debes elegir una variante de ${p.nombre}` });
+        }
+        const v = variantes.find((x) => x.nombre === it.variante);
+        if (!v) return res.status(400).json({ success: false, error: `Variante no válida para ${p.nombre}` });
+        varNombre = v.nombre;
+        if (v.precio != null) precio = Number(v.precio);
+        if (v.stock != null) {
+          usaVarStock = true;
+          if (Number(v.stock) < cantidad) {
+            return res.status(409).json({ success: false, error: `Stock insuficiente de ${p.nombre} (${v.nombre})` });
+          }
+        } else if (p.stock < cantidad) {
+          return res.status(409).json({ success: false, error: `Stock insuficiente de ${p.nombre}` });
+        }
+      } else if (p.stock < cantidad) {
         return res.status(409).json({ success: false, error: `Stock insuficiente de ${p.nombre} (disponible: ${p.stock})` });
       }
-      lineItems.push({ product: p, cantidad, subtotal: p.precio * cantidad });
+
+      lineItems.push({ product: p, cantidad, precio, subtotal: precio * cantidad, variante: varNombre, usaVarStock });
     }
 
     const subtotal = lineItems.reduce((s, li) => s + li.subtotal, 0);
@@ -183,7 +266,8 @@ router.post('/orders', async (req, res) => {
             create: lineItems.map((li) => ({
               productId: li.product.id,
               nombre: li.product.nombre,
-              precioUnitario: li.product.precio,
+              variante: li.variante,
+              precioUnitario: li.precio,
               cantidad: li.cantidad,
               subtotal: li.subtotal,
             })),
@@ -193,10 +277,19 @@ router.post('/orders', async (req, res) => {
       });
 
       for (const li of lineItems) {
-        await tx.shopProduct.update({
-          where: { id: li.product.id },
-          data: { stock: { decrement: li.cantidad } },
-        });
+        if (li.usaVarStock) {
+          const fresh = await tx.shopProduct.findUnique({ where: { id: li.product.id } });
+          const vs = Array.isArray(fresh.variantes) ? fresh.variantes : [];
+          const updated = vs.map((v) =>
+            v.nombre === li.variante ? { ...v, stock: Number(v.stock) - li.cantidad } : v,
+          );
+          await tx.shopProduct.update({ where: { id: li.product.id }, data: { variantes: updated } });
+        } else {
+          await tx.shopProduct.update({
+            where: { id: li.product.id },
+            data: { stock: { decrement: li.cantidad } },
+          });
+        }
       }
       return created;
     });
@@ -294,6 +387,44 @@ router.patch('/admin/orders/:id', authenticate, async (req, res) => {
       data: { ...(estado && { estado }) },
     });
     res.json({ success: true, data: order });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ── Admin: analítica de la tienda ──
+router.get('/admin/stats', authenticate, async (req, res) => {
+  try {
+    const CONFIRMADOS = ['PAGADO', 'EN_PREPARACION', 'ENVIADO', 'ENTREGADO'];
+    const [totalPedidos, pendientes, confirmados, agg, clientes, recompra, porEstadoRaw, topRaw] = await Promise.all([
+      prisma.shopOrder.count(),
+      prisma.shopOrder.count({ where: { estado: 'PENDIENTE_PAGO' } }),
+      prisma.shopOrder.count({ where: { estado: { in: CONFIRMADOS } } }),
+      prisma.shopOrder.aggregate({ _sum: { total: true }, where: { estado: { in: CONFIRMADOS } } }),
+      prisma.shopCustomer.count(),
+      prisma.shopCustomer.findMany({ select: { _count: { select: { orders: true } } } }),
+      prisma.shopOrder.groupBy({ by: ['estado'], _count: { _all: true } }),
+      prisma.shopOrderItem.groupBy({
+        by: ['nombre'],
+        _sum: { cantidad: true, subtotal: true },
+        orderBy: { _sum: { cantidad: 'desc' } },
+        take: 5,
+      }),
+    ]);
+
+    const ventasConfirmadas = agg._sum.total || 0;
+    const ticketPromedio = confirmados ? ventasConfirmadas / confirmados : 0;
+    const clientesRecompra = recompra.filter((c) => c._count.orders > 1).length;
+
+    res.json({
+      success: true,
+      data: {
+        totalPedidos, pendientes, confirmados,
+        ventasConfirmadas, ticketPromedio,
+        clientes, clientesRecompra,
+        tasaRecompra: clientes ? clientesRecompra / clientes : 0,
+        porEstado: porEstadoRaw.map((r) => ({ estado: r.estado, count: r._count._all })),
+        topProductos: topRaw.map((r) => ({ nombre: r.nombre, cantidad: r._sum.cantidad || 0, ventas: r._sum.subtotal || 0 })),
+      },
+    });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 

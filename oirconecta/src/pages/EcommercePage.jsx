@@ -48,6 +48,7 @@ const EcommercePage = () => {
   const [wishlist, setWishlist] = useState([]);
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [selectedVar, setSelectedVar] = useState({}); // { [productId]: nombreVariante }
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -83,13 +84,15 @@ const EcommercePage = () => {
     }
   };
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (product, variante) => {
+    const precio = variante && variante.precio != null ? variante.precio : product.precio;
+    const lineId = `${product.id}::${variante?.nombre || ''}`;
     setCart((prev) => {
-      const existing = prev.find((it) => it.id === product.id);
+      const existing = prev.find((it) => it.lineId === lineId);
       if (existing) {
-        return prev.map((it) => (it.id === product.id ? { ...it, cantidad: it.cantidad + 1 } : it));
+        return prev.map((it) => (it.lineId === lineId ? { ...it, cantidad: it.cantidad + 1 } : it));
       }
-      return [...prev, { ...product, cantidad: 1 }];
+      return [...prev, { ...product, precio, variante: variante?.nombre || null, lineId, cantidad: 1 }];
     });
     setCartOpen(true);
   };
@@ -252,7 +255,17 @@ const EcommercePage = () => {
 
           {/* Productos */}
           <Grid container spacing={4}>
-            {filteredProducts.map((product) => (
+            {filteredProducts.map((product) => {
+              const variantes = Array.isArray(product.variantes) ? product.variantes : [];
+              const selNombre = selectedVar[product.id] || '';
+              const chosen = variantes.find((v) => v.nombre === selNombre) || null;
+              const precioEfectivo = chosen && chosen.precio != null ? chosen.precio : product.precio;
+              const requiereVariante = variantes.length > 0;
+              const agotado = requiereVariante
+                ? (chosen && chosen.stock != null ? chosen.stock <= 0 : product.stock <= 0)
+                : product.stock <= 0;
+              const puedeAgregar = requiereVariante ? !!chosen && !agotado : !agotado;
+              return (
               <Grid item xs={12} sm={6} md={4} key={product.id}>
                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardMedia
@@ -285,11 +298,28 @@ const EcommercePage = () => {
                       </Typography>
                     )}
 
+                    {requiereVariante && (
+                      <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                        <InputLabel>Elige una opción</InputLabel>
+                        <Select
+                          value={selNombre}
+                          label="Elige una opción"
+                          onChange={(e) => setSelectedVar((prev) => ({ ...prev, [product.id]: e.target.value }))}
+                        >
+                          {variantes.map((v) => (
+                            <MenuItem key={v.nombre} value={v.nombre} disabled={v.stock != null && v.stock <= 0}>
+                              {v.nombre}{v.stock != null && v.stock <= 0 ? ' (agotado)' : ''}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
+
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="h5" component="span" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                        {formatPrice(product.precio)}
+                        {formatPrice(precioEfectivo)}
                       </Typography>
-                      {product.precioAntes != null && product.precioAntes > product.precio && (
+                      {product.precioAntes != null && product.precioAntes > precioEfectivo && (
                         <Typography
                           variant="body2"
                           component="span"
@@ -307,19 +337,20 @@ const EcommercePage = () => {
                     <Button
                       fullWidth
                       variant="contained"
-                      disabled={product.stock <= 0}
-                      onClick={() => handleAddToCart(product)}
+                      disabled={!puedeAgregar}
+                      onClick={() => handleAddToCart(product, chosen)}
                       sx={{
                         bgcolor: '#085946',
                         '&:hover': { bgcolor: '#272F50' }
                       }}
                     >
-                      {product.stock > 0 ? 'Agregar al carrito' : 'Agotado'}
+                      {agotado ? 'Agotado' : requiereVariante && !chosen ? 'Elige una opción' : 'Agregar al carrito'}
                     </Button>
                   </CardContent>
                 </Card>
               </Grid>
-            ))}
+              );
+            })}
           </Grid>
 
           {!loading && filteredProducts.length === 0 && (

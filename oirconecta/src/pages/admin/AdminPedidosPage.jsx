@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, Tabs, Tab, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, CircularProgress, Alert, Snackbar,
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, Select, MenuItem,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Select, MenuItem, Grid,
 } from '@mui/material';
 import { adminFetch, getAdminToken } from './adminAuth';
 
@@ -32,12 +32,26 @@ const estadoInfo = (v) => ESTADOS.find((e) => e.value === v) || { label: v || '�
 const formatPrice = (p) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(p || 0);
 const formatDate = (d) => (d ? new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
+const formatPct = (n) => `${Math.round((n || 0) * 100)}%`;
+
+function StatCard({ label, value, hint }) {
+  return (
+    <Card sx={{ ...GLASS_CARD, height: '100%' }}>
+      <CardContent sx={{ py: 2 }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</Typography>
+        <Typography variant="h5" sx={{ fontWeight: 800, color: '#085946', mt: 0.5 }}>{value}</Typography>
+        {hint && <Typography variant="caption" sx={{ color: 'text.secondary' }}>{hint}</Typography>}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function AdminPedidosPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState(0);
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -50,13 +64,15 @@ export default function AdminPedidosPage() {
 
   async function fetchAll() {
     setLoading(true); setError(null);
-    const [o, c] = await Promise.all([
+    const [o, c, s] = await Promise.all([
       adminFetch('/api/shop/admin/orders'),
       adminFetch('/api/shop/admin/customers'),
+      adminFetch('/api/shop/admin/stats'),
     ]);
     if (!o.ok) setError(o.data?.error || 'No se pudieron cargar los pedidos');
     else setOrders(o.data?.data || []);
     if (c.ok) setCustomers(c.data?.data || []);
+    if (s.ok) setStats(s.data?.data || null);
     setLoading(false);
   }
 
@@ -72,6 +88,31 @@ export default function AdminPedidosPage() {
         <Typography variant="h4" sx={{ fontWeight: 800, ...HEADER_GRADIENT, mb: 0.5 }}>Pedidos y clientes</Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>Tienda OírConecta — seguimiento de pedidos y recompras</Typography>
       </Box>
+
+      {stats && (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={6} md={3}><StatCard label="Ventas confirmadas" value={formatPrice(stats.ventasConfirmadas)} hint={`${stats.confirmados} pedidos`} /></Grid>
+          <Grid item xs={6} md={3}><StatCard label="Ticket promedio" value={formatPrice(stats.ticketPromedio)} /></Grid>
+          <Grid item xs={6} md={3}><StatCard label="Pendientes de pago" value={stats.pendientes} hint={`${stats.totalPedidos} pedidos en total`} /></Grid>
+          <Grid item xs={6} md={3}><StatCard label="Clientes" value={stats.clientes} hint={`${formatPct(stats.tasaRecompra)} recompra (${stats.clientesRecompra})`} /></Grid>
+          {stats.topProductos?.length > 0 && (
+            <Grid item xs={12}>
+              <Card sx={GLASS_CARD}>
+                <CardContent sx={{ py: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Top productos (por unidades)</Typography>
+                  {stats.topProductos.map((p) => (
+                    <Box key={p.nombre} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.4, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                      <Typography variant="body2" noWrap sx={{ flex: 1, mr: 2 }}>{p.nombre}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mr: 2 }}>{p.cantidad} u.</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#085946', minWidth: 100, textAlign: 'right' }}>{formatPrice(p.ventas)}</Typography>
+                    </Box>
+                  ))}
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+        </Grid>
+      )}
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)}
         sx={{ mb: 3, '& .MuiTab-root': { fontWeight: 700, textTransform: 'none' }, '& .Mui-selected': { color: '#085946' }, '& .MuiTabs-indicator': { backgroundColor: '#085946' } }}>
@@ -174,7 +215,7 @@ export default function AdminPedidosPage() {
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>Items</Typography>
               {(detail.items || []).map((it) => (
                 <Box key={it.id} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-                  <Typography variant="body2">{it.cantidad}× {it.nombre}</Typography>
+                  <Typography variant="body2">{it.cantidad}× {it.nombre}{it.variante ? ` — ${it.variante}` : ''}</Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatPrice(it.subtotal)}</Typography>
                 </Box>
               ))}

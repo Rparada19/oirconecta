@@ -1073,6 +1073,8 @@ model ShopProduct {
   activo      Boolean         @default(true)
   destacado   Boolean         @default(false)
   imageUrls   String[]        @default([])
+  /// Variantes opcionales [{ nombre, precio?, stock? }]. Si hay, el cliente debe elegir una.
+  variantes   Json?
   orderItems  ShopOrderItem[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -1160,10 +1162,37 @@ model ShopOrderItem {
   productId     String?
   product       ShopProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
   nombre        String
+  variante      String?
   precioUnitario Float
   cantidad      Int
   subtotal      Float
 
   @@index([orderId])
   @@map("shop_order_items")
+}
+
+// ===========================================
+// COMPARADOR — fichas editables por marca/tecnología/plataforma
+// Precios cargados manualmente para que el público vea la realidad.
+// ===========================================
+
+model ComparadorItem {
+  id          String   @id @default(uuid())
+  marca       String
+  tecnologia  String
+  plataforma  String
+  modelo      String?
+  fortalezas  String?  @db.Text
+  debilidades String?  @db.Text
+  uso         String?  @db.Text
+  consejos    String?  @db.Text
+  precio      Float?
+  imageUrl    String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([marca])
+  @@index([activo])
+  @@map("comparador_items")
 }

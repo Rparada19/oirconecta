@@ -3,14 +3,56 @@ import {
   Box, Typography, Card, CardContent, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, CircularProgress,
   Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  Tooltip, TextField, MenuItem, FormControlLabel, Switch, Grid,
+  Tooltip, TextField, MenuItem, FormControlLabel, Switch, Grid, Divider,
 } from '@mui/material';
 import StarOutlineIcon from '@mui/icons-material/StarOutline';
 import StarIcon from '@mui/icons-material/Star';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
+import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined';
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
+import * as XLSX from 'xlsx';
 import { adminFetch } from './adminAuth';
+
+// Columnas esperadas del Excel de importación.
+const IMPORT_COLS = ['nombre', 'categoria', 'marca', 'sku', 'precio', 'precioAntes', 'stock', 'descripcion', 'imageUrls', 'activo', 'destacado', 'variantes'];
+
+const parseBool = (v) => {
+  if (typeof v === 'boolean') return v;
+  const s = String(v ?? '').trim().toLowerCase();
+  return ['1', 'true', 'si', 'sí', 'x', 'activo', 'verdadero'].includes(s);
+};
+// "8mm Cerrada:1500:50; 10mm Abierta::30" -> [{nombre,precio,stock}]
+const parseVariantes = (v) => {
+  const s = String(v ?? '').trim();
+  if (!s) return [];
+  return s.split(';').map((part) => {
+    const [nombre, precio, stock] = part.split(':').map((x) => (x ?? '').trim());
+    return { nombre, precio: precio === '' || precio == null ? null : Number(precio), stock: stock === '' || stock == null ? null : parseInt(stock, 10) };
+  }).filter((x) => x.nombre);
+};
+const rowToProduct = (row) => {
+  // claves insensibles a mayúsculas/espacios
+  const get = (key) => {
+    const k = Object.keys(row).find((kk) => kk.trim().toLowerCase() === key.toLowerCase());
+    return k ? row[k] : undefined;
+  };
+  return {
+    nombre: get('nombre'),
+    categoria: String(get('categoria') ?? '').trim().toUpperCase(),
+    marca: get('marca'),
+    sku: get('sku'),
+    precio: get('precio'),
+    precioAntes: get('precioAntes'),
+    stock: get('stock'),
+    descripcion: get('descripcion'),
+    imageUrls: String(get('imageUrls') ?? '').split(',').map((x) => x.trim()).filter(Boolean),
+    activo: get('activo') === undefined ? true : parseBool(get('activo')),
+    destacado: parseBool(get('destacado')),
+    variantes: parseVariantes(get('variantes')),
+  };
+};
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.90)',
@@ -39,7 +81,7 @@ const formatPrice = (p) => {
 const EMPTY = {
   nombre: '', categoria: 'BATERIAS', marca: '', sku: '',
   precio: '', precioAntes: '', stock: '0', descripcion: '',
-  imageUrls: '', activo: true, destacado: false,
+  imageUrls: '', activo: true, destacado: false, variantes: [],
 };
 
 export default function AdminShopProductsPanel() {
@@ -57,8 +99,51 @@ export default function AdminShopProductsPanel() {
   const [deleting, setDeleting] = useState(false);
 
   const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
+  const [importing, setImporting] = useState(false);
+  const fileRef = React.useRef(null);
 
   useEffect(() => { fetchProducts(); }, []);
+
+  const downloadTemplate = () => {
+    const ejemplo = ['Oliva silicona', 'OLIVAS', 'Phonak', 'OLV-01', 1500, '', 0, 'Oliva de repuesto', '', 'si', 'no', '8mm Cerrada:1500:50; 10mm Abierta::30'];
+    const ws = XLSX.utils.aoa_to_sheet([IMPORT_COLS, ejemplo]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Productos');
+    XLSX.writeFile(wb, 'plantilla_productos.xlsx');
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setImporting(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      const products = rows.map(rowToProduct).filter((p) => p.nombre);
+      if (!products.length) {
+        setSnack({ open: true, msg: 'El archivo no tiene filas válidas.', severity: 'error' });
+        setImporting(false);
+        return;
+      }
+      const { ok, data } = await adminFetch('/api/shop/admin/products/bulk', { method: 'POST', body: JSON.stringify({ products }) });
+      if (!ok) {
+        setSnack({ open: true, msg: `Error: ${data?.error || 'no se pudo importar'}`, severity: 'error' });
+      } else {
+        const { created, total, errors } = data.data;
+        const msg = `Importados ${created}/${total}.` + (errors?.length ? ` ${errors.length} con error.` : '');
+        setSnack({ open: true, msg, severity: errors?.length ? 'warning' : 'success' });
+        if (errors?.length) console.warn('Errores de importación:', errors);
+        fetchProducts();
+      }
+    } catch (err) {
+      setSnack({ open: true, msg: `No se pudo leer el archivo: ${err.message}`, severity: 'error' });
+    } finally {
+      setImporting(false);
+    }
+  };
 
   async function fetchProducts() {
     setLoading(true);
@@ -78,9 +163,16 @@ export default function AdminShopProductsPanel() {
       sku: p.sku || '', precio: String(p.precio ?? ''), precioAntes: p.precioAntes != null ? String(p.precioAntes) : '',
       stock: String(p.stock ?? 0), descripcion: p.descripcion || '',
       imageUrls: (p.imageUrls || []).join(', '), activo: !!p.activo, destacado: !!p.destacado,
+      variantes: Array.isArray(p.variantes) ? p.variantes.map((v) => ({ nombre: v.nombre || '', precio: v.precio ?? '', stock: v.stock ?? '' })) : [],
     });
     setDialogOpen(true);
   };
+
+  const addVariante = () => setForm((f) => ({ ...f, variantes: [...f.variantes, { nombre: '', precio: '', stock: '' }] }));
+  const setVariante = (i, k) => (e) => setForm((f) => ({
+    ...f, variantes: f.variantes.map((v, idx) => (idx === i ? { ...v, [k]: e.target.value } : v)),
+  }));
+  const removeVariante = (i) => setForm((f) => ({ ...f, variantes: f.variantes.filter((_, idx) => idx !== i) }));
 
   const setField = (k) => (e) => {
     const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -105,6 +197,13 @@ export default function AdminShopProductsPanel() {
       imageUrls: form.imageUrls.split(',').map((s) => s.trim()).filter(Boolean),
       activo: form.activo,
       destacado: form.destacado,
+      variantes: form.variantes
+        .filter((v) => String(v.nombre).trim())
+        .map((v) => ({
+          nombre: String(v.nombre).trim(),
+          precio: v.precio === '' || v.precio == null ? null : Number(v.precio),
+          stock: v.stock === '' || v.stock == null ? null : parseInt(v.stock, 10),
+        })),
     };
     const path = editId ? `/api/shop/admin/products/${editId}` : '/api/shop/admin/products';
     const method = editId ? 'PATCH' : 'POST';
@@ -143,10 +242,20 @@ export default function AdminShopProductsPanel() {
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           Productos de la tienda OírConecta (accesorios). No se venden audífonos por web.
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}
-          sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
-          Nuevo producto
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button variant="text" size="small" startIcon={<DownloadOutlinedIcon />} onClick={downloadTemplate} sx={{ color: '#085946' }}>
+            Plantilla
+          </Button>
+          <Button variant="outlined" startIcon={<UploadFileOutlinedIcon />} disabled={importing} onClick={() => fileRef.current?.click()}
+            sx={{ borderRadius: '10px', fontWeight: 700, borderColor: '#085946', color: '#085946' }}>
+            {importing ? 'Importando…' : 'Importar Excel'}
+          </Button>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" hidden onChange={handleImportFile} />
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}
+            sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+            Nuevo producto
+          </Button>
+        </Box>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 3, borderRadius: '12px' }}>{error}</Alert>}
@@ -255,6 +364,28 @@ export default function AdminShopProductsPanel() {
             <Grid item xs={12}>
               <TextField label="URLs de imágenes (separadas por coma)" value={form.imageUrls} onChange={setField('imageUrls')} fullWidth size="small" />
             </Grid>
+
+            <Grid item xs={12}>
+              <Divider sx={{ my: 0.5 }} />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  Variantes (opcional) — ej. tallas/formas de olivas
+                </Typography>
+                <Button size="small" startIcon={<AddIcon />} onClick={addVariante} sx={{ color: '#085946' }}>Agregar</Button>
+              </Box>
+              <Typography variant="caption" color="text.secondary">
+                Si agregas variantes, el cliente deberá elegir una. Precio y stock por variante son opcionales (si los dejas vacíos, usa los del producto).
+              </Typography>
+              {form.variantes.map((v, i) => (
+                <Box key={i} sx={{ display: 'flex', gap: 1, mt: 1, alignItems: 'center' }}>
+                  <TextField label="Nombre" value={v.nombre} onChange={setVariante(i, 'nombre')} size="small" sx={{ flex: 2 }} />
+                  <TextField label="Precio" value={v.precio} onChange={setVariante(i, 'precio')} type="number" size="small" sx={{ flex: 1 }} />
+                  <TextField label="Stock" value={v.stock} onChange={setVariante(i, 'stock')} type="number" size="small" sx={{ flex: 1 }} />
+                  <IconButton size="small" onClick={() => removeVariante(i)} sx={{ color: '#ef4444' }}><DeleteOutlineIcon fontSize="small" /></IconButton>
+                </Box>
+              ))}
+            </Grid>
+
             <Grid item xs={6}>
               <FormControlLabel control={<Switch checked={form.activo} onChange={setField('activo')} />} label="Activo" />
             </Grid>

@@ -29,7 +29,9 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { adminFetch, getAdminToken } from './adminAuth';
+import { exportRowsToExcel, exportRowsToPdf } from '../../utils/adminExport';
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.90)',
@@ -146,15 +148,36 @@ export default function AdminProfesionalesPage() {
   const getCity = (p) => p.workplaces?.[0]?.ciudad || p.workplaces?.[0]?.city || p.ciudad || '—';
   const getStatus = (p) => STATUS_MAP[p.status] || { label: p.status || '—', color: 'default' };
 
+  const profilesToRows = (list) => list.map((p) => ({
+    Nombre: getName(p),
+    Email: getEmail(p),
+    Profesión: p.profession || p.profesion || '',
+    Ciudad: getCity(p),
+    'Fecha registro': p.createdAt ? new Date(p.createdAt).toLocaleDateString('es-CO') : '',
+    Estado: getStatus(p).label,
+  }));
+
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, ...HEADER_GRADIENT, mb: 0.5 }}>
-          Gestión de Profesionales
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Aprueba o rechaza solicitudes del directorio
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 800, ...HEADER_GRADIENT, mb: 0.5 }}>
+            Gestión de Profesionales
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Aprueba o rechaza solicitudes del directorio
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button size="small" variant="outlined" startIcon={<FileDownloadOutlinedIcon />} disabled={!filtered.length}
+            onClick={() => exportRowsToExcel(profilesToRows(filtered), 'profesionales', 'Profesionales')}>
+            Excel
+          </Button>
+          <Button size="small" variant="outlined" startIcon={<FileDownloadOutlinedIcon />} disabled={!filtered.length}
+            onClick={() => exportRowsToPdf(profilesToRows(filtered), 'profesionales', 'Profesionales — Directorio OírConecta')}>
+            PDF
+          </Button>
+        </Box>
       </Box>
 
       {error && (

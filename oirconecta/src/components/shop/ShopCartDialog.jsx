@@ -26,14 +26,15 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
 
   const subtotal = cart.reduce((s, it) => s + it.precio * it.cantidad, 0);
 
-  const setQty = (id, delta) => {
+  const lineKey = (it) => it.lineId || it.id;
+  const setQty = (key, delta) => {
     setCart((prev) =>
       prev
-        .map((it) => (it.id === id ? { ...it, cantidad: it.cantidad + delta } : it))
+        .map((it) => (lineKey(it) === key ? { ...it, cantidad: it.cantidad + delta } : it))
         .filter((it) => it.cantidad > 0),
     );
   };
-  const removeItem = (id) => setCart((prev) => prev.filter((it) => it.id !== id));
+  const removeItem = (key) => setCart((prev) => prev.filter((it) => lineKey(it) !== key));
   const setField = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const handleClose = () => {
@@ -59,7 +60,7 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: cart.map((it) => ({ productId: it.id, cantidad: it.cantidad })),
+          items: cart.map((it) => ({ productId: it.id, variante: it.variante || null, cantidad: it.cantidad })),
           contacto: {
             nombre: form.nombre.trim(), email: form.email.trim(),
             telefono: form.telefono.trim(), documento: form.documento.trim() || null,
@@ -109,16 +110,17 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
           ) : (
             <Box>
               {cart.map((it) => (
-                <Box key={it.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                <Box key={lineKey(it)} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography noWrap sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{it.nombre}</Typography>
+                    {it.variante && <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{it.variante}</Typography>}
                     <Typography variant="body2" color="text.secondary">{formatPrice(it.precio)} c/u</Typography>
                   </Box>
-                  <IconButton size="small" onClick={() => setQty(it.id, -1)}><RemoveIcon fontSize="small" /></IconButton>
+                  <IconButton size="small" onClick={() => setQty(lineKey(it), -1)}><RemoveIcon fontSize="small" /></IconButton>
                   <Typography sx={{ minWidth: 24, textAlign: 'center', fontWeight: 600 }}>{it.cantidad}</Typography>
-                  <IconButton size="small" onClick={() => setQty(it.id, +1)} disabled={it.stock != null && it.cantidad >= it.stock}><AddIcon fontSize="small" /></IconButton>
+                  <IconButton size="small" onClick={() => setQty(lineKey(it), +1)}><AddIcon fontSize="small" /></IconButton>
                   <Typography sx={{ minWidth: 90, textAlign: 'right', fontWeight: 700 }}>{formatPrice(it.precio * it.cantidad)}</Typography>
-                  <IconButton size="small" onClick={() => removeItem(it.id)} sx={{ color: '#ef4444' }}><DeleteOutlineIcon fontSize="small" /></IconButton>
+                  <IconButton size="small" onClick={() => removeItem(lineKey(it))} sx={{ color: '#ef4444' }}><DeleteOutlineIcon fontSize="small" /></IconButton>
                 </Box>
               ))}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 2 }}>

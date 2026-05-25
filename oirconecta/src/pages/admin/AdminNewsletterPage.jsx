@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Box,
+  Button,
   Card,
   Chip,
   CircularProgress,
@@ -19,7 +20,18 @@ import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
 import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded';
 import UnsubscribeRoundedIcon from '@mui/icons-material/UnsubscribeRounded';
 import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { adminFetch } from './adminAuth';
+import { exportRowsToExcel, exportRowsToPdf } from '../../utils/adminExport';
+
+const subsToRows = (subs) => subs.map((s) => ({
+  Nombre: s.nombre || '',
+  Correo: s.email || '',
+  Teléfono: s.telefono || '',
+  Ciudad: s.ciudad || '',
+  Estado: s.status === 'ACTIVE' ? 'Activo' : s.status === 'UNSUBSCRIBED' ? 'Baja' : 'Rebote',
+  Alta: s.createdAt ? new Date(s.createdAt).toLocaleDateString('es-CO') : '',
+}));
 
 function StatCard({ icon, value, label, color = 'primary.main' }) {
   return (
@@ -88,13 +100,24 @@ export default function AdminNewsletterPage() {
 
       {tab === 0 && (
         <Box>
-          <TextField
-            size="small"
-            placeholder="Buscar por nombre, correo o ciudad…"
-            value={q}
-            onChange={(e) => { setQ(e.target.value); loadSubs(e.target.value); }}
-            sx={{ mb: 2, width: { xs: '100%', sm: 360 } }}
-          />
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap', rowGap: 1.5 }}>
+            <TextField
+              size="small"
+              placeholder="Buscar por nombre, correo o ciudad…"
+              value={q}
+              onChange={(e) => { setQ(e.target.value); loadSubs(e.target.value); }}
+              sx={{ width: { xs: '100%', sm: 360 } }}
+            />
+            <Box sx={{ flexGrow: 1 }} />
+            <Button size="small" variant="outlined" startIcon={<FileDownloadOutlinedIcon />} disabled={!subs.length}
+              onClick={() => exportRowsToExcel(subsToRows(subs), 'newsletter_suscriptores', 'Suscriptores')}>
+              Excel
+            </Button>
+            <Button size="small" variant="outlined" startIcon={<FileDownloadOutlinedIcon />} disabled={!subs.length}
+              onClick={() => exportRowsToPdf(subsToRows(subs), 'newsletter_suscriptores', 'Suscriptores — Newsletter OírConecta')}>
+              PDF
+            </Button>
+          </Stack>
           <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid', borderColor: 'grey.100', overflow: 'auto' }}>
             <Table size="small">
               <TableHead>

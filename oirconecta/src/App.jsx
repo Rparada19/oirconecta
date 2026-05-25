@@ -20,6 +20,7 @@ const AudifonosPage = lazy(() => import('./pages/AudifonosPage'));
 const ImplantesPage = lazy(() => import('./pages/ImplantesPage'));
 const ContactoPage = lazy(() => import('./pages/ContactoPage'));
 const EcommercePage = lazy(() => import('./pages/EcommercePage'));
+const ComparadorPage = lazy(() => import('./pages/ComparadorPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const AgendamientoPage = lazy(() => import('./pages/AgendamientoPage'));
@@ -93,6 +94,7 @@ const AdminBlogPage = lazy(() => import('./pages/admin/AdminBlogPage'));
 const AdminProfesionalesPage = lazy(() => import('./pages/admin/AdminProfesionalesPage'));
 const AdminMarketplacePage = lazy(() => import('./pages/admin/AdminMarketplacePage'));
 const AdminPedidosPage = lazy(() => import('./pages/admin/AdminPedidosPage'));
+const AdminComparadorPage = lazy(() => import('./pages/admin/AdminComparadorPage'));
 const AdminNewsletterPage = lazy(() => import('./pages/admin/AdminNewsletterPage'));
 
 const theme = buildTheme(createTheme);
@@ -167,6 +169,7 @@ export default function App() {
           <Route path="/implantes/advanced-bionics" element={<ImplantesAdvancedBionicsPage />} />
           <Route path="/implantes/medel" element={<ImplantesMedelPage />} />
           <Route path="/ecommerce" element={<EcommercePage />} />
+          <Route path="/comparador" element={<ComparadorPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/profesionales/otologos" element={<OtologosPage />} />
           <Route path="/profesionales/audiologos" element={<AudiologasPage />} />
@@ -234,6 +237,7 @@ export default function App() {
             <Route path="profesionales" element={<AdminProfesionalesPage />} />
             <Route path="marketplace" element={<AdminMarketplacePage />} />
             <Route path="pedidos" element={<AdminPedidosPage />} />
+            <Route path="comparador" element={<AdminComparadorPage />} />
             <Route path="newsletter" element={<AdminNewsletterPage />} />
           </Route>
 

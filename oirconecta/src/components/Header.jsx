@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -96,6 +96,7 @@ const mobileFlatLinks = [
   { label: 'Implantes', to: '/implantes' },
   ...profesionesDirectorioMenuItems,
   { label: 'Blog', to: '/blog' },
+  { label: 'Comparador', to: '/comparador' },
   { label: 'Tienda', to: '/ecommerce' },
 ];
 
@@ -131,6 +132,7 @@ const CustomMenu = styled(Menu)(() => ({
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
   const [openMenu, setOpenMenu] = useState(null);
@@ -154,8 +156,13 @@ const Header = () => {
   };
 
   const handleLogoClick = () => {
-    navigate('/');
     setMobileOpen(false);
+    if (location.pathname === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/');
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'auto' }), 0);
+    }
   };
 
   const waHref = getWhatsAppHref();
@@ -254,6 +261,20 @@ const Header = () => {
                   <ChatOutlinedIcon />
                 </IconButton>
               </Tooltip>
+              <Button
+                color="inherit"
+                onClick={() => navigate('/comparador')}
+                sx={{
+                  fontWeight: 500,
+                  color: 'text.secondary',
+                  px: 1.5,
+                  minWidth: 0,
+                  fontSize: '0.9375rem',
+                  '&:hover': { color: 'primary.main', bgcolor: 'transparent' },
+                }}
+              >
+                Comparador
+              </Button>
               <Button
                 color="inherit"
                 onClick={() => navigate('/ecommerce')}
