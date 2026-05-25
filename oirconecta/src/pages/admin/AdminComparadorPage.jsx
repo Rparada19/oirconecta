@@ -38,6 +38,9 @@ export default function AdminComparadorPage() {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [leadView, setLeadView] = useState(null);
+  const [nuevoSeg, setNuevoSeg] = useState('');
+  const [segSaving, setSegSaving] = useState(false);
   const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
 
   useEffect(() => {
@@ -62,6 +65,20 @@ export default function AdminComparadorPage() {
   async function setLeadEstado(lead, estado) {
     const { ok } = await adminFetch(`/api/comparador/admin/leads/${lead.id}`, { method: 'PATCH', body: JSON.stringify({ estado }) });
     if (ok) { setSnack({ open: true, msg: 'Solicitud actualizada.', severity: 'success' }); fetchLeads(); }
+  }
+
+  async function agregarSeguimiento() {
+    if (!leadView || !nuevoSeg.trim()) return;
+    setSegSaving(true);
+    const { ok, data } = await adminFetch(`/api/comparador/admin/leads/${leadView.id}`, { method: 'PATCH', body: JSON.stringify({ addSeguimiento: nuevoSeg.trim() }) });
+    setSegSaving(false);
+    if (ok) {
+      setLeadView(data.data);
+      setNuevoSeg('');
+      fetchLeads();
+    } else {
+      setSnack({ open: true, msg: 'No se pudo guardar el seguimiento.', severity: 'error' });
+    }
   }
 
   const openCreate = () => { setEditId(null); setForm(EMPTY); setDialogOpen(true); };
@@ -134,7 +151,7 @@ export default function AdminComparadorPage() {
                 <Table>
                   <TableHead>
                     <TableRow sx={{ background: 'rgba(8,89,70,0.03)' }}>
-                      {['Nombre', 'Teléfono', 'Email', 'Ciudad', 'Sugerida', 'Estado', 'Fecha'].map((h) => (
+                      {['Nombre', 'Teléfono', 'Email', 'Ciudad', 'Sugerida', 'Estado', 'Fecha', 'Seguimiento'].map((h) => (
                         <TableCell key={h} sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.72rem', textTransform: 'uppercase', py: 1.8 }}>{h}</TableCell>
                       ))}
                     </TableRow>
@@ -153,6 +170,11 @@ export default function AdminComparadorPage() {
                           </Select>
                         </TableCell>
                         <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{l.createdAt ? new Date(l.createdAt).toLocaleDateString('es-CO') : '—'}</TableCell>
+                        <TableCell>
+                          <Button size="small" onClick={() => { setLeadView(l); setNuevoSeg(''); }} sx={{ color: '#085946', minWidth: 0 }}>
+                            {(Array.isArray(l.seguimientos) ? l.seguimientos.length : 0) > 0 ? `Ver (${l.seguimientos.length})` : 'Registrar'}
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -232,6 +254,45 @@ export default function AdminComparadorPage() {
         <DialogActions sx={{ px: 2.5, pb: 2, gap: 1 }}>
           <Button onClick={() => setDeleteTarget(null)} sx={{ borderRadius: '10px' }}>Cancelar</Button>
           <Button variant="contained" color="error" onClick={handleDeleteConfirm} sx={{ borderRadius: '10px', fontWeight: 700 }}>Eliminar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Seguimiento de un lead */}
+      <Dialog open={!!leadView} onClose={() => setLeadView(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Seguimiento — {leadView?.nombre}</DialogTitle>
+        <DialogContent>
+          {leadView && (
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {leadView.telefono}{leadView.email ? ` · ${leadView.email}` : ''}{leadView.ciudad ? ` · ${leadView.ciudad}` : ''}
+                {leadView.marcaSugerida ? <><br />Sugerida: {leadView.marcaSugerida}</> : null}
+              </Typography>
+
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Bitácora de llamadas</Typography>
+              {(Array.isArray(leadView.seguimientos) ? leadView.seguimientos : []).length === 0 ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Aún no hay seguimientos.</Typography>
+              ) : (
+                <Box sx={{ mb: 2 }}>
+                  {[...leadView.seguimientos].reverse().map((s, i) => (
+                    <Box key={i} sx={{ py: 1, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                      <Typography variant="caption" color="text.secondary">{new Date(s.fecha).toLocaleString('es-CO')}</Typography>
+                      <Typography variant="body2">{s.texto}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+
+              <TextField label="Nuevo seguimiento (resumen de la llamada)" value={nuevoSeg} onChange={(e) => setNuevoSeg(e.target.value)}
+                fullWidth size="small" multiline rows={3} />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 2.5, pb: 2, gap: 1 }}>
+          <Button onClick={() => setLeadView(null)} sx={{ borderRadius: '10px' }}>Cerrar</Button>
+          <Button variant="contained" onClick={agregarSeguimiento} disabled={segSaving || !nuevoSeg.trim()}
+            sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+            {segSaving ? 'Guardando…' : 'Agregar seguimiento'}
+          </Button>
         </DialogActions>
       </Dialog>
 

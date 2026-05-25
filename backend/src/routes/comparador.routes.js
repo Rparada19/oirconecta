@@ -113,14 +113,20 @@ router.get('/admin/leads', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// ── Admin: actualizar solicitud (estado / notas) ──
+// ── Admin: actualizar solicitud (estado / notas / agregar seguimiento) ──
 router.patch('/admin/leads/:id', authenticate, async (req, res) => {
   try {
-    const { estado, notas } = req.body;
-    const lead = await prisma.comparadorLead.update({
-      where: { id: req.params.id },
-      data: { ...(estado && { estado }), ...(notas !== undefined && { notas }) },
-    });
+    const { estado, notas, addSeguimiento } = req.body;
+    const data = {};
+    if (estado) data.estado = estado;
+    if (notas !== undefined) data.notas = notas;
+    if (addSeguimiento && String(addSeguimiento).trim()) {
+      const actual = await prisma.comparadorLead.findUnique({ where: { id: req.params.id } });
+      if (!actual) return res.status(404).json({ success: false, error: 'No encontrado' });
+      const prev = Array.isArray(actual.seguimientos) ? actual.seguimientos : [];
+      data.seguimientos = [...prev, { fecha: new Date().toISOString(), texto: String(addSeguimiento).trim() }];
+    }
+    const lead = await prisma.comparadorLead.update({ where: { id: req.params.id }, data });
     res.json({ success: true, data: lead });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });

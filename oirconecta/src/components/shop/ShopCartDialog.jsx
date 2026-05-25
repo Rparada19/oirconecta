@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography,
   IconButton, TextField, Grid, Divider, Alert, CircularProgress,
@@ -23,8 +23,25 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
+  const [cross, setCross] = useState([]);
 
   const subtotal = cart.reduce((s, it) => s + it.precio * it.cantidad, 0);
+
+  useEffect(() => {
+    if (!open || step !== 'cart' || cart.length === 0) return;
+    const exclude = cart.map((it) => it.id).join(',');
+    fetch(`${getApiBaseUrl()}/api/shop/cross-sell?exclude=${encodeURIComponent(exclude)}`)
+      .then((r) => r.json()).then((j) => setCross(j?.data || [])).catch(() => setCross([]));
+  }, [open, step, cart.length]);
+
+  const addCross = (p) => {
+    const lineId = `${p.id}::`;
+    setCart((prev) => {
+      const ex = prev.find((it) => it.lineId === lineId);
+      if (ex) return prev.map((it) => (it.lineId === lineId ? { ...it, cantidad: it.cantidad + 1 } : it));
+      return [...prev, { ...p, precio: p.precio, variante: null, lineId, cantidad: 1 }];
+    });
+  };
 
   const lineKey = (it) => it.lineId || it.id;
   const setQty = (key, delta) => {
@@ -128,6 +145,25 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
                 <Typography sx={{ fontWeight: 800, color: '#085946' }}>{formatPrice(subtotal)}</Typography>
               </Box>
               <Typography variant="caption" color="text.secondary">El costo de envío se coordina al confirmar el pedido.</Typography>
+
+              {cross.filter((p) => !cart.some((it) => it.id === p.id)).length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Divider sx={{ mb: 1.5 }} />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>También te puede servir</Typography>
+                  {cross.filter((p) => !cart.some((it) => it.id === p.id)).map((p) => (
+                    <Box key={p.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.8 }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.nombre}</Typography>
+                        <Typography variant="caption" color="text.secondary">{formatPrice(p.precio)}</Typography>
+                      </Box>
+                      <Button size="small" variant="outlined" onClick={() => addCross(p)}
+                        sx={{ borderRadius: '8px', borderColor: '#085946', color: '#085946', minWidth: 0 }}>
+                        Agregar
+                      </Button>
+                    </Box>
+                  ))}
+                </Box>
+              )}
             </Box>
           )
         )}

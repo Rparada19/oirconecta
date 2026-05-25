@@ -1213,6 +1213,8 @@ model ComparadorLead {
   test          Json?
   estado        String   @default("NUEVO") // NUEVO | CONTACTADO | CERRADO
   notas         String?  @db.Text
+  /// Bitácora de seguimientos [{ fecha, texto }]
+  seguimientos  Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

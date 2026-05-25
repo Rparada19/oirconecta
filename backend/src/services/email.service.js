@@ -555,6 +555,78 @@ async function sendComparadorLeadEmails({ nombre, telefono, email, ciudad, marca
   }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 12. TIENDA — confirmación de pedido (cliente, con cross-sell) + aviso al equipo
+// ════════════════════════════════════════════════════════════════════════════
+function fmtCOP(n) {
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0);
+}
+
+async function sendShopOrderEmails({ order, items = [], sugerencias = [] }) {
+  const itemsHtml = items.map((it) => `
+    <tr>
+      <td style="padding:6px 0;font-size:14px;color:#0f1923;">${it.cantidad}× ${it.nombre}${it.variante ? ` <span style="color:#6b7280;">(${it.variante})</span>` : ''}</td>
+      <td style="padding:6px 0;font-size:14px;color:#0f1923;font-weight:600;text-align:right;white-space:nowrap;">${fmtCOP(it.subtotal)}</td>
+    </tr>`).join('');
+
+  const crossHtml = sugerencias.length ? (
+    divider() +
+    `<p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#085946;">También te puede servir</p>` +
+    sugerencias.map((s) => `
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:8px;">
+        <tr>
+          <td style="font-size:14px;color:#374151;">${s.nombre}</td>
+          <td style="font-size:14px;color:#085946;font-weight:700;text-align:right;white-space:nowrap;">${fmtCOP(s.precio)}</td>
+        </tr>
+      </table>`).join('') +
+    btn(`${SITE_URL}/ecommerce`, 'Ver en la tienda')
+  ) : '';
+
+  // ── Al cliente ──
+  if (order.envioEmail) {
+    const html = baseTemplate({
+      preheader: `Recibimos tu pedido #${order.numero}. Te contactaremos para el pago y envío.`,
+      title: 'Pedido recibido — OírConecta',
+      bodyHtml: [
+        h1(`¡Gracias por tu pedido! 🛍️`),
+        p(`Hola <strong>${order.envioNombre || ''}</strong>, registramos tu pedido <strong>#${order.numero}</strong>. Te contactaremos para coordinar el pago y el envío.`),
+        `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f9fafb;border-radius:12px;padding:8px 20px;margin:16px 0;">
+          <tbody>${itemsHtml}
+            <tr><td style="padding:10px 0 4px;font-size:15px;font-weight:800;color:#0f1923;border-top:1px solid #e5e7eb;">Total</td>
+            <td style="padding:10px 0 4px;font-size:15px;font-weight:800;color:#085946;text-align:right;border-top:1px solid #e5e7eb;">${fmtCOP(order.total)}</td></tr>
+          </tbody>
+        </table>`,
+        p(`<span style="font-size:13px;color:#6b7280;">Envío a: ${order.envioDireccion}, ${order.envioCiudad}${order.envioDepartamento ? ', ' + order.envioDepartamento : ''}.</span>`),
+        crossHtml,
+        divider(),
+        p(`<span style="font-size:13px;color:#6b7280;">¿Dudas? <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> · WhatsApp <a href="https://wa.me/573157939569">+57 315 793 9569</a></span>`),
+      ].join(''),
+    });
+    await deliver({ to: order.envioEmail, toName: order.envioNombre, subject: `Pedido #${order.numero} recibido — OírConecta`, html });
+  }
+
+  // ── Al equipo ──
+  const adminHtml = baseTemplate({
+    preheader: `Nuevo pedido #${order.numero} por ${fmtCOP(order.total)}.`,
+    title: 'Nuevo pedido — OírConecta',
+    bodyHtml: [
+      h1(`Nuevo pedido #${order.numero} 🛒`),
+      highlight([
+        ['Cliente',  order.envioNombre || '—'],
+        ['Teléfono', order.envioTelefono || '—'],
+        ['Email',    order.envioEmail || '—'],
+        ['Ciudad',   order.envioCiudad || '—'],
+        ['Total',    fmtCOP(order.total)],
+      ]),
+      `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:8px 0;">
+        <tbody>${itemsHtml}</tbody>
+      </table>`,
+      btn(`${SITE_URL}/portal-admin/pedidos`, 'Ver en el panel'),
+    ].join(''),
+  });
+  await deliver({ to: 'conversemos@oirconecta.com', toName: 'Equipo OírConecta', subject: `Nuevo pedido #${order.numero} — OírConecta`, html: adminHtml });
+}
+
 // ─── Exports ─────────────────────────────────────────────────────────────────
 // ════════════════════════════════════════════════════════════════════════════
 // NEWSLETTER — bienvenida y envío de edición
@@ -616,6 +688,7 @@ module.exports = {
   sendPasswordReset,
   sendContactFormNotification,
   sendComparadorLeadEmails,
+  sendShopOrderEmails,
 
   sendAppointmentReminder,
   sendRescheduledNotification,

@@ -3,6 +3,7 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const { authenticate } = require('../middleware/auth');
 const { getPaymentProvider } = require('../services/payment');
+const emailService = require('../services/email.service');
 
 const prisma = new PrismaClient();
 
@@ -36,6 +37,28 @@ router.get('/products', async (req, res) => {
       prisma.shopProduct.count({ where }),
     ]);
     res.json({ success: true, data: products, total });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Sugerencias de cross-sell: productos activos, con stock, sin variantes
+// (para que el "agregar rápido" no requiera elegir variante). Excluye ids dados.
+async function getCrossSell(excludeIds = [], limit = 4) {
+  const candidatos = await prisma.shopProduct.findMany({
+    where: { activo: true, stock: { gt: 0 }, id: { notIn: excludeIds } },
+    orderBy: [{ destacado: 'desc' }, { createdAt: 'desc' }],
+    take: 24,
+  });
+  return candidatos
+    .filter((p) => !Array.isArray(p.variantes) || p.variantes.length === 0)
+    .slice(0, limit);
+}
+
+// ── Público: cross-sell ──
+router.get('/cross-sell', async (req, res) => {
+  try {
+    const exclude = String(req.query.exclude || '').split(',').map((s) => s.trim()).filter(Boolean);
+    const data = await getCrossSell(exclude, 4);
+    res.json({ success: true, data });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -293,6 +316,17 @@ router.post('/orders', async (req, res) => {
       }
       return created;
     });
+
+    // Correos (no bloquean): confirmación al cliente con cross-sell + aviso al equipo.
+    (async () => {
+      const excludeIds = lineItems.map((li) => li.product.id);
+      const sugerencias = await getCrossSell(excludeIds, 3);
+      await emailService.sendShopOrderEmails({
+        order,
+        items: order.items,
+        sugerencias: sugerencias.map((s) => ({ nombre: s.nombre, precio: s.precio })),
+      });
+    })().catch((err) => console.error('[shop] email pedido error:', err.message));
 
     res.status(201).json({ success: true, data: { id: order.id, numero: order.numero, total: order.total, estado: order.estado } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
