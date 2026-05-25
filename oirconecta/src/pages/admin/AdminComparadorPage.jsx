@@ -4,7 +4,7 @@ import {
   Box, Typography, Card, CardContent, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, IconButton, CircularProgress, Alert, Snackbar, Dialog,
   DialogTitle, DialogContent, DialogActions, Button, Tooltip, TextField, Grid,
-  FormControlLabel, Switch,
+  FormControlLabel, Switch, Tabs, Tab, Select, MenuItem,
 } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -28,7 +28,9 @@ const EMPTY = {
 
 export default function AdminComparadorPage() {
   const navigate = useNavigate();
+  const [tab, setTab] = useState(0);
   const [items, setItems] = useState([]);
+  const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,6 +43,7 @@ export default function AdminComparadorPage() {
   useEffect(() => {
     if (!getAdminToken()) { navigate('/admin-login', { replace: true }); return; }
     fetchItems();
+    fetchLeads();
   }, []);
 
   async function fetchItems() {
@@ -49,6 +52,16 @@ export default function AdminComparadorPage() {
     if (!ok) setError(data?.error || 'No se pudieron cargar las fichas');
     else setItems(data?.data || []);
     setLoading(false);
+  }
+
+  async function fetchLeads() {
+    const { ok, data } = await adminFetch('/api/comparador/admin/leads');
+    if (ok) setLeads(data?.data || []);
+  }
+
+  async function setLeadEstado(lead, estado) {
+    const { ok } = await adminFetch(`/api/comparador/admin/leads/${lead.id}`, { method: 'PATCH', body: JSON.stringify({ estado }) });
+    if (ok) { setSnack({ open: true, msg: 'Solicitud actualizada.', severity: 'success' }); fetchLeads(); }
   }
 
   const openCreate = () => { setEditId(null); setForm(EMPTY); setDialogOpen(true); };
@@ -95,14 +108,60 @@ export default function AdminComparadorPage() {
           <Typography variant="h4" sx={{ fontWeight: 800, ...HEADER_GRADIENT, mb: 0.5 }}>Comparador</Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>Fichas por marca / tecnología / plataforma con precios reales</Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}
-          sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
-          Nueva ficha
-        </Button>
+        {tab === 0 && (
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}
+            sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+            Nueva ficha
+          </Button>
+        )}
       </Box>
+
+      <Tabs value={tab} onChange={(_, v) => setTab(v)}
+        sx={{ mb: 3, '& .MuiTab-root': { fontWeight: 700, textTransform: 'none' }, '& .Mui-selected': { color: '#085946' }, '& .MuiTabs-indicator': { backgroundColor: '#085946' } }}>
+        <Tab label={`Fichas (${items.length})`} />
+        <Tab label={`Solicitudes (${leads.length})`} />
+      </Tabs>
 
       {error && <Alert severity="error" sx={{ mb: 3, borderRadius: '12px' }}>{error}</Alert>}
 
+      {tab === 1 ? (
+        <Card sx={GLASS_CARD}>
+          <CardContent sx={{ p: 0 }}>
+            {leads.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 6 }}><Typography variant="body2" color="text.secondary">Aún no hay solicitudes de orientación.</Typography></Box>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ background: 'rgba(8,89,70,0.03)' }}>
+                      {['Nombre', 'Teléfono', 'Email', 'Ciudad', 'Sugerida', 'Estado', 'Fecha'].map((h) => (
+                        <TableCell key={h} sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.72rem', textTransform: 'uppercase', py: 1.8 }}>{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {leads.map((l) => (
+                      <TableRow key={l.id} sx={{ '&:hover': { background: 'rgba(8,89,70,0.03)' } }}>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>{l.nombre}</TableCell>
+                        <TableCell sx={{ fontSize: '0.82rem' }}>{l.telefono}</TableCell>
+                        <TableCell sx={{ fontSize: '0.82rem', color: 'text.secondary' }}>{l.email || '—'}</TableCell>
+                        <TableCell sx={{ fontSize: '0.82rem', color: 'text.secondary' }}>{l.ciudad || '—'}</TableCell>
+                        <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary', maxWidth: 180 }}>{l.marcaSugerida || '—'}</TableCell>
+                        <TableCell>
+                          <Select value={l.estado} size="small" onChange={(e) => setLeadEstado(l, e.target.value)} sx={{ fontSize: '0.78rem', '& .MuiSelect-select': { py: 0.5 } }}>
+                            {['NUEVO', 'CONTACTADO', 'CERRADO'].map((e) => <MenuItem key={e} value={e} sx={{ fontSize: '0.8rem' }}>{e}</MenuItem>)}
+                          </Select>
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{l.createdAt ? new Date(l.createdAt).toLocaleDateString('es-CO') : '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
       <Card sx={GLASS_CARD}>
         <CardContent sx={{ p: 0 }}>
           {loading ? (
@@ -140,6 +199,7 @@ export default function AdminComparadorPage() {
           )}
         </CardContent>
       </Card>
+      )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>{editId ? 'Editar ficha' : 'Nueva ficha'}</DialogTitle>

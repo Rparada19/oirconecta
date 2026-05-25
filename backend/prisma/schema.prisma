@@ -1196,3 +1196,26 @@ model ComparadorItem {
   @@index([activo])
   @@map("comparador_items")
 }
+
+// ===========================================
+// COMPARADOR — solicitudes de orientación (leads)
+// El paciente deja datos para que el equipo lo llame y oriente.
+// ===========================================
+
+model ComparadorLead {
+  id            String   @id @default(uuid())
+  nombre        String
+  telefono      String
+  email         String?
+  ciudad        String?
+  marcaSugerida String?
+  candidatos    Json?
+  test          Json?
+  estado        String   @default("NUEVO") // NUEVO | CONTACTADO | CERRADO
+  notas         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([estado])
+  @@map("comparador_leads")
+}
