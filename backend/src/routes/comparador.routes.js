@@ -3,6 +3,7 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const { authenticate } = require('../middleware/auth');
 const { generarComparacion } = require('../services/comparadorAI');
+const emailService = require('../services/email.service');
 
 const prisma = new PrismaClient();
 
@@ -92,6 +93,12 @@ router.post('/leads', async (req, res) => {
         test: test || undefined,
       },
     });
+    // Correos (no bloquean la respuesta): confirmación al paciente + aviso al equipo.
+    emailService.sendComparadorLeadEmails({
+      nombre: lead.nombre, telefono: lead.telefono, email: lead.email,
+      ciudad: lead.ciudad, marcaSugerida: lead.marcaSugerida,
+    }).catch((err) => console.error('[comparador] email lead error:', err.message));
+
     res.status(201).json({ success: true, data: { id: lead.id } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });

@@ -511,6 +511,50 @@ async function sendRescheduledNotification({ to, patientName, oldFecha, oldHora,
   await deliver({ to, subject: `Reagendamiento: ${patientName} — OírConecta`, html });
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 11. COMPARADOR — confirmación al paciente + aviso del lead al equipo
+// ════════════════════════════════════════════════════════════════════════════
+async function sendComparadorLeadEmails({ nombre, telefono, email, ciudad, marcaSugerida }) {
+  // ── Aviso al equipo (conversemos@oirconecta.com) ──
+  const adminEmail = 'conversemos@oirconecta.com';
+  const adminHtml = baseTemplate({
+    preheader: `Nuevo lead del comparador: ${nombre} (${telefono}).`,
+    title: 'Nuevo lead del comparador — OírConecta',
+    bodyHtml: [
+      h1('Nuevo lead del comparador 📞'),
+      p('Un paciente pidió orientación tras usar el comparador de audífonos.'),
+      highlight([
+        ['Nombre',          nombre   || '—'],
+        ['Teléfono',        telefono || '—'],
+        ['Email',           email    || '—'],
+        ['Ciudad',          ciudad   || '—'],
+        ['Opción sugerida', marcaSugerida || '—'],
+      ]),
+      btn(`${SITE_URL}/portal-admin/comparador`, 'Ver en el panel'),
+    ].join(''),
+  });
+  await deliver({ to: adminEmail, toName: 'Equipo OírConecta', subject: `Nuevo lead del comparador: ${nombre} — OírConecta`, html: adminHtml });
+
+  // ── Confirmación al paciente (si dejó email) ──
+  if (email) {
+    const html = baseTemplate({
+      preheader: 'Recibimos tu solicitud. Un asesor te contactará pronto.',
+      title: 'Recibimos tu solicitud — OírConecta',
+      bodyHtml: [
+        h1('¡Gracias por tu interés! 👂'),
+        p(`Hola <strong>${nombre || ''}</strong>, recibimos tu solicitud de orientación desde el comparador de audífonos.`),
+        p('Un asesor te contactará pronto para ayudarte a elegir y adaptar la mejor opción según tu pérdida auditiva.'),
+        marcaSugerida ? highlight([['Opción sugerida', marcaSugerida]]) : '',
+        p('Mientras tanto, puedes explorar nuestro contenido de salud auditiva.'),
+        btn(`${SITE_URL}/blog`, 'Leer artículos'),
+        divider(),
+        p(`<span style="font-size:13px;color:#6b7280;">¿Dudas? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o WhatsApp <a href="https://wa.me/573157939569">+57 315 793 9569</a>.</span>`),
+      ].join(''),
+    });
+    await deliver({ to: email, toName: nombre, subject: 'Recibimos tu solicitud — OírConecta', html });
+  }
+}
+
 // ─── Exports ─────────────────────────────────────────────────────────────────
 // ════════════════════════════════════════════════════════════════════════════
 // NEWSLETTER — bienvenida y envío de edición
@@ -571,6 +615,7 @@ module.exports = {
   sendInquiryConfirmation,
   sendPasswordReset,
   sendContactFormNotification,
+  sendComparadorLeadEmails,
 
   sendAppointmentReminder,
   sendRescheduledNotification,
