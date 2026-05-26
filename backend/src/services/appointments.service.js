@@ -262,12 +262,19 @@ const create = async (data, createdById) => {
   // Envío de correos no debe bloquear la respuesta del POST. Si el SMTP cuelga
   // (ej. Render bloquea puerto 465), la cita igual queda registrada y el paciente
   // ve la confirmación inmediata; los emails se intentan en segundo plano.
-  const { sendBookingConfirmations } = require('./email.service');
+  const { sendBookingConfirmations, sendBookingConfirmation } = require('./email.service');
+  const config = require('../config');
   sendBookingConfirmations(appointment, {
     professionalName: data.professionalDisplayName || undefined,
   }).catch((e) => {
     console.error('[appointments.create] email notify:', e.message);
   });
+  // Aviso al admin si está configurado y es diferente al profesional
+  if (config.admin.email && config.admin.email !== appointment.professionalNotifyEmail) {
+    const adminAppt = { ...appointment, patientEmail: null, professionalNotifyEmail: config.admin.email };
+    sendBookingConfirmation(adminAppt, { professionalName: data.professionalDisplayName || undefined })
+      .catch((e) => console.error('[appointments.create] admin email notify:', e.message));
+  }
 
   return appointment;
 };

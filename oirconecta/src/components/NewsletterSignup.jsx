@@ -40,9 +40,9 @@ export default function NewsletterSignup({ source = 'web', compact = false, inli
   if (state === 'done') {
     return (
       <Alert
-        icon={<MarkEmailReadRoundedIcon />}
+        icon={<MarkEmailReadRoundedIcon sx={{ color: '#ffffff' }} />}
         severity="success"
-        sx={{ borderRadius: 3, fontWeight: 600 }}
+        sx={{ borderRadius: 3, fontWeight: 600, bgcolor: 'rgba(255,255,255,0.15)', color: '#ffffff', '& .MuiAlert-icon': { color: '#ffffff' } }}
       >
         ¡Listo! Te enviamos un correo de bienvenida. Revisa tu bandeja (y la carpeta de spam por si acaso).
       </Alert>
