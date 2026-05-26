@@ -149,13 +149,14 @@ async function deliver({ to, toName, subject, html, text }) {
       });
       if (!res.ok) {
         const err = await res.text().catch(() => '');
-        console.error('[email] Sender.com error', res.status, err.slice(0, 300));
+        console.error('[email] Sender.com error', res.status, err.slice(0, 300), '→ intento Resend si está configurado');
+        // No return: caer al respaldo (Resend) si existe.
       } else {
         console.log('[email] Sender.com →', to, subject);
+        return;
       }
-      return;
     } catch (e) {
-      console.error('[email] Sender.com exception:', e.message);
+      console.error('[email] Sender.com exception:', e.message, '→ intento Resend si está configurado');
     }
   }
 
