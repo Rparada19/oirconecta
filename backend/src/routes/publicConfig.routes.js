@@ -4,7 +4,9 @@
  */
 
 const express = require('express');
+const { body, validationResult } = require('express-validator');
 const config = require('../config');
+const emailService = require('../services/email.service');
 
 const router = express.Router();
 
@@ -19,5 +21,20 @@ router.get('/retail-config', (req, res) => {
     },
   });
 });
+
+// POST /api/public/contact
+router.post('/contact',
+  body('nombre').trim().notEmpty(),
+  body('email').isEmail(),
+  body('mensaje').trim().notEmpty(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+    const { nombre, email, telefono, asunto, mensaje } = req.body;
+    emailService.sendContactFormNotification({ nombre, email, telefono, asunto, mensaje })
+      .catch((e) => console.error('[contact] email error:', e.message));
+    res.json({ success: true });
+  }
+);
 
 module.exports = router;

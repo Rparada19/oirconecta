@@ -39,27 +39,20 @@ const ContactoPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const { nombre, email, telefono, asunto, mensaje } = formData;
-    const subject = encodeURIComponent(asunto?.trim() || 'Consulta web OírConecta');
-    const body = encodeURIComponent(
-      `Nombre: ${nombre}\nEmail: ${email}\nTeléfono: ${telefono}\n\nMensaje:\n${mensaje}`
-    );
-    window.location.href = `mailto:conversemos@oirconecta.com?subject=${subject}&body=${body}`;
-
-    setSnackbar({
-      open: true,
-      message: 'Se abrirá tu correo para enviar el mensaje a conversemos@oirconecta.com.',
-      severity: 'success',
-    });
-    setFormData({
-      nombre: '',
-      email: '',
-      telefono: '',
-      asunto: '',
-      mensaje: '',
-    });
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/public/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) throw new Error('error');
+      setSnackbar({ open: true, message: 'Mensaje enviado. Te responderemos pronto.', severity: 'success' });
+      setFormData({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
+    } catch {
+      setSnackbar({ open: true, message: 'Error al enviar. Escríbenos a conversemos@oirconecta.com', severity: 'error' });
+    }
   };
 
   const handleCloseSnackbar = () => {
