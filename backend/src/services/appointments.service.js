@@ -380,6 +380,7 @@ const rescheduleByToken = async (token, newFecha, newHora) => {
     emailService.sendRescheduledNotification({
       to,
       patientName: apt.patientName,
+      patientEmail: apt.patientEmail || null,
       oldFecha: apt.fecha.toISOString().slice(0, 10),
       oldHora: apt.hora,
       newFecha: dateStr,

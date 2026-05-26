@@ -20,6 +20,7 @@ const SENDER_ENDPOINT  = 'https://api.sender.net/v2/emails';
 const RESEND_ENDPOINT  = 'https://api.resend.com/emails';
 const FROM_NAME        = 'OírConecta';
 const FROM_EMAIL       = process.env.EMAIL_FROM || 'no-reply@oirconecta.com';
+const ADMIN_EMAIL      = process.env.ADMIN_EMAIL || null;
 const LOGO_URL         = 'https://oirconecta.com/logo-oirconecta.png';
 const SITE_URL         = 'https://oirconecta.com';
 
@@ -276,6 +277,26 @@ async function sendProfessionalWelcome({ email, nombre, nombreConsultorio }) {
     ].join(''),
   });
   await deliver({ to: email, toName: nombre, subject: '¡Bienvenido/a a OírConecta! Revisaremos tu perfil pronto', html });
+
+  // Aviso al admin para que revise y apruebe
+  if (ADMIN_EMAIL) {
+    const adminHtml = baseTemplate({
+      preheader: `Nuevo profesional registrado: ${nombre}. Pendiente de aprobación.`,
+      title: 'Nuevo profesional — OírConecta',
+      bodyHtml: [
+        h1('Nuevo profesional registrado 🩺'),
+        p('Un profesional se registró en el directorio y está pendiente de aprobación.'),
+        highlight([
+          ['Nombre',       nombre || '—'],
+          ['Consultorio',  nombreConsultorio || '—'],
+          ['Email',        email],
+        ]),
+        btn(`${SITE_URL}/portal-admin/directorio`, 'Revisar en el panel'),
+      ].join(''),
+    });
+    deliver({ to: ADMIN_EMAIL, toName: 'Admin OírConecta', subject: `Nuevo profesional por aprobar: ${nombre} — OírConecta`, html: adminHtml })
+      .catch(() => {});
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -441,6 +462,21 @@ async function sendContactFormNotification({ nombre, email, telefono, asunto, me
     ].join(''),
   });
   await deliver({ to: internalEmail, toName: 'Equipo OírConecta', subject: `Contacto web: ${asunto || nombre} — OírConecta`, html });
+
+  // Confirmación al visitante
+  if (email) {
+    const confirmHtml = baseTemplate({
+      preheader: 'Recibimos tu mensaje. Te responderemos pronto.',
+      title: 'Mensaje recibido — OírConecta',
+      bodyHtml: [
+        h1('Recibimos tu mensaje ✓'),
+        p(`Hola <strong>${nombre || ''}</strong>, gracias por contactarnos. Revisaremos tu mensaje y te responderemos en menos de 24 horas.`),
+        divider(),
+        p(`<span style="font-size:13px;color:#6b7280;">¿Urgente? Escríbenos al WhatsApp <a href="https://wa.me/573157939569">+57 315 793 9569</a></span>`),
+      ].join(''),
+    });
+    await deliver({ to: email, toName: nombre, subject: 'Recibimos tu mensaje — OírConecta', html: confirmHtml });
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -486,7 +522,24 @@ async function sendAppointmentReminder({ email, nombre, fecha, hora, tipo, confi
 // ════════════════════════════════════════════════════════════════════════════
 // 10. NOTIFICACIÓN DE REAGENDAMIENTO (a audiologa y admin)
 // ════════════════════════════════════════════════════════════════════════════
-async function sendRescheduledNotification({ to, patientName, oldFecha, oldHora, newFecha, newHora }) {
+async function sendRescheduledNotification({ to, patientName, patientEmail, oldFecha, oldHora, newFecha, newHora }) {
+  // Aviso al paciente
+  if (patientEmail) {
+    const html = baseTemplate({
+      preheader: `Tu cita fue reagendada al ${newFecha} a las ${newHora}.`,
+      title: 'Cita reagendada — OírConecta',
+      bodyHtml: [
+        h1('Tu cita fue reagendada ✓'),
+        p(`Hola <strong>${patientName || ''}</strong>, tu cita quedó reprogramada exitosamente.`),
+        highlight([
+          ['Nueva fecha', newFecha],
+          ['Nueva hora',  newHora],
+        ]),
+        p('Para más información escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o al <a href="https://wa.me/573157939569">+57 315 793 9569</a>.'),
+      ].join(''),
+    });
+    await deliver({ to: patientEmail, toName: patientName, subject: `Tu cita fue reagendada — OírConecta`, html });
+  }
   const html = baseTemplate({
     preheader: `${patientName} reagendó su cita del ${oldFecha} al ${newFecha}.`,
     title: 'Cita reagendada — OírConecta',
@@ -535,6 +588,9 @@ async function sendComparadorLeadEmails({ nombre, telefono, email, ciudad, marca
     ].join(''),
   });
   await deliver({ to: adminEmail, toName: 'Equipo OírConecta', subject: `Nuevo lead del comparador: ${nombre} — OírConecta`, html: adminHtml });
+  if (ADMIN_EMAIL && ADMIN_EMAIL !== adminEmail) {
+    await deliver({ to: ADMIN_EMAIL, toName: 'Admin OírConecta', subject: `Nuevo lead del comparador: ${nombre} — OírConecta`, html: adminHtml });
+  }
 
   // ── Confirmación al paciente (si dejó email) ──
   if (email) {
@@ -626,6 +682,9 @@ async function sendShopOrderEmails({ order, items = [], sugerencias = [] }) {
     ].join(''),
   });
   await deliver({ to: 'conversemos@oirconecta.com', toName: 'Equipo OírConecta', subject: `Nuevo pedido #${order.numero} — OírConecta`, html: adminHtml });
+  if (ADMIN_EMAIL && ADMIN_EMAIL !== 'conversemos@oirconecta.com') {
+    await deliver({ to: ADMIN_EMAIL, toName: 'Admin OírConecta', subject: `Nuevo pedido #${order.numero} — OírConecta`, html: adminHtml });
+  }
 }
 
 // ─── Exports ─────────────────────────────────────────────────────────────────
@@ -648,13 +707,27 @@ async function sendNewsletterWelcome({ email, nombre, unsubscribeUrl }) {
     bodyHtml,
   });
 
-  return deliver({
+  await deliver({
     to: email,
     toName: nombre,
     subject: '👂 Bienvenido al boletín de OírConecta',
     html,
     text: `Bienvenido a OírConecta, ${nombre || ''}. Te enviaremos información de salud auditiva cada 15 días. Cancela: ${unsubscribeUrl}`,
   });
+
+  // Aviso al admin de nuevo suscriptor
+  if (ADMIN_EMAIL) {
+    const adminHtml = baseTemplate({
+      preheader: `Nuevo suscriptor al boletín: ${nombre} (${email}).`,
+      title: 'Nuevo suscriptor — OírConecta',
+      bodyHtml: [
+        h1('Nuevo suscriptor al boletín 📧'),
+        highlight([['Nombre', nombre || '—'], ['Email', email]]),
+      ].join(''),
+    });
+    deliver({ to: ADMIN_EMAIL, toName: 'Admin OírConecta', subject: `Nuevo suscriptor: ${nombre} — OírConecta`, html: adminHtml })
+      .catch(() => {});
+  }
 }
 
 /**
