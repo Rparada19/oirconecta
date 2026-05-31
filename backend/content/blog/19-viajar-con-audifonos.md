@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: null
+coverUrl: https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1600&q=80
 ---
 
 Viajar con audífonos es totalmente posible y, hoy en día, hasta cómodo. Pero hay diferencias importantes entre un viaje tranquilo y uno donde te quedas sin pilas en una ciudad ajena, se te moja el aparato en una playa o el control de seguridad del aeropuerto te genera dudas innecesarias. La mayoría de problemas que viven los usuarios al viajar se previenen con un poco de organización antes de salir de casa.

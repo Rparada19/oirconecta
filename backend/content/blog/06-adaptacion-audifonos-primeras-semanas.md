@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: null
+coverUrl: https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1600&q=80
 ---
 
 El día que recibes tus primeros audífonos es emocionante. Sales del centro auditivo escuchando cosas que llevabas años sin escuchar: el motor de los carros, el sonido del aire acondicionado, hasta tus propios pasos. Y por dentro estás pensando "esto está demasiado fuerte" o "mi voz suena rara". Bienvenido a la adaptación.

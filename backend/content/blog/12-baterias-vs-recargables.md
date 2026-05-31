@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: null
+coverUrl: https://images.unsplash.com/photo-1543165796-5426273eaab3?w=1600&q=80
 ---
 
 Hace diez años, todos los audífonos funcionaban con pilas desechables del tamaño de una aspirina. Hoy, los modelos recargables dominan el mercado y casi todos los lanzamientos premium vienen con batería de litio integrada. Pero la pila desechable no ha desaparecido: sigue presente en muchos modelos y, para ciertos perfiles de usuario, sigue siendo la mejor opción.

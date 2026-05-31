@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: null
+coverUrl: https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1600&q=80
 ---
 
 Un audífono moderno puede costar entre 3 y 15 millones de pesos. Es un dispositivo médico de precisión que pasa entre 10 y 14 horas al día metido en un ambiente cálido, húmedo, con cerumen y, en muchos casos, sudor. Si no se limpia bien, los pequeños componentes electrónicos —el receptor, los filtros, el micrófono— se deterioran mucho antes de tiempo. La diferencia entre un audífono que dura 7 años y uno que falla a los 3 muchas veces no está en la marca, sino en la rutina diaria de limpieza.

@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: null
+coverUrl: https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1600&q=80
 ---
 
 Cuando alguien escucha por primera vez "tienes pérdida auditiva", suele asumir que todas son iguales. No lo son. Existen tres tipos principales —conductiva, neurosensorial y mixta— y entender cuál es el tuyo cambia por completo lo que viene después: el tratamiento, el pronóstico y la calidad de vida que puedes esperar.

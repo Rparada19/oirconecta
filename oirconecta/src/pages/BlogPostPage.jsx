@@ -64,13 +64,89 @@ function formatDate(iso) {
 }
 
 const MD_COMPONENTS = {
-  h1: ({ children }) => <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.25rem' }, fontWeight: 900, color: '#0f1923', mt: 5, mb: 2, letterSpacing: '-0.02em', lineHeight: 1.15 }}>{children}</Typography>,
-  h2: ({ children }) => <Typography component="h2" sx={{ fontSize: { xs: '1.375rem', md: '1.625rem' }, fontWeight: 800, color: '#0f1923', mt: 5, mb: 2, letterSpacing: '-0.015em' }}>{children}</Typography>,
-  h3: ({ children }) => <Typography component="h3" sx={{ fontSize: { xs: '1.125rem', md: '1.25rem' }, fontWeight: 700, color: '#0f1923', mt: 3.5, mb: 1.25 }}>{children}</Typography>,
-  h4: ({ children }) => <Typography component="h4" sx={{ fontSize: '1.0625rem', fontWeight: 700, color: '#0f1923', mt: 2.5, mb: 1 }}>{children}</Typography>,
-  p: ({ children }) => <Typography sx={{ fontSize: '1.0625rem', color: '#374151', lineHeight: 1.8, mb: 2 }}>{children}</Typography>,
-  ul: ({ children }) => <Box component="ul" sx={{ pl: 3, mb: 2.5, '& li': { fontSize: '1.0625rem', color: '#374151', lineHeight: 1.8, mb: 0.75 } }}>{children}</Box>,
-  ol: ({ children }) => <Box component="ol" sx={{ pl: 3, mb: 2.5, '& li': { fontSize: '1.0625rem', color: '#374151', lineHeight: 1.8, mb: 0.75 } }}>{children}</Box>,
+  h1: ({ children }) => <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.25rem' }, fontWeight: 900, color: '#0f1923', mt: 6, mb: 2.5, letterSpacing: '-0.02em', lineHeight: 1.15 }}>{children}</Typography>,
+  h2: ({ children }) => (
+    <Typography component="h2" sx={{
+      fontSize: { xs: '1.5rem', md: '1.875rem' },
+      fontWeight: 800,
+      color: '#0f1923',
+      mt: 7,
+      mb: 2.5,
+      pb: 1.5,
+      letterSpacing: '-0.02em',
+      lineHeight: 1.25,
+      borderBottom: '3px solid #6ee7c8',
+      display: 'inline-block',
+      pr: 2,
+    }}>
+      {children}
+    </Typography>
+  ),
+  h3: ({ children }) => <Typography component="h3" sx={{ fontSize: { xs: '1.1875rem', md: '1.375rem' }, fontWeight: 700, color: '#0f1923', mt: 4.5, mb: 1.5, letterSpacing: '-0.01em' }}>{children}</Typography>,
+  h4: ({ children }) => <Typography component="h4" sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#0f1923', mt: 3, mb: 1 }}>{children}</Typography>,
+  p: ({ children }) => <Typography sx={{ fontSize: { xs: '1.0625rem', md: '1.125rem' }, color: '#1f2937', lineHeight: 1.85, mb: 2.75, letterSpacing: '0.005em' }}>{children}</Typography>,
+  ul: ({ children }) => (
+    <Box component="ul" sx={{
+      pl: 0,
+      mb: 3.5,
+      listStyle: 'none',
+      '& > li': {
+        position: 'relative',
+        pl: 3.5,
+        fontSize: { xs: '1.0625rem', md: '1.125rem' },
+        color: '#1f2937',
+        lineHeight: 1.85,
+        mb: 1.25,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          left: 6,
+          top: '0.7em',
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          backgroundColor: '#085946',
+        },
+      },
+    }}>
+      {children}
+    </Box>
+  ),
+  ol: ({ children }) => (
+    <Box component="ol" sx={{
+      pl: 0,
+      mb: 3.5,
+      counterReset: 'item',
+      listStyle: 'none',
+      '& > li': {
+        position: 'relative',
+        pl: 4,
+        fontSize: { xs: '1.0625rem', md: '1.125rem' },
+        color: '#1f2937',
+        lineHeight: 1.85,
+        mb: 1.5,
+        counterIncrement: 'item',
+        '&::before': {
+          content: 'counter(item)',
+          position: 'absolute',
+          left: 0,
+          top: '0.15em',
+          width: 26,
+          height: 26,
+          borderRadius: '50%',
+          backgroundColor: '#085946',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '0.8125rem',
+          fontWeight: 700,
+        },
+      },
+    }}>
+      {children}
+    </Box>
+  ),
   li: ({ children }) => <li>{children}</li>,
   strong: ({ children }) => <Box component="strong" sx={{ fontWeight: 700, color: '#0f1923' }}>{children}</Box>,
   em: ({ children }) => <Box component="em" sx={{ fontStyle: 'italic' }}>{children}</Box>,
@@ -100,19 +176,56 @@ const MD_COMPONENTS = {
         <code>{children}</code>
       </Box>
     ),
-  hr: () => <Box sx={{ height: 1, bgcolor: '#e5e7eb', my: 4 }} />,
-  table: ({ children }) => (
-    <Box sx={{ overflowX: 'auto', my: 3 }}>
-      <Box component="table" sx={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.9375rem' }}>{children}</Box>
+  hr: () => (
+    <Box sx={{
+      my: 5,
+      display: 'flex',
+      justifyContent: 'center',
+      '&::before, &::after': {
+        content: '""',
+        flex: 1,
+        height: 1,
+        backgroundColor: '#e5e7eb',
+        alignSelf: 'center',
+      },
+      '&::after': { ml: 2 },
+      '&::before': { mr: 2 },
+    }}>
+      <Box sx={{ color: '#6ee7c8', fontSize: '1.5rem', lineHeight: 1 }}>◆</Box>
     </Box>
   ),
-  thead: ({ children }) => <Box component="thead" sx={{ bgcolor: '#f3f4f6' }}>{children}</Box>,
+  table: ({ children }) => (
+    <Box sx={{ overflowX: 'auto', my: 4, borderRadius: 2, border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+      <Box component="table" sx={{ borderCollapse: 'collapse', width: '100%', fontSize: { xs: '0.9375rem', md: '1rem' } }}>{children}</Box>
+    </Box>
+  ),
+  thead: ({ children }) => <Box component="thead" sx={{ bgcolor: '#085946', '& th': { color: '#fff !important' } }}>{children}</Box>,
   tbody: ({ children }) => <Box component="tbody">{children}</Box>,
-  tr: ({ children }) => <Box component="tr" sx={{ borderBottom: '1px solid #e5e7eb' }}>{children}</Box>,
-  th: ({ children }) => <Box component="th" sx={{ textAlign: 'left', fontWeight: 700, color: '#0f1923', p: 1.25, borderBottom: '2px solid #d1d5db' }}>{children}</Box>,
-  td: ({ children }) => <Box component="td" sx={{ p: 1.25, color: '#374151' }}>{children}</Box>,
+  tr: ({ children }) => <Box component="tr" sx={{ borderBottom: '1px solid #e5e7eb', '&:last-child': { borderBottom: 'none' }, '&:nth-of-type(even)': { backgroundColor: '#f9fafb' } }}>{children}</Box>,
+  th: ({ children }) => <Box component="th" sx={{ textAlign: 'left', fontWeight: 700, p: 1.75 }}>{children}</Box>,
+  td: ({ children }) => <Box component="td" sx={{ p: 1.75, color: '#1f2937', lineHeight: 1.6 }}>{children}</Box>,
   img: ({ src, alt }) => (
-    <Box component="img" src={src} alt={alt || ''} loading="lazy" decoding="async" sx={{ maxWidth: '100%', height: 'auto', borderRadius: 2, my: 3, display: 'block' }} />
+    <Box sx={{ my: 4.5 }}>
+      <Box
+        component="img"
+        src={src}
+        alt={alt || ''}
+        loading="lazy"
+        decoding="async"
+        sx={{
+          width: '100%',
+          height: 'auto',
+          borderRadius: 3,
+          display: 'block',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+        }}
+      />
+      {alt && (
+        <Typography sx={{ fontSize: '0.875rem', color: '#6b7280', fontStyle: 'italic', textAlign: 'center', mt: 1.5 }}>
+          {alt}
+        </Typography>
+      )}
+    </Box>
   ),
 };
 

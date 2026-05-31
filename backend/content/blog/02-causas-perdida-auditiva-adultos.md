@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: null
+coverUrl: https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1600&q=80
 ---
 
 La pérdida auditiva en adultos rara vez aparece de un día para otro. Casi siempre es un proceso lento que se confunde con "los demás hablan bajito" o "el televisor ya no suena igual". Cuando finalmente se busca ayuda, han pasado en promedio **siete años** desde el primer síntoma. Siete años de esfuerzo, malentendidos en el trabajo y aislamiento familiar evitable.

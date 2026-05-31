@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: null
+coverUrl: https://images.unsplash.com/photo-1584516150909-c43483ee7932?w=1600&q=80
 ---
 
 Casi todos crecimos con la misma rutina: después de la ducha, un cotonete en cada oído. Se siente bien, parece higiénico, y la abuela lo hacía. El problema es que esa costumbre tan arraigada es, según todos los especialistas en oído del mundo, **una de las peores cosas que puedes hacerle a tus oídos**. Y no es exageración de médicos: es la causa número uno de tapones de cerumen, irritaciones e incluso perforaciones de tímpano.

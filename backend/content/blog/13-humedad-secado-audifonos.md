@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: null
+coverUrl: https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=1600&q=80
 ---
 
 Si vives en Cartagena, Barranquilla, Cali, Bucaramanga, Pereira o cualquier ciudad con clima cálido y húmedo, hay un enemigo invisible que está deteriorando tus audífonos más rápido de lo que crees: la humedad. Aunque tus oídos no se mojen, aunque no sudes mucho, los componentes electrónicos del audífono están expuestos cada día a humedad ambiental que poco a poco corroe contactos, oxida circuitos y satura micrófonos.
