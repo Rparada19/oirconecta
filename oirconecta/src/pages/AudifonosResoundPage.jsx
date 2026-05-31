@@ -126,7 +126,7 @@ const AudifonosResoundPage = () => {
                   sx={{ borderRadius: '14px', fontWeight: 800, px: 3.5, py: 1.75, fontSize: '1rem',
                     bgcolor: '#fff', color: '#085946',
                     boxShadow: '0 8px 28px rgba(0,0,0,0.20)',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)', boxShadow: '0 12px 36px rgba(0,0,0,0.28)' },
+                    '&:hover': { background: 'rgba(255,255,255,0.92) !important', transform: 'translateY(-2px)', boxShadow: '0 12px 36px rgba(0,0,0,0.28)' },
                     transition: 'all 0.25s ease' }}>
                   Solicitar cita
                 </Button>
@@ -320,7 +320,7 @@ const AudifonosResoundPage = () => {
               sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75,
                 bgcolor: '#fff', color: '#085946',
                 boxShadow: '0 8px 28px rgba(0,0,0,0.25)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)' },
+                '&:hover': { background: 'rgba(255,255,255,0.92) !important', transform: 'translateY(-2px)' },
                 transition: 'all 0.25s ease' }}>
               Agendar valoración
             </Button>

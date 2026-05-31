@@ -82,7 +82,7 @@ const ImplantesAdvancedBionicsPage = () => {
               <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, mb: 4, maxWidth: 480 }}>{BRAND.descripcion}</Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button variant="contained" size="large" endIcon={<ArrowForward />} onClick={() => navigate('/agendar')}
-                  sx={{ borderRadius: '14px', fontWeight: 800, px: 3.5, py: 1.75, bgcolor: '#fff', color: '#272F50', boxShadow: '0 8px 28px rgba(0,0,0,0.20)', '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)' }, transition: 'all 0.25s ease' }}>
+                  sx={{ borderRadius: '14px', fontWeight: 800, px: 3.5, py: 1.75, bgcolor: '#fff', color: '#272F50', boxShadow: '0 8px 28px rgba(0,0,0,0.20)', '&:hover': { background: 'rgba(255,255,255,0.92) !important', transform: 'translateY(-2px)' }, transition: 'all 0.25s ease' }}>
                   Solicitar cita
                 </Button>
                 <Button variant="outlined" size="large" onClick={() => navigate('/implantes')}
@@ -179,7 +179,7 @@ const ImplantesAdvancedBionicsPage = () => {
           </Typography>
           <Typography sx={{ fontSize: '1.125rem', color: 'rgba(255,255,255,0.78)', mb: 5, maxWidth: 500, mx: 'auto', lineHeight: 1.65 }}>Un especialista de la red te orienta sobre los implantes Advanced Bionics más adecuados para tu caso.</Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
-            <Button variant="contained" size="large" endIcon={<ArrowForward />} onClick={() => navigate('/agendar')} sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75, bgcolor: '#fff', color: '#272F50', boxShadow: '0 8px 28px rgba(0,0,0,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)' }, transition: 'all 0.25s ease' }}>Agendar valoración</Button>
+            <Button variant="contained" size="large" endIcon={<ArrowForward />} onClick={() => navigate('/agendar')} sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75, bgcolor: '#fff', color: '#272F50', boxShadow: '0 8px 28px rgba(0,0,0,0.25)', '&:hover': { background: 'rgba(255,255,255,0.92) !important', transform: 'translateY(-2px)' }, transition: 'all 0.25s ease' }}>Agendar valoración</Button>
             <Button variant="outlined" size="large" onClick={() => navigate('/implantes')} sx={{ borderRadius: '14px', fontWeight: 700, px: 4, py: 1.625, borderColor: 'rgba(255,255,255,0.40)', color: '#fff', '&:hover': { borderColor: 'rgba(255,255,255,0.70)', bgcolor: 'rgba(255,255,255,0.08)' } }}>Ver más implantes</Button>
           </Stack>
         </Container>
