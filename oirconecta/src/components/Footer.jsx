@@ -52,44 +52,60 @@ const Footer = () => (
   <footer role="contentinfo">
     <Box
       sx={{
-        background:
-          'radial-gradient(ellipse 80% 60% at 10% 110%, rgba(13,122,92,0.30) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #085946 0%, #0d6b56 30%, #272F50 70%, #1a1f38 100%)',
+        background: 'linear-gradient(180deg, #272F50 0%, #1a1f38 100%)',
         color: '#fff',
         pt: { xs: 8, md: 10 },
         pb: 0,
         position: 'relative',
         overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute', inset: 0,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          pointerEvents: 'none',
-        },
       }}
     >
+      {/* Blob decorativo verde sutil */}
+      <Box sx={{
+        position: 'absolute', top: -100, right: -100,
+        width: 360, height: 360, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(8,89,70,0.18) 0%, transparent 70%)',
+        filter: 'blur(60px)', pointerEvents: 'none',
+      }} />
+      {/* Blob ocre */}
+      <Box sx={{
+        position: 'absolute', bottom: 80, left: -80,
+        width: 280, height: 280, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(201,168,106,0.12) 0%, transparent 70%)',
+        filter: 'blur(60px)', pointerEvents: 'none',
+      }} />
+
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         {/* Franja de suscripción al boletín */}
         <Box
           sx={{
-            mb: { xs: 5, md: 6 },
-            p: { xs: 2.5, md: 3 },
-            borderRadius: 3,
+            mb: { xs: 5, md: 7 },
+            p: { xs: 3, md: 4 },
+            borderRadius: '10px',
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
             alignItems: { xs: 'flex-start', md: 'center' },
             justifyContent: 'space-between',
-            gap: { xs: 2, md: 4 },
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            backdropFilter: 'blur(6px)',
+            gap: { xs: 2.5, md: 4 },
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.10)',
           }}
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 800, fontSize: { xs: 17, md: 19 }, color: '#fff', mb: 0.25 }}>
+            <Typography sx={{
+              fontFamily: '"Playfair Display", Georgia, serif',
+              fontWeight: 600,
+              fontSize: { xs: '1.375rem', md: '1.625rem' },
+              color: '#fff', mb: 0.5,
+              letterSpacing: '-0.01em',
+            }}>
               Suscríbete a nuestro boletín
             </Typography>
-            <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 13.5 }}>
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              color: 'rgba(255,255,255,0.65)',
+              fontSize: '0.9375rem',
+            }}>
               Salud auditiva cada 15 días, en lenguaje claro. Sin spam.
             </Typography>
           </Box>
@@ -108,10 +124,28 @@ const Footer = () => (
         <Grid container spacing={{ xs: 4, md: 6 }}>
           {/* Brand column */}
           <Grid item xs={12} md={4}>
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: 2.5 }}>
               <img src="/logo-oirconecta-blanco.png" alt="OírConecta" style={{ height: 44 }} />
             </Box>
-            <Typography sx={{ color: 'rgba(255,255,255,0.68)', lineHeight: 1.7, fontSize: '0.9375rem', mb: 3.5, maxWidth: 320 }}>
+            <Typography sx={{
+              fontFamily: '"Playfair Display", Georgia, serif',
+              fontStyle: 'italic',
+              fontSize: '1rem',
+              color: '#C9A86A',
+              mb: 2.5,
+              fontWeight: 400,
+              letterSpacing: '0.02em',
+            }}>
+              Escucha. Conecta. Vive mejor.
+            </Typography>
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              color: 'rgba(255,255,255,0.65)',
+              lineHeight: 1.7,
+              fontSize: '0.9375rem',
+              mb: 3.5,
+              maxWidth: 340,
+            }}>
               Referencia de valores, educación, ayuda para ubicar al profesional adecuado y acompañamiento en decisiones de salud auditiva.
             </Typography>
 
@@ -127,17 +161,17 @@ const Footer = () => (
                   aria-label={s.label}
                   size="small"
                   sx={{
-                    color: 'rgba(255,255,255,0.55)',
-                    background: 'rgba(255,255,255,0.08)',
+                    color: 'rgba(255,255,255,0.60)',
+                    background: 'rgba(255,255,255,0.06)',
                     border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '10px',
-                    width: 38, height: 38,
-                    transition: 'all 0.2s ease',
+                    borderRadius: '6px',
+                    width: 40, height: 40,
+                    transition: 'all 0.25s ease',
                     '&:hover': {
-                      color: '#fff',
-                      background: 'rgba(255,255,255,0.16)',
-                      border: '1px solid rgba(255,255,255,0.25)',
-                      transform: 'translateY(-2px)',
+                      color: '#272F50',
+                      background: '#C9A86A',
+                      border: '1px solid #C9A86A',
+                      transform: 'translateY(-3px)',
                     },
                   }}
                 >
@@ -155,7 +189,7 @@ const Footer = () => (
             <Grid item xs={6} sm={4} md={2} key={s.title}>
               <Typography
                 sx={{
-                  fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.10em',
+                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
                   textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)',
                   mb: 2.5,
                 }}
@@ -189,7 +223,7 @@ const Footer = () => (
           <Grid item xs={12} sm={6} md={2}>
             <Typography
               sx={{
-                fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.10em',
+                fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
                 textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)',
                 mb: 2.5,
               }}
