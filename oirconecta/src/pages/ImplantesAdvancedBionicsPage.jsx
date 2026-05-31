@@ -13,7 +13,7 @@ const BRAND = {
   eslogan: 'HiRes™ & Marvel Technology',
   descripcion: 'Advanced Bionics ofrece procesadores de sonido de vanguardia con tecnología HiRes™ para una audición clara en entornos complejos. Cada sistema se adapta a las necesidades únicas de cada usuario.',
   rating: '4.8',
-  gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
+  gradient: 'linear-gradient(135deg, #272F50 0%, #003DA5 100%)',
   glow: 'rgba(39,47,80,0.40)',
 };
 
@@ -26,7 +26,7 @@ const productos = [
 
 const tecnologias = [
   { icon: Hearing, titulo: 'HiRes™ Ultra 3D', descripcion: 'La mayor resolución de sonido disponible en implantes', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
-  { icon: Bluetooth, titulo: 'Marvel Technology', descripcion: 'Streaming directo desde cualquier dispositivo Bluetooth', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)' },
+  { icon: Bluetooth, titulo: 'Marvel Technology', descripcion: 'Streaming directo desde cualquier dispositivo Bluetooth', gradient: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)' },
   { icon: BatteryChargingFull, titulo: 'Energía inteligente', descripcion: 'Batería recargable con autonomía de todo el día', gradient: 'linear-gradient(135deg, #1a2744 0%, #272F50 100%)' },
   { icon: Smartphone, titulo: 'myPhonak App', descripcion: 'Control total desde tu smartphone en tiempo real', gradient: 'linear-gradient(135deg, #071628 0%, #085946 100%)' },
 ];

@@ -13,8 +13,8 @@ const BRAND = {
   eslogan: 'Calidad y conectividad',
   descripcion: 'Audífonos con tecnología de procesamiento avanzado, recargables y conectividad total para una experiencia auditiva personalizada. Rexton combina diseño elegante con potencia auditiva para cada estilo de vida.',
   rating: '4.7',
-  gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-  glow: 'rgba(8,89,70,0.40)',
+  gradient: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
+  glow: 'rgba(240,180,0,0.40)',
 };
 
 const productos = [
@@ -42,10 +42,10 @@ const productos = [
 ];
 
 const tecnologias = [
-  { icon: Hearing, titulo: 'Nexus AI', descripcion: 'Procesamiento avanzado para audición clara y natural', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a todos tus dispositivos', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Batería Recargable', descripcion: 'Comodidad sin pilas, siempre listo para usar', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
-  { icon: Smartphone, titulo: 'App Rexton Smart', descripcion: 'Control personalizado de tus audífonos desde el móvil', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
+  { icon: Hearing, titulo: 'Nexus AI', descripcion: 'Procesamiento avanzado para audición clara y natural', gradient: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a todos tus dispositivos', gradient: 'linear-gradient(135deg, #272F50 0%, #F0B400 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Batería Recargable', descripcion: 'Comodidad sin pilas, siempre listo para usar', gradient: 'linear-gradient(135deg, #F0B400AA 0%, #272F50 100%)' },
+  { icon: Smartphone, titulo: 'App Rexton Smart', descripcion: 'Control personalizado de tus audífonos desde el móvil', gradient: 'linear-gradient(135deg, #F0B400 0%, #272F50DD 100%)' },
 ];
 
 const AudifonosRextonPage = () => {
@@ -73,7 +73,7 @@ const AudifonosRextonPage = () => {
         background:
           'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.45) 0%, transparent 55%),' +
           'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #063c2c 0%, #085946 35%, #1a2240 70%, #272F50 100%)',
+          'linear-gradient(160deg, #604800 0%, #F0B400 30%, #272F50 75%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}

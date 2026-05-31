@@ -13,7 +13,7 @@ const BRAND = {
   eslogan: 'BrainHearing™',
   descripcion: 'La experiencia auditiva debe tener en cuenta cada necesidad única. Descubre una audición más natural y clara con nuestros audífonos inteligentes diseñados para trabajar con tu cerebro.',
   rating: '4.7',
-  gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
+  gradient: 'linear-gradient(135deg, #272F50 0%, #6E2585 100%)',
   glow: 'rgba(39,47,80,0.40)',
 };
 
@@ -25,9 +25,9 @@ const productos = [
 
 const tecnologias = [
   { icon: Psychology, titulo: 'BrainHearing™', descripcion: 'Tecnología que imita el procesamiento natural del cerebro', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth 5.0 y streaming directo', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Batería Inteligente', descripcion: 'Hasta 24 horas de uso continuo', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
-  { icon: Smartphone, titulo: 'App Oticon ON', descripcion: 'Control personalizado desde tu móvil', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth 5.0 y streaming directo', gradient: 'linear-gradient(135deg, #6E2585 0%, #272F50 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Batería Inteligente', descripcion: 'Hasta 24 horas de uso continuo', gradient: 'linear-gradient(135deg, #6E2585AA 0%, #272F50 100%)' },
+  { icon: Smartphone, titulo: 'App Oticon ON', descripcion: 'Control personalizado desde tu móvil', gradient: 'linear-gradient(135deg, #6E2585 0%, #272F50DD 100%)' },
 ];
 
 const AudifonosOticonPage = () => {

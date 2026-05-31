@@ -25,8 +25,8 @@ const productos = [
 
 const tecnologias = [
   { icon: AutoAwesome, titulo: 'AutoSense Sky™', descripcion: 'Tecnología de reconocimiento automático de entornos', gradient: 'linear-gradient(135deg, #1a2744 0%, #085946 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth 5.0 y streaming directo', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Batería Inteligente', descripcion: 'Hasta 30 horas de uso continuo', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth 5.0 y streaming directo', gradient: 'linear-gradient(135deg, #008C45 0%, #00382B 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Batería Inteligente', descripcion: 'Hasta 30 horas de uso continuo', gradient: 'linear-gradient(135deg, #008C45AA 0%, #00382B 100%)' },
   { icon: Smartphone, titulo: 'App myPhonak', descripcion: 'Control personalizado desde tu móvil', gradient: 'linear-gradient(135deg, #085946 0%, #1a2744 100%)' },
 ];
 

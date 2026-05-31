@@ -91,7 +91,7 @@ const tecnologias = [
     icon: Smartphone,
     titulo: 'App Nucleus Smart',
     descripcion: 'Control, ajuste y monitoreo del implante desde tu teléfono',
-    gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+    gradient: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
   },
 ];
 

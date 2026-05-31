@@ -13,7 +13,7 @@ const BRAND = {
   eslogan: 'Speech Variable Processing™',
   descripcion: 'Audífonos con tecnología SoundDNA™, recargables y conectividad total para una experiencia auditiva personalizada. Trek, Cheer y app SoundLink 2 para cada necesidad auditiva.',
   rating: '4.7',
-  gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
+  gradient: 'linear-gradient(135deg, #272F50 0%, #2D2D2D 100%)',
   glow: 'rgba(39,47,80,0.40)',
 };
 
@@ -25,7 +25,7 @@ const productos = [
 
 const tecnologias = [
   { icon: Hearing, titulo: 'SoundDNA™', descripcion: 'Tecnología de procesamiento de sonido natural sin distorsión', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a cualquier dispositivo', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a cualquier dispositivo', gradient: 'linear-gradient(135deg, #2D2D2D 0%, #272F50DD 100%)' },
   { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería recargable y resistente al agua IP68', gradient: 'linear-gradient(135deg, #272F50 0%, #71A095 100%)' },
   { icon: Smartphone, titulo: 'App SoundLink 2', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #085946 0%, #71A095 100%)' },
 ];

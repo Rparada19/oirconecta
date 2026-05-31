@@ -13,7 +13,7 @@ const BRAND = {
   eslogan: 'IA en salud auditiva',
   descripcion: 'Starkey integra inteligencia artificial, conectividad y diseño para que vivas cada momento con claridad y confianza. Evolv AI, Livio y app Thrive para cada necesidad auditiva.',
   rating: '4.8',
-  gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)',
+  gradient: 'linear-gradient(135deg, #F0B400AA 0%, #003DA5 100%)',
   glow: 'rgba(113,160,149,0.40)',
 };
 
@@ -44,8 +44,8 @@ const productos = [
 const tecnologias = [
   { icon: Hearing, titulo: 'Evolv AI', descripcion: 'Inteligencia artificial para una audición más natural y precisa', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
   { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo con todos los dispositivos', gradient: 'linear-gradient(135deg, #085946 0%, #71A095 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería de larga duración resistente al agua', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
-  { icon: Smartphone, titulo: 'App Thrive', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería de larga duración resistente al agua', gradient: 'linear-gradient(135deg, #003DA5 0%, #F0B400 100%)' },
+  { icon: Smartphone, titulo: 'App Thrive', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #F0B400 0%, #003DA5DD 100%)' },
 ];
 
 const AudifonosStarkeyPage = () => {

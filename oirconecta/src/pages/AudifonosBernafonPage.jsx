@@ -14,7 +14,7 @@ const BRAND = {
   descripcion: 'Audífonos con tecnología Hybrid Technology™, recargables y conectividad total para una experiencia auditiva personalizada. Bernafon combina precisión suiza con sonido natural para cada momento de tu vida.',
   rating: '4.8',
   gradient: 'linear-gradient(135deg, #085946 0%, #1a2744 100%)',
-  glow: 'rgba(8,89,70,0.40)',
+  glow: 'rgba(201,52,43,0.40)',
 };
 
 const productos = [

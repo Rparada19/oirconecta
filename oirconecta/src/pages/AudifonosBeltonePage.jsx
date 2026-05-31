@@ -44,8 +44,8 @@ const productos = [
 const tecnologias = [
   { icon: Hearing, titulo: 'Evoke AI', descripcion: 'Aprendizaje automático para una audición más natural y adaptable', gradient: 'linear-gradient(135deg, #272F50 0%, #71A095 100%)' },
   { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo con todos los dispositivos', gradient: 'linear-gradient(135deg, #71A095 0%, #272F50 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería de larga duración resistente al agua', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
-  { icon: Smartphone, titulo: 'HearMax App', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería de larga duración resistente al agua', gradient: 'linear-gradient(135deg, #2E7D32 0%, #00382BDD 100%)' },
+  { icon: Smartphone, titulo: 'HearMax App', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #00382B 0%, #2E7D32 100%)' },
 ];
 
 const AudifonosBeltonePage = () => {

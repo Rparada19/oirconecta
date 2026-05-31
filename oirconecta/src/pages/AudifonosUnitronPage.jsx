@@ -27,7 +27,7 @@ const tecnologias = [
   { icon: Hearing, titulo: 'Flex:trial™', descripcion: 'Tecnología única para probar antes de comprar tu audífono', gradient: 'linear-gradient(135deg, #1a2744 0%, #71A095 100%)' },
   { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a cualquier dispositivo', gradient: 'linear-gradient(135deg, #71A095 0%, #1a2744 100%)' },
   { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería recargable y resistente al agua IP68', gradient: 'linear-gradient(135deg, #1a2744 0%, #085946 100%)' },
-  { icon: Smartphone, titulo: 'App Remote Plus', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
+  { icon: Smartphone, titulo: 'App Remote Plus', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #0066B2AA 0%, #272F50 100%)' },
 ];
 
 const AudifonosUnitronPage = () => {

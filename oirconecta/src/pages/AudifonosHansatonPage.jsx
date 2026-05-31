@@ -26,8 +26,8 @@ const productos = [
 const tecnologias = [
   { icon: Hearing, titulo: 'Sonido 3D', descripcion: 'Tecnología de procesamiento de sonido 3D para mejor audición', gradient: 'linear-gradient(135deg, #71A095 0%, #272F50 100%)' },
   { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a cualquier dispositivo', gradient: 'linear-gradient(135deg, #272F50 0%, #71A095 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería recargable y resistente al agua IP68', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
-  { icon: Smartphone, titulo: 'App Stream Remote', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería recargable y resistente al agua IP68', gradient: 'linear-gradient(135deg, #003DA5AA 0%, #272F50 100%)' },
+  { icon: Smartphone, titulo: 'App Stream Remote', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #272F50 0%, #003DA5 100%)' },
 ];
 
 const AudifonosHansatonPage = () => {

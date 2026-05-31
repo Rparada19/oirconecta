@@ -13,8 +13,8 @@ const BRAND = {
   eslogan: 'Claridad europea',
   descripcion: 'Audífonos con tecnología de procesamiento avanzado, recargables y conectividad total para una experiencia auditiva personalizada. Audio Service integra precisión europea con innovación auditiva.',
   rating: '4.7',
-  gradient: 'linear-gradient(135deg, #1a3d4a 0%, #272F50 100%)',
-  glow: 'rgba(26,61,74,0.40)',
+  gradient: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)',
+  glow: 'rgba(252,211,3,0.40)',
 };
 
 const productos = [
@@ -42,9 +42,9 @@ const productos = [
 ];
 
 const tecnologias = [
-  { icon: Hearing, titulo: 'Nexus AI', descripcion: 'Procesamiento avanzado para audición clara y natural', gradient: 'linear-gradient(135deg, #1a3d4a 0%, #272F50 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a todos tus dispositivos', gradient: 'linear-gradient(135deg, #272F50 0%, #1a3d4a 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Batería Recargable', descripcion: 'Comodidad sin pilas, siempre listo para usar', gradient: 'linear-gradient(135deg, #3a5f70 0%, #272F50 100%)' },
+  { icon: Hearing, titulo: 'Nexus AI', descripcion: 'Procesamiento avanzado para audición clara y natural', gradient: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a todos tus dispositivos', gradient: 'linear-gradient(135deg, #272F50 0%, #FCD303 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Batería Recargable', descripcion: 'Comodidad sin pilas, siempre listo para usar', gradient: 'linear-gradient(135deg, #FCD303AA 0%, #272F50 100%)' },
   { icon: Smartphone, titulo: 'App Smart', descripcion: 'Control personalizado de tus audífonos desde el móvil', gradient: 'linear-gradient(135deg, #1a3d4a 0%, #1e2a5e 100%)' },
 ];
 
@@ -189,7 +189,7 @@ const AudifonosAudioservicePage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Línea de{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #1a3d4a 0%, #272F50 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 productos
               </Box>
@@ -264,7 +264,7 @@ const AudifonosAudioservicePage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Tecnología{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #1a3d4a 0%, #272F50 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 avanzada
               </Box>

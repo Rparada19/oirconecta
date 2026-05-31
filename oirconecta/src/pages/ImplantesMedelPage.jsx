@@ -91,7 +91,7 @@ const tecnologias = [
     icon: Smartphone,
     titulo: 'App AudioKey 2',
     descripcion: 'Control total del procesador y ajuste personalizado desde el móvil',
-    gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+    gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
   },
 ];
 

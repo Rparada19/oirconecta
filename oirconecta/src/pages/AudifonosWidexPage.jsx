@@ -13,8 +13,8 @@ const BRAND = {
   eslogan: 'Tecnología PureSound™',
   descripcion: 'Su pérdida auditiva es tan única como su huella digital. Con la ayuda de un profesional de la audición, puede encontrar un audífono que se adapte a su audición, a su vida y a su estilo.',
   rating: '4.8',
-  gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-  glow: 'rgba(8,89,70,0.40)',
+  gradient: 'linear-gradient(135deg, #1A1A1A 0%, #272F50 100%)',
+  glow: 'rgba(26,26,26,0.40)',
 };
 
 const productos = [
@@ -25,10 +25,10 @@ const productos = [
 ];
 
 const tecnologias = [
-  { icon: Hearing, titulo: 'PureSound™', descripcion: 'Tecnología de sonido natural sin distorsión', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth 5.0 y streaming directo', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Batería Inteligente', descripcion: 'Hasta 30 horas de uso continuo', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
-  { icon: Smartphone, titulo: 'App Avanzada', descripcion: 'Control personalizado desde tu móvil', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
+  { icon: Hearing, titulo: 'PureSound™', descripcion: 'Tecnología de sonido natural sin distorsión', gradient: 'linear-gradient(135deg, #1A1A1A 0%, #272F50 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth 5.0 y streaming directo', gradient: 'linear-gradient(135deg, #272F50 0%, #1A1A1A 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Batería Inteligente', descripcion: 'Hasta 30 horas de uso continuo', gradient: 'linear-gradient(135deg, #1A1A1AAA 0%, #272F50 100%)' },
+  { icon: Smartphone, titulo: 'App Avanzada', descripcion: 'Control personalizado desde tu móvil', gradient: 'linear-gradient(135deg, #1A1A1A 0%, #272F50DD 100%)' },
 ];
 
 const AudifonosWidexPage = () => {
@@ -56,7 +56,7 @@ const AudifonosWidexPage = () => {
         background:
           'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.45) 0%, transparent 55%),' +
           'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #063c2c 0%, #085946 35%, #1a2240 70%, #272F50 100%)',
+          'linear-gradient(160deg, #0a0a0a 0%, #1A1A1A 30%, #272F50 75%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}

@@ -13,8 +13,8 @@ const BRAND = {
   eslogan: 'Smart Hearing™',
   descripcion: 'ReSound combina innovación, conectividad y personalización para que vivas cada momento con claridad y confianza. Tecnología M&RIE, recargables y app Smart 3D para cada necesidad auditiva.',
   rating: '4.7',
-  gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)',
-  glow: 'rgba(8,89,70,0.40)',
+  gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50DD 100%)',
+  glow: 'rgba(201,52,43,0.40)',
 };
 
 const productos = [
@@ -43,8 +43,8 @@ const productos = [
 
 const tecnologias = [
   { icon: Hearing, titulo: 'M&RIE', descripcion: 'Micrófono en el oído para sonido natural y personalizado', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo con todos los dispositivos', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería de larga duración resistente al agua', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo con todos los dispositivos', gradient: 'linear-gradient(135deg, #272F50 0%, #C9342B 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería de larga duración resistente al agua', gradient: 'linear-gradient(135deg, #C9342BAA 0%, #272F50 100%)' },
   { icon: Smartphone, titulo: 'Smart 3D App', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #085946 0%, #71A095 100%)' },
 ];
 

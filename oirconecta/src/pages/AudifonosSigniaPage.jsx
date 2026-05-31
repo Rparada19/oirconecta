@@ -25,7 +25,7 @@ const productos = [
 
 const tecnologias = [
   { icon: RecordVoiceOver, titulo: 'Own Voice Processing™', descripcion: 'Tu propia voz suena completamente natural', gradient: 'linear-gradient(135deg, #0a4d3c 0%, #71A095 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo desde cualquier dispositivo', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo desde cualquier dispositivo', gradient: 'linear-gradient(135deg, #DC143C 0%, #272F50 100%)' },
   { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Carga rápida con autonomía extendida todo el día', gradient: 'linear-gradient(135deg, #71A095 0%, #0a4d3c 100%)' },
   { icon: Smartphone, titulo: 'App Signia', descripcion: 'Control total y personalización desde tu móvil', gradient: 'linear-gradient(135deg, #0a4d3c 0%, #272F50 100%)' },
 ];
