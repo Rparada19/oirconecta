@@ -9,10 +9,10 @@ tags:
   - prevención auditiva
   - salud auditiva
   - factores de riesgo
-estado: BORRADOR
+estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
-publishedAt: null
+publishedAt: '2026-05-31T14:30:11Z'
 coverUrl: null
 ---
 
