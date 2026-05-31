@@ -160,13 +160,13 @@ const AudifonosWidexPage = () => {
         {/* Wave bottom */}
         <Box sx={{ position: 'relative', mt: { xs: 6, md: 8 }, lineHeight: 0, flexShrink: 0 }}>
           <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', width: '100%' }}>
-            <path d="M0 80L48 66C96 53 192 26 288 20C384 13 480 26 576 33C672 40 768 40 864 33C960 26 1056 13 1152 13C1248 13 1344 26 1392 33L1440 40V80H0Z" fill="#f4f9f7"/>
+            <path d="M0 80L48 66C96 53 192 26 288 20C384 13 480 26 576 33C672 40 768 40 864 33C960 26 1056 13 1152 13C1248 13 1344 26 1392 33L1440 40V80H0Z" fill="#FBFAF8"/>
           </svg>
         </Box>
       </Box>
 
       {/* ── PRODUCTOS ── */}
-      <Box sx={{ py: { xs: 5, md: 8 }, bgcolor: '#f4f9f7' }}>
+      <Box sx={{ py: { xs: 5, md: 8 }, bgcolor: '#FBFAF8' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
