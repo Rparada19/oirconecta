@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet';
 import {
   Box,
   Container,
@@ -69,6 +70,14 @@ export default function RegistroProfesionalPage() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Helmet>
+        <title>Registro de profesionales | OírConecta</title>
+        <meta name="description" content="Únete a la red de profesionales auditivos de OírConecta. Audiólogos, otorrinolaringólogos y fonoaudiólogos: registra tu perfil y recibe pacientes." />
+        <link rel="canonical" href="https://oirconecta.com/registro-profesional" />
+        <meta property="og:title" content="Registro de profesionales | OírConecta" />
+        <meta property="og:description" content="Únete a la red de profesionales auditivos de OírConecta." />
+        <meta property="og:url" content="https://oirconecta.com/registro-profesional" />
+      </Helmet>
       <Header />
       <Box sx={{ flex: 1, pt: { xs: 12, md: 14 }, pb: 6, bgcolor: 'grey.50' }}>
         <Container maxWidth="sm">

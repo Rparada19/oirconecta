@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { Box, Container, Typography, Chip, Stack, Button, CircularProgress, Divider } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -100,8 +101,21 @@ export default function BlogPostPage() {
   const catColor = CAT_COLOR[post?.categoria] || '#6b7280';
   const catLabel = CATEGORIAS[post?.categoria] || post?.categoria || '';
 
+  const seoTitle = post?.titulo ? `${post.titulo} | Blog OírConecta` : 'Blog OírConecta — Salud auditiva';
+  const seoDesc = post?.resumen || post?.descripcion || 'Artículos sobre audición, audífonos, prevención y bienestar auditivo en OírConecta.';
+  const seoSlug = post?.slug || slug || '';
+
   return (
     <Box component="main" sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDesc} />
+        <link rel="canonical" href={`https://oirconecta.com/blog/${seoSlug}`} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDesc} />
+        <meta property="og:url" content={`https://oirconecta.com/blog/${seoSlug}`} />
+      </Helmet>
       <Header />
 
       {loading ? (

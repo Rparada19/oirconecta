@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Helmet } from 'react-helmet';
 import { useSearchParams, Link as RouterLink } from 'react-router-dom';
 import {
   Box, Container, Typography, Grid, TextField, Button, Stack,
@@ -262,6 +263,14 @@ export default function AgendamientoPage() {
 
   return (
     <Box component="main" sx={{ bgcolor:'#f8fafc', minHeight:'100vh' }}>
+      <Helmet>
+        <title>Agenda tu cita auditiva | OírConecta</title>
+        <meta name="description" content="Agenda online tu valoración auditiva con profesionales certificados de la red OírConecta. Disponibilidad en tiempo real y confirmación inmediata." />
+        <link rel="canonical" href="https://oirconecta.com/agendar" />
+        <meta property="og:title" content="Agenda tu cita auditiva | OírConecta" />
+        <meta property="og:description" content="Agenda online tu valoración auditiva con profesionales certificados." />
+        <meta property="og:url" content="https://oirconecta.com/agendar" />
+      </Helmet>
       <Header />
 
       {/* Hero */}

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useSearchParams } from 'react-router-dom';
 import { FaStar, FaUserMd } from 'react-icons/fa';
 import Header from '../components/Header';
@@ -169,9 +170,17 @@ const OtologosPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Helmet>
+        <title>Otorrinolaringólogos en Colombia | Directorio OírConecta</title>
+        <meta name="description" content="Encuentra otorrinolaringólogos (otólogos) certificados en Colombia. Filtra por ciudad y subespecialidad. Perfiles verificados con datos de contacto." />
+        <link rel="canonical" href="https://oirconecta.com/profesionales/otologos" />
+        <meta property="og:title" content="Otorrinolaringólogos en Colombia | Directorio OírConecta" />
+        <meta property="og:description" content="Encuentra otólogos certificados en Colombia. Filtra por ciudad y subespecialidad." />
+        <meta property="og:url" content="https://oirconecta.com/profesionales/otologos" />
+      </Helmet>
       <Header />
       <div style={{ height: '80px' }}></div>
-      
+
       {/* Hero Section */}
       <div className="hero-header">
         <div className="hero-content">

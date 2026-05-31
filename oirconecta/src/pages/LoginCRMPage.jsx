@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, TextField, Button, Typography,
@@ -44,6 +45,11 @@ const LoginCRMPage = () => {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>Login CRM | OírConecta</title>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
     <Box
       sx={{
         minHeight: '100vh',
@@ -212,6 +218,7 @@ const LoginCRMPage = () => {
         </Box>
       </Box>
     </Box>
+    </>
   );
 };
 

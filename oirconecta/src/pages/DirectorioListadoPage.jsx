@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { Helmet } from 'react-helmet';
 import { useSearchParams, Link as RouterLink, useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Stack, Button, Breadcrumbs, Paper, CircularProgress } from '@mui/material';
 import NavigateNext from '@mui/icons-material/NavigateNext';
@@ -161,6 +162,14 @@ export default function DirectorioListadoPage() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f4f7f6' }}>
+      <Helmet>
+        <title>Directorio de profesionales auditivos en Colombia | OírConecta</title>
+        <meta name="description" content="Directorio completo de audiólogos, otorrinolaringólogos y fonoaudiólogos en Colombia. Filtra por ciudad, profesión y póliza. Perfiles verificados." />
+        <link rel="canonical" href="https://oirconecta.com/directorio/listado" />
+        <meta property="og:title" content="Directorio de profesionales auditivos en Colombia | OírConecta" />
+        <meta property="og:description" content="Audiólogos, otólogos y fonoaudiólogos en Colombia. Filtra por ciudad, profesión y póliza." />
+        <meta property="og:url" content="https://oirconecta.com/directorio/listado" />
+      </Helmet>
       <Header />
       <Box sx={{ height: 72 }} />
 

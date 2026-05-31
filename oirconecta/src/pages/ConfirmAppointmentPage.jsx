@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { useSearchParams, Link as RouterLink } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -30,6 +31,10 @@ export default function ConfirmAppointmentPage() {
 
   return (
     <>
+      <Helmet>
+        <title>Confirmar cita | OírConecta</title>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <Header />
       <Box sx={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2 }}>
         <Box sx={{ textAlign: 'center', maxWidth: 480 }}>

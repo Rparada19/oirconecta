@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { Helmet } from 'react-helmet';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -479,8 +480,22 @@ export default function DirectorioProfesionalPage() {
     setLeadError('');
   }, []);
 
+  const seoTitle = name ? `${name} | OírConecta` : 'Perfil profesional | OírConecta';
+  const seoDesc = profile
+    ? `Conoce a ${name}: experiencia, servicios, pólizas aceptadas y datos de contacto en el directorio de profesionales auditivos de OírConecta.`
+    : 'Perfil de profesional auditivo en el directorio OírConecta.';
+
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: DIR_BG.page }}>
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDesc} />
+        <link rel="canonical" href={`https://oirconecta.com/directorio/profesional/${profileId || ''}`} />
+        <meta property="og:type" content="profile" />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDesc} />
+        <meta property="og:url" content={`https://oirconecta.com/directorio/profesional/${profileId || ''}`} />
+      </Helmet>
       <Header />
       <Box sx={{ height: 72 }} />
 

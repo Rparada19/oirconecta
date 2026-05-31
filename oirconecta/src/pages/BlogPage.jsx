@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useSearchParams, Link as RouterLink } from 'react-router-dom';
 import {
   Box, Container, Typography, Grid, Card, CardContent, CardMedia,
@@ -179,6 +180,14 @@ export default function BlogPage() {
 
   return (
     <Box component="main" sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+      <Helmet>
+        <title>Blog OírConecta — Salud auditiva, audífonos y prevención</title>
+        <meta name="description" content="Artículos prácticos sobre audición, audífonos, implantes, prevención y bienestar auditivo. Información confiable de la red OírConecta." />
+        <link rel="canonical" href="https://oirconecta.com/blog" />
+        <meta property="og:title" content="Blog OírConecta — Salud auditiva, audífonos y prevención" />
+        <meta property="og:description" content="Artículos prácticos sobre audición, audífonos, implantes, prevención y bienestar auditivo." />
+        <meta property="og:url" content="https://oirconecta.com/blog" />
+      </Helmet>
       <NewsletterPopup source="blog-popup" />
       <Header />
 

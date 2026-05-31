@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -72,6 +73,11 @@ export default function LoginDirectorioPage() {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>Login profesionales | OírConecta</title>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
     <Box
       sx={{
         minHeight: '100vh',
@@ -194,5 +200,6 @@ export default function LoginDirectorioPage() {
         </Paper>
       </Container>
     </Box>
+    </>
   );
 }

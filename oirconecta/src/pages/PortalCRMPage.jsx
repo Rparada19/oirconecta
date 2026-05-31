@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet';
 import { Box, Container, Typography, Grid, Button, Chip, Avatar } from '@mui/material';
 import {
   Dashboard, CalendarToday, People, Settings, Assessment,
@@ -126,6 +127,11 @@ const PortalCRMPage = () => {
     .toUpperCase();
 
   return (
+    <>
+      <Helmet>
+        <title>Portal CRM | OírConecta</title>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
     <Box
       sx={{
         minHeight: '100vh',
@@ -402,6 +408,7 @@ const PortalCRMPage = () => {
         </Grid>
       </Container>
     </Box>
+    </>
   );
 };
 

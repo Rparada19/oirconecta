@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Helmet } from 'react-helmet';
 import { useSearchParams } from 'react-router-dom';
 import { FaStar, FaUserMd, FaUpload, FaFileExcel, FaDownload, FaTrash } from 'react-icons/fa';
 import Header from '../components/Header';
@@ -178,6 +179,14 @@ const AudiologasPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Helmet>
+        <title>Audiólogas en Colombia | Directorio OírConecta</title>
+        <meta name="description" content="Encuentra audiólogas y fonoaudiólogas certificadas en Colombia. Filtra por ciudad y especialidad. Perfiles verificados con reseñas y datos de contacto." />
+        <link rel="canonical" href="https://oirconecta.com/profesionales/audiologos" />
+        <meta property="og:title" content="Audiólogas en Colombia | Directorio OírConecta" />
+        <meta property="og:description" content="Encuentra audiólogas certificadas en Colombia. Filtra por ciudad y especialidad." />
+        <meta property="og:url" content="https://oirconecta.com/profesionales/audiologos" />
+      </Helmet>
       <Header />
       <div style={{ height: '80px' }}></div>
       

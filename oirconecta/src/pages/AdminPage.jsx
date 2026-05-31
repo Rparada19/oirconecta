@@ -104,6 +104,7 @@ const AdminPage = () => {
       <Helmet>
         <title>Administración - OirConecta</title>
         <meta name="description" content="Panel de administración para cargar datos de especialistas" />
+        <meta name="robots" content="noindex,nofollow" />
       </Helmet>
 
       <Header />

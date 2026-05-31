@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Helmet } from 'react-helmet';
 import { useSearchParams, Link as RouterLink } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -153,6 +154,10 @@ export default function RescheduleAppointmentPage() {
 
   return (
     <>
+      <Helmet>
+        <title>Reagendar cita | OírConecta</title>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <Header />
       <Box sx={{
         minHeight: '80vh',
