@@ -105,7 +105,7 @@ const ImplantesPage = () => {
           <Typography component="h1" sx={{ fontSize: { xs: '2.25rem', md: '3.5rem' }, fontWeight: 900,
             letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff', mb: 2.5 }}>
             Implantes{' '}
-            <Box component="span" sx={{ color: '#C9A86A' }}>
+            <Box component="span" sx={{ color: '#fff' }}>
               auditivos
             </Box>
           </Typography>

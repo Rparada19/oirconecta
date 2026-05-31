@@ -90,7 +90,7 @@ const AudifonosSigniaPage = () => {
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
                 letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Audífonos{' '}
-                <Box component="span" sx={{ color: '#C9A86A' }}>
+                <Box component="span" sx={{ color: '#fff' }}>
                   Signia
                 </Box>
               </Typography>
