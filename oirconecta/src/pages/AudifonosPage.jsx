@@ -158,8 +158,7 @@ const AudifonosPage = () => {
           <Typography component="h1" sx={{ fontSize: { xs: '2.25rem', md: '3.5rem' }, fontWeight: 900,
             letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff', mb: 2.5 }}>
             Audífonos en{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <Box component="span" sx={{ color: '#C9A86A' }}>
               la red
             </Box>
           </Typography>

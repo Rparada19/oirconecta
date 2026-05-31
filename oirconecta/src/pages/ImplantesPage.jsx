@@ -105,8 +105,7 @@ const ImplantesPage = () => {
           <Typography component="h1" sx={{ fontSize: { xs: '2.25rem', md: '3.5rem' }, fontWeight: 900,
             letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff', mb: 2.5 }}>
             Implantes{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <Box component="span" sx={{ color: '#C9A86A' }}>
               auditivos
             </Box>
           </Typography>
@@ -124,8 +123,7 @@ const ImplantesPage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.75rem', md: '2.25rem' }, letterSpacing: '-0.03em',
             textAlign: 'center', mb: 1, color: '#0f1923' }}>
             Marcas con las que{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <Box component="span" sx={{ color: '#C9A86A' }}>
               trabajamos
             </Box>
           </Typography>
@@ -199,8 +197,7 @@ const ImplantesPage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.75rem', md: '2.25rem' }, letterSpacing: '-0.03em',
             textAlign: 'center', mb: 1, color: '#0f1923' }}>
             Tipos de{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <Box component="span" sx={{ color: '#C9A86A' }}>
               soluciones
             </Box>
           </Typography>

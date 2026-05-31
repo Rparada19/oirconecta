@@ -108,8 +108,7 @@ const AudifonosAudioservicePage = () => {
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
                 letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Audífonos{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                <Box component="span" sx={{ color: '#C9A86A' }}>
                   Audio Service
                 </Box>
               </Typography>
@@ -184,8 +183,7 @@ const AudifonosAudioservicePage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Línea de{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              <Box component="span" sx={{ color: '#C9A86A' }}>
                 productos
               </Box>
             </Typography>
@@ -259,8 +257,7 @@ const AudifonosAudioservicePage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Tecnología{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              <Box component="span" sx={{ color: '#C9A86A' }}>
                 avanzada
               </Box>
             </Typography>
@@ -306,8 +303,7 @@ const AudifonosAudioservicePage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
             letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
             ¿Listo para escuchar{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <Box component="span" sx={{ color: '#C9A86A' }}>
               mejor?
             </Box>
           </Typography>

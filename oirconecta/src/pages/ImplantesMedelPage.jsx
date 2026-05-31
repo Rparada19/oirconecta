@@ -156,8 +156,7 @@ const ImplantesMedelPage = () => {
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
                 letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Implantes{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                <Box component="span" sx={{ color: '#C9A86A' }}>
                   MED-EL
                 </Box>
               </Typography>
@@ -232,8 +231,7 @@ const ImplantesMedelPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Sistemas{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              <Box component="span" sx={{ color: '#C9A86A' }}>
                 disponibles
               </Box>
             </Typography>
@@ -307,8 +305,7 @@ const ImplantesMedelPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Tecnología{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              <Box component="span" sx={{ color: '#C9A86A' }}>
                 exclusiva
               </Box>
             </Typography>
@@ -354,8 +351,7 @@ const ImplantesMedelPage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
             letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
             Da el paso hacia una{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <Box component="span" sx={{ color: '#C9A86A' }}>
               vida más plena
             </Box>
           </Typography>
