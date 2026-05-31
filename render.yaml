@@ -33,6 +33,23 @@ services:
       - key: VITE_API_URL
         value: https://oirconecta-api.onrender.com
     routes:
+      # Rutas heredadas del hack SEO en DreamHost: las enviamos al backend
+      # para que responda 410 Gone y Google las desindexe.
+      - type: rewrite
+        source: /items/*
+        destination: https://oirconecta-api.onrender.com/gone/items
+      - type: rewrite
+        source: /shop/*
+        destination: https://oirconecta-api.onrender.com/gone/shop
+      - type: rewrite
+        source: /wp-content/*
+        destination: https://oirconecta-api.onrender.com/gone/wp-content
+      - type: rewrite
+        source: /wp-includes/*
+        destination: https://oirconecta-api.onrender.com/gone/wp-includes
+      - type: rewrite
+        source: /wp-admin/*
+        destination: https://oirconecta-api.onrender.com/gone/wp-admin
       - type: rewrite
         source: /*
         destination: /index.html

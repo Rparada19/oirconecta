@@ -89,6 +89,13 @@ app.get('/', (req, res) => {
 // API routes
 app.use('/api', routes);
 
+// 410 Gone — rutas heredadas del hack SEO japonés en DreamHost.
+// Render rewrite envía aquí /items/*, /shop/*, etc. para que Google las desindexe.
+app.all('/gone/*', (req, res) => {
+  res.set('X-Robots-Tag', 'noindex');
+  res.status(410).type('text/plain').send('410 Gone');
+});
+
 // 404 para rutas no encontradas
 app.use((req, res) => {
   res.status(404).json({
