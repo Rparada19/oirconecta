@@ -159,10 +159,10 @@ export function buildTheme(createThemeFn) {
             '--oc-primary':      '#085946',
             '--oc-primary-dark': '#064a3a',
             '--oc-navy':         '#272F50',
-            '--oc-radius-sm':    '10px',
-            '--oc-radius':       '16px',
-            '--oc-radius-lg':    '24px',
-            '--oc-radius-xl':    '32px',
+            '--oc-radius-sm':    '6px',
+            '--oc-radius':       '8px',
+            '--oc-radius-lg':    '12px',
+            '--oc-radius-xl':    '16px',
             '--oc-glass-bg':     'rgba(255,255,255,0.72)',
             '--oc-glass-border': 'rgba(255,255,255,0.60)',
             '--oc-shadow-color': 'rgba(8,89,70,0.15)',
@@ -190,7 +190,7 @@ export function buildTheme(createThemeFn) {
         defaultProps: { disableElevation: true },
         styleOverrides: {
           root: {
-            borderRadius: 12,
+            borderRadius: 6,
             padding: '10px 22px',
             fontWeight: 700,
             textTransform: 'none',
@@ -234,7 +234,7 @@ export function buildTheme(createThemeFn) {
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 20,
+            borderRadius: 6,
             background: 'rgba(255,255,255,0.82)',
             backdropFilter: 'blur(20px) saturate(1.8)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
@@ -254,7 +254,7 @@ export function buildTheme(createThemeFn) {
         styleOverrides: {
           root: {
             backgroundImage: 'none',
-            borderRadius: 16,
+            borderRadius: 8,
           },
           elevation1: {
             boxShadow: '0 2px 12px rgba(8,89,70,0.07), 0 1px 4px rgba(8,89,70,0.04)',
@@ -276,7 +276,7 @@ export function buildTheme(createThemeFn) {
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
-              borderRadius: 12,
+              borderRadius: 6,
               background: 'rgba(255,255,255,0.85)',
               backdropFilter: 'blur(8px)',
               transition: 'all 0.2s ease',
@@ -353,7 +353,7 @@ export function buildTheme(createThemeFn) {
       MuiDialog: {
         styleOverrides: {
           paper: {
-            borderRadius: 24,
+            borderRadius: 6,
             background: 'rgba(255,255,255,0.95)',
             backdropFilter: 'blur(32px) saturate(2)',
             WebkitBackdropFilter: 'blur(32px) saturate(2)',
@@ -366,7 +366,7 @@ export function buildTheme(createThemeFn) {
       MuiMenu: {
         styleOverrides: {
           paper: {
-            borderRadius: 16,
+            borderRadius: 8,
             background: 'rgba(255,255,255,0.95)',
             backdropFilter: 'blur(24px) saturate(2)',
             WebkitBackdropFilter: 'blur(24px) saturate(2)',
@@ -439,7 +439,7 @@ export function buildTheme(createThemeFn) {
 
       MuiAlert: {
         styleOverrides: {
-          root: { borderRadius: 12, fontWeight: 500 },
+          root: { borderRadius: 6, fontWeight: 500 },
           standardSuccess: { background: 'rgba(5,150,105,0.10)', color: '#065f46', border: '1px solid rgba(5,150,105,0.20)' },
           standardError:   { background: 'rgba(220,38,38,0.10)', color: '#991b1b', border: '1px solid rgba(220,38,38,0.20)' },
           standardWarning: { background: 'rgba(217,119,6,0.10)',  color: '#92400e', border: '1px solid rgba(217,119,6,0.20)' },
