@@ -120,7 +120,7 @@ const ImplantesAdvancedBionicsPage = () => {
       </Box>
 
       {/* PRODUCTOS */}
-      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#f4f9f7' }}>
+      <Box sx={{ py: { xs: 5, md: 8 }, bgcolor: '#f4f9f7' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' }, letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
@@ -154,7 +154,7 @@ const ImplantesAdvancedBionicsPage = () => {
       </Box>
 
       {/* TECNOLOGÍAS */}
-      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#fff' }}>
+      <Box sx={{ py: { xs: 5, md: 8 }, bgcolor: '#fff' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' }, letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
@@ -176,7 +176,7 @@ const ImplantesAdvancedBionicsPage = () => {
       </Box>
 
       {/* CTA */}
-      <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 8, md: 12 }, background: 'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(39,47,80,0.45) 0%, transparent 55%),radial-gradient(ellipse 60% 70% at 80% 40%, rgba(13,122,92,0.35) 0%, transparent 55%),linear-gradient(160deg, #0f1428 0%, #1a2240 40%, #063c2c 80%, #085946 100%)', color: '#fff' }}>
+      <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 5, md: 8 }, background: 'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(39,47,80,0.45) 0%, transparent 55%),radial-gradient(ellipse 60% 70% at 80% 40%, rgba(13,122,92,0.35) 0%, transparent 55%),linear-gradient(160deg, #0f1428 0%, #1a2240 40%, #063c2c 80%, #085946 100%)', color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
         <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' }, letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>

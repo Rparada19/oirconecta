@@ -35,7 +35,7 @@ export default function AuditionGuideSection() {
       id="aprender-audicion"
       component="section"
       aria-label="Señales de alerta auditiva"
-      sx={{ scrollMarginTop: 96, py: { xs: 8, md: 10 }, bgcolor: 'background.default' }}
+      sx={{ scrollMarginTop: 96, py: { xs: 5, md: 7 }, bgcolor: 'background.default' }}
     >
       <Container maxWidth="lg">
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems={{ md: 'flex-start' }} sx={{ mb: 5 }}>

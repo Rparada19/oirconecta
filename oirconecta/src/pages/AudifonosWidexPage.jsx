@@ -166,7 +166,7 @@ const AudifonosWidexPage = () => {
       </Box>
 
       {/* ── PRODUCTOS ── */}
-      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#f4f9f7' }}>
+      <Box sx={{ py: { xs: 5, md: 8 }, bgcolor: '#f4f9f7' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
@@ -241,7 +241,7 @@ const AudifonosWidexPage = () => {
       </Box>
 
       {/* ── TECNOLOGÍAS ── */}
-      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#fff' }}>
+      <Box sx={{ py: { xs: 5, md: 8 }, bgcolor: '#fff' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
@@ -282,7 +282,7 @@ const AudifonosWidexPage = () => {
       </Box>
 
       {/* ── CTA BANNER ── */}
-      <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 8, md: 12 },
+      <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 5, md: 8 },
         background:
           'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(13,122,92,0.40) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(39,47,80,0.50) 0%, transparent 55%),' +

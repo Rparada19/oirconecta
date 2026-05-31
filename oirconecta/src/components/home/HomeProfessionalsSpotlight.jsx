@@ -23,7 +23,7 @@ const pros = [
 
 export default function HomeProfessionalsSpotlight() {
   return (
-    <Box component="section" aria-labelledby="heading-profesionales" sx={{ py: { xs: 7, md: 9 }, bgcolor: 'background.paper' }}>
+    <Box component="section" aria-labelledby="heading-profesionales" sx={{ py: { xs: 5, md: 7 }, bgcolor: 'background.paper' }}>
       <Container maxWidth="lg">
         <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 700, letterSpacing: '0.14em', mb: 2 }}>
           Personas, no listas
@@ -35,48 +35,53 @@ export default function HomeProfessionalsSpotlight() {
           Perfiles claros para que elijas con quién conversar primero —sin presión, sin letra pequeña en el primer “hola”.
         </Typography>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={4}>
           {pros.map((p) => (
             <Grid item xs={12} md={6} key={p.to}>
               <Card
                 elevation={0}
                 sx={{
                   height: '100%',
-                  borderRadius: 3,
+                  borderRadius: '8px',
                   overflow: 'hidden',
                   border: '1px solid',
                   borderColor: 'rgba(39, 47, 80, 0.08)',
                   display: 'flex',
-                  flexDirection: { xs: 'column', sm: 'row' },
+                  flexDirection: 'column',
+                  transition: 'all 0.3s ease',
+                  '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 32px rgba(8,89,70,0.10)', '& .pro-img': { transform: 'scale(1.04)' } },
                 }}
               >
-                <Box
-                  aria-hidden
-                  sx={{
-                    width: { xs: '100%', sm: 200 },
-                    minHeight: { xs: 200, sm: 'auto' },
-                    flexShrink: 0,
-                    backgroundImage: `url(${p.img})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                  }}
-                />
-                <CardContent sx={{ p: { xs: 2.5, sm: 3 }, display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
-                    <Avatar sx={{ bgcolor: 'rgba(8, 89, 70, 0.12)', color: 'primary.main', width: 40, height: 40, fontSize: '0.875rem' }}>
+                <Box sx={{ position: 'relative', height: { xs: 240, md: 280 }, overflow: 'hidden' }}>
+                  <Box
+                    className="pro-img"
+                    aria-hidden
+                    sx={{
+                      position: 'absolute', inset: 0,
+                      backgroundImage: `url(${p.img})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      transition: 'transform 0.5s ease',
+                    }}
+                  />
+                  <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.55) 100%)' }} />
+                  <Stack direction="row" alignItems="center" spacing={1.25} sx={{ position: 'absolute', bottom: 20, left: 20 }}>
+                    <Avatar sx={{ bgcolor: '#fff', color: '#085946', width: 44, height: 44, fontSize: '1rem', fontWeight: 800, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
                       {p.role.charAt(0)}
                     </Avatar>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', letterSpacing: '0.06em' }}>
+                    <Typography sx={{ fontWeight: 800, color: '#fff', fontSize: '0.875rem', letterSpacing: '0.08em', textTransform: 'uppercase', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
                       {p.role}
                     </Typography>
                   </Stack>
-                  <Typography component="h3" variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                </Box>
+                <CardContent sx={{ p: { xs: 3, md: 4 }, display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <Typography component="h3" sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' }, fontWeight: 800, mb: 1.5, color: '#0f1923', letterSpacing: '-0.015em', lineHeight: 1.25 }}>
                     {p.headline}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.65, mb: 2, flexGrow: 1 }}>
+                  <Typography sx={{ fontSize: { xs: '0.9375rem', md: '1rem' }, color: '#4a5568', lineHeight: 1.65, mb: 3, flexGrow: 1 }}>
                     {p.text}
                   </Typography>
-                  <Button component={RouterLink} to={p.to} variant="contained" color="primary" sx={{ alignSelf: 'flex-start', fontWeight: 700 }}>
+                  <Button component={RouterLink} to={p.to} variant="contained" color="primary" sx={{ alignSelf: 'flex-start', fontWeight: 700, fontSize: '0.9375rem', px: 3, py: 1.25 }}>
                     {p.cta}
                   </Button>
                 </CardContent>

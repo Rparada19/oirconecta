@@ -52,7 +52,7 @@ export default function HomeB2BSection() {
         pointerEvents: 'none',
       }} />
 
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, py: { xs: 10, md: 14 } }}>
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, py: { xs: 6, md: 8 } }}>
         <Grid container spacing={{ xs: 6, md: 8 }} alignItems="center">
 
           {/* ── Left: copy ── */}

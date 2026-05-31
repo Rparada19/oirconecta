@@ -50,7 +50,7 @@ const NosotrosPage = () => {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 10 } }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 7 } }}>
 
         {/* What we do */}
         <Box sx={{ mb: 8, borderRadius: '22px', p: { xs: 3, md: 4 },

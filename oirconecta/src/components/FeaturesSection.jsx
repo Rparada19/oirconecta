@@ -60,7 +60,7 @@ const FeaturesSection = () => (
   <Box
     component="section"
     aria-label="Qué hace OírConecta"
-    sx={{ py: { xs: 8, md: 12 }, background: 'linear-gradient(180deg, #f0f4f2 0%, #ffffff 100%)' }}
+    sx={{ py: { xs: 5, md: 8 }, background: 'linear-gradient(180deg, #f0f4f2 0%, #ffffff 100%)' }}
   >
     <Container maxWidth="lg">
       {/* Header */}

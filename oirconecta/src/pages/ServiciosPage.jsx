@@ -99,7 +99,7 @@ const ServiciosPage = () => {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 10 } }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 7 } }}>
         <Grid container spacing={3}>
           {servicios.map((servicio, index) => (
             <Grid item xs={12} md={6} lg={4} key={index}>

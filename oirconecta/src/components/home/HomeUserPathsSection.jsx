@@ -66,7 +66,7 @@ export default function HomeUserPathsSection() {
       id="que-buscas"
       component="section"
       aria-labelledby="heading-que-buscas"
-      sx={{ scrollMarginTop: 96, py: { xs: 8, md: 12 }, bgcolor: '#f4f9f7' }}
+      sx={{ scrollMarginTop: 96, py: { xs: 5, md: 8 }, bgcolor: '#f4f9f7' }}
     >
       <Container maxWidth="lg">
         {/* Header */}
@@ -107,37 +107,37 @@ export default function HomeUserPathsSection() {
                   display: 'flex', flexDirection: 'column',
                 }}>
                   {/* Gradient top banner */}
-                  <Box sx={{ height: 120, background: p.gradient, position: 'relative', overflow: 'hidden',
+                  <Box sx={{ height: { xs: 140, md: 170 }, background: p.gradient, position: 'relative', overflow: 'hidden',
                     display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {/* Number watermark */}
                     <Typography sx={{
-                      position: 'absolute', right: 12, bottom: -10,
-                      fontSize: '5rem', fontWeight: 900, letterSpacing: '-0.05em',
-                      color: 'rgba(255,255,255,0.12)', lineHeight: 1, userSelect: 'none',
+                      position: 'absolute', right: 18, bottom: -14,
+                      fontSize: { xs: '6rem', md: '7rem' }, fontWeight: 900, letterSpacing: '-0.05em',
+                      color: 'rgba(255,255,255,0.14)', lineHeight: 1, userSelect: 'none',
                     }}>
                       {p.number}
                     </Typography>
                     {/* Icon */}
-                    <Box sx={{ width: 60, height: 60, borderRadius: '8px',
+                    <Box sx={{ width: 72, height: 72, borderRadius: '8px',
                       background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.30)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       backdropFilter: 'blur(10px)' }}>
-                      <Icon sx={{ color: '#fff', fontSize: 30 }} />
+                      <Icon sx={{ color: '#fff', fontSize: 38 }} />
                     </Box>
                   </Box>
 
                   {/* Content */}
-                  <Box sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#0f1923',
-                      letterSpacing: '-0.01em', mb: 1, lineHeight: 1.3 }}>
+                  <Box sx={{ p: { xs: 3, md: 4 }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.125rem', md: '1.25rem' }, color: '#0f1923',
+                      letterSpacing: '-0.015em', mb: 1.5, lineHeight: 1.25 }}>
                       {p.title}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.65, flexGrow: 1, mb: 2 }}>
+                    <Typography sx={{ fontSize: { xs: '0.9375rem', md: '1rem' }, color: '#4a5568', lineHeight: 1.65, flexGrow: 1, mb: 2.5 }}>
                       {p.blurb}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#085946', fontWeight: 700 }}>
-                      <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#085946' }}>Continuar</Typography>
-                      <ArrowForwardRoundedIcon className="path-arrow" sx={{ fontSize: 17, transition: 'transform 0.2s ease' }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: '#085946', fontWeight: 700 }}>
+                      <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: '#085946' }}>Continuar</Typography>
+                      <ArrowForwardRoundedIcon className="path-arrow" sx={{ fontSize: 19, transition: 'transform 0.2s ease' }} />
                     </Box>
                   </Box>
                 </Box>

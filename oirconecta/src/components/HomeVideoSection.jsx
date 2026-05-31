@@ -10,7 +10,7 @@ export default function HomeVideoSection() {
 
   return (
     <Box component="section" aria-label="Video educativo"
-      sx={{ py: { xs: 8, md: 12 }, bgcolor: 'background.paper' }}>
+      sx={{ py: { xs: 5, md: 8 }, bgcolor: 'background.paper' }}>
       <Container maxWidth="lg">
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' },
           gap: { xs: 5, md: 8 }, alignItems: 'center' }}>

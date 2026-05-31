@@ -39,7 +39,7 @@ export default function TestimonialsSection() {
   return (
     <section aria-label="Historias de personas como tú">
       <Box sx={{
-        py: { xs: 10, md: 14 },
+        py: { xs: 6, md: 8 },
         position: 'relative', overflow: 'hidden',
         background:
           'radial-gradient(ellipse 80% 60% at 15% 30%, rgba(13,122,92,0.30) 0%, transparent 55%),' +

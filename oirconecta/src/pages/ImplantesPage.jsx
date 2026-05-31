@@ -117,7 +117,7 @@ const ImplantesPage = () => {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 10 } }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 7 } }}>
 
         {/* Brands */}
         <Box sx={{ mb: 8 }}>

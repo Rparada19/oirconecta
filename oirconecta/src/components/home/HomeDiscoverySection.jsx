@@ -42,7 +42,7 @@ const tiles = [
 export default function HomeDiscoverySection() {
   return (
     <Box component="section" aria-labelledby="heading-explorar"
-      sx={{ py: { xs: 8, md: 12 }, background: 'linear-gradient(180deg, #f4f9f7 0%, #fff 100%)' }}>
+      sx={{ py: { xs: 5, md: 8 }, background: 'linear-gradient(180deg, #f4f9f7 0%, #fff 100%)' }}>
       <Container maxWidth="lg">
         {/* Header */}
         <Box sx={{ mb: { xs: 6, md: 8 } }}>
