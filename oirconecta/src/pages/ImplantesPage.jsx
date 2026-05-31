@@ -6,6 +6,7 @@ import { CheckCircle, ExpandMore, Hearing } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import MarketingCardMedia from '../components/marketing/MarketingCardMedia';
+import SeoBreadcrumbs from '../components/seo/SeoBreadcrumbs';
 
 const ImplantesPage = () => {
   const navigate = useNavigate();
@@ -75,6 +76,13 @@ const ImplantesPage = () => {
       </Helmet>
 
       <Header />
+
+      <Container maxWidth="lg" sx={{ pt: 10 }}>
+        <SeoBreadcrumbs items={[
+          { label: 'Inicio', to: '/' },
+          { label: 'Implantes auditivos' },
+        ]} />
+      </Container>
 
       {/* Hero */}
       <Box sx={{

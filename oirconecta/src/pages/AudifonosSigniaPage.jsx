@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import SeoBreadcrumbs from '../components/seo/SeoBreadcrumbs';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -39,6 +40,13 @@ const AudifonosSigniaPage = () => {
         <link rel="canonical" href="https://oirconecta.com/audifonos/signia" />
       </Helmet>
       <Header />
+      <Container maxWidth="lg" sx={{ pt: 10 }}>
+        <SeoBreadcrumbs items={[
+          { label: 'Inicio', to: '/' },
+          { label: 'Audífonos', to: '/audifonos' },
+          { label: 'Signia' },
+        ]} />
+      </Container>
 
       {/* ── HERO ── */}
       <Box sx={{

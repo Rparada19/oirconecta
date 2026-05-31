@@ -6,6 +6,7 @@ import { Star } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import MarketingCardMedia from '../components/marketing/MarketingCardMedia';
+import SeoBreadcrumbs from '../components/seo/SeoBreadcrumbs';
 
 const AudifonosPage = () => {
   const navigate = useNavigate();
@@ -128,6 +129,13 @@ const AudifonosPage = () => {
       </Helmet>
 
       <Header />
+
+      <Container maxWidth="lg" sx={{ pt: 10 }}>
+        <SeoBreadcrumbs items={[
+          { label: 'Inicio', to: '/' },
+          { label: 'Audífonos' },
+        ]} />
+      </Container>
 
       {/* Hero */}
       <Box sx={{

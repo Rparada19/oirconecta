@@ -45,21 +45,53 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Organization",
+      "@type": "MedicalOrganization",
+      "@id": "https://oirconecta.com/#organization",
       "name": "OírConecta",
-      "description": "Plataforma de salud auditiva: referencia de valores, educación, conexión con profesionales, acompañamiento en decisiones, servicios de la red e información sobre marcas en Colombia.",
+      "alternateName": "Oír Conecta",
+      "description": "Plataforma de salud auditiva en Colombia: directorio de audiólogos, otorrinolaringólogos y fonoaudiólogos, comparador de audífonos, información sobre implantes y acompañamiento en la decisión.",
+      "medicalSpecialty": ["Audiology", "Otolaryngologic"],
+      "areaServed": {
+        "@type": "Country",
+        "name": "Colombia"
+      },
       "url": "https://oirconecta.com",
-      "logo": "https://oirconecta.com/logo.png",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://oirconecta.com/logo.png"
+      },
+      "image": "https://oirconecta.com/logo.png",
       "address": {
         "@type": "PostalAddress",
         "addressCountry": "CO",
-        "addressLocality": "Bogotá"
+        "addressLocality": "Bogotá",
+        "addressRegion": "Cundinamarca"
       },
-      "contactPoint": {
+      "contactPoint": [{
         "@type": "ContactPoint",
         "telephone": "+57-315-793-9569",
         "contactType": "customer service",
-        "email": "conversemos@oirconecta.com"
+        "email": "conversemos@oirconecta.com",
+        "areaServed": "CO",
+        "availableLanguage": ["Spanish"]
+      }],
+      "sameAs": []
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://oirconecta.com/#website",
+      "url": "https://oirconecta.com",
+      "name": "OírConecta",
+      "description": "Salud auditiva en Colombia: directorio de profesionales, comparador de audífonos e implantes auditivos.",
+      "publisher": { "@id": "https://oirconecta.com/#organization" },
+      "inLanguage": "es-CO",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://oirconecta.com/directorio/listado?q={search_term_string}",
+        "query-input": "required name=search_term_string"
       }
     }
     </script>
