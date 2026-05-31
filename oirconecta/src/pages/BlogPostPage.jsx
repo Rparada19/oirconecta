@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { Box, Container, Typography, Chip, Stack, Button, CircularProgress, Divider } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -61,17 +63,65 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+const MD_COMPONENTS = {
+  h1: ({ children }) => <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.25rem' }, fontWeight: 900, color: '#0f1923', mt: 5, mb: 2, letterSpacing: '-0.02em', lineHeight: 1.15 }}>{children}</Typography>,
+  h2: ({ children }) => <Typography component="h2" sx={{ fontSize: { xs: '1.375rem', md: '1.625rem' }, fontWeight: 800, color: '#0f1923', mt: 5, mb: 2, letterSpacing: '-0.015em' }}>{children}</Typography>,
+  h3: ({ children }) => <Typography component="h3" sx={{ fontSize: { xs: '1.125rem', md: '1.25rem' }, fontWeight: 700, color: '#0f1923', mt: 3.5, mb: 1.25 }}>{children}</Typography>,
+  h4: ({ children }) => <Typography component="h4" sx={{ fontSize: '1.0625rem', fontWeight: 700, color: '#0f1923', mt: 2.5, mb: 1 }}>{children}</Typography>,
+  p: ({ children }) => <Typography sx={{ fontSize: '1.0625rem', color: '#374151', lineHeight: 1.8, mb: 2 }}>{children}</Typography>,
+  ul: ({ children }) => <Box component="ul" sx={{ pl: 3, mb: 2.5, '& li': { fontSize: '1.0625rem', color: '#374151', lineHeight: 1.8, mb: 0.75 } }}>{children}</Box>,
+  ol: ({ children }) => <Box component="ol" sx={{ pl: 3, mb: 2.5, '& li': { fontSize: '1.0625rem', color: '#374151', lineHeight: 1.8, mb: 0.75 } }}>{children}</Box>,
+  li: ({ children }) => <li>{children}</li>,
+  strong: ({ children }) => <Box component="strong" sx={{ fontWeight: 700, color: '#0f1923' }}>{children}</Box>,
+  em: ({ children }) => <Box component="em" sx={{ fontStyle: 'italic' }}>{children}</Box>,
+  a: ({ href, children }) => {
+    const isExternal = href && /^https?:\/\//i.test(href);
+    return (
+      <Box
+        component="a"
+        href={href}
+        {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        sx={{ color: '#085946', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: '3px', '&:hover': { color: '#0d7a5f' } }}
+      >
+        {children}
+      </Box>
+    );
+  },
+  blockquote: ({ children }) => (
+    <Box sx={{ borderLeft: '4px solid #6ee7c8', pl: 2.5, py: 1, my: 3, bgcolor: 'rgba(110,231,200,0.08)', borderRadius: '0 8px 8px 0', '& p': { color: '#0f1923', fontStyle: 'italic' } }}>
+      {children}
+    </Box>
+  ),
+  code: ({ inline, children }) =>
+    inline ? (
+      <Box component="code" sx={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace', bgcolor: '#f3f4f6', px: 0.75, py: 0.25, borderRadius: 0.5, fontSize: '0.9375em' }}>{children}</Box>
+    ) : (
+      <Box component="pre" sx={{ fontFamily: 'ui-monospace, monospace', bgcolor: '#0f1923', color: '#e5e7eb', p: 2, borderRadius: 1, overflow: 'auto', my: 2 }}>
+        <code>{children}</code>
+      </Box>
+    ),
+  hr: () => <Box sx={{ height: 1, bgcolor: '#e5e7eb', my: 4 }} />,
+  table: ({ children }) => (
+    <Box sx={{ overflowX: 'auto', my: 3 }}>
+      <Box component="table" sx={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.9375rem' }}>{children}</Box>
+    </Box>
+  ),
+  thead: ({ children }) => <Box component="thead" sx={{ bgcolor: '#f3f4f6' }}>{children}</Box>,
+  tbody: ({ children }) => <Box component="tbody">{children}</Box>,
+  tr: ({ children }) => <Box component="tr" sx={{ borderBottom: '1px solid #e5e7eb' }}>{children}</Box>,
+  th: ({ children }) => <Box component="th" sx={{ textAlign: 'left', fontWeight: 700, color: '#0f1923', p: 1.25, borderBottom: '2px solid #d1d5db' }}>{children}</Box>,
+  td: ({ children }) => <Box component="td" sx={{ p: 1.25, color: '#374151' }}>{children}</Box>,
+  img: ({ src, alt }) => (
+    <Box component="img" src={src} alt={alt || ''} loading="lazy" decoding="async" sx={{ maxWidth: '100%', height: 'auto', borderRadius: 2, my: 3, display: 'block' }} />
+  ),
+};
+
 function renderContent(text) {
-  return text.split('\n').map((line, i) => {
-    if (line.startsWith('## ')) {
-      return <Typography key={i} component="h2" sx={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f1923', mt: 4, mb: 1.5, letterSpacing: '-0.01em' }}>{line.replace('## ', '')}</Typography>;
-    }
-    if (line.startsWith('- ')) {
-      return <Typography key={i} component="li" sx={{ fontSize: '1rem', color: '#374151', lineHeight: 1.8, mb: 0.5, ml: 2 }}>{line.replace('- ', '')}</Typography>;
-    }
-    if (line.trim() === '') return <Box key={i} sx={{ height: 8 }} />;
-    return <Typography key={i} sx={{ fontSize: '1rem', color: '#374151', lineHeight: 1.85, mb: 1 }}>{line}</Typography>;
-  });
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
+      {text || ''}
+    </ReactMarkdown>
+  );
 }
 
 export default function BlogPostPage() {
