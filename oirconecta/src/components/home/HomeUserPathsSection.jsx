@@ -66,11 +66,11 @@ export default function HomeUserPathsSection() {
       id="que-buscas"
       component="section"
       aria-labelledby="heading-que-buscas"
-      sx={{ scrollMarginTop: 96, py: { xs: 5, md: 8 }, bgcolor: '#f4f9f7' }}
+      sx={{ scrollMarginTop: 96, py: { xs: 4, md: 6 }, bgcolor: '#f4f9f7' }}
     >
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
+        <Box sx={{ textAlign: 'center', mb: { xs: 3.5, md: 4.5 } }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 0.75,
             borderRadius: '8px', background: 'rgba(8,89,70,0.08)', border: '1px solid rgba(8,89,70,0.15)', mb: 2.5 }}>
             <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#085946' }}>

@@ -52,7 +52,7 @@ export default function TestimonialsSection() {
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
             <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 0.75,
               borderRadius: '8px', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.18)', mb: 3 }}>
               <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em',

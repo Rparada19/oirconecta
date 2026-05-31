@@ -45,7 +45,7 @@ export default function HomeDiscoverySection() {
       sx={{ py: { xs: 5, md: 8 }, background: 'linear-gradient(180deg, #f4f9f7 0%, #fff 100%)' }}>
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ mb: { xs: 6, md: 8 } }}>
+        <Box sx={{ mb: { xs: 4, md: 5 } }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 0.75,
             borderRadius: '8px', background: 'rgba(8,89,70,0.08)', border: '1px solid rgba(8,89,70,0.15)', mb: 2.5 }}>
             <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#085946' }}>

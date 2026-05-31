@@ -64,7 +64,7 @@ const FeaturesSection = () => (
   >
     <Container maxWidth="lg">
       {/* Header */}
-      <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
+      <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
         <Box
           sx={{
             display: 'inline-block',

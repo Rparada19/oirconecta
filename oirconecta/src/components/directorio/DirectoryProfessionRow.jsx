@@ -33,7 +33,7 @@ export default function DirectoryProfessionRow({ title, profiles }) {
     <Box
       component="section"
       sx={{
-        mb: { xs: 6, md: 8 },
+        mb: { xs: 4, md: 5 },
         pt: { xs: 4, md: 5 },
         pb: { xs: 3, md: 4 },
         borderTop: '1px solid rgba(8, 89, 70, 0.08)',

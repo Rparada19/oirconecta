@@ -167,7 +167,7 @@ const AudifonosUnitronPage = () => {
       {/* ── PRODUCTOS ── */}
       <Box sx={{ py: { xs: 5, md: 8 }, bgcolor: '#f4f9f7' }}>
         <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Línea de{' '}
@@ -242,7 +242,7 @@ const AudifonosUnitronPage = () => {
       {/* ── TECNOLOGÍAS ── */}
       <Box sx={{ py: { xs: 5, md: 8 }, bgcolor: '#fff' }}>
         <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Tecnología{' '}
