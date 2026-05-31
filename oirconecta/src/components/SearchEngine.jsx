@@ -673,9 +673,9 @@ export default function SearchEngine({
                     </FormControl>
                   </InputWrapper>
                 </Grid>
-                <Grid item xs={12} md={isProfessionalPage ? 4 : 1.5}>
+                <Grid item xs={12} md={isProfessionalPage ? 4 : 'auto'} sx={{ display: 'flex', alignItems: 'stretch' }}>
                   <Button
-                    fullWidth
+                    fullWidth={isProfessionalPage}
                     variant="contained"
                     size="large"
                     type="submit"
@@ -687,6 +687,9 @@ export default function SearchEngine({
                       height: 56,
                       borderRadius: 2,
                       fontWeight: 700,
+                      px: 4,
+                      minWidth: 120,
+                      width: { xs: '100%', md: 'auto' },
                       transition: 'transform 0.18s ease, box-shadow 0.18s ease',
                       '&:hover': {
                         bgcolor: 'primary.dark',
