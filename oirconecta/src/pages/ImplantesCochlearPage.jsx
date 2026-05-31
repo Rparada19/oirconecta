@@ -160,7 +160,7 @@ const ImplantesCochlearPage = () => {
                   Cochlear
                 </Box>
               </Typography>
-              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#fca5a5', mb: 2.5, letterSpacing: '-0.01em' }}>
+              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#fde68a', mb: 2.5, letterSpacing: '-0.01em' }}>
                 {BRAND.eslogan}
               </Typography>
               <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, mb: 4, maxWidth: 480 }}>
@@ -171,7 +171,7 @@ const ImplantesCochlearPage = () => {
                 <Button variant="contained" size="large" endIcon={<ArrowForward />}
                   onClick={() => navigate('/agendar')}
                   sx={{ borderRadius: '14px', fontWeight: 800, px: 3.5, py: 1.75, fontSize: '1rem',
-                    bgcolor: '#fff', color: '#a83232',
+                    bgcolor: '#fff', color: '#F0B400',
                     boxShadow: '0 8px 28px rgba(0,0,0,0.20)',
                     '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)', boxShadow: '0 12px 36px rgba(0,0,0,0.28)' },
                     transition: 'all 0.25s ease' }}>
@@ -207,7 +207,7 @@ const ImplantesCochlearPage = () => {
                       <Grid item xs={6} key={s.label}>
                         <Box sx={{ borderRadius: '14px', p: 2, background: 'rgba(255,255,255,0.10)',
                           border: '1px solid rgba(255,255,255,0.15)', textAlign: 'center' }}>
-                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#fca5a5', letterSpacing: '-0.02em' }}>{s.value}</Typography>
+                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#fde68a', letterSpacing: '-0.02em' }}>{s.value}</Typography>
                           <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>{s.label}</Typography>
                         </Box>
                       </Grid>
@@ -248,16 +248,16 @@ const ImplantesCochlearPage = () => {
             {productos.map((p, i) => (
               <Grid item xs={12} sm={6} md={3} key={i}>
                 <Box sx={{ height: '100%', borderRadius: '22px', overflow: 'hidden', bgcolor: '#fff',
-                  boxShadow: '0 2px 20px rgba(168,50,50,0.08)', border: '1px solid rgba(168,50,50,0.08)',
+                  boxShadow: '0 2px 20px rgba(240,180,0,0.08)', border: '1px solid rgba(240,180,0,0.08)',
                   display: 'flex', flexDirection: 'column',
                   transition: 'all 0.28s ease',
-                  '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(168,50,50,0.15)' },
+                  '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(240,180,0,0.15)' },
                   position: 'relative' }}>
                   {p.destacado && (
                     <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 2,
                       px: 1.5, py: 0.5, borderRadius: '8px',
-                      background: 'linear-gradient(135deg, #a83232, #085946)',
-                      boxShadow: '0 4px 12px rgba(168,50,50,0.35)' }}>
+                      background: 'linear-gradient(135deg, #F0B400, #085946)',
+                      boxShadow: '0 4px 12px rgba(240,180,0,0.35)' }}>
                       <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Destacado</Typography>
                     </Box>
                   )}
@@ -273,23 +273,23 @@ const ImplantesCochlearPage = () => {
                   <Box sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                       <Chip label={p.categoria} size="small" sx={{ fontWeight: 700, fontSize: '0.7rem',
-                        bgcolor: 'rgba(168,50,50,0.08)', color: '#a83232', border: '1px solid rgba(168,50,50,0.18)' }} />
+                        bgcolor: 'rgba(240,180,0,0.08)', color: '#F0B400', border: '1px solid rgba(240,180,0,0.18)' }} />
                     </Box>
                     <Typography sx={{ fontWeight: 800, fontSize: '1.0625rem', color: '#0f1923', mb: 0.75 }}>{p.nombre}</Typography>
                     <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.6, mb: 2, flexGrow: 1 }}>{p.descripcion}</Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 2.5 }}>
                       {p.caracteristicas.slice(0, 3).map((c) => (
                         <Box key={c} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <CheckCircle sx={{ fontSize: 15, color: '#a83232' }} />
+                          <CheckCircle sx={{ fontSize: 15, color: '#F0B400' }} />
                           <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568' }}>{c}</Typography>
                         </Box>
                       ))}
                     </Box>
                     <Button variant="contained" fullWidth onClick={() => navigate('/agendar')}
                       sx={{ borderRadius: '12px', fontWeight: 700,
-                        background: 'linear-gradient(135deg, #a83232, #085946)',
-                        boxShadow: '0 4px 14px rgba(168,50,50,0.25)',
-                        '&:hover': { boxShadow: '0 6px 20px rgba(168,50,50,0.35)' } }}>
+                        background: 'linear-gradient(135deg, #F0B400, #085946)',
+                        boxShadow: '0 4px 14px rgba(240,180,0,0.25)',
+                        '&:hover': { boxShadow: '0 6px 20px rgba(240,180,0,0.35)' } }}>
                       Solicitar información
                     </Button>
                   </Box>
@@ -323,12 +323,12 @@ const ImplantesCochlearPage = () => {
                 <Grid item xs={12} sm={6} md={3} key={t.titulo}>
                   <Box sx={{ borderRadius: '22px', p: 3, height: '100%', textAlign: 'center',
                     background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(168,50,50,0.08)', boxShadow: '0 2px 16px rgba(168,50,50,0.06)',
+                    border: '1px solid rgba(240,180,0,0.08)', boxShadow: '0 2px 16px rgba(240,180,0,0.06)',
                     transition: 'all 0.28s ease',
-                    '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(168,50,50,0.13)' } }}>
+                    '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(240,180,0,0.13)' } }}>
                     <Box sx={{ width: 64, height: 64, borderRadius: '8px', background: t.gradient,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2,
-                      boxShadow: '0 8px 20px rgba(168,50,50,0.25)' }}>
+                      boxShadow: '0 8px 20px rgba(240,180,0,0.25)' }}>
                       <Icon sx={{ color: '#fff', fontSize: 30 }} />
                     </Box>
                     <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#0f1923', mb: 1 }}>{t.titulo}</Typography>
@@ -344,7 +344,7 @@ const ImplantesCochlearPage = () => {
       {/* ── CTA BANNER ── */}
       <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 5, md: 8 },
         background:
-          'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(168,50,50,0.55) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(240,180,0,0.55) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(8,89,70,0.40) 0%, transparent 55%),' +
           'linear-gradient(160deg, #483600 0%, #846300 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff' }}>
@@ -366,7 +366,7 @@ const ImplantesCochlearPage = () => {
             <Button variant="contained" size="large" endIcon={<ArrowForward />}
               onClick={() => navigate('/agendar')}
               sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75,
-                bgcolor: '#fff', color: '#a83232',
+                bgcolor: '#fff', color: '#F0B400',
                 boxShadow: '0 8px 28px rgba(0,0,0,0.25)',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)' },
                 transition: 'all 0.25s ease' }}>

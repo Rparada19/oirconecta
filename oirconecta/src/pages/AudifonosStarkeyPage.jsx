@@ -73,7 +73,7 @@ const AudifonosStarkeyPage = () => {
         background:
           'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(240,180,0,0.42) 0%, transparent 55%),' +
           'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #483600 0%, #846300 30%, #003DA5 70%, #1a1f38 100%)',
+          'linear-gradient(160deg, #846300 0%, #846300 30%, #003DA5 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}
@@ -113,7 +113,7 @@ const AudifonosStarkeyPage = () => {
                   Starkey
                 </Box>
               </Typography>
-              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#c8f5ed', mb: 2.5, letterSpacing: '-0.01em' }}>
+              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#fde68a', mb: 2.5, letterSpacing: '-0.01em' }}>
                 {BRAND.eslogan}
               </Typography>
               <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, mb: 4, maxWidth: 480 }}>
@@ -124,7 +124,7 @@ const AudifonosStarkeyPage = () => {
                 <Button variant="contained" size="large" endIcon={<ArrowForward />}
                   onClick={() => navigate('/agendar')}
                   sx={{ borderRadius: '14px', fontWeight: 800, px: 3.5, py: 1.75, fontSize: '1rem',
-                    bgcolor: '#fff', color: '#71A095',
+                    bgcolor: '#fff', color: '#F0B400',
                     boxShadow: '0 8px 28px rgba(0,0,0,0.20)',
                     '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)', boxShadow: '0 12px 36px rgba(0,0,0,0.28)' },
                     transition: 'all 0.25s ease' }}>
@@ -162,7 +162,7 @@ const AudifonosStarkeyPage = () => {
                       <Grid item xs={6} key={s.label}>
                         <Box sx={{ borderRadius: '14px', p: 2, background: 'rgba(255,255,255,0.10)',
                           border: '1px solid rgba(255,255,255,0.15)', textAlign: 'center' }}>
-                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#c8f5ed', letterSpacing: '-0.02em' }}>{s.value}</Typography>
+                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#fde68a', letterSpacing: '-0.02em' }}>{s.value}</Typography>
                           <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>{s.label}</Typography>
                         </Box>
                       </Grid>
@@ -203,17 +203,17 @@ const AudifonosStarkeyPage = () => {
             {productos.map((p, i) => (
               <Grid item xs={12} sm={6} md={4} key={i}>
                 <Box sx={{ height: '100%', borderRadius: '22px', overflow: 'hidden', bgcolor: '#fff',
-                  boxShadow: '0 2px 20px rgba(113,160,149,0.08)', border: '1px solid rgba(113,160,149,0.12)',
+                  boxShadow: '0 2px 20px rgba(240,180,0,0.08)', border: '1px solid rgba(240,180,0,0.12)',
                   display: 'flex', flexDirection: 'column',
                   transition: 'all 0.28s ease',
-                  '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(113,160,149,0.18)' },
+                  '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(240,180,0,0.18)' },
                   position: 'relative',
                 }}>
                   {p.destacado && (
                     <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 2,
                       px: 1.5, py: 0.5, borderRadius: '8px',
-                      background: 'linear-gradient(135deg,#71A095,#085946)',
-                      boxShadow: '0 4px 12px rgba(113,160,149,0.35)' }}>
+                      background: 'linear-gradient(135deg,#F0B400,#085946)',
+                      boxShadow: '0 4px 12px rgba(240,180,0,0.35)' }}>
                       <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Destacado</Typography>
                     </Box>
                   )}
@@ -230,23 +230,23 @@ const AudifonosStarkeyPage = () => {
                   <Box sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                       <Chip label={p.categoria} size="small" sx={{ fontWeight: 700, fontSize: '0.7rem',
-                        bgcolor: 'rgba(113,160,149,0.10)', color: '#71A095', border: '1px solid rgba(113,160,149,0.22)' }} />
+                        bgcolor: 'rgba(240,180,0,0.10)', color: '#F0B400', border: '1px solid rgba(240,180,0,0.22)' }} />
                     </Box>
                     <Typography sx={{ fontWeight: 800, fontSize: '1.0625rem', color: '#0f1923', mb: 0.75 }}>{p.nombre}</Typography>
                     <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.6, mb: 2, flexGrow: 1 }}>{p.descripcion}</Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 2.5 }}>
                       {p.caracteristicas.slice(0, 3).map((c) => (
                         <Box key={c} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <CheckCircle sx={{ fontSize: 15, color: '#71A095' }} />
+                          <CheckCircle sx={{ fontSize: 15, color: '#F0B400' }} />
                           <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568' }}>{c}</Typography>
                         </Box>
                       ))}
                     </Box>
                     <Button variant="contained" fullWidth onClick={() => navigate('/agendar')}
                       sx={{ borderRadius: '12px', fontWeight: 700,
-                        background: 'linear-gradient(135deg,#71A095,#085946)',
-                        boxShadow: '0 4px 14px rgba(113,160,149,0.25)',
-                        '&:hover': { boxShadow: '0 6px 20px rgba(113,160,149,0.35)' } }}>
+                        background: 'linear-gradient(135deg,#F0B400,#085946)',
+                        boxShadow: '0 4px 14px rgba(240,180,0,0.25)',
+                        '&:hover': { boxShadow: '0 6px 20px rgba(240,180,0,0.35)' } }}>
                       Solicitar información
                     </Button>
                   </Box>
@@ -280,12 +280,12 @@ const AudifonosStarkeyPage = () => {
                 <Grid item xs={12} sm={6} md={3} key={t.titulo}>
                   <Box sx={{ borderRadius: '22px', p: 3, height: '100%', textAlign: 'center',
                     background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(113,160,149,0.10)', boxShadow: '0 2px 16px rgba(113,160,149,0.07)',
+                    border: '1px solid rgba(240,180,0,0.10)', boxShadow: '0 2px 16px rgba(240,180,0,0.07)',
                     transition: 'all 0.28s ease',
-                    '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(113,160,149,0.16)' } }}>
+                    '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(240,180,0,0.16)' } }}>
                     <Box sx={{ width: 64, height: 64, borderRadius: '8px', background: t.gradient,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2,
-                      boxShadow: '0 8px 20px rgba(113,160,149,0.28)' }}>
+                      boxShadow: '0 8px 20px rgba(240,180,0,0.28)' }}>
                       <Icon sx={{ color: '#fff', fontSize: 30 }} />
                     </Box>
                     <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#0f1923', mb: 1 }}>{t.titulo}</Typography>
@@ -301,9 +301,9 @@ const AudifonosStarkeyPage = () => {
       {/* ── CTA BANNER ── */}
       <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 5, md: 8 },
         background:
-          'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(113,160,149,0.40) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(240,180,0,0.40) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(8,89,70,0.50) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #483600 0%, #846300 30%, #003DA5 70%, #1a1f38 100%)',
+          'linear-gradient(160deg, #846300 0%, #846300 30%, #003DA5 70%, #1a1f38 100%)',
         color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
@@ -323,7 +323,7 @@ const AudifonosStarkeyPage = () => {
             <Button variant="contained" size="large" endIcon={<ArrowForward />}
               onClick={() => navigate('/agendar')}
               sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75,
-                bgcolor: '#fff', color: '#71A095',
+                bgcolor: '#fff', color: '#F0B400',
                 boxShadow: '0 8px 28px rgba(0,0,0,0.25)',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', transform: 'translateY(-2px)' },
                 transition: 'all 0.25s ease' }}>

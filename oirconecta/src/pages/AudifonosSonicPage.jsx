@@ -55,7 +55,7 @@ const AudifonosSonicPage = () => {
         background:
           'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(45,45,45,0.42) 0%, transparent 55%),' +
           'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #0d0d0d 0%, #181818 30%, #272F50 70%, #1a1f38 100%)',
+          'linear-gradient(160deg, #1A1A1A 0%, #2D2D2D 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}
@@ -95,7 +95,7 @@ const AudifonosSonicPage = () => {
                   Sonic
                 </Box>
               </Typography>
-              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#6ee7c8', mb: 2.5, letterSpacing: '-0.01em' }}>
+              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#C9A86A', mb: 2.5, letterSpacing: '-0.01em' }}>
                 {BRAND.eslogan}
               </Typography>
               <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, mb: 4, maxWidth: 480 }}>
@@ -144,7 +144,7 @@ const AudifonosSonicPage = () => {
                       <Grid item xs={6} key={s.label}>
                         <Box sx={{ borderRadius: '14px', p: 2, background: 'rgba(255,255,255,0.10)',
                           border: '1px solid rgba(255,255,255,0.15)', textAlign: 'center' }}>
-                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#6ee7c8', letterSpacing: '-0.02em' }}>{s.value}</Typography>
+                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#C9A86A', letterSpacing: '-0.02em' }}>{s.value}</Typography>
                           <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>{s.label}</Typography>
                         </Box>
                       </Grid>
@@ -285,7 +285,7 @@ const AudifonosSonicPage = () => {
         background:
           'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(39,47,80,0.50) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(8,89,70,0.40) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #0d0d0d 0%, #181818 30%, #272F50 70%, #1a1f38 100%)',
+          'linear-gradient(160deg, #1A1A1A 0%, #2D2D2D 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />

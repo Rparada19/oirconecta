@@ -73,7 +73,7 @@ const AudifonosBeltonePage = () => {
         background:
           'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(46,125,50,0.42) 0%, transparent 55%),' +
           'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #0d250f 0%, #19441b 30%, #00382B 70%, #1a1f38 100%)',
+          'linear-gradient(160deg, #00382B 0%, #1d5c20 30%, #00382B 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}
@@ -113,7 +113,7 @@ const AudifonosBeltonePage = () => {
                   Beltone
                 </Box>
               </Typography>
-              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#c8f5ed', mb: 2.5, letterSpacing: '-0.01em' }}>
+              <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#a7f3d0', mb: 2.5, letterSpacing: '-0.01em' }}>
                 {BRAND.eslogan}
               </Typography>
               <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, mb: 4, maxWidth: 480 }}>
@@ -162,7 +162,7 @@ const AudifonosBeltonePage = () => {
                       <Grid item xs={6} key={s.label}>
                         <Box sx={{ borderRadius: '14px', p: 2, background: 'rgba(255,255,255,0.10)',
                           border: '1px solid rgba(255,255,255,0.15)', textAlign: 'center' }}>
-                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#c8f5ed', letterSpacing: '-0.02em' }}>{s.value}</Typography>
+                          <Typography sx={{ fontWeight: 900, fontSize: '1.5rem', color: '#a7f3d0', letterSpacing: '-0.02em' }}>{s.value}</Typography>
                           <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>{s.label}</Typography>
                         </Box>
                       </Grid>
@@ -212,7 +212,7 @@ const AudifonosBeltonePage = () => {
                   {p.destacado && (
                     <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 2,
                       px: 1.5, py: 0.5, borderRadius: '8px',
-                      background: 'linear-gradient(135deg,#272F50,#71A095)',
+                      background: 'linear-gradient(135deg,#272F50,#2E7D32)',
                       boxShadow: '0 4px 12px rgba(39,47,80,0.35)' }}>
                       <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Destacado</Typography>
                     </Box>
@@ -244,7 +244,7 @@ const AudifonosBeltonePage = () => {
                     </Box>
                     <Button variant="contained" fullWidth onClick={() => navigate('/agendar')}
                       sx={{ borderRadius: '12px', fontWeight: 700,
-                        background: 'linear-gradient(135deg,#272F50,#71A095)',
+                        background: 'linear-gradient(135deg,#272F50,#2E7D32)',
                         boxShadow: '0 4px 14px rgba(39,47,80,0.25)',
                         '&:hover': { boxShadow: '0 6px 20px rgba(39,47,80,0.35)' } }}>
                       Solicitar información
@@ -302,8 +302,8 @@ const AudifonosBeltonePage = () => {
       <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 5, md: 8 },
         background:
           'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(39,47,80,0.50) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(113,160,149,0.40) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #0d250f 0%, #19441b 30%, #00382B 70%, #1a1f38 100%)',
+          'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(46,125,50,0.40) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #00382B 0%, #1d5c20 30%, #00382B 70%, #1a1f38 100%)',
         color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
