@@ -5,48 +5,67 @@
 const SERIF = '"Playfair Display", "Cormorant Garamond", Georgia, serif';
 const SANS  = '"DM Sans", "Inter", "Helvetica", "Arial", sans-serif';
 
+// Paleta oficial OírConecta 2026
+export const OC_COLORS = {
+  // Marca principal
+  navyPrincipal:  '#272F50',  // Azul corporativo (principal)
+  navyConecta:    '#4054B2',  // Azul secundario
+  verdeBienestar: '#085946',  // Verde salud
+  verdeInstitucional: '#00382B', // Verde profundo
+  // Tonos tierra
+  arena:      '#D9CDBF',
+  beige:      '#C9B8A6',
+  terracota:  '#B7835A',
+  cafe:       '#7A5A43',
+  oroSuave:   '#C9A86A',
+  // Grises
+  grisOscuro: '#343A40',
+  grisMedio:  '#6B7280',
+  grisClaro:  '#A1A7B1',
+  grisFondo:  '#D8DADF',
+  fondoClaro: '#F4F5F7',
+  blancoCalido: '#FBFAF8',
+};
+
 export function buildTheme(createThemeFn) {
   return createThemeFn({
     palette: {
       primary: {
-        main: '#085946',  // Verde oscuro corporativo
-        light: '#0d7a5c',
-        dark: '#00382B',  // Verde texto profundo
-        contrastText: '#ffffff',
-      },
-      secondary: {
-        main: '#272F50',  // Azul oscuro
-        light: '#4054B2', // Azul claro
+        main: OC_COLORS.navyPrincipal,  // Navy como primario (autoridad)
+        light: OC_COLORS.navyConecta,
         dark: '#1a1f38',
         contrastText: '#ffffff',
       },
-      // Acento tierra cálido (editorial healthcare)
+      secondary: {
+        main: OC_COLORS.verdeBienestar,  // Verde como secundario
+        light: '#0d7a5c',
+        dark: OC_COLORS.verdeInstitucional,
+        contrastText: '#ffffff',
+      },
       tertiary: {
-        main: '#C9A961',  // Ocre cálido
+        main: OC_COLORS.oroSuave,  // Oro como acento premium
         light: '#D4B97A',
         dark: '#A88947',
       },
       earth: {
-        terracotta: '#B5651D',
-        clay:       '#C97B5D',
-        ochre:      '#C9A961',
-        sand:       '#E8DDC8',
-        cream:      '#FAF6EE',
-        stone:      '#A89888',
-        warmGray:   '#6B6258',
+        arena:     OC_COLORS.arena,
+        beige:     OC_COLORS.beige,
+        terracota: OC_COLORS.terracota,
+        cafe:      OC_COLORS.cafe,
+        oro:       OC_COLORS.oroSuave,
       },
       background: {
-        default: '#FAF6EE',  // Crema cálido en lugar de gris frío
+        default: OC_COLORS.blancoCalido,  // Blanco cálido #FBFAF8
         paper: '#ffffff',
       },
       text: {
-        primary: '#00382B',  // Verde texto profundo (más cálido que negro)
-        secondary: '#4a5568',
+        primary: OC_COLORS.navyPrincipal,  // Navy para textos principales
+        secondary: OC_COLORS.grisMedio,
       },
-      success: { main: '#059669' },
-      warning: { main: '#C9A961' },
-      error:   { main: '#B5651D' },
-      info:    { main: '#4054B2' },
+      success: { main: OC_COLORS.verdeBienestar },
+      warning: { main: OC_COLORS.oroSuave },
+      error:   { main: OC_COLORS.terracota },
+      info:    { main: OC_COLORS.navyConecta },
       grey: {
         50:  '#f0f4f2',
         100: '#e2eae6',
