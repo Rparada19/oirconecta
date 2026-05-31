@@ -2,33 +2,51 @@
  * OirConecta — Design System 2025
  * Bold & Contemporary · Glassmorphism · Colored shadows
  */
+const SERIF = '"Playfair Display", "Cormorant Garamond", Georgia, serif';
+const SANS  = '"DM Sans", "Inter", "Helvetica", "Arial", sans-serif';
+
 export function buildTheme(createThemeFn) {
   return createThemeFn({
     palette: {
       primary: {
-        main: '#085946',
+        main: '#085946',  // Verde oscuro corporativo
         light: '#0d7a5c',
-        dark: '#064a3a',
+        dark: '#00382B',  // Verde texto profundo
         contrastText: '#ffffff',
       },
       secondary: {
-        main: '#272F50',
-        light: '#3a4575',
+        main: '#272F50',  // Azul oscuro
+        light: '#4054B2', // Azul claro
         dark: '#1a1f38',
         contrastText: '#ffffff',
       },
+      // Acento tierra cálido (editorial healthcare)
+      tertiary: {
+        main: '#C9A961',  // Ocre cálido
+        light: '#D4B97A',
+        dark: '#A88947',
+      },
+      earth: {
+        terracotta: '#B5651D',
+        clay:       '#C97B5D',
+        ochre:      '#C9A961',
+        sand:       '#E8DDC8',
+        cream:      '#FAF6EE',
+        stone:      '#A89888',
+        warmGray:   '#6B6258',
+      },
       background: {
-        default: '#f0f4f2',
+        default: '#FAF6EE',  // Crema cálido en lugar de gris frío
         paper: '#ffffff',
       },
       text: {
-        primary: '#0f1923',
+        primary: '#00382B',  // Verde texto profundo (más cálido que negro)
         secondary: '#4a5568',
       },
       success: { main: '#059669' },
-      warning: { main: '#d97706' },
-      error:   { main: '#dc2626' },
-      info:    { main: '#0284c7' },
+      warning: { main: '#C9A961' },
+      error:   { main: '#B5651D' },
+      info:    { main: '#4054B2' },
       grey: {
         50:  '#f0f4f2',
         100: '#e2eae6',
@@ -44,33 +62,37 @@ export function buildTheme(createThemeFn) {
     },
 
     typography: {
-      fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+      fontFamily: SANS,
       h1: {
-        fontSize: '3.75rem',
-        fontWeight: 800,
-        lineHeight: 1.1,
-        letterSpacing: '-0.03em',
-        '@media (max-width:600px)': { fontSize: '2.5rem' },
+        fontFamily: SERIF,
+        fontSize: '4.5rem',
+        fontWeight: 700,
+        lineHeight: 1.05,
+        letterSpacing: '-0.02em',
+        '@media (max-width:600px)': { fontSize: '2.75rem' },
       },
       h2: {
-        fontSize: '3rem',
-        fontWeight: 800,
-        lineHeight: 1.15,
-        letterSpacing: '-0.025em',
-        '@media (max-width:600px)': { fontSize: '2.125rem' },
+        fontFamily: SERIF,
+        fontSize: '3.25rem',
+        fontWeight: 700,
+        lineHeight: 1.1,
+        letterSpacing: '-0.018em',
+        '@media (max-width:600px)': { fontSize: '2.25rem' },
       },
       h3: {
-        fontSize: '2.25rem',
+        fontFamily: SERIF,
+        fontSize: '2.5rem',
         fontWeight: 700,
-        lineHeight: 1.2,
-        letterSpacing: '-0.02em',
+        lineHeight: 1.15,
+        letterSpacing: '-0.012em',
         '@media (max-width:600px)': { fontSize: '1.875rem' },
       },
       h4: {
+        fontFamily: SERIF,
         fontSize: '1.875rem',
-        fontWeight: 700,
-        lineHeight: 1.25,
-        letterSpacing: '-0.015em',
+        fontWeight: 600,
+        lineHeight: 1.22,
+        letterSpacing: '-0.008em',
         '@media (max-width:600px)': { fontSize: '1.5rem' },
       },
       h5: {
