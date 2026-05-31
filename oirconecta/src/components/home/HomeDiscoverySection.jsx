@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Container, Typography, Grid } from '@mui/material';
+import { Box, Container, Typography, Grid, Stack } from '@mui/material';
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
-import GraphicEqOutlinedIcon from '@mui/icons-material/GraphicEqOutlined';
-import CoPresentOutlinedIcon from '@mui/icons-material/CoPresentOutlined';
-import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
+
+const C = {
+  navy: '#272F50', verde: '#085946', verdeProfundo: '#00382B',
+  oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280',
+  grisClaro: '#A1A7B1',
+};
 
 const tiles = [
   {
@@ -12,132 +15,157 @@ const tiles = [
     title: 'Descubrir marcas y estilos',
     text: 'Orientación para comparar con calma. 13 marcas explicadas sin sensación de catálogo frío.',
     to: '/audifonos',
-    icon: GraphicEqOutlinedIcon,
-    gradient: 'linear-gradient(160deg, #063c2c 0%, #085946 50%, #0d7a5f 100%)',
     stat: '13+',
     statLabel: 'marcas',
+    image: 'https://image.pollinations.ai/prompt/Premium%20hearing%20aid%20brands%20display%2C%20modern%20technology%2C%20editorial%20product%20photography%2C%20clean%20warm%20lighting?width=900&height=700&nologo=true',
   },
   {
     kicker: 'Implantes cocleares',
     title: 'Explorar opciones cocleares',
     text: 'Rutas y fabricantes líderes, explicados como primer paso — no como venta cerrada.',
     to: '/implantes',
-    icon: CoPresentOutlinedIcon,
-    gradient: 'linear-gradient(160deg, #1a1f38 0%, #272F50 50%, #1a3d5c 100%)',
     stat: '3',
     statLabel: 'fabricantes',
+    image: 'https://image.pollinations.ai/prompt/Cochlear%20implant%20external%20processor%20behind%20ear%20of%20smiling%20adult%2C%20modern%20healthcare%20device%2C%20editorial%20photography?width=900&height=700&nologo=true',
   },
   {
     kicker: 'Referencia y tienda',
     title: 'Precios orientativos y accesorios',
     text: 'Transparencia para conversar mejor con tu especialista. Lo clínico sigue siendo personal.',
     to: '/ecommerce',
-    icon: StorefrontOutlinedIcon,
-    gradient: 'linear-gradient(160deg, #2d4a44 0%, #71A095 50%, #085946 100%)',
     stat: '100+',
     statLabel: 'productos',
+    image: 'https://image.pollinations.ai/prompt/Hearing%20aid%20accessories%20collection%20on%20clean%20surface%2C%20cleaning%20kit%20cases%20batteries%2C%20editorial%20product%20photography?width=900&height=700&nologo=true',
   },
 ];
 
 export default function HomeDiscoverySection() {
   return (
     <Box component="section" aria-labelledby="heading-explorar"
-      sx={{ py: { xs: 5, md: 8 }, background: 'linear-gradient(180deg, #f4f9f7 0%, #fff 100%)' }}>
+      sx={{ py: { xs: 6, md: 9 }, bgcolor: C.blanco }}>
       <Container maxWidth="lg">
-        {/* Header */}
-        <Box sx={{ mb: { xs: 4, md: 5 } }}>
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 0.75,
-            borderRadius: '8px', background: 'rgba(8,89,70,0.08)', border: '1px solid rgba(8,89,70,0.15)', mb: 2.5 }}>
-            <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#085946' }}>
-              Exploración guiada
-            </Typography>
-          </Box>
-          <Typography id="heading-explorar" component="h2"
-            sx={{ fontSize: { xs: '2rem', md: '3rem' }, fontWeight: 900, letterSpacing: '-0.03em',
-              lineHeight: 1.1, color: '#0f1923', mb: 1.5, maxWidth: 700 }}>
-            Explora con{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              intención
+        <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 }, maxWidth: 720, mx: 'auto' }}>
+          <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25} sx={{ mb: 2.5 }}>
+            <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+              fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.verde,
+            }}>Explorar</Typography>
+            <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
+          </Stack>
+          <Typography id="heading-explorar" component="h2" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '2rem', md: '2.875rem' }, fontWeight: 600,
+            letterSpacing: '-0.018em', lineHeight: 1.1, color: C.navy, mb: 2,
+          }}>
+            Para entender{' '}
+            <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
+              tus opciones
             </Box>
           </Typography>
-          <Typography sx={{ fontSize: '1.0625rem', color: '#4a5568', maxWidth: 580, lineHeight: 1.65 }}>
-            Aquí no "compras en un clic". Te acercamos a marcas, dispositivos y contexto para que llegues a tu cita sabiendo qué preguntar.
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif', fontSize: '1.0625rem',
+            color: C.gris, lineHeight: 1.6,
+          }}>
+            Información clara para que decidas con calma, no por presión comercial.
           </Typography>
         </Box>
 
-        {/* Large graphic tiles */}
-        <Grid container spacing={3}>
-          {tiles.map((t) => {
-            const Icon = t.icon;
-            return (
-              <Grid item xs={12} md={4} key={t.to}>
-                <Box component={RouterLink} to={t.to} sx={{
-                  display: 'block', textDecoration: 'none', height: '100%',
-                  borderRadius: '8px', overflow: 'hidden',
-                  background: t.gradient,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-                  transition: 'all 0.32s cubic-bezier(0.4,0,0.2,1)',
-                  '&:hover': { transform: 'translateY(-8px)', boxShadow: '0 24px 60px rgba(0,0,0,0.28)' },
-                  '&:hover .arrow-icon': { transform: 'translate(4px,-4px)' },
-                  position: 'relative',
-                }}>
-                  {/* Grain overlay */}
-                  <Box sx={{ position: 'absolute', inset: 0, opacity: 0.3, pointerEvents: 'none',
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E")` }} />
-
-                  {/* Stat watermark */}
-                  <Typography sx={{
-                    position: 'absolute', right: 20, top: 20,
-                    fontSize: '4.5rem', fontWeight: 900, letterSpacing: '-0.04em',
-                    color: 'rgba(255,255,255,0.10)', lineHeight: 1, userSelect: 'none',
+        <Grid container spacing={{ xs: 3, md: 4 }}>
+          {tiles.map((t) => (
+            <Grid item xs={12} md={4} key={t.to}>
+              <Box
+                component={RouterLink}
+                to={t.to}
+                sx={{
+                  display: 'flex', flexDirection: 'column',
+                  textDecoration: 'none',
+                  height: '100%',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  bgcolor: '#fff',
+                  border: `1px solid ${C.grisClaro}33`,
+                  transition: 'all 0.4s cubic-bezier(0.4,0,0.2,1)',
+                  '&:hover': {
+                    transform: 'translateY(-6px)',
+                    boxShadow: `0 20px 48px ${C.navy}18`,
+                    borderColor: `${C.navy}33`,
+                    '& .tile-cover': { transform: 'scale(1.06)' },
+                    '& .tile-arrow': { color: C.verde, transform: 'translate(2px, -2px)' },
+                  },
+                }}
+              >
+                <Box sx={{ position: 'relative', paddingTop: '60%', overflow: 'hidden' }}>
+                  <Box
+                    className="tile-cover"
+                    component="img"
+                    src={t.image}
+                    alt={t.title}
+                    loading="lazy"
+                    sx={{
+                      position: 'absolute', inset: 0,
+                      width: '100%', height: '100%',
+                      objectFit: 'cover',
+                      transition: 'transform 0.6s cubic-bezier(0.4,0,0.2,1)',
+                    }}
+                  />
+                  <Box sx={{
+                    position: 'absolute', top: 16, left: 16,
+                    bgcolor: 'rgba(255,255,255,0.95)',
+                    borderRadius: '6px', px: 1.25, py: 0.625,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
                   }}>
-                    {t.stat}
-                  </Typography>
-
-                  <Box sx={{ p: { xs: 3, md: 3.5 }, position: 'relative', zIndex: 1, minHeight: 300,
-                    display: 'flex', flexDirection: 'column' }}>
-                    {/* Kicker */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 'auto' }}>
-                      <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em',
-                        textTransform: 'uppercase', color: 'rgba(255,255,255,0.70)' }}>
-                        {t.kicker}
-                      </Typography>
-                      <ArrowOutwardRoundedIcon className="arrow-icon"
-                        sx={{ color: 'rgba(255,255,255,0.70)', fontSize: 20, transition: 'transform 0.2s ease' }} />
-                    </Box>
-
-                    {/* Icon */}
-                    <Box sx={{ width: 64, height: 64, borderRadius: '8px',
-                      background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      backdropFilter: 'blur(10px)', my: 3 }}>
-                      <Icon sx={{ color: '#fff', fontSize: 32 }} />
-                    </Box>
-
-                    {/* Title & text */}
-                    <Box>
-                      <Typography sx={{ fontWeight: 900, fontSize: '1.375rem', color: '#fff',
-                        letterSpacing: '-0.02em', lineHeight: 1.2, mb: 1.5 }}>
-                        {t.title}
-                      </Typography>
-                      <Typography sx={{ fontSize: '0.9375rem', color: 'rgba(255,255,255,0.80)',
-                        lineHeight: 1.65, mb: 2.5 }}>
-                        {t.text}
-                      </Typography>
-                      {/* Stat badge */}
-                      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1,
-                        px: 1.5, py: 0.625, borderRadius: '10px',
-                        background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}>
-                        <Typography sx={{ fontWeight: 900, fontSize: '1.125rem', color: '#fff' }}>{t.stat}</Typography>
-                        <Typography sx={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.80)', fontWeight: 600 }}>{t.statLabel}</Typography>
-                      </Box>
-                    </Box>
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem',
+                      fontWeight: 700, color: C.verde, letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                    }}>{t.kicker}</Typography>
+                  </Box>
+                  {/* Stat overlay */}
+                  <Box sx={{
+                    position: 'absolute', bottom: 16, right: 16,
+                    bgcolor: 'rgba(255,255,255,0.95)',
+                    borderRadius: '8px', px: 1.75, py: 1,
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+                    textAlign: 'center',
+                  }}>
+                    <Typography sx={{
+                      fontFamily: '"Playfair Display", serif', fontStyle: 'italic',
+                      fontSize: '1.5rem', fontWeight: 700, color: C.navy, lineHeight: 1,
+                    }}>{t.stat}</Typography>
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem',
+                      color: C.gris, fontWeight: 600, mt: 0.25,
+                    }}>{t.statLabel}</Typography>
                   </Box>
                 </Box>
-              </Grid>
-            );
-          })}
+                <Box sx={{ p: { xs: 3, md: 3.5 }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                  <Typography component="h3" sx={{
+                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontSize: { xs: '1.25rem', md: '1.375rem' }, fontWeight: 600,
+                    color: C.navy, letterSpacing: '-0.01em', lineHeight: 1.2, mb: 1.5,
+                  }}>{t.title}</Typography>
+                  <Typography sx={{
+                    fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem',
+                    color: C.gris, lineHeight: 1.6, mb: 2.5, flexGrow: 1,
+                  }}>{t.text}</Typography>
+                  <Box sx={{
+                    display: 'flex', alignItems: 'center', gap: 0.75,
+                    color: C.navy, fontWeight: 700,
+                  }}>
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem',
+                      fontWeight: 700, color: 'inherit',
+                    }}>Explorar</Typography>
+                    <ArrowOutwardRoundedIcon
+                      className="tile-arrow"
+                      sx={{ fontSize: 18, color: C.navy, transition: 'all 0.3s ease' }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            </Grid>
+          ))}
         </Grid>
       </Container>
     </Box>

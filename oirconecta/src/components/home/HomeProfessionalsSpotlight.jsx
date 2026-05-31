@@ -28,8 +28,19 @@ export default function HomeProfessionalsSpotlight() {
         <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 700, letterSpacing: '0.14em', mb: 2 }}>
           Personas, no listas
         </Typography>
-        <Typography id="heading-profesionales" component="h2" variant="h3" sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.02em' }}>
-          Profesionales que te escuchan de verdad
+        <Typography id="heading-profesionales" component="h2" sx={{
+          fontFamily: '"Playfair Display", Georgia, serif',
+          fontSize: { xs: '2rem', md: '2.875rem' },
+          fontWeight: 600,
+          color: '#272F50',
+          letterSpacing: '-0.018em',
+          lineHeight: 1.1,
+          mb: 2,
+        }}>
+          Profesionales que te{' '}
+          <Box component="span" sx={{ fontStyle: 'italic', color: '#085946', fontWeight: 500 }}>
+            escuchan de verdad
+          </Box>
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: { xs: 4, md: 5 }, maxWidth: 640, lineHeight: 1.65 }}>
           Perfiles claros para que elijas con quién conversar primero —sin presión, sin letra pequeña en el primer “hola”.
