@@ -42,13 +42,13 @@ export default function HomeB2BSection() {
       <Box sx={{
         position: 'absolute', right: -120, top: '50%', transform: 'translateY(-50%)',
         width: 480, height: 480, borderRadius: '50%',
-        border: '1.5px solid rgba(110,231,200,0.10)',
+        border: '1.5px solid rgba(201,168,106,0.10)',
         pointerEvents: 'none',
       }} />
       <Box sx={{
         position: 'absolute', right: -60, top: '50%', transform: 'translateY(-50%)',
         width: 340, height: 340, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(110,231,200,0.06) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(201,168,106,0.06) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 
@@ -62,10 +62,10 @@ export default function HomeB2BSection() {
               display: 'inline-flex', alignItems: 'center', gap: 1,
               px: 2, py: 0.625, mb: 4,
               borderRadius: '8px',
-              background: 'rgba(110,231,200,0.10)',
-              border: '1px solid rgba(110,231,200,0.25)',
+              background: 'rgba(201,168,106,0.10)',
+              border: '1px solid rgba(201,168,106,0.25)',
             }}>
-              <MedicalServicesOutlinedIcon sx={{ fontSize: 15, color: '#6ee7c8' }} />
+              <MedicalServicesOutlinedIcon sx={{ fontSize: 15, color: '#C9A86A' }} />
               <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em',
                 textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>
                 Para profesionales de la salud auditiva
@@ -85,7 +85,7 @@ export default function HomeB2BSection() {
               <Box
                 component="span"
                 sx={{
-                  background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
+                  background: 'linear-gradient(135deg, #C9A86A 0%, #a7f3d0 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                 }}
               >
@@ -102,7 +102,7 @@ export default function HomeB2BSection() {
             <Stack spacing={1.75} sx={{ mb: 6 }}>
               {BENEFITS.map((b) => (
                 <Box key={b} sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>
-                  <CheckCircleOutlineIcon sx={{ fontSize: 20, color: '#6ee7c8', flexShrink: 0 }} />
+                  <CheckCircleOutlineIcon sx={{ fontSize: 20, color: '#C9A86A', flexShrink: 0 }} />
                   <Typography sx={{ fontSize: '0.9375rem', color: 'rgba(255,255,255,0.82)' }}>{b}</Typography>
                 </Box>
               ))}
@@ -118,12 +118,12 @@ export default function HomeB2BSection() {
                 startIcon={<PersonAddAltOutlinedIcon />}
                 sx={{
                   fontWeight: 700, px: 3.5, py: 1.5, borderRadius: '14px', fontSize: '0.9375rem',
-                  background: 'linear-gradient(135deg, #6ee7c8 0%, #34d399 100%)',
+                  background: 'linear-gradient(135deg, #C9A86A 0%, #34d399 100%)',
                   color: '#041a12',
-                  boxShadow: '0 8px 28px rgba(110,231,200,0.30)',
+                  boxShadow: '0 8px 28px rgba(201,168,106,0.30)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #a7f3d0 0%, #6ee7c8 100%)',
-                    boxShadow: '0 12px 36px rgba(110,231,200,0.40)',
+                    background: 'linear-gradient(135deg, #a7f3d0 0%, #C9A86A 100%)',
+                    boxShadow: '0 12px 36px rgba(201,168,106,0.40)',
                     transform: 'translateY(-2px)',
                   },
                   transition: 'all 0.22s ease',
@@ -169,7 +169,7 @@ export default function HomeB2BSection() {
                       <Grid item xs={4} key={s.label}>
                         <Typography sx={{
                           fontSize: { xs: '1.5rem', sm: '2rem' }, fontWeight: 900,
-                          background: 'linear-gradient(135deg, #6ee7c8, #a7f3d0)',
+                          background: 'linear-gradient(135deg, #C9A86A, #a7f3d0)',
                           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                           letterSpacing: '-0.02em',
                         }}>
@@ -189,7 +189,7 @@ export default function HomeB2BSection() {
                 <Box sx={{
                   borderRadius: '8px', p: 3,
                   background: 'linear-gradient(140deg, rgba(8,89,70,0.55) 0%, rgba(13,31,60,0.55) 100%)',
-                  border: '1px solid rgba(110,231,200,0.18)',
+                  border: '1px solid rgba(201,168,106,0.18)',
                   backdropFilter: 'blur(20px)',
                   height: '100%',
                 }}>
@@ -197,9 +197,9 @@ export default function HomeB2BSection() {
                     background: 'linear-gradient(135deg, #085946, #0d7a5f)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     boxShadow: '0 6px 18px rgba(8,89,70,0.45)' }}>
-                    <MedicalServicesOutlinedIcon sx={{ color: '#6ee7c8', fontSize: 22 }} />
+                    <MedicalServicesOutlinedIcon sx={{ color: '#C9A86A', fontSize: 22 }} />
                   </Box>
-                  <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#6ee7c8', mb: 1 }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#C9A86A', mb: 1 }}>
                     Tu portal propio
                   </Typography>
                   <Typography sx={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.68)', lineHeight: 1.65, mb: 2 }}>
@@ -210,7 +210,7 @@ export default function HomeB2BSection() {
                     to="/portal-profesional"
                     size="small"
                     endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
-                    sx={{ color: '#6ee7c8', fontWeight: 600, p: 0, '&:hover': { bgcolor: 'transparent', opacity: 0.8 } }}
+                    sx={{ color: '#C9A86A', fontWeight: 600, p: 0, '&:hover': { bgcolor: 'transparent', opacity: 0.8 } }}
                   >
                     Acceder al portal
                   </Button>

@@ -23,7 +23,7 @@ export default function RecommendationOfMonthSection() {
           <Box sx={{
             position: 'absolute', top: -80, right: -80,
             width: 280, height: 280, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(110,231,200,0.25) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(201,168,106,0.25) 0%, transparent 70%)',
             filter: 'blur(40px)', pointerEvents: 'none',
           }} />
 
@@ -126,21 +126,21 @@ export default function RecommendationOfMonthSection() {
               }} />
               <Box sx={{
                 width: 96, height: 96, borderRadius: '8px',
-                bgcolor: 'rgba(110,231,200,0.15)',
-                border: '2px solid rgba(110,231,200,0.35)',
+                bgcolor: 'rgba(201,168,106,0.15)',
+                border: '2px solid rgba(201,168,106,0.35)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 mb: 3,
                 position: 'relative', zIndex: 1,
                 backdropFilter: 'blur(10px)',
               }}>
-                <LightbulbOutlinedIcon sx={{ fontSize: 52, color: '#6ee7c8' }} />
+                <LightbulbOutlinedIcon sx={{ fontSize: 52, color: '#C9A86A' }} />
               </Box>
               <Typography sx={{
                 fontSize: '0.6875rem',
                 fontWeight: 800,
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                color: '#6ee7c8',
+                color: '#C9A86A',
                 mb: 1.5,
                 textAlign: 'center',
                 position: 'relative', zIndex: 1,

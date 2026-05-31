@@ -1,137 +1,238 @@
-import React from 'react';
-import { Box, Container, Typography, Grid, Avatar, Rating, Chip } from '@mui/material';
-import { FormatQuote, VerifiedUser } from '@mui/icons-material';
+import React, { useState } from 'react';
+import { Box, Container, Typography, IconButton, Stack, Rating } from '@mui/material';
+import { FormatQuote, ArrowBackIos, ArrowForwardIos, LocationOnOutlined } from '@mui/icons-material';
+
+const C = {
+  navy: '#272F50', verde: '#085946', verdeProfundo: '#00382B',
+  oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280',
+};
+
+const HERO_BG = 'https://image.pollinations.ai/prompt/Elegant%20mature%20Latina%20woman%20smiling%20peacefully%20at%20home%20with%20family%20warm%20natural%20light%20cinematic%20editorial%20portrait%20photography?width=2200&height=1400&nologo=true';
 
 const STORIES = [
   {
     id: 1,
-    name: 'Elena, 68',
+    name: 'Elena',
+    age: 68,
     place: 'Bogotá',
     tag: 'Volvió a disfrutar las reuniones',
     rating: 5,
     text: 'Me daba pena decir "¿me lo repites?". Hoy vuelvo a reírme con mis nietos en la mesa. No fue magia: fue encontrar a alguien que me explicó con paciencia y me acompañó en cada ajuste.',
-    image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-    accent: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
   },
   {
     id: 2,
-    name: 'Andrés, 45',
+    name: 'Andrés',
+    age: 45,
     place: 'Medellín',
     tag: 'Dejó de evitar el teléfono',
     rating: 5,
     text: 'Trabajo con clientes todo el día. Estaba agotado de adivinar palabras por llamada. Pedir ayuda me quitó un peso: entendí qué pasaba y qué podía hacer, sin sentirme "viejo".',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    accent: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
   },
   {
     id: 3,
-    name: 'Lucía, 52',
+    name: 'Lucía',
+    age: 52,
     place: 'Cali',
     tag: 'Recuperó confianza',
     rating: 5,
     text: 'Tenía miedo de que me dijeran que "era normal". Me escucharon de verdad. Hoy entiendo mi oído y me siento dueña de mis decisiones, con calma.',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-    accent: 'linear-gradient(135deg, #71A095 0%, #085946 100%)',
   },
 ];
 
 export default function TestimonialsSection() {
-  return (
-    <section aria-label="Historias de personas como tú">
-      <Box sx={{
-        py: { xs: 6, md: 8 },
-        position: 'relative', overflow: 'hidden',
-        background:
-          'radial-gradient(ellipse 80% 60% at 15% 30%, rgba(13,122,92,0.30) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 60% 70% at 85% 70%, rgba(39,47,80,0.45) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #041f17 0%, #063c2c 35%, #0f1830 70%, #1a2040 100%)',
-      }}>
-        {/* Grain */}
-        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.4, pointerEvents: 'none',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
+  const [idx, setIdx] = useState(0);
+  const t = STORIES[idx];
+  const prev = () => setIdx((i) => (i === 0 ? STORIES.length - 1 : i - 1));
+  const next = () => setIdx((i) => (i === STORIES.length - 1 ? 0 : i + 1));
 
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 0.75,
-              borderRadius: '8px', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.18)', mb: 3 }}>
-              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em',
-                textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>
-                Historias con corazón
-              </Typography>
-            </Box>
-            <Typography component="h2"
-              sx={{ fontSize: { xs: '2.25rem', md: '3.5rem' }, fontWeight: 900,
-                letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff', mb: 2 }}>
-              "Por fin me{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                entendieron"
-              </Box>
+  return (
+    <Box
+      component="section"
+      aria-label="Historias de personas como tú"
+      sx={{
+        position: 'relative',
+        overflow: 'hidden',
+        py: { xs: 8, md: 12 },
+        minHeight: { md: 640 },
+        display: 'flex', alignItems: 'center',
+      }}
+    >
+      {/* Full-bleed image */}
+      <Box sx={{
+        position: 'absolute', inset: 0,
+        backgroundImage: `url("${HERO_BG}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }} />
+      {/* Overlay degradado navy */}
+      <Box sx={{
+        position: 'absolute', inset: 0,
+        background: `linear-gradient(135deg, ${C.navy}EE 0%, ${C.navy}D5 40%, ${C.verdeProfundo}CC 100%)`,
+      }} />
+      {/* Patrón ruido */}
+      <Box sx={{
+        position: 'absolute', inset: 0, opacity: 0.06, pointerEvents: 'none',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+      }} />
+
+      <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, textAlign: 'center', color: '#fff' }}>
+        {/* Eyebrow */}
+        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25} sx={{ mb: 3 }}>
+          <Box sx={{ width: 28, height: 2, bgcolor: C.oro }} />
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '0.75rem', fontWeight: 600,
+            letterSpacing: '0.18em', textTransform: 'uppercase',
+            color: C.oro,
+          }}>
+            Historias reales
+          </Typography>
+          <Box sx={{ width: 28, height: 2, bgcolor: C.oro }} />
+        </Stack>
+
+        {/* Heading */}
+        <Typography component="h2" sx={{
+          fontFamily: '"Playfair Display", Georgia, serif',
+          fontSize: { xs: '1.875rem', md: '2.625rem' },
+          fontWeight: 600,
+          lineHeight: 1.15,
+          letterSpacing: '-0.018em',
+          mb: 5,
+          color: '#fff',
+        }}>
+          Lo que cambió cuando{' '}
+          <Box component="span" sx={{ fontStyle: 'italic', color: C.oro, fontWeight: 500 }}>
+            pidieron ayuda
+          </Box>
+        </Typography>
+
+        {/* Carrusel */}
+        <Box sx={{ position: 'relative', maxWidth: 760, mx: 'auto' }}>
+          <FormatQuote sx={{
+            fontSize: 88,
+            color: C.oro,
+            opacity: 0.45,
+            position: 'absolute',
+            top: { xs: -40, md: -60 },
+            left: { xs: 0, md: -40 },
+            transform: 'scaleX(-1)',
+          }} />
+
+          <Box sx={{
+            position: 'relative',
+            transition: 'opacity 0.4s ease',
+          }}>
+            <Rating value={t.rating} readOnly sx={{
+              color: C.oro,
+              fontSize: 22,
+              mb: 3,
+            }} />
+
+            <Typography sx={{
+              fontFamily: '"Playfair Display", Georgia, serif',
+              fontStyle: 'italic',
+              fontWeight: 400,
+              fontSize: { xs: '1.25rem', md: '1.625rem' },
+              lineHeight: 1.5,
+              color: 'rgba(255,255,255,0.95)',
+              mb: 4,
+              letterSpacing: '-0.005em',
+            }}>
+              "{t.text}"
             </Typography>
-            <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.70)',
-              maxWidth: 560, mx: 'auto', lineHeight: 1.65 }}>
-              Historias de personas que encontraron claridad, alivio y decisiones con calma.
+
+            <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ mb: 1 }}>
+              <Box sx={{
+                width: 52, height: 52, borderRadius: '50%',
+                bgcolor: `${C.oro}26`,
+                border: `1.5px solid ${C.oro}77`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: '"Playfair Display", serif',
+                fontSize: '1.375rem',
+                fontWeight: 600,
+                fontStyle: 'italic',
+                color: C.oro,
+              }}>
+                {t.name.charAt(0)}
+              </Box>
+              <Box sx={{ textAlign: 'left' }}>
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color: '#fff',
+                  lineHeight: 1.2,
+                }}>
+                  {t.name}, {t.age}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                  <LocationOnOutlined sx={{ fontSize: 14, color: 'rgba(255,255,255,0.55)' }} />
+                  <Typography sx={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: '0.8125rem',
+                    color: 'rgba(255,255,255,0.65)',
+                  }}>
+                    {t.place}
+                  </Typography>
+                </Box>
+              </Box>
+            </Stack>
+
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: C.oro,
+              mt: 1.5,
+            }}>
+              {t.tag}
             </Typography>
           </Box>
 
-          {/* Cards */}
-          <Grid container spacing={3}>
-            {STORIES.map((t) => (
-              <Grid item xs={12} md={4} key={t.id}>
-                <Box sx={{
-                  height: '100%', borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.07)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  p: { xs: 3, sm: 3.5 }, position: 'relative',
-                  transition: 'all 0.28s ease',
-                  '&:hover': { background: 'rgba(255,255,255,0.11)', transform: 'translateY(-4px)',
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.30)' },
-                }}>
-                  {/* Accent bar */}
-                  <Box sx={{ width: 40, height: 4, borderRadius: '4px', background: t.accent, mb: 3 }} />
+          {/* Controles */}
+          <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ mt: 5 }}>
+            <IconButton onClick={prev} aria-label="Anterior" sx={{
+              width: 44, height: 44, borderRadius: '50%',
+              bgcolor: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.20)',
+              color: '#fff',
+              '&:hover': { bgcolor: C.oro, color: C.navy, border: `1px solid ${C.oro}` },
+            }}>
+              <ArrowBackIos sx={{ fontSize: 14, ml: 0.5 }} />
+            </IconButton>
 
-                  {/* Big quote */}
-                  <FormatQuote sx={{ fontSize: '3rem', color: 'rgba(255,255,255,0.12)',
-                    position: 'absolute', top: 20, right: 20 }} />
+            {/* Dots */}
+            <Stack direction="row" spacing={1}>
+              {STORIES.map((_, i) => (
+                <Box
+                  key={i}
+                  onClick={() => setIdx(i)}
+                  sx={{
+                    cursor: 'pointer',
+                    width: i === idx ? 28 : 8,
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: i === idx ? C.oro : 'rgba(255,255,255,0.30)',
+                    transition: 'all 0.3s ease',
+                  }}
+                />
+              ))}
+            </Stack>
 
-                  {/* Text */}
-                  <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.90)',
-                    lineHeight: 1.75, fontStyle: 'italic', mb: 3, minHeight: 120 }}>
-                    "{t.text}"
-                  </Typography>
-
-                  {/* Tag + Rating */}
-                  <Box sx={{ mb: 2.5 }}>
-                    <Chip label={t.tag} size="small" sx={{
-                      mb: 1.5, fontWeight: 700, fontSize: '0.75rem',
-                      bgcolor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.90)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                    }} />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                      <Rating value={t.rating} readOnly size="small"
-                        sx={{ '& .MuiRating-iconFilled': { color: '#6ee7c8' } }} />
-                      <VerifiedUser sx={{ fontSize: 16, color: '#6ee7c8', opacity: 0.8 }} />
-                    </Box>
-                  </Box>
-
-                  {/* Author */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5,
-                    pt: 2.5, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
-                    <Avatar src={t.image} alt={t.name} sx={{ width: 44, height: 44,
-                      border: '2px solid rgba(255,255,255,0.20)' }} />
-                    <Box>
-                      <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem', color: '#fff' }}>{t.name}</Typography>
-                      <Typography sx={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.55)' }}>{t.place}</Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-    </section>
+            <IconButton onClick={next} aria-label="Siguiente" sx={{
+              width: 44, height: 44, borderRadius: '50%',
+              bgcolor: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.20)',
+              color: '#fff',
+              '&:hover': { bgcolor: C.oro, color: C.navy, border: `1px solid ${C.oro}` },
+            }}>
+              <ArrowForwardIos sx={{ fontSize: 14 }} />
+            </IconButton>
+          </Stack>
+        </Box>
+      </Container>
+    </Box>
   );
 }

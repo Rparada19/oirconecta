@@ -1,8 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Button, Grid } from '@mui/material';
+import { Box, Container, Typography, Button, Grid, Stack } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+
+const C = {
+  navy: '#272F50', verdeProfundo: '#00382B', oro: '#C9A86A',
+  blanco: '#FBFAF8', gris: '#6B7280',
+};
 
 const BULLETS = [
   'Compara hasta 3 marcas, tecnologías y plataformas',
@@ -13,42 +19,110 @@ const BULLETS = [
 export default function HomeComparadorSection() {
   const navigate = useNavigate();
   return (
-    <Box sx={{ py: { xs: 6, md: 9 }, px: 2 }}>
+    <Box sx={{ py: { xs: 6, md: 9 }, bgcolor: C.blanco }}>
       <Container maxWidth="lg">
         <Box sx={{
-          borderRadius: '8px',
-          background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 55%, #6ee7c8 140%)',
+          position: 'relative',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          background: `linear-gradient(135deg, ${C.navy} 0%, #1f2545 60%, ${C.verdeProfundo} 100%)`,
           color: '#fff',
-          p: { xs: 4, md: 6 },
-          boxShadow: '0 20px 60px rgba(8,89,70,0.25)',
+          boxShadow: `0 24px 64px ${C.navy}33`,
         }}>
-          <Grid container spacing={4} alignItems="center">
+          <Box sx={{
+            position: 'absolute', top: -120, right: -120,
+            width: 380, height: 380, borderRadius: '50%',
+            background: `radial-gradient(circle, ${C.oro}26 0%, transparent 70%)`,
+            filter: 'blur(50px)', pointerEvents: 'none',
+          }} />
+          <Grid container alignItems="stretch">
             <Grid item xs={12} md={7}>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, background: 'rgba(255,255,255,0.15)', px: 1.5, py: 0.5, borderRadius: '8px', mb: 2 }}>
-                <AutoAwesomeIcon sx={{ fontSize: 18 }} />
-                <Typography variant="caption" sx={{ fontWeight: 700, letterSpacing: '0.04em' }}>NUEVO · CON INTELIGENCIA ARTIFICIAL</Typography>
+              <Box sx={{ p: { xs: 4, md: 6 }, position: 'relative', zIndex: 1 }}>
+                <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 3 }}>
+                  <Box sx={{ width: 28, height: 2, bgcolor: C.oro }} />
+                  <Typography sx={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: '0.7rem', fontWeight: 700,
+                    letterSpacing: '0.18em', textTransform: 'uppercase', color: C.oro,
+                  }}>
+                    Nuevo · Con inteligencia artificial
+                  </Typography>
+                </Stack>
+                <Typography component="h2" sx={{
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontSize: { xs: '2rem', md: '2.875rem' },
+                  fontWeight: 600, lineHeight: 1.1, color: '#fff',
+                  letterSpacing: '-0.018em', mb: 2.5,
+                }}>
+                  ¿No sabes qué{' '}
+                  <Box component="span" sx={{ fontStyle: 'italic', color: C.oro, fontWeight: 500 }}>
+                    audífono elegir
+                  </Box>?
+                </Typography>
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: { xs: '1rem', md: '1.125rem' },
+                  color: 'rgba(255,255,255,0.80)', lineHeight: 1.6,
+                  mb: 3.5, maxWidth: 560,
+                }}>
+                  Nuestro comparador con IA te orienta: dinos tu pérdida y presupuesto, y te decimos cuál te conviene — con precios reales.
+                </Typography>
+                <Stack spacing={1.5} sx={{ mb: 4 }}>
+                  {BULLETS.map((b) => (
+                    <Box key={b} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <CheckCircleOutlineIcon sx={{ fontSize: 20, color: C.oro }} />
+                      <Typography sx={{
+                        fontFamily: '"DM Sans", sans-serif',
+                        fontSize: '0.9375rem', color: 'rgba(255,255,255,0.90)',
+                      }}>{b}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+                <Button
+                  variant="contained" size="large"
+                  startIcon={<CompareArrowsIcon />}
+                  onClick={() => navigate('/comparador')}
+                  sx={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    bgcolor: C.oro, color: C.navy, fontWeight: 700, fontSize: '0.9375rem',
+                    px: 3.5, py: 1.75, borderRadius: '6px', letterSpacing: '0.01em',
+                    boxShadow: `0 8px 24px ${C.oro}55`, transition: 'all 0.3s ease',
+                    '&:hover': { bgcolor: '#D4B97A', transform: 'translateY(-2px)',
+                      boxShadow: `0 12px 28px ${C.oro}66` },
+                  }}
+                >Probar comparador IA</Button>
               </Box>
-              <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, lineHeight: 1.15, fontSize: { xs: '1.8rem', md: '2.4rem' } }}>
-                ¿No sabes qué audífono elegir?
-              </Typography>
-              <Typography sx={{ opacity: 0.92, mb: 3, fontSize: '1.05rem', maxWidth: 560 }}>
-                Nuestro comparador con IA te orienta: dinos tu pérdida y presupuesto, y te decimos cuál te conviene — con precios reales.
-              </Typography>
-              <Box component="ul" sx={{ m: 0, mb: 3, pl: 0, listStyle: 'none' }}>
-                {BULLETS.map((b) => (
-                  <Box component="li" key={b} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Box sx={{ width: 7, height: 7, borderRadius: '50%', background: '#6ee7c8' }} />
-                    <Typography sx={{ opacity: 0.95 }}>{b}</Typography>
-                  </Box>
-                ))}
-              </Box>
-              <Button variant="contained" size="large" startIcon={<CompareArrowsIcon />} onClick={() => navigate('/comparador')}
-                sx={{ background: '#fff', color: '#085946', fontWeight: 800, borderRadius: '8px', px: 4, py: 1.3, '&:hover': { background: '#f0fdf4' } }}>
-                Probar el comparador
-              </Button>
             </Grid>
-            <Grid item xs={12} md={5} sx={{ textAlign: 'center', display: { xs: 'none', md: 'block' } }}>
-              <CompareArrowsIcon sx={{ fontSize: 180, opacity: 0.25 }} />
+            <Grid item xs={12} md={5} sx={{ position: 'relative' }}>
+              <Box sx={{
+                height: '100%', minHeight: { xs: 280, md: 'auto' },
+                background: 'url("https://image.pollinations.ai/prompt/Premium%20modern%20hearing%20aids%20on%20clean%20dark%20surface%2C%20editorial%20product%20photography%2C%20dramatic%20lighting?width=900&height=900&nologo=true")',
+                backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
+                '&::after': {
+                  content: '""', position: 'absolute', inset: 0,
+                  background: `linear-gradient(to left, transparent 0%, ${C.navy}80 100%)`,
+                },
+              }}>
+                <Box sx={{
+                  position: 'absolute', bottom: 24, right: 24, zIndex: 2,
+                  bgcolor: 'rgba(255,255,255,0.95)', borderRadius: '8px',
+                  p: 2, display: 'flex', alignItems: 'center', gap: 1.5,
+                  maxWidth: 220, boxShadow: '0 12px 32px rgba(0,0,0,0.25)',
+                }}>
+                  <AutoAwesomeIcon sx={{ fontSize: 28, color: C.oro }} />
+                  <Box>
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem',
+                      color: C.gris, letterSpacing: '0.06em',
+                      textTransform: 'uppercase', fontWeight: 600,
+                    }}>IA Comparador</Typography>
+                    <Typography sx={{
+                      fontFamily: '"Playfair Display", serif',
+                      fontSize: '0.9375rem', color: C.navy, fontWeight: 700, lineHeight: 1.2,
+                    }}>3 marcas en 1 minuto</Typography>
+                  </Box>
+                </Box>
+              </Box>
             </Grid>
           </Grid>
         </Box>
