@@ -50,7 +50,12 @@ async function main() {
     }
 
     const fm = parsed.data || {};
-    const contenido = (parsed.content || '').trim();
+    // Cortar el bloque "Notas para el editor (no publicar)" si existe.
+    // Convención: una línea con solo "---" seguida de "**Notas para el editor"
+    let rawContent = parsed.content || '';
+    const cutPattern = /\n---\s*\n\s*\*\*Notas para el editor[\s\S]*$/;
+    rawContent = rawContent.replace(cutPattern, '');
+    const contenido = rawContent.trim();
 
     const slug = fm.slug;
     const titulo = fm.titulo;
