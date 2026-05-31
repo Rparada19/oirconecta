@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useParams, Link as RouterLink } from 'react-router-dom';
-import { Box, Container, Typography, Chip, Stack, Button, CircularProgress, Divider } from '@mui/material';
+import { Box, Container, Typography, Chip, Stack, Button, CircularProgress, Divider, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import LinkIcon from '@mui/icons-material/Link';
+import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import NewsletterCTA from '../components/NewsletterCTA';
@@ -18,6 +23,13 @@ const CATEGORIAS = {
   productos: 'Productos y tecnología',
   salud: 'Salud auditiva',
   'estilo-de-vida': 'Estilo de vida',
+  guias: 'Guías y educación',
+  cuidados: 'Mantenimiento y cuidados',
+  comparativas: 'Comparativas',
+  glosario: 'Glosario auditivo',
+  tecnologia: 'Tecnología',
+  lanzamientos: 'Nuevos lanzamientos',
+  casos: 'Casos y testimonios',
   general: 'General',
 };
 
@@ -25,8 +37,21 @@ const CAT_COLOR = {
   productos: '#085946',
   salud: '#272F50',
   'estilo-de-vida': '#71A095',
+  guias: '#085946',
+  cuidados: '#0d7a5f',
+  comparativas: '#1a2240',
+  glosario: '#6ee7c8',
+  tecnologia: '#272F50',
+  lanzamientos: '#d97706',
+  casos: '#71A095',
   general: '#6b7280',
 };
+
+function calcReadingTime(text) {
+  const words = (text || '').trim().split(/\s+/).length;
+  const minutes = Math.max(1, Math.round(words / 200));
+  return minutes;
+}
 
 const DEMO_POSTS = {
   '1': {
@@ -268,16 +293,54 @@ export default function BlogPostPage() {
   const seoDesc = post?.resumen || post?.descripcion || 'Artículos sobre audición, audífonos, prevención y bienestar auditivo en OírConecta.';
   const seoSlug = post?.slug || slug || '';
 
+  const readingMin = useMemo(() => calcReadingTime(post?.contenido), [post?.contenido]);
+  const articleUrl = `https://oirconecta.com/blog/${seoSlug}`;
+  const heroCover = post?.coverUrl || null;
+
+  const handleShare = (network) => {
+    if (typeof window === 'undefined') return;
+    const u = encodeURIComponent(articleUrl);
+    const t = encodeURIComponent(post?.titulo || '');
+    if (network === 'whatsapp') window.open(`https://wa.me/?text=${t}%20${u}`, '_blank');
+    else if (network === 'facebook') window.open(`https://www.facebook.com/sharer/sharer.php?u=${u}`, '_blank');
+    else if (network === 'copy') {
+      navigator.clipboard?.writeText(articleUrl);
+    }
+  };
+
+  const articleJsonLd = post ? {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.titulo,
+    description: post.resumen || '',
+    image: post.coverUrl || 'https://oirconecta.com/logo-oirconecta.png',
+    datePublished: post.publishedAt || post.createdAt,
+    dateModified: post.updatedAt || post.publishedAt,
+    author: { '@type': 'Organization', name: post.autorNombre || 'OírConecta', url: 'https://oirconecta.com' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'OírConecta',
+      logo: { '@type': 'ImageObject', url: 'https://oirconecta.com/logo-oirconecta.png' },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
+  } : null;
+
   return (
     <Box component="main" sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
-        <link rel="canonical" href={`https://oirconecta.com/blog/${seoSlug}`} />
+        <link rel="canonical" href={articleUrl} />
         <meta property="og:type" content="article" />
         <meta property="og:title" content={seoTitle} />
         <meta property="og:description" content={seoDesc} />
-        <meta property="og:url" content={`https://oirconecta.com/blog/${seoSlug}`} />
+        <meta property="og:url" content={articleUrl} />
+        {post?.coverUrl && <meta property="og:image" content={post.coverUrl} />}
+        {post?.coverUrl && <meta property="twitter:image" content={post.coverUrl} />}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="article:published_time" content={post?.publishedAt || ''} />
+        <meta property="article:author" content={post?.autorNombre || 'OírConecta'} />
+        {articleJsonLd && <script type="application/ld+json">{JSON.stringify(articleJsonLd)}</script>}
       </Helmet>
       <Header />
 
@@ -295,65 +358,203 @@ export default function BlogPostPage() {
         </Container>
       ) : (
         <>
-          {/* Hero */}
+          {/* HERO con cover de fondo */}
           <Box sx={{
-            background:
-              'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.42) 0%, transparent 55%),' +
-              'linear-gradient(160deg, #063c2c 0%, #085946 35%, #1a2240 70%, #272F50 100%)',
-            color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 7, md: 9 },
-            position: 'relative', overflow: 'hidden',
+            position: 'relative',
+            minHeight: { xs: 520, md: 620 },
+            display: 'flex',
+            alignItems: 'flex-end',
+            color: '#fff',
+            pt: { xs: 14, md: 16 },
+            pb: { xs: 6, md: 8 },
+            overflow: 'hidden',
+            background: heroCover ? 'transparent' : 'linear-gradient(160deg, #063c2c 0%, #085946 50%, #1a2240 100%)',
           }}>
-            <Box sx={{ position: 'absolute', inset: 0, opacity: 0.3, pointerEvents: 'none',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
-            <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
+            {/* Background image */}
+            {heroCover && (
+              <Box sx={{
+                position: 'absolute', inset: 0,
+                backgroundImage: `url("${heroCover}")`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                transform: 'scale(1.05)',
+                filter: 'brightness(0.55)',
+              }} />
+            )}
+            {/* Overlay degradado */}
+            <Box sx={{
+              position: 'absolute', inset: 0,
+              background: heroCover
+                ? 'linear-gradient(180deg, rgba(6,60,44,0.55) 0%, rgba(6,60,44,0.25) 40%, rgba(8,89,70,0.85) 80%, rgba(26,34,64,0.95) 100%)'
+                : 'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.42) 0%, transparent 55%)',
+            }} />
+            {/* Forma decorativa */}
+            <Box sx={{
+              position: 'absolute', bottom: -1, left: 0, right: 0, height: 60,
+              background: 'linear-gradient(to top, #fafafa, transparent)',
+              pointerEvents: 'none',
+            }} />
+            <Container maxWidth="md" sx={{ position: 'relative', zIndex: 2, width: '100%' }}>
               <Button component={RouterLink} to="/blog" startIcon={<ArrowBackIcon />}
-                sx={{ color: 'rgba(255,255,255,0.70)', mb: 3, fontWeight: 600, p: 0,
-                  '&:hover': { color: '#fff', bgcolor: 'transparent' } }}>
+                sx={{
+                  color: 'rgba(255,255,255,0.90)', mb: 4, fontWeight: 600, p: 0,
+                  textTransform: 'none', fontSize: '0.875rem',
+                  '&:hover': { color: '#6ee7c8', bgcolor: 'transparent' },
+                }}>
                 Volver al blog
               </Button>
-              <Chip label={catLabel} size="small" sx={{
-                display: 'block', width: 'fit-content', mb: 2.5, fontWeight: 700, fontSize: '0.75rem',
-                bgcolor: `${catColor}40`, color: '#fff', border: `1px solid ${catColor}60`,
-              }} />
+              <Chip
+                label={catLabel}
+                size="small"
+                sx={{
+                  display: 'inline-flex',
+                  mb: 3,
+                  fontWeight: 800,
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  px: 1.5,
+                  height: 28,
+                  bgcolor: 'rgba(110,231,200,0.18)',
+                  color: '#6ee7c8',
+                  border: '1px solid rgba(110,231,200,0.45)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              />
               <Typography component="h1" sx={{
-                fontSize: { xs: '1.875rem', md: '2.75rem' }, fontWeight: 900,
-                letterSpacing: '-0.03em', lineHeight: 1.15, color: '#fff', mb: 3,
+                fontSize: { xs: '2rem', md: '3.25rem' },
+                fontWeight: 900,
+                letterSpacing: '-0.025em',
+                lineHeight: 1.12,
+                color: '#fff',
+                mb: 3.5,
+                textShadow: heroCover ? '0 2px 12px rgba(0,0,0,0.35)' : 'none',
+                maxWidth: 820,
               }}>
                 {post.titulo}
               </Typography>
-              <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', gap: 1 }}>
+              {post.resumen && (
+                <Typography sx={{
+                  fontSize: { xs: '1rem', md: '1.1875rem' },
+                  color: 'rgba(255,255,255,0.85)',
+                  lineHeight: 1.6,
+                  fontWeight: 400,
+                  mb: 4,
+                  maxWidth: 720,
+                }}>
+                  {post.resumen}
+                </Typography>
+              )}
+              <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <PersonOutlineIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.55)' }} />
-                  <Typography sx={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.70)' }}>{post.autorNombre}</Typography>
+                  <Box sx={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    bgcolor: 'rgba(110,231,200,0.20)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '1.5px solid rgba(110,231,200,0.40)',
+                  }}>
+                    <PersonOutlineIcon sx={{ fontSize: 17, color: '#6ee7c8' }} />
+                  </Box>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{post.autorNombre}</Typography>
                 </Box>
                 {post.publishedAt && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <CalendarTodayOutlinedIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.55)' }} />
-                    <Typography sx={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.70)' }}>{formatDate(post.publishedAt)}</Typography>
+                    <CalendarTodayOutlinedIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.65)' }} />
+                    <Typography sx={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)' }}>{formatDate(post.publishedAt)}</Typography>
                   </Box>
                 )}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <AccessTimeIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.65)' }} />
+                  <Typography sx={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)' }}>{readingMin} min de lectura</Typography>
+                </Box>
               </Stack>
             </Container>
           </Box>
 
-          {/* Content */}
-          <Container maxWidth="md" sx={{ py: { xs: 6, md: 8 } }}>
-            {post.resumen && (
-              <Typography sx={{
-                fontSize: '1.1875rem', color: '#374151', lineHeight: 1.75, fontWeight: 500,
-                borderLeft: `4px solid ${catColor}`, pl: 3, mb: 5,
-                fontStyle: 'italic',
-              }}>
-                {post.resumen}
+          {/* CONTENT */}
+          <Container maxWidth="md" sx={{ py: { xs: 5, md: 7 }, position: 'relative' }}>
+            {/* Share floating bar - desktop only */}
+            <Box sx={{
+              position: { md: 'sticky' }, top: { md: 100 },
+              float: { md: 'left' }, ml: { md: -10 }, mr: { md: 0 },
+              display: 'flex', flexDirection: 'column', gap: 1,
+              mb: { xs: 3, md: 0 },
+              alignItems: 'center',
+            }}>
+              <Typography sx={{ fontSize: '0.6875rem', color: '#6b7280', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.5, writingMode: { md: 'horizontal-tb' } }}>
+                Compartir
               </Typography>
-            )}
-            {post.coverUrl && (
-              <Box component="img" src={post.coverUrl} alt={post.titulo}
-                sx={{ width: '100%', borderRadius: '18px', mb: 5, maxHeight: 420, objectFit: 'cover' }} />
-            )}
-            <Box sx={{ '& ul, & ol': { pl: 2 } }}>
+              <IconButton onClick={() => handleShare('whatsapp')} aria-label="Compartir en WhatsApp" sx={{ bgcolor: '#25D366', color: '#fff', '&:hover': { bgcolor: '#1ebe57' }, width: 40, height: 40 }}>
+                <WhatsAppIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+              <IconButton onClick={() => handleShare('facebook')} aria-label="Compartir en Facebook" sx={{ bgcolor: '#1877F2', color: '#fff', '&:hover': { bgcolor: '#0f62cf' }, width: 40, height: 40 }}>
+                <FacebookIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+              <IconButton onClick={() => handleShare('copy')} aria-label="Copiar enlace" sx={{ bgcolor: '#f3f4f6', color: '#0f1923', '&:hover': { bgcolor: '#e5e7eb' }, width: 40, height: 40 }}>
+                <LinkIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+            </Box>
+
+            {/* Article body */}
+            <Box sx={{
+              '& > div > p:first-of-type::first-letter': {
+                fontSize: { xs: '3.25rem', md: '4rem' },
+                fontWeight: 900,
+                color: '#085946',
+                float: 'left',
+                lineHeight: 0.9,
+                pr: 1.5,
+                pt: 0.5,
+                fontFamily: 'Georgia, serif',
+              },
+            }}>
               {renderContent(post.contenido || '')}
             </Box>
+
+            {/* Tags */}
+            {Array.isArray(post.tags) && post.tags.length > 0 && (
+              <Box sx={{ mt: 6, mb: 4 }}>
+                <Typography sx={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 1.5 }}>
+                  Etiquetas
+                </Typography>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  {post.tags.map((t) => (
+                    <Chip key={t} label={t} size="small" sx={{ bgcolor: '#f0fdf4', color: '#085946', fontWeight: 600, border: '1px solid #d1fae5' }} />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
+            {/* Share inline mobile + Newsletter */}
+            <Box sx={{
+              mt: 6, p: 4,
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+              border: '1px solid #d1fae5',
+              display: 'flex', flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2.5,
+            }}>
+              <Box>
+                <Typography sx={{ fontWeight: 800, color: '#0f1923', fontSize: '1.0625rem', mb: 0.5 }}>
+                  ¿Te resultó útil este artículo?
+                </Typography>
+                <Typography sx={{ fontSize: '0.9375rem', color: '#4b5563' }}>
+                  Compártelo con alguien que lo necesite.
+                </Typography>
+              </Box>
+              <Stack direction="row" spacing={1.25}>
+                <IconButton onClick={() => handleShare('whatsapp')} aria-label="WhatsApp" sx={{ bgcolor: '#25D366', color: '#fff', '&:hover': { bgcolor: '#1ebe57' } }}>
+                  <WhatsAppIcon />
+                </IconButton>
+                <IconButton onClick={() => handleShare('facebook')} aria-label="Facebook" sx={{ bgcolor: '#1877F2', color: '#fff', '&:hover': { bgcolor: '#0f62cf' } }}>
+                  <FacebookIcon />
+                </IconButton>
+                <IconButton onClick={() => handleShare('copy')} aria-label="Copiar enlace" sx={{ bgcolor: '#fff', color: '#0f1923', border: '1px solid #d1d5db', '&:hover': { bgcolor: '#f9fafb' } }}>
+                  <LinkIcon />
+                </IconButton>
+              </Stack>
+            </Box>
+
             <NewsletterCTA source="blog-post" />
             <Divider sx={{ mt: 6, mb: 4 }} />
             <Button component={RouterLink} to="/blog" startIcon={<ArrowBackIcon />}
