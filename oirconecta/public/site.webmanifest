@@ -1,0 +1,19 @@
+{
+  "name": "OírConecta — Salud auditiva en Colombia",
+  "short_name": "OírConecta",
+  "description": "Directorio de profesionales auditivos, comparador de audífonos e información sobre implantes en Colombia.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#085946",
+  "lang": "es-CO",
+  "dir": "ltr",
+  "orientation": "portrait-primary",
+  "categories": ["health", "medical", "lifestyle"],
+  "icons": [
+    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}
