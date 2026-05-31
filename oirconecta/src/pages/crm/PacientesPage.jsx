@@ -179,7 +179,7 @@ const PacientesPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
               <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
-                borderRadius: '20px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 1.5 }}>
+                borderRadius: '8px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 1.5 }}>
                 <People sx={{ fontSize: 14, color: 'rgba(255,255,255,0.80)' }} />
                 <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.80)' }}>PACIENTES</Typography>
               </Box>
@@ -215,7 +215,7 @@ const PacientesPage = () => {
             { label: 'Promedio Citas/Paciente', value: avgCitas, gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)', glow: 'rgba(124,58,237,0.22)', icon: People },
           ].map((stat) => (
             <Grid item xs={12} sm={4} key={stat.label}>
-              <Box sx={{ p: 3, borderRadius: '20px',
+              <Box sx={{ p: 3, borderRadius: '8px',
                 background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.70)',
                 boxShadow: '0 2px 16px rgba(8,89,70,0.06)',
@@ -239,7 +239,7 @@ const PacientesPage = () => {
         </Grid>
 
         {/* Search */}
-        <Box sx={{ mb: 3, p: 2.5, borderRadius: '18px',
+        <Box sx={{ mb: 3, p: 2.5, borderRadius: '8px',
           background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.70)',
           boxShadow: '0 2px 12px rgba(8,89,70,0.06)' }}>

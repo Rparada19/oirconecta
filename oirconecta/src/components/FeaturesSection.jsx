@@ -69,7 +69,7 @@ const FeaturesSection = () => (
           sx={{
             display: 'inline-block',
             px: 2, py: 0.625,
-            borderRadius: '20px',
+            borderRadius: '8px',
             background: 'rgba(8,89,70,0.08)',
             border: '1px solid rgba(8,89,70,0.16)',
             mb: 2.5,
@@ -137,7 +137,7 @@ const FeaturesSection = () => (
               <Box
                 className="feat-icon"
                 sx={{
-                  width: 56, height: 56, borderRadius: '16px',
+                  width: 56, height: 56, borderRadius: '6px',
                   background: f.gradient, color: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   mb: 2.5,

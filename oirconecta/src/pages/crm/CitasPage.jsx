@@ -998,7 +998,7 @@ const CitasPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
               <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
-                borderRadius: '20px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 1.5 }}>
+                borderRadius: '8px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 1.5 }}>
                 <CalendarToday sx={{ fontSize: 14, color: 'rgba(255,255,255,0.80)' }} />
                 <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.80)' }}>CRM · AGENDA</Typography>
               </Box>
@@ -1030,7 +1030,7 @@ const CitasPage = () => {
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {CITA_STATS.map((stat) => (
             <Grid item xs={6} sm={4} md={2.4} key={stat.label}>
-              <Box sx={{ p: 2, borderRadius: '18px',
+              <Box sx={{ p: 2, borderRadius: '8px',
                 background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.70)',
                 boxShadow: '0 2px 12px rgba(8,89,70,0.06)',
@@ -1047,7 +1047,7 @@ const CitasPage = () => {
         </Grid>
 
         {/* Tabs */}
-        <Box sx={{ mb: 3, borderRadius: '18px', overflow: 'hidden',
+        <Box sx={{ mb: 3, borderRadius: '8px', overflow: 'hidden',
           background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.70)',
           boxShadow: '0 2px 12px rgba(8,89,70,0.06)' }}>
@@ -1063,7 +1063,7 @@ const CitasPage = () => {
         </Box>
 
         {/* Filtros y Búsqueda */}
-        <Box sx={{ mb: 3, p: 2.5, borderRadius: '18px',
+        <Box sx={{ mb: 3, p: 2.5, borderRadius: '8px',
           background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.70)',
           boxShadow: '0 2px 12px rgba(8,89,70,0.06)' }}>

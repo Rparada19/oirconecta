@@ -147,7 +147,7 @@ const ImplantesCochlearPage = () => {
 
               {/* Logo */}
               <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 1.5,
-                borderRadius: '18px', background: 'rgba(255,255,255,0.95)',
+                borderRadius: '8px', background: 'rgba(255,255,255,0.95)',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.20)', mb: 3 }}>
                 <img src={BRAND.logo} alt="Cochlear" style={{ height: 48, objectFit: 'contain' }} />
               </Box>
@@ -190,11 +190,11 @@ const ImplantesCochlearPage = () => {
             {/* Right — glass brand card */}
             <Grid item xs={12} md={6}>
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Box sx={{ borderRadius: '28px', width: '100%', maxWidth: 440,
+                <Box sx={{ borderRadius: '8px', width: '100%', maxWidth: 440,
                   background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(20px)',
                   border: '1px solid rgba(255,255,255,0.20)',
                   boxShadow: '0 32px 80px rgba(0,0,0,0.30)', p: 4 }}>
-                  <Box sx={{ borderRadius: '20px', bgcolor: '#fff', p: 3, mb: 3, textAlign: 'center' }}>
+                  <Box sx={{ borderRadius: '8px', bgcolor: '#fff', p: 3, mb: 3, textAlign: 'center' }}>
                     <img src={BRAND.logo} alt="Cochlear" style={{ height: 80, objectFit: 'contain' }} />
                   </Box>
                   <Grid container spacing={2}>
@@ -326,7 +326,7 @@ const ImplantesCochlearPage = () => {
                     border: '1px solid rgba(168,50,50,0.08)', boxShadow: '0 2px 16px rgba(168,50,50,0.06)',
                     transition: 'all 0.28s ease',
                     '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(168,50,50,0.13)' } }}>
-                    <Box sx={{ width: 64, height: 64, borderRadius: '18px', background: t.gradient,
+                    <Box sx={{ width: 64, height: 64, borderRadius: '8px', background: t.gradient,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2,
                       boxShadow: '0 8px 20px rgba(168,50,50,0.25)' }}>
                       <Icon sx={{ color: '#fff', fontSize: 30 }} />

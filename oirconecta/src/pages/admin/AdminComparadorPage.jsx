@@ -306,7 +306,7 @@ export default function AdminComparadorPage() {
       </Card>
       )}
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '6px' } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>{editId ? 'Editar ficha' : 'Nueva ficha'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
@@ -331,7 +331,7 @@ export default function AdminComparadorPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} PaperProps={{ sx: { borderRadius: '16px' } }}>
+      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} PaperProps={{ sx: { borderRadius: '6px' } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>¿Eliminar ficha?</DialogTitle>
         <DialogContent><Typography>¿Seguro que deseas eliminar <strong>{deleteTarget?.marca} {deleteTarget?.tecnologia}</strong>?</Typography></DialogContent>
         <DialogActions sx={{ px: 2.5, pb: 2, gap: 1 }}>
@@ -341,7 +341,7 @@ export default function AdminComparadorPage() {
       </Dialog>
 
       {/* Seguimiento de un lead */}
-      <Dialog open={!!leadView} onClose={() => setLeadView(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
+      <Dialog open={!!leadView} onClose={() => setLeadView(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '6px' } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>Seguimiento — {leadView?.nombre}</DialogTitle>
         <DialogContent>
           {leadView && (

@@ -57,11 +57,11 @@ export default function AdminLoginPage() {
       <Box component="form" onSubmit={handleSubmit} sx={{
         position: 'relative', zIndex: 1, width: '100%', maxWidth: 420, mx: 2,
         background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(24px)',
-        border: '1px solid rgba(255,255,255,0.14)', borderRadius: '28px',
+        border: '1px solid rgba(255,255,255,0.14)', borderRadius: '8px',
         p: { xs: 4, sm: 5 }, boxShadow: '0 32px 80px rgba(0,0,0,0.40)',
       }}>
         {/* Icon */}
-        <Box sx={{ width: 64, height: 64, borderRadius: '18px', mx: 'auto', mb: 3,
+        <Box sx={{ width: 64, height: 64, borderRadius: '8px', mx: 'auto', mb: 3,
           background: 'linear-gradient(135deg, #085946, #0d7a5f)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 12px 30px rgba(8,89,70,0.45)' }}>

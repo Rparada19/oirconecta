@@ -331,7 +331,7 @@ export default function AdminShopProductsPanel() {
       </Card>
 
       {/* Crear / editar */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '6px' } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>{editId ? 'Editar producto' : 'Nuevo producto'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
@@ -404,7 +404,7 @@ export default function AdminShopProductsPanel() {
       </Dialog>
 
       {/* Eliminar */}
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} PaperProps={{ sx: { borderRadius: '16px' } }}>
+      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} PaperProps={{ sx: { borderRadius: '6px' } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>¿Eliminar producto?</DialogTitle>
         <DialogContent>
           <Typography>¿Seguro que deseas eliminar <strong>"{deleteTarget?.nombre}"</strong>? Esta acción no se puede deshacer.</Typography>

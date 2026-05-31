@@ -99,7 +99,7 @@ function FeaturedCard({ post }) {
           <Box sx={{
             display: 'inline-flex', alignItems: 'center', gap: 1,
             px: 1.75, py: 0.875,
-            borderRadius: '999px',
+            borderRadius: '8px',
             bgcolor: 'rgba(255,255,255,0.18)',
             border: '1px solid rgba(255,255,255,0.30)',
             backdropFilter: 'blur(12px)',
@@ -268,7 +268,7 @@ function PostCard({ post }) {
             position: 'absolute', top: 14, left: 14,
             display: 'inline-flex', alignItems: 'center', gap: 0.75,
             px: 1.5, py: 0.75,
-            borderRadius: '999px',
+            borderRadius: '8px',
             bgcolor: 'rgba(255,255,255,0.95)',
             backdropFilter: 'blur(8px)',
             boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
@@ -454,7 +454,7 @@ export default function BlogPage() {
               <Box sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 1,
                 px: 1.75, py: 0.875,
-                borderRadius: '999px',
+                borderRadius: '8px',
                 background: 'rgba(110,231,200,0.12)',
                 border: '1px solid rgba(110,231,200,0.30)',
                 mb: 3,
@@ -556,7 +556,7 @@ export default function BlogPage() {
                       <Box sx={{
                         display: 'inline-flex', alignItems: 'center', gap: 0.75,
                         px: 1.5, py: 0.625,
-                        borderRadius: '999px',
+                        borderRadius: '8px',
                         bgcolor: 'rgba(255,255,255,0.95)',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                       }}>
@@ -746,7 +746,7 @@ export default function BlogPage() {
               bgcolor: '#6ee7c8', color: '#0a2018',
               fontWeight: 800, fontSize: '0.9375rem',
               px: 4, py: 1.5,
-              borderRadius: '999px',
+              borderRadius: '8px',
               textTransform: 'none',
               boxShadow: '0 10px 25px rgba(110,231,200,0.3)',
               '&:hover': { bgcolor: '#a7f3d0', boxShadow: '0 14px 30px rgba(110,231,200,0.4)' },

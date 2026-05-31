@@ -261,7 +261,7 @@ export default function DirectoryHero({
               sx={{
                 px: 1.25,
                 py: 0.5,
-                borderRadius: 999,
+                borderRadius: 8,
                 bgcolor: 'rgba(255,255,255,0.6)',
                 border: '1px solid rgba(0,0,0,0.06)',
                 backdropFilter: 'blur(6px)',
@@ -286,7 +286,7 @@ function StatPill({ icon: Icon, value, label }) {
         sx={{
           width: 36,
           height: 36,
-          borderRadius: 999,
+          borderRadius: 8,
           bgcolor: 'rgba(255,255,255,0.85)',
           border: '1px solid rgba(0,0,0,0.06)',
           display: 'flex',

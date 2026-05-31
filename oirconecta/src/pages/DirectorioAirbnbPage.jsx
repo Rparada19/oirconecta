@@ -267,7 +267,7 @@ export default function DirectorioAirbnbPage() {
             <Button
               variant="contained"
               onClick={handleClearFilters}
-              sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 700 }}
+              sx={{ borderRadius: 8, textTransform: 'none', fontWeight: 700 }}
             >
               Limpiar filtros
             </Button>
@@ -281,7 +281,7 @@ export default function DirectorioAirbnbPage() {
               disabled={loadingMore}
               variant="outlined"
               sx={{
-                borderRadius: 999,
+                borderRadius: 8,
                 textTransform: 'none',
                 fontWeight: 700,
                 px: 4,

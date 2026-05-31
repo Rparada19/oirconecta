@@ -47,7 +47,7 @@ export default function HomeDiscoverySection() {
         {/* Header */}
         <Box sx={{ mb: { xs: 6, md: 8 } }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 0.75,
-            borderRadius: '20px', background: 'rgba(8,89,70,0.08)', border: '1px solid rgba(8,89,70,0.15)', mb: 2.5 }}>
+            borderRadius: '8px', background: 'rgba(8,89,70,0.08)', border: '1px solid rgba(8,89,70,0.15)', mb: 2.5 }}>
             <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#085946' }}>
               Exploración guiada
             </Typography>
@@ -74,7 +74,7 @@ export default function HomeDiscoverySection() {
               <Grid item xs={12} md={4} key={t.to}>
                 <Box component={RouterLink} to={t.to} sx={{
                   display: 'block', textDecoration: 'none', height: '100%',
-                  borderRadius: '24px', overflow: 'hidden',
+                  borderRadius: '8px', overflow: 'hidden',
                   background: t.gradient,
                   boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
                   transition: 'all 0.32s cubic-bezier(0.4,0,0.2,1)',
@@ -108,7 +108,7 @@ export default function HomeDiscoverySection() {
                     </Box>
 
                     {/* Icon */}
-                    <Box sx={{ width: 64, height: 64, borderRadius: '20px',
+                    <Box sx={{ width: 64, height: 64, borderRadius: '8px',
                       background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       backdropFilter: 'blur(10px)', my: 3 }}>

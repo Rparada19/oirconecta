@@ -61,7 +61,7 @@ export default function HomeB2BSection() {
             <Box sx={{
               display: 'inline-flex', alignItems: 'center', gap: 1,
               px: 2, py: 0.625, mb: 4,
-              borderRadius: '20px',
+              borderRadius: '8px',
               background: 'rgba(110,231,200,0.10)',
               border: '1px solid rgba(110,231,200,0.25)',
             }}>
@@ -187,7 +187,7 @@ export default function HomeB2BSection() {
               {/* Card: Portal profesional */}
               <Grid item xs={12} sm={6}>
                 <Box sx={{
-                  borderRadius: '20px', p: 3,
+                  borderRadius: '8px', p: 3,
                   background: 'linear-gradient(140deg, rgba(8,89,70,0.55) 0%, rgba(13,31,60,0.55) 100%)',
                   border: '1px solid rgba(110,231,200,0.18)',
                   backdropFilter: 'blur(20px)',
@@ -220,7 +220,7 @@ export default function HomeB2BSection() {
               {/* Card: Marcas */}
               <Grid item xs={12} sm={6}>
                 <Box sx={{
-                  borderRadius: '20px', p: 3,
+                  borderRadius: '8px', p: 3,
                   background: 'rgba(255,255,255,0.04)',
                   border: '1px solid rgba(255,255,255,0.10)',
                   backdropFilter: 'blur(20px)',

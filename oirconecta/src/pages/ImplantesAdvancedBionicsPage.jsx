@@ -69,7 +69,7 @@ const ImplantesAdvancedBionicsPage = () => {
                 <Chip label="Implantes" size="small" onClick={() => navigate('/implantes')} sx={{ bgcolor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer', fontWeight: 600 }} />
                 <Chip label="Advanced Bionics" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.20)', color: '#fff', border: '1px solid rgba(255,255,255,0.30)', fontWeight: 700 }} />
               </Box>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 1.5, borderRadius: '18px', background: 'rgba(255,255,255,0.95)', boxShadow: '0 8px 32px rgba(0,0,0,0.20)', mb: 3 }}>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 1.5, borderRadius: '8px', background: 'rgba(255,255,255,0.95)', boxShadow: '0 8px 32px rgba(0,0,0,0.20)', mb: 3 }}>
                 <img src={BRAND.logo} alt="Advanced Bionics" style={{ height: 48, objectFit: 'contain' }} />
               </Box>
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
@@ -93,8 +93,8 @@ const ImplantesAdvancedBionicsPage = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Box sx={{ borderRadius: '28px', overflow: 'hidden', width: '100%', maxWidth: 440, background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.20)', boxShadow: '0 32px 80px rgba(0,0,0,0.30)', p: 4 }}>
-                  <Box sx={{ borderRadius: '20px', bgcolor: '#fff', p: 3, mb: 3, textAlign: 'center' }}>
+                <Box sx={{ borderRadius: '8px', overflow: 'hidden', width: '100%', maxWidth: 440, background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.20)', boxShadow: '0 32px 80px rgba(0,0,0,0.30)', p: 4 }}>
+                  <Box sx={{ borderRadius: '8px', bgcolor: '#fff', p: 3, mb: 3, textAlign: 'center' }}>
                     <img src={BRAND.logo} alt="Advanced Bionics" style={{ height: 80, objectFit: 'contain' }} />
                   </Box>
                   <Grid container spacing={2}>
@@ -165,7 +165,7 @@ const ImplantesAdvancedBionicsPage = () => {
             {tecnologias.map((t) => { const Icon = t.icon; return (
               <Grid item xs={12} sm={6} md={3} key={t.titulo}>
                 <Box sx={{ borderRadius: '22px', p: 3, height: '100%', textAlign: 'center', background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)', border: '1px solid rgba(39,47,80,0.08)', boxShadow: '0 2px 16px rgba(8,89,70,0.07)', transition: 'all 0.28s ease', '&:hover': { transform: 'translateY(-6px)', boxShadow: '0 20px 48px rgba(39,47,80,0.14)' } }}>
-                  <Box sx={{ width: 64, height: 64, borderRadius: '18px', background: t.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2, boxShadow: '0 8px 20px rgba(39,47,80,0.25)' }}><Icon sx={{ color: '#fff', fontSize: 30 }} /></Box>
+                  <Box sx={{ width: 64, height: 64, borderRadius: '8px', background: t.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2, boxShadow: '0 8px 20px rgba(39,47,80,0.25)' }}><Icon sx={{ color: '#fff', fontSize: 30 }} /></Box>
                   <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#0f1923', mb: 1 }}>{t.titulo}</Typography>
                   <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.65 }}>{t.descripcion}</Typography>
                 </Box>

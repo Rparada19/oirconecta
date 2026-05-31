@@ -54,7 +54,7 @@ export default function TestimonialsSection() {
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
             <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 0.75,
-              borderRadius: '20px', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.18)', mb: 3 }}>
+              borderRadius: '8px', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.18)', mb: 3 }}>
               <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>
                 Historias con corazón
@@ -80,7 +80,7 @@ export default function TestimonialsSection() {
             {STORIES.map((t) => (
               <Grid item xs={12} md={4} key={t.id}>
                 <Box sx={{
-                  height: '100%', borderRadius: '24px',
+                  height: '100%', borderRadius: '8px',
                   background: 'rgba(255,255,255,0.07)',
                   backdropFilter: 'blur(20px)',
                   border: '1px solid rgba(255,255,255,0.12)',

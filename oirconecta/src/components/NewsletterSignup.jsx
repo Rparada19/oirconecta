@@ -68,7 +68,7 @@ export default function NewsletterSignup({ source = 'web', compact = false, inli
             variant="contained"
             disabled={state === 'loading'}
             sx={{
-              borderRadius: 999, textTransform: 'none', fontWeight: 800,
+              borderRadius: 8, textTransform: 'none', fontWeight: 800,
               px: 3.5, whiteSpace: 'nowrap', flexShrink: 0,
               bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' },
             }}
@@ -141,7 +141,7 @@ export default function NewsletterSignup({ source = 'web', compact = false, inli
         disabled={state === 'loading'}
         sx={{
           mt: 2,
-          borderRadius: 999,
+          borderRadius: 8,
           textTransform: 'none',
           fontWeight: 800,
           px: 4,

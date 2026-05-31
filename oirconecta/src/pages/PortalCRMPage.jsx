@@ -272,7 +272,7 @@ const PortalCRMPage = () => {
               fontSize: '0.8125rem',
               letterSpacing: '0.02em',
               border: '1px solid rgba(8,89,70,0.18)',
-              borderRadius: '20px',
+              borderRadius: '8px',
               mb: 2,
               px: 0.5,
             }}
@@ -314,7 +314,7 @@ const PortalCRMPage = () => {
                 onClick={() => navigate(item.path)}
                 sx={{
                   cursor: 'pointer',
-                  borderRadius: '20px',
+                  borderRadius: '8px',
                   background: 'rgba(255,255,255,0.82)',
                   backdropFilter: 'blur(20px) saturate(1.8)',
                   WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
@@ -354,7 +354,7 @@ const PortalCRMPage = () => {
                   sx={{
                     width: 56,
                     height: 56,
-                    borderRadius: '16px',
+                    borderRadius: '6px',
                     background: item.gradient,
                     display: 'flex',
                     alignItems: 'center',

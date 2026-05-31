@@ -72,7 +72,7 @@ export default function HomeUserPathsSection() {
         {/* Header */}
         <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2.5, py: 0.75,
-            borderRadius: '20px', background: 'rgba(8,89,70,0.08)', border: '1px solid rgba(8,89,70,0.15)', mb: 2.5 }}>
+            borderRadius: '8px', background: 'rgba(8,89,70,0.08)', border: '1px solid rgba(8,89,70,0.15)', mb: 2.5 }}>
             <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#085946' }}>
               ¿Por dónde empezamos?
             </Typography>
@@ -94,7 +94,7 @@ export default function HomeUserPathsSection() {
             return (
               <Grid item xs={12} sm={6} md={3} key={p.title}>
                 <Box onClick={() => handlePath(p)} sx={{
-                  cursor: 'pointer', height: '100%', borderRadius: '24px', overflow: 'hidden',
+                  cursor: 'pointer', height: '100%', borderRadius: '8px', overflow: 'hidden',
                   background: '#fff',
                   boxShadow: '0 2px 20px rgba(8,89,70,0.07)',
                   border: '1px solid rgba(8,89,70,0.08)',
@@ -118,7 +118,7 @@ export default function HomeUserPathsSection() {
                       {p.number}
                     </Typography>
                     {/* Icon */}
-                    <Box sx={{ width: 60, height: 60, borderRadius: '18px',
+                    <Box sx={{ width: 60, height: 60, borderRadius: '8px',
                       background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.30)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       backdropFilter: 'blur(10px)' }}>

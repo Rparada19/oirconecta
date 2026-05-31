@@ -337,7 +337,7 @@ export default function AdminMarketplacePage() {
       <Dialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        PaperProps={{ sx: { borderRadius: '16px' } }}
+        PaperProps={{ sx: { borderRadius: '6px' } }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>¿Eliminar servicio?</DialogTitle>
         <DialogContent>

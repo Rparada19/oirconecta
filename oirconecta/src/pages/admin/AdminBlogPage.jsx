@@ -255,7 +255,7 @@ export default function AdminBlogPage() {
               </Typography>
             </Box>
           ) : (
-            <TableContainer sx={{ borderRadius: '16px' }}>
+            <TableContainer sx={{ borderRadius: '6px' }}>
               <Table>
                 <TableHead>
                   <TableRow sx={{ background: 'rgba(8,89,70,0.04)' }}>
@@ -489,7 +489,7 @@ export default function AdminBlogPage() {
       <Dialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        PaperProps={{ sx: { borderRadius: '16px' } }}
+        PaperProps={{ sx: { borderRadius: '6px' } }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>¿Eliminar post?</DialogTitle>
         <DialogContent>

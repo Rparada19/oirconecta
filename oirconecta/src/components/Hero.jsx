@@ -75,7 +75,7 @@ const Hero = () => {
               letterSpacing: '0.04em',
               mb: 3.5,
               px: 0.5,
-              borderRadius: '20px',
+              borderRadius: '8px',
             }}
           />
 
@@ -190,7 +190,7 @@ const Hero = () => {
               textDecoration: 'none',
               px: 3,
               py: 1.75,
-              borderRadius: '16px',
+              borderRadius: '6px',
               background: 'rgba(110,231,200,0.10)',
               border: '1px solid rgba(110,231,200,0.28)',
               backdropFilter: 'blur(12px)',

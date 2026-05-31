@@ -24,7 +24,7 @@ const BenefitCard = styled(Card)(({ theme }) => ({
 const IconBox = styled(Box)(({ theme }) => ({
   width: 64,
   height: 64,
-  borderRadius: 18,
+  borderRadius: 8,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',

@@ -263,7 +263,7 @@ export default function DirectoryFiltersDrawer({ open, onClose, value, onApply, 
           variant="contained"
           sx={{
             flex: 1,
-            borderRadius: 999,
+            borderRadius: 8,
             textTransform: 'none',
             fontWeight: 800,
             py: 1.25,

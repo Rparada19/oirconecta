@@ -533,7 +533,7 @@ const DashboardPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
               <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
-                borderRadius: '20px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)',
+                borderRadius: '8px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)',
                 mb: 1.5 }}>
                 <Assessment sx={{ fontSize: 14, color: 'rgba(255,255,255,0.80)' }} />
                 <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.80)' }}>
@@ -912,7 +912,7 @@ const DashboardPage = () => {
                   { icon: TrendingUp, label: 'Oportunidades', value: formatCurrency(ventasData.valoresCotizadosPendientes), gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)', glow: 'rgba(124,58,237,0.20)' },
                 ].map((item) => (
                   <Grid item xs={12} sm={6} md={3} key={item.label}>
-                    <Box sx={{ p: 2.5, borderRadius: '16px', background: 'rgba(8,89,70,0.04)',
+                    <Box sx={{ p: 2.5, borderRadius: '6px', background: 'rgba(8,89,70,0.04)',
                       border: '1px solid rgba(8,89,70,0.08)',
                       transition: 'all 0.22s ease',
                       '&:hover': { boxShadow: `0 8px 24px ${item.glow}`, transform: 'translateY(-3px)' } }}>
@@ -986,7 +986,7 @@ const DashboardPage = () => {
                   </Grid>
                   {rubros.map((item) => (
                     <Grid item xs={12} md={4} key={item.label}>
-                      <Box sx={{ p: 2.5, borderRadius: '16px', background: 'rgba(8,89,70,0.04)', border: '1px solid rgba(8,89,70,0.08)',
+                      <Box sx={{ p: 2.5, borderRadius: '6px', background: 'rgba(8,89,70,0.04)', border: '1px solid rgba(8,89,70,0.08)',
                         transition: 'all 0.22s ease', '&:hover': { boxShadow: `0 8px 24px ${item.glow}`, transform: 'translateY(-3px)' } }}>
                         <Box sx={{ width: 40, height: 40, borderRadius: '12px', background: item.gradient,
                           display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1.5, boxShadow: `0 4px 14px ${item.glow}` }}>
@@ -1294,7 +1294,7 @@ const DashboardPage = () => {
                       <Grid item xs={12} md={6} key={key}>
                         <Box
                           sx={{
-                            p: 2.5, borderRadius: '18px', height: '100%',
+                            p: 2.5, borderRadius: '8px', height: '100%',
                             background: 'rgba(255,255,255,0.70)', backdropFilter: 'blur(12px)',
                             border: '1px solid rgba(255,255,255,0.60)',
                             boxShadow: '0 2px 12px rgba(8,89,70,0.06)',

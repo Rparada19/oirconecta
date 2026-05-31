@@ -16,7 +16,7 @@ export default function HomeVideoSection() {
           gap: { xs: 5, md: 8 }, alignItems: 'center' }}>
           {/* Left text */}
           <Box sx={{ flex: '0 0 auto', maxWidth: { md: 400 } }}>
-            <Box sx={{ display: 'inline-flex', px: 2.5, py: 0.75, borderRadius: '20px',
+            <Box sx={{ display: 'inline-flex', px: 2.5, py: 0.75, borderRadius: '8px',
               background: 'rgba(8,89,70,0.08)', border: '1px solid rgba(8,89,70,0.15)', mb: 2.5 }}>
               <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: '#085946' }}>
@@ -47,7 +47,7 @@ export default function HomeVideoSection() {
 
           {/* Right video/placeholder */}
           <Box sx={{ flex: 1, width: '100%' }}>
-            <Box sx={{ borderRadius: '24px', overflow: 'hidden',
+            <Box sx={{ borderRadius: '8px', overflow: 'hidden',
               boxShadow: '0 24px 64px rgba(8,89,70,0.18)',
               border: '1px solid rgba(8,89,70,0.10)' }}>
               {hasVideo ? (

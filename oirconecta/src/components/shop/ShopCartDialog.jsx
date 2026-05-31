@@ -114,7 +114,7 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '6px' } }}>
       <DialogTitle sx={{ fontWeight: 700 }}>
         {step === 'cart' && 'Tu carrito'}
         {step === 'form' && 'Datos de contacto y envío'}

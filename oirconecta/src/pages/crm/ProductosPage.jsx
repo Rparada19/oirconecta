@@ -42,7 +42,7 @@ const MAX_FICHA_BYTES = 4 * 1024 * 1024;
 /** Acordeones del catálogo: tarjetas suaves, sin “tubo” plano a todo el ancho. */
 const catalogAccordionSx = {
   border: 'none',
-  borderRadius: '20px',
+  borderRadius: '8px',
   overflow: 'hidden',
   bgcolor: '#ffffff',
   boxShadow: '0 2px 14px rgba(39, 47, 80, 0.06), 0 1px 3px rgba(8, 89, 70, 0.04)',
@@ -238,7 +238,7 @@ const ProductosPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
               <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
-                borderRadius: '20px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 1.5 }}>
+                borderRadius: '8px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 1.5 }}>
                 <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.80)' }}>CRM · CATÁLOGO</Typography>
               </Box>
               <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.5rem' }, fontWeight: 900,

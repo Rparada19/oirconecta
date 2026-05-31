@@ -138,7 +138,7 @@ const DirectoryCardV2 = memo(function DirectoryCardV2({ profile }) {
               right: 10,
               bgcolor: 'rgba(15,25,35,0.78)',
               color: '#fff',
-              borderRadius: 999,
+              borderRadius: 8,
               px: 1.25,
               py: 0.5,
               display: 'flex',

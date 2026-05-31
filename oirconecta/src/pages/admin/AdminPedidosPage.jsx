@@ -201,7 +201,7 @@ export default function AdminPedidosPage() {
       </Card>
 
       {/* Detalle de pedido */}
-      <Dialog open={!!detail} onClose={() => setDetail(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
+      <Dialog open={!!detail} onClose={() => setDetail(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '6px' } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>Pedido #{detail?.numero}</DialogTitle>
         <DialogContent>
           {detail && (

@@ -133,7 +133,7 @@ export default function DirectorioProfesionPage() {
                 component={RouterLink}
                 to="/directorio"
                 variant="contained"
-                sx={{ mt: 2, borderRadius: 999, textTransform: 'none', fontWeight: 700 }}
+                sx={{ mt: 2, borderRadius: 8, textTransform: 'none', fontWeight: 700 }}
               >
                 Ver todo el directorio
               </Button>

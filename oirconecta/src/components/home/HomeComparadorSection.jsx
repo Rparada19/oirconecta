@@ -16,7 +16,7 @@ export default function HomeComparadorSection() {
     <Box sx={{ py: { xs: 6, md: 9 }, px: 2 }}>
       <Container maxWidth="lg">
         <Box sx={{
-          borderRadius: '28px',
+          borderRadius: '8px',
           background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 55%, #6ee7c8 140%)',
           color: '#fff',
           p: { xs: 4, md: 6 },
@@ -24,7 +24,7 @@ export default function HomeComparadorSection() {
         }}>
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={7}>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, background: 'rgba(255,255,255,0.15)', px: 1.5, py: 0.5, borderRadius: '999px', mb: 2 }}>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, background: 'rgba(255,255,255,0.15)', px: 1.5, py: 0.5, borderRadius: '8px', mb: 2 }}>
                 <AutoAwesomeIcon sx={{ fontSize: 18 }} />
                 <Typography variant="caption" sx={{ fontWeight: 700, letterSpacing: '0.04em' }}>NUEVO · CON INTELIGENCIA ARTIFICIAL</Typography>
               </Box>
@@ -43,7 +43,7 @@ export default function HomeComparadorSection() {
                 ))}
               </Box>
               <Button variant="contained" size="large" startIcon={<CompareArrowsIcon />} onClick={() => navigate('/comparador')}
-                sx={{ background: '#fff', color: '#085946', fontWeight: 800, borderRadius: '999px', px: 4, py: 1.3, '&:hover': { background: '#f0fdf4' } }}>
+                sx={{ background: '#fff', color: '#085946', fontWeight: 800, borderRadius: '8px', px: 4, py: 1.3, '&:hover': { background: '#f0fdf4' } }}>
                 Probar el comparador
               </Button>
             </Grid>
