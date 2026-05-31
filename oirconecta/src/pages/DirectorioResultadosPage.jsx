@@ -83,8 +83,9 @@ export default function DirectorioResultadosPage() {
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f4f7f6' }}>
       <Helmet>
         <title>Resultados del directorio | OírConecta</title>
-        <meta name="description" content="Profesionales auditivos en Colombia agrupados por profesión. Audiólogos, otólogos y fonoaudiólogos verificados con datos de contacto." />
-        <link rel="canonical" href="https://oirconecta.com/directorio-clasico" />
+        <meta name="description" content="Profesionales auditivos en Colombia agrupados por profesión." />
+        <meta name="robots" content="noindex,follow" />
+        <link rel="canonical" href="https://oirconecta.com/directorio/listado" />
       </Helmet>
       <Header />
       <Box sx={{ height: 72 }} />
