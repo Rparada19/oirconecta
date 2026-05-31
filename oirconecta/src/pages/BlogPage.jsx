@@ -63,7 +63,7 @@ function FeaturedCard({ post }) {
         display: 'block',
         position: 'relative',
         textDecoration: 'none',
-        borderRadius: 4,
+        borderRadius: 2,
         overflow: 'hidden',
         height: { xs: 420, md: 540 },
         boxShadow: '0 20px 50px rgba(0,0,0,0.18)',
@@ -173,7 +173,7 @@ function CompactCard({ post }) {
         display: 'flex', gap: 2,
         textDecoration: 'none',
         p: 1.5,
-        borderRadius: 3,
+        borderRadius: 2,
         transition: 'all 0.3s ease',
         '&:hover': {
           bgcolor: '#f9fafb',
@@ -233,7 +233,7 @@ function PostCard({ post }) {
         display: 'flex', flexDirection: 'column',
         textDecoration: 'none',
         height: '100%',
-        borderRadius: 4,
+        borderRadius: 2,
         overflow: 'hidden',
         bgcolor: '#fff',
         border: '1px solid #f0f0f0',
@@ -327,7 +327,7 @@ function CategoryCard({ slug, label, count, active, onClick }) {
       onClick={onClick}
       sx={{
         cursor: 'pointer',
-        p: 2.5, borderRadius: 3,
+        p: 2.5, borderRadius: 2,
         bgcolor: active ? m.color : '#fff',
         color: active ? '#fff' : '#0f1923',
         border: `1.5px solid ${active ? m.color : '#e5e7eb'}`,
@@ -509,7 +509,7 @@ export default function BlogPage() {
                     ARTÍCULOS PUBLICADOS
                   </Typography>
                 </Box>
-                <Box sx={{ width: 1, bgcolor: 'rgba(255,255,255,0.15)' }} />
+                <Box sx={{ width: '1px', height: 56, bgcolor: 'rgba(255,255,255,0.15)' }} />
                 <Box>
                   <Typography sx={{ fontSize: { xs: '1.875rem', md: '2.25rem' }, fontWeight: 900, color: '#6ee7c8', lineHeight: 1 }}>
                     {sections.filter((s) => s.count > 0).length || 4}
@@ -529,7 +529,7 @@ export default function BlogPage() {
                   to={`/blog/${featured.slug}`}
                   sx={{
                     display: 'block', textDecoration: 'none',
-                    borderRadius: 4, overflow: 'hidden',
+                    borderRadius: 2, overflow: 'hidden',
                     position: 'relative',
                     height: { xs: 340, md: 420 },
                     boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
