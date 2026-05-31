@@ -240,7 +240,8 @@ export default function SearchEngine({
     (ciudad && ciudad !== 'Todas las ciudades') ||
     (poliza && poliza !== POLIZA_LABEL_TODAS);
 
-  const colMd = isProfessionalPage ? 2 : 2;
+  const colMd = isProfessionalPage ? 2 : 2.5;
+  const nameColMd = isProfessionalPage ? 2 : 3;
 
   const compactPad = directoryMode && (directoryCompact || embeddedInHero);
   const directoryHuman = directoryMode && (directoryCompact || embeddedInHero);
@@ -558,7 +559,7 @@ export default function SearchEngine({
               </>
             ) : (
               <>
-                <Grid item xs={12} md={colMd} sx={{ alignItems: 'stretch' }}>
+                <Grid item xs={12} md={nameColMd} sx={{ alignItems: 'stretch' }}>
                   <InputWrapper sx={{ width: '100%' }}>
                     <Search className="icon" />
                     <TextField
@@ -672,7 +673,7 @@ export default function SearchEngine({
                     </FormControl>
                   </InputWrapper>
                 </Grid>
-                <Grid item xs={12} md={isProfessionalPage ? 4 : 4}>
+                <Grid item xs={12} md={isProfessionalPage ? 4 : 1.5}>
                   <Button
                     fullWidth
                     variant="contained"
