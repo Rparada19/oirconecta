@@ -512,10 +512,10 @@ export default function BlogPage() {
                 <Box sx={{ width: '1px', height: 56, bgcolor: 'rgba(255,255,255,0.15)' }} />
                 <Box>
                   <Typography sx={{ fontSize: { xs: '1.875rem', md: '2.25rem' }, fontWeight: 900, color: '#6ee7c8', lineHeight: 1 }}>
-                    {sections.filter((s) => s.count > 0).length || 4}
+                    {sections.length || 7}
                   </Typography>
                   <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', fontWeight: 600, mt: 0.5, letterSpacing: '0.05em' }}>
-                    TEMÁTICAS
+                    CATEGORÍAS
                   </Typography>
                 </Box>
               </Stack>
