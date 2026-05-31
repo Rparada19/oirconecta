@@ -43,9 +43,9 @@ const productos = [
 
 const tecnologias = [
   { icon: Hearing, titulo: 'Nexus AI', descripcion: 'Procesamiento avanzado para audición clara y natural', gradient: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a todos tus dispositivos', gradient: 'linear-gradient(135deg, #272F50 0%, #FCD303 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a todos tus dispositivos', gradient: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)' },
   { icon: BatteryChargingFull, titulo: 'Batería Recargable', descripcion: 'Comodidad sin pilas, siempre listo para usar', gradient: 'linear-gradient(135deg, #FCD303AA 0%, #272F50 100%)' },
-  { icon: Smartphone, titulo: 'App Smart', descripcion: 'Control personalizado de tus audífonos desde el móvil', gradient: 'linear-gradient(135deg, #1a3d4a 0%, #1e2a5e 100%)' },
+  { icon: Smartphone, titulo: 'App Smart', descripcion: 'Control personalizado de tus audífonos desde el móvil', gradient: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)' },
 ];
 
 const AudifonosAudioservicePage = () => {
@@ -71,9 +71,9 @@ const AudifonosAudioservicePage = () => {
         position: 'relative', overflow: 'hidden', minHeight: { xs: 'auto', md: '80vh' },
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         background:
-          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(26,61,74,0.55) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.65) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #0d2230 0%, #1a3d4a 35%, #1e2a4a 70%, #272F50 100%)',
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(252,211,3,0.42) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #4b3f00 0%, #8a7401 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}
@@ -108,7 +108,7 @@ const AudifonosAudioservicePage = () => {
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
                 letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Audífonos{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%)',
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   Audio Service
                 </Box>
@@ -303,7 +303,7 @@ const AudifonosAudioservicePage = () => {
         background:
           'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(26,61,74,0.50) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(39,47,80,0.60) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #0d2230 0%, #1a3d4a 40%, #1e2a4a 80%, #272F50 100%)',
+          'linear-gradient(160deg, #4b3f00 0%, #8a7401 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
@@ -311,7 +311,7 @@ const AudifonosAudioservicePage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
             letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
             ¿Listo para escuchar{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%)',
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #FCD303 0%, #272F50 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               mejor?
             </Box>

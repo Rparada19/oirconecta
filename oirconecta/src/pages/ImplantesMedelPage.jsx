@@ -13,8 +13,8 @@ const BRAND = {
   eslogan: 'La mejor audición para toda la vida',
   descripcion: 'MED-EL es pionero en implantes cocleares con más de 35 años de experiencia. Sus soluciones van desde implantes cocleares hasta sistemas de conducción ósea, adaptándose a cada necesidad de forma duradera.',
   rating: '4.9',
-  gradient: 'linear-gradient(135deg, #1a3a6e 0%, #085946 100%)',
-  glow: 'rgba(26,58,110,0.45)',
+  gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
+  glow: 'rgba(201,52,43,0.40)',
 };
 
 const productos = [
@@ -73,19 +73,19 @@ const tecnologias = [
     icon: Psychology,
     titulo: 'FineHearing™',
     descripcion: 'Codificación de frecuencias más precisa para una audición natural y rica en detalles',
-    gradient: 'linear-gradient(135deg, #1a3a6e 0%, #085946 100%)',
+    gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
   },
   {
     icon: GraphicEq,
     titulo: 'HDNR™',
     descripcion: 'Reducción de ruido de alta definición para ambientes ruidosos',
-    gradient: 'linear-gradient(135deg, #085946 0%, #1a3a6e 100%)',
+    gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
   },
   {
     icon: Bluetooth,
     titulo: 'AudioStream',
     descripcion: 'Conectividad directa con todos los dispositivos Bluetooth',
-    gradient: 'linear-gradient(135deg, #1a3a6e 0%, #272F50 100%)',
+    gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
   },
   {
     icon: Smartphone,
@@ -119,9 +119,9 @@ const ImplantesMedelPage = () => {
         position: 'relative', overflow: 'hidden', minHeight: { xs: 'auto', md: '80vh' },
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         background:
-          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(26,58,110,0.65) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(8,89,70,0.45) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #0a1628 0%, #1a3a6e 35%, #0a3d2e 70%, #085946 100%)',
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(201,52,43,0.42) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #3c0f0c 0%, #6e1c17 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}
@@ -156,7 +156,7 @@ const ImplantesMedelPage = () => {
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
                 letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Implantes{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%)',
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   MED-EL
                 </Box>
@@ -237,7 +237,7 @@ const ImplantesMedelPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Sistemas{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #1a3a6e 0%, #085946 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 disponibles
               </Box>
@@ -312,7 +312,7 @@ const ImplantesMedelPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Tecnología{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #1a3a6e 0%, #085946 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 exclusiva
               </Box>
@@ -351,7 +351,7 @@ const ImplantesMedelPage = () => {
         background:
           'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(26,58,110,0.60) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(8,89,70,0.45) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #0a1628 0%, #1a3a6e 40%, #0a3d2e 80%, #085946 100%)',
+          'linear-gradient(160deg, #3c0f0c 0%, #6e1c17 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
@@ -359,7 +359,7 @@ const ImplantesMedelPage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
             letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
             Da el paso hacia una{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%)',
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               vida más plena
             </Box>

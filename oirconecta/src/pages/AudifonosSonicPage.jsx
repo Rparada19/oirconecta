@@ -13,8 +13,8 @@ const BRAND = {
   eslogan: 'Speech Variable Processing™',
   descripcion: 'Audífonos con tecnología SoundDNA™, recargables y conectividad total para una experiencia auditiva personalizada. Trek, Cheer y app SoundLink 2 para cada necesidad auditiva.',
   rating: '4.7',
-  gradient: 'linear-gradient(135deg, #272F50 0%, #2D2D2D 100%)',
-  glow: 'rgba(39,47,80,0.40)',
+  gradient: 'linear-gradient(135deg, #2D2D2D 0%, #272F50 100%)',
+  glow: 'rgba(45,45,45,0.40)',
 };
 
 const productos = [
@@ -24,10 +24,10 @@ const productos = [
 ];
 
 const tecnologias = [
-  { icon: Hearing, titulo: 'SoundDNA™', descripcion: 'Tecnología de procesamiento de sonido natural sin distorsión', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
+  { icon: Hearing, titulo: 'SoundDNA™', descripcion: 'Tecnología de procesamiento de sonido natural sin distorsión', gradient: 'linear-gradient(135deg, #2D2D2D 0%, #272F50 100%)' },
   { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a cualquier dispositivo', gradient: 'linear-gradient(135deg, #2D2D2D 0%, #272F50DD 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería recargable y resistente al agua IP68', gradient: 'linear-gradient(135deg, #272F50 0%, #71A095 100%)' },
-  { icon: Smartphone, titulo: 'App SoundLink 2', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #085946 0%, #71A095 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería recargable y resistente al agua IP68', gradient: 'linear-gradient(135deg, #2D2D2D 0%, #272F50 100%)' },
+  { icon: Smartphone, titulo: 'App SoundLink 2', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #2D2D2D 0%, #272F50 100%)' },
 ];
 
 const AudifonosSonicPage = () => {
@@ -53,9 +53,9 @@ const AudifonosSonicPage = () => {
         position: 'relative', overflow: 'hidden', minHeight: { xs: 'auto', md: '80vh' },
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         background:
-          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(8,89,70,0.45) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #1a2240 0%, #272F50 35%, #063c2c 70%, #085946 100%)',
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(45,45,45,0.42) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #0d0d0d 0%, #181818 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}
@@ -90,7 +90,7 @@ const AudifonosSonicPage = () => {
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
                 letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Audífonos{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #2D2D2D 0%, #272F50 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   Sonic
                 </Box>
@@ -171,7 +171,7 @@ const AudifonosSonicPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Línea de{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #2D2D2D 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 productos
               </Box>
@@ -246,7 +246,7 @@ const AudifonosSonicPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Tecnología{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #2D2D2D 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 avanzada
               </Box>
@@ -285,7 +285,7 @@ const AudifonosSonicPage = () => {
         background:
           'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(39,47,80,0.50) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(8,89,70,0.40) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #1a2240 0%, #272F50 40%, #063c2c 80%, #085946 100%)',
+          'linear-gradient(160deg, #0d0d0d 0%, #181818 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
@@ -293,7 +293,7 @@ const AudifonosSonicPage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
             letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
             ¿Listo para escuchar{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #2D2D2D 0%, #272F50 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               mejor?
             </Box>

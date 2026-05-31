@@ -13,7 +13,7 @@ const BRAND = {
   eslogan: 'Tecnología Dyn™',
   descripcion: 'Audífonos con tecnología Hybrid Technology™, recargables y conectividad total para una experiencia auditiva personalizada. Bernafon combina precisión suiza con sonido natural para cada momento de tu vida.',
   rating: '4.8',
-  gradient: 'linear-gradient(135deg, #085946 0%, #1a2744 100%)',
+  gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
   glow: 'rgba(201,52,43,0.40)',
 };
 
@@ -42,10 +42,10 @@ const productos = [
 ];
 
 const tecnologias = [
-  { icon: Hearing, titulo: 'Hybrid Technology™', descripcion: 'Procesamiento híbrido para audición clara y natural', gradient: 'linear-gradient(135deg, #085946 0%, #1a2744 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a todos tus dispositivos', gradient: 'linear-gradient(135deg, #1a2744 0%, #085946 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Batería Recargable', descripcion: 'Comodidad sin pilas, siempre listo para usar', gradient: 'linear-gradient(135deg, #2a5f5a 0%, #1a2744 100%)' },
-  { icon: Smartphone, titulo: 'App EasyControl-A', descripcion: 'Control personalizado de tus audífonos desde el móvil', gradient: 'linear-gradient(135deg, #085946 0%, #243060 100%)' },
+  { icon: Hearing, titulo: 'Hybrid Technology™', descripcion: 'Procesamiento híbrido para audición clara y natural', gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo a todos tus dispositivos', gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Batería Recargable', descripcion: 'Comodidad sin pilas, siempre listo para usar', gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)' },
+  { icon: Smartphone, titulo: 'App EasyControl-A', descripcion: 'Control personalizado de tus audífonos desde el móvil', gradient: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)' },
 ];
 
 const AudifonosBernafonPage = () => {
@@ -71,9 +71,9 @@ const AudifonosBernafonPage = () => {
         position: 'relative', overflow: 'hidden', minHeight: { xs: 'auto', md: '80vh' },
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         background:
-          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.45) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(26,39,68,0.65) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #063c2c 0%, #085946 35%, #111e38 70%, #1a2744 100%)',
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(201,52,43,0.42) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #3c0f0c 0%, #6e1c17 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}
@@ -108,7 +108,7 @@ const AudifonosBernafonPage = () => {
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
                 letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Audífonos{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a5b4fc 100%)',
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   Bernafon
                 </Box>
@@ -189,7 +189,7 @@ const AudifonosBernafonPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Línea de{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #085946 0%, #1a2744 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 productos
               </Box>
@@ -264,7 +264,7 @@ const AudifonosBernafonPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Tecnología{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #085946 0%, #1a2744 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 avanzada
               </Box>
@@ -303,7 +303,7 @@ const AudifonosBernafonPage = () => {
         background:
           'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(13,122,92,0.40) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(26,39,68,0.60) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #063c2c 0%, #085946 40%, #111e38 80%, #1a2744 100%)',
+          'linear-gradient(160deg, #3c0f0c 0%, #6e1c17 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
@@ -311,7 +311,7 @@ const AudifonosBernafonPage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
             letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
             ¿Listo para escuchar{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a5b4fc 100%)',
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #C9342B 0%, #272F50 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               mejor?
             </Box>

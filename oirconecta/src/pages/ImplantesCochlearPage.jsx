@@ -13,8 +13,8 @@ const BRAND = {
   eslogan: 'Nucleus® — El implante más usado en el mundo',
   descripcion: 'Cochlear es el líder mundial en implantes cocleares con más de 700.000 personas beneficiadas. Su sistema Nucleus® ofrece la mejor experiencia auditiva con tecnología de vanguardia y soporte de por vida.',
   rating: '4.9',
-  gradient: 'linear-gradient(135deg, #a83232 0%, #085946 100%)',
-  glow: 'rgba(168,50,50,0.40)',
+  gradient: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
+  glow: 'rgba(240,180,0,0.40)',
 };
 
 const productos = [
@@ -73,19 +73,19 @@ const tecnologias = [
     icon: Psychology,
     titulo: 'SmartSound® iQ',
     descripcion: 'Procesamiento inteligente del sonido que se adapta automáticamente al entorno',
-    gradient: 'linear-gradient(135deg, #a83232 0%, #085946 100%)',
+    gradient: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
   },
   {
     icon: Bluetooth,
     titulo: 'Conectividad Total',
     descripcion: 'Streaming directo desde iPhone, Android y televisores',
-    gradient: 'linear-gradient(135deg, #085946 0%, #a83232 100%)',
+    gradient: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
   },
   {
     icon: BatteryChargingFull,
     titulo: 'Recargable IP68',
     descripcion: 'Batería de larga duración con protección total contra agua y polvo',
-    gradient: 'linear-gradient(135deg, #a83232 0%, #272F50 100%)',
+    gradient: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
   },
   {
     icon: Smartphone,
@@ -119,9 +119,9 @@ const ImplantesCochlearPage = () => {
         position: 'relative', overflow: 'hidden', minHeight: { xs: 'auto', md: '80vh' },
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         background:
-          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(168,50,50,0.50) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(8,89,70,0.45) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #2a0a0a 0%, #6b1f1f 30%, #0a3d2e 65%, #085946 100%)',
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(240,180,0,0.42) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #483600 0%, #846300 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}
@@ -155,7 +155,7 @@ const ImplantesCochlearPage = () => {
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
                 letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Implantes{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #fca5a5 0%, #fed7aa 100%)',
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   Cochlear
                 </Box>
@@ -234,7 +234,7 @@ const ImplantesCochlearPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Sistemas{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #a83232 0%, #085946 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 disponibles
               </Box>
@@ -307,7 +307,7 @@ const ImplantesCochlearPage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Tecnología{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #a83232 0%, #085946 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 Nucleus®
               </Box>
@@ -346,7 +346,7 @@ const ImplantesCochlearPage = () => {
         background:
           'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(168,50,50,0.55) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(8,89,70,0.40) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #2a0a0a 0%, #6b1f1f 35%, #0a3d2e 75%, #085946 100%)',
+          'linear-gradient(160deg, #483600 0%, #846300 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
@@ -354,7 +354,7 @@ const ImplantesCochlearPage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
             letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
             Más de{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #fca5a5 0%, #fed7aa 100%)',
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #F0B400 0%, #272F50 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               700.000 personas
             </Box>{' '}confían en Cochlear

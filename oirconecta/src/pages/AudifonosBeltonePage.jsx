@@ -13,8 +13,8 @@ const BRAND = {
   eslogan: 'Audición con soporte cercano',
   descripcion: 'Beltone integra tecnología de aprendizaje automático, conectividad y diseño para que vivas cada momento con claridad y confianza. Evoke, Legend y app Beltone HearMax para cada necesidad auditiva.',
   rating: '4.7',
-  gradient: 'linear-gradient(135deg, #272F50 0%, #71A095 100%)',
-  glow: 'rgba(39,47,80,0.40)',
+  gradient: 'linear-gradient(135deg, #2E7D32 0%, #00382B 100%)',
+  glow: 'rgba(46,125,50,0.40)',
 };
 
 const productos = [
@@ -42,10 +42,10 @@ const productos = [
 ];
 
 const tecnologias = [
-  { icon: Hearing, titulo: 'Evoke AI', descripcion: 'Aprendizaje automático para una audición más natural y adaptable', gradient: 'linear-gradient(135deg, #272F50 0%, #71A095 100%)' },
-  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo con todos los dispositivos', gradient: 'linear-gradient(135deg, #71A095 0%, #272F50 100%)' },
+  { icon: Hearing, titulo: 'Evoke AI', descripcion: 'Aprendizaje automático para una audición más natural y adaptable', gradient: 'linear-gradient(135deg, #2E7D32 0%, #00382B 100%)' },
+  { icon: Bluetooth, titulo: 'Conectividad Total', descripcion: 'Bluetooth y streaming directo con todos los dispositivos', gradient: 'linear-gradient(135deg, #2E7D32 0%, #00382B 100%)' },
   { icon: BatteryChargingFull, titulo: 'Recargable', descripcion: 'Batería de larga duración resistente al agua', gradient: 'linear-gradient(135deg, #2E7D32 0%, #00382BDD 100%)' },
-  { icon: Smartphone, titulo: 'HearMax App', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #00382B 0%, #2E7D32 100%)' },
+  { icon: Smartphone, titulo: 'HearMax App', descripcion: 'Control total de los audífonos desde tu móvil', gradient: 'linear-gradient(135deg, #2E7D32 0%, #00382B 100%)' },
 ];
 
 const AudifonosBeltonePage = () => {
@@ -71,9 +71,9 @@ const AudifonosBeltonePage = () => {
         position: 'relative', overflow: 'hidden', minHeight: { xs: 'auto', md: '80vh' },
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         background:
-          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(113,160,149,0.45) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #161c30 0%, #272F50 35%, #4a7a72 70%, #71A095 100%)',
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(46,125,50,0.42) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #0d250f 0%, #19441b 30%, #00382B 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         {/* Grain */}
@@ -108,7 +108,7 @@ const AudifonosBeltonePage = () => {
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900,
                 letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Audífonos{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #c8f5ed 0%, #d4d9f0 100%)',
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #2E7D32 0%, #00382B 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   Beltone
                 </Box>
@@ -189,7 +189,7 @@ const AudifonosBeltonePage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Línea de{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #272F50 0%, #71A095 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #2E7D32 0%, #00382B 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 productos
               </Box>
@@ -264,7 +264,7 @@ const AudifonosBeltonePage = () => {
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' },
               letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
               Tecnología{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(135deg, #272F50 0%, #71A095 100%)',
+              <Box component="span" sx={{ background: 'linear-gradient(135deg, #2E7D32 0%, #00382B 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 avanzada
               </Box>
@@ -303,7 +303,7 @@ const AudifonosBeltonePage = () => {
         background:
           'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(39,47,80,0.50) 0%, transparent 55%),' +
           'radial-gradient(ellipse 60% 70% at 80% 40%, rgba(113,160,149,0.40) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #161c30 0%, #272F50 40%, #4a7a72 80%, #71A095 100%)',
+          'linear-gradient(160deg, #0d250f 0%, #19441b 30%, #00382B 70%, #1a1f38 100%)',
         color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
@@ -311,7 +311,7 @@ const AudifonosBeltonePage = () => {
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' },
             letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
             ¿Listo para escuchar{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #c8f5ed 0%, #d4d9f0 100%)',
+            <Box component="span" sx={{ background: 'linear-gradient(135deg, #2E7D32 0%, #00382B 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               mejor?
             </Box>

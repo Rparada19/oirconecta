@@ -13,8 +13,8 @@ const BRAND = {
   eslogan: 'HiRes™ & Marvel Technology',
   descripcion: 'Advanced Bionics ofrece procesadores de sonido de vanguardia con tecnología HiRes™ para una audición clara en entornos complejos. Cada sistema se adapta a las necesidades únicas de cada usuario.',
   rating: '4.8',
-  gradient: 'linear-gradient(135deg, #272F50 0%, #003DA5 100%)',
-  glow: 'rgba(39,47,80,0.40)',
+  gradient: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)',
+  glow: 'rgba(0,61,165,0.40)',
 };
 
 const productos = [
@@ -25,10 +25,10 @@ const productos = [
 ];
 
 const tecnologias = [
-  { icon: Hearing, titulo: 'HiRes™ Ultra 3D', descripcion: 'La mayor resolución de sonido disponible en implantes', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)' },
+  { icon: Hearing, titulo: 'HiRes™ Ultra 3D', descripcion: 'La mayor resolución de sonido disponible en implantes', gradient: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)' },
   { icon: Bluetooth, titulo: 'Marvel Technology', descripcion: 'Streaming directo desde cualquier dispositivo Bluetooth', gradient: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)' },
-  { icon: BatteryChargingFull, titulo: 'Energía inteligente', descripcion: 'Batería recargable con autonomía de todo el día', gradient: 'linear-gradient(135deg, #1a2744 0%, #272F50 100%)' },
-  { icon: Smartphone, titulo: 'myPhonak App', descripcion: 'Control total desde tu smartphone en tiempo real', gradient: 'linear-gradient(135deg, #071628 0%, #085946 100%)' },
+  { icon: BatteryChargingFull, titulo: 'Energía inteligente', descripcion: 'Batería recargable con autonomía de todo el día', gradient: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)' },
+  { icon: Smartphone, titulo: 'myPhonak App', descripcion: 'Control total desde tu smartphone en tiempo real', gradient: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)' },
 ];
 
 const ImplantesAdvancedBionicsPage = () => {
@@ -54,9 +54,9 @@ const ImplantesAdvancedBionicsPage = () => {
         position: 'relative', overflow: 'hidden', minHeight: { xs: 'auto', md: '80vh' },
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         background:
-          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(13,122,92,0.35) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #0f1428 0%, #1a2240 35%, #063c2c 70%, #085946 100%)',
+          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(0,61,165,0.42) 0%, transparent 55%),' +
+          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
+          'linear-gradient(160deg, #001231 0%, #00215a 30%, #272F50 70%, #1a1f38 100%)',
         color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
       }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.40, pointerEvents: 'none',
@@ -74,7 +74,7 @@ const ImplantesAdvancedBionicsPage = () => {
               </Box>
               <Typography component="h1" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05, color: '#fff', mb: 2 }}>
                 Implantes{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                <Box component="span" sx={{ background: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   Advanced Bionics
                 </Box>
               </Typography>
@@ -124,7 +124,7 @@ const ImplantesAdvancedBionicsPage = () => {
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' }, letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
-              Línea de <Box component="span" sx={{ background: 'linear-gradient(135deg, #272F50 0%, #085946 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>procesadores</Box>
+              Línea de <Box component="span" sx={{ background: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>procesadores</Box>
             </Typography>
             <Typography sx={{ fontSize: '1rem', color: '#4a5568', maxWidth: 520, mx: 'auto' }}>Modelos disponibles a través de los especialistas de la red OírConecta</Typography>
           </Box>
@@ -158,7 +158,7 @@ const ImplantesAdvancedBionicsPage = () => {
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
             <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.875rem', md: '2.75rem' }, letterSpacing: '-0.03em', color: '#0f1923', mb: 1 }}>
-              Tecnología <Box component="span" sx={{ background: 'linear-gradient(135deg, #272F50 0%, #085946 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>avanzada</Box>
+              Tecnología <Box component="span" sx={{ background: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>avanzada</Box>
             </Typography>
           </Box>
           <Grid container spacing={3}>
@@ -176,11 +176,11 @@ const ImplantesAdvancedBionicsPage = () => {
       </Box>
 
       {/* CTA */}
-      <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 5, md: 8 }, background: 'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(39,47,80,0.45) 0%, transparent 55%),radial-gradient(ellipse 60% 70% at 80% 40%, rgba(13,122,92,0.35) 0%, transparent 55%),linear-gradient(160deg, #0f1428 0%, #1a2240 40%, #063c2c 80%, #085946 100%)', color: '#fff' }}>
+      <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 5, md: 8 }, background: 'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(39,47,80,0.45) 0%, transparent 55%),radial-gradient(ellipse 60% 70% at 80% 40%, rgba(13,122,92,0.35) 0%, transparent 55%),linear-gradient(160deg, #001231 0%, #00215a 30%, #272F50 70%, #1a1f38 100%)', color: '#fff' }}>
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
         <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
           <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' }, letterSpacing: '-0.03em', color: '#fff', mb: 2 }}>
-            ¿Listo para <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>escuchar mejor?</Box>
+            ¿Listo para <Box component="span" sx={{ background: 'linear-gradient(135deg, #003DA5 0%, #272F50 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>escuchar mejor?</Box>
           </Typography>
           <Typography sx={{ fontSize: '1.125rem', color: 'rgba(255,255,255,0.78)', mb: 5, maxWidth: 500, mx: 'auto', lineHeight: 1.65 }}>Un especialista de la red te orienta sobre los implantes Advanced Bionics más adecuados para tu caso.</Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
