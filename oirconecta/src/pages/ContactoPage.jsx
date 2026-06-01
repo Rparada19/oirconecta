@@ -36,20 +36,61 @@ const ContactoPage = () => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  // Si el asunto viene desde una marca (?asunto=Solicitud de información - Widex)
+  // extraer la marca y rutear al endpoint del comparador que guarda lead en BD.
+  const extractMarca = (asunto) => {
+    const m = /Solicitud de información\s*-\s*(.+)/i.exec(asunto || '');
+    return m ? m[1].trim() : null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
+    const marca = extractMarca(formData.asunto);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com'}/api/public/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+      let res;
+      if (marca) {
+        // Ruta de marca → guarda como lead en Comparador (visible en admin)
+        if (!formData.nombre || !formData.telefono) {
+          throw new Error('Nombre y teléfono son requeridos');
+        }
+        res = await fetch(`${API}/api/comparador/leads`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: formData.nombre,
+            telefono: formData.telefono,
+            email: formData.email || null,
+            marcaSugerida: marca,
+            test: { fuenteWeb: 'contacto-marca', asunto: formData.asunto, mensaje: formData.mensaje },
+          }),
+        });
+      } else {
+        // Contacto general
+        res = await fetch(`${API}/api/public/contact`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+      }
       if (!res.ok) throw new Error('error');
-      setSnackbar({ open: true, message: 'Mensaje enviado. Te responderemos en menos de 24 horas.', severity: 'success' });
+      setSnackbar({
+        open: true,
+        message: marca
+          ? `Solicitud enviada. El equipo de ${marca} te contactará pronto.`
+          : 'Mensaje enviado. Te responderemos en menos de 24 horas.',
+        severity: 'success',
+      });
       setFormData({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
-    } catch {
-      setSnackbar({ open: true, message: 'Error al enviar. Escríbenos directo a conversemos@oirconecta.com', severity: 'error' });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err.message === 'Nombre y teléfono son requeridos'
+          ? err.message
+          : 'Error al enviar. Escríbenos directo a conversemos@oirconecta.com',
+        severity: 'error',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -199,7 +240,7 @@ const ContactoPage = () => {
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <TextField fullWidth name="telefono" label="Teléfono (opcional)"
+                    <TextField fullWidth name="telefono" label={asuntoFromUrl ? "Teléfono *" : "Teléfono (opcional)"} required={Boolean(asuntoFromUrl)}
                       value={formData.telefono} onChange={handleChange}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
                     />
