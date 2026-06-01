@@ -82,6 +82,11 @@ const menuConfig = [
       { label: 'Mantenimiento y cuidados', to: '/blog?categoria=cuidados' },
     ],
   },
+  {
+    label: 'Contacto',
+    type: 'contacto',
+    to: '/contacto',
+  },
 ];
 
 const mobileFlatLinks = [
@@ -94,6 +99,7 @@ const mobileFlatLinks = [
   { label: 'Blog', to: '/blog' },
   { label: 'Comparador', to: '/comparador' },
   { label: 'Tienda', to: '/ecommerce' },
+  { label: 'Contacto', to: '/contacto' },
 ];
 
 const CustomMenu = styled(Menu)(() => ({
