@@ -33,10 +33,7 @@ const menuConfig = [
   {
     label: 'Nosotros',
     type: 'nosotros',
-    items: [
-      { label: 'Quiénes somos', to: '/nosotros#quienes-somos' },
-      { label: 'Qué hacemos', to: '/nosotros#que-hacemos' },
-    ],
+    to: '/nosotros',
   },
   {
     label: 'Audífonos',
@@ -166,45 +163,60 @@ const Header = () => {
 
   const waHref = getWhatsAppHref();
 
-  const navButtons = menuConfig.map((menu) => (
-    <Box key={menu.type} sx={{ position: 'relative' }}>
-      <Button
-        onClick={(e) => handleMenuClick(e, menu.type)}
-        endIcon={<ArrowDropDownIcon sx={{ opacity: 0.65 }} />}
-        sx={{
-          fontWeight: 600,
-          px: 1.75,
-          py: 0.75,
-          minHeight: 40,
-          borderRadius: '10px',
-          color: '#0f1923',
-          fontSize: '0.9375rem',
-          letterSpacing: '-0.005em',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            backgroundColor: 'rgba(8,89,70,0.07)',
-            color: '#085946',
-          },
-        }}
-      >
-        {menu.label}
-      </Button>
-      <CustomMenu
-        open={openMenu === menu.type}
-        anchorEl={anchorEl}
-        onClose={handleMenuClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        PaperProps={{ sx: { zIndex: theme.zIndex.modal + 1 } }}
-      >
-        {menu.items.map((item) => (
-          <MenuItem key={item.to + item.label} onClick={() => handleNavigation(item.to)}>
-            {item.label}
-          </MenuItem>
-        ))}
-      </CustomMenu>
-    </Box>
-  ));
+  const navButtons = menuConfig.map((menu) => {
+    const isDirectLink = !menu.items || menu.items.length === 0;
+    const buttonSx = {
+      fontWeight: 600,
+      px: 1.75,
+      py: 0.75,
+      minHeight: 40,
+      borderRadius: '10px',
+      color: '#0f1923',
+      fontSize: '0.9375rem',
+      letterSpacing: '-0.005em',
+      transition: 'all 0.2s ease',
+      '&:hover': {
+        backgroundColor: 'rgba(8,89,70,0.07)',
+        color: '#085946',
+      },
+    };
+
+    if (isDirectLink) {
+      return (
+        <Box key={menu.type} sx={{ position: 'relative' }}>
+          <Button onClick={() => handleNavigation(menu.to)} sx={buttonSx}>
+            {menu.label}
+          </Button>
+        </Box>
+      );
+    }
+
+    return (
+      <Box key={menu.type} sx={{ position: 'relative' }}>
+        <Button
+          onClick={(e) => handleMenuClick(e, menu.type)}
+          endIcon={<ArrowDropDownIcon sx={{ opacity: 0.65 }} />}
+          sx={buttonSx}
+        >
+          {menu.label}
+        </Button>
+        <CustomMenu
+          open={openMenu === menu.type}
+          anchorEl={anchorEl}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          PaperProps={{ sx: { zIndex: theme.zIndex.modal + 1 } }}
+        >
+          {menu.items.map((item) => (
+            <MenuItem key={item.to + item.label} onClick={() => handleNavigation(item.to)}>
+              {item.label}
+            </MenuItem>
+          ))}
+        </CustomMenu>
+      </Box>
+    );
+  });
 
   return (
     <AppBar
