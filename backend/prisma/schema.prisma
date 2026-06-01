@@ -1221,3 +1221,24 @@ model ComparadorLead {
   @@index([estado])
   @@map("comparador_leads")
 }
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  nombre    String
+  email     String
+  telefono  String?
+  asunto    String?
+  mensaje   String   @db.Text
+  estado    String   @default("NUEVO") // NUEVO | RESPONDIDO | ARCHIVADO
+  notas     String?  @db.Text
+  emailSent Boolean  @default(false)
+  emailError String?
+  /// IP, user agent y otros metadatos del cliente
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([estado])
+  @@index([createdAt])
+  @@map("contact_messages")
+}

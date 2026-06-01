@@ -20,6 +20,7 @@ import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
+import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { getAdminToken, clearAdminToken, getAdminUser } from './adminAuth';
@@ -39,6 +40,7 @@ const navItems = [
   { label: 'Pedidos', icon: <ReceiptLongOutlinedIcon />, path: '/portal-admin/pedidos' },
   { label: 'Comparador', icon: <CompareArrowsOutlinedIcon />, path: '/portal-admin/comparador' },
   { label: 'Newsletter', icon: <MailOutlineRoundedIcon />, path: '/portal-admin/newsletter' },
+  { label: 'Buzón de contacto', icon: <InboxOutlinedIcon />, path: '/portal-admin/contactos' },
 ];
 
 export default function AdminLayout() {
