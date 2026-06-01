@@ -3,6 +3,11 @@ import { useParams, Link as RouterLink } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { Box, Button, Container, Grid, Stack, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
+import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
+import MedicalServicesOutlinedIcon from '@mui/icons-material/MedicalServicesOutlined';
+import BiotechOutlinedIcon from '@mui/icons-material/BiotechOutlined';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -11,6 +16,79 @@ import DirectoryCardSkeleton from '../components/directorio/v2/DirectoryCardSkel
 import { fetchFeaturedByProfession, searchDirectoryV2 } from '../services/directoryDiscoveryService';
 
 const PAGE_SIZE = 24;
+
+// Contexto por profesión (imagen + qué hace + cuándo consultar)
+const PROFESSION_CONTEXT = {
+  fonoaudiologia: {
+    icon: RecordVoiceOverOutlinedIcon,
+    image: 'https://image.pollinations.ai/prompt/Latina%20speech%20therapist%20fonoaudiologa%20working%20with%20child%20auditory%20verbal%20therapy%2C%20colorful%20cards%2C%20warm%20engaging%20clinic%20session%2C%20editorial%20portrait?width=1200&height=900&nologo=true',
+    descripcion: 'El fonoaudiólogo evalúa y rehabilita la comunicación: lenguaje, habla, voz y audición. Es clave en la adaptación de audífonos y en la terapia auditivo-verbal de niños y adultos.',
+    queHacen: [
+      'Evaluación de lenguaje, habla y voz',
+      'Terapia auditivo-verbal post audífono o implante',
+      'Tratamiento de tartamudez y trastornos del habla',
+      'Acompañamiento en rehabilitación auditiva',
+    ],
+    cuandoConsultar: [
+      'Niño que no habla a su edad esperada',
+      'Adulto con dificultad para entender después de adaptarse audífono',
+      'Cambios recientes en la voz o el habla',
+      'Post implante coclear (rehabilitación)',
+    ],
+  },
+  audiologia: {
+    icon: HearingOutlinedIcon,
+    image: 'https://image.pollinations.ai/prompt/Latina%20audiologist%20fitting%20modern%20hearing%20aid%20on%20senior%20patient%20smiling%2C%20clean%20clinic%2C%20editorial%20healthcare%20portrait?width=1200&height=900&nologo=true',
+    descripcion: 'El audiólogo es el especialista en la evaluación, diagnóstico y adaptación de audífonos. Hace tu audiometría, te orienta sobre tecnología y te acompaña en la programación y seguimiento.',
+    queHacen: [
+      'Audiometrías y pruebas auditivas completas',
+      'Adaptación y programación de audífonos',
+      'Seguimiento del proceso auditivo',
+      'Asesoría en prevención y conservación auditiva',
+    ],
+    cuandoConsultar: [
+      'Sospecha de pérdida auditiva (subes mucho el TV)',
+      'Antes de comprar tu primer audífono',
+      'Para ajustar un audífono que no funciona como esperas',
+      'Audiometría preventiva (cada 2-3 años después de los 50)',
+    ],
+  },
+  otorrinolaringologia: {
+    icon: MedicalServicesOutlinedIcon,
+    image: 'https://image.pollinations.ai/prompt/Latino%20ENT%20otorhinolaryngologist%20doctor%20examining%20patient%20ear%20with%20otoscope%2C%20professional%20clinical%20setting%2C%20editorial%20portrait%20photography?width=1200&height=900&nologo=true',
+    descripcion: 'El otorrinolaringólogo (ORL) es el médico especialista en oído, nariz y garganta. Diagnostica y trata enfermedades del oído, prescribe medicamentos y realiza cirugías cuando hace falta.',
+    queHacen: [
+      'Diagnóstico médico de enfermedades del oído',
+      'Tratamiento de otitis, vértigo, tinnitus',
+      'Cirugías de oído medio y externo',
+      'Manejo de pérdidas auditivas con causa médica',
+    ],
+    cuandoConsultar: [
+      'Pérdida auditiva súbita (¡urgencia!)',
+      'Otitis recurrentes o crónicas',
+      'Vértigo, mareo o problemas de equilibrio',
+      'Zumbido persistente (tinnitus)',
+      'Dolor de oído o secreciones',
+    ],
+  },
+  otologia: {
+    icon: BiotechOutlinedIcon,
+    image: 'https://image.pollinations.ai/prompt/Latino%20otologist%20doctor%20surgeon%20looking%20at%20cochlear%20implant%20device%20in%20modern%20surgical%20clinic%2C%20editorial%20medical%20portrait?width=1200&height=900&nologo=true',
+    descripcion: 'El otólogo es el ORL sub-especializado en oído. Maneja casos complejos: implantes cocleares, cirugías de oído medio, schwannomas y patologías del nervio auditivo.',
+    queHacen: [
+      'Cirugía de implante coclear',
+      'Cirugía de oído medio (otosclerosis, colesteatoma)',
+      'Evaluación de candidatura a implantes auditivos',
+      'Tratamiento de patología compleja del oído',
+    ],
+    cuandoConsultar: [
+      'Pérdida auditiva severa o profunda',
+      'Evaluación para implante coclear',
+      'Otosclerosis confirmada',
+      'Referencia de ORL para caso quirúrgico complejo',
+    ],
+  },
+};
 
 export default function DirectorioProfesionPage() {
   const { slug } = useParams();
@@ -125,6 +203,119 @@ export default function DirectorioProfesionPage() {
           </Box>
         </Container>
       </Box>
+
+      {/* BANNER CONTEXTO PROFESIÓN */}
+      {PROFESSION_CONTEXT[slug] && (
+        <Box sx={{ py: { xs: 5, md: 7 }, bgcolor: '#fff' }}>
+          <Container maxWidth="lg">
+            <Box sx={{
+              position: 'relative', borderRadius: '12px', overflow: 'hidden',
+              boxShadow: `0 20px 50px ${C.navy}14`,
+              border: `1px solid ${C.grisClaro}33`,
+            }}>
+              <Grid container>
+                {/* Imagen profesión */}
+                <Grid item xs={12} md={5} sx={{ position: 'relative', minHeight: { xs: 280, md: 'auto' } }}>
+                  <Box
+                    component="img"
+                    src={PROFESSION_CONTEXT[slug].image}
+                    alt={`${profession?.nombre || 'Profesión'} - OírConecta`}
+                    loading="lazy"
+                    sx={{
+                      position: 'absolute', inset: 0,
+                      width: '100%', height: '100%',
+                      objectFit: 'cover', display: 'block',
+                    }}
+                  />
+                  <Box sx={{
+                    position: 'absolute', inset: 0,
+                    background: { xs: `linear-gradient(180deg, transparent 40%, ${C.verdeProfundo}DD 100%)`,
+                                  md: `linear-gradient(to right, transparent 50%, rgba(255,255,255,0.05) 100%)` },
+                  }} />
+                  <Box sx={{
+                    position: 'absolute', bottom: { xs: 20, md: 24 }, left: { xs: 20, md: 24 },
+                    bgcolor: 'rgba(255,255,255,0.95)', borderRadius: '8px',
+                    px: 1.75, py: 0.875, display: 'flex', alignItems: 'center', gap: 1,
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+                  }}>
+                    {(() => {
+                      const Icon = PROFESSION_CONTEXT[slug].icon;
+                      return <Icon sx={{ fontSize: 20, color: C.verde }} />;
+                    })()}
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+                      fontWeight: 700, color: C.navy, letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                    }}>
+                      {profession?.nombre || 'Profesión'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                {/* Contenido */}
+                <Grid item xs={12} md={7}>
+                  <Box sx={{ p: { xs: 3.5, md: 5 } }}>
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+                      fontWeight: 600, letterSpacing: '0.18em',
+                      textTransform: 'uppercase', color: C.verde, mb: 1.5,
+                    }}>¿Qué hacen?</Typography>
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif',
+                      fontSize: { xs: '1rem', md: '1.0625rem' },
+                      color: C.gris, lineHeight: 1.65, mb: 3.5,
+                    }}>
+                      {PROFESSION_CONTEXT[slug].descripcion}
+                    </Typography>
+
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography sx={{
+                          fontFamily: '"Playfair Display", Georgia, serif',
+                          fontSize: '1.0625rem', fontWeight: 600,
+                          color: C.navy, mb: 1.5,
+                        }}>Qué hacen</Typography>
+                        <Stack spacing={1}>
+                          {PROFESSION_CONTEXT[slug].queHacen.map((q) => (
+                            <Box key={q} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                              <CheckCircleOutlineIcon sx={{ fontSize: 16, color: C.verde, mt: '3px', flexShrink: 0 }} />
+                              <Typography sx={{
+                                fontFamily: '"DM Sans", sans-serif',
+                                fontSize: '0.875rem', color: C.navy, lineHeight: 1.5,
+                              }}>{q}</Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography sx={{
+                          fontFamily: '"Playfair Display", Georgia, serif',
+                          fontSize: '1.0625rem', fontWeight: 600,
+                          color: C.navy, mb: 1.5,
+                        }}>Cuándo consultar</Typography>
+                        <Stack spacing={1}>
+                          {PROFESSION_CONTEXT[slug].cuandoConsultar.map((c) => (
+                            <Box key={c} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                              <Box sx={{
+                                width: 6, height: 6, borderRadius: '50%',
+                                bgcolor: C.oro, mt: '7px', flexShrink: 0,
+                              }} />
+                              <Typography sx={{
+                                fontFamily: '"DM Sans", sans-serif',
+                                fontSize: '0.875rem', color: C.navy, lineHeight: 1.5,
+                              }}>{c}</Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Container>
+        </Box>
+      )}
 
       <Box sx={{ pb: 6 }}>
         <Container maxWidth="lg">
