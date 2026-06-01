@@ -59,89 +59,48 @@ export default function DirectoryHero({
   return (
     <Box
       sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        pt: { xs: 5, md: 9 },
+        position: 'relative', overflow: 'hidden',
+        pt: { xs: 12, md: 14 },
         pb: { xs: 5, md: 7 },
-        background:
-          'radial-gradient(circle at 15% 0%, rgba(8,89,70,0.20), transparent 50%),' +
-          'radial-gradient(circle at 85% 10%, rgba(39,47,80,0.18), transparent 55%),' +
-          'radial-gradient(circle at 50% 100%, rgba(113,160,149,0.12), transparent 60%),' +
-          'linear-gradient(180deg, #f4f8f6 0%, #ebf2ee 100%)',
+        bgcolor: '#FBFAF8',
       }}
     >
-      {/* Orbes decorativos con blur */}
-      <Box
-        aria-hidden
-        sx={{
-          position: 'absolute',
-          top: -120,
-          right: -80,
-          width: 320,
-          height: 320,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(8,89,70,0.35) 0%, rgba(8,89,70,0) 70%)',
-          filter: 'blur(40px)',
-          pointerEvents: 'none',
-        }}
-      />
-      <Box
-        aria-hidden
-        sx={{
-          position: 'absolute',
-          bottom: -100,
-          left: -60,
-          width: 280,
-          height: 280,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(39,47,80,0.30) 0%, rgba(39,47,80,0) 70%)',
-          filter: 'blur(40px)',
-          pointerEvents: 'none',
-        }}
-      />
+      <Box aria-hidden sx={{
+        position: 'absolute', top: -180, right: -180,
+        width: 540, height: 540, borderRadius: '50%',
+        background: 'radial-gradient(circle, #D9CDBF50 0%, transparent 70%)',
+        filter: 'blur(60px)', pointerEvents: 'none',
+      }} />
+      <Box aria-hidden sx={{
+        position: 'absolute', bottom: -100, left: -60,
+        width: 280, height: 280, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(39,47,80,0.10) 0%, transparent 70%)',
+        filter: 'blur(50px)', pointerEvents: 'none',
+      }} />
 
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <Stack spacing={2.5} alignItems="center" textAlign="center" sx={{ mb: { xs: 4, md: 5 } }}>
-          <Chip
-            icon={<VerifiedRoundedIcon sx={{ fontSize: 16 }} />}
-            label="Directorio verificado · Colombia"
-            sx={{
-              bgcolor: 'rgba(255,255,255,0.85)',
-              backdropFilter: 'blur(8px)',
-              color: 'primary.main',
-              fontWeight: 700,
-              fontSize: 12,
-              letterSpacing: 0.4,
-              border: '1px solid rgba(8,89,70,0.18)',
-              boxShadow: '0 8px 24px -12px rgba(8,89,70,0.25)',
-              '& .MuiChip-icon': { color: 'primary.main' },
-            }}
-          />
+          <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25}>
+            <Box sx={{ width: 28, height: 2, bgcolor: '#085946' }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+              fontWeight: 600, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: '#085946',
+            }}>Directorio verificado · Colombia</Typography>
+            <Box sx={{ width: 28, height: 2, bgcolor: '#085946' }} />
+          </Stack>
 
-          <Typography
-            variant="h1"
-            sx={{
-              fontWeight: 800,
-              fontSize: { xs: 34, sm: 44, md: 60 },
-              lineHeight: 1.05,
-              letterSpacing: { xs: -0.5, md: -1.5 },
-              maxWidth: 880,
-              color: 'text.primary',
-            }}
-          >
+          <Typography component="h1" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontWeight: 600,
+            fontSize: { xs: '2.25rem', sm: '3rem', md: '4rem' },
+            lineHeight: 1.05, letterSpacing: '-0.018em',
+            maxWidth: 880, color: '#272F50',
+          }}>
             {title || (
               <>
                 Encuentra al{' '}
-                <Box
-                  component="span"
-                  sx={{
-                    color: 'primary.main',
-                    background: 'linear-gradient(120deg, #085946 0%, #0d7a5c 60%, #71A095 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
-                >
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#085946', fontWeight: 500 }}>
                   especialista auditivo
                 </Box>{' '}
                 ideal
@@ -149,15 +108,11 @@ export default function DirectoryHero({
             )}
           </Typography>
 
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'text.secondary',
-              maxWidth: 640,
-              fontSize: { xs: 15, md: 17 },
-              lineHeight: 1.6,
-            }}
-          >
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif',
+            color: '#6B7280', maxWidth: 640,
+            fontSize: { xs: '1rem', md: '1.1875rem' }, lineHeight: 1.6,
+          }}>
             {subtitle ||
               'Audiólogos, fonoaudiólogos y otorrinos verificados, con reseñas reales y atención presencial o virtual.'}
           </Typography>

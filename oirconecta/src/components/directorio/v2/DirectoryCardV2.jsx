@@ -5,8 +5,13 @@ import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
+import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
 
-const FALLBACK = '/icono-oirconecta.png';
+const FALLBACK = null;
+const C = {
+  navy: '#272F50', verde: '#085946', oro: '#C9A86A',
+  blanco: '#FBFAF8', gris: '#6B7280', grisClaro: '#A1A7B1',
+};
 
 function pickImage(profile) {
   if (profile.fotoPerfilUrl) return profile.fotoPerfilUrl;
@@ -53,44 +58,61 @@ const DirectoryCardV2 = memo(function DirectoryCardV2({ profile }) {
       to={`/directorio/profesional/${profile.id}`}
       elevation={0}
       sx={{
-        textDecoration: 'none',
-        color: 'inherit',
-        display: 'block',
-        position: 'relative',
-        borderRadius: 3,
-        overflow: 'hidden',
-        bgcolor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'grey.100',
-        transition: 'transform .25s ease, box-shadow .25s ease',
+        textDecoration: 'none', color: 'inherit',
+        display: 'flex', flexDirection: 'column',
+        position: 'relative', borderRadius: '10px',
+        overflow: 'hidden', bgcolor: '#fff', height: '100%',
+        border: `1px solid ${C.grisClaro}33`,
+        transition: 'all 0.35s cubic-bezier(0.4,0,0.2,1)',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: '0 18px 40px -20px rgba(8,89,70,0.35)',
-          borderColor: 'transparent',
+          boxShadow: `0 16px 36px ${C.navy}18`,
+          borderColor: `${C.navy}33`,
+          '& .dirv2-cover': { transform: 'scale(1.04)' },
         },
       }}
     >
-      <Box
-        sx={{
-          position: 'relative',
-          aspectRatio: '4 / 3',
-          width: '100%',
-          bgcolor: 'grey.100',
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          component="img"
-          src={img}
-          alt={nombre}
-          loading="lazy"
-          onError={(e) => {
-            e.currentTarget.src = FALLBACK;
-            e.currentTarget.style.objectFit = 'contain';
-            e.currentTarget.style.padding = '24%';
-          }}
-          sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
+      <Box sx={{
+        position: 'relative', aspectRatio: '4 / 3', width: '100%',
+        overflow: 'hidden',
+        background: img
+          ? 'transparent'
+          : `linear-gradient(135deg, ${C.verde}15 0%, ${C.navy}18 100%)`,
+      }}>
+        {img ? (
+          <Box
+            className="dirv2-cover"
+            component="img"
+            src={img} alt={nombre} loading="lazy"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            sx={{
+              width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+              transition: 'transform 0.6s cubic-bezier(0.4,0,0.2,1)',
+            }}
+          />
+        ) : (
+          <Box sx={{
+            position: 'absolute', inset: 0,
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 1.5,
+          }}>
+            <Box sx={{
+              width: 56, height: 56, borderRadius: '50%',
+              bgcolor: 'rgba(255,255,255,0.9)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 6px 16px rgba(39,47,80,0.10)',
+            }}>
+              <PersonOutlineRoundedIcon sx={{ fontSize: 30, color: C.verde }} />
+            </Box>
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '0.6875rem', fontWeight: 600,
+              color: C.gris, letterSpacing: '0.1em', textTransform: 'uppercase',
+            }}>
+              Perfil verificado
+            </Typography>
+          </Box>
+        )}
 
         {/* Badges flotantes */}
         <Stack
@@ -158,26 +180,24 @@ const DirectoryCardV2 = memo(function DirectoryCardV2({ profile }) {
         )}
       </Box>
 
-      <Box sx={{ p: 2 }}>
-        <Typography
-          variant="subtitle1"
-          sx={{
-            fontWeight: 700,
-            color: 'text.primary',
-            lineHeight: 1.3,
-            display: '-webkit-box',
-            WebkitLineClamp: 1,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
+      <Box sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        <Typography sx={{
+          fontFamily: '"Playfair Display", Georgia, serif',
+          fontWeight: 600, fontSize: '1.0625rem',
+          color: C.navy, lineHeight: 1.25, letterSpacing: '-0.005em',
+          display: '-webkit-box',
+          WebkitLineClamp: 1, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden', mb: 0.5,
+        }}>
           {nombre}
         </Typography>
 
-        <Typography
-          variant="body2"
-          sx={{ color: 'primary.main', fontWeight: 600, mt: 0.25 }}
-        >
+        <Typography sx={{
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: '0.8125rem', fontWeight: 600,
+          color: C.verde, letterSpacing: '0.02em',
+          textTransform: 'uppercase',
+        }}>
           {profesion}
         </Typography>
 

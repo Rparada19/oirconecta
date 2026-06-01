@@ -50,54 +50,97 @@ export default function DirectorioProfesionPage() {
 
   const tituloPlural = profession ? `${profession.nombre}s` : 'Profesionales';
 
+  const C = { navy: '#272F50', verde: '#085946', verdeProfundo: '#00382B',
+    oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280', grisClaro: '#A1A7B1', arena: '#D9CDBF' };
+
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: C.blanco, minHeight: '100vh' }}>
       <Helmet>
-        <title>{`${tituloPlural} en Colombia | Oír Conecta`}</title>
-        <meta
-          name="description"
-          content={`Encuentra ${tituloPlural.toLowerCase()} verificados en Colombia. Compara reseñas, ciudad y modalidad.`}
-        />
+        <title>{`${tituloPlural} en Colombia | OírConecta`}</title>
+        <meta name="description" content={`Encuentra ${tituloPlural.toLowerCase()} verificados en Colombia. Compara reseñas, ciudad y modalidad.`} />
       </Helmet>
       <Header />
 
-      <Box sx={{ pt: { xs: 4, md: 7 }, pb: 4 }}>
-        <Container maxWidth="lg">
+      {/* HERO */}
+      <Box sx={{ position: 'relative', overflow: 'hidden', pt: { xs: 14, md: 16 }, pb: { xs: 4, md: 6 }, bgcolor: C.blanco }}>
+        <Box sx={{
+          position: 'absolute', top: -180, right: -180,
+          width: 480, height: 480, borderRadius: '50%',
+          background: `radial-gradient(circle, ${C.arena}50 0%, transparent 70%)`,
+          filter: 'blur(60px)', pointerEvents: 'none',
+        }} />
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Button
-            component={RouterLink}
-            to="/directorio"
+            component={RouterLink} to="/directorio"
             startIcon={<ArrowBackRoundedIcon />}
-            sx={{ mb: 2, textTransform: 'none', fontWeight: 700, color: 'text.secondary' }}
-          >
-            Todo el directorio
-          </Button>
+            sx={{
+              fontFamily: '"DM Sans", sans-serif', textTransform: 'none',
+              fontWeight: 600, color: C.gris, mb: 3, p: 0,
+              '&:hover': { color: C.navy, bgcolor: 'transparent' },
+            }}
+          >Todo el directorio</Button>
 
-          <Stack spacing={1} sx={{ mb: 3 }}>
-            <Typography
-              variant="overline"
-              sx={{ color: 'primary.main', fontWeight: 800, letterSpacing: 1 }}
-            >
-              Directorio · Profesión
-            </Typography>
-            <Typography variant="h2" sx={{ fontWeight: 800, fontSize: { xs: 30, md: 44 }, lineHeight: 1.1 }}>
-              {tituloPlural} en Colombia
-            </Typography>
-            {profession?.descripcion && (
-              <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: 720 }}>
-                {profession.descripcion}
-              </Typography>
-            )}
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-              {total} profesional{total === 1 ? '' : 'es'} disponible{total === 1 ? '' : 's'}
-            </Typography>
+          <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 2.5 }}>
+            <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+              fontWeight: 600, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: C.verde,
+            }}>Directorio · {profession?.nombre || 'Profesionales'}</Typography>
           </Stack>
 
+          <Typography component="h1" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '2.25rem', md: '3.5rem' }, fontWeight: 600,
+            lineHeight: 1.08, color: C.navy, letterSpacing: '-0.018em', mb: 2.5,
+          }}>
+            {tituloPlural}{' '}
+            <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
+              en Colombia
+            </Box>
+          </Typography>
+
+          {profession?.descripcion && (
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+              color: C.gris, lineHeight: 1.6, maxWidth: 720, mb: 2,
+            }}>
+              {profession.descripcion}
+            </Typography>
+          )}
+
+          <Box sx={{
+            display: 'inline-flex', alignItems: 'center', gap: 1,
+            px: 1.75, py: 0.875, borderRadius: '6px',
+            bgcolor: `${C.verde}12`, border: `1px solid ${C.verde}33`,
+          }}>
+            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: C.verde }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem',
+              fontWeight: 600, color: C.verdeProfundo,
+            }}>
+              {total} profesional{total === 1 ? '' : 'es'} disponible{total === 1 ? '' : 's'}
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      <Box sx={{ pb: 6 }}>
+        <Container maxWidth="lg">
           {featured.length > 0 && (
-            <Box sx={{ mb: 5 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-                Mejor calificados
+            <Box sx={{ mb: 6 }}>
+              <Typography component="h2" sx={{
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: { xs: '1.5rem', md: '1.875rem' }, fontWeight: 600,
+                color: C.navy, letterSpacing: '-0.01em', mb: 3,
+              }}>
+                Mejor{' '}
+                <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
+                  calificados
+                </Box>
               </Typography>
-              <Grid container spacing={2}>
+              <Grid container spacing={{ xs: 2.5, md: 3 }}>
                 {featured.slice(0, 4).map((p) => (
                   <Grid item xs={12} sm={6} md={3} key={p.id}>
                     <DirectoryCardV2 profile={p} />
@@ -107,7 +150,11 @@ export default function DirectorioProfesionPage() {
             </Box>
           )}
 
-          <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+          <Typography component="h2" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '1.5rem', md: '1.875rem' }, fontWeight: 600,
+            color: C.navy, letterSpacing: '-0.01em', mb: 3,
+          }}>
             Todos los {tituloPlural.toLowerCase()}
           </Typography>
           <Grid container spacing={2.5}>

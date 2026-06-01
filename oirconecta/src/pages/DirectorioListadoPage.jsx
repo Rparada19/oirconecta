@@ -161,7 +161,7 @@ export default function DirectorioListadoPage() {
   }, [activeFilters, filteredPayload, filterError, loadingFiltered, mergedExplore.length, filters, page]);
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f4f7f6' }}>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#FBFAF8' }}>
       <Helmet>
         <title>Directorio de profesionales auditivos en Colombia | OírConecta</title>
         <meta name="description" content="Directorio completo de audiólogos, otorrinolaringólogos y fonoaudiólogos en Colombia. Filtra por ciudad, profesión y póliza. Perfiles verificados." />
@@ -175,35 +175,59 @@ export default function DirectorioListadoPage() {
 
       <Box
         sx={{
-          bgcolor: '#e8f2ec',
-          borderBottom: '1px solid rgba(8, 89, 70, 0.1)',
-          py: { xs: 2.5, md: 3.5 },
+          position: 'relative', overflow: 'hidden',
+          bgcolor: '#FBFAF8',
+          borderBottom: '1px solid rgba(39,47,80,0.06)',
+          py: { xs: 4, md: 6 },
         }}
       >
-        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
-          <Breadcrumbs separator={<NavigateNext fontSize="small" />} sx={{ mb: 2, '& .MuiBreadcrumbs-separator': { mx: 0.5 } }}>
-            <Button component={RouterLink} to="/directorio" color="inherit" sx={{ textTransform: 'none', fontWeight: 600 }}>
+        <Box sx={{
+          position: 'absolute', top: -120, right: -120,
+          width: 400, height: 400, borderRadius: '50%',
+          background: 'radial-gradient(circle, #D9CDBF50 0%, transparent 70%)',
+          filter: 'blur(60px)', pointerEvents: 'none',
+        }} />
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, px: { xs: 2, sm: 3 } }}>
+          <Breadcrumbs separator={<NavigateNext fontSize="small" sx={{ color: '#A1A7B1' }} />} sx={{ mb: 2.5, '& .MuiBreadcrumbs-separator': { mx: 0.5 } }}>
+            <Button component={RouterLink} to="/directorio" sx={{
+              textTransform: 'none', fontWeight: 600, color: '#6B7280',
+              fontFamily: '"DM Sans", sans-serif', minWidth: 0, p: 0,
+              '&:hover': { color: '#272F50', bgcolor: 'transparent' },
+            }}>
               Directorio
             </Button>
-            <Typography color="text.primary" sx={{ fontWeight: 700 }}>
-              Listado
-            </Typography>
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif', fontWeight: 700, color: '#272F50',
+            }}>Listado</Typography>
           </Breadcrumbs>
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
-              color: '#0f1f18',
-              fontSize: { xs: '1.5rem', md: '2rem' },
-            }}
-          >
-            Buscar profesionales
+
+          <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 2 }}>
+            <Box sx={{ width: 28, height: 2, bgcolor: '#085946' }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+              fontWeight: 600, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: '#085946',
+            }}>Encuentra a tu especialista</Typography>
+          </Stack>
+
+          <Typography component="h1" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '2.25rem', md: '3.25rem' }, fontWeight: 600,
+            letterSpacing: '-0.018em', lineHeight: 1.08,
+            color: '#272F50', mb: 2,
+          }}>
+            Buscar{' '}
+            <Box component="span" sx={{ fontStyle: 'italic', color: '#085946', fontWeight: 500 }}>
+              profesionales
+            </Box>
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 1, maxWidth: 720, lineHeight: 1.65 }}>
-            Elija especialidad, ciudad y/o póliza, o escriba el nombre del profesional o del consultorio. Los resultados se
-            actualizan según los criterios combinados.
+
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+            color: '#6B7280', maxWidth: 720, lineHeight: 1.6,
+          }}>
+            Filtra por especialidad, ciudad o póliza. También puedes buscar por nombre del profesional o del consultorio.
           </Typography>
         </Container>
       </Box>
