@@ -58,7 +58,7 @@ export default function AuditionGuideSection() {
                   boxShadow: `0 6px 18px ${C.navy}33`,
                   '&:hover': { background: '#1a1f38 !important', transform: 'translateY(-2px)' },
                 }}
-              >Agendar valoración</Button>
+              >Agendar una valoración</Button>
             </Box>
           </Grid>
           <Grid item xs={12} md={7}>

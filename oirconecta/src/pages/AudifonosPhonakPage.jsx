@@ -103,13 +103,13 @@ const AudifonosPhonakPage = () => {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button variant="contained" size="large" endIcon={<ArrowForward />}
-                  onClick={() => navigate('/agendar')}
+                  onClick={() => navigate('/contacto?asunto=Solicitud%20de%20información%20-%20Phonak')}
                   sx={{ borderRadius: '14px', fontWeight: 800, px: 3.5, py: 1.75, fontSize: '1rem',
                     bgcolor: '#fff', color: '#008C45',
                     boxShadow: '0 8px 28px rgba(0,0,0,0.20)',
                     '&:hover': { background: 'rgba(255,255,255,0.92) !important', transform: 'translateY(-2px)', boxShadow: '0 12px 36px rgba(0,0,0,0.28)' },
                     transition: 'all 0.25s ease' }}>
-                  Solicitar cita
+                  Solicitar información
                 </Button>
                 <Button variant="outlined" size="large" onClick={() => navigate('/contacto')}
                   sx={{ borderRadius: '14px', fontWeight: 700, px: 3, py: 1.625, fontSize: '1rem',
@@ -217,7 +217,7 @@ const AudifonosPhonakPage = () => {
                         </Box>
                       ))}
                     </Box>
-                    <Button variant="contained" fullWidth onClick={() => navigate('/agendar')}
+                    <Button variant="contained" fullWidth onClick={() => navigate('/contacto?asunto=Solicitud%20de%20información%20-%20Phonak')}
                       sx={{ borderRadius: '12px', fontWeight: 700,
                         background: 'linear-gradient(135deg, #008C45, #085946)',
                         boxShadow: '0 4px 14px rgba(0,140,69,0.25)',
@@ -294,7 +294,7 @@ const AudifonosPhonakPage = () => {
           </Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
             <Button variant="contained" size="large" endIcon={<ArrowForward />}
-              onClick={() => navigate('/agendar')}
+              onClick={() => navigate('/contacto?asunto=Solicitud%20de%20información%20-%20Phonak')}
               sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75,
                 bgcolor: '#fff', color: '#008C45',
                 boxShadow: '0 8px 28px rgba(0,0,0,0.25)',

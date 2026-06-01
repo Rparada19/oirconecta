@@ -318,7 +318,7 @@ const NosotrosPage = () => (
             boxShadow: `0 8px 24px ${C.oro}55`,
             '&:hover': { background: '#D4B97A !important', transform: 'translateY(-2px)' },
           }}
-        >Agendar una conversación</Button>
+        >Agendar una valoración</Button>
       </Container>
     </Box>
 

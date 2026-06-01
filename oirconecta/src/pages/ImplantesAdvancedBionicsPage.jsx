@@ -81,9 +81,9 @@ const ImplantesAdvancedBionicsPage = () => {
               <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#003DA5', mb: 2.5 }}>{BRAND.eslogan}</Typography>
               <Typography sx={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, mb: 4, maxWidth: 480 }}>{BRAND.descripcion}</Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <Button variant="contained" size="large" endIcon={<ArrowForward />} onClick={() => navigate('/agendar')}
+                <Button variant="contained" size="large" endIcon={<ArrowForward />} onClick={() => navigate('/contacto?asunto=Solicitud%20de%20información%20-%20Advanced%20Bionics')}
                   sx={{ borderRadius: '14px', fontWeight: 800, px: 3.5, py: 1.75, bgcolor: '#fff', color: '#272F50', boxShadow: '0 8px 28px rgba(0,0,0,0.20)', '&:hover': { background: 'rgba(255,255,255,0.92) !important', transform: 'translateY(-2px)' }, transition: 'all 0.25s ease' }}>
-                  Solicitar cita
+                  Solicitar información
                 </Button>
                 <Button variant="outlined" size="large" onClick={() => navigate('/implantes')}
                   sx={{ borderRadius: '14px', fontWeight: 700, px: 3, py: 1.625, borderColor: 'rgba(255,255,255,0.40)', color: '#fff', backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.08)', '&:hover': { borderColor: 'rgba(255,255,255,0.70)', background: 'rgba(255,255,255,0.15)' } }}>
@@ -139,7 +139,7 @@ const ImplantesAdvancedBionicsPage = () => {
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 2.5 }}>
                       {p.caracteristicas.slice(0, 3).map((c) => (<Box key={c} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><CheckCircle sx={{ fontSize: 15, color: '#272F50' }} /><Typography sx={{ fontSize: '0.8125rem', color: '#4a5568' }}>{c}</Typography></Box>))}
                     </Box>
-                    <Button variant="contained" fullWidth onClick={() => navigate('/agendar')} sx={{ borderRadius: '12px', fontWeight: 700, background: 'linear-gradient(135deg,#272F50,#085946)', boxShadow: '0 4px 14px rgba(39,47,80,0.25)', '&:hover': { boxShadow: '0 6px 20px rgba(39,47,80,0.35)' } }}>Solicitar información</Button>
+                    <Button variant="contained" fullWidth onClick={() => navigate('/contacto?asunto=Solicitud%20de%20información%20-%20Advanced%20Bionics')} sx={{ borderRadius: '12px', fontWeight: 700, background: 'linear-gradient(135deg,#272F50,#085946)', boxShadow: '0 4px 14px rgba(39,47,80,0.25)', '&:hover': { boxShadow: '0 6px 20px rgba(39,47,80,0.35)' } }}>Solicitar información</Button>
                   </Box>
                 </Box>
               </Grid>
@@ -179,7 +179,7 @@ const ImplantesAdvancedBionicsPage = () => {
           </Typography>
           <Typography sx={{ fontSize: '1.125rem', color: 'rgba(255,255,255,0.78)', mb: 5, maxWidth: 500, mx: 'auto', lineHeight: 1.65 }}>Un especialista de la red te orienta sobre los implantes Advanced Bionics más adecuados para tu caso.</Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
-            <Button variant="contained" size="large" endIcon={<ArrowForward />} onClick={() => navigate('/agendar')} sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75, bgcolor: '#fff', color: '#272F50', boxShadow: '0 8px 28px rgba(0,0,0,0.25)', '&:hover': { background: 'rgba(255,255,255,0.92) !important', transform: 'translateY(-2px)' }, transition: 'all 0.25s ease' }}>Agendar valoración</Button>
+            <Button variant="contained" size="large" endIcon={<ArrowForward />} onClick={() => navigate('/contacto?asunto=Solicitud%20de%20información%20-%20Advanced%20Bionics')} sx={{ borderRadius: '14px', fontWeight: 800, px: 4, py: 1.75, bgcolor: '#fff', color: '#272F50', boxShadow: '0 8px 28px rgba(0,0,0,0.25)', '&:hover': { background: 'rgba(255,255,255,0.92) !important', transform: 'translateY(-2px)' }, transition: 'all 0.25s ease' }}>Agendar valoración</Button>
             <Button variant="outlined" size="large" onClick={() => navigate('/implantes')} sx={{ borderRadius: '14px', fontWeight: 700, px: 4, py: 1.625, borderColor: 'rgba(255,255,255,0.40)', color: '#fff', '&:hover': { borderColor: 'rgba(255,255,255,0.70)', bgcolor: 'rgba(255,255,255,0.08)' } }}>Ver más implantes</Button>
           </Stack>
         </Container>

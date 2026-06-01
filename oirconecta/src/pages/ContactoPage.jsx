@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import {
   Box, Container, Typography, Grid, TextField, Button,
@@ -20,11 +21,18 @@ const C = {
 const HERO_IMAGE = 'https://image.pollinations.ai/prompt/Latina%20woman%20smiling%20warmly%20talking%20on%20phone%20with%20hearing%20healthcare%20specialist%2C%20bright%20office%2C%20editorial%20portrait%20photography?width=1200&height=1400&nologo=true';
 
 const ContactoPage = () => {
+  const [searchParams] = useSearchParams();
+  const asuntoFromUrl = searchParams.get('asunto') || '';
   const [formData, setFormData] = useState({
-    nombre: '', email: '', telefono: '', asunto: '', mensaje: '',
+    nombre: '', email: '', telefono: '', asunto: asuntoFromUrl, mensaje: '',
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [submitting, setSubmitting] = useState(false);
+
+  // Si llega con asunto en la URL (ej. desde una marca), prellena
+  useEffect(() => {
+    if (asuntoFromUrl) setFormData((f) => ({ ...f, asunto: asuntoFromUrl }));
+  }, [asuntoFromUrl]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -197,20 +205,28 @@ const ContactoPage = () => {
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth required>
-                      <InputLabel sx={{ fontFamily: '"DM Sans", sans-serif' }}>Asunto</InputLabel>
-                      <Select
-                        name="asunto" value={formData.asunto} onChange={handleChange} label="Asunto"
-                        sx={{ borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' }}
-                      >
-                        <MenuItem value="consulta-general">Consulta general</MenuItem>
-                        <MenuItem value="audifonos">Audífonos</MenuItem>
-                        <MenuItem value="implantes">Implantes cocleares</MenuItem>
-                        <MenuItem value="profesional">Soy profesional auditivo</MenuItem>
-                        <MenuItem value="cita">Quiero agendar</MenuItem>
-                        <MenuItem value="otro">Otro</MenuItem>
-                      </Select>
-                    </FormControl>
+                    {asuntoFromUrl ? (
+                      <TextField fullWidth required name="asunto" label="Asunto"
+                        value={formData.asunto} onChange={handleChange}
+                        helperText="Prellenado según la marca que estabas viendo"
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                      />
+                    ) : (
+                      <FormControl fullWidth required>
+                        <InputLabel sx={{ fontFamily: '"DM Sans", sans-serif' }}>Asunto</InputLabel>
+                        <Select
+                          name="asunto" value={formData.asunto} onChange={handleChange} label="Asunto"
+                          sx={{ borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' }}
+                        >
+                          <MenuItem value="consulta-general">Consulta general</MenuItem>
+                          <MenuItem value="audifonos">Audífonos</MenuItem>
+                          <MenuItem value="implantes">Implantes cocleares</MenuItem>
+                          <MenuItem value="profesional">Soy profesional auditivo</MenuItem>
+                          <MenuItem value="cita">Quiero agendar</MenuItem>
+                          <MenuItem value="otro">Otro</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
                   </Grid>
                   <Grid item xs={12}>
                     <TextField fullWidth required multiline rows={5}
