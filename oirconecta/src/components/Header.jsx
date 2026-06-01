@@ -36,8 +36,6 @@ const menuConfig = [
     items: [
       { label: 'Quiénes somos', to: '/nosotros#quienes-somos' },
       { label: 'Qué hacemos', to: '/nosotros#que-hacemos' },
-      { label: 'Misión', to: '/nosotros#mision' },
-      { label: 'Visión', to: '/nosotros#vision' },
     ],
   },
   {
