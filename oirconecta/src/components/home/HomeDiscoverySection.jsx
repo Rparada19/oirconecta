@@ -17,7 +17,7 @@ const tiles = [
     to: '/audifonos',
     stat: '13+',
     statLabel: 'marcas',
-    image: 'https://image.pollinations.ai/prompt/Premium%20hearing%20aid%20brands%20display%2C%20modern%20technology%2C%20editorial%20product%20photography%2C%20clean%20warm%20lighting?width=900&height=700&nologo=true',
+    image: 'https://images.pexels.com/photos/36670377/pexels-photo-36670377.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     kicker: 'Implantes cocleares',
@@ -26,7 +26,7 @@ const tiles = [
     to: '/implantes',
     stat: '3',
     statLabel: 'fabricantes',
-    image: 'https://image.pollinations.ai/prompt/Cochlear%20implant%20external%20processor%20behind%20ear%20of%20smiling%20adult%2C%20modern%20healthcare%20device%2C%20editorial%20photography?width=900&height=700&nologo=true',
+    image: 'https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     kicker: 'Referencia y tienda',
@@ -35,7 +35,7 @@ const tiles = [
     to: '/ecommerce',
     stat: '100+',
     statLabel: 'productos',
-    image: 'https://image.pollinations.ai/prompt/Hearing%20aid%20accessories%20collection%20on%20clean%20surface%2C%20cleaning%20kit%20cases%20batteries%2C%20editorial%20product%20photography?width=900&height=700&nologo=true',
+    image: 'https://images.pexels.com/photos/6319017/pexels-photo-6319017.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
 ];
 

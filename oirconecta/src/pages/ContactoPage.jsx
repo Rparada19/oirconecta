@@ -18,7 +18,7 @@ const C = {
   gris: '#6B7280', grisClaro: '#A1A7B1', arena: '#D9CDBF',
 };
 
-const HERO_IMAGE = 'https://image.pollinations.ai/prompt/Latina%20woman%20smiling%20warmly%20talking%20on%20phone%20with%20hearing%20healthcare%20specialist%2C%20bright%20office%2C%20editorial%20portrait%20photography?width=1200&height=1400&nologo=true';
+const HERO_IMAGE = 'https://images.pexels.com/photos/8101355/pexels-photo-8101355.jpeg?w=1200&h=1400&auto=compress&cs=tinysrgb&fit=crop';
 
 const ContactoPage = () => {
   const [searchParams] = useSearchParams();

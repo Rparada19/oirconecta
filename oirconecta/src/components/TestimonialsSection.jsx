@@ -7,7 +7,7 @@ const C = {
   oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280',
 };
 
-const HERO_BG = 'https://image.pollinations.ai/prompt/Elegant%20mature%20Latina%20woman%20smiling%20peacefully%20at%20home%20with%20family%20warm%20natural%20light%20cinematic%20editorial%20portrait%20photography?width=2200&height=1400&nologo=true';
+const HERO_BG = 'https://images.pexels.com/photos/8958906/pexels-photo-8958906.jpeg?w=2200&h=1400&auto=compress&cs=tinysrgb&fit=crop';
 
 const STORIES = [
   {

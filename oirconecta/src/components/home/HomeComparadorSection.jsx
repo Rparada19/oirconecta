@@ -96,7 +96,7 @@ export default function HomeComparadorSection() {
             <Grid item xs={12} md={5} sx={{ position: 'relative' }}>
               <Box sx={{
                 height: '100%', minHeight: { xs: 280, md: 'auto' },
-                background: 'url("https://image.pollinations.ai/prompt/Premium%20modern%20hearing%20aids%20on%20clean%20dark%20surface%2C%20editorial%20product%20photography%2C%20dramatic%20lighting?width=900&height=900&nologo=true")',
+                background: 'url("https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=900&h=900&auto=compress&cs=tinysrgb&fit=crop")',
                 backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
                 '&::after': {
                   content: '""', position: 'absolute', inset: 0,

@@ -68,8 +68,8 @@ export default function AdminLoginPage() {
           <AdminPanelSettings sx={{ color: '#fff', fontSize: 34 }} />
         </Box>
 
-        <Typography sx={{ fontWeight: 900, fontSize: '1.75rem', color: '#fff',
-          textAlign: 'center', letterSpacing: '-0.03em', mb: 0.5 }}>
+        <Typography sx={{ fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2rem', color: '#fff',
+          textAlign: 'center', letterSpacing: '-0.02em', mb: 0.5 }}>
           Portal Admin
         </Typography>
         <Typography sx={{ color: 'rgba(255,255,255,0.55)', textAlign: 'center',
@@ -110,10 +110,10 @@ export default function AdminLoginPage() {
         </Box>
 
         <Button type="submit" fullWidth variant="contained" disabled={loading}
-          sx={{ mt: 3.5, py: 1.6, borderRadius: '14px', fontWeight: 800, fontSize: '1rem',
-            background: 'linear-gradient(135deg, #0d7a5c, #085946)',
+          sx={{ mt: 3.5, py: 1.6, borderRadius: '6px', fontWeight: 700, fontSize: '0.95rem',
+            background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #00382B 100%)',
             boxShadow: '0 8px 24px rgba(8,89,70,0.45)',
-            '&:hover': { boxShadow: '0 12px 32px rgba(8,89,70,0.55)' } }}>
+            '&:hover': { background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%)', boxShadow: '0 12px 32px rgba(8,89,70,0.55)', transform: 'translateY(-1px)' } }}>
           {loading ? <CircularProgress size={22} sx={{ color: '#fff' }} /> : 'Entrar al panel'}
         </Button>
 
@@ -128,7 +128,7 @@ export default function AdminLoginPage() {
 
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
-    borderRadius: '12px',
+    borderRadius: '6px',
     bgcolor: 'rgba(255,255,255,0.07)',
     color: '#fff',
     '& fieldset': { borderColor: 'rgba(255,255,255,0.18)' },

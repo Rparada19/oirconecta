@@ -17,7 +17,7 @@ const C = {
   grisClaro: '#A1A7B1',
 };
 
-const HERO_IMAGE = 'https://image.pollinations.ai/prompt/Smiling%20Latina%20senior%20woman%20happy%20receiving%20hearing%20examination%20from%20female%20audiologist%20with%20otoscope%2C%20warm%20natural%20daylight%2C%20premium%20healthcare%20editorial%2C%20clean%20clinic%2C%20portrait%20photography?width=1400&height=1600&nologo=true';
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1576669801945-7a346954da5a?w=1200&h=1400&q=80&auto=format&fit=crop';
 
 const TRUST_ITEMS = [
   { icon: VerifiedOutlined, label: 'Profesionales verificados' },
@@ -108,18 +108,18 @@ const Hero = () => {
                 endIcon={<ArrowForward />}
                 sx={{
                   fontFamily: '"DM Sans", sans-serif',
-                  background: '#272F50 !important', color: '#fff !important',
+                  background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #00382B 100%) !important', color: '#fff !important',
                   fontWeight: 700,
                   fontSize: '0.9375rem',
                   px: 3.5, py: 1.75,
                   borderRadius: '6px',
                   letterSpacing: '0.01em',
-                  boxShadow: `0 6px 18px ${C.navy}33`,
+                  boxShadow: '0 6px 18px rgba(8,89,70,0.35)',
                   transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
                   '&:hover': {
-                    bgcolor: C.navyLight,
+                    background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%) !important',
                     transform: 'translateY(-2px)',
-                    boxShadow: `0 10px 24px ${C.navy}44`,
+                    boxShadow: '0 10px 24px rgba(8,89,70,0.45)',
                   },
                 }}
               >
@@ -196,6 +196,8 @@ const Hero = () => {
                 src={HERO_IMAGE}
                 alt="Audióloga sonriente examinando a paciente en consulta cálida"
                 loading="eager"
+                decoding="async"
+                fetchpriority="high"
                 sx={{
                   width: '100%', height: '100%',
                   objectFit: 'cover',

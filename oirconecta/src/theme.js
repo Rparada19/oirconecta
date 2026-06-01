@@ -242,15 +242,17 @@ export function buildTheme(createThemeFn) {
             overflow: 'hidden',
           },
           contained: {
-            background: 'linear-gradient(135deg, #4054B2 0%, #272F50 60%, #1a1f38 100%)',
+            background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #00382B 100%)',
             color: '#ffffff',
-            boxShadow: '0 4px 16px rgba(39,47,80,0.28), 0 1px 4px rgba(39,47,80,0.15), inset 0 1px 0 rgba(255,255,255,0.15)',
+            boxShadow: '0 4px 16px rgba(8,89,70,0.30), 0 1px 4px rgba(8,89,70,0.18), inset 0 1px 0 rgba(255,255,255,0.18)',
             '&:hover': {
-              background: 'linear-gradient(135deg, #5067C5 0%, #313B65 60%, #272F50 100%)',
-              boxShadow: '0 8px 28px rgba(39,47,80,0.38), 0 2px 8px rgba(39,47,80,0.20)',
+              background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%)',
+              boxShadow: '0 8px 28px rgba(8,89,70,0.40), 0 2px 8px rgba(8,89,70,0.22)',
               transform: 'translateY(-1px)',
             },
-            '&:active': { transform: 'translateY(0)', boxShadow: '0 2px 8px rgba(39,47,80,0.25)' },
+            '&:active': { transform: 'translateY(0)', boxShadow: '0 2px 8px rgba(8,89,70,0.28)' },
+            '&:focus-visible': { outline: '2px solid #6ee7c8', outlineOffset: 2 },
+            '&.Mui-disabled': { background: '#cbd5d1', color: '#7a8a85' },
           },
           outlined: {
             borderWidth: '1.5px',
@@ -263,6 +265,7 @@ export function buildTheme(createThemeFn) {
               backgroundColor: 'rgba(39,47,80,0.06)',
               transform: 'translateY(-1px)',
             },
+            '&:focus-visible': { outline: '2px solid #272F50', outlineOffset: 2 },
           },
           text: {
             color: '#085946',

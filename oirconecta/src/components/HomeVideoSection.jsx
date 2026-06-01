@@ -10,7 +10,7 @@ const C = {
   oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280', arena: '#D9CDBF',
 };
 
-const POSTER = 'https://image.pollinations.ai/prompt/Mature%20Latina%20patient%20smiling%20warmly%20during%20hearing%20consultation%20with%20kind%20female%20audiologist%2C%20bright%20clinic%2C%20editorial%20healthcare%20photography?width=1400&height=900&nologo=true';
+const POSTER = 'https://images.pexels.com/photos/5206950/pexels-photo-5206950.jpeg?w=1400&h=900&auto=compress&cs=tinysrgb&fit=crop';
 
 export default function HomeVideoSection() {
   const hasVideo = Boolean(HOME_VIDEO_EMBED_URL && HOME_VIDEO_EMBED_URL.trim());
@@ -48,10 +48,10 @@ export default function HomeVideoSection() {
             <Button component={RouterLink} to="/agendar" variant="contained" size="large"
               startIcon={<CalendarMonthIcon />}
               sx={{
-                fontFamily: '"DM Sans", sans-serif', background: '#272F50 !important', color: '#fff !important',
+                fontFamily: '"DM Sans", sans-serif', background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #00382B 100%) !important', color: '#fff !important',
                 fontWeight: 700, fontSize: '0.9375rem', px: 3.5, py: 1.5, borderRadius: '6px',
-                boxShadow: `0 6px 18px ${C.navy}33`,
-                '&:hover': { background: '#1a1f38 !important', transform: 'translateY(-2px)' },
+                boxShadow: '0 6px 18px rgba(8,89,70,0.35)',
+                '&:hover': { background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%) !important', transform: 'translateY(-2px)', boxShadow: '0 10px 24px rgba(8,89,70,0.45)' },
               }}
             >Agendar una valoración</Button>
           </Box>

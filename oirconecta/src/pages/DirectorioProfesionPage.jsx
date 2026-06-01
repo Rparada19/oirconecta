@@ -21,7 +21,7 @@ const PAGE_SIZE = 24;
 const PROFESSION_CONTEXT = {
   fonoaudiologia: {
     icon: RecordVoiceOverOutlinedIcon,
-    image: 'https://image.pollinations.ai/prompt/Latina%20speech%20therapist%20fonoaudiologa%20working%20with%20child%20auditory%20verbal%20therapy%2C%20colorful%20cards%2C%20warm%20engaging%20clinic%20session%2C%20editorial%20portrait?width=1200&height=900&nologo=true',
+    image: 'https://images.pexels.com/photos/8613122/pexels-photo-8613122.jpeg?w=1200&h=900&auto=compress&cs=tinysrgb&fit=crop',
     descripcion: 'El fonoaudiólogo evalúa y rehabilita la comunicación: lenguaje, habla, voz y audición. Es clave en la adaptación de audífonos y en la terapia auditivo-verbal de niños y adultos.',
     queHacen: [
       'Evaluación de lenguaje, habla y voz',
@@ -38,7 +38,7 @@ const PROFESSION_CONTEXT = {
   },
   audiologia: {
     icon: HearingOutlinedIcon,
-    image: 'https://image.pollinations.ai/prompt/Latina%20audiologist%20fitting%20modern%20hearing%20aid%20on%20senior%20patient%20smiling%2C%20clean%20clinic%2C%20editorial%20healthcare%20portrait?width=1200&height=900&nologo=true',
+    image: 'https://images.pexels.com/photos/36670377/pexels-photo-36670377.jpeg?w=1200&h=900&auto=compress&cs=tinysrgb&fit=crop',
     descripcion: 'El audiólogo es el especialista en la evaluación, diagnóstico y adaptación de audífonos. Hace tu audiometría, te orienta sobre tecnología y te acompaña en la programación y seguimiento.',
     queHacen: [
       'Audiometrías y pruebas auditivas completas',
@@ -55,7 +55,7 @@ const PROFESSION_CONTEXT = {
   },
   otorrinolaringologia: {
     icon: MedicalServicesOutlinedIcon,
-    image: 'https://image.pollinations.ai/prompt/Latino%20ENT%20otorhinolaryngologist%20doctor%20examining%20patient%20ear%20with%20otoscope%2C%20professional%20clinical%20setting%2C%20editorial%20portrait%20photography?width=1200&height=900&nologo=true',
+    image: 'https://images.pexels.com/photos/5206946/pexels-photo-5206946.jpeg?w=1200&h=900&auto=compress&cs=tinysrgb&fit=crop',
     descripcion: 'El otorrinolaringólogo (ORL) es el médico especialista en oído, nariz y garganta. Diagnostica y trata enfermedades del oído, prescribe medicamentos y realiza cirugías cuando hace falta.',
     queHacen: [
       'Diagnóstico médico de enfermedades del oído',
@@ -73,7 +73,7 @@ const PROFESSION_CONTEXT = {
   },
   otologia: {
     icon: BiotechOutlinedIcon,
-    image: 'https://image.pollinations.ai/prompt/Latino%20otologist%20doctor%20surgeon%20looking%20at%20cochlear%20implant%20device%20in%20modern%20surgical%20clinic%2C%20editorial%20medical%20portrait?width=1200&height=900&nologo=true',
+    image: 'https://images.pexels.com/photos/5206942/pexels-photo-5206942.jpeg?w=1200&h=900&auto=compress&cs=tinysrgb&fit=crop',
     descripcion: 'El otólogo es el ORL sub-especializado en oído. Maneja casos complejos: implantes cocleares, cirugías de oído medio, schwannomas y patologías del nervio auditivo.',
     queHacen: [
       'Cirugía de implante coclear',

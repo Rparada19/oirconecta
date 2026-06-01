@@ -52,11 +52,11 @@ export default function AuditionGuideSection() {
               <Button component={RouterLink} to="/agendar" variant="contained" size="large"
                 endIcon={<ArrowForwardIcon />}
                 sx={{
-                  fontFamily: '"DM Sans", sans-serif', background: '#272F50 !important', color: '#fff !important',
+                  fontFamily: '"DM Sans", sans-serif', background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #00382B 100%) !important', color: '#fff !important',
                   fontWeight: 700, fontSize: '0.9375rem', px: 3.5, py: 1.5,
                   borderRadius: '6px', letterSpacing: '0.01em',
-                  boxShadow: `0 6px 18px ${C.navy}33`,
-                  '&:hover': { background: '#1a1f38 !important', transform: 'translateY(-2px)' },
+                  boxShadow: '0 6px 18px rgba(8,89,70,0.35)',
+                  '&:hover': { background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%) !important', transform: 'translateY(-2px)', boxShadow: '0 10px 24px rgba(8,89,70,0.45)' },
                 }}
               >Agendar una valoración</Button>
             </Box>

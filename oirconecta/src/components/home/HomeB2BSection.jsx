@@ -18,7 +18,7 @@ const BENEFITS = [
   'Aprobación y acompañamiento del equipo OírConecta',
 ];
 
-const HERO_IMAGE = 'https://image.pollinations.ai/prompt/Confident%20Latina%20female%20audiologist%20doctor%20in%20clean%20white%20coat%20smiling%20in%20modern%20clinic%2C%20editorial%20healthcare%20portrait%2C%20warm%20professional?width=1200&height=1400&nologo=true';
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=1200&h=1400&q=80&auto=format&fit=crop';
 
 export default function HomeB2BSection() {
   return (

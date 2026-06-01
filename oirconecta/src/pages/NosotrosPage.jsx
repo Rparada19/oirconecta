@@ -15,7 +15,7 @@ const C = {
   gris: '#6B7280', grisClaro: '#A1A7B1', arena: '#D9CDBF',
 };
 
-const HERO_IMAGE = 'https://image.pollinations.ai/prompt/Diverse%20Latin%20American%20healthcare%20professionals%20smiling%20together%20in%20modern%20clinic%2C%20editorial%20warm%20portrait%2C%20natural%20light?width=1600&height=1100&nologo=true';
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1504813184591-01572f98c85f?w=1600&h=1100&q=80&auto=format&fit=crop';
 
 const VALORES = [
   { icon: PeopleOutlineOutlined, title: 'Cercanía humana', text: 'Personas que escuchan, no protocolos. La consulta es un encuentro, no un trámite.' },
@@ -105,6 +105,8 @@ const NosotrosPage = () => (
               <Box component="img" src={HERO_IMAGE}
                 alt="Equipo de profesionales auditivos OírConecta"
                 loading="eager"
+                decoding="async"
+                fetchpriority="high"
                 sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />
             </Box>

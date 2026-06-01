@@ -136,7 +136,7 @@ const LoginCRMPage = () => {
             </Box>
             <Typography
               variant="h4"
-              sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#0f1923', mb: 0.75 }}
+              sx={{ fontFamily: '"Playfair Display", serif', fontWeight: 700, letterSpacing: '-0.02em', color: '#0f1923', mb: 0.75 }}
             >
               Acceso CRM
             </Typography>

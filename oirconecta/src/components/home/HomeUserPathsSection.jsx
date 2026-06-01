@@ -24,7 +24,7 @@ const paths = [
   {
     title: 'Encontrar especialista',
     blurb: 'Busca por ciudad o especialidad. Tú eliges con quién hablar primero.',
-    image: 'https://image.pollinations.ai/prompt/Senior%20patient%20and%20warm%20Latina%20female%20audiologist%20smiling%20together%20in%20modern%20bright%20clinic%2C%20editorial%20healthcare%20photography%2C%20natural%20light?width=800&height=600&nologo=true',
+    image: 'https://images.unsplash.com/photo-1631558556874-1d127211f574?w=800&h=600&q=80&auto=format&fit=crop',
     alt: 'Audióloga conversando con paciente',
     mode: 'scroll',
     target: 'busqueda-profesionales',
@@ -33,7 +33,7 @@ const paths = [
   {
     title: 'Explorar audífonos',
     blurb: 'Marcas y tecnologías explicadas sin prisa ni presión comercial.',
-    image: 'https://image.pollinations.ai/prompt/Modern%20premium%20hearing%20aid%20behind%20mature%20woman%20ear%20closeup%2C%20warm%20natural%20daylight%2C%20clean%20product%20editorial%20photography?width=800&height=600&nologo=true',
+    image: 'https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=800&h=600&auto=compress&cs=tinysrgb&fit=crop',
     alt: 'Audífono moderno detrás de la oreja',
     mode: 'route',
     to: '/audifonos',
@@ -42,7 +42,7 @@ const paths = [
   {
     title: 'Conocer la red',
     blurb: 'Nuestra misión, criterios de selección y profesionales suscritos.',
-    image: 'https://image.pollinations.ai/prompt/Group%20of%20diverse%20Latin%20American%20audiologists%20and%20doctors%20smiling%20together%20in%20healthcare%20clinic%20hallway%2C%20professional%20warm%20portrait%2C%20editorial?width=800&height=600&nologo=true',
+    image: 'https://images.unsplash.com/photo-1504813184591-01572f98c85f?w=800&h=600&q=80&auto=format&fit=crop',
     alt: 'Equipo de profesionales auditivos',
     mode: 'route',
     to: '/nosotros',
@@ -51,7 +51,7 @@ const paths = [
   {
     title: 'Aprender sobre audición',
     blurb: 'Señales comunes, qué esperar en consulta y cómo prevenir pérdida.',
-    image: 'https://image.pollinations.ai/prompt/Mature%20Latin%20couple%20at%20home%20warmly%20listening%20together%20to%20family%20conversation%2C%20natural%20light%2C%20editorial%20lifestyle%20photography?width=800&height=600&nologo=true',
+    image: 'https://images.unsplash.com/photo-1534768654272-e97681c3a2c7?w=800&h=600&q=80&auto=format&fit=crop',
     alt: 'Pareja escuchando atenta en casa',
     mode: 'scroll',
     target: 'aprender-audicion',

@@ -20,37 +20,37 @@ const SERVICIOS = [
     titulo: 'Evaluación auditiva',
     descripcion: 'Audiometría, impedanciometría y pruebas complementarias para caracterizar tu audición y orientar el tratamiento.',
     icon: AssessmentOutlined,
-    image: 'https://image.pollinations.ai/prompt/Audiologist%20performing%20hearing%20test%20on%20patient%20in%20soundproof%20booth%2C%20clean%20clinic%2C%20editorial%20healthcare?width=900&height=700&nologo=true',
+    image: 'https://images.pexels.com/photos/5206951/pexels-photo-5206951.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     titulo: 'Adaptación de audífonos',
     descripcion: 'Selección, prueba en consulta y ajuste fino según tu estilo de vida, tipo de pérdida y preferencias.',
     icon: HearingOutlined,
-    image: 'https://image.pollinations.ai/prompt/Audiologist%20fitting%20modern%20hearing%20aid%20on%20senior%20patient%20smiling%2C%20warm%20clinic%2C%20editorial%20portrait?width=900&height=700&nologo=true',
+    image: 'https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     titulo: 'Implantes cocleares',
     descripcion: 'Información sobre candidatura, proceso multidisciplinario y seguimiento; coordinación con marcas líderes.',
     icon: SupportOutlined,
-    image: 'https://image.pollinations.ai/prompt/Cochlear%20implant%20external%20processor%20behind%20ear%20of%20smiling%20patient%2C%20medical%20editorial%20photography?width=900&height=700&nologo=true',
+    image: 'https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     titulo: 'Rehabilitación y terapia',
     descripcion: 'Acompañamiento en habla auditiva y adaptación a dispositivos para niños y adultos.',
     icon: PsychologyOutlined,
-    image: 'https://image.pollinations.ai/prompt/Speech%20therapist%20working%20with%20child%20auditory%20verbal%20therapy%2C%20colorful%20cards%2C%20warm%20engaging%20session?width=900&height=700&nologo=true',
+    image: 'https://images.pexels.com/photos/8613122/pexels-photo-8613122.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     titulo: 'Audiología pediátrica',
     descripcion: 'Tamizaje, evaluación adaptada a la edad y seguimiento familiar con enfoque sensible.',
     icon: SchoolOutlined,
-    image: 'https://image.pollinations.ai/prompt/Pediatric%20audiologist%20gently%20examining%20baby%20with%20mother%20smiling%2C%20warm%20clinic%20room%2C%20editorial?width=900&height=700&nologo=true',
+    image: 'https://images.unsplash.com/photo-1632053002928-1919605ee6f7?w=900&h=700&q=80&auto=format&fit=crop',
   },
   {
     titulo: 'Audiología laboral',
     descripcion: 'Evaluaciones ocupacionales y recomendaciones para conservación auditiva en entornos de ruido.',
     icon: GroupOutlined,
-    image: 'https://image.pollinations.ai/prompt/Industrial%20worker%20wearing%20professional%20hearing%20protection%20at%20factory%2C%20safety%20editorial%20photography?width=900&height=700&nologo=true',
+    image: 'https://images.pexels.com/photos/29988954/pexels-photo-29988954.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
 ];
 
