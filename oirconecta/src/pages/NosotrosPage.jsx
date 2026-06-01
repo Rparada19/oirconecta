@@ -1,186 +1,329 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { Box, Container, Typography, Grid } from '@mui/material';
-import { People, Psychology, Hearing, Support } from '@mui/icons-material';
+import { Box, Container, Typography, Grid, Stack, Button } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import {
+  PeopleOutlineOutlined, PsychologyOutlined, HearingOutlined, SupportOutlined,
+  VisibilityOutlined, FlagOutlined, ArrowForward,
+} from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-const NosotrosPage = () => {
-  return (
-    <>
-      <Helmet>
-        <title>Nosotros - OírConecta | Plataforma y red de servicios auditivos</title>
-        <meta name="description" content="OírConecta: referencia de valores de audífonos y accesorios, educación, ubicación de profesionales, acompañamiento en decisiones, oferta de servicios de la red e información sobre marcas." />
-        <meta name="keywords" content="OirConecta, especialistas auditivos, Colombia, audiólogos, otorrinolaringólogos, otólogos, salud auditiva" />
-        <link rel="canonical" href="https://oirconecta.com/nosotros" />
-      </Helmet>
-
-      <Header />
-
-      {/* Hero */}
-      <Box sx={{
-        position: 'relative', overflow: 'hidden',
-        background:
-          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.42) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #063c2c 0%, #085946 35%, #1a2240 70%, #272F50 100%)',
-        color: '#fff', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
-      }}>
-        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 2, py: 0.625,
-            borderRadius: '8px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 3 }}>
-            <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>
-              OírConecta
-            </Typography>
-          </Box>
-          <Typography component="h1" sx={{ fontSize: { xs: '2.25rem', md: '3.5rem' }, fontWeight: 900,
-            letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff', mb: 2.5 }}>
-            Sobre{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              OírConecta
-            </Box>
-          </Typography>
-          <Typography sx={{ fontSize: { xs: '1.0625rem', md: '1.25rem' }, color: 'rgba(255,255,255,0.80)',
-            maxWidth: 700, mx: 'auto', lineHeight: 1.6 }}>
-            Plataforma que visibiliza los servicios de audiólogos, otólogos y centros. El paciente explora y contacta; la atención clínica es responsabilidad de cada especialista.
-          </Typography>
-        </Container>
-      </Box>
-
-      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 7 } }}>
-
-        {/* What we do */}
-        <Box sx={{ mb: 8, borderRadius: '22px', p: { xs: 3, md: 4 },
-          background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 2px 16px rgba(8,89,70,0.07)',
-          borderLeft: '4px solid #085946' }}>
-          <Typography sx={{ fontWeight: 800, fontSize: '1.375rem', color: '#0f1923', letterSpacing: '-0.02em', mb: 1 }}>
-            Qué hace OírConecta
-          </Typography>
-          <Typography sx={{ color: '#4a5568', mb: 2.5, fontSize: '0.9375rem' }}>
-            Estos seis ejes definen el valor que buscamos entregar a las personas y a la red de suscriptores:
-          </Typography>
-          <Box component="ol" sx={{ pl: 2.5, m: 0 }}>
-            {[
-              'Informar mensualmente los valores de referencia de audífonos y accesorios.',
-              'Educar para tomar mejores decisiones sobre salud auditiva.',
-              'Ayudar a ubicar al profesional o centro que mejor encaje con cada caso.',
-              'Acompañar la toma de decisiones con información clara y ordenada.',
-              'Ofertar y visibilizar todos los servicios que la red promueve en un solo canal.',
-              'Informar sobre las distintas marcas y opciones presentes en el mercado.',
-            ].map((text) => (
-              <Typography key={text} component="li" sx={{ fontSize: '0.9375rem', color: '#4a5568', mb: 1.25, lineHeight: 1.6 }}>
-                {text}
-              </Typography>
-            ))}
-          </Box>
-        </Box>
-
-        {/* Misión y Visión */}
-        <Grid container spacing={3} sx={{ mb: 8 }}>
-          {[
-            {
-              titulo: 'Misión',
-              texto: 'Dar a los pacientes un punto de entrada claro para descubrir servicios de evaluación, audífonos, implantes y rehabilitación, y conectarlos con quienes integran la red. Dar a los profesionales visibilidad y herramientas para comunicar lo que ofrecen, sin sustituir su criterio médico.',
-              gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-            },
-            {
-              titulo: 'Visión',
-              texto: 'Ser el canal de referencia en Colombia para que las personas encuentren servicios auditivos ofrecidos por una red amplia y actualizada de especialistas. Crecer con criterios de calidad y un modelo sostenible de suscripción.',
-              gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)',
-            },
-          ].map((item) => (
-            <Grid item xs={12} md={6} key={item.titulo}>
-              <Box sx={{
-                height: '100%', borderRadius: '22px', p: 3.5,
-                background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 2px 16px rgba(8,89,70,0.07)',
-                transition: 'all 0.28s ease',
-                '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 16px 40px rgba(8,89,70,0.12)' },
-              }}>
-                <Box sx={{ width: 40, height: 4, borderRadius: '4px', background: item.gradient, mb: 2 }} />
-                <Typography sx={{ fontWeight: 800, fontSize: '1.25rem', color: '#0f1923', letterSpacing: '-0.02em', mb: 1.5 }}>
-                  {item.titulo}
-                </Typography>
-                <Typography sx={{ fontSize: '0.9375rem', color: '#4a5568', lineHeight: 1.7 }}>
-                  {item.texto}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Valores */}
-        <Box sx={{ mb: 8 }}>
-          <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.75rem', md: '2.25rem' }, letterSpacing: '-0.03em',
-            textAlign: 'center', mb: 5, color: '#0f1923' }}>
-            Nuestros{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              valores
-            </Box>
-          </Typography>
-          <Grid container spacing={3}>
-            {[
-              { icon: People, label: 'Confianza', desc: 'Claridad sobre qué hace la plataforma y qué hace cada profesional; la confianza clínica se construye en la consulta.', gradient: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)', glow: 'rgba(8,89,70,0.20)' },
-              { icon: Psychology, label: 'Excelencia', desc: 'Impulsamos buenas prácticas en la información mostrada; la excelencia asistencial la asegura cada especialista.', gradient: 'linear-gradient(135deg, #272F50 0%, #085946 100%)', glow: 'rgba(39,47,80,0.20)' },
-              { icon: Hearing, label: 'Accesibilidad', desc: 'Búsqueda por ciudad y especialidad para acercar opciones reales a quien las necesita.', gradient: 'linear-gradient(135deg, #71A095 0%, #085946 100%)', glow: 'rgba(113,160,149,0.25)' },
-              { icon: Support, label: 'Compromiso', desc: 'Mejora continua del producto digital y acompañamiento a la red de suscriptores.', gradient: 'linear-gradient(135deg, #085946 0%, #272F50 100%)', glow: 'rgba(8,89,70,0.20)' },
-            ].map((v) => (
-              <Grid item xs={12} sm={6} md={3} key={v.label}>
-                <Box sx={{
-                  height: '100%', borderRadius: '22px', p: 3, textAlign: 'center',
-                  background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 2px 16px rgba(8,89,70,0.07)',
-                  transition: 'all 0.28s ease',
-                  '&:hover': { transform: 'translateY(-6px)', boxShadow: `0 20px 48px ${v.glow}` },
-                }}>
-                  <Box sx={{ width: 56, height: 56, borderRadius: '14px', background: v.gradient,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2,
-                    boxShadow: `0 8px 20px ${v.glow}` }}>
-                    <v.icon sx={{ color: '#fff', fontSize: 28 }} />
-                  </Box>
-                  <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#0f1923', mb: 1 }}>
-                    {v.label}
-                  </Typography>
-                  <Typography sx={{ fontSize: '0.875rem', color: '#4a5568', lineHeight: 1.65 }}>
-                    {v.desc}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Historia */}
-        <Box sx={{ borderRadius: '22px', p: { xs: 3, md: 5 },
-          background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 2px 16px rgba(8,89,70,0.07)' }}>
-          <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.5rem', md: '2rem' }, letterSpacing: '-0.03em', color: '#0f1923', mb: 3 }}>
-            Historia del{' '}
-            <Box component="span" sx={{ background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              proyecto
-            </Box>
-          </Typography>
-          <Typography sx={{ fontSize: '0.9375rem', color: '#4a5568', lineHeight: 1.75, mb: 2 }}>
-            OírConecta surge de la experiencia en salud auditiva y de la constatación de que los pacientes necesitan un lugar donde <strong style={{ color: '#0f1923' }}>ver qué servicios existen</strong> y <strong style={{ color: '#0f1923' }}>con quién pueden acudir</strong>, sin recorrer decenas de sitios dispersos.
-          </Typography>
-          <Typography sx={{ fontSize: '0.9375rem', color: '#4a5568', lineHeight: 1.75, mb: 2 }}>
-            La plataforma combina contenido sobre audífonos e implantes con directorios de profesionales y, para quienes se suscriben, mayor visibilidad y herramientas operativas. Así el modelo alinea al paciente informado con la oferta real del mercado.
-          </Typography>
-          <Typography sx={{ fontSize: '0.9375rem', color: '#4a5568', lineHeight: 1.75 }}>
-            Hoy el sitio está orientado a <strong style={{ color: '#0f1923' }}>promover los servicios de la red</strong>: no sustituye al centro ni al consultorio, los potencia en un solo canal.
-          </Typography>
-        </Box>
-      </Container>
-
-      <Footer />
-    </>
-  );
+const C = {
+  navy: '#272F50', navyLight: '#4054B2', verde: '#085946',
+  verdeProfundo: '#00382B', oro: '#C9A86A', blanco: '#FBFAF8',
+  gris: '#6B7280', grisClaro: '#A1A7B1', arena: '#D9CDBF',
 };
 
-export default NosotrosPage; 
+const HERO_IMAGE = 'https://image.pollinations.ai/prompt/Diverse%20Latin%20American%20healthcare%20professionals%20smiling%20together%20in%20modern%20clinic%2C%20editorial%20warm%20portrait%2C%20natural%20light?width=1600&height=1100&nologo=true';
+
+const VALORES = [
+  { icon: PeopleOutlineOutlined, title: 'Cercanía humana', text: 'Personas que escuchan, no protocolos. La consulta es un encuentro, no un trámite.' },
+  { icon: PsychologyOutlined,    title: 'Decisiones informadas', text: 'Información clara y honesta para que decidas con calma, sin presión comercial.' },
+  { icon: HearingOutlined,       title: 'Salud auditiva integral', text: 'Acompañamos cada etapa: detección, adaptación, seguimiento y vida cotidiana.' },
+  { icon: SupportOutlined,       title: 'Acompañamiento real', text: 'No te abandonamos después de la venta. Estamos antes, durante y después.' },
+];
+
+const NosotrosPage = () => (
+  <>
+    <Helmet>
+      <title>Nosotros - OírConecta | Plataforma y red de servicios auditivos</title>
+      <meta name="description" content="OírConecta: referencia de valores, educación y red de profesionales auditivos verificados en Colombia. Quiénes somos, qué hacemos y por qué importamos." />
+      <link rel="canonical" href="https://oirconecta.com/nosotros" />
+    </Helmet>
+    <Header />
+
+    {/* HERO */}
+    <Box sx={{ position: 'relative', overflow: 'hidden', pt: { xs: 14, md: 16 }, pb: { xs: 6, md: 9 }, bgcolor: C.blanco }}>
+      <Box sx={{
+        position: 'absolute', top: -180, right: -180,
+        width: 540, height: 540, borderRadius: '50%',
+        background: `radial-gradient(circle, ${C.arena}50 0%, transparent 70%)`,
+        filter: 'blur(60px)', pointerEvents: 'none',
+      }} />
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+        <Grid container spacing={{ xs: 5, md: 8 }} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+              <Box sx={{ width: 32, height: 2, bgcolor: C.verde }} />
+              <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+                fontWeight: 600, letterSpacing: '0.18em',
+                textTransform: 'uppercase', color: C.verde,
+              }}>Quiénes somos</Typography>
+            </Stack>
+            <Typography component="h1" id="quienes-somos" sx={{
+              fontFamily: '"Playfair Display", Georgia, serif',
+              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.75rem' },
+              fontWeight: 600, lineHeight: 1.08, color: C.navy,
+              letterSpacing: '-0.018em', mb: 3,
+            }}>
+              Una red para{' '}
+              <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
+                cuidar tu audición
+              </Box>{' '}toda la vida.
+            </Typography>
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+              lineHeight: 1.65, color: C.gris, mb: 4, maxWidth: 540,
+            }}>
+              OírConecta es la plataforma que conecta a personas con profesionales auditivos verificados en Colombia. Sin marketing, sin promesas vacías —solo información clara, acompañamiento y cuidado.
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Button
+                component={RouterLink} to="/directorio/listado"
+                variant="contained" size="large" endIcon={<ArrowForward />}
+                sx={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  bgcolor: C.navy, color: '#fff', fontWeight: 700,
+                  fontSize: '0.9375rem', px: 3.5, py: 1.75,
+                  borderRadius: '6px',
+                  boxShadow: `0 6px 18px ${C.navy}33`,
+                  '&:hover': { bgcolor: '#1a1f38', transform: 'translateY(-2px)' },
+                }}
+              >Conocer la red</Button>
+              <Button
+                component={RouterLink} to="/servicios"
+                variant="outlined" size="large"
+                sx={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  color: C.navy, borderColor: C.grisClaro, borderWidth: '1.5px',
+                  fontWeight: 600, fontSize: '0.9375rem', px: 3.5, py: 1.75,
+                  borderRadius: '6px',
+                  '&:hover': { borderColor: C.navy, borderWidth: '1.5px', bgcolor: 'rgba(39,47,80,0.04)' },
+                }}
+              >Ver servicios</Button>
+            </Stack>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Box sx={{
+              position: 'relative', borderRadius: '12px', overflow: 'hidden',
+              boxShadow: `0 20px 50px ${C.navy}1f`,
+              aspectRatio: { xs: '4/3', md: '5/6' }, maxHeight: { md: 640 },
+            }}>
+              <Box component="img" src={HERO_IMAGE}
+                alt="Equipo de profesionales auditivos OírConecta"
+                loading="eager"
+                sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+
+    {/* QUÉ HACEMOS */}
+    <Box id="que-hacemos" component="section" sx={{ py: { xs: 6, md: 9 }, bgcolor: '#fff', scrollMarginTop: 96 }}>
+      <Container maxWidth="lg">
+        <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 }, maxWidth: 720, mx: 'auto' }}>
+          <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25} sx={{ mb: 2.5 }}>
+            <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+              fontWeight: 600, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: C.verde,
+            }}>Qué hacemos</Typography>
+            <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
+          </Stack>
+          <Typography component="h2" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '2rem', md: '2.875rem' }, fontWeight: 600,
+            letterSpacing: '-0.018em', lineHeight: 1.1, color: C.navy, mb: 2,
+          }}>
+            Cuatro principios que{' '}
+            <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
+              nos guían
+            </Box>
+          </Typography>
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif', fontSize: '1.0625rem',
+            color: C.gris, lineHeight: 1.6,
+          }}>
+            Cada decisión, cada artículo y cada profesional de la red comparten estos valores.
+          </Typography>
+        </Box>
+        <Grid container spacing={{ xs: 2.5, md: 3 }}>
+          {VALORES.map((v) => {
+            const Icon = v.icon;
+            return (
+              <Grid item xs={12} sm={6} md={3} key={v.title}>
+                <Box sx={{
+                  p: 3.5, borderRadius: '10px', bgcolor: C.blanco,
+                  border: `1px solid ${C.grisClaro}33`, height: '100%',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    borderColor: `${C.verde}55`, transform: 'translateY(-4px)',
+                    boxShadow: `0 12px 28px ${C.navy}12`,
+                  },
+                }}>
+                  <Box sx={{
+                    width: 48, height: 48, borderRadius: '8px',
+                    bgcolor: `${C.verde}12`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2.5,
+                  }}><Icon sx={{ fontSize: 26, color: C.verde }} /></Box>
+                  <Typography sx={{
+                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontSize: '1.1875rem', fontWeight: 600,
+                    color: C.navy, lineHeight: 1.25, mb: 1.25,
+                  }}>{v.title}</Typography>
+                  <Typography sx={{
+                    fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem',
+                    color: C.gris, lineHeight: 1.6,
+                  }}>{v.text}</Typography>
+                </Box>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Container>
+    </Box>
+
+    {/* MISIÓN + VISIÓN */}
+    <Box id="mision" component="section" sx={{ py: { xs: 6, md: 9 }, bgcolor: C.blanco, scrollMarginTop: 96 }}>
+      <Container maxWidth="lg">
+        <Grid container spacing={{ xs: 3, md: 4 }}>
+          <Grid item xs={12} md={6}>
+            <Box sx={{
+              position: 'relative', overflow: 'hidden', borderRadius: '12px',
+              p: { xs: 4, md: 6 }, height: '100%',
+              background: `linear-gradient(135deg, ${C.verde} 0%, ${C.verdeProfundo} 100%)`,
+              color: '#fff',
+            }}>
+              <Box sx={{
+                position: 'absolute', top: -80, right: -80,
+                width: 280, height: 280, borderRadius: '50%',
+                background: `radial-gradient(circle, ${C.oro}26 0%, transparent 70%)`,
+                filter: 'blur(40px)', pointerEvents: 'none',
+              }} />
+              <Box sx={{ position: 'relative', zIndex: 1 }}>
+                <Box sx={{
+                  width: 56, height: 56, borderRadius: '10px',
+                  bgcolor: 'rgba(201,168,106,0.18)',
+                  border: '1.5px solid rgba(201,168,106,0.35)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3,
+                }}><FlagOutlined sx={{ fontSize: 28, color: C.oro }} /></Box>
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+                  fontWeight: 600, letterSpacing: '0.18em',
+                  textTransform: 'uppercase', color: C.oro, mb: 1.5,
+                }}>Nuestra misión</Typography>
+                <Typography component="h3" id="mision-heading" sx={{
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontSize: { xs: '1.5rem', md: '1.875rem' }, fontWeight: 600,
+                  color: '#fff', lineHeight: 1.2, mb: 2.5, letterSpacing: '-0.01em',
+                }}>
+                  Acompañar a cada persona en su{' '}
+                  <Box component="span" sx={{ fontStyle: 'italic', color: C.oro }}>
+                    camino auditivo
+                  </Box>
+                </Typography>
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif', fontSize: '1.0625rem',
+                  color: 'rgba(255,255,255,0.85)', lineHeight: 1.65,
+                }}>
+                  Conectar a personas con profesionales auditivos verificados, ofrecer información clara y útil, y acompañar cada decisión —desde la primera duda hasta el seguimiento de por vida.
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={6} id="vision">
+            <Box sx={{
+              position: 'relative', overflow: 'hidden', borderRadius: '12px',
+              p: { xs: 4, md: 6 }, height: '100%',
+              background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyLight} 100%)`,
+              color: '#fff',
+            }}>
+              <Box sx={{
+                position: 'absolute', top: -80, left: -80,
+                width: 280, height: 280, borderRadius: '50%',
+                background: `radial-gradient(circle, ${C.oro}26 0%, transparent 70%)`,
+                filter: 'blur(40px)', pointerEvents: 'none',
+              }} />
+              <Box sx={{ position: 'relative', zIndex: 1 }}>
+                <Box sx={{
+                  width: 56, height: 56, borderRadius: '10px',
+                  bgcolor: 'rgba(201,168,106,0.18)',
+                  border: '1.5px solid rgba(201,168,106,0.35)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3,
+                }}><VisibilityOutlined sx={{ fontSize: 28, color: C.oro }} /></Box>
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+                  fontWeight: 600, letterSpacing: '0.18em',
+                  textTransform: 'uppercase', color: C.oro, mb: 1.5,
+                }}>Nuestra visión</Typography>
+                <Typography component="h3" sx={{
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontSize: { xs: '1.5rem', md: '1.875rem' }, fontWeight: 600,
+                  color: '#fff', lineHeight: 1.2, mb: 2.5, letterSpacing: '-0.01em',
+                }}>
+                  La{' '}
+                  <Box component="span" sx={{ fontStyle: 'italic', color: C.oro }}>
+                    referencia confiable
+                  </Box>{' '}de salud auditiva en Colombia
+                </Typography>
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif', fontSize: '1.0625rem',
+                  color: 'rgba(255,255,255,0.85)', lineHeight: 1.65,
+                }}>
+                  Ser el lugar al que cualquier persona, familia o profesional acuda primero cuando tenga una duda sobre audición —porque saben que aquí encontrarán información honesta, profesionales verificados y acompañamiento real.
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+
+    {/* CTA */}
+    <Box component="section" sx={{
+      py: { xs: 6, md: 8 }, bgcolor: C.verdeProfundo, color: '#fff',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <Box sx={{
+        position: 'absolute', top: -100, right: -100,
+        width: 380, height: 380, borderRadius: '50%',
+        background: `radial-gradient(circle, ${C.oro}26 0%, transparent 70%)`,
+        filter: 'blur(60px)', pointerEvents: 'none',
+      }} />
+      <Container maxWidth="md" sx={{ position: 'relative', textAlign: 'center' }}>
+        <Typography sx={{
+          fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+          fontWeight: 600, letterSpacing: '0.18em',
+          textTransform: 'uppercase', color: C.oro, mb: 2,
+        }}>Empieza hoy</Typography>
+        <Typography component="h2" sx={{
+          fontFamily: '"Playfair Display", Georgia, serif',
+          fontSize: { xs: '2rem', md: '2.875rem' }, fontWeight: 600,
+          lineHeight: 1.15, color: '#fff', letterSpacing: '-0.018em', mb: 2.5,
+        }}>
+          ¿Hablamos sobre tu{' '}
+          <Box component="span" sx={{ fontStyle: 'italic', color: C.oro }}>
+            audición
+          </Box>?
+        </Typography>
+        <Typography sx={{
+          fontFamily: '"DM Sans", sans-serif', fontSize: '1.0625rem',
+          color: 'rgba(255,255,255,0.80)', mb: 4, maxWidth: 560, mx: 'auto',
+        }}>
+          Conecta con un profesional verificado de la red OírConecta. Sin presión, sin venta —solo conversación honesta.
+        </Typography>
+        <Button
+          component={RouterLink} to="/agendar"
+          variant="contained" endIcon={<ArrowForward />}
+          sx={{
+            fontFamily: '"DM Sans", sans-serif', bgcolor: C.oro, color: C.navy,
+            fontWeight: 700, fontSize: '0.9375rem', px: 4, py: 1.75,
+            borderRadius: '6px',
+            boxShadow: `0 8px 24px ${C.oro}55`,
+            '&:hover': { bgcolor: '#D4B97A', transform: 'translateY(-2px)' },
+          }}
+        >Agendar una conversación</Button>
+      </Container>
+    </Box>
+
+    <Footer />
+  </>
+);
+
+export default NosotrosPage;

@@ -34,10 +34,10 @@ const menuConfig = [
     label: 'Nosotros',
     type: 'nosotros',
     items: [
-      { label: 'Quiénes somos', to: '/nosotros' },
-      { label: 'Qué hacemos', to: '/servicios' },
-      { label: 'Visión', to: '/nosotros' },
-      { label: 'Misión', to: '/nosotros' },
+      { label: 'Quiénes somos', to: '/nosotros#quienes-somos' },
+      { label: 'Qué hacemos', to: '/nosotros#que-hacemos' },
+      { label: 'Misión', to: '/nosotros#mision' },
+      { label: 'Visión', to: '/nosotros#vision' },
     ],
   },
   {
