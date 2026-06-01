@@ -273,49 +273,69 @@ export default function AgendamientoPage() {
       </Helmet>
       <Header />
 
-      {/* Hero */}
+      {/* HERO editorial */}
       <Box sx={{
-        position:'relative', overflow:'hidden',
-        background:
-          'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.42) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 70% 60% at 90% 80%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'linear-gradient(160deg, #063c2c 0%, #085946 35%, #1a2240 70%, #272F50 100%)',
-        color:'#fff', pt:{ xs:14, md:16 }, pb:{ xs:6, md:8 },
+        position: 'relative', overflow: 'hidden',
+        pt: { xs: 14, md: 16 }, pb: { xs: 5, md: 7 },
+        bgcolor: '#FBFAF8',
       }}>
-        <Box sx={{ position:'absolute', inset:0, opacity:0.3, pointerEvents:'none',
-          backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
-        <Container maxWidth="lg" sx={{ position:'relative', zIndex:1 }}>
-          <Box sx={{ display:'inline-flex', alignItems:'center', gap:1, px:2, py:0.625,
-            borderRadius:'20px', background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.20)', mb:3 }}>
-            <CalendarMonthIcon sx={{ fontSize:15, color:'#6ee7c8' }} />
-            <Typography sx={{ fontSize:'0.75rem', fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'rgba(255,255,255,0.85)' }}>
-              Agendamiento en línea
-            </Typography>
-          </Box>
-          <Typography component="h1" sx={{ fontSize:{ xs:'2.25rem', md:'3.25rem' }, fontWeight:900,
-            letterSpacing:'-0.03em', lineHeight:1.1, color:'#fff', mb:2 }}>
+        <Box sx={{
+          position: 'absolute', top: -180, right: -180,
+          width: 480, height: 480, borderRadius: '50%',
+          background: 'radial-gradient(circle, #D9CDBF50 0%, transparent 70%)',
+          filter: 'blur(60px)', pointerEvents: 'none',
+        }} />
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 2.5 }}>
+            <Box sx={{ width: 28, height: 2, bgcolor: '#085946' }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+              fontWeight: 600, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: '#085946',
+            }}>Agendamiento en línea</Typography>
+          </Stack>
+
+          <Typography component="h1" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '2.25rem', sm: '3rem', md: '3.75rem' },
+            fontWeight: 600, lineHeight: 1.08, color: '#272F50',
+            letterSpacing: '-0.018em', mb: 2.5,
+          }}>
             Agenda tu valoración{' '}
-            <Box component="span" sx={{ background:'linear-gradient(135deg,#6ee7c8,#a7f3d0)',
-              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
+            <Box component="span" sx={{ fontStyle: 'italic', color: '#085946', fontWeight: 500 }}>
               auditiva
             </Box>
           </Typography>
-          <Typography sx={{ fontSize:'1.0625rem', color:'rgba(255,255,255,0.75)', mb:4, maxWidth:560, lineHeight:1.7 }}>
-            Selecciona el día y hora que mejor te convenga. Las citas son de <strong style={{color:'#fff'}}>50 minutos</strong>, de lunes a viernes de 8:00 AM a 4:00 PM.
+
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+            color: '#6B7280', lineHeight: 1.6,
+            mb: 3.5, maxWidth: 620,
+          }}>
+            Selecciona el día y hora que mejor te convenga. Las citas son de{' '}
+            <Box component="strong" sx={{ color: '#272F50', fontWeight: 700 }}>50 minutos</Box>,
+            de lunes a viernes de 8:00 AM a 4:00 PM.
           </Typography>
 
-          {/* Info chips */}
-          <Stack direction="row" spacing={2} sx={{ flexWrap:'wrap', gap:1.5 }}>
+          {/* Info pills */}
+          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
             {[
-              { icon:<LocationOnOutlinedIcon sx={{ fontSize:15 }} />, text:'Cr 10 #96-25 Cons. 320, Bogotá' },
-              { icon:<AccessTimeIcon sx={{ fontSize:15 }} />, text:'Lun – Vie · 8:00 AM – 4:00 PM' },
-              { icon:<CheckCircleIcon sx={{ fontSize:15 }} />, text:'Confirmación inmediata por email' },
+              { icon: <LocationOnOutlinedIcon sx={{ fontSize: 15 }} />, text: 'Cr 10 #96-25 Cons. 320, Bogotá' },
+              { icon: <AccessTimeIcon sx={{ fontSize: 15 }} />, text: 'Lun – Vie · 8:00 AM – 4:00 PM' },
+              { icon: <CheckCircleIcon sx={{ fontSize: 15 }} />, text: 'Confirmación inmediata por email' },
             ].map(c => (
-              <Box key={c.text} sx={{ display:'flex', alignItems:'center', gap:0.75,
-                px:1.75, py:0.625, borderRadius:'20px', background:'rgba(255,255,255,0.10)',
-                border:'1px solid rgba(255,255,255,0.18)' }}>
-                <Box sx={{ color:'#6ee7c8' }}>{c.icon}</Box>
-                <Typography sx={{ fontSize:'0.8125rem', color:'rgba(255,255,255,0.85)', fontWeight:500 }}>{c.text}</Typography>
+              <Box key={c.text} sx={{
+                display: 'flex', alignItems: 'center', gap: 0.75,
+                px: 1.5, py: 0.75, borderRadius: '6px',
+                bgcolor: 'rgba(8,89,70,0.06)',
+                border: '1px solid rgba(8,89,70,0.18)',
+              }}>
+                <Box sx={{ color: '#085946', display: 'flex' }}>{c.icon}</Box>
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem',
+                  color: '#272F50', fontWeight: 600,
+                }}>{c.text}</Typography>
               </Box>
             ))}
           </Stack>
