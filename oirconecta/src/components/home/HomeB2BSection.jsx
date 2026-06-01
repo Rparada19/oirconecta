@@ -98,10 +98,10 @@ export default function HomeB2BSection() {
                 endIcon={<ArrowForwardIcon />}
                 sx={{
                   fontFamily: '"DM Sans", sans-serif',
-                  bgcolor: C.oro, color: C.navy, fontWeight: 700, fontSize: '0.9375rem',
+                  background: '#C9A86A !important', color: '#272F50 !important', fontWeight: 700, fontSize: '0.9375rem',
                   px: 3.5, py: 1.75, borderRadius: '6px', letterSpacing: '0.01em',
                   boxShadow: `0 8px 24px ${C.oro}55`,
-                  '&:hover': { bgcolor: '#D4B97A', transform: 'translateY(-2px)' },
+                  '&:hover': { background: '#D4B97A !important', transform: 'translateY(-2px)' },
                 }}
               >Suscribir mi perfil</Button>
               <Button

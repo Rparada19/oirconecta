@@ -198,7 +198,7 @@ export default function TestimonialsSection() {
               bgcolor: 'rgba(255,255,255,0.08)',
               border: '1px solid rgba(255,255,255,0.20)',
               color: '#fff',
-              '&:hover': { bgcolor: C.oro, color: C.navy, border: `1px solid ${C.oro}` },
+              '&:hover': { background: '#C9A86A !important', color: '#272F50 !important', border: `1px solid ${C.oro}` },
             }}>
               <ArrowBackIos sx={{ fontSize: 14, ml: 0.5 }} />
             </IconButton>
@@ -226,7 +226,7 @@ export default function TestimonialsSection() {
               bgcolor: 'rgba(255,255,255,0.08)',
               border: '1px solid rgba(255,255,255,0.20)',
               color: '#fff',
-              '&:hover': { bgcolor: C.oro, color: C.navy, border: `1px solid ${C.oro}` },
+              '&:hover': { background: '#C9A86A !important', color: '#272F50 !important', border: `1px solid ${C.oro}` },
             }}>
               <ArrowForwardIos sx={{ fontSize: 14 }} />
             </IconButton>

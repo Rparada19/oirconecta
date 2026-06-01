@@ -166,7 +166,7 @@ const ServiciosPage = () => (
 
     {/* CTA */}
     <Box component="section" sx={{
-      py: { xs: 6, md: 9 }, bgcolor: C.navy, color: '#fff',
+      py: { xs: 6, md: 9 }, background: '#272F50 !important', color: '#fff !important',
       position: 'relative', overflow: 'hidden',
     }}>
       <Box sx={{
@@ -201,11 +201,11 @@ const ServiciosPage = () => (
           component={RouterLink} to="/directorio/listado"
           variant="contained" endIcon={<ArrowForward />}
           sx={{
-            fontFamily: '"DM Sans", sans-serif', bgcolor: C.oro, color: C.navy,
+            fontFamily: '"DM Sans", sans-serif', background: '#C9A86A !important', color: '#272F50 !important',
             fontWeight: 700, fontSize: '0.9375rem', px: 4, py: 1.75,
             borderRadius: '6px',
             boxShadow: `0 8px 24px ${C.oro}55`,
-            '&:hover': { bgcolor: '#D4B97A', transform: 'translateY(-2px)' },
+            '&:hover': { background: '#D4B97A !important', transform: 'translateY(-2px)' },
           }}
         >Ir al directorio</Button>
       </Container>

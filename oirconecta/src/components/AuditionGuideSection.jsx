@@ -52,11 +52,11 @@ export default function AuditionGuideSection() {
               <Button component={RouterLink} to="/agendar" variant="contained" size="large"
                 endIcon={<ArrowForwardIcon />}
                 sx={{
-                  fontFamily: '"DM Sans", sans-serif', bgcolor: C.navy, color: '#fff',
+                  fontFamily: '"DM Sans", sans-serif', background: '#272F50 !important', color: '#fff !important',
                   fontWeight: 700, fontSize: '0.9375rem', px: 3.5, py: 1.5,
                   borderRadius: '6px', letterSpacing: '0.01em',
                   boxShadow: `0 6px 18px ${C.navy}33`,
-                  '&:hover': { bgcolor: '#1a1f38', transform: 'translateY(-2px)' },
+                  '&:hover': { background: '#1a1f38 !important', transform: 'translateY(-2px)' },
                 }}
               >Agendar valoración</Button>
             </Box>

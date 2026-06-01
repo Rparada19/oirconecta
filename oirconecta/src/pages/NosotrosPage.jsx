@@ -76,11 +76,11 @@ const NosotrosPage = () => (
                 variant="contained" size="large" endIcon={<ArrowForward />}
                 sx={{
                   fontFamily: '"DM Sans", sans-serif',
-                  bgcolor: C.navy, color: '#fff', fontWeight: 700,
+                  background: '#272F50 !important', color: '#fff !important', fontWeight: 700,
                   fontSize: '0.9375rem', px: 3.5, py: 1.75,
                   borderRadius: '6px',
                   boxShadow: `0 6px 18px ${C.navy}33`,
-                  '&:hover': { bgcolor: '#1a1f38', transform: 'translateY(-2px)' },
+                  '&:hover': { background: '#1a1f38 !important', transform: 'translateY(-2px)' },
                 }}
               >Conocer la red</Button>
               <Button
@@ -312,11 +312,11 @@ const NosotrosPage = () => (
           component={RouterLink} to="/agendar"
           variant="contained" endIcon={<ArrowForward />}
           sx={{
-            fontFamily: '"DM Sans", sans-serif', bgcolor: C.oro, color: C.navy,
+            fontFamily: '"DM Sans", sans-serif', background: '#C9A86A !important', color: '#272F50 !important',
             fontWeight: 700, fontSize: '0.9375rem', px: 4, py: 1.75,
             borderRadius: '6px',
             boxShadow: `0 8px 24px ${C.oro}55`,
-            '&:hover': { bgcolor: '#D4B97A', transform: 'translateY(-2px)' },
+            '&:hover': { background: '#D4B97A !important', transform: 'translateY(-2px)' },
           }}
         >Agendar una conversación</Button>
       </Container>

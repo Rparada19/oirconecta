@@ -108,8 +108,7 @@ const Hero = () => {
                 endIcon={<ArrowForward />}
                 sx={{
                   fontFamily: '"DM Sans", sans-serif',
-                  bgcolor: C.navy,
-                  color: '#fff',
+                  background: '#272F50 !important', color: '#fff !important',
                   fontWeight: 700,
                   fontSize: '0.9375rem',
                   px: 3.5, py: 1.75,
