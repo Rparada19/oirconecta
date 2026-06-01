@@ -106,7 +106,7 @@ export default function HomeB2BSection() {
               >Suscribir mi perfil</Button>
               <Button
                 component={RouterLink}
-                to="/login-profesional"
+                to="/login-directorio"
                 variant="outlined"
                 size="large"
                 startIcon={<LoginIcon />}
