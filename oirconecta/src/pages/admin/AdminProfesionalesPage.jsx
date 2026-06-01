@@ -104,11 +104,15 @@ export default function AdminProfesionalesPage() {
     setError(null);
     const { data, error: err } = await adminFetch('/api/directory/admin/profiles');
     if (err) setError(err);
-    else setProfiles(data?.data || data || []);
+    else {
+      const list = data?.data ?? data;
+      setProfiles(Array.isArray(list) ? list : []);
+    }
     setLoading(false);
   };
 
-  const filtered = profiles.filter((p) => TABS[tab].statuses.includes(p.status));
+  const profilesArray = Array.isArray(profiles) ? profiles : [];
+  const filtered = profilesArray.filter((p) => TABS[tab].statuses.includes(p.status));
 
   const handleRowClick = (profile) => {
     setSelected(profile);
@@ -199,7 +203,7 @@ export default function AdminProfesionalesPage() {
               }}
             >
               {TABS.map((t, i) => {
-                const count = profiles.filter((p) => t.statuses.includes(p.status)).length;
+                const count = profilesArray.filter((p) => t.statuses.includes(p.status)).length;
                 return <Tab key={t.label} label={`${t.label} (${count})`} />;
               })}
             </Tabs>
