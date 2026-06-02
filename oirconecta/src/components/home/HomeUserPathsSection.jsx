@@ -33,7 +33,7 @@ const paths = [
   {
     title: 'Explorar audífonos',
     blurb: 'Marcas y tecnologías explicadas sin prisa ni presión comercial.',
-    image: 'https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=800&h=600&auto=compress&cs=tinysrgb&fit=crop',
+    image: 'https://images.pexels.com/photos/6677156/pexels-photo-6677156.jpeg?w=800&h=600&auto=compress&cs=tinysrgb&fit=crop',
     alt: 'Audífono moderno detrás de la oreja',
     mode: 'route',
     to: '/audifonos',

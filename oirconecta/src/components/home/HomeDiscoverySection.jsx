@@ -17,7 +17,7 @@ const tiles = [
     to: '/audifonos',
     stat: '13+',
     statLabel: 'marcas',
-    image: 'https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: 'https://images.pexels.com/photos/16852335/pexels-photo-16852335.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     kicker: 'Implantes cocleares',

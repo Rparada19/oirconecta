@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: https://images.pexels.com/photos/16852335/pexels-photo-16852335.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
 ---
 
 Empieza casi sin darse cuenta. La persona sube un poco el volumen del televisor. Pide que le repitan en las reuniones familiares. Dice que "todos hablan entre dientes" o que "los jóvenes de ahora no vocalizan". Se cansa más en las conversaciones de grupo y poco a poco empieza a evitarlas. No es que esté distraída ni que no preste atención: es que está escuchando peor. Eso tiene nombre: presbiacusia.

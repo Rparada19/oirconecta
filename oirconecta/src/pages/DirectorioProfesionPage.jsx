@@ -38,7 +38,7 @@ const PROFESSION_CONTEXT = {
   },
   audiologia: {
     icon: HearingOutlinedIcon,
-    image: 'https://images.pexels.com/photos/36670377/pexels-photo-36670377.jpeg?w=1200&h=900&auto=compress&cs=tinysrgb&fit=crop',
+    image: 'https://images.unsplash.com/photo-1576669801945-7a346954da5a?w=1200&h=900&q=80&auto=format&fit=crop',
     descripcion: 'El audiólogo es el especialista en la evaluación, diagnóstico y adaptación de audífonos. Hace tu audiometría, te orienta sobre tecnología y te acompaña en la programación y seguimiento.',
     queHacen: [
       'Audiometrías y pruebas auditivas completas',

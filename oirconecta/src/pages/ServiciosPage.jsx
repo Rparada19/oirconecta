@@ -32,7 +32,7 @@ const SERVICIOS = [
     titulo: 'Implantes cocleares',
     descripcion: 'Información sobre candidatura, proceso multidisciplinario y seguimiento; coordinación con marcas líderes.',
     icon: SupportOutlined,
-    image: 'https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: 'https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     titulo: 'Rehabilitación y terapia',
