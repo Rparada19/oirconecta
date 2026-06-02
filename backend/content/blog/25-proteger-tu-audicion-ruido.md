@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T15:00:00Z'
-coverUrl: https://image.pollinations.ai/prompt/Person%20wearing%20professional%20noise%20cancelling%20earplugs%20at%20concert%2C%20protective%20hearing%20gear%2C%20music%20event%20background?width=1600&height=900&nologo=true
+coverUrl: https://images.pexels.com/photos/29988954/pexels-photo-29988954.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
 ---
 
 La pérdida auditiva por ruido es una de las pocas causas de hipoacusia que es **100% prevenible**. Y al mismo tiempo, es una de las más subestimadas. La cóclea no avisa cuando empieza a dañarse; el daño es indoloro, gradual y se acumula durante años. Cuando aparece el síntoma —zumbido constante, dificultad para entender en ruido— el daño ya está hecho y, salvo excepciones, **es irreversible**.

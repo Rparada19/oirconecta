@@ -17,7 +17,7 @@ const tiles = [
     to: '/audifonos',
     stat: '13+',
     statLabel: 'marcas',
-    image: 'https://images.pexels.com/photos/36670377/pexels-photo-36670377.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: 'https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     kicker: 'Implantes cocleares',
@@ -26,7 +26,7 @@ const tiles = [
     to: '/implantes',
     stat: '3',
     statLabel: 'fabricantes',
-    image: 'https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: 'https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
   },
   {
     kicker: 'Referencia y tienda',

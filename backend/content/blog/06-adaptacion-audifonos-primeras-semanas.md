@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://image.pollinations.ai/prompt/Mature%20adult%20gently%20placing%20modern%20BTE%20hearing%20aid%20behind%20ear%2C%20morning%20routine%2C%20warm%20soft%20light?width=1600&height=900&nologo=true
+coverUrl: https://images.pexels.com/photos/36670377/pexels-photo-36670377.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
 ---
 
 El día que recibes tus primeros audífonos es emocionante. Sales del centro auditivo escuchando cosas que llevabas años sin escuchar: el motor de los carros, el sonido del aire acondicionado, hasta tus propios pasos. Y por dentro estás pensando "esto está demasiado fuerte" o "mi voz suena rara". Bienvenido a la adaptación.

@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://image.pollinations.ai/prompt/Modern%20electric%20hearing%20aid%20dryer%20with%20two%20hearing%20aids%20inside%2C%20indicator%20light%20on%2C%20evening%20warm%20light?width=1600&height=900&nologo=true
+coverUrl: https://images.pexels.com/photos/36485822/pexels-photo-36485822.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
 ---
 
 Si vives en Cartagena, Barranquilla, Cali, Bucaramanga, Pereira o cualquier ciudad con clima cálido y húmedo, hay un enemigo invisible que está deteriorando tus audífonos más rápido de lo que crees: la humedad. Aunque tus oídos no se mojen, aunque no sudes mucho, los componentes electrónicos del audífono están expuestos cada día a humedad ambiental que poco a poco corroe contactos, oxida circuitos y satura micrófonos.

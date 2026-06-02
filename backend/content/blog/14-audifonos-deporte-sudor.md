@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://image.pollinations.ai/prompt/Adult%20runner%20outdoors%20wearing%20hearing%20aid%20with%20protective%20sleeve%2C%20athletic%20outfit%2C%20morning%20natural%20light?width=1600&height=900&nologo=true
+coverUrl: https://images.pexels.com/photos/6293191/pexels-photo-6293191.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
 ---
 
 Hacer ejercicio con audífonos es perfectamente posible y muy recomendable: la actividad física mejora la circulación coclear, controla factores de riesgo de pérdida auditiva como hipertensión y diabetes, y el aislamiento auditivo durante el entrenamiento puede ser frustrante. El problema no es el ejercicio en sí, sino el **sudor**: una mezcla salina, ácida y conductora que es uno de los peores enemigos de la electrónica miniaturizada.

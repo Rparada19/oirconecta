@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://image.pollinations.ai/prompt/Hearing%20aid%20cleaning%20kit%20with%20brush%20microfiber%20cloth%20wax%20filters%20dehumidifier%20capsule%2C%20flat%20lay%20on%20clean%20surface?width=1600&height=900&nologo=true
+coverUrl: https://images.pexels.com/photos/36670377/pexels-photo-36670377.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
 ---
 
 Un audífono moderno puede costar entre 3 y 15 millones de pesos. Es un dispositivo médico de precisión que pasa entre 10 y 14 horas al día metido en un ambiente cálido, húmedo, con cerumen y, en muchos casos, sudor. Si no se limpia bien, los pequeños componentes electrónicos —el receptor, los filtros, el micrófono— se deterioran mucho antes de tiempo. La diferencia entre un audífono que dura 7 años y uno que falla a los 3 muchas veces no está en la marca, sino en la rutina diaria de limpieza.

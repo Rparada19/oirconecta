@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://image.pollinations.ai/prompt/Happy%20young%20child%20wearing%20colorful%20pediatric%20hearing%20aid%20behind%20ear%2C%20smiling%20at%20home%2C%20bright%20natural%20light?width=1600&height=900&nologo=true
+coverUrl: https://images.unsplash.com/photo-1632053002928-1919605ee6f7?w=1600&q=80&auto=format&fit=crop
 ---
 
 Cuando un niño recibe sus primeros audífonos, los padres entran a un mundo nuevo de responsabilidades que nadie les enseñó. Los audífonos infantiles no son simplemente versiones pequeñas de los de adulto: son dispositivos que tienen que sobrevivir a juegos, caídas, sudor, saliva, comida, tierra de patio, agua de baño y la curiosidad infinita de un niño que no entiende por qué no se los puede quitar y meter en la boca. Y todo eso mientras hacen el trabajo más importante de su vida: ayudar al cerebro de ese niño a desarrollar lenguaje.

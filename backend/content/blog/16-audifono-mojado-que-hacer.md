@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://image.pollinations.ai/prompt/Hand%20drying%20small%20hearing%20aid%20with%20microfiber%20cloth%2C%20urgent%20careful%20action%2C%20clean%20countertop?width=1600&height=900&nologo=true
+coverUrl: https://images.pexels.com/photos/36670377/pexels-photo-36670377.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
 ---
 
 Pasa más seguido de lo que la gente cree. Te metes a la ducha sin acordarte. Te agarra un aguacero saliendo del carro. Se te cae al lavamanos. Olvidas que lo tienes puesto y entras al mar. En todos estos casos, la reacción de los siguientes 5 minutos puede ser la diferencia entre salvar el audífono o perderlo. Y la mala noticia es que la mayoría de la gente hace exactamente lo que no debe.

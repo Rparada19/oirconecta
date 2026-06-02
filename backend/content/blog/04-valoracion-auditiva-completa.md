@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://image.pollinations.ai/prompt/Patient%20inside%20soundproof%20audiometry%20booth%20wearing%20headphones%2C%20audiologist%20visible%20through%20glass?width=1600&height=900&nologo=true
+coverUrl: https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=1600&q=80&auto=format&fit=crop
 ---
 
 Una valoración auditiva completa no es "una audiometría rápida". Es un conjunto de pruebas que, juntas, dan una imagen completa de cómo escuchas: cuánto, en qué frecuencias, qué tan bien entiendes las palabras y dónde está el problema dentro del sistema auditivo. Bien hecha, dura entre 45 minutos y 1 hora y media. Mal hecha, te puede costar años de tratamientos equivocados.

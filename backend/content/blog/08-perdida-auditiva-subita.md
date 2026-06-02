@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://image.pollinations.ai/prompt/Adult%20man%20with%20concerned%20expression%20touching%20one%20ear%2C%20sudden%20alarm%2C%20neutral%20background?width=1600&height=900&nologo=true
+coverUrl: https://images.unsplash.com/photo-1631558556874-1d127211f574?w=1600&q=80&auto=format&fit=crop
 ---
 
 Te despiertas y un oído no escucha. O estás en una llamada, cambias el teléfono de lado y descubres que por ese oído casi no oyes. A veces viene con un zumbido fuerte o una sensación de oído tapado. La reacción típica es esperar: "será cera", "se me destapará", "mañana estaré mejor". Y ese es, justamente, el error más caro que se puede cometer con la audición.

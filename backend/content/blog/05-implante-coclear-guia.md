@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://image.pollinations.ai/prompt/Cochlear%20implant%20external%20processor%20behind%20ear%20of%20smiling%20adult%2C%20modern%20minimalist%20design?width=1600&height=900&nologo=true
+coverUrl: https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
 ---
 
 Cuando alguien escucha por primera vez la palabra "implante coclear", suele imaginar un milagro tecnológico que devuelve la audición perfecta. La realidad es más matizada: el implante coclear es uno de los dispositivos médicos más exitosos de la historia de la medicina, pero no es ni un sustituto del oído normal ni una decisión que se tome en una semana.
