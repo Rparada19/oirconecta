@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T15:00:00Z'
-coverUrl: https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1600&q=80&auto=format&fit=crop
+coverUrl: https://images.pexels.com/photos/27567505/pexels-photo-27567505.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
 ---
 
 Vivir con hipoacusia no es solo "escuchar menos". Es ajustar mil microdecisiones a lo largo del día: dónde sentarte en una reunión, cómo pedir que repitan sin parecer descortés, cómo manejar una llamada importante, cómo cuidar el audífono en el gimnasio, cómo decirle al mesero que no entendiste el menú. Casi nadie te explica eso al salir del consultorio del audiólogo. Y son justamente esas microdecisiones las que marcan la diferencia entre una vida cómoda y una vida agotadora.

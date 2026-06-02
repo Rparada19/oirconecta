@@ -42,7 +42,7 @@ const paths = [
   {
     title: 'Conocer la red',
     blurb: 'Nuestra misión, criterios de selección y profesionales suscritos.',
-    image: 'https://images.unsplash.com/photo-1504813184591-01572f98c85f?w=800&h=600&q=80&auto=format&fit=crop',
+    image: 'https://images.pexels.com/photos/6129507/pexels-photo-6129507.jpeg?w=800&h=600&auto=compress&cs=tinysrgb&fit=crop',
     alt: 'Equipo de profesionales auditivos',
     mode: 'route',
     to: '/nosotros',
