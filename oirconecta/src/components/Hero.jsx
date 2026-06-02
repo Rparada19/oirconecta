@@ -17,7 +17,7 @@ const C = {
   grisClaro: '#A1A7B1',
 };
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1576669801945-7a346954da5a?w=1200&h=1400&q=80&auto=format&fit=crop';
+const HERO_IMAGE = 'https://images.pexels.com/photos/7086032/pexels-photo-7086032.jpeg?w=1200&h=1400&auto=compress&cs=tinysrgb&fit=crop';
 
 const TRUST_ITEMS = [
   { icon: VerifiedOutlined, label: 'Profesionales verificados' },
@@ -194,7 +194,7 @@ const Hero = () => {
               <Box
                 component="img"
                 src={HERO_IMAGE}
-                alt="Audióloga sonriente examinando a paciente en consulta cálida"
+                alt="Familia disfrutando momentos juntos gracias a una mejor audición"
                 loading="eager"
                 decoding="async"
                 fetchpriority="high"
