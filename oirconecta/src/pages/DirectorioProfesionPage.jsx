@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { Box, Button, Container, Grid, Stack, Typography } from '@mui/material';
+import {
+  Box, Button, Container, Grid, Stack, Typography,
+  TextField, MenuItem, InputAdornment, IconButton,
+} from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { POLIZAS_COLOMBIA, POLIZA_LABEL_TODAS } from '../config/polizasColombia';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
 import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
@@ -16,6 +22,13 @@ import DirectoryCardSkeleton from '../components/directorio/v2/DirectoryCardSkel
 import { fetchFeaturedByProfession, searchDirectoryV2 } from '../services/directoryDiscoveryService';
 
 const PAGE_SIZE = 24;
+
+const CIUDAD_TODAS = 'Todas las ciudades';
+const CIUDADES = [
+  CIUDAD_TODAS, 'Bogotá', 'Medellín', 'Cali', 'Barranquilla',
+  'Bucaramanga', 'Pereira', 'Armenia', 'Manizales', 'Cartagena',
+  'Cúcuta', 'Ibagué', 'Sincelejo', 'Santa Marta', 'Villavicencio',
+];
 
 // Contexto por profesión (imagen + qué hace + cuándo consultar)
 const PROFESSION_CONTEXT = {
@@ -98,19 +111,44 @@ export default function DirectorioProfesionPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Filtros
+  const [qInput, setQInput] = useState('');
+  const [q, setQ] = useState('');
+  const [ciudad, setCiudad] = useState(CIUDAD_TODAS);
+  const [poliza, setPoliza] = useState(POLIZA_LABEL_TODAS);
+
+  // Debounce búsqueda por texto
+  useEffect(() => {
+    const t = setTimeout(() => setQ(qInput.trim()), 350);
+    return () => clearTimeout(t);
+  }, [qInput]);
+
+  // Featured (top calificados) — solo cambia con slug
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    Promise.all([
-      fetchFeaturedByProfession(slug, 6),
-      searchDirectoryV2({ professionSlug: slug, limit: PAGE_SIZE }),
-    ])
-      .then(([fRes, sRes]) => {
+    fetchFeaturedByProfession(slug, 6)
+      .then((fRes) => {
         if (cancelled) return;
         if (fRes?.data?.success) {
           setProfession(fRes.data.data?.profession || null);
           setFeatured(fRes.data.data?.items || []);
         }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [slug]);
+
+  // Listado con filtros
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const params = { professionSlug: slug, limit: PAGE_SIZE };
+    if (q) params.q = q;
+    if (ciudad && ciudad !== CIUDAD_TODAS) params.ciudad = ciudad;
+    if (poliza && poliza !== POLIZA_LABEL_TODAS) params.poliza = poliza;
+    searchDirectoryV2(params)
+      .then((sRes) => {
+        if (cancelled) return;
         if (sRes?.data?.success) {
           const d = sRes.data.data || {};
           setItems(d.items || []);
@@ -118,13 +156,17 @@ export default function DirectorioProfesionPage() {
         }
       })
       .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [slug]);
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [slug, q, ciudad, poliza]);
+
+  const hasFilters = useMemo(
+    () => Boolean(q) || (ciudad && ciudad !== CIUDAD_TODAS) || (poliza && poliza !== POLIZA_LABEL_TODAS),
+    [q, ciudad, poliza]
+  );
+  const resetFilters = () => {
+    setQInput(''); setQ(''); setCiudad(CIUDAD_TODAS); setPoliza(POLIZA_LABEL_TODAS);
+  };
 
   const tituloPlural = profession ? `${profession.nombre}s` : 'Profesionales';
 
@@ -344,10 +386,82 @@ export default function DirectorioProfesionPage() {
           <Typography component="h2" sx={{
             fontFamily: '"Playfair Display", Georgia, serif',
             fontSize: { xs: '1.5rem', md: '1.875rem' }, fontWeight: 600,
-            color: C.navy, letterSpacing: '-0.01em', mb: 3,
+            color: C.navy, letterSpacing: '-0.01em', mb: 2.5,
           }}>
             Todos los {tituloPlural.toLowerCase()}
           </Typography>
+
+          {/* Barra de filtros */}
+          <Box sx={{
+            bgcolor: '#fff', border: `1px solid ${C.grisClaro}40`,
+            borderRadius: '12px', boxShadow: `0 6px 20px ${C.navy}08`,
+            p: { xs: 1.5, md: 2 }, mb: 3,
+          }}>
+            <Grid container spacing={1.5} alignItems="center">
+              <Grid item xs={12} md={5}>
+                <TextField
+                  fullWidth size="small" placeholder="Buscar por nombre o consultorio"
+                  value={qInput}
+                  onChange={(e) => setQInput(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRoundedIcon sx={{ fontSize: 20, color: C.gris }} />
+                      </InputAdornment>
+                    ),
+                    sx: { borderRadius: '8px', fontFamily: '"DM Sans", sans-serif' },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <TextField
+                  select fullWidth size="small" value={ciudad}
+                  onChange={(e) => setCiudad(e.target.value)}
+                  InputProps={{ sx: { borderRadius: '8px', fontFamily: '"DM Sans", sans-serif' } }}
+                >
+                  {CIUDADES.map((c) => (
+                    <MenuItem key={c} value={c} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>
+                      {c}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <TextField
+                  select fullWidth size="small" value={poliza}
+                  onChange={(e) => setPoliza(e.target.value)}
+                  InputProps={{ sx: { borderRadius: '8px', fontFamily: '"DM Sans", sans-serif' } }}
+                >
+                  <MenuItem value={POLIZA_LABEL_TODAS} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>
+                    {POLIZA_LABEL_TODAS}
+                  </MenuItem>
+                  {POLIZAS_COLOMBIA.map((p) => (
+                    <MenuItem key={p} value={p} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>
+                      {p}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} md={1}>
+                {hasFilters && (
+                  <IconButton onClick={resetFilters} size="small" title="Limpiar filtros"
+                    sx={{ width: '100%', borderRadius: '8px', color: C.gris,
+                      '&:hover': { bgcolor: `${C.verde}10`, color: C.verde } }}>
+                    <CloseRoundedIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Grid>
+            </Grid>
+            {hasFilters && !loading && (
+              <Typography sx={{
+                mt: 1.5, fontFamily: '"DM Sans", sans-serif',
+                fontSize: '0.8125rem', color: C.gris,
+              }}>
+                {total} resultado{total === 1 ? '' : 's'} con filtros aplicados
+              </Typography>
+            )}
+          </Box>
+
           <Grid container spacing={2.5}>
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
@@ -365,16 +479,21 @@ export default function DirectorioProfesionPage() {
           {!loading && items.length === 0 && (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
-                Aún no hay {tituloPlural.toLowerCase()} registrados
+                {hasFilters
+                  ? `Sin resultados para los filtros aplicados`
+                  : `Aún no hay ${tituloPlural.toLowerCase()} registrados`}
               </Typography>
-              <Button
-                component={RouterLink}
-                to="/directorio"
-                variant="contained"
-                sx={{ mt: 2, borderRadius: 8, textTransform: 'none', fontWeight: 700 }}
-              >
-                Ver todo el directorio
-              </Button>
+              {hasFilters ? (
+                <Button onClick={resetFilters} variant="contained"
+                  sx={{ mt: 2, borderRadius: '8px', textTransform: 'none', fontWeight: 700 }}>
+                  Limpiar filtros
+                </Button>
+              ) : (
+                <Button component={RouterLink} to="/directorio" variant="contained"
+                  sx={{ mt: 2, borderRadius: '8px', textTransform: 'none', fontWeight: 700 }}>
+                  Ver todo el directorio
+                </Button>
+              )}
             </Box>
           )}
         </Container>
