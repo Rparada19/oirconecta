@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, Table, TableHead, TableBody, TableRow, TableCell,
   TextField, MenuItem, Chip, Button, Stack, CircularProgress, Tooltip, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert,
 } from '@mui/material';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
@@ -11,6 +12,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
+import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import { adminFetch } from './adminAuth';
 
 const ACCENT = '#085946';
@@ -68,6 +71,10 @@ export default function AdminSuscripcionesPage() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ ciudad: '', profesionSlug: '', status: '', plan: '' });
   const [q, setQ] = useState('');
+  const [cancelTarget, setCancelTarget] = useState(null); // sub a cancelar
+  const [cancelMotivo, setCancelMotivo] = useState('');
+  const [working, setWorking] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -95,6 +102,39 @@ export default function AdminSuscripcionesPage() {
       (i.email || '').toLowerCase().includes(term)
     );
   }, [items, q]);
+
+  const handleCancel = async () => {
+    if (!cancelTarget) return;
+    setWorking(true);
+    const r = await adminFetch(`/api/subscriptions/admin/${cancelTarget.id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo: cancelMotivo, immediate: true }),
+    });
+    setWorking(false);
+    if (r?.data?.success) {
+      setToast({ severity: 'success', msg: `Suscripción de ${cancelTarget.nombre || cancelTarget.email} cancelada. Email de despedida enviado.` });
+      setCancelTarget(null); setCancelMotivo('');
+      fetchAll();
+    } else {
+      setToast({ severity: 'error', msg: r?.error || 'No se pudo cancelar' });
+    }
+  };
+
+  const handleReactivate = async (sub) => {
+    if (!window.confirm(`¿Reactivar la suscripción de ${sub.nombre || sub.email}? Se le concederán 30 días desde hoy.`)) return;
+    setWorking(true);
+    const r = await adminFetch(`/api/subscriptions/admin/${sub.id}/reactivate`, {
+      method: 'POST',
+      body: JSON.stringify({ extendDays: 30 }),
+    });
+    setWorking(false);
+    if (r?.data?.success) {
+      setToast({ severity: 'success', msg: `Suscripción reactivada. Email enviado.` });
+      fetchAll();
+    } else {
+      setToast({ severity: 'error', msg: r?.error || 'No se pudo reactivar' });
+    }
+  };
 
   const handleExport = () => {
     const params = new URLSearchParams();
@@ -198,7 +238,7 @@ export default function AdminSuscripcionesPage() {
             <Table size="small">
               <TableHead sx={{ bgcolor: '#f8fafc' }}>
                 <TableRow>
-                  {['Nombre', 'Especialidad', 'Ciudad', 'Plan', 'Estado', 'Vence', 'Días restantes', 'Mora', 'Último pago'].map((h) => (
+                  {['Nombre', 'Especialidad', 'Ciudad', 'Plan', 'Estado', 'Vence', 'Días restantes', 'Mora', 'Último pago', 'Acciones'].map((h) => (
                     <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       {h}
                     </TableCell>
@@ -229,12 +269,29 @@ export default function AdminSuscripcionesPage() {
                         {s.diasMora > 0 ? `${s.diasMora}d` : '—'}
                       </TableCell>
                       <TableCell sx={{ fontSize: '0.8125rem' }}>{fmtDate(s.lastPaymentAt)}</TableCell>
+                      <TableCell>
+                        {s.status === 'CANCELED' || s.status === 'SUSPENDED' ? (
+                          <Tooltip title="Reactivar">
+                            <IconButton size="small" disabled={working} onClick={() => handleReactivate(s)}
+                              sx={{ color: ACCENT, '&:hover': { bgcolor: `${ACCENT}10` } }}>
+                              <RestartAltRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Dar de baja">
+                            <IconButton size="small" disabled={working} onClick={() => setCancelTarget(s)}
+                              sx={{ color: '#b91c1c', '&:hover': { bgcolor: '#fee2e2' } }}>
+                              <PersonOffOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>
+                    <TableCell colSpan={10} sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>
                       Sin resultados
                     </TableCell>
                   </TableRow>
@@ -248,6 +305,38 @@ export default function AdminSuscripcionesPage() {
       <Typography sx={{ mt: 2, fontSize: '0.75rem', color: '#94a3b8' }}>
         Mostrando {filtered.length} de {total} suscripciones.
       </Typography>
+
+      {/* Dialog cancelación */}
+      <Dialog open={!!cancelTarget} onClose={() => !working && setCancelTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: NAVY }}>
+          Dar de baja suscripción
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Vas a cancelar la suscripción de <strong>{cancelTarget?.nombre || cancelTarget?.email}</strong>.
+            Su perfil dejará de aparecer en el directorio público de inmediato y recibirá un correo de despedida.
+          </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            La información (perfil, reseñas, historial) se conserva. Puedes reactivar después si hace falta.
+          </Alert>
+          <TextField fullWidth multiline rows={3} label="Motivo (opcional, queda registrado)"
+            value={cancelMotivo} onChange={(e) => setCancelMotivo(e.target.value)}
+            placeholder="Ej: solicitó cancelación por WhatsApp, falta de uso, cambió de actividad..." />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCancelTarget(null)} disabled={working}>Cancelar</Button>
+          <Button onClick={handleCancel} disabled={working} variant="contained"
+            startIcon={working ? <CircularProgress size={16} color="inherit" /> : <PersonOffOutlinedIcon />}
+            sx={{ background: '#b91c1c', '&:hover': { background: '#991b1b' } }}>
+            Dar de baja
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={!!toast} autoHideDuration={5000} onClose={() => setToast(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+        {toast && <Alert severity={toast.severity} onClose={() => setToast(null)} sx={{ borderRadius: '8px' }}>{toast.msg}</Alert>}
+      </Snackbar>
     </Box>
   );
 }

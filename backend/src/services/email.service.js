@@ -750,6 +750,95 @@ async function sendNewsletterEdition({ email, nombre, subject, preheader, conten
   return deliver({ to: email, toName: nombre, subject, html });
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// SUSCRIPCIÓN — Despedida (cancelación)
+// ════════════════════════════════════════════════════════════════════════════
+
+async function sendSubscriptionCanceled({ email, nombre, motivo, vigenteHasta, reactivacionUrl }) {
+  const html = baseTemplate({
+    preheader: 'Hemos procesado la cancelación de tu suscripción en OírConecta.',
+    title: 'Hemos cancelado tu suscripción',
+    bodyHtml: [
+      h1(`Gracias por habernos acompañado${nombre ? `, ${nombre}` : ''} 🌿`),
+      p('Hemos procesado la cancelación de tu suscripción en OírConecta. Lamentamos verte partir.'),
+      vigenteHasta
+        ? p(`Tu perfil seguirá visible hasta el <strong>${new Date(vigenteHasta).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>. Después de esa fecha, dejará de aparecer en el directorio público.`)
+        : p('Tu perfil ya no aparece en el directorio público.'),
+      motivo
+        ? `<table cellpadding="0" cellspacing="0" role="presentation" style="background:#f9fafb;border-radius:12px;padding:16px 20px;margin:16px 0;border-left:4px solid #6b7280;">
+            <tr><td>
+              <p style="margin:0;font-size:13px;color:#6b7280;"><strong>Motivo registrado:</strong> ${motivo}</p>
+            </td></tr>
+          </table>`
+        : '',
+      `<table cellpadding="0" cellspacing="0" role="presentation" style="background:#f0fdf4;border-radius:12px;padding:20px 24px;margin:20px 0;border-left:4px solid #085946;">
+        <tr><td>
+          <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#085946;">Tu información sigue segura</p>
+          <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">
+            No borramos tus datos. Si decides volver, tu perfil, reseñas e historial
+            estarán esperándote tal como los dejaste.
+          </p>
+        </td></tr>
+      </table>`,
+      reactivacionUrl ? btn(reactivacionUrl, 'Reactivar mi suscripción') : '',
+      divider(),
+      p('Antes de irte, nos encantaría saber qué podríamos mejorar. Una respuesta a este correo basta — la leemos toda.'),
+      p(`<span style="font-size:13px;color:#6b7280;">¿Cambiaste de opinión? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o por WhatsApp al <a href="https://wa.me/573157939569">+57 315 793 9569</a>.</span>`),
+      p('<span style="font-size:13px;color:#6b7280;">Gracias por confiar en nosotros para conectar tu práctica con los pacientes que más te necesitan. Te deseamos lo mejor en el camino que sigues.</span>'),
+      p('<span style="font-size:13px;color:#085946;font-weight:600;">— El equipo OírConecta</span>'),
+    ].join(''),
+  });
+  await deliver({
+    to: email,
+    toName: nombre,
+    subject: 'Hemos cancelado tu suscripción — OírConecta',
+    html,
+  });
+
+  // Aviso al admin
+  if (ADMIN_EMAIL) {
+    const adminHtml = baseTemplate({
+      preheader: `Cancelación procesada: ${nombre || email}`,
+      title: 'Cancelación de suscripción',
+      bodyHtml: [
+        h1('Suscripción cancelada'),
+        highlight([
+          ['Profesional', nombre || '—'],
+          ['Email', email],
+          ['Vigente hasta', vigenteHasta ? new Date(vigenteHasta).toLocaleDateString('es-CO') : 'Inmediato'],
+          ['Motivo', motivo || 'No especificado'],
+        ]),
+      ].join(''),
+    });
+    deliver({
+      to: ADMIN_EMAIL,
+      toName: 'Admin OírConecta',
+      subject: `Cancelación: ${nombre || email} — OírConecta`,
+      html: adminHtml,
+    }).catch(() => {});
+  }
+}
+
+async function sendSubscriptionReactivated({ email, nombre }) {
+  const html = baseTemplate({
+    preheader: '¡Bienvenido/a de regreso a OírConecta!',
+    title: '¡Bienvenido/a de regreso!',
+    bodyHtml: [
+      h1(`¡Qué bueno tenerte de vuelta${nombre ? `, ${nombre}` : ''}! 🎉`),
+      p('Tu suscripción está activa de nuevo. Tu perfil ya volvió al directorio y los pacientes pueden encontrarte.'),
+      btn(`${SITE_URL}/portal-profesional`, 'Acceder a mi portal'),
+      divider(),
+      p('<span style="font-size:13px;color:#6b7280;">Si necesitas ayuda con tu perfil, escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.</span>'),
+    ].join(''),
+  });
+  await deliver({
+    to: email,
+    toName: nombre,
+    subject: '¡Bienvenido/a de regreso! Tu suscripción está activa — OírConecta',
+    html,
+  });
+}
+
 module.exports = {
   sendBookingConfirmation,
   sendProfessionalWelcome,
@@ -763,6 +852,8 @@ module.exports = {
   sendContactFormNotification,
   sendComparadorLeadEmails,
   sendShopOrderEmails,
+  sendSubscriptionCanceled,
+  sendSubscriptionReactivated,
 
   sendAppointmentReminder,
   sendRescheduledNotification,

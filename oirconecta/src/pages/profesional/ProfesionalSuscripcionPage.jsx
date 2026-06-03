@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Chip, Stack, Button, Grid, Divider,
   LinearProgress, CircularProgress, Table, TableHead, TableBody, TableRow, TableCell, Alert,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar,
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import { directoryApi } from '../../services/directoryAccountApi';
 
 const ACCENT = '#085946';
@@ -28,12 +30,41 @@ const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-CO', { year: 'nume
 export default function ProfesionalSuscripcionPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [motivo, setMotivo] = useState('');
+  const [working, setWorking] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const reload = () => {
+    directoryApi.get('/api/subscriptions/me')
+      .then((r) => { if (r.data?.success) setData(r.data.data); })
+      .catch(() => {});
+  };
+
+  const handleCancel = async () => {
+    setWorking(true);
+    try {
+      const r = await directoryApi.post('/api/subscriptions/me/cancel', { motivo, immediate: false });
+      if (r.data?.success) {
+        setToast({ severity: 'success', msg: 'Tu suscripción se canceló. Te enviamos un correo de despedida y conservas acceso hasta el vencimiento.' });
+        setCancelOpen(false); setMotivo('');
+        reload();
+      } else {
+        setToast({ severity: 'error', msg: r.data?.error || 'No se pudo cancelar' });
+      }
+    } catch (e) {
+      setToast({ severity: 'error', msg: e?.response?.data?.error || 'Error de red' });
+    } finally {
+      setWorking(false);
+    }
+  };
 
   useEffect(() => {
     directoryApi.get('/api/subscriptions/me')
       .then((r) => { if (r.data?.success) setData(r.data.data); })
       .catch(() => {})
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {
@@ -217,6 +248,57 @@ export default function ProfesionalSuscripcionPage() {
           </Box>
         )}
       </Card>
+
+      {/* Cancelación */}
+      {s.status !== 'CANCELED' && !s.cancelAtPeriodEnd && (
+        <Box sx={{ mt: 6, p: 3, borderRadius: '12px', border: '1px dashed #cbd5e1', bgcolor: '#fafbfc' }}>
+          <Typography sx={{ fontWeight: 700, color: NAVY, mb: 0.5 }}>
+            ¿Necesitas pausar o cancelar?
+          </Typography>
+          <Typography sx={{ fontSize: '0.875rem', color: '#64748b', mb: 2 }}>
+            Puedes darte de baja en cualquier momento. Conservas acceso hasta la fecha de vencimiento y no perdemos tu información — si decides volver, todo sigue ahí.
+          </Typography>
+          <Button onClick={() => setCancelOpen(true)} variant="outlined"
+            startIcon={<PersonOffOutlinedIcon />}
+            sx={{ borderColor: '#cbd5e1', color: '#475569', borderRadius: '8px', textTransform: 'none', fontWeight: 600,
+              '&:hover': { borderColor: '#b91c1c', color: '#b91c1c', bgcolor: '#fef2f2' } }}>
+            Darme de baja
+          </Button>
+        </Box>
+      )}
+      {s.cancelAtPeriodEnd && (
+        <Alert severity="warning" sx={{ mt: 6, borderRadius: '8px' }}>
+          Tu suscripción se cancelará el <strong>{fmtDate(s.currentPeriodEnd)}</strong>. Si cambias de opinión, escríbenos a conversemos@oirconecta.com.
+        </Alert>
+      )}
+
+      <Dialog open={cancelOpen} onClose={() => !working && setCancelOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: NAVY }}>¿Seguro que quieres darte de baja?</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Conservarás acceso hasta el <strong>{fmtDate(s.currentPeriodEnd)}</strong>. Después de esa fecha, tu perfil dejará de aparecer en el directorio público.
+          </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            No perdemos tu información. Si decides volver, tu perfil, reseñas e historial estarán esperándote.
+          </Alert>
+          <TextField fullWidth multiline rows={3} label="¿Nos dejas saber qué pasó? (opcional)"
+            value={motivo} onChange={(e) => setMotivo(e.target.value)}
+            placeholder="Tu opinión nos ayuda a mejorar." />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCancelOpen(false)} disabled={working}>Mantener suscripción</Button>
+          <Button onClick={handleCancel} disabled={working} variant="contained"
+            startIcon={working ? <CircularProgress size={16} color="inherit" /> : <PersonOffOutlinedIcon />}
+            sx={{ background: '#b91c1c', '&:hover': { background: '#991b1b' } }}>
+            Confirmar baja
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={!!toast} autoHideDuration={6000} onClose={() => setToast(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        {toast && <Alert severity={toast.severity} onClose={() => setToast(null)} sx={{ borderRadius: '8px' }}>{toast.msg}</Alert>}
+      </Snackbar>
     </Box>
   );
 }

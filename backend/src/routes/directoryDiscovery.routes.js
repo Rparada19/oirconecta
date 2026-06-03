@@ -278,7 +278,15 @@ router.get(
         if (c) cityId = c.id;
       }
 
-      const where = { status: 'APPROVED' };
+      // Excluir suscripciones canceladas/suspendidas del directorio público.
+      // Si no hay subscription registrada (legacy), seguimos mostrando.
+      const subOk = {
+        OR: [
+          { subscription: { is: null } },
+          { subscription: { is: { status: { notIn: ['CANCELED', 'SUSPENDED'] } } } },
+        ],
+      };
+      const where = { status: 'APPROVED', AND: [subOk] };
       if (professionId) where.professionId = professionId;
       if (cityId) where.cityId = cityId;
       if (req.query.minRating) where.ratingAvg = { gte: parseFloat(req.query.minRating) };
@@ -286,11 +294,13 @@ router.get(
 
       if (req.query.q) {
         const term = req.query.q.trim();
-        where.OR = [
-          { nombreConsultorio: { contains: term, mode: 'insensitive' } },
-          { profesion: { contains: term, mode: 'insensitive' } },
-          { account: { is: { nombre: { contains: term, mode: 'insensitive' } } } },
-        ];
+        where.AND.push({
+          OR: [
+            { nombreConsultorio: { contains: term, mode: 'insensitive' } },
+            { profesion: { contains: term, mode: 'insensitive' } },
+            { account: { is: { nombre: { contains: term, mode: 'insensitive' } } } },
+          ],
+        });
       }
 
       let orderBy;

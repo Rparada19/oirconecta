@@ -37,6 +37,24 @@ router.get('/me', authenticateDirectoryAccount, async (req, res) => {
   }
 });
 
+// Profesional cancela su propia suscripción
+router.post('/me/cancel', authenticateDirectoryAccount, async (req, res) => {
+  try {
+    const profile = await prisma.directoryProfile.findUnique({
+      where: { accountId: req.directoryAccount.id },
+      include: { subscription: true },
+    });
+    if (!profile?.subscription) return res.status(404).json({ success: false, error: 'Sin suscripción activa' });
+    const { motivo, immediate } = req.body || {};
+    const updated = await subService.cancelSubscription(profile.subscription.id, {
+      motivo, immediate: !!immediate, canceledByAdmin: false,
+    });
+    res.json({ success: true, data: { id: updated.id, status: updated.status, cancelAtPeriodEnd: updated.cancelAtPeriodEnd, currentPeriodEnd: updated.currentPeriodEnd } });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // ─── Admin ───
 router.get('/admin/stats', authenticate, authorize('ADMIN'), async (req, res) => {
   try {
@@ -93,6 +111,30 @@ router.post('/admin/backfill', authenticate, authorize('ADMIN'), async (req, res
   try {
     const result = await subService.backfillTrialsAll();
     res.json({ success: true, data: result });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Admin cancela una suscripción (inmediato por defecto)
+router.post('/admin/:id/cancel', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const { motivo, immediate = true } = req.body || {};
+    const updated = await subService.cancelSubscription(req.params.id, {
+      motivo, immediate: !!immediate, canceledByAdmin: true,
+    });
+    res.json({ success: true, data: updated });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Admin reactiva una suscripción cancelada
+router.post('/admin/:id/reactivate', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const { extendDays = 30 } = req.body || {};
+    const updated = await subService.reactivateSubscription(req.params.id, { extendDays: parseInt(extendDays) });
+    res.json({ success: true, data: updated });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }

@@ -306,6 +306,114 @@ async function backfillTrialsAll() {
   return { created, totalScanned: profiles.length };
 }
 
+/**
+ * Cancela una suscripción. Dos modos:
+ *  - immediate=true  → status CANCELED y currentPeriodEnd = ahora (sale del directorio ya)
+ *  - immediate=false → cancelAtPeriodEnd=true, conserva acceso hasta vencer
+ */
+async function cancelSubscription(subscriptionId, { motivo, immediate = false, canceledByAdmin = false } = {}) {
+  const sub = await prisma.subscription.findUnique({
+    where: { id: subscriptionId },
+    include: { plan: true, profile: { include: { account: true } } },
+  });
+  if (!sub) throw new Error('Suscripción no encontrada');
+  if (sub.status === 'CANCELED') return sub;
+
+  const now = new Date();
+  const data = immediate
+    ? { status: 'CANCELED', canceledAt: now, currentPeriodEnd: now, cancelAtPeriodEnd: false }
+    : { cancelAtPeriodEnd: true, canceledAt: now };
+  if (motivo) data.metadata = { ...(sub.metadata || {}), motivoCancelacion: motivo };
+
+  const updated = await prisma.subscription.update({
+    where: { id: subscriptionId },
+    data,
+    include: { plan: true, profile: { include: { account: true } } },
+  });
+
+  await prisma.subscriptionEvent.create({
+    data: {
+      subscriptionId,
+      tipo: 'CANCELED',
+      fromStatus: sub.status,
+      toStatus: immediate ? 'CANCELED' : sub.status,
+      notas: `${canceledByAdmin ? 'Admin' : 'Self'} · ${immediate ? 'inmediato' : 'al final del periodo'}${motivo ? ` · ${motivo}` : ''}`,
+      metadata: { motivo, canceledByAdmin },
+    },
+  });
+
+  // Email de despedida (no bloquea)
+  try {
+    const emailService = require('./email.service');
+    const email = updated.profile?.account?.email;
+    const nombre = updated.profile?.account?.nombre;
+    if (email) {
+      emailService.sendSubscriptionCanceled({
+        email,
+        nombre,
+        motivo,
+        vigenteHasta: immediate ? null : updated.currentPeriodEnd,
+      }).catch((e) => console.error('[email] despedida:', e?.message));
+    }
+  } catch (e) {
+    console.error('[cancel] email error:', e.message);
+  }
+
+  return updated;
+}
+
+/**
+ * Reactiva una suscripción CANCELED → crea nuevo periodo de 30 días por defecto.
+ * Útil para admin que quiera revertir la baja.
+ */
+async function reactivateSubscription(subscriptionId, { extendDays = 30 } = {}) {
+  const sub = await prisma.subscription.findUnique({
+    where: { id: subscriptionId },
+    include: { plan: true, profile: { include: { account: true } } },
+  });
+  if (!sub) throw new Error('Suscripción no encontrada');
+
+  const now = new Date();
+  const end = addDays(now, extendDays);
+  const updated = await prisma.subscription.update({
+    where: { id: subscriptionId },
+    data: {
+      status: sub.plan?.code === 'TRIAL_90D' ? 'TRIAL' : 'ACTIVE',
+      currentPeriodStart: now,
+      currentPeriodEnd: end,
+      nextChargeAt: end,
+      cancelAtPeriodEnd: false,
+      canceledAt: null,
+      diasMora: 0,
+    },
+    include: { plan: true, profile: { include: { account: true } } },
+  });
+
+  await prisma.subscriptionEvent.create({
+    data: {
+      subscriptionId,
+      tipo: 'REACTIVATED',
+      fromStatus: sub.status,
+      toStatus: updated.status,
+      notas: `Reactivada por ${extendDays} días`,
+    },
+  });
+
+  try {
+    const emailService = require('./email.service');
+    const email = updated.profile?.account?.email;
+    const nombre = updated.profile?.account?.nombre;
+    if (email) {
+      emailService.sendSubscriptionReactivated({ email, nombre })
+        .catch((e) => console.error('[email] reactivada:', e?.message));
+    }
+  } catch (e) {
+    console.error('[reactivate] email error:', e.message);
+  }
+
+  return updated;
+}
+
 module.exports = {
   IVA_RATE,
   PLAN_DEFAULTS,
@@ -316,4 +424,6 @@ module.exports = {
   getAdminStats,
   backfillTrialsAll,
   recomputeStatus,
+  cancelSubscription,
+  reactivateSubscription,
 };
