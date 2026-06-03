@@ -22,14 +22,14 @@ model User {
   nombre               String
   role                 Role     @default(ADMIN)
   activo               Boolean  @default(true)
-  professionalConfigId String?  // ID del profesional en config (para audióloga: filtrar pacientes por cita asignada)
+  professionalConfigId String? // ID del profesional en config (para audióloga: filtrar pacientes por cita asignada)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
   // Relaciones
-  leadsCreados    Lead[]        @relation("LeadCreatedBy")
-  citasCreadas    Appointment[] @relation("AppointmentCreatedBy")
-  ventasCreadas   Sale[]        @relation("SaleCreatedBy")
+  leadsCreados          Lead[]        @relation("LeadCreatedBy")
+  citasCreadas          Appointment[] @relation("AppointmentCreatedBy")
+  ventasCreadas         Sale[]        @relation("SaleCreatedBy")
   blockedSlotsRequested BlockedSlot[] @relation("BlockedSlotRequestedBy")
   blockedSlotsApproved  BlockedSlot[] @relation("BlockedSlotApprovedBy")
 
@@ -53,8 +53,8 @@ model DirectoryAccount {
 
 /// Ficha listable en el directorio (moderada por un admin del CRM; sin FK a `User`).
 model DirectoryProfile {
-  id        String   @id @default(uuid())
-  accountId String   @unique
+  id        String           @id @default(uuid())
+  accountId String           @unique
   account   DirectoryAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   status DirectoryProfileStatus @default(PENDING)
@@ -67,68 +67,68 @@ model DirectoryProfile {
   telefonoPublico     String?
   emailPublico        String?
   /// Imagen ancha tipo banner (distinta de fotos de perfil / galería).
-  bannerUrl             String?
+  bannerUrl           String?
   /// URL de la foto de perfil (listados y hero); si falta, puede usarse la primera de `photoUrls`.
-  fotoPerfilUrl         String?
+  fotoPerfilUrl       String?
   /// Incrustar mapa: URL del iframe que genera Google Maps al compartir → «Insertar mapa» (embed).
-  googleMapsEmbedUrl    String?  @db.Text
+  googleMapsEmbedUrl  String?              @db.Text
   /// Enlace «Abrir en Google Maps» (opcional, URL corta del lugar).
-  googleMapsLugarUrl    String?
-  perfilVisitas        Int      @default(0)
+  googleMapsLugarUrl  String?
+  perfilVisitas       Int                  @default(0)
   /// Clics en enlaces WhatsApp desde la ficha pública (métrica automática).
-  whatsappClickCount   Int      @default(0)
+  whatsappClickCount  Int                  @default(0)
   /// Clics en el teléfono (llamadas directas) desde la ficha pública (métrica automática).
-  callClickCount       Int      @default(0)
+  callClickCount      Int                  @default(0)
   /// Contadores legacy (JSON); las métricas principales son automáticas (`directoryStats` en API).
-  estadisticasCitas    Json?
+  estadisticasCitas   Json?
   /// Contenido de blog (producto de pago); tramo público opcional vía página de ficha.
-  blogMarkdown         String?  @db.Text
-  liveChatUrl          String?
+  blogMarkdown        String?              @db.Text
+  liveChatUrl         String?
   /// Encabezados opcionales por sección (JSON flexible).
-  titulosSecciones     Json?
+  titulosSecciones    Json?
   /// Si existe: profesional vinculado a la ficha de un centro (persona jurídica).
-  parentProfileId      String?
-  parentProfile        DirectoryProfile?  @relation("DirectoryCentroProfesionales", fields: [parentProfileId], references: [id], onDelete: SetNull)
-  profesionalesCentro  DirectoryProfile[] @relation("DirectoryCentroProfesionales")
+  parentProfileId     String?
+  parentProfile       DirectoryProfile?    @relation("DirectoryCentroProfesionales", fields: [parentProfileId], references: [id], onDelete: SetNull)
+  profesionalesCentro DirectoryProfile[]   @relation("DirectoryCentroProfesionales")
 
   nombreConsultorio String?
   /// Texto libre legacy (se mantiene durante backfill). Para búsqueda/ranking se usa `professionId`.
-  profesion          String?
+  profesion         String?
   /// Profesión canónica (lookup `professions`). Se llena con `normalizeProfesion()` al guardar/registrar.
-  professionId       String?
-  profession         Profession? @relation(fields: [professionId], references: [id], onDelete: SetNull)
+  professionId      String?
+  profession        Profession? @relation(fields: [professionId], references: [id], onDelete: SetNull)
   /// Ciudad principal canónica (lookup `cities`). El primer workplace puede sembrarlo si está vacío.
-  cityId             String?
-  city               City? @relation(fields: [cityId], references: [id], onDelete: SetNull)
-  polizasAceptadas   String[] @default([])
+  cityId            String?
+  city              City?       @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  polizasAceptadas  String[]    @default([])
   /// Texto público en primera persona (MASCULINO | FEMENINO). Solo aplica a persona natural; null = redacción neutra.
-  generoFicha        String?
+  generoFicha       String?
 
   /// Cache: promedio de ratings de reviews APPROVED.
-  ratingAvg          Float    @default(0)
+  ratingAvg        Float     @default(0)
   /// Cache: número de reviews APPROVED.
-  reviewsCount       Int      @default(0)
+  reviewsCount     Int       @default(0)
   /// Cache: visitas en los últimos 30 días (recalculado por job/cron).
-  viewsCount30d      Int      @default(0)
+  viewsCount30d    Int       @default(0)
   /// 0-100: completitud del perfil (foto, bio, servicios, horarios, etc.). Recalculado al guardar.
-  completeness       Int      @default(0)
+  completeness     Int       @default(0)
   /// Score compuesto para ordenar resultados de búsqueda y secciones destacadas.
-  rankingScore       Float    @default(0)
+  rankingScore     Float     @default(0)
   /// Destacado manual por admin (badge "Destacado").
-  isFeatured         Boolean  @default(false)
+  isFeatured       Boolean   @default(false)
   /// Destacado pagado (aparece en /sponsored hasta `sponsoredUntil`).
-  isSponsored        Boolean  @default(false)
-  sponsoredUntil     DateTime?
+  isSponsored      Boolean   @default(false)
+  sponsoredUntil   DateTime?
   /// Nota del admin cuando pide ajustes (status = NEEDS_CHANGES).
-  needsChangesNote   String?  @db.Text
+  needsChangesNote String?   @db.Text
 
-  workplaces DirectoryWorkplace[]
-  inquiries  DirectoryInquiry[]
-  reviews    Review[]
-  reports    Report[]
-  views      ProfileView[]
-  events     DirectoryEvent[]
-  appointmentsFromDirectory Appointment[] @relation("AppointmentDirectoryProfile")
+  workplaces                DirectoryWorkplace[]
+  inquiries                 DirectoryInquiry[]
+  reviews                   Review[]
+  reports                   Report[]
+  views                     ProfileView[]
+  events                    DirectoryEvent[]
+  appointmentsFromDirectory Appointment[]        @relation("AppointmentDirectoryProfile")
 
   allies       Json?
   studies      Json?
@@ -138,32 +138,33 @@ model DirectoryProfile {
   consultation Json?
 
   /// Redes sociales { instagram, facebook, linkedin, youtube, tiktok, web }
-  redesSociales      Json?
+  redesSociales       Json?
   /// Servicios ofrecidos [{ nombre, descripcion, precio, duracion }]
-  servicios          Json?
+  servicios           Json?
   /// WhatsApp público (número con código de país, ej. 573157939569)
-  whatsappPublico    String?
+  whatsappPublico     String?
   /// Número de tarjeta profesional (RETHUS u otro registro oficial)
   registroProfesional String?
   /// Idiomas de atención
-  idiomas            String[] @default([])
+  idiomas             String[] @default([])
   /// Modalidad: presencial, virtual, domicilio
-  modalidadAtencion  String[] @default([])
+  modalidadAtencion   String[] @default([])
   /// Años de experiencia clínica
-  anosExperiencia    Int?
+  anosExperiencia     Int?
   /// Población que atiende: adultos, niños, tercera edad
-  poblacionAtiende   String[] @default([])
+  poblacionAtiende    String[] @default([])
   /// Métodos de pago aceptados: efectivo, tarjeta, transferencia
-  metodoPago         String[] @default([])
+  metodoPago          String[] @default([])
   /// Preguntas y respuestas frecuentes [{ pregunta, respuesta }]
-  qaList             Json?
+  qaList              Json?
 
   reviewedAt          DateTime?
   /// Id del usuario CRM que moderó (solo trazabilidad; sin relación Prisma al modelo User).
   reviewedByCrmUserId String?
   rejectionReason     String?
 
-  listings    MarketplaceListing[]
+  listings     MarketplaceListing[]
+  subscription Subscription?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -197,7 +198,7 @@ model DirectoryWorkplace {
 
 /// Mensaje enviado desde el formulario de la ficha pública (buzón del titular en Mi directorio).
 model DirectoryInquiry {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   profileId String
   profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -206,10 +207,10 @@ model DirectoryInquiry {
   telefono String
   mensaje  String? @db.Text
 
-  status DirectoryInquiryStatus @default(NEW)
+  status      DirectoryInquiryStatus @default(NEW)
   readAt      DateTime?
   respondedAt DateTime?
-  ownerNote   String? @db.Text
+  ownerNote   String?                @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -227,11 +228,11 @@ enum DirectoryInquiryStatus {
 
 /// Eventos con fecha para métricas del directorio (WhatsApp, llamadas). Las visitas se registran en ProfileView.
 model DirectoryEvent {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   profileId String
   profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  type      String   // WHATSAPP | CALL
-  createdAt DateTime @default(now())
+  type      String // WHATSAPP | CALL
+  createdAt DateTime         @default(now())
 
   @@index([profileId, type, createdAt])
   @@index([type, createdAt])
@@ -245,8 +246,8 @@ model DirectoryEvent {
 model BlockedSlot {
   id            String            @id @default(uuid())
   fecha         DateTime
-  horaInicio    String            // HH:MM
-  horaFin       String            // HH:MM
+  horaInicio    String // HH:MM
+  horaFin       String // HH:MM
   motivo        String
   estado        BlockedSlotStatus @default(PENDING)
   requestedById String
@@ -292,34 +293,34 @@ enum DirectoryPersonaTipo {
 // ===========================================
 
 model Lead {
-  id                       String      @id @default(uuid())
-  nombre                   String
-  email                    String
-  telefono                 String
-  direccion                String?
-  ciudad                   String?
+  id                        String     @id @default(uuid())
+  nombre                    String
+  email                     String
+  telefono                  String
+  direccion                 String?
+  ciudad                    String?
   usuarioAudifonosMedicados String     @default("NO")
-  procedencia              String      @default("visita-medica")
-  interes                  String      @default("Consulta General")
-  notas                    String?
-  estado                   LeadEstado  @default(NUEVO)
-  
+  procedencia               String     @default("visita-medica")
+  interes                   String     @default("Consulta General")
+  notas                     String?
+  estado                    LeadEstado @default(NUEVO)
+
   // Campos adicionales de procedencia
-  medicoReferente          String?
-  redSocial                String?
-  campanaMarketingOffline  String?
-  personaRecomendacion     String?
-  agendamientoManualTipo   String?
-  
+  medicoReferente         String?
+  redSocial               String?
+  campanaMarketingOffline String?
+  personaRecomendacion    String?
+  agendamientoManualTipo  String?
+
   // Relaciones
-  createdById              String?
-  createdBy                User?       @relation("LeadCreatedBy", fields: [createdById], references: [id])
-  appointmentId            String?
-  appointment              Appointment? @relation(fields: [appointmentId], references: [id])
-  patient                  Patient?
-  
-  createdAt                DateTime    @default(now())
-  updatedAt                DateTime    @updatedAt
+  createdById   String?
+  createdBy     User?        @relation("LeadCreatedBy", fields: [createdById], references: [id])
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  patient       Patient?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("leads")
 }
@@ -339,44 +340,44 @@ enum LeadEstado {
 // ===========================================
 
 model Patient {
-  id                       String   @id @default(uuid())
-  nombre                   String
-  email                    String   @unique
-  telefono                 String
-  direccion                String?
-  ciudad                   String?
-  fechaNacimiento          DateTime?
-  genero                   String?
-  tipoDocumento            String?
-  numeroDocumento          String?
-  ocupacion                String?
-  estadoCivil              String?
-  eps                      String?
-  usuarioAudifonosMedicados String  @default("NO")
-  procedencia              String   @default("visita-medica")
-  notas                    String?
-  
+  id                        String    @id @default(uuid())
+  nombre                    String
+  email                     String    @unique
+  telefono                  String
+  direccion                 String?
+  ciudad                    String?
+  fechaNacimiento           DateTime?
+  genero                    String?
+  tipoDocumento             String?
+  numeroDocumento           String?
+  ocupacion                 String?
+  estadoCivil               String?
+  eps                       String?
+  usuarioAudifonosMedicados String    @default("NO")
+  procedencia               String    @default("visita-medica")
+  notas                     String?
+
   // Datos clínicos generales
-  tienePerdidaAuditiva     Boolean  @default(false)
-  
+  tienePerdidaAuditiva Boolean @default(false)
+
   // Historia clínica y anamnesis (diligencia en primera consulta)
-  anamnesisClinica         Json?    // motivoConsulta, sintomasAuditivos, antecedentes, desarrollo, resultadosEvaluacion, etc.
-  anamnesisSocial          Json?    // estadoCivil, ocupacion, nivelEducativo, contextoFamiliar, contextoLaboral, habitos, etc.
-  
+  anamnesisClinica Json? // motivoConsulta, sintomasAuditivos, antecedentes, desarrollo, resultadosEvaluacion, etc.
+  anamnesisSocial  Json? // estadoCivil, ocupacion, nivelEducativo, contextoFamiliar, contextoLaboral, habitos, etc.
+
   // Relación con lead original
-  leadId                   String?  @unique
-  lead                     Lead?    @relation(fields: [leadId], references: [id])
-  
+  leadId String? @unique
+  lead   Lead?   @relation(fields: [leadId], references: [id])
+
   // Relaciones
-  appointments             Appointment[]
-  quotes                   Quote[]
-  sales                    Sale[]
-  consultations            Consultation[]
-  maintenances             Maintenance[]
-  interactions             Interaction[]
-  
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  appointments  Appointment[]
+  quotes        Quote[]
+  sales         Sale[]
+  consultations Consultation[]
+  maintenances  Maintenance[]
+  interactions  Interaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("patients")
 }
@@ -386,26 +387,26 @@ model Patient {
 // ===========================================
 
 model Maintenance {
-  id                    String    @id @default(uuid())
-  patientId              String
-  patient                Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  type                  String     // cleaning, repair, adjustment, battery-replacement, check-up, other
-  productId             String?
-  scheduledDate         DateTime
-  scheduledTime         String?    // HH:mm
-  completedDate         DateTime?
-  completedTime         String?
-  status                String     @default("en_proceso") // en_proceso, realizado, enviado_a_garantia, enviado_a_revision
-  description           String?
-  workPerformed         String?
-  cost                  Float      @default(0)
-  notes                 String?
-  nextMaintenanceDate   DateTime?
-  relatedAppointmentId  String?
-  processSteps          Json?      // [{ date, action, note }]
-  metadata              Json?
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime   @updatedAt
+  id                   String    @id @default(uuid())
+  patientId            String
+  patient              Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type                 String // cleaning, repair, adjustment, battery-replacement, check-up, other
+  productId            String?
+  scheduledDate        DateTime
+  scheduledTime        String? // HH:mm
+  completedDate        DateTime?
+  completedTime        String?
+  status               String    @default("en_proceso") // en_proceso, realizado, enviado_a_garantia, enviado_a_revision
+  description          String?
+  workPerformed        String?
+  cost                 Float     @default(0)
+  notes                String?
+  nextMaintenanceDate  DateTime?
+  relatedAppointmentId String?
+  processSteps         Json? // [{ date, action, note }]
+  metadata             Json?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@index([patientId])
   @@index([scheduledDate])
@@ -417,24 +418,24 @@ model Maintenance {
 // ===========================================
 
 model Interaction {
-  id                    String    @id @default(uuid())
-  patientId             String
-  patient               Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  type                  String    // call, message, email, visit, reminder, follow_up_consumables, follow_up_garantia, appointment, other
-  channel               String?   // phone, whatsapp, sms, email, in_person, system
-  title                 String
-  description           String?
-  status                String    @default("completed") // completed, sent, scheduled, missed, failed
-  direction             String?   // inbound, outbound (llamadas)
-  duration              Int?      // minutos (llamadas)
-  occurredAt            DateTime  @default(now())
-  scheduledDate         DateTime?
-  scheduledTime         String?
-  relatedAppointmentId  String?
-  relatedMaintenanceId  String?
-  metadata              Json?     // outcome, phoneNumber, consumable type (pilas/filtros/tubos), quantity, nextRecommendationDate, etc.
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                   String    @id @default(uuid())
+  patientId            String
+  patient              Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type                 String // call, message, email, visit, reminder, follow_up_consumables, follow_up_garantia, appointment, other
+  channel              String? // phone, whatsapp, sms, email, in_person, system
+  title                String
+  description          String?
+  status               String    @default("completed") // completed, sent, scheduled, missed, failed
+  direction            String? // inbound, outbound (llamadas)
+  duration             Int? // minutos (llamadas)
+  occurredAt           DateTime  @default(now())
+  scheduledDate        DateTime?
+  scheduledTime        String?
+  relatedAppointmentId String?
+  relatedMaintenanceId String?
+  metadata             Json? // outcome, phoneNumber, consumable type (pilas/filtros/tubos), quantity, nextRecommendationDate, etc.
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@index([patientId])
   @@index([occurredAt])
@@ -454,18 +455,18 @@ model Appointment {
   procedencia     String            @default("visita-medica")
   estado          AppointmentStatus @default(CONFIRMED)
   notas           String?
-  tipoConsulta    String?           // primera-vez, control, adaptacion, etc.
-  durationMinutes Int?              // duración de la consulta en minutos (ej. 20, 30, 50)
-  
+  tipoConsulta    String? // primera-vez, control, adaptacion, etc.
+  durationMinutes Int? // duración de la consulta en minutos (ej. 20, 30, 50)
+
   // Paciente (puede no existir aún si es lead)
-  patientId     String?
-  patient       Patient?          @relation(fields: [patientId], references: [id])
-  
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id])
+
   // Datos del paciente (si aún no es paciente registrado)
-  patientName   String?
-  patientEmail  String?
-  patientPhone  String?
-  
+  patientName  String?
+  patientEmail String?
+  patientPhone String?
+
   // Profesional (ID desde configuración del centro)
   professionalId String?
 
@@ -475,24 +476,24 @@ model Appointment {
 
   /// Correo del profesional para notificar agendamiento desde perfil público
   professionalNotifyEmail String?
-  
-  // Creado por
-  createdById   String?
-  createdBy     User?             @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
-  
-  // Relaciones
-  leads         Lead[]
-  consultation  Consultation?
-  
-  // Recordatorios y reagendamiento
-  rescheduleToken    String?   @unique  // token para reagendar desde email
-  reminder5dSentAt   DateTime?          // recordatorio 5 días antes
-  reminder1dSentAt   DateTime?          // recordatorio 1 día antes
-  reminder5hSentAt   DateTime?          // recordatorio 5 horas antes
-  patientConfirmedAt DateTime?          // confirmación del paciente por email
 
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  // Creado por
+  createdById String?
+  createdBy   User?   @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
+
+  // Relaciones
+  leads        Lead[]
+  consultation Consultation?
+
+  // Recordatorios y reagendamiento
+  rescheduleToken    String?   @unique // token para reagendar desde email
+  reminder5dSentAt   DateTime? // recordatorio 5 días antes
+  reminder1dSentAt   DateTime? // recordatorio 1 día antes
+  reminder5hSentAt   DateTime? // recordatorio 5 horas antes
+  patientConfirmedAt DateTime? // confirmación del paciente por email
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([directoryProfileId])
   @@index([rescheduleToken])
@@ -513,24 +514,24 @@ enum AppointmentStatus {
 // ===========================================
 
 model Consultation {
-  id               String      @id @default(uuid())
-  fecha            DateTime    @default(now())
-  tipoConsulta     String      // primera-vez, control, adaptacion, etc.
-  notasConsulta    String?
-  perdidaAuditiva  Boolean?
-  proximosPasos    String?
-  
+  id              String   @id @default(uuid())
+  fecha           DateTime @default(now())
+  tipoConsulta    String // primera-vez, control, adaptacion, etc.
+  notasConsulta   String?
+  perdidaAuditiva Boolean?
+  proximosPasos   String?
+
   // Datos del formulario según tipo de consulta (JSON flexible)
-  formData         Json?
-  
+  formData Json?
+
   // Relaciones
-  patientId        String
-  patient          Patient     @relation(fields: [patientId], references: [id])
-  appointmentId    String?     @unique
-  appointment      Appointment? @relation(fields: [appointmentId], references: [id])
-  
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  patientId     String
+  patient       Patient      @relation(fields: [patientId], references: [id])
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("consultations")
 }
@@ -542,44 +543,44 @@ model Consultation {
 model Campaign {
   id                String         @id @default(uuid())
   nombre            String
-  tipo              String         // Email, Redes Sociales, SMS, etc.
+  tipo              String // Email, Redes Sociales, SMS, etc.
   estado            CampaignStatus @default(ACTIVA)
   fechaInicio       DateTime
   fechaFin          DateTime
-  fabricante        String?        // Marca de audífonos asociada
+  fabricante        String? // Marca de audífonos asociada
   descuentoAprobado Float          @default(0)
 
   /// Proveedor / distribuidor de la promoción
-  proveedorNombre      String?
+  proveedorNombre          String?
   /// Referencia válida para aplicar el descuento (texto libre)
-  referenciaDescuento  String?      @db.Text
+  referenciaDescuento      String?  @db.Text
   /// Tecnología válida en el descuento
-  tecnologiaDescuento  String?      @db.Text
+  tecnologiaDescuento      String?  @db.Text
   /// BATERIA | RECARGABLE | AMBOS
-  alimentacionAudifono String?
+  alimentacionAudifono     String?
   /// UNO = solo 1 audífono | DOS = solo par (2) | UNO_O_DOS = aplica a 1 o 2
   validezCantidadAudifonos String?
   /// TOTAL_VENTA = % sobre todas las unidades | SEGUNDO_AUDIFONO = % solo sobre el 2.º audífono
-  aplicacionDescuento   String?
+  aplicacionDescuento      String?
   /// IDs de productos del catálogo CRM (`config.marketplace.productos`, localStorage)
-  catalogProductIds     String[]     @default([])
+  catalogProductIds        String[] @default([])
   /// TODAS | texto de plataforma del catálogo (misma marca)
-  plataformaCampana     String?
-  descripcion           String?      @db.Text
-  incluye               String?      @db.Text
-  noIncluye             String?      @db.Text
-  
+  plataformaCampana        String?
+  descripcion              String?  @db.Text
+  incluye                  String?  @db.Text
+  noIncluye                String?  @db.Text
+
   // Métricas
-  destinatarios     Int            @default(0)
-  abiertos          Int            @default(0)
-  clicks            Int            @default(0)
-  
+  destinatarios Int @default(0)
+  abiertos      Int @default(0)
+  clicks        Int @default(0)
+
   // Relaciones
-  quotes            Quote[]
-  sales             Sale[]
-  
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  quotes Quote[]
+  sales  Sale[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("campaigns")
 }
@@ -595,44 +596,44 @@ enum CampaignStatus {
 // ===========================================
 
 model Quote {
-  id              String      @id @default(uuid())
-  estado          QuoteStatus @default(PENDING)
-  
+  id     String      @id @default(uuid())
+  estado QuoteStatus @default(PENDING)
+
   // Producto
-  marca           String
-  cantidad        Int         @default(1)
-  tecnologia      String?
-  plataforma      String?
-  recargable      String      @default("NO")
-  
+  marca      String
+  cantidad   Int     @default(1)
+  tecnologia String?
+  plataforma String?
+  recargable String  @default("NO")
+
   // Garantía y seguros
-  anosGarantia    Int         @default(1)
-  seguroPerdida   String      @default("NO")
-  seguroRotura    String      @default("NO")
-  
+  anosGarantia  Int    @default(1)
+  seguroPerdida String @default("NO")
+  seguroRotura  String @default("NO")
+
   // Precios
-  valorUnitario   Float
-  descuento       Float       @default(0)
-  valorPorUnidad  Float?
-  valorTotal      Float
-  
+  valorUnitario  Float
+  descuento      Float  @default(0)
+  valorPorUnidad Float?
+  valorTotal     Float
+
   // Campaña
-  campaignId      String?
-  campaign        Campaign?   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
   // Paciente
-  patientId       String
-  patient         Patient     @relation(fields: [patientId], references: [id])
-  
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
   // Metadata (imágenes, comentarios, etc.)
-  metadata        Json?
-  notas           String?
-  
+  metadata Json?
+  notas    String?
+
   // Historial de cambios
-  history         QuoteHistory[]
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  history QuoteHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("quotes")
 }
@@ -642,7 +643,7 @@ model QuoteHistory {
   id        String   @id @default(uuid())
   quoteId   String
   quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  snapshot  Json     // Snapshot completo de la cotización antes del cambio
+  snapshot  Json // Snapshot completo de la cotización antes del cambio
   createdAt DateTime @default(now())
 
   @@index([quoteId])
@@ -661,67 +662,67 @@ enum QuoteStatus {
 // ===========================================
 
 model Sale {
-  id                    String       @id @default(uuid())
-  categoria             SaleCategory @default(HEARING_AID)
-  
+  id        String       @id @default(uuid())
+  categoria SaleCategory @default(HEARING_AID)
+
   // Producto (para audífonos)
-  marca                 String?
-  modelo                String?
-  cantidad              Int          @default(1)
-  tecnologia            String?
-  plataforma            String?
-  recargable            String?
-  
+  marca      String?
+  modelo     String?
+  cantidad   Int     @default(1)
+  tecnologia String?
+  plataforma String?
+  recargable String?
+
   // Precios
-  valorUnitario         Float
-  descuento             Float        @default(0)
-  valorTotal            Float
-  
+  valorUnitario Float
+  descuento     Float @default(0)
+  valorTotal    Float
+
   // Garantía y seguros (audífonos)
-  anosGarantia          Int?
-  seguroPerdida         String?
-  seguroRotura          String?
-  
+  anosGarantia  Int?
+  seguroPerdida String?
+  seguroRotura  String?
+
   // Fechas importantes
-  fechaVenta            DateTime     @default(now())
-  fechaAdaptacion       DateTime?
-  fechaFinGarantia      DateTime?
-  fechaPrimerControl    DateTime?
+  fechaVenta               DateTime  @default(now())
+  fechaAdaptacion          DateTime?
+  fechaFinGarantia         DateTime?
+  fechaPrimerControl       DateTime?
   fechaPrimerMantenimiento DateTime?
-  
+
   // Campaña (audífonos)
-  campaignId            String?
-  campaign              Campaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
   // Para consultas
-  descripcionConsulta   String?
-  fechaConsulta         DateTime?
-  
+  descripcionConsulta String?
+  fechaConsulta       DateTime?
+
   // Para accesorios (JSON con items)
-  accesoriosItems       Json?
-  
+  accesoriosItems Json?
+
   // Paciente
-  patientId             String
-  patient               Patient      @relation(fields: [patientId], references: [id])
-  
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
   // Creado por
-  createdById           String?
-  createdBy             User?        @relation("SaleCreatedBy", fields: [createdById], references: [id])
-  
+  createdById String?
+  createdBy   User?   @relation("SaleCreatedBy", fields: [createdById], references: [id])
+
   // Metadata adicional
-  metadata              Json?
-  notas                 String?
-  
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
+  metadata Json?
+  notas    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("sales")
 }
 
 enum SaleCategory {
-  HEARING_AID  // Audífonos
-  SERVICE      // Consulta
-  ACCESSORY    // Accesorio
+  HEARING_AID // Audífonos
+  SERVICE // Consulta
+  ACCESSORY // Accesorio
 }
 
 // ===========================================
@@ -760,21 +761,21 @@ enum BlogPostStatus {
 // ===========================================
 
 model MarketplaceListing {
-  id            String                  @id @default(uuid())
-  profileId     String
-  profile       DirectoryProfile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  titulo        String
-  descripcion   String?                 @db.Text
-  categoria     String
-  precio        Float?
-  precioDesde   Float?
-  precioHasta   Float?
-  modalidad     String                  @default("presencial") // presencial, virtual, ambos
-  estado        MarketplaceListingStatus @default(ACTIVO)
-  imageUrls     String[]                @default([])
-  destacado     Boolean                 @default(false)
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
+  id          String                   @id @default(uuid())
+  profileId   String
+  profile     DirectoryProfile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  titulo      String
+  descripcion String?                  @db.Text
+  categoria   String
+  precio      Float?
+  precioDesde Float?
+  precioHasta Float?
+  modalidad   String                   @default("presencial") // presencial, virtual, ambos
+  estado      MarketplaceListingStatus @default(ACTIVO)
+  imageUrls   String[]                 @default([])
+  destacado   Boolean                  @default(false)
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
 
   @@index([profileId])
   @@index([categoria, estado])
@@ -840,8 +841,8 @@ model Department {
 
 /// Conserva el nombre `City` por compatibilidad con la API pública. En la práctica representa cualquier municipio del DANE.
 model City {
-  id           String   @id @default(uuid())
-  slug         String   @unique
+  id           String      @id @default(uuid())
+  slug         String      @unique
   nombre       String
   /// Texto plano del departamento (cache para listados sin join).
   departamento String?
@@ -849,16 +850,16 @@ model City {
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   /// Código DANE del municipio (5 dígitos, ej. "05001" Medellín).
-  codigoDane   String?  @unique
+  codigoDane   String?     @unique
   /// Categoría DANE: capital_departamento | ciudad_grande | municipio | corregimiento.
   categoria    String?
-  pais         String   @default("CO")
+  pais         String      @default("CO")
   lat          Float?
   lng          Float?
-  activo       Boolean  @default(true)
-  orden        Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  activo       Boolean     @default(true)
+  orden        Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   profiles DirectoryProfile[]
 
@@ -872,7 +873,7 @@ model City {
 // ===========================================
 
 model Review {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   profileId String
   profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -885,10 +886,10 @@ model Review {
   status               ReviewStatus @default(PENDING)
   moderatedAt          DateTime?
   moderatedByCrmUserId String?
-  moderationNote       String? @db.Text
+  moderationNote       String?      @db.Text
 
   /// Acumulado de reportes contra esta reseña (denuncias del público).
-  reportCount Int @default(0)
+  reportCount Int       @default(0)
   reportedAt  DateTime?
 
   createdAt DateTime @default(now())
@@ -930,7 +931,7 @@ model Report {
   status              ReportStatus @default(NEW)
   resolvedAt          DateTime?
   resolvedByCrmUserId String?
-  resolutionNote      String? @db.Text
+  resolutionNote      String?      @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -953,7 +954,7 @@ enum ReportStatus {
 
 /// Una fila por visita a la ficha pública. Un job recalcula `DirectoryProfile.viewsCount30d` desde aquí.
 model ProfileView {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   profileId String
   profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -975,20 +976,20 @@ model ProfileView {
 
 /// Suscriptor del boletín. `email` único. Las bajas se marcan con status, no se borran (trazabilidad).
 model NewsletterSubscriber {
-  id        String   @id @default(uuid())
-  nombre    String
-  email     String   @unique
-  telefono  String?
-  ciudad    String?
-  status    NewsletterSubscriberStatus @default(ACTIVE)
+  id               String                     @id @default(uuid())
+  nombre           String
+  email            String                     @unique
+  telefono         String?
+  ciudad           String?
+  status           NewsletterSubscriberStatus @default(ACTIVE)
   /// De dónde vino: home, blog, footer, popup, import, etc.
-  source    String?
+  source           String?
   /// Token para el enlace de baja (un solo valor por suscriptor).
-  unsubscribeToken String @unique @default(uuid())
+  unsubscribeToken String                     @unique @default(uuid())
   welcomeSentAt    DateTime?
   unsubscribedAt   DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
 
   sends NewsletterSend[]
 
@@ -1005,22 +1006,22 @@ enum NewsletterSubscriberStatus {
 
 /// Una edición del boletín. Guarda el HTML enviado y contadores agregados para el panel admin.
 model NewsletterCampaign {
-  id          String   @id @default(uuid())
-  asunto      String
-  preheader   String?
-  htmlContent String   @db.Text
+  id             String                   @id @default(uuid())
+  asunto         String
+  preheader      String?
+  htmlContent    String                   @db.Text
   /// Post de blog asociado (opcional), si la campaña difunde un artículo.
-  blogPostId  String?
-  status      NewsletterCampaignStatus @default(DRAFT)
+  blogPostId     String?
+  status         NewsletterCampaignStatus @default(DRAFT)
   /// Contadores agregados (se actualizan al enviar y con el pixel de apertura).
-  recipientCount Int @default(0)
-  sentCount      Int @default(0)
-  openCount      Int @default(0)
-  clickCount     Int @default(0)
+  recipientCount Int                      @default(0)
+  sentCount      Int                      @default(0)
+  openCount      Int                      @default(0)
+  clickCount     Int                      @default(0)
   scheduledFor   DateTime?
   sentAt         DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
 
   sends NewsletterSend[]
 
@@ -1038,17 +1039,17 @@ enum NewsletterCampaignStatus {
 
 /// Registro por (campaña, suscriptor): permite saber quién recibió, abrió y/o hizo clic.
 model NewsletterSend {
-  id           String   @id @default(uuid())
+  id           String               @id @default(uuid())
   campaignId   String
-  campaign     NewsletterCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign     NewsletterCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   subscriberId String
   subscriber   NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
 
-  status     String   @default("sent") // sent | delivered | opened | clicked | bounced | failed
-  openedAt   DateTime?
-  clickedAt  DateTime?
-  openCount  Int      @default(0)
-  createdAt  DateTime @default(now())
+  status    String    @default("sent") // sent | delivered | opened | clicked | bounced | failed
+  openedAt  DateTime?
+  clickedAt DateTime?
+  openCount Int       @default(0)
+  createdAt DateTime  @default(now())
 
   @@unique([campaignId, subscriberId])
   @@index([campaignId, status])
@@ -1093,7 +1094,7 @@ enum ShopCategory {
 }
 
 model ShopCustomer {
-  id           String       @id @default(uuid())
+  id           String      @id @default(uuid())
   nombre       String
   email        String
   telefono     String
@@ -1101,10 +1102,10 @@ model ShopCustomer {
   direccion    String?
   ciudad       String?
   departamento String?
-  notas        String?      @db.Text
+  notas        String?     @db.Text
   orders       ShopOrder[]
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@unique([email])
   @@index([telefono])
@@ -1112,25 +1113,25 @@ model ShopCustomer {
 }
 
 model ShopOrder {
-  id           String          @id @default(uuid())
-  numero       Int             @default(autoincrement())
-  customerId   String
-  customer     ShopCustomer    @relation(fields: [customerId], references: [id])
-  estado       ShopOrderStatus @default(PENDIENTE_PAGO)
-  items        ShopOrderItem[]
+  id         String          @id @default(uuid())
+  numero     Int             @default(autoincrement())
+  customerId String
+  customer   ShopCustomer    @relation(fields: [customerId], references: [id])
+  estado     ShopOrderStatus @default(PENDIENTE_PAGO)
+  items      ShopOrderItem[]
 
-  subtotal     Float
-  envio        Float           @default(0)
-  total        Float
+  subtotal Float
+  envio    Float @default(0)
+  total    Float
 
   // Snapshot de envío (la dirección puede cambiar entre pedidos)
-  envioNombre    String
-  envioTelefono  String
-  envioEmail     String
-  envioDireccion String
-  envioCiudad    String
+  envioNombre       String
+  envioTelefono     String
+  envioEmail        String
+  envioDireccion    String
+  envioCiudad       String
   envioDepartamento String?
-  envioNotas     String?       @db.Text
+  envioNotas        String? @db.Text
 
   // Pago (abstracción de pasarela; se llena en F3)
   metodoPago    String?
@@ -1138,8 +1139,8 @@ model ShopOrder {
   pagoRef       String?
   pagoEstado    String?
 
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([estado])
   @@index([customerId])
@@ -1156,16 +1157,16 @@ enum ShopOrderStatus {
 }
 
 model ShopOrderItem {
-  id            String       @id @default(uuid())
-  orderId       String
-  order         ShopOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId     String?
-  product       ShopProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  nombre        String
-  variante      String?
+  id             String       @id @default(uuid())
+  orderId        String
+  order          ShopOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String?
+  product        ShopProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  nombre         String
+  variante       String?
   precioUnitario Float
-  cantidad      Int
-  subtotal      Float
+  cantidad       Int
+  subtotal       Float
 
   @@index([orderId])
   @@map("shop_order_items")
@@ -1223,22 +1224,186 @@ model ComparadorLead {
 }
 
 model ContactMessage {
-  id        String   @id @default(uuid())
-  nombre    String
-  email     String
-  telefono  String?
-  asunto    String?
-  mensaje   String   @db.Text
-  estado    String   @default("NUEVO") // NUEVO | RESPONDIDO | ARCHIVADO
-  notas     String?  @db.Text
-  emailSent Boolean  @default(false)
+  id         String   @id @default(uuid())
+  nombre     String
+  email      String
+  telefono   String?
+  asunto     String?
+  mensaje    String   @db.Text
+  estado     String   @default("NUEVO") // NUEVO | RESPONDIDO | ARCHIVADO
+  notas      String?  @db.Text
+  emailSent  Boolean  @default(false)
   emailError String?
   /// IP, user agent y otros metadatos del cliente
-  metadata  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([estado])
   @@index([createdAt])
   @@map("contact_messages")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Suscripciones de profesionales — F1: estructura + trial 90d.
+// F2 añadirá Wompi (payments + invoices reales).
+// ─────────────────────────────────────────────────────────────
+
+enum SubscriptionStatus {
+  TRIAL // En periodo de prueba gratuito
+  ACTIVE // Plan pagado vigente
+  PENDING // Pago iniciado pero no confirmado
+  EXPIRING_SOON // Vence en <=15 días (calc, persistido para queries)
+  EXPIRED // Venció, todavía dentro del periodo de gracia (no suspendido)
+  PAST_DUE // En mora (>1 día sin pagar tras vencer)
+  SUSPENDED // Perfil oculto del directorio
+  CANCELED // Profesional canceló voluntariamente
+}
+
+enum PlanCode {
+  TRIAL_90D
+  MENSUAL
+  ANUAL
+}
+
+model Plan {
+  id           String   @id @default(uuid())
+  code         PlanCode @unique
+  nombre       String
+  /// Precio SIN IVA (COP centavos = COP * 1, sin decimales en COP)
+  precioCOP    Int      @default(0)
+  /// Duración en días (90 trial, 30 mensual, 365 anual)
+  duracionDias Int
+  beneficios   String[] @default([])
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id        String           @id @default(uuid())
+  profileId String           @unique
+  profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  status SubscriptionStatus @default(TRIAL)
+
+  /// Inicio del periodo actual (trial o ciclo de pago)
+  currentPeriodStart DateTime
+  /// Fin del periodo actual — usado para cálculo días restantes
+  currentPeriodEnd   DateTime
+
+  /// Origen primer trial (no se modifica al renovar)
+  trialStart DateTime?
+  trialEnd   DateTime?
+
+  /// Última fecha en la que se confirmó un pago
+  lastPaymentAt DateTime?
+  /// Fecha proyectada del próximo cobro (=currentPeriodEnd para mensual/anual)
+  nextChargeAt  DateTime?
+  /// Días de mora actuales (denormalizado para queries en admin)
+  diasMora      Int       @default(0)
+
+  /// Si el usuario solicitó cancelación al final del periodo
+  cancelAtPeriodEnd Boolean   @default(false)
+  canceledAt        DateTime?
+
+  /// Metadata libre (ej: motivo cancelación, notas internas)
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+  invoices Invoice[]
+  events   SubscriptionEvent[]
+
+  @@index([status])
+  @@index([currentPeriodEnd])
+  @@index([status, currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+/// Auditoría de cambios de estado (creación, renovación, suspensión, reactivación, cancelación)
+model SubscriptionEvent {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  /// CREATED | TRIAL_STARTED | TRIAL_ENDING | RENEWED | PAYMENT_FAILED | SUSPENDED | REACTIVATED | CANCELED | PLAN_CHANGED
+  tipo       String
+  fromStatus SubscriptionStatus?
+  toStatus   SubscriptionStatus?
+  notas      String?             @db.Text
+  metadata   Json?
+  createdAt  DateTime            @default(now())
+
+  @@index([subscriptionId, createdAt])
+  @@map("subscription_events")
+}
+
+/// F2: cada intento de cobro / cobro confirmado contra Wompi
+model Payment {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  /// PENDING | APPROVED | DECLINED | VOIDED | ERROR
+  status   String  @default("PENDING")
+  /// PSE | CARD | NEQUI | BANCOLOMBIA_TRANSFER | OTHER
+  metodo   String?
+  montoCOP Int // SIN IVA
+  ivaCOP   Int     @default(0)
+  totalCOP Int // monto + iva
+  moneda   String  @default("COP")
+
+  /// IDs externos del gateway (Wompi transactionId, reference, etc.)
+  gatewayTxId String?
+  gatewayRef  String? @unique
+  gatewayRaw  Json?
+
+  errorMessage String?
+  paidAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoice Invoice?
+
+  @@index([subscriptionId, createdAt])
+  @@index([status])
+  @@map("payments")
+}
+
+/// Factura/comprobante emitido tras pago aprobado
+model Invoice {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  paymentId      String?      @unique
+  payment        Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  /// Numeración secuencial (formato OC-YYYY-000001)
+  numero   String @unique
+  /// SIN IVA
+  baseCOP  Int
+  ivaCOP   Int    @default(0)
+  totalCOP Int
+
+  /// Snapshot fiscal del cliente al emitir (NIT/cédula, nombre, dirección)
+  clienteSnapshot Json
+  /// URL al PDF generado (S3/Cloudinary/local), null hasta que se genere
+  pdfUrl          String?
+
+  emitidaAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([subscriptionId])
+  @@map("invoices")
 }

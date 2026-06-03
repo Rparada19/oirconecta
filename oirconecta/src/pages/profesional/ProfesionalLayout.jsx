@@ -24,6 +24,7 @@ import {
   PersonOutlined,
   StorefrontOutlined,
   MailOutlined,
+  WorkspacePremiumOutlined,
   OpenInNew,
   LogoutOutlined,
   MenuOutlined,
@@ -38,6 +39,7 @@ const NAV_ITEMS = [
   { label: 'Mi perfil', icon: <PersonOutlined />, path: '/portal-profesional/perfil' },
   { label: 'Mis servicios', icon: <StorefrontOutlined />, path: '/portal-profesional/servicios' },
   { label: 'Consultas recibidas', icon: <MailOutlined />, path: '/portal-profesional/consultas', inquiriesBadge: true },
+  { label: 'Mi suscripción', icon: <WorkspacePremiumOutlined />, path: '/portal-profesional/suscripcion' },
 ];
 
 function statusChip(status) {

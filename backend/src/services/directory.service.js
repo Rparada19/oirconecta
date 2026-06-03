@@ -128,7 +128,7 @@ async function registerProfessional({ email, password, nombre, personaTipo, docu
 
   const hashedPassword = await hashPassword(password);
 
-  const account = await prisma.$transaction(async (tx) => {
+  const { account, profileId } = await prisma.$transaction(async (tx) => {
     const acc = await tx.directoryAccount.create({
       data: {
         email: em,
@@ -137,7 +137,7 @@ async function registerProfessional({ email, password, nombre, personaTipo, docu
         activo: true,
       },
     });
-    await tx.directoryProfile.create({
+    const prof = await tx.directoryProfile.create({
       data: {
         accountId: acc.id,
         status: 'PENDING',
@@ -146,8 +146,16 @@ async function registerProfessional({ email, password, nombre, personaTipo, docu
         nombreConsultorio: nc,
       },
     });
-    return acc;
+    return { account: acc, profileId: prof.id };
   });
+
+  // Asignar trial 90 días (no bloquea la respuesta)
+  try {
+    const subService = require('./subscription.service');
+    await subService.createTrialForProfile(profileId);
+  } catch (e) {
+    console.error('[trial] no se pudo crear suscripción de prueba:', e?.message);
+  }
 
   const token = generateDirectoryToken(account);
 
