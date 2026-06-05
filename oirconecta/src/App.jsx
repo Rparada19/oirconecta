@@ -100,6 +100,7 @@ const AdminNewsletterPage = lazy(() => import('./pages/admin/AdminNewsletterPage
 const AdminContactosPage = lazy(() => import('./pages/admin/AdminContactosPage'));
 const AdminSuscripcionesPage = lazy(() => import('./pages/admin/AdminSuscripcionesPage'));
 const AdminMarketingPage = lazy(() => import('./pages/admin/AdminMarketingPage'));
+const PopupBienvenida = lazy(() => import('./components/marketing/PopupBienvenida'));
 
 const theme = buildTheme(createTheme);
 
@@ -147,6 +148,7 @@ export default function App() {
       <Router basename={routerBasename()}>
         <AuthProvider>
         <Suspense fallback={<PageLoader />}>
+        <PopupBienvenida />
         <Routes>
           <Route path="/" element={<HomePage />} />
 

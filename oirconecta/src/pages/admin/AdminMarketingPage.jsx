@@ -9,6 +9,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
+import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -347,6 +348,85 @@ export default function AdminMarketingPage() {
   );
 }
 
+// ─── Uploader de creatividad (Cloudinary vía backend) ───
+function CreativeUploader({ value, onChange }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    setBusy(true); setError(null);
+    const fd = new FormData();
+    fd.append('file', file);
+    const token = localStorage.getItem('oirconecta_admin_token');
+    try {
+      const r = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/marketing/admin/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || 'Error al subir');
+      onChange({
+        creativeUrl: j.data.url,
+        creativePublicId: j.data.publicId,
+        creativeType: j.data.resourceType === 'video' ? 'video' : 'image',
+        creativeWidth: j.data.width,
+        creativeHeight: j.data.height,
+      });
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Box>
+      <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', mb: 1, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        Creatividad
+      </Typography>
+      {value.creativeUrl ? (
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 1.5, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+          <Box sx={{ width: 80, height: 80, borderRadius: '6px', overflow: 'hidden', flexShrink: 0, bgcolor: '#000' }}>
+            {value.creativeType === 'video' ? (
+              <video src={value.creativeUrl} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <img src={value.creativeUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            )}
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: NAVY }}>
+              {value.creativeType === 'video' ? 'Video' : 'Imagen'} · {value.creativeWidth}×{value.creativeHeight}
+            </Typography>
+            <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {value.creativeUrl}
+            </Typography>
+          </Box>
+          <Button size="small" onClick={() => onChange({ creativeUrl: null, creativePublicId: null, creativeType: null, creativeWidth: null, creativeHeight: null })}
+            sx={{ color: '#b91c1c', textTransform: 'none' }}>
+            Cambiar
+          </Button>
+        </Box>
+      ) : (
+        <Box component="label" sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+          py: 3, borderRadius: '8px', border: '2px dashed #cbd5e1', cursor: 'pointer',
+          color: '#64748b', '&:hover': { borderColor: ACCENT, color: ACCENT, bgcolor: `${ACCENT}05` },
+        }}>
+          {busy ? <CircularProgress size={20} /> : <CloudUploadOutlinedIcon />}
+          <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+            {busy ? 'Subiendo…' : 'Subir imagen, GIF o video (máx 10MB)'}
+          </Typography>
+          <input type="file" hidden accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"
+            onChange={(e) => handleFile(e.target.files?.[0])} />
+        </Box>
+      )}
+      {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
+    </Box>
+  );
+}
+
 // ─── Dialog Anunciante ───
 function AdvertiserDialog({ open, data, onClose, onSaved }) {
   const [form, setForm] = useState({});
@@ -474,6 +554,9 @@ function CampaignDialog({ open, data, initialActionType, advertisers, catalog, o
           <Grid item xs={12}>
             <TextField label="Notas internas" fullWidth multiline rows={2} size="small"
               value={form.internalNotes || ''} onChange={(e) => setForm({ ...form, internalNotes: e.target.value })} />
+          </Grid>
+          <Grid item xs={12}>
+            <CreativeUploader value={form} onChange={(patch) => setForm({ ...form, ...patch })} />
           </Grid>
           <Grid item xs={12}>
             <Box sx={{ p: 2, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px dashed #cbd5e1' }}>

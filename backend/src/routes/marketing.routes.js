@@ -52,6 +52,60 @@ router.get('/catalog', (req, res) => {
   res.json({ success: true, data: { items: CATALOG, categories: CATEGORIES } });
 });
 
+// ─── Público: campaña activa por tipo + tracking ───
+// Rate limit en memoria por sessionId+campaña (1 impresión/hora, 3 clics/hora)
+const seen = new Map(); // key: `${sessionId}:${campaignId}:${type}` → count + ts
+const RATE_WINDOW_MS = 60 * 60 * 1000;
+const LIMITS = { impression: 1, click: 3 };
+
+function rateOk(sessionId, campaignId, type) {
+  if (!sessionId || !campaignId) return true; // si no hay sessionId, dejamos pasar
+  const key = `${sessionId}:${campaignId}:${type}`;
+  const now = Date.now();
+  const rec = seen.get(key);
+  if (!rec || (now - rec.ts) > RATE_WINDOW_MS) {
+    seen.set(key, { count: 1, ts: now });
+    return true;
+  }
+  if (rec.count >= LIMITS[type]) return false;
+  rec.count++;
+  return true;
+}
+
+// Limpieza periódica del Map (cada 30 min)
+setInterval(() => {
+  const cutoff = Date.now() - RATE_WINDOW_MS;
+  for (const [k, v] of seen.entries()) if (v.ts < cutoff) seen.delete(k);
+}, 30 * 60 * 1000).unref();
+
+router.get('/public/active', async (req, res) => {
+  try {
+    const { actionType } = req.query;
+    if (!actionType) return res.json({ success: true, data: null });
+    const data = await svc.getActiveCampaignByActionType(actionType);
+    res.set('Cache-Control', 'public, max-age=30'); // CDN 30s
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/tracking/impression', async (req, res) => {
+  try {
+    const { campaignId, sessionId } = req.body || {};
+    if (!rateOk(sessionId, campaignId, 'impression')) return res.json({ success: true, throttled: true });
+    await svc.recordEvent(campaignId, 'impression');
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/tracking/click', async (req, res) => {
+  try {
+    const { campaignId, sessionId } = req.body || {};
+    if (!rateOk(sessionId, campaignId, 'click')) return res.json({ success: true, throttled: true });
+    await svc.recordEvent(campaignId, 'click');
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ─── Dashboard ───
 router.get('/admin/stats', authenticate, authorize('ADMIN'), async (req, res) => {
   try {

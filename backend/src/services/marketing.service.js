@@ -136,7 +136,8 @@ async function createCampaign(input) {
 async function updateCampaign(id, data) {
   // Si cambia nombre, no regenero slug (rompe URLs); slug es estable.
   const allowed = ['nombre', 'startDate', 'endDate', 'priceCOP', 'destinationUrl',
-    'internalNotes', 'status', 'isActive', 'abTestMode', 'autoOptimize', 'config'];
+    'internalNotes', 'status', 'isActive', 'abTestMode', 'autoOptimize', 'config',
+    'creativeUrl', 'creativePublicId', 'creativeType', 'creativeWidth', 'creativeHeight'];
   const clean = {};
   for (const k of allowed) if (data[k] !== undefined) clean[k] = data[k];
   if (clean.startDate) clean.startDate = new Date(clean.startDate);
@@ -162,6 +163,57 @@ async function toggleCampaignActive(id, isActive) {
 
 async function deleteCampaign(id) {
   return prisma.marketingCampaign.delete({ where: { id } });
+}
+
+/**
+ * Devuelve la campaña activa para un tipo de acción dado (uso público).
+ * Si hay varias (caso raro), retorna la más reciente.
+ */
+async function getActiveCampaignByActionType(actionType) {
+  const now = new Date();
+  const camp = await prisma.marketingCampaign.findFirst({
+    where: {
+      actionType,
+      isActive: true,
+      status: 'ACTIVE',
+      startDate: { lte: now },
+      endDate: { gte: now },
+      creativeUrl: { not: null },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!camp) return null;
+  return {
+    id: camp.id,
+    slug: camp.slug,
+    actionType: camp.actionType,
+    creativeUrl: camp.creativeUrl,
+    creativeType: camp.creativeType,
+    creativeWidth: camp.creativeWidth,
+    creativeHeight: camp.creativeHeight,
+    destinationUrl: camp.destinationUrl,
+    config: camp.config,
+    utm: {
+      source: camp.utmSource,
+      medium: camp.utmMedium,
+      campaign: camp.utmCampaign,
+    },
+  };
+}
+
+/** Agrega impresión/clic al bucket diario UTC de la campaña. */
+async function recordEvent(campaignId, type) {
+  if (!campaignId || !['impression', 'click'].includes(type)) return null;
+  const exists = await prisma.marketingCampaign.findUnique({ where: { id: campaignId }, select: { id: true } });
+  if (!exists) return null;
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const field = type === 'impression' ? 'impressions' : 'clicks';
+  return prisma.marketingMetric.upsert({
+    where: { campaignId_date: { campaignId, date: today } },
+    create: { campaignId, date: today, [field]: 1 },
+    update: { [field]: { increment: 1 } },
+  });
 }
 
 // ─── KPIs ───
@@ -219,4 +271,6 @@ module.exports = {
   toggleCampaignActive,
   deleteCampaign,
   getDashboardStats,
+  getActiveCampaignByActionType,
+  recordEvent,
 };
