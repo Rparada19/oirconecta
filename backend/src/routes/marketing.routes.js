@@ -8,9 +8,44 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middleware/auth');
 const svc = require('../services/marketing.service');
+const storage = require('../services/storage.service');
 const { CATALOG, CATEGORIES } = require('../config/marketingCatalog');
 
 const router = express.Router();
+const uploader = storage.makeUploader({ folder: 'marketing/creativos', maxSizeMB: 10 });
+
+// ─── Upload de creatividades ───
+router.post('/admin/upload', authenticate, authorize('ADMIN'), (req, res) => {
+  if (!storage.isConfigured) {
+    return res.status(503).json({ success: false, error: 'Cloudinary no configurado (CLOUDINARY_URL faltante).' });
+  }
+  uploader.single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ success: false, error: err.message });
+    if (!req.file) return res.status(400).json({ success: false, error: 'Sin archivo' });
+    res.json({
+      success: true,
+      data: {
+        url: req.file.path,           // URL pública CDN
+        publicId: req.file.filename,  // para borrar luego
+        format: req.file.format,
+        bytes: req.file.size,
+        width: req.file.width,
+        height: req.file.height,
+        resourceType: req.file.resource_type,
+      },
+    });
+  });
+});
+
+router.delete('/admin/upload/:publicId(*)', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const { resourceType = 'image' } = req.query;
+    await storage.destroy(req.params.publicId, { resourceType });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 // ─── Catálogo ───
 router.get('/catalog', (req, res) => {
