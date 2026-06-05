@@ -1382,6 +1382,79 @@ model Payment {
   @@map("payments")
 }
 
+// ─────────────────────────────────────────────────────────────
+// Marketing & Ventas — M1 (cimientos)
+// Anunciantes + Campañas con UTM autogen. Variantes A/B y métricas
+// llegan en M2/M3. Reutiliza NewsletterSend para envíos de email.
+// ─────────────────────────────────────────────────────────────
+
+model MarketingAdvertiser {
+  id               String @id @default(uuid())
+  nombre           String
+  /// CASA_COMERCIAL | PROFESIONAL | CLINICA | MARCA | OTRO
+  tipo             String  @default("OTRO")
+  contactoNombre   String?
+  contactoEmail    String?
+  contactoTelefono String?
+  emailFacturacion String?
+  nit              String?
+  notas            String? @db.Text
+  logoUrl          String?
+
+  campaigns MarketingCampaign[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nombre])
+  @@map("marketing_advertisers")
+}
+
+model MarketingCampaign {
+  id           String @id @default(uuid())
+  advertiserId String
+  advertiser   MarketingAdvertiser @relation(fields: [advertiserId], references: [id], onDelete: Restrict)
+
+  nombre String
+  slug   String @unique
+  /// Referencia al catálogo (POPUP_BIENVENIDA, BANNER_HERO, etc.)
+  actionType String
+
+  startDate DateTime
+  endDate   DateTime
+  priceCOP  Int @default(0)
+
+  /// DRAFT | SCHEDULED | ACTIVE | PAUSED | ENDED
+  status   String  @default("DRAFT")
+  /// Toggle ON/OFF rápido para apagar la creatividad sin cambiar estado
+  isActive Boolean @default(false)
+
+  destinationUrl String?
+  internalNotes  String? @db.Text
+
+  // UTMs cacheados (computados en service)
+  utmSource   String  @default("oirconecta")
+  utmMedium   String
+  utmCampaign String
+  utmContent  String?
+  utmTerm     String?
+
+  // Estructura lista para M3
+  abTestMode   Boolean @default(false)
+  autoOptimize Boolean @default(false)
+  /// Config específica del tipo de acción (delay, slot, segmentación, etc.)
+  config       Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([advertiserId])
+  @@index([actionType])
+  @@index([status, isActive])
+  @@index([endDate])
+  @@map("marketing_campaigns")
+}
+
 /// Factura/comprobante emitido tras pago aprobado
 model Invoice {
   id             String       @id @default(uuid())

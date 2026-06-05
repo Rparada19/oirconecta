@@ -99,6 +99,7 @@ const AdminComparadorPage = lazy(() => import('./pages/admin/AdminComparadorPage
 const AdminNewsletterPage = lazy(() => import('./pages/admin/AdminNewsletterPage'));
 const AdminContactosPage = lazy(() => import('./pages/admin/AdminContactosPage'));
 const AdminSuscripcionesPage = lazy(() => import('./pages/admin/AdminSuscripcionesPage'));
+const AdminMarketingPage = lazy(() => import('./pages/admin/AdminMarketingPage'));
 
 const theme = buildTheme(createTheme);
 
@@ -245,6 +246,7 @@ export default function App() {
             <Route path="newsletter" element={<AdminNewsletterPage />} />
             <Route path="contactos" element={<AdminContactosPage />} />
             <Route path="suscripciones" element={<AdminSuscripcionesPage />} />
+            <Route path="marketing" element={<AdminMarketingPage />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

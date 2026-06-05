@@ -22,6 +22,7 @@ import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
+import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { getAdminToken, clearAdminToken, getAdminUser } from './adminAuth';
@@ -41,6 +42,7 @@ const navItems = [
   { label: 'Pedidos', icon: <ReceiptLongOutlinedIcon />, path: '/portal-admin/pedidos' },
   { label: 'Comparador', icon: <CompareArrowsOutlinedIcon />, path: '/portal-admin/comparador' },
   { label: 'Newsletter', icon: <MailOutlineRoundedIcon />, path: '/portal-admin/newsletter' },
+  { label: 'Marketing & Ventas', icon: <CampaignOutlinedIcon />, path: '/portal-admin/marketing' },
   { label: 'Buzón de contacto', icon: <InboxOutlinedIcon />, path: '/portal-admin/contactos' },
   { label: 'Suscripciones', icon: <WorkspacePremiumOutlinedIcon />, path: '/portal-admin/suscripciones' },
 ];

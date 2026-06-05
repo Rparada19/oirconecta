@@ -1,0 +1,92 @@
+/**
+ * Marketing & Ventas — M1.
+ * Todas las rutas son admin (JWT ADMIN). El catálogo es público (read-only)
+ * para que el front del catálogo pueda renderizar sin auth si más adelante
+ * se expone una vitrina pública.
+ */
+
+const express = require('express');
+const { authenticate, authorize } = require('../middleware/auth');
+const svc = require('../services/marketing.service');
+const { CATALOG, CATEGORIES } = require('../config/marketingCatalog');
+
+const router = express.Router();
+
+// ─── Catálogo ───
+router.get('/catalog', (req, res) => {
+  res.json({ success: true, data: { items: CATALOG, categories: CATEGORIES } });
+});
+
+// ─── Dashboard ───
+router.get('/admin/stats', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.getDashboardStats();
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── Anunciantes ───
+router.get('/admin/advertisers', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.listAdvertisers(req.query);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.post('/admin/advertisers', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.createAdvertiser(req.body);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.patch('/admin/advertisers/:id', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.updateAdvertiser(req.params.id, req.body);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.delete('/admin/advertisers/:id', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    await svc.deleteAdvertiser(req.params.id);
+    res.json({ success: true });
+  } catch (e) {
+    // Foreign key restrict
+    if (e.code === 'P2003') {
+      return res.status(409).json({ success: false, error: 'No se puede eliminar: tiene campañas asociadas.' });
+    }
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ─── Campañas ───
+router.get('/admin/campaigns', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.listCampaigns(req.query);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.post('/admin/campaigns', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.createCampaign(req.body);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.patch('/admin/campaigns/:id', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.updateCampaign(req.params.id, req.body);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.post('/admin/campaigns/:id/toggle', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.toggleCampaignActive(req.params.id, req.body.isActive);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.delete('/admin/campaigns/:id', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    await svc.deleteCampaign(req.params.id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+module.exports = router;

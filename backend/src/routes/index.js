@@ -26,6 +26,7 @@ const comparadorRoutes = require('./comparador.routes');
 const publicConfigRoutes = require('./publicConfig.routes');
 const newsletterRoutes = require('./newsletter.routes');
 const subscriptionRoutes = require('./subscription.routes');
+const marketingRoutes = require('./marketing.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
@@ -49,6 +50,7 @@ router.use('/comparador', comparadorRoutes);
 router.use('/public', publicConfigRoutes);
 router.use('/newsletter', newsletterRoutes);
 router.use('/subscriptions', subscriptionRoutes);
+router.use('/marketing', marketingRoutes);
 
 // Info de la API
 router.get('/', (req, res) => {
