@@ -186,6 +186,66 @@ export default function AdminSuscripcionesPage() {
         <Grid item xs={6} md={3}><StatCard icon={BlockOutlinedIcon} label="Vencidos" value={stats?.vencidos ?? '—'} color="#a16207" /></Grid>
       </Grid>
 
+      {/* Planes vigentes — referencia rápida para cotizar */}
+      <Card sx={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', mb: 3, overflow: 'hidden' }}>
+        <Box sx={{ px: 2.5, py: 1.75, bgcolor: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
+          <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem' }}>
+            Planes vigentes
+          </Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+            Referencia para cotización telefónica · precios en COP, IVA 19% aparte
+          </Typography>
+        </Box>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {['Plan', 'Para quién', 'Precio (sin IVA)', 'IVA 19%', 'Total cobrado', 'Vigencia'].map((h) => (
+                <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  {h}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {[
+              { plan: 'Prueba gratuita', target: 'Todos los registros nuevos',          precio: 0,       vig: '45 días' },
+              { plan: 'Mensual',         target: 'Profesional independiente',           precio: 20000,   vig: '30 días' },
+              { plan: 'Anual',           target: 'Profesional independiente',           precio: 200000,  vig: '12 meses',  badge: 'Ahorra $40.000' },
+              { plan: 'Empresa o centro', target: 'Persona jurídica · por sede',        precio: 20000,   vig: '30 días',   nota: '× cada sede registrada' },
+            ].map((row) => {
+              const iva = Math.round(row.precio * 0.19);
+              return (
+                <TableRow key={row.plan} hover>
+                  <TableCell>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: NAVY }}>{row.plan}</Typography>
+                      {row.badge && (
+                        <Chip label={row.badge} size="small"
+                          sx={{ bgcolor: '#fef3c7', color: '#a16207', fontWeight: 700, fontSize: '0.65rem', height: 18 }} />
+                      )}
+                    </Stack>
+                    {row.nota && (
+                      <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{row.nota}</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem', color: '#475569' }}>{row.target}</TableCell>
+                  <TableCell sx={{ fontSize: '0.875rem', fontWeight: 700, color: NAVY }}>
+                    {row.precio === 0 ? '—' : fmtCOP(row.precio)}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                    {row.precio === 0 ? '—' : fmtCOP(iva)}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.875rem', fontWeight: 800, color: ACCENT }}>
+                    {row.precio === 0 ? '$0' : fmtCOP(row.precio + iva)}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>{row.vig}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </Card>
+
       {/* Filtros */}
       <Card sx={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', p: 2, mb: 2 }}>
         <Grid container spacing={1.5} alignItems="center">

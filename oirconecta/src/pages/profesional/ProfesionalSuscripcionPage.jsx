@@ -163,7 +163,7 @@ export default function ProfesionalSuscripcionPage() {
       </Typography>
       {data.perfil?.personaTipo === 'JURIDICA' && (
         <Alert severity="info" sx={{ mb: 2, borderRadius: '8px' }}>
-          Tu cuenta está registrada como <strong>empresa o centro</strong>: la facturación es de $20.000 mensuales por cada sede registrada (sin descuento anual).
+          Tu cuenta está registrada como <strong>empresa o centro</strong>: la facturación es de $20.000 mensuales por cada sede registrada.
         </Alert>
       )}
       <Grid container spacing={2} sx={{ mb: 4 }}>
