@@ -31,7 +31,7 @@ const STATUS_COLOR = {
 };
 
 const ESTADOS = ['', 'TRIAL', 'ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
-const PLANES = ['', 'TRIAL_90D', 'MENSUAL', 'ANUAL'];
+const PLANES = ['', 'TRIAL_90D', 'MENSUAL', 'ANUAL', 'EMPRESA'];
 const PROFESIONES = [
   { slug: '', label: 'Todas' },
   { slug: 'fonoaudiologia', label: 'Fonoaudiología' },

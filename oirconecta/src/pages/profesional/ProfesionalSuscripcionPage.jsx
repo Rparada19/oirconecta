@@ -144,7 +144,7 @@ export default function ProfesionalSuscripcionPage() {
 
           {s.status === 'TRIAL' && (
             <Alert severity="info" sx={{ mt: 3, borderRadius: '8px' }}>
-              Estás disfrutando de tu prueba gratuita de 90 días. Al vencer, elige un plan para mantener tu perfil activo.
+              Estás disfrutando de tu prueba gratuita de 45 días. Al vencer, elige un plan para mantener tu perfil activo.
             </Alert>
           )}
           {(s.status === 'PAST_DUE' || s.status === 'SUSPENDED') && (
@@ -161,22 +161,30 @@ export default function ProfesionalSuscripcionPage() {
       <Typography variant="h6" sx={{ fontWeight: 800, color: NAVY, mb: 2, letterSpacing: '-0.01em' }}>
         Planes disponibles
       </Typography>
+      {data.perfil?.personaTipo === 'JURIDICA' && (
+        <Alert severity="info" sx={{ mb: 2, borderRadius: '8px' }}>
+          Tu cuenta está registrada como <strong>empresa o centro</strong>: la facturación es de $20.000 mensuales por cada sede registrada (sin descuento anual).
+        </Alert>
+      )}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         {data.plansDisponibles?.map((p) => {
           const isAnual = p.code === 'ANUAL';
+          const isEmpresa = p.code === 'EMPRESA';
+          const highlight = isAnual; // solo anual tiene badge "mejor valor"
+          const sedeCount = p.detalle?.sedeCount || 1;
           return (
-            <Grid item xs={12} md={6} key={p.id}>
+            <Grid item xs={12} md={isEmpresa ? 12 : 6} key={p.id}>
               <Card sx={{
-                borderRadius: '14px', border: isAnual ? `2px solid ${GOLD}` : '1px solid #e5e7eb',
+                borderRadius: '14px', border: highlight ? `2px solid ${GOLD}` : '1px solid #e5e7eb',
                 position: 'relative', height: '100%',
               }}>
-                {isAnual && (
+                {highlight && (
                   <Chip label="MEJOR VALOR" size="small"
                     sx={{ position: 'absolute', top: 12, right: 12, bgcolor: GOLD, color: '#fff', fontWeight: 800, fontSize: '0.65rem' }} />
                 )}
                 <CardContent sx={{ p: 3 }}>
                   <Typography sx={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, mb: 0.5 }}>
-                    {isAnual ? 'Anual' : 'Mensual'}
+                    {isEmpresa ? 'Empresa o centro' : isAnual ? 'Anual' : 'Mensual'}
                   </Typography>
                   <Stack direction="row" alignItems="baseline" spacing={0.5}>
                     <Typography sx={{ fontSize: '2rem', fontWeight: 900, color: NAVY }}>
@@ -186,6 +194,11 @@ export default function ProfesionalSuscripcionPage() {
                       / {isAnual ? 'año' : 'mes'}
                     </Typography>
                   </Stack>
+                  {isEmpresa && p.detalle && (
+                    <Typography sx={{ fontSize: '0.8125rem', color: NAVY, mb: 0.5, fontWeight: 600 }}>
+                      {fmtCOP(p.detalle.unitCOP)} × {sedeCount} sede{sedeCount === 1 ? '' : 's'}
+                    </Typography>
+                  )}
                   <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', mb: 2 }}>
                     + IVA 19% → total {fmtCOP(p.totalCOP)}
                   </Typography>
@@ -202,7 +215,7 @@ export default function ProfesionalSuscripcionPage() {
                   <Button fullWidth variant="contained" disabled
                     startIcon={<HourglassEmptyIcon />}
                     sx={{
-                      background: isAnual ? `linear-gradient(135deg, ${GOLD}, #B7835A)` : ACCENT,
+                      background: highlight ? `linear-gradient(135deg, ${GOLD}, #B7835A)` : ACCENT,
                       borderRadius: '8px', textTransform: 'none', fontWeight: 700,
                       '&.Mui-disabled': { background: '#cbd5e1', color: '#64748b' },
                     }}>

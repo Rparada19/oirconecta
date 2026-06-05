@@ -149,7 +149,7 @@ async function registerProfessional({ email, password, nombre, personaTipo, docu
     return { account: acc, profileId: prof.id };
   });
 
-  // Asignar trial 90 días (no bloquea la respuesta)
+  // Asignar trial 45 días (no bloquea la respuesta)
   try {
     const subService = require('./subscription.service');
     await subService.createTrialForProfile(profileId);

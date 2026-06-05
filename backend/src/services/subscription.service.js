@@ -3,11 +3,13 @@
  * F2 añadirá Wompi (capture, webhook, factura PDF).
  *
  * Reglas de negocio:
- *  - Todo profesional nuevo recibe TRIAL_90D al crearse perfil.
+ *  - Profesional natural recibe TRIAL_90D (45 días reales) al crearse perfil.
+ *  - Empresa (persona jurídica) paga $20.000 × sede × mes (sin descuento anual).
+ *  - Independiente: $20.000/mes o $200.000/año (10 meses precio anual).
  *  - El status se recalcula on-read si no se ha materializado.
  *  - "días restantes" = ceil((currentPeriodEnd - now) / 1 día).
  *  - EXPIRING_SOON cuando faltan <=15 días; EXPIRED cuando ya pasó.
- *  - PAST_DUE cuando expired y han pasado >=1 día sin renovar (mensual/anual).
+ *  - PAST_DUE cuando expired y han pasado >=1 día sin renovar.
  *  - SUSPENDED a los 30 días de mora (lo aplica el cron).
  */
 
@@ -15,15 +17,30 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const IVA_RATE = 0.19;
+const TRIAL_DAYS = 45;
 
 const PLAN_DEFAULTS = [
-  { code: 'TRIAL_90D', nombre: 'Prueba gratuita (90 días)', precioCOP: 0,      duracionDias: 90,
+  // El code se mantiene como TRIAL_90D por compatibilidad con datos previos;
+  // la duración real es 45 días.
+  { code: 'TRIAL_90D', nombre: 'Prueba gratuita (45 días)', precioCOP: 0,      duracionDias: TRIAL_DAYS,
     beneficios: ['Acceso completo al portal', 'Perfil visible en directorio', 'Recepción de solicitudes', 'Estadísticas'] },
-  { code: 'MENSUAL',   nombre: 'Plan mensual',              precioCOP: 15000,  duracionDias: 30,
+  { code: 'MENSUAL',   nombre: 'Profesional independiente · mensual', precioCOP: 20000,  duracionDias: 30,
     beneficios: ['Perfil activo', 'Aparición en búsquedas', 'Recepción de solicitudes', 'Acceso a estadísticas'] },
-  { code: 'ANUAL',     nombre: 'Plan anual',                precioCOP: 150000, duracionDias: 365,
-    beneficios: ['Todo del plan mensual', 'Prioridad en búsquedas', 'Insignia "Profesional Verificado"', 'Ahorro vs mensual'] },
+  { code: 'ANUAL',     nombre: 'Profesional independiente · anual',   precioCOP: 200000, duracionDias: 365,
+    beneficios: ['Todo del plan mensual', 'Prioridad en búsquedas', 'Insignia "Profesional Verificado"', 'Ahorras $40.000 al año'] },
+  { code: 'EMPRESA',   nombre: 'Empresa o centro · mensual por sede', precioCOP: 20000,  duracionDias: 30,
+    beneficios: ['Una ficha por sede', '$20.000 mensuales por cada sede', 'Aparición en búsquedas en todas las ciudades', 'Sin compromiso anual'] },
 ];
+
+/**
+ * Precio mensual de empresa = $20.000 × (#sedes o 1).
+ * Devuelve { unitCOP, sedeCount, totalCOP }.
+ */
+function priceEmpresa(profile) {
+  const sedeCount = Math.max(1, (profile?.workplaces?.length || 0));
+  const unitCOP = 20000;
+  return { unitCOP, sedeCount, totalCOP: unitCOP * sedeCount };
+}
 
 /** Asegura que existan los 3 planes en BD. Idempotente. */
 async function ensurePlans() {
@@ -102,7 +119,7 @@ async function recomputeStatus(sub) {
 /**
  * Crea suscripción TRIAL para un perfil. Si ya tiene una, devuelve la existente.
  */
-async function createTrialForProfile(profileId, { trialDays = 90 } = {}) {
+async function createTrialForProfile(profileId, { trialDays = TRIAL_DAYS } = {}) {
   const existing = await prisma.subscription.findUnique({ where: { profileId }, include: { plan: true } });
   if (existing) return existing;
 
@@ -130,7 +147,7 @@ async function createTrialForProfile(profileId, { trialDays = 90 } = {}) {
       subscriptionId: sub.id,
       tipo: 'TRIAL_STARTED',
       toStatus: 'TRIAL',
-      notas: `Trial 90d. Vence ${end.toISOString()}`,
+      notas: `Trial ${trialDays}d. Vence ${end.toISOString()}`,
     },
   });
   return sub;
@@ -147,6 +164,14 @@ async function getMySubscription(profileId) {
   if (!sub) sub = await createTrialForProfile(profileId);
   sub = await recomputeStatus(sub);
 
+  const profile = await prisma.directoryProfile.findUnique({
+    where: { id: profileId },
+    select: {
+      personaTipo: true,
+      workplaces: { select: { id: true, nombreCentro: true } },
+    },
+  });
+
   const now = new Date();
   const diasRestantes = Math.max(0, daysBetween(new Date(sub.currentPeriodEnd), now));
 
@@ -157,9 +182,32 @@ async function getMySubscription(profileId) {
     select: { id: true, totalCOP: true, metodo: true, paidAt: true, gatewayRef: true },
   });
 
-  const plans = await prisma.plan.findMany({ where: { activo: true, code: { in: ['MENSUAL', 'ANUAL'] } } });
+  // Plan disponible depende del tipo de persona.
+  const isEmpresa = profile?.personaTipo === 'JURIDICA';
+  const planCodes = isEmpresa ? ['EMPRESA'] : ['MENSUAL', 'ANUAL'];
+  const plans = await prisma.plan.findMany({ where: { activo: true, code: { in: planCodes } } });
+
+  const empresa = isEmpresa ? priceEmpresa(profile) : null;
+
+  const plansDisponibles = plans.map((p) => {
+    let baseCOP = p.precioCOP;
+    let detalle = null;
+    if (p.code === 'EMPRESA' && empresa) {
+      baseCOP = empresa.totalCOP;
+      detalle = { sedeCount: empresa.sedeCount, unitCOP: empresa.unitCOP };
+    }
+    const iva = Math.round(baseCOP * IVA_RATE);
+    return {
+      ...p,
+      precioCOP: baseCOP,
+      ivaCOP: iva,
+      totalCOP: baseCOP + iva,
+      detalle,
+    };
+  });
 
   return {
+    perfil: { personaTipo: profile?.personaTipo || 'NATURAL', sedes: profile?.workplaces || [] },
     subscription: {
       id: sub.id,
       status: sub.status,
@@ -173,11 +221,7 @@ async function getMySubscription(profileId) {
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
     },
     payments,
-    plansDisponibles: plans.map((p) => ({
-      ...p,
-      ivaCOP: Math.round(p.precioCOP * IVA_RATE),
-      totalCOP: p.precioCOP + Math.round(p.precioCOP * IVA_RATE),
-    })),
+    plansDisponibles,
   };
 }
 
@@ -247,31 +291,34 @@ async function listForAdmin({ ciudad, profesionSlug, status, plan, limit = 50, o
  * Resumen ejecutivo (dashboard admin).
  */
 async function getAdminStats() {
-  const [byStatus, monthlyActive, annualActive] = await Promise.all([
+  const ACTIVE_STATUSES = ['ACTIVE', 'EXPIRING_SOON'];
+  const [byStatus, monthlyActive, annualActive, empresasActivas] = await Promise.all([
     prisma.subscription.groupBy({ by: ['status'], _count: { _all: true } }),
-    prisma.subscription.count({
-      where: {
-        status: { in: ['ACTIVE', 'EXPIRING_SOON'] },
-        plan: { is: { code: 'MENSUAL' } },
-      },
-    }),
-    prisma.subscription.count({
-      where: {
-        status: { in: ['ACTIVE', 'EXPIRING_SOON'] },
-        plan: { is: { code: 'ANUAL' } },
-      },
+    prisma.subscription.count({ where: { status: { in: ACTIVE_STATUSES }, plan: { is: { code: 'MENSUAL' } } } }),
+    prisma.subscription.count({ where: { status: { in: ACTIVE_STATUSES }, plan: { is: { code: 'ANUAL' } } } }),
+    prisma.subscription.findMany({
+      where: { status: { in: ACTIVE_STATUSES }, plan: { is: { code: 'EMPRESA' } } },
+      select: { profile: { select: { workplaces: { select: { id: true } } } } },
     }),
   ]);
 
   const counts = Object.fromEntries(byStatus.map((b) => [b.status, b._count._all]));
   const total = byStatus.reduce((a, b) => a + b._count._all, 0);
 
-  const planMensual = await prisma.plan.findUnique({ where: { code: 'MENSUAL' } });
-  const planAnual = await prisma.plan.findUnique({ where: { code: 'ANUAL' } });
+  const [planMensual, planAnual, planEmpresa] = await Promise.all([
+    prisma.plan.findUnique({ where: { code: 'MENSUAL' } }),
+    prisma.plan.findUnique({ where: { code: 'ANUAL' } }),
+    prisma.plan.findUnique({ where: { code: 'EMPRESA' } }),
+  ]);
 
-  // MRR: mensuales activas + (anuales / 12). Sin IVA.
+  // Empresa: $20.000 × total sedes activas
+  const totalSedesEmpresa = empresasActivas.reduce((acc, s) => acc + Math.max(1, s.profile?.workplaces?.length || 0), 0);
+  const mrrEmpresa = totalSedesEmpresa * (planEmpresa?.precioCOP || 0);
+
+  // MRR: mensuales activas + (anuales / 12) + empresa por sede. Sin IVA.
   const mrr = (monthlyActive * (planMensual?.precioCOP || 0))
-            + Math.round((annualActive * (planAnual?.precioCOP || 0)) / 12);
+            + Math.round((annualActive * (planAnual?.precioCOP || 0)) / 12)
+            + mrrEmpresa;
   const arr = mrr * 12;
 
   return {
@@ -286,6 +333,8 @@ async function getAdminStats() {
     arrCOP: arr,
     suscripcionesMensualActivas: monthlyActive,
     suscripcionesAnualActivas: annualActive,
+    suscripcionesEmpresaActivas: empresasActivas.length,
+    totalSedesEmpresa,
   };
 }
 
@@ -416,7 +465,9 @@ async function reactivateSubscription(subscriptionId, { extendDays = 30 } = {}) 
 
 module.exports = {
   IVA_RATE,
+  TRIAL_DAYS,
   PLAN_DEFAULTS,
+  priceEmpresa,
   ensurePlans,
   createTrialForProfile,
   getMySubscription,

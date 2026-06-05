@@ -1261,9 +1261,10 @@ enum SubscriptionStatus {
 }
 
 enum PlanCode {
-  TRIAL_90D
-  MENSUAL
-  ANUAL
+  TRIAL_90D   // Trial gratuito (45 días desde 2026-06; nombre legacy)
+  MENSUAL     // Independiente: $20.000/mes
+  ANUAL       // Independiente: $200.000/año
+  EMPRESA     // Persona jurídica: $20.000/mes por sede (sin descuento anual)
 }
 
 model Plan {
