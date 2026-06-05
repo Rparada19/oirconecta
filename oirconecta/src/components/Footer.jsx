@@ -4,6 +4,7 @@ import { Box, Container, Grid, Typography, Link, IconButton, Divider, Stack } fr
 import { Facebook, Instagram, LinkedIn, YouTube, Email, Phone, LocationOn } from '@mui/icons-material';
 import { directoryProfesionToSlug } from '../utils/directoryPresentation';
 import NewsletterSignup from './NewsletterSignup';
+import BannerFooter from './marketing/BannerFooter';
 
 const SECTIONS = [
   {
@@ -50,6 +51,7 @@ const CONTACT = [
 
 const Footer = () => (
   <footer role="contentinfo">
+    <BannerFooter />
     <Box
       sx={{
         background: 'linear-gradient(180deg, #272F50 0%, #1a1f38 100%)',

@@ -96,12 +96,29 @@ async function listCampaigns({ q, advertiserId, actionType, status, isActive, li
     }),
     prisma.marketingCampaign.count({ where }),
   ]);
-  // Anota datos del catálogo para evitar joins en el front
-  const enriched = items.map((c) => ({
-    ...c,
-    actionLabel: BY_CODE[c.actionType]?.label || c.actionType,
-    actionCategory: BY_CODE[c.actionType]?.categoria || null,
-  }));
+  // Métricas del mes en curso por campaña (1 query agregada)
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+  const metrics = items.length === 0 ? [] : await prisma.marketingMetric.groupBy({
+    by: ['campaignId'],
+    where: { campaignId: { in: items.map((c) => c.id) }, date: { gte: monthStart } },
+    _sum: { impressions: true, clicks: true, leads: true },
+  });
+  const metricsBy = Object.fromEntries(metrics.map((m) => [m.campaignId, m._sum]));
+
+  const enriched = items.map((c) => {
+    const m = metricsBy[c.id] || {};
+    const imp = m.impressions || 0;
+    const clk = m.clicks || 0;
+    return {
+      ...c,
+      actionLabel: BY_CODE[c.actionType]?.label || c.actionType,
+      actionCategory: BY_CODE[c.actionType]?.categoria || null,
+      monthImpressions: imp,
+      monthClicks: clk,
+      monthLeads: m.leads || 0,
+      monthCTR: imp > 0 ? Math.round((clk / imp) * 10000) / 100 : 0,
+    };
+  });
   return { items: enriched, total };
 }
 
@@ -220,41 +237,46 @@ async function recordEvent(campaignId, type) {
 async function getDashboardStats() {
   const now = new Date();
   const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const [
     totalAdvertisers,
     activeCampaigns,
     upcomingExpiring,
     monthIncome,
+    monthMetrics,
   ] = await Promise.all([
     prisma.marketingAdvertiser.count(),
     prisma.marketingCampaign.count({ where: { isActive: true, status: 'ACTIVE' } }),
     prisma.marketingCampaign.count({
-      where: {
-        isActive: true,
-        endDate: { lte: in30Days, gte: now },
-      },
+      where: { isActive: true, endDate: { lte: in30Days, gte: now } },
     }),
-    // Suma de priceCOP de campañas que estuvieron activas este mes
     prisma.marketingCampaign.aggregate({
       _sum: { priceCOP: true },
-      where: {
-        startDate: { lte: now },
-        endDate: { gte: new Date(now.getFullYear(), now.getMonth(), 1) },
-      },
+      where: { startDate: { lte: now }, endDate: { gte: monthStart } },
+    }),
+    prisma.marketingMetric.aggregate({
+      _sum: { impressions: true, clicks: true, leads: true },
+      where: { date: { gte: monthStart } },
     }),
   ]);
+
+  const impresionesMes = monthMetrics._sum.impressions || 0;
+  const clicsMes = monthMetrics._sum.clicks || 0;
+  const leadsMes = monthMetrics._sum.leads || 0;
+  const ctrPromedio = impresionesMes > 0
+    ? Math.round((clicsMes / impresionesMes) * 10000) / 100  // 2 decimales en %
+    : 0;
 
   return {
     anunciantesActivos: totalAdvertisers,
     campanasActivasAhora: activeCampaigns,
     campanasPorVencer30d: upcomingExpiring,
     ingresosMesCOP: monthIncome._sum.priceCOP || 0,
-    // Stubs M2: cuando llegue tracking, estos vienen reales
-    impresionesMes: 0,
-    clicsMes: 0,
-    leadsMes: 0,
-    ctrPromedio: 0,
+    impresionesMes,
+    clicsMes,
+    leadsMes,
+    ctrPromedio,
   };
 }
 

@@ -207,7 +207,7 @@ export default function AdminMarketingPage() {
                   <Table size="small">
                     <TableHead sx={{ bgcolor: '#f8fafc' }}>
                       <TableRow>
-                        {['Campaña', 'Anunciante', 'Tipo', 'Estado', 'ON/OFF', 'Periodo', 'Precio', 'Acciones'].map((h) => (
+                        {['Campaña', 'Anunciante', 'Tipo', 'Estado', 'ON/OFF', 'Impr. mes', 'Clics', 'CTR', 'Periodo', 'Precio', 'Acciones'].map((h) => (
                           <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase' }}>{h}</TableCell>
                         ))}
                       </TableRow>
@@ -231,6 +231,11 @@ export default function AdminMarketingPage() {
                               <Switch size="small" checked={c.isActive} onChange={() => toggleCampaign(c)}
                                 sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: ACCENT },
                                   '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: ACCENT } }} />
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{c.monthImpressions || 0}</TableCell>
+                            <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{c.monthClicks || 0}</TableCell>
+                            <TableCell sx={{ fontSize: '0.8125rem', color: c.monthCTR > 0 ? ACCENT : '#94a3b8', fontWeight: 600 }}>
+                              {c.monthCTR > 0 ? `${c.monthCTR}%` : '—'}
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.75rem' }}>
                               {fmtDate(c.startDate)}<br />
@@ -262,7 +267,7 @@ export default function AdminMarketingPage() {
                         );
                       })}
                       {campaigns.length === 0 && (
-                        <TableRow><TableCell colSpan={8} sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>
+                        <TableRow><TableCell colSpan={11} sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>
                           Sin campañas aún. Crea la primera desde el catálogo.
                         </TableCell></TableRow>
                       )}
@@ -344,6 +349,83 @@ export default function AdminMarketingPage() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
         {toast && <Alert severity={toast.severity} onClose={() => setToast(null)} sx={{ borderRadius: '8px' }}>{toast.msg}</Alert>}
       </Snackbar>
+    </Box>
+  );
+}
+
+// ─── Config específica por tipo de acción ───
+function ActionConfigPanel({ actionType, config, onChange }) {
+  const cfg = config || {};
+  const set = (k, v) => onChange({ ...cfg, [k]: v });
+
+  // Configs soportadas por tipo (M2)
+  const popup = ['POPUP_BIENVENIDA', 'EXIT_INTENT', 'MOBILE_INTERSTICIAL'].includes(actionType);
+  const banner = ['BANNER_HERO', 'BANNER_SIDEBAR', 'BANNER_FOOTER', 'COMPARADOR_BANNER',
+                  'MOBILE_STICKY_FOOTER', 'BLOG_PATROCINADOR', 'WEB_PUSH_TOAST'].includes(actionType);
+  const search = actionType === 'SEARCH_DESTACADO';
+
+  if (!popup && !banner && !search) return null;
+
+  return (
+    <Box sx={{ p: 2, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+      <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', mb: 1.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        Configuración del formato
+      </Typography>
+      <Grid container spacing={2}>
+        {popup && (
+          <>
+            <Grid item xs={6} md={3}>
+              <TextField fullWidth size="small" type="number" label="Delay (seg)"
+                value={cfg.delaySec ?? 3} onChange={(e) => set('delaySec', parseInt(e.target.value) || 0)} />
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <TextField fullWidth size="small" type="number" label="Cierre permitido tras (seg)"
+                value={cfg.closeAfterSec ?? 0} onChange={(e) => set('closeAfterSec', parseInt(e.target.value) || 0)} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth select size="small" label="Frecuencia"
+                value={cfg.frecuencia ?? 'session'} onChange={(e) => set('frecuencia', e.target.value)}>
+                <MenuItem value="session">1 por sesión</MenuItem>
+                <MenuItem value="day">1 por día</MenuItem>
+                <MenuItem value="always">Siempre</MenuItem>
+              </TextField>
+            </Grid>
+          </>
+        )}
+        {banner && (
+          <>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth select size="small" label="Donde aparece"
+                value={cfg.segmento ?? 'all'} onChange={(e) => set('segmento', e.target.value)}>
+                <MenuItem value="all">Todas las páginas</MenuItem>
+                <MenuItem value="home">Solo home</MenuItem>
+                <MenuItem value="directorio">Solo directorio</MenuItem>
+                <MenuItem value="blog">Solo blog</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth select size="small" label="Dispositivo"
+                value={cfg.device ?? 'both'} onChange={(e) => set('device', e.target.value)}>
+                <MenuItem value="both">Desktop + mobile</MenuItem>
+                <MenuItem value="desktop">Solo desktop</MenuItem>
+                <MenuItem value="mobile">Solo mobile</MenuItem>
+              </TextField>
+            </Grid>
+          </>
+        )}
+        {search && (
+          <>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth size="small" label="Especialidad (slug)" placeholder="audiologia"
+                value={cfg.especialidad ?? ''} onChange={(e) => set('especialidad', e.target.value)} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth size="small" label="Ciudad"
+                value={cfg.ciudad ?? ''} onChange={(e) => set('ciudad', e.target.value)} />
+            </Grid>
+          </>
+        )}
+      </Grid>
     </Box>
   );
 }
@@ -557,6 +639,10 @@ function CampaignDialog({ open, data, initialActionType, advertisers, catalog, o
           </Grid>
           <Grid item xs={12}>
             <CreativeUploader value={form} onChange={(patch) => setForm({ ...form, ...patch })} />
+          </Grid>
+          <Grid item xs={12}>
+            <ActionConfigPanel actionType={form.actionType} config={form.config || {}}
+              onChange={(config) => setForm({ ...form, config })} />
           </Grid>
           <Grid item xs={12}>
             <Box sx={{ p: 2, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px dashed #cbd5e1' }}>
