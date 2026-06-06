@@ -295,6 +295,57 @@ export function directoryAlliesGrouped(allies) {
 }
 
 /**
+ * Servicios del profesional agrupados por la profesión asociada.
+ * Devuelve `{ groups: [{ profesion, items: [{nombre, ...}] }], esEmpresa, total }`.
+ *
+ * - Persona NATURAL: 1 grupo con su profesión (o "Servicios" si no hay).
+ * - Persona JURIDICA con `profesionesAdicionales`: 1 grupo por cada
+ *   profesión activa (principal + adicionales). Servicios sin `profesion`
+ *   asociada caen en un grupo "Otros".
+ *
+ * `items` conserva el objeto original (nombre, descripcion, precio, duracion).
+ */
+export function directoryServicesByProfession(profile) {
+  if (!profile) return { groups: [], esEmpresa: false, total: 0 };
+  const servicios = Array.isArray(profile.servicios) ? profile.servicios : [];
+  const esEmpresa = !!profile.esCentro || profile.personaTipo === 'JURIDICA';
+  const principal = profile.profesion || null;
+  const adicionales = Array.isArray(profile.profesionesAdicionales) ? profile.profesionesAdicionales : [];
+  const profesionesActivas = Array.from(new Set([principal, ...adicionales].filter(Boolean)));
+
+  if (!esEmpresa || profesionesActivas.length <= 1) {
+    // Un solo grupo (titulado con la profesión cuando exista)
+    const items = servicios
+      .map((s) => (typeof s === 'string' ? { nombre: s } : s))
+      .filter((s) => s && s.nombre);
+    return {
+      esEmpresa,
+      total: items.length,
+      groups: items.length > 0 ? [{ profesion: principal, items }] : [],
+    };
+  }
+
+  // Empresa con múltiples profesiones → agrupar
+  const map = new Map();
+  for (const p of profesionesActivas) map.set(p, []);
+  const otros = [];
+  for (const raw of servicios) {
+    const s = typeof raw === 'string' ? { nombre: raw } : raw;
+    if (!s || !s.nombre) continue;
+    const prof = s.profesion && profesionesActivas.includes(s.profesion) ? s.profesion : null;
+    if (prof) map.get(prof).push(s);
+    else otros.push(s);
+  }
+  const groups = [];
+  for (const p of profesionesActivas) {
+    const items = map.get(p);
+    if (items.length > 0) groups.push({ profesion: p, items });
+  }
+  if (otros.length > 0) groups.push({ profesion: null, items: otros });
+  return { esEmpresa, total: servicios.length, groups };
+}
+
+/**
  * Chips de servicios reales del profesional (máx. N).
  * Lee primero del JSON `servicios` (lista creada por el profesional con
  * { nombre, descripcion, precio, duracion, profesion? }). Solo si está

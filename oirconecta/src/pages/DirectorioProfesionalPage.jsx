@@ -52,6 +52,7 @@ import {
   directoryProfilePhoto,
   directoryAvailabilitySummary,
   directoryServiceChips,
+  directoryServicesByProfession,
   directoryAlliesGrouped,
   waMeHrefFromPhone,
 } from '../utils/directoryPresentation';
@@ -297,6 +298,7 @@ export default function DirectorioProfesionalPage() {
   const wa = waMeHrefFromPhone(phone);
   const bio = profile ? directoryProfileBio(profile) : '';
   const chips = profile ? directoryServiceChips(profile, 10) : [];
+  const serviciosAgrupados = profile ? directoryServicesByProfession(profile) : { groups: [], esEmpresa: false, total: 0 };
   const alliesGrouped = useMemo(() => (profile ? directoryAlliesGrouped(profile.allies) : []), [profile]);
   const polizas = Array.isArray(profile?.polizasAceptadas) ? profile.polizasAceptadas.filter(Boolean) : [];
 
@@ -1443,43 +1445,91 @@ export default function DirectorioProfesionalPage() {
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.75, fontWeight: 500 }}>
                   {sectionTitles.serviciosDesc}
                 </Typography>
-                {chips.length > 0 ? (
+                {serviciosAgrupados.total > 0 ? (
+                  <Box>
+                    {serviciosAgrupados.groups.map((grupo, gIdx) => (
+                      <Box key={grupo.profesion || `otros-${gIdx}`} sx={{ mb: gIdx < serviciosAgrupados.groups.length - 1 ? 4 : 0 }}>
+                        {serviciosAgrupados.esEmpresa && serviciosAgrupados.groups.length > 1 && (
+                          <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'primary.dark', mb: 1.5, mt: gIdx === 0 ? 0 : 1, letterSpacing: '-0.01em' }}>
+                            {grupo.profesion || 'Otros servicios'}
+                          </Typography>
+                        )}
+                        <Grid container spacing={1.75}>
+                          {grupo.items.map((s, idx) => {
+                            const SvcIcon = HELP_PILLAR_ICONS[(gIdx * 7 + idx) % HELP_PILLAR_ICONS.length];
+                            const detalles = [s.precio && `$${s.precio}`, s.duracion].filter(Boolean).join(' · ');
+                            return (
+                              <Grid item xs={12} sm={6} md={4} key={`${s.nombre}-${idx}`}>
+                                <Paper
+                                  elevation={0}
+                                  sx={{
+                                    height: '100%',
+                                    p: 2,
+                                    borderRadius: 2.5,
+                                    border: '1px solid rgba(8, 89, 70, 0.1)',
+                                    bgcolor: 'rgba(255,255,255,0.85)',
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: 1.5,
+                                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                                    '&:hover': {
+                                      transform: 'translateY(-2px)',
+                                      boxShadow: '0 12px 32px rgba(16, 40, 32, 0.08)',
+                                    },
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      width: 40, height: 40, borderRadius: 1.75,
+                                      bgcolor: 'rgba(8, 89, 70, 0.08)',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      color: 'primary.dark', flexShrink: 0,
+                                    }}
+                                  >
+                                    <SvcIcon sx={{ fontSize: 22 }} />
+                                  </Box>
+                                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                                    <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.9375rem', md: '1rem' }, lineHeight: 1.4, color: '#0f1f18' }}>
+                                      {s.nombre}
+                                    </Typography>
+                                    {s.descripcion && (
+                                      <Typography sx={{ fontSize: '0.8125rem', color: 'rgba(15,31,24,0.65)', mt: 0.5, lineHeight: 1.5 }}>
+                                        {s.descripcion}
+                                      </Typography>
+                                    )}
+                                    {detalles && (
+                                      <Typography sx={{ fontSize: '0.7rem', color: 'primary.main', fontWeight: 700, mt: 0.5, letterSpacing: '0.04em' }}>
+                                        {detalles}
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                </Paper>
+                              </Grid>
+                            );
+                          })}
+                        </Grid>
+                      </Box>
+                    ))}
+                  </Box>
+                ) : chips.length > 0 ? (
                   <Grid container spacing={1.75}>
                     {chips.map((c, idx) => {
                       const SvcIcon = HELP_PILLAR_ICONS[idx % HELP_PILLAR_ICONS.length];
                       return (
                         <Grid item xs={12} sm={6} md={4} key={c}>
-                          <Paper
-                            elevation={0}
+                          <Paper elevation={0}
                             sx={{
-                              height: '100%',
-                              p: 2,
-                              borderRadius: 2.5,
+                              height: '100%', p: 2, borderRadius: 2.5,
                               border: '1px solid rgba(8, 89, 70, 0.1)',
                               bgcolor: 'rgba(255,255,255,0.85)',
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: 1.5,
-                              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                              '&:hover': {
-                                transform: 'translateY(-2px)',
-                                boxShadow: '0 12px 32px rgba(16, 40, 32, 0.08)',
-                              },
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 1.75,
-                                bgcolor: 'rgba(8, 89, 70, 0.08)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'primary.dark',
-                                flexShrink: 0,
-                              }}
-                            >
+                              display: 'flex', alignItems: 'flex-start', gap: 1.5,
+                            }}>
+                            <Box sx={{
+                              width: 40, height: 40, borderRadius: 1.75,
+                              bgcolor: 'rgba(8, 89, 70, 0.08)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: 'primary.dark', flexShrink: 0,
+                            }}>
                               <SvcIcon sx={{ fontSize: 22 }} />
                             </Box>
                             <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.9375rem', md: '1rem' }, lineHeight: 1.45, color: '#0f1f18' }}>
