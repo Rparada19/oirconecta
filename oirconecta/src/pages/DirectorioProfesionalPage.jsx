@@ -122,6 +122,12 @@ const dirCtaPrimarySx = {
   '&:hover': { transform: 'translateY(-1px)' },
 };
 
+// Mixin para botones "primarios" sobre fondo oscuro/gradiente (texto blanco forzado)
+const ctaOnDarkSx = {
+  color: '#ffffff !important',
+  '& .MuiSvgIcon-root': { color: '#ffffff' },
+};
+
 const HELP_PILLAR_ICONS = [MedicalServices, Psychology, CoPresent, FavoriteBorder];
 const HELP_PILLAR_COPY = [
   { title: 'Escucha activa', text: 'Tiempo real para entender tu historia y lo que te preocupa del oído o del equilibrio.' },
@@ -2083,6 +2089,7 @@ export default function DirectorioProfesionalPage() {
                 size="medium"
                 startIcon={<CalendarMonth />}
                 sx={{
+                  ...ctaOnDarkSx,
                   fontWeight: 800,
                   textTransform: 'none',
                   borderRadius: 2.5,
@@ -2144,6 +2151,7 @@ export default function DirectorioProfesionalPage() {
         </>
       )}
 
+      <Box sx={{ height: { xs: 32, md: 48 } }} aria-hidden />
       <Footer />
 
       <ContactoProfesionalDialog
