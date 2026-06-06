@@ -358,7 +358,7 @@ export default function ProfesionalPerfilPage() {
                 <FormControl fullWidth sx={fieldSx}>
                   <InputLabel>Profesión</InputLabel>
                   <Select value={form.profesion} label="Profesión" onChange={e => set('profesion', e.target.value)}>
-                    {['Audiólogo','Fonoaudiólogo','Otorrinolaringólogo','Otólogo'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+                    {['Audiología','Fonoaudiología','Otorrinolaringología','Otología'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
                   </Select>
                 </FormControl>
               </Grid>
