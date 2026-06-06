@@ -40,7 +40,9 @@ export default function PhotoUploader({
       if (r?.data?.success) {
         onChange(r.data.data.url, r.data.data);
       } else {
-        setError(r?.data?.error || 'Error al subir');
+        // directoryRequest devuelve `r.error` cuando el status no es 2xx.
+        const msg = r?.error || r?.data?.error || 'Error al subir';
+        setError(msg);
       }
     } catch (e) {
       setError(e?.response?.data?.error || e.message || 'Error de red');
