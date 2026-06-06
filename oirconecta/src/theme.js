@@ -321,18 +321,29 @@ export function buildTheme(createThemeFn) {
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
-              borderRadius: 6,
-              background: 'rgba(255,255,255,0.85)',
-              backdropFilter: 'blur(8px)',
+              borderRadius: 8,
+              background: '#ffffff',
               transition: 'all 0.2s ease',
-              '& fieldset': { borderColor: 'rgba(8,89,70,0.20)', borderWidth: '1.5px' },
-              '&:hover fieldset': { borderColor: 'rgba(8,89,70,0.45)' },
+              // borderWidth uniforme: si cambias a 1.5px el notch del label se descuadra
+              '& fieldset': { borderColor: 'rgba(8,89,70,0.25)', borderWidth: '1px' },
+              '&:hover fieldset': { borderColor: 'rgba(8,89,70,0.50)' },
               '&.Mui-focused fieldset': {
                 borderColor: '#085946',
-                boxShadow: '0 0 0 3px rgba(8,89,70,0.12)',
+                borderWidth: '2px',
+                boxShadow: '0 0 0 3px rgba(8,89,70,0.10)',
               },
+              // Asegura que el notch (legend) ajuste correctamente al tamaño de la label
+              '& .MuiOutlinedInput-notchedOutline legend': { fontSize: '0.75em' },
             },
+            // Label: cuando está dentro del input (no shrunk), color suave; al enfocar, verde.
+            '& .MuiInputLabel-root': { color: 'rgba(15,25,35,0.55)' },
             '& .MuiInputLabel-root.Mui-focused': { color: '#085946' },
+            // Cuando el label está shrunk (tiene valor o focused), darle background blanco
+            // para que no se vea encima de un placeholder/cursor en el notch.
+            '& .MuiInputLabel-shrink': {
+              background: '#ffffff',
+              padding: '0 4px',
+            },
           },
         },
       },

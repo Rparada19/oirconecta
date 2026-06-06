@@ -8,6 +8,7 @@ import { AddOutlined, Close, SaveOutlined } from '@mui/icons-material';
 import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
 import { getServiciosSugeridos } from '../../config/serviciosPorProfesion';
+import PhotoUploader from '../../components/profesional/PhotoUploader';
 
 const glassCard = {
   background: 'rgba(255,255,255,0.90)',
@@ -503,13 +504,60 @@ export default function ProfesionalPerfilPage() {
           {/* 8 — Galería */}
           <TabPanel value={tab} index={8}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}><TextField fullWidth label="Foto de perfil (URL)" {...f('fotoPerfilUrl')} sx={fieldSx} helperText="URL pública de tu foto profesional" /></Grid>
-              <Grid item xs={12} sm={6}><TextField fullWidth label="Banner (URL)" {...f('bannerUrl')} sx={fieldSx} helperText="Imagen ancha para la cabecera de tu ficha" /></Grid>
-              <Grid item xs={12}><Divider /></Grid>
-              <Grid item xs={12}>
-                <StringListField label="Fotos adicionales (URLs)" placeholder="https://..." values={form.photoUrls} onChange={v => set('photoUrls', v)} />
+              <Grid item xs={12} sm={4}>
+                <SectionTitle>Foto de perfil</SectionTitle>
+                <PhotoUploader
+                  value={form.fotoPerfilUrl}
+                  onChange={(url) => set('fotoPerfilUrl', url)}
+                  label="Subir foto de perfil"
+                  aspectRatio="1/1"
+                  hint="Cuadrada, idealmente 600×600 px. Aparece en tu tarjeta del directorio."
+                />
               </Grid>
-              <Grid item xs={12}><Divider /></Grid>
+              <Grid item xs={12} sm={8}>
+                <SectionTitle>Banner / cabecera</SectionTitle>
+                <PhotoUploader
+                  value={form.bannerUrl}
+                  onChange={(url) => set('bannerUrl', url)}
+                  label="Subir banner"
+                  aspectRatio="3/1"
+                  hint="Imagen ancha, 1800×600 px aprox. Aparece encima de tu ficha pública."
+                />
+              </Grid>
+              <Grid item xs={12}><Divider sx={{ my: 1 }} /></Grid>
+              <Grid item xs={12}>
+                <SectionTitle>Fotos adicionales</SectionTitle>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Hasta {form.photoUrls.length} fotos extras: consultorio, equipo, ambiente, etc.
+                </Typography>
+                <Grid container spacing={2}>
+                  {form.photoUrls.map((url, i) => (
+                    <Grid item xs={6} sm={3} key={i}>
+                      <PhotoUploader
+                        value={url}
+                        onChange={(u) => {
+                          const next = [...form.photoUrls];
+                          if (u) next[i] = u; else next.splice(i, 1);
+                          set('photoUrls', next);
+                        }}
+                        label="Subir foto"
+                        aspectRatio="1/1"
+                        maxMB={8}
+                      />
+                    </Grid>
+                  ))}
+                  <Grid item xs={6} sm={3}>
+                    <PhotoUploader
+                      value=""
+                      onChange={(u) => { if (u) set('photoUrls', [...form.photoUrls, u]); }}
+                      label="+ Agregar foto"
+                      aspectRatio="1/1"
+                      maxMB={8}
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
+              <Grid item xs={12}><Divider sx={{ my: 1 }} /></Grid>
               <Grid item xs={12}>
                 <StringListField label="Videos (URLs de YouTube o Vimeo)" placeholder="https://youtube.com/watch?v=..." values={form.videoUrls} onChange={v => set('videoUrls', v)} />
               </Grid>

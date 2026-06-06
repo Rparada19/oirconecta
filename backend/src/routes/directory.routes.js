@@ -11,6 +11,9 @@ const directoryController = require('../controllers/directory.controller');
 const { authenticate, authorize } = require('../middleware/auth');
 const { authenticateDirectoryAccount } = require('../middleware/directoryAuth');
 const validateRequest = require('../middleware/validateRequest');
+const storage = require('../services/storage.service');
+
+const profileUploader = storage.makeUploader({ folder: 'directorio/perfiles', maxSizeMB: 8 });
 
 router.get(
   '/search',
@@ -83,6 +86,28 @@ router.post(
 
 router.get('/me', authenticateDirectoryAccount, directoryController.getMe);
 router.get('/me/stats', authenticateDirectoryAccount, directoryController.getMyStats);
+
+// Upload de imagen del profesional (foto perfil, banner, galería)
+router.post('/me/upload', authenticateDirectoryAccount, (req, res) => {
+  if (!storage.isConfigured) {
+    return res.status(503).json({ success: false, error: 'Storage no configurado en el servidor.' });
+  }
+  profileUploader.single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ success: false, error: err.message });
+    if (!req.file) return res.status(400).json({ success: false, error: 'Sin archivo' });
+    res.json({
+      success: true,
+      data: {
+        url: req.file.path,
+        publicId: req.file.filename,
+        width: req.file.width,
+        height: req.file.height,
+        format: req.file.format,
+        bytes: req.file.size,
+      },
+    });
+  });
+});
 
 router.get(
   '/me/inquiries',

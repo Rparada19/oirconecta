@@ -483,16 +483,18 @@ async function updateMyDirectoryProfile(accountId, body) {
     if (body.profesion == null || body.profesion === '') {
       patch.profesion = null;
       patch.professionId = null;
-    } else if (!PROFESIONES_DIRECTORIO.includes(body.profesion)) {
-      const err = new Error(`Profesión no válida. Use: ${PROFESIONES_DIRECTORIO.join(', ')}`);
-      err.statusCode = 400;
-      throw err;
     } else {
-      patch.profesion = body.profesion;
-      // Mapeo canónico contra `professions` (F1). Si el seed aún no corrió,
-      // simplemente quedará null y se rellenará en la próxima edición.
+      // Acepta tanto la disciplina ("Audiología") como el nombre del rol
+      // ("Audiólogo/a"). normalizeProfesion mapea ambos a la fila canónica.
       const canonical = await normalizeProfesion(body.profesion, prisma);
-      patch.professionId = canonical ? canonical.id : null;
+      if (!canonical) {
+        const err = new Error(`Profesión no válida. Use: ${PROFESIONES_DIRECTORIO.join(', ')}`);
+        err.statusCode = 400;
+        throw err;
+      }
+      // Guarda el nombre de la disciplina (texto legacy) consistente.
+      patch.profesion = canonical.nombreDisciplina || canonical.nombre || body.profesion;
+      patch.professionId = canonical.id;
     }
   }
   if (body.polizasAceptadas !== undefined) {
