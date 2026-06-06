@@ -7,6 +7,7 @@ import {
 import { AddOutlined, Close, SaveOutlined } from '@mui/icons-material';
 import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
+import { getServiciosSugeridos } from '../../config/serviciosPorProfesion';
 
 const glassCard = {
   background: 'rgba(255,255,255,0.90)',
@@ -81,12 +82,48 @@ function StringListField({ label, placeholder, values, onChange }) {
   );
 }
 
-function ServiciosEditor({ servicios, onChange }) {
-  function add() { onChange([...servicios, { nombre: '', descripcion: '', precio: '', duracion: '' }]); }
+function ServiciosEditor({ servicios, onChange, profesion }) {
+  function add(nombre = '') { onChange([...servicios, { nombre, descripcion: '', precio: '', duracion: '' }]); }
   function remove(i) { onChange(servicios.filter((_, idx) => idx !== i)); }
   function update(i, field, val) { const n = servicios.map((s, idx) => idx === i ? { ...s, [field]: val } : s); onChange(n); }
+
+  const sugeridos = getServiciosSugeridos(profesion);
+  const yaAgregados = new Set(servicios.map((s) => (s.nombre || '').trim().toLowerCase()));
+
   return (
     <Box>
+      {sugeridos.length > 0 && (
+        <Box sx={{ mb: 3, p: 2, borderRadius: '12px', bgcolor: 'rgba(8,89,70,0.04)', border: '1px dashed rgba(8,89,70,0.25)' }}>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN, mb: 1.5 }}>
+            Servicios sugeridos para tu profesión
+          </Typography>
+          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 1.5 }}>
+            Haz clic en cualquier servicio para agregarlo a tu perfil. Puedes ajustar precio, duración y descripción después.
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {sugeridos.map((s) => {
+              const isAdded = yaAgregados.has(s.toLowerCase());
+              return (
+                <Chip
+                  key={s}
+                  label={s}
+                  size="small"
+                  onClick={isAdded ? undefined : () => add(s)}
+                  icon={isAdded ? <Close style={{ fontSize: 14, color: 'rgba(8,89,70,0.6)' }} /> : <AddOutlined style={{ fontSize: 14 }} />}
+                  sx={{
+                    cursor: isAdded ? 'default' : 'pointer',
+                    bgcolor: isAdded ? 'rgba(8,89,70,0.12)' : '#fff',
+                    color: isAdded ? 'rgba(8,89,70,0.7)' : GREEN,
+                    border: '1px solid rgba(8,89,70,0.25)',
+                    fontWeight: 600,
+                    '&:hover': { bgcolor: isAdded ? 'rgba(8,89,70,0.12)' : 'rgba(8,89,70,0.08)' },
+                  }}
+                />
+              );
+            })}
+          </Box>
+        </Box>
+      )}
       {servicios.map((s, i) => (
         <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
@@ -101,9 +138,9 @@ function ServiciosEditor({ servicios, onChange }) {
           </Grid>
         </Card>
       ))}
-      <Button startIcon={<AddOutlined />} onClick={add} variant="outlined" size="small"
+      <Button startIcon={<AddOutlined />} onClick={() => add('')} variant="outlined" size="small"
         sx={{ borderRadius: '10px', textTransform: 'none', borderColor: GREEN, color: GREEN, fontWeight: 700 }}>
-        + Agregar servicio
+        + Agregar servicio personalizado
       </Button>
     </Box>
   );
@@ -398,7 +435,7 @@ export default function ProfesionalPerfilPage() {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Lista los servicios que ofreces. El precio es opcional.
             </Typography>
-            <ServiciosEditor servicios={form.servicios} onChange={v => set('servicios', v)} />
+            <ServiciosEditor servicios={form.servicios} onChange={v => set('servicios', v)} profesion={form.profesion} />
           </TabPanel>
 
           {/* 4 — Marcas */}
