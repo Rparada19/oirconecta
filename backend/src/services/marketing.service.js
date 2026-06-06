@@ -44,6 +44,13 @@ function computeUtms({ slug, actionType, especialidad }) {
   };
 }
 
+// Lista de marcas (para selector frontend)
+const BRANDS = [
+  'Phonak', 'Oticon', 'Signia', 'ReSound', 'Widex', 'Starkey', 'Unitron',
+  'Bernafon', 'Audio Service', 'Rexton', 'Hansaton', 'Sonic', 'Philips HearLink',
+  'Cochlear', 'Advanced Bionics', 'MED-EL', 'Oticon Medical', 'Neurelec', 'SYNCHRONY',
+].sort((a, b) => a.localeCompare(b, 'es'));
+
 // ─── Anunciantes ───
 async function listAdvertisers({ q, limit = 100, offset = 0 } = {}) {
   const where = q
@@ -65,10 +72,102 @@ async function listAdvertisers({ q, limit = 100, offset = 0 } = {}) {
 }
 
 async function createAdvertiser(data) {
-  return prisma.marketingAdvertiser.create({ data });
+  const { contacts, activities, ...rest } = data || {};
+  return prisma.marketingAdvertiser.create({
+    data: {
+      ...rest,
+      ...(Array.isArray(contacts) && contacts.length > 0 && {
+        contacts: { create: contacts.map((c) => ({
+          nombre: c.nombre, cargo: c.cargo, email: c.email,
+          telefono: c.telefono, esPrincipal: !!c.esPrincipal,
+        })) },
+      }),
+    },
+    include: { contacts: true },
+  });
+}
+
+/** Detalle completo del anunciante con relaciones y resumen de campañas. */
+async function getAdvertiserById(id) {
+  const adv = await prisma.marketingAdvertiser.findUnique({
+    where: { id },
+    include: {
+      contacts: { orderBy: [{ esPrincipal: 'desc' }, { createdAt: 'asc' }] },
+      activities: { orderBy: { fecha: 'desc' }, take: 50 },
+      campaigns: {
+        orderBy: { startDate: 'desc' },
+        include: { metrics: { select: { impressions: true, clicks: true, leads: true } } },
+      },
+    },
+  });
+  if (!adv) return null;
+
+  const totalInvertidoCOP = adv.campaigns.reduce((s, c) => s + (c.priceCOP || 0), 0);
+  const activas = adv.campaigns.filter((c) => c.isActive && c.status === 'ACTIVE').length;
+
+  const totalImp = adv.campaigns.reduce(
+    (s, c) => s + c.metrics.reduce((a, m) => a + (m.impressions || 0), 0), 0);
+  const totalClk = adv.campaigns.reduce(
+    (s, c) => s + c.metrics.reduce((a, m) => a + (m.clicks || 0), 0), 0);
+  const ctrGlobal = totalImp > 0 ? Math.round((totalClk / totalImp) * 10000) / 100 : 0;
+
+  // Strip metrics from campaigns for transport (ya agregamos)
+  adv.campaigns = adv.campaigns.map(({ metrics, ...c }) => c);
+
+  return {
+    ...adv,
+    resumen: {
+      totalCampanas: adv.campaigns.length,
+      campanasActivas: activas,
+      totalInvertidoCOP,
+      totalImpresiones: totalImp,
+      totalClics: totalClk,
+      ctrGlobal,
+    },
+  };
 }
 async function updateAdvertiser(id, data) {
-  return prisma.marketingAdvertiser.update({ where: { id }, data });
+  // Ignora relaciones (contactos/actividades) que se manejan en sus propios endpoints
+  const { contacts, activities, campaigns, _count, ...clean } = data || {};
+  if (clean.presupuestoAnualCOP !== undefined) {
+    clean.presupuestoAnualCOP = clean.presupuestoAnualCOP === null || clean.presupuestoAnualCOP === ''
+      ? null : parseInt(clean.presupuestoAnualCOP);
+  }
+  if (clean.nextFollowUpAt) clean.nextFollowUpAt = new Date(clean.nextFollowUpAt);
+  return prisma.marketingAdvertiser.update({
+    where: { id }, data: clean,
+    include: { contacts: true },
+  });
+}
+
+// ─── Contactos del anunciante ───
+async function addContact(advertiserId, data) {
+  return prisma.marketingAdvertiserContact.create({
+    data: { advertiserId, ...data },
+  });
+}
+async function updateContact(contactId, data) {
+  return prisma.marketingAdvertiserContact.update({ where: { id: contactId }, data });
+}
+async function deleteContact(contactId) {
+  return prisma.marketingAdvertiserContact.delete({ where: { id: contactId } });
+}
+
+// ─── Actividades / timeline ───
+async function addActivity(advertiserId, data, autorEmail) {
+  return prisma.marketingAdvertiserActivity.create({
+    data: {
+      advertiserId,
+      tipo: data.tipo,
+      descripcion: data.descripcion,
+      fecha: data.fecha ? new Date(data.fecha) : new Date(),
+      reminderAt: data.reminderAt ? new Date(data.reminderAt) : null,
+      autorEmail,
+    },
+  });
+}
+async function deleteActivity(activityId) {
+  return prisma.marketingAdvertiserActivity.delete({ where: { id: activityId } });
 }
 async function deleteAdvertiser(id) {
   // Restrict: si tiene campañas, falla y debe responderse claro.
@@ -283,10 +382,17 @@ async function getDashboardStats() {
 module.exports = {
   slugify,
   computeUtms,
+  BRANDS,
   listAdvertisers,
   createAdvertiser,
   updateAdvertiser,
   deleteAdvertiser,
+  getAdvertiserById,
+  addContact,
+  updateContact,
+  deleteContact,
+  addActivity,
+  deleteActivity,
   listCampaigns,
   createCampaign,
   updateCampaign,

@@ -1401,13 +1401,71 @@ model MarketingAdvertiser {
   notas            String? @db.Text
   logoUrl          String?
 
-  campaigns MarketingCampaign[]
+  // Hoja de cuenta (CRM B2B)
+  sitioWeb            String?
+  linkedinUrl         String?
+  /// Marca principal asociada (slug: phonak, widex, oticon, etc.)
+  marcaPrincipal      String?
+  /// PROSPECT | NEGOCIATING | ACTIVE | PAUSED | LOST
+  pipelineStage       String  @default("PROSPECT")
+  region              String?
+  ciudad              String?
+  presupuestoAnualCOP Int?
+  /// Frecuencia esperada de pauta: MENSUAL | TRIMESTRAL | SEMESTRAL | ANUAL | EVENTUAL
+  frecuenciaPauta     String?
+  nextFollowUpAt      DateTime?
+
+  campaigns  MarketingCampaign[]
+  contacts   MarketingAdvertiserContact[]
+  activities MarketingAdvertiserActivity[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([nombre])
+  @@index([pipelineStage])
+  @@index([marcaPrincipal])
   @@map("marketing_advertisers")
+}
+
+/// Contactos múltiples por anunciante (decision maker, comprador, etc.)
+model MarketingAdvertiserContact {
+  id           String @id @default(uuid())
+  advertiserId String
+  advertiser   MarketingAdvertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+
+  nombre      String
+  cargo       String?
+  email       String?
+  telefono    String?
+  esPrincipal Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([advertiserId])
+  @@map("marketing_advertiser_contacts")
+}
+
+/// Bitácora de la relación con el anunciante (llamadas, reuniones, propuestas, notas)
+model MarketingAdvertiserActivity {
+  id           String @id @default(uuid())
+  advertiserId String
+  advertiser   MarketingAdvertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+
+  /// LLAMADA | REUNION | EMAIL | PROPUESTA | CONTRATO | NOTA
+  tipo        String
+  descripcion String  @db.Text
+  /// Email del admin que registró la actividad (trazabilidad)
+  autorEmail  String?
+  fecha       DateTime @default(now())
+  reminderAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([advertiserId, fecha])
+  @@index([reminderAt])
+  @@map("marketing_advertiser_activities")
 }
 
 model MarketingCampaign {

@@ -133,6 +133,55 @@ router.patch('/admin/advertisers/:id', authenticate, authorize('ADMIN'), async (
     res.json({ success: true, data });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
+// Detalle hoja de cuenta
+router.get('/admin/advertisers/:id', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.getAdvertiserById(req.params.id);
+    if (!data) return res.status(404).json({ success: false, error: 'No encontrado' });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Lista de marcas para el selector
+router.get('/admin/brands', authenticate, authorize('ADMIN'), (req, res) => {
+  res.json({ success: true, data: svc.BRANDS });
+});
+
+// Contactos
+router.post('/admin/advertisers/:id/contacts', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.addContact(req.params.id, req.body);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.patch('/admin/contacts/:contactId', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.updateContact(req.params.contactId, req.body);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.delete('/admin/contacts/:contactId', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    await svc.deleteContact(req.params.contactId);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Actividades / timeline
+router.post('/admin/advertisers/:id/activities', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const autor = req.user?.email || null;
+    const data = await svc.addActivity(req.params.id, req.body, autor);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+router.delete('/admin/activities/:activityId', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    await svc.deleteActivity(req.params.activityId);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 router.delete('/admin/advertisers/:id', authenticate, authorize('ADMIN'), async (req, res) => {
   try {
     await svc.deleteAdvertiser(req.params.id);

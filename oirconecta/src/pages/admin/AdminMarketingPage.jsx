@@ -17,6 +17,15 @@ import MouseOutlinedIcon from '@mui/icons-material/MouseOutlined';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
 import { adminFetch } from './adminAuth';
+import AdvertiserDetailDrawer from './AdvertiserDetailDrawer';
+
+const PIPELINE_COLOR = {
+  PROSPECT:    { bg: '#f1f5f9', fg: '#64748b', label: 'Prospecto' },
+  NEGOCIATING: { bg: '#ede9fe', fg: '#6d28d9', label: 'Negociando' },
+  ACTIVE:      { bg: '#dcfce7', fg: '#15803d', label: 'Activo' },
+  PAUSED:      { bg: '#fef3c7', fg: '#a16207', label: 'Pausado' },
+  LOST:        { bg: '#fee2e2', fg: '#b91c1c', label: 'Perdido' },
+};
 
 const ACCENT = '#085946';
 const NAVY = '#272F50';
@@ -65,6 +74,7 @@ export default function AdminMarketingPage() {
   // dialogs
   const [advDialog, setAdvDialog] = useState(null); // null | {new}|{edit, data}
   const [campDialog, setCampDialog] = useState(null); // null | { actionType?: string, data?: object }
+  const [advDetailId, setAdvDetailId] = useState(null); // anunciante abierto en drawer
 
   const reload = async () => {
     setLoading(true);
@@ -294,36 +304,41 @@ export default function AdminMarketingPage() {
                 <Table size="small">
                   <TableHead sx={{ bgcolor: '#f8fafc' }}>
                     <TableRow>
-                      {['Nombre', 'Tipo', 'Contacto', 'Campañas', 'Acciones'].map((h) => (
+                      {['Nombre', 'Marca', 'Pipeline', 'Tipo', 'Campañas', 'Acciones'].map((h) => (
                         <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase' }}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {advertisers.map((a) => (
-                      <TableRow key={a.id} hover>
-                        <TableCell>
-                          <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>{a.nombre}</Typography>
-                          {a.nit && <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>NIT {a.nit}</Typography>}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: '0.8125rem' }}>{a.tipo}</TableCell>
-                        <TableCell sx={{ fontSize: '0.8125rem' }}>
-                          {a.contactoNombre && <div>{a.contactoNombre}</div>}
-                          {a.contactoEmail && <div style={{ color: '#64748b', fontSize: '0.75rem' }}>{a.contactoEmail}</div>}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{a._count?.campaigns || 0}</TableCell>
-                        <TableCell>
-                          <IconButton size="small" onClick={() => setAdvDialog({ data: a })}>
-                            <EditOutlinedIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" onClick={() => deleteAdvertiser(a)} sx={{ color: '#b91c1c' }}>
-                            <DeleteOutlineIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {advertisers.map((a) => {
+                      const p = PIPELINE_COLOR[a.pipelineStage] || PIPELINE_COLOR.PROSPECT;
+                      return (
+                        <TableRow key={a.id} hover sx={{ cursor: 'pointer' }}
+                          onClick={() => setAdvDetailId(a.id)}>
+                          <TableCell>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>{a.nombre}</Typography>
+                            {a.contactoNombre && <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{a.contactoNombre}</Typography>}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem' }}>{a.marcaPrincipal || '—'}</TableCell>
+                          <TableCell>
+                            <Chip size="small" label={p.label}
+                              sx={{ bgcolor: p.bg, color: p.fg, fontWeight: 700, fontSize: '0.7rem', height: 22 }} />
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem' }}>{a.tipo}</TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{a._count?.campaigns || 0}</TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <IconButton size="small" onClick={() => setAdvDialog({ data: a })}>
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" onClick={() => deleteAdvertiser(a)} sx={{ color: '#b91c1c' }}>
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                     {advertisers.length === 0 && (
-                      <TableRow><TableCell colSpan={5} sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>
+                      <TableRow><TableCell colSpan={6} sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>
                         Sin anunciantes aún.
                       </TableCell></TableRow>
                     )}
@@ -339,6 +354,9 @@ export default function AdminMarketingPage() {
       <AdvertiserDialog open={!!advDialog} data={advDialog?.data}
         onClose={() => setAdvDialog(null)}
         onSaved={() => { setAdvDialog(null); reload(); setToast({ severity: 'success', msg: 'Anunciante guardado' }); }} />
+
+      <AdvertiserDetailDrawer open={!!advDetailId} advertiserId={advDetailId}
+        onClose={() => setAdvDetailId(null)} onUpdated={reload} />
 
       <CampaignDialog open={!!campDialog} initialActionType={campDialog?.actionType}
         data={campDialog?.data} advertisers={advertisers} catalog={catalog.items}
