@@ -144,6 +144,7 @@ router.patch(
     body('nombreConsultorio').optional().isString().isLength({ max: 200 }),
     body('profesion').optional().isString().isLength({ max: 80 }),
     body('polizasAceptadas').optional().isArray(),
+    body('profesionesAdicionales').optional().isArray(),
     body('workplaces').optional().isArray(),
     body('allies').optional().custom((v) => v == null || typeof v === 'object'),
     body('studies').optional().custom((v) => v == null || typeof v === 'object'),

@@ -479,6 +479,36 @@ async function updateMyDirectoryProfile(accountId, body) {
         ? null
         : String(body.nombreConsultorio).trim().slice(0, 200);
   }
+  // Mapeo slug → nombre de disciplina (texto canónico que se persiste).
+  const SLUG_TO_DISCIPLINA = {
+    audiologo: 'Audiología',
+    fonoaudiologo: 'Fonoaudiología',
+    otologo: 'Otología',
+    otorrinolaringologo: 'Otorrinolaringología',
+  };
+
+  // Profesiones adicionales (solo aplica a centros/empresas; en personas naturales
+  // se ignora y se fuerza a []).
+  if (body.profesionesAdicionales !== undefined) {
+    const tipo = patch.personaTipo || existing.personaTipo;
+    if (tipo !== 'JURIDICA') {
+      patch.profesionesAdicionales = [];
+    } else if (!Array.isArray(body.profesionesAdicionales)) {
+      patch.profesionesAdicionales = [];
+    } else {
+      const seen = new Set();
+      const result = [];
+      for (const raw of body.profesionesAdicionales) {
+        const canonical = await normalizeProfesion(String(raw || ''), prisma);
+        if (canonical && !seen.has(canonical.id)) {
+          seen.add(canonical.id);
+          result.push(SLUG_TO_DISCIPLINA[canonical.slug] || canonical.nombre);
+        }
+      }
+      patch.profesionesAdicionales = result;
+    }
+  }
+
   if (body.profesion !== undefined) {
     if (body.profesion == null || body.profesion === '') {
       patch.profesion = null;
@@ -493,7 +523,7 @@ async function updateMyDirectoryProfile(accountId, body) {
         throw err;
       }
       // Guarda el nombre de la disciplina (texto legacy) consistente.
-      patch.profesion = canonical.nombreDisciplina || canonical.nombre || body.profesion;
+      patch.profesion = SLUG_TO_DISCIPLINA[canonical.slug] || canonical.nombre || body.profesion;
       patch.professionId = canonical.id;
     }
   }

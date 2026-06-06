@@ -97,6 +97,11 @@ model DirectoryProfile {
   /// Profesión canónica (lookup `professions`). Se llena con `normalizeProfesion()` al guardar/registrar.
   professionId      String?
   profession        Profession? @relation(fields: [professionId], references: [id], onDelete: SetNull)
+  /// Para perfiles JURIDICA (centros/clínicas/empresas): lista adicional de
+  /// profesiones que el centro presta. Se guardan nombres canónicos
+  /// ("Audiología", "Fonoaudiología", "Otorrinolaringología", "Otología").
+  /// Para NATURAL siempre es []. La profesión "primaria" sigue en `profesion`.
+  profesionesAdicionales String[] @default([])
   /// Ciudad principal canónica (lookup `cities`). El primer workplace puede sembrarlo si está vacío.
   cityId            String?
   city              City?       @relation(fields: [cityId], references: [id], onDelete: SetNull)

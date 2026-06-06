@@ -83,63 +83,86 @@ function StringListField({ label, placeholder, values, onChange }) {
   );
 }
 
-function ServiciosEditor({ servicios, onChange, profesion }) {
-  function add(nombre = '') { onChange([...servicios, { nombre, descripcion: '', precio: '', duracion: '' }]); }
+function ServiciosEditor({ servicios, onChange, profesion, profesionesAdicionales = [], esEmpresa = false }) {
+  function add(nombre = '', prof = '') { onChange([...servicios, { nombre, descripcion: '', precio: '', duracion: '', profesion: prof }]); }
   function remove(i) { onChange(servicios.filter((_, idx) => idx !== i)); }
   function update(i, field, val) { const n = servicios.map((s, idx) => idx === i ? { ...s, [field]: val } : s); onChange(n); }
 
-  const sugeridos = getServiciosSugeridos(profesion);
+  // Lista única de profesiones a sugerir (sin duplicados)
+  const profesionesActivas = Array.from(new Set([profesion, ...(profesionesAdicionales || [])].filter(Boolean)));
   const yaAgregados = new Set(servicios.map((s) => (s.nombre || '').trim().toLowerCase()));
 
   return (
     <Box>
-      {!profesion && (
+      {profesionesActivas.length === 0 && (
         <Alert severity="info" sx={{ mb: 3, borderRadius: '12px' }}>
           Define tu <strong>profesión</strong> en la pestaña <strong>Datos básicos</strong> y aparecerán automáticamente los servicios típicos de tu especialidad listos para agregar con un click.
         </Alert>
       )}
-      {sugeridos.length > 0 && (
-        <Box sx={{ mb: 3, p: 2, borderRadius: '12px', bgcolor: 'rgba(8,89,70,0.04)', border: '1px dashed rgba(8,89,70,0.25)' }}>
-          <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN, mb: 1.5 }}>
-            Servicios sugeridos para tu profesión
-          </Typography>
-          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 1.5 }}>
-            Haz clic en cualquier servicio para agregarlo a tu perfil. Puedes ajustar precio, duración y descripción después.
-          </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {sugeridos.map((s) => {
-              const isAdded = yaAgregados.has(s.toLowerCase());
-              return (
-                <Chip
-                  key={s}
-                  label={s}
-                  size="small"
-                  onClick={isAdded ? undefined : () => add(s)}
-                  icon={isAdded ? <Close style={{ fontSize: 14, color: 'rgba(8,89,70,0.6)' }} /> : <AddOutlined style={{ fontSize: 14 }} />}
-                  sx={{
-                    cursor: isAdded ? 'default' : 'pointer',
-                    bgcolor: isAdded ? 'rgba(8,89,70,0.12)' : '#fff',
-                    color: isAdded ? 'rgba(8,89,70,0.7)' : GREEN,
-                    border: '1px solid rgba(8,89,70,0.25)',
-                    fontWeight: 600,
-                    '&:hover': { bgcolor: isAdded ? 'rgba(8,89,70,0.12)' : 'rgba(8,89,70,0.08)' },
-                  }}
-                />
-              );
-            })}
+
+      {profesionesActivas.map((prof) => {
+        const sugeridos = getServiciosSugeridos(prof);
+        if (sugeridos.length === 0) return null;
+        return (
+          <Box key={prof} sx={{ mb: 3, p: 2, borderRadius: '12px', bgcolor: 'rgba(8,89,70,0.04)', border: '1px dashed rgba(8,89,70,0.25)' }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN, mb: 1.5 }}>
+              {esEmpresa ? `Servicios de ${prof}` : 'Servicios sugeridos para tu profesión'}
+            </Typography>
+            <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 1.5 }}>
+              Haz clic en cualquier servicio para agregarlo a tu perfil. Puedes ajustar precio, duración y descripción después.
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {sugeridos.map((s) => {
+                const isAdded = yaAgregados.has(s.toLowerCase());
+                return (
+                  <Chip
+                    key={s}
+                    label={s}
+                    size="small"
+                    onClick={isAdded ? undefined : () => add(s, prof)}
+                    icon={isAdded ? <Close style={{ fontSize: 14, color: 'rgba(8,89,70,0.6)' }} /> : <AddOutlined style={{ fontSize: 14 }} />}
+                    sx={{
+                      cursor: isAdded ? 'default' : 'pointer',
+                      bgcolor: isAdded ? 'rgba(8,89,70,0.12)' : '#fff',
+                      color: isAdded ? 'rgba(8,89,70,0.7)' : GREEN,
+                      border: '1px solid rgba(8,89,70,0.25)',
+                      fontWeight: 600,
+                      '&:hover': { bgcolor: isAdded ? 'rgba(8,89,70,0.12)' : 'rgba(8,89,70,0.08)' },
+                    }}
+                  />
+                );
+              })}
+            </Box>
           </Box>
-        </Box>
-      )}
+        );
+      })}
+
       {servicios.map((s, i) => (
         <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-            <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Servicio {i + 1}</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Servicio {i + 1}</Typography>
+              {esEmpresa && s.profesion && (
+                <Chip size="small" label={s.profesion} sx={{ bgcolor: 'rgba(8,89,70,0.10)', color: GREEN, fontWeight: 600, height: 20, fontSize: '0.65rem' }} />
+              )}
+            </Box>
             <IconButton size="small" onClick={() => remove(i)} sx={{ color: '#EF4444' }}><Close fontSize="small" /></IconButton>
           </Box>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Nombre del servicio *" value={s.nombre} onChange={e => update(i, 'nombre', e.target.value)} sx={fieldSx} /></Grid>
-            <Grid item xs={6} sm={3}><TextField fullWidth size="small" label="Precio (COP)" value={s.precio} onChange={e => update(i, 'precio', e.target.value)} placeholder="Ej: 80000" sx={fieldSx} /></Grid>
-            <Grid item xs={6} sm={3}><TextField fullWidth size="small" label="Duración" value={s.duracion} onChange={e => update(i, 'duracion', e.target.value)} placeholder="Ej: 50 min" sx={fieldSx} /></Grid>
+            <Grid item xs={12} sm={esEmpresa ? 4 : 6}><TextField fullWidth size="small" label="Nombre del servicio *" value={s.nombre} onChange={e => update(i, 'nombre', e.target.value)} sx={fieldSx} /></Grid>
+            {esEmpresa && (
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth size="small" sx={fieldSx}>
+                  <InputLabel>Profesión</InputLabel>
+                  <Select value={s.profesion || ''} label="Profesión" onChange={e => update(i, 'profesion', e.target.value)}>
+                    <MenuItem value="">— Sin asociar —</MenuItem>
+                    {profesionesActivas.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+            <Grid item xs={6} sm={esEmpresa ? 2 : 3}><TextField fullWidth size="small" label="Precio (COP)" value={s.precio} onChange={e => update(i, 'precio', e.target.value)} placeholder="Ej: 80000" sx={fieldSx} /></Grid>
+            <Grid item xs={6} sm={esEmpresa ? 2 : 3}><TextField fullWidth size="small" label="Duración" value={s.duracion} onChange={e => update(i, 'duracion', e.target.value)} placeholder="Ej: 50 min" sx={fieldSx} /></Grid>
             <Grid item xs={12}><TextField fullWidth size="small" label="Descripción" value={s.descripcion} onChange={e => update(i, 'descripcion', e.target.value)} multiline rows={2} sx={fieldSx} /></Grid>
           </Grid>
         </Card>
@@ -247,7 +270,7 @@ function DisponibilidadEditor({ disponibilidad, onChange }) {
 }
 
 const EMPTY_FORM = {
-  nombreConsultorio: '', profesion: '', generoFicha: '', descripcion: '',
+  nombreConsultorio: '', profesion: '', profesionesAdicionales: [], generoFicha: '', descripcion: '',
   personaTipo: '', documentoIdentidad: '', registroProfesional: '', anosExperiencia: '',
   telefonoPublico: '', whatsappPublico: '', emailPublico: '', direccionPublica: '',
   fotoPerfilUrl: '', bannerUrl: '',
@@ -280,6 +303,7 @@ export default function ProfesionalPerfilPage() {
       setForm({
         nombreConsultorio: d.nombreConsultorio || '',
         profesion: d.profesion || '',
+        profesionesAdicionales: Array.isArray(d.profesionesAdicionales) ? d.profesionesAdicionales : [],
         generoFicha: d.generoFicha || '',
         descripcion: d.descripcion || '',
         personaTipo: d.personaTipo || '',
@@ -357,12 +381,43 @@ export default function ProfesionalPerfilPage() {
               <Grid item xs={12} sm={6}><TextField fullWidth label="Nombre / Consultorio / Centro *" {...f('nombreConsultorio')} sx={fieldSx} /></Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth sx={fieldSx}>
-                  <InputLabel>Profesión</InputLabel>
-                  <Select value={form.profesion} label="Profesión" onChange={e => set('profesion', e.target.value)}>
+                  <InputLabel>{form.personaTipo === 'JURIDICA' ? 'Profesión principal' : 'Profesión'}</InputLabel>
+                  <Select value={form.profesion} label={form.personaTipo === 'JURIDICA' ? 'Profesión principal' : 'Profesión'} onChange={e => set('profesion', e.target.value)}>
                     {['Audiología','Fonoaudiología','Otorrinolaringología','Otología'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
                   </Select>
                 </FormControl>
               </Grid>
+              {form.personaTipo === 'JURIDICA' && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN, mb: 1 }}>
+                    Profesiones adicionales en el centro
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 1.5 }}>
+                    Selecciona todas las profesiones que se prestan en tu centro. Los servicios sugeridos se mostrarán agrupados por cada una.
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {['Audiología','Fonoaudiología','Otorrinolaringología','Otología']
+                      .filter(p => p !== form.profesion)
+                      .map(p => {
+                        const checked = form.profesionesAdicionales.includes(p);
+                        return (
+                          <Chip key={p} label={p} clickable
+                            onClick={() => {
+                              const cur = form.profesionesAdicionales;
+                              set('profesionesAdicionales', checked ? cur.filter(x => x !== p) : [...cur, p]);
+                            }}
+                            sx={{
+                              bgcolor: checked ? GREEN : '#fff',
+                              color: checked ? '#fff' : GREEN,
+                              border: `1px solid ${GREEN}`,
+                              fontWeight: 600,
+                              '&:hover': { bgcolor: checked ? '#064a3a' : 'rgba(8,89,70,0.08)' },
+                            }} />
+                        );
+                      })}
+                  </Box>
+                </Grid>
+              )}
               <Grid item xs={12} sm={4}>
                 <FormControl fullWidth sx={fieldSx}>
                   <InputLabel>Tipo de cuenta</InputLabel>
@@ -441,7 +496,10 @@ export default function ProfesionalPerfilPage() {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Lista los servicios que ofreces. El precio es opcional.
             </Typography>
-            <ServiciosEditor servicios={form.servicios} onChange={v => set('servicios', v)} profesion={form.profesion} />
+            <ServiciosEditor servicios={form.servicios} onChange={v => set('servicios', v)}
+              profesion={form.profesion}
+              profesionesAdicionales={form.profesionesAdicionales}
+              esEmpresa={form.personaTipo === 'JURIDICA'} />
           </TabPanel>
 
           {/* 4 — Marcas */}
