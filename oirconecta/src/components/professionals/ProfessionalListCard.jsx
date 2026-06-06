@@ -167,7 +167,10 @@ export default function ProfessionalListCard({ professional, roleLabel, toProfil
             className="btn-profile"
             onClick={(e) => {
               stop(e);
-              navigate('/agendar');
+              // Lleva al perfil del profesional. Desde ahí, el botón
+              // "Agendar cita" abre formulario de contacto (o /agendar
+              // si es consultorio propio de OírConecta).
+              if (toProfile) navigate(toProfile);
             }}
           >
             Agendar cita

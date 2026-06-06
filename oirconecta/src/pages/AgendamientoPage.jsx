@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { useSearchParams, Link as RouterLink } from 'react-router-dom';
 import {
@@ -174,7 +174,15 @@ function StepBadge({ num, label, active, done }) {
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function AgendamientoPage() {
   const [searchParams] = useSearchParams();
-  const directoryProfileId = searchParams.get('desdeDirectorio') || undefined;
+  const rawDirectoryProfileId = searchParams.get('desdeDirectorio') || undefined;
+  const [ownIds, setOwnIds] = useState([]);
+  // Solo aceptamos desdeDirectorio si pertenece a un consultorio propio de
+  // OírConecta. Cualquier otro UUID se ignora (el resto de profesionales del
+  // directorio gestiona sus citas por fuera; el contacto va por formulario).
+  const directoryProfileId = useMemo(
+    () => (rawDirectoryProfileId && ownIds.includes(rawDirectoryProfileId) ? rawDirectoryProfileId : undefined),
+    [rawDirectoryProfileId, ownIds]
+  );
 
   const [step, setStep] = useState(0); // 0=fecha, 1=hora, 2=datos, 3=éxito
   const [selectedDate, setSelectedDate] = useState(null);
@@ -191,7 +199,10 @@ export default function AgendamientoPage() {
   useEffect(() => {
     // Ping al health check para despertar el servidor antes de que el usuario seleccione fecha
     fetch(`${API}/api/public/retail-config`)
-      .then(r => r.json()).then(d => { if (d?.data?.professionalId) setRetailId(d.data.professionalId); })
+      .then(r => r.json()).then(d => {
+        if (d?.data?.professionalId) setRetailId(d.data.professionalId);
+        setOwnIds(d?.data?.ownDirectoryProfileIds || []);
+      })
       .catch(() => {});
     // Precarga slots del día siguiente para que el servidor ya esté caliente
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);

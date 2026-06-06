@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { useParams, Link as RouterLink } from 'react-router-dom';
+import ContactoProfesionalDialog from '../components/directorio/ContactoProfesionalDialog';
 import {
   Box,
   Typography,
@@ -395,11 +396,42 @@ export default function DirectorioProfesionalPage() {
     );
   }, [wa, name]);
 
+  // ─── ¿Este perfil pertenece a OírConecta (consultorio propio)? ───
+  // Solo los propios pueden enlazar a /agendar?desdeDirectorio=...
+  // El resto abre un formulario de contacto que envía email al profesional.
+  const [ownIds, setOwnIds] = useState([]);
+  useEffect(() => {
+    const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
+    fetch(`${API}/api/public/retail-config`)
+      .then((r) => r.json())
+      .then((d) => setOwnIds(d?.data?.ownDirectoryProfileIds || []))
+      .catch(() => setOwnIds([]));
+  }, []);
+  const isOirConectaOwn = useMemo(
+    () => !!profileId && ownIds.includes(profileId),
+    [ownIds, profileId]
+  );
+
   const agendarDesdeDirectorio = useMemo(
     () =>
-      `/agendar${profileId && isDirectoryProfileUuid(profileId) ? `?desdeDirectorio=${encodeURIComponent(profileId)}` : ''}`,
-    [profileId]
+      isOirConectaOwn
+        ? `/agendar${profileId && isDirectoryProfileUuid(profileId) ? `?desdeDirectorio=${encodeURIComponent(profileId)}` : ''}`
+        : null,
+    [isOirConectaOwn, profileId]
   );
+
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  /**
+   * Para usar en los botones "Agendar/Reservar cita":
+   * - Si es perfil propio → props para link a /agendar
+   * - Si NO es propio → props que abren el dialog de contacto
+   */
+  const agendarButtonProps = useMemo(() => {
+    if (isOirConectaOwn && agendarDesdeDirectorio) {
+      return { component: RouterLink, to: agendarDesdeDirectorio };
+    }
+    return { onClick: () => setContactDialogOpen(true) };
+  }, [isOirConectaOwn, agendarDesdeDirectorio]);
 
   const onWhatsappTrack = useCallback(() => {
     trackDirectoryWhatsAppClick(profileId).catch(() => {});
@@ -826,8 +858,7 @@ export default function DirectorioProfesionalPage() {
                     }}
                   >
                     <Button
-                      component={RouterLink}
-                      to={agendarDesdeDirectorio}
+                      {...agendarButtonProps}
                       variant="contained"
                       size="large"
                       startIcon={<CalendarMonth />}
@@ -969,8 +1000,7 @@ export default function DirectorioProfesionalPage() {
                 </Box>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} justifyContent={{ xs: 'center', md: 'flex-end' }}>
                   <Button
-                    component={RouterLink}
-                    to={agendarDesdeDirectorio}
+                    {...agendarButtonProps}
                     variant="contained"
                     size="medium"
                     startIcon={<CalendarMonth />}
@@ -1083,8 +1113,7 @@ export default function DirectorioProfesionalPage() {
                   sx={{ mt: 3, flexWrap: 'wrap', alignItems: { xs: 'stretch', sm: 'center' } }}
                 >
                   <Button
-                    component={RouterLink}
-                    to={agendarDesdeDirectorio}
+                    {...agendarButtonProps}
                     variant="contained"
                     size="large"
                     startIcon={<CalendarMonth />}
@@ -1550,8 +1579,7 @@ export default function DirectorioProfesionalPage() {
                     </Typography>
                   </Box>
                   <Button
-                    component={RouterLink}
-                    to={agendarDesdeDirectorio}
+                    {...agendarButtonProps}
                     variant="contained"
                     size="medium"
                     startIcon={<CalendarMonth />}
@@ -1895,8 +1923,7 @@ export default function DirectorioProfesionalPage() {
                   sx={{ flexWrap: 'wrap', rowGap: 1.5 }}
                 >
                   <Button
-                    component={RouterLink}
-                    to={agendarDesdeDirectorio}
+                    {...agendarButtonProps}
                     variant="contained"
                     size="large"
                     startIcon={<CalendarMonth />}
@@ -2012,8 +2039,7 @@ export default function DirectorioProfesionalPage() {
                 sx={{ width: '100%' }}
               >
               <Button
-                component={RouterLink}
-                to={agendarDesdeDirectorio}
+                {...agendarButtonProps}
                 variant="contained"
                 size="medium"
                 startIcon={<CalendarMonth />}
@@ -2083,6 +2109,13 @@ export default function DirectorioProfesionalPage() {
       )}
 
       <Footer />
+
+      <ContactoProfesionalDialog
+        open={contactDialogOpen}
+        onClose={() => setContactDialogOpen(false)}
+        profileId={profileId}
+        profesionalNombre={name}
+      />
     </Box>
   );
 }

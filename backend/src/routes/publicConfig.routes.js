@@ -17,10 +17,17 @@ const router = express.Router();
 // Devuelve el professionalId del consultorio propio de OírConecta para que
 // /agendar consulte y agende contra la agenda real de ese profesional.
 router.get('/retail-config', (req, res) => {
+  // OWN_DIRECTORY_PROFILE_IDS: lista de DirectoryProfile.id (UUIDs) que pertenecen
+  // a consultorios propios de OírConecta. Solo esas fichas pueden enlazar
+  // a /agendar?desdeDirectorio=... — el resto debe abrir formulario de contacto.
+  const ownDirectoryProfileIds = (process.env.OWN_DIRECTORY_PROFILE_IDS || '')
+    .split(',').map((s) => s.trim()).filter(Boolean);
+
   res.json({
     success: true,
     data: {
       professionalId: config.retail.professionalId,
+      ownDirectoryProfileIds,
     },
   });
 });
