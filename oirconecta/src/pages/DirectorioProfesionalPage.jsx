@@ -233,7 +233,7 @@ function humanHelpBlock(profile, bio) {
     return bio.length <= max ? bio : `${bio.slice(0, max - 1)}…`;
   }
   const n = profile?.account?.nombre?.split(' ')?.[0] || 'Hola';
-  return `${n}, gracias por visitar mi perfil. Cuéntame qué te preocupa: desde una primera valoración hasta el seguimiento de audífonos, mi prioridad es que te vayas con claridad y un plan que tenga sentido para ti. Si no sabes por dónde empezar, podemos ordenar las ideas juntos en la consulta.`;
+  return `Soy ${n} y atiendo a cada paciente con un enfoque clínico personalizado. Desde la primera consulta hasta el seguimiento, mi compromiso es brindarte un diagnóstico claro y un plan terapéutico acorde a tus necesidades. Te invito a agendar una cita para evaluar juntos cómo cuidar mejor tu salud auditiva.`;
 }
 
 export default function DirectorioProfesionalPage() {
@@ -311,9 +311,9 @@ export default function DirectorioProfesionalPage() {
     const pick = (k, fb) => directorySectionTitle(ts, k, fb);
     return {
       ayuda: pick('ayuda', '¿En qué puedo ayudarte?'),
-      contacto: pick('contacto', 'Cuéntame qué necesitas'),
+      contacto: pick('contacto', 'Solicita una valoración'),
       servicios: pick('servicios', 'Servicios'),
-      serviciosDesc: pick('serviciosDesc', 'Servicios que realizo con mayor frecuencia'),
+      serviciosDesc: pick('serviciosDesc', 'Atenciones especializadas que ofrezco para acompañar tu salud auditiva'),
       marcas: pick('marcas', 'Aliados'),
       marcasDesc: pick('marcasDesc', 'Marcas y soluciones con las que trabajo para cuidarte mejor'),
       ubicaciones: pick('ubicaciones', 'Ubicaciones'),
@@ -871,10 +871,10 @@ export default function DirectorioProfesionalPage() {
                         py: 1.35,
                         px: 2.75,
                         fontSize: { xs: '1rem', md: '1.0625rem' },
-                        bgcolor: 'common.white',
+                        background: '#ffffff !important',
                         color: 'primary.dark',
                         boxShadow: '0 10px 36px rgba(0,0,0,0.2)',
-                        '&:hover': { bgcolor: '#f7fffb', boxShadow: '0 14px 42px rgba(0,0,0,0.24)' },
+                        '&:hover': { background: '#f7fffb !important', boxShadow: '0 14px 42px rgba(0,0,0,0.24)' },
                       }}
                     >
                       Agendar cita
@@ -1649,9 +1649,6 @@ export default function DirectorioProfesionalPage() {
                   >
                     WhatsApp
                   </Button>
-                  <Button onClick={scrollToContact} variant="text" size="small" sx={{ fontWeight: 600, textTransform: 'none', opacity: 0.9 }}>
-                    Ir al formulario
-                  </Button>
                 </Stack>
               </Box>
             </Box>
@@ -1957,13 +1954,13 @@ export default function DirectorioProfesionalPage() {
                     lineHeight: 1.3,
                   }}
                 >
-                  Da el primer paso
+                  Agenda tu valoración
                 </Typography>
                 <Typography sx={{ opacity: 0.9, mb: 0.75, maxWidth: '52ch', mx: 'auto', fontWeight: 600, lineHeight: 1.55, fontSize: { xs: '0.875rem', md: '0.9375rem' } }}>
-                  Agenda en menos de 1 minuto en línea.
+                  Reserva en línea o escríbeme directamente.
                 </Typography>
                 <Typography sx={{ opacity: 0.82, mb: 2.25, maxWidth: '52ch', mx: 'auto', fontWeight: 500, lineHeight: 1.65, fontSize: { xs: '0.875rem', md: '0.9375rem' } }}>
-                  Respondo rápido por WhatsApp; también puedes llamar o dejar tus datos en el formulario.
+                  Atención personalizada por WhatsApp, llamada o correo. Resolvemos tus dudas antes de la consulta.
                 </Typography>
                 <Stack
                   direction={{ xs: 'column', sm: 'row' }}
@@ -1983,10 +1980,10 @@ export default function DirectorioProfesionalPage() {
                       fontWeight: 800,
                       textTransform: 'none',
                       borderRadius: 2.5,
-                      bgcolor: 'common.white',
+                      background: '#ffffff !important',
                       color: 'primary.dark',
                       boxShadow: '0 8px 28px rgba(0,0,0,0.2)',
-                      '&:hover': { bgcolor: '#f0fff8' },
+                      '&:hover': { background: '#f0fff8 !important' },
                     }}
                   >
                     Agendar cita
@@ -2038,14 +2035,6 @@ export default function DirectorioProfesionalPage() {
                       Correo
                     </Button>
                   ) : null}
-                  <Button
-                    onClick={scrollToContact}
-                    variant="text"
-                    size="medium"
-                    sx={{ color: 'rgba(255,255,255,0.78)', fontWeight: 600, textTransform: 'none' }}
-                  >
-                    Formulario
-                  </Button>
                 </Stack>
               </Box>
             </Box>
@@ -2148,9 +2137,6 @@ export default function DirectorioProfesionalPage() {
                     Correo
                   </Button>
                 ) : null}
-                <Button onClick={scrollToContact} variant="text" size="small" sx={{ fontWeight: 600, textTransform: 'none', flexShrink: 0, opacity: 0.9 }}>
-                  Formulario
-                </Button>
               </Stack>
               </Stack>
             </Box>
