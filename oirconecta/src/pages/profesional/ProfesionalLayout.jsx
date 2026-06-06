@@ -37,7 +37,6 @@ const SIDEBAR_W = 240;
 const NAV_ITEMS = [
   { label: 'Mi panel', icon: <DashboardOutlined />, path: '/portal-profesional' },
   { label: 'Mi perfil', icon: <PersonOutlined />, path: '/portal-profesional/perfil' },
-  { label: 'Mis servicios', icon: <StorefrontOutlined />, path: '/portal-profesional/servicios' },
   { label: 'Consultas recibidas', icon: <MailOutlined />, path: '/portal-profesional/consultas', inquiriesBadge: true },
   { label: 'Mi suscripción', icon: <WorkspacePremiumOutlined />, path: '/portal-profesional/suscripcion' },
 ];
