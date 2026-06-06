@@ -92,6 +92,11 @@ function ServiciosEditor({ servicios, onChange, profesion }) {
 
   return (
     <Box>
+      {!profesion && (
+        <Alert severity="info" sx={{ mb: 3, borderRadius: '12px' }}>
+          Define tu <strong>profesión</strong> en la pestaña <strong>Datos básicos</strong> y aparecerán automáticamente los servicios típicos de tu especialidad listos para agregar con un click.
+        </Alert>
+      )}
       {sugeridos.length > 0 && (
         <Box sx={{ mb: 3, p: 2, borderRadius: '12px', bgcolor: 'rgba(8,89,70,0.04)', border: '1px dashed rgba(8,89,70,0.25)' }}>
           <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN, mb: 1.5 }}>
