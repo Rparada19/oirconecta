@@ -10,11 +10,22 @@ const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-const isConfigured = !!process.env.CLOUDINARY_URL;
+// Solo consideramos "configurado" si CLOUDINARY_URL existe Y tiene formato válido
+// (debe empezar por cloudinary://). De lo contrario, los endpoints de upload
+// responden 503 pero el backend NO crashea al arrancar.
+const rawUrl = process.env.CLOUDINARY_URL || '';
+const isConfigured = rawUrl.startsWith('cloudinary://');
+
+if (process.env.CLOUDINARY_URL && !isConfigured) {
+  console.warn('[storage] CLOUDINARY_URL presente pero con formato inválido (debe empezar con "cloudinary://"). Upload deshabilitado.');
+}
 
 if (isConfigured) {
-  // La URL la lee cloudinary internamente, pero forzamos secure por defecto.
-  cloudinary.config({ secure: true });
+  try {
+    cloudinary.config({ secure: true });
+  } catch (e) {
+    console.error('[storage] Error al configurar Cloudinary:', e.message);
+  }
 }
 
 /**
