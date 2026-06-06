@@ -294,12 +294,27 @@ export function directoryAlliesGrouped(allies) {
   return blocks.filter((b) => b.names.length > 0);
 }
 
-/** Chips de servicios / cobertura (máx. 3): mezcla pólizas y aliados. */
+/**
+ * Chips de servicios reales del profesional (máx. N).
+ * Lee primero del JSON `servicios` (lista creada por el profesional con
+ * { nombre, descripcion, precio, duracion, profesion? }). Solo si está
+ * vacío, fallback a pólizas + marcas como referencia de cobertura.
+ */
 export function directoryServiceChips(profile, max = 3) {
   if (Array.isArray(profile?._demo?.services) && profile._demo.services.length) {
     return profile._demo.services.map((s) => String(s)).filter(Boolean).slice(0, max);
   }
   const chips = [];
+  // 1) Servicios declarados por el profesional
+  const servicios = Array.isArray(profile?.servicios) ? profile.servicios : [];
+  for (const s of servicios) {
+    if (chips.length >= max) break;
+    const nombre = typeof s === 'string' ? s : (s && s.nombre);
+    if (nombre && !chips.includes(nombre)) chips.push(String(nombre));
+  }
+  if (chips.length > 0) return chips.slice(0, max);
+
+  // 2) Fallback (sin servicios declarados): muestra cobertura como guía
   const pol = Array.isArray(profile.polizasAceptadas) ? profile.polizasAceptadas : [];
   for (const p of pol) {
     if (chips.length >= max) break;

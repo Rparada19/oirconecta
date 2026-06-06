@@ -556,9 +556,11 @@ async function updateMyDirectoryProfile(accountId, body) {
   }
 
   const data = { ...patch };
-  if (existing.status === 'APPROVED') {
-    data.status = 'PENDING';
-  } else if (existing.status === 'REJECTED' || existing.status === 'DRAFT') {
+  // No demotivamos el perfil aprobado por cada edición — sería frustrante
+  // que cada cambio menor le quite la visibilidad en el directorio. El admin
+  // puede mover manualmente a PENDING si detecta algo en la revisión rutinaria.
+  // Sí re-encolamos los REJECTED/DRAFT a PENDING para que vuelvan a moderación.
+  if (existing.status === 'REJECTED' || existing.status === 'DRAFT') {
     data.status = 'PENDING';
   }
 

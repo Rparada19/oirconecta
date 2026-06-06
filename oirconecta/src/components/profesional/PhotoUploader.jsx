@@ -36,9 +36,7 @@ export default function PhotoUploader({
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const r = await directoryApi.post('/api/directory/me/upload', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const r = await directoryApi.post('/api/directory/me/upload', fd);
       if (r?.data?.success) {
         onChange(r.data.data.url, r.data.data);
       } else {

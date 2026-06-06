@@ -38,10 +38,17 @@ export function clearDirectoryToken() {
 export async function directoryRequest(path, options = {}) {
   const { skipAuth = false, ...fetchOptions } = options;
   const url = path.startsWith('http') ? path : `${BASE_URL.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+  const isFormData = typeof FormData !== 'undefined' && fetchOptions.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
+    // Si el body es FormData, NO seteamos Content-Type: el navegador lo arma con boundary.
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(fetchOptions.headers || {}),
   };
+  // Si el caller pasó Content-Type para multipart pero también es FormData, dejamos que
+  // el navegador decida — quitamos el header manualmente.
+  if (isFormData && headers['Content-Type'] && /multipart\/form-data/i.test(headers['Content-Type'])) {
+    delete headers['Content-Type'];
+  }
   const token = getDirectoryToken();
   if (!skipAuth && token) headers.Authorization = `Bearer ${token}`;
 
@@ -77,8 +84,14 @@ export async function directoryRequest(path, options = {}) {
   }
 }
 
+function serializeBody(body) {
+  if (body == null) return undefined;
+  if (typeof FormData !== 'undefined' && body instanceof FormData) return body;
+  return JSON.stringify(body);
+}
+
 export const directoryApi = {
   get: (path, opts) => directoryRequest(path, { ...opts, method: 'GET' }),
-  post: (path, body, opts) => directoryRequest(path, { ...opts, method: 'POST', body: JSON.stringify(body) }),
-  patch: (path, body, opts) => directoryRequest(path, { ...opts, method: 'PATCH', body: JSON.stringify(body) }),
+  post: (path, body, opts) => directoryRequest(path, { ...opts, method: 'POST', body: serializeBody(body) }),
+  patch: (path, body, opts) => directoryRequest(path, { ...opts, method: 'PATCH', body: serializeBody(body) }),
 };
