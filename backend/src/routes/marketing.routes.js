@@ -8,6 +8,7 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middleware/auth');
 const svc = require('../services/marketing.service');
+const pageReg = require('../services/pageRegistry.service');
 const storage = require('../services/storage.service');
 const { CATALOG, CATEGORIES } = require('../config/marketingCatalog');
 const { listPageTypes } = require('../utils/pageTypes');
@@ -102,6 +103,28 @@ router.get('/public/active-list', async (req, res) => {
 // Catálogo público de tipos de página (para el selector del admin)
 router.get('/public/page-types', (_req, res) => {
   res.json({ success: true, data: listPageTypes() });
+});
+
+// ─── PageRegistry (admin) ───
+router.get('/admin/pages', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await pageReg.list(req.query);
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/admin/pages/sync', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await pageReg.syncAll();
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.get('/admin/coverage', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await pageReg.getCoverage();
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.post('/tracking/impression', async (req, res) => {

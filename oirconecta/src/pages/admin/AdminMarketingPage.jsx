@@ -173,9 +173,10 @@ export default function AdminMarketingPage() {
                 <Grid item xs={6} md={3}><StatCard icon={CampaignOutlinedIcon} label="CTR promedio" value={stats?.ctrPromedio ? `${stats.ctrPromedio}%` : '—'} color="#6d28d9" /></Grid>
                 <Grid item xs={6} md={3}><StatCard icon={CampaignOutlinedIcon} label="Leads (mes)" value={stats?.leadsMes ?? '—'} color="#6d28d9" /></Grid>
               </Grid>
-              <Alert severity="info" sx={{ borderRadius: '8px' }}>
+              <Alert severity="info" sx={{ borderRadius: '8px', mb: 3 }}>
                 Las métricas de impresiones, clics, CTR y leads se activan al desplegar M2 (tracking en sitio público).
               </Alert>
+              <CoverageWidget />
             </>
           )}
 
@@ -393,6 +394,102 @@ export default function AdminMarketingPage() {
         {toast && <Alert severity={toast.severity} onClose={() => setToast(null)} sx={{ borderRadius: '8px' }}>{toast.msg}</Alert>}
       </Snackbar>
     </Box>
+  );
+}
+
+// ─── Cobertura publicitaria ───
+function CoverageWidget() {
+  const [cov, setCov] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const load = () => adminFetch('/api/marketing/admin/coverage').then((r) => {
+    if (r?.data?.success) setCov(r.data.data);
+  });
+  useEffect(() => { load(); }, []);
+
+  const sync = async () => {
+    setSyncing(true);
+    await adminFetch('/api/marketing/admin/pages/sync', { method: 'POST' });
+    await load();
+    setSyncing(false);
+  };
+
+  if (!cov) return null;
+
+  return (
+    <Card sx={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
+      <CardContent>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+          <Box>
+            <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '1rem' }}>
+              Cobertura publicitaria
+            </Typography>
+            <Typography sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
+              {cov.activeCampaigns} campaña(s) activa(s) · {cov.totalPages} página(s) en el portal
+            </Typography>
+          </Box>
+          <Button size="small" onClick={sync} disabled={syncing}
+            sx={{ color: ACCENT, textTransform: 'none', fontWeight: 700 }}>
+            {syncing ? 'Sincronizando…' : 'Sincronizar páginas'}
+          </Button>
+        </Stack>
+
+        <Box sx={{ mb: 2 }}>
+          <Stack direction="row" alignItems="baseline" spacing={1}>
+            <Typography sx={{ fontSize: '2.5rem', fontWeight: 900, color: ACCENT, lineHeight: 1 }}>
+              {cov.coveragePct}%
+            </Typography>
+            <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+              de páginas con al menos 1 anuncio activo
+            </Typography>
+          </Stack>
+          <Box sx={{ mt: 1, height: 8, borderRadius: 4, bgcolor: '#e2e8f0', overflow: 'hidden' }}>
+            <Box sx={{ width: `${cov.coveragePct}%`, height: '100%', bgcolor: ACCENT }} />
+          </Box>
+        </Box>
+
+        <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', mb: 1, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Por tipo de página
+        </Typography>
+        <Table size="small">
+          <TableHead sx={{ bgcolor: '#f8fafc' }}>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem' }}>Tipo</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem' }}>Páginas</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem' }}>Con campaña</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem' }}>Cobertura</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {cov.types.map((t) => {
+              const pct = t.total > 0 ? Math.round((t.covered / t.total) * 100) : 0;
+              return (
+                <TableRow key={t.type}>
+                  <TableCell sx={{ fontSize: '0.8125rem', fontFamily: 'monospace' }}>{t.type}</TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>{t.total}</TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700, color: t.covered > 0 ? ACCENT : '#94a3b8' }}>{t.covered}</TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem', color: pct > 0 ? ACCENT : '#94a3b8', fontWeight: 700 }}>{pct}%</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+
+        {cov.uncoveredSample?.length > 0 && (
+          <Box sx={{ mt: 2, p: 1.5, borderRadius: '8px', bgcolor: '#fef3c7' }}>
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#a16207', mb: 0.5 }}>
+              Páginas sin anuncio (muestra de {cov.uncoveredSample.length}):
+            </Typography>
+            <Stack direction="row" flexWrap="wrap" gap={0.5}>
+              {cov.uncoveredSample.slice(0, 8).map((p) => (
+                <Chip key={p.path} label={p.path} size="small"
+                  sx={{ bgcolor: '#fff', color: '#92400e', fontFamily: 'monospace', fontSize: '0.7rem', height: 22 }} />
+              ))}
+            </Stack>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -724,6 +821,7 @@ function CampaignDialog({ open, data, initialActionType, advertisers, catalog, o
           </Grid>
           <Grid item xs={12}>
             <CampaignPagesSelector
+              actionType={form.actionType}
               value={form.pagesConfig}
               onChange={(pagesConfig) => setForm({ ...form, pagesConfig })} />
           </Grid>

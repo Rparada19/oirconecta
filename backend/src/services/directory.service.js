@@ -684,6 +684,23 @@ async function setStatusByAdmin(accountId, { status, rejectionReason, needsChang
     }
   }
 
+  // Hook PageRegistry: registra/desactiva la ficha pública
+  try {
+    const pageReg = require('./pageRegistry.service');
+    const nombreLegible = updated.nombreConsultorio || acc?.nombre || updated.id.slice(0, 8);
+    if (status === 'APPROVED') {
+      pageReg.upsert({
+        type: 'perfil_profesional',
+        name: `Profesional: ${nombreLegible}`,
+        path: `/profesional/${updated.id}`,
+        entityId: updated.id, entityType: 'DirectoryProfile',
+      }).catch((e) => console.error('[pageReg] perfil:', e?.message));
+    } else if (status === 'REJECTED' || status === 'NEEDS_CHANGES') {
+      pageReg.deactivateByEntity('DirectoryProfile', updated.id)
+        .catch((e) => console.error('[pageReg] deactivate perfil:', e?.message));
+    }
+  } catch (e) { /* opcional */ }
+
   return updated;
 }
 

@@ -83,6 +83,18 @@ router.post('/', authenticate, async (req, res) => {
         publishedAt: estado === 'PUBLICADO' ? new Date() : null,
       },
     });
+    // Hook PageRegistry
+    if (post.estado === 'PUBLICADO') {
+      try {
+        const pageReg = require('../services/pageRegistry.service');
+        pageReg.upsert({
+          type: 'blog_articulo',
+          name: `Blog: ${post.titulo}`,
+          path: `/blog/${post.slug}`,
+          entityId: post.id, entityType: 'BlogPost',
+        }).catch(() => {});
+      } catch {}
+    }
     res.status(201).json({ success: true, data: post });
   } catch (e) {
     if (e.code === 'P2002') return res.status(400).json({ success: false, error: 'El slug ya existe' });
@@ -109,6 +121,20 @@ router.patch('/:id', authenticate, async (req, res) => {
         ...(!wasPublished && nowPublished ? { publishedAt: new Date() } : {}),
       },
     });
+    // Hook PageRegistry
+    try {
+      const pageReg = require('../services/pageRegistry.service');
+      if (!wasPublished && nowPublished) {
+        pageReg.upsert({
+          type: 'blog_articulo',
+          name: `Blog: ${post.titulo}`,
+          path: `/blog/${post.slug}`,
+          entityId: post.id, entityType: 'BlogPost',
+        }).catch(() => {});
+      } else if (wasPublished && !nowPublished) {
+        pageReg.deactivateByEntity('BlogPost', post.id).catch(() => {});
+      }
+    } catch {}
     res.json({ success: true, data: post });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });

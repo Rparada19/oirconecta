@@ -1539,6 +1539,40 @@ model MarketingCampaign {
   @@map("marketing_campaigns")
 }
 
+/// Inventario vivo de páginas del portal con auto-registro.
+/// Cada entidad publicada (blog, perfil, ficha de marca) registra su path aquí.
+/// Permite a las campañas dirigirse a páginas específicas y al admin ver cobertura.
+model MarketingPage {
+  id          String  @id @default(uuid())
+  /// Slug único estable. Ej: 'blog__guia-elegir-primer-audifono'
+  pageKey     String  @unique
+  /// Categoría canónica (blog_articulo, perfil_profesional, audifonos_marca, ...)
+  type        String
+  /// Nombre legible para la UI del admin
+  name        String
+  /// Ruta exacta. Ej: '/blog/guia-elegir-primer-audifono'
+  path        String  @unique
+  /// Patrón del tipo. Ej: '/blog/:slug'
+  pathPattern String?
+
+  /// Si false → la página fue removida o despublicada. Se conserva la fila
+  /// para que las campañas con specific_paths la marquen como "eliminada".
+  active      Boolean @default(true)
+
+  /// FK opcional al recurso de origen (BlogPost.id, DirectoryProfile.id, etc.)
+  entityId    String?
+  /// Tipo de la entidad ('BlogPost', 'DirectoryProfile', 'Brand', ...)
+  entityType  String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deactivatedAt DateTime?
+
+  @@index([type, active])
+  @@index([entityType, entityId])
+  @@map("marketing_pages")
+}
+
 /// Métricas diarias agregadas por campaña (M2). M3 las particionará por variante.
 model MarketingMetric {
   id          String   @id @default(uuid())

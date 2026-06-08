@@ -22,17 +22,48 @@ const NAVY = '#272F50';
 
 const DEFAULT_VALUE = { mode: 'all', types: [], specificPaths: [], excludePaths: [] };
 
-export default function CampaignPagesSelector({ value, onChange }) {
+export default function CampaignPagesSelector({ value, onChange, actionType }) {
   const cfg = value || DEFAULT_VALUE;
   const [pageTypes, setPageTypes] = useState([]);
+  const [registeredPaths, setRegisteredPaths] = useState(new Set());
   const [pathInput, setPathInput] = useState('');
   const [excludeInput, setExcludeInput] = useState('');
+
+  // Forzar specific=['/'] para HOMEPAGE_TAKEOVER
+  useEffect(() => {
+    if (actionType === 'HOMEPAGE_TAKEOVER') {
+      if (cfg.mode !== 'specific' || !cfg.specificPaths?.includes('/')) {
+        onChange({ mode: 'specific', types: [], specificPaths: ['/'], excludePaths: [] });
+      }
+    }
+    // eslint-disable-next-line
+  }, [actionType]);
 
   useEffect(() => {
     adminFetch('/api/marketing/public/page-types').then((r) => {
       if (r?.data?.success) setPageTypes(r.data.data || []);
     });
+    // Carga paths registrados para validar "ya no existe"
+    adminFetch('/api/marketing/admin/pages?limit=2000').then((r) => {
+      if (r?.data?.success) {
+        const set = new Set((r.data.data.items || []).filter((p) => p.active).map((p) => p.path));
+        setRegisteredPaths(set);
+      }
+    });
   }, []);
+
+  // Bloqueo total para HOMEPAGE_TAKEOVER
+  if (actionType === 'HOMEPAGE_TAKEOVER') {
+    return (
+      <Alert severity="info" sx={{ borderRadius: '8px' }}>
+        <strong>Takeover de homepage:</strong> esta campaña ocupa exclusivamente la <code>/</code> (home).
+        El selector queda bloqueado para garantizar la exclusividad del formato.
+      </Alert>
+    );
+  }
+
+  const showPopupWarning = actionType === 'POPUP_BIENVENIDA' && cfg.mode === 'all';
+  const missingPaths = (cfg.specificPaths || []).filter((p) => registeredPaths.size > 0 && !registeredPaths.has(p));
 
   const setMode = (mode) => onChange({ ...cfg, mode });
   const toggleType = (type) => {
@@ -56,6 +87,12 @@ export default function CampaignPagesSelector({ value, onChange }) {
       <Typography sx={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', mb: 1.5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
         ¿Dónde publicar?
       </Typography>
+
+      {showPopupWarning && (
+        <Alert severity="warning" sx={{ mb: 2, borderRadius: '6px' }}>
+          El pop-up en <strong>todas las páginas</strong> puede afectar la experiencia. Considera limitarlo a la home o al directorio.
+        </Alert>
+      )}
 
       <RadioGroup value={cfg.mode || 'all'} onChange={(e) => setMode(e.target.value)}>
         <FormControlLabel value="all" control={<Radio size="small" sx={{ '&.Mui-checked': { color: ACCENT } }} />}
@@ -101,11 +138,23 @@ export default function CampaignPagesSelector({ value, onChange }) {
               InputProps={{ sx: { borderRadius: '6px', fontFamily: 'monospace', fontSize: '0.8125rem' } }} />
           </Stack>
           <Stack direction="row" flexWrap="wrap" gap={0.75}>
-            {(cfg.specificPaths || []).map((p) => (
-              <Chip key={p} label={p} size="small" onDelete={() => removePath(p)}
-                sx={{ bgcolor: `${ACCENT}15`, color: NAVY, fontFamily: 'monospace', fontSize: '0.7rem' }} />
-            ))}
+            {(cfg.specificPaths || []).map((p) => {
+              const missing = missingPaths.includes(p);
+              return (
+                <Chip key={p} label={missing ? `${p} (eliminada)` : p} size="small" onDelete={() => removePath(p)}
+                  sx={{
+                    bgcolor: missing ? '#fee2e2' : `${ACCENT}15`,
+                    color: missing ? '#b91c1c' : NAVY,
+                    fontFamily: 'monospace', fontSize: '0.7rem'
+                  }} />
+              );
+            })}
           </Stack>
+          {missingPaths.length > 0 && (
+            <Alert severity="warning" sx={{ mt: 1, borderRadius: '6px', fontSize: '0.8125rem' }}>
+              {missingPaths.length} página(s) ya no existe(n) en el portal. Quítalas o reemplázalas.
+            </Alert>
+          )}
           {(cfg.specificPaths || []).length === 0 && (
             <Alert severity="warning" sx={{ mt: 1, borderRadius: '6px', fontSize: '0.8125rem' }}>
               Debes agregar al menos una página.
