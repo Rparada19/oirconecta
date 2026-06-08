@@ -6,10 +6,11 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
-import { usePreviewMode } from '../../hooks/usePreviewMode';
+import { usePreviewMode, usePreviewFocusSlot } from '../../hooks/usePreviewMode';
 
 export default function PreviewModeIndicator() {
   const preview = usePreviewMode();
+  const focusSlot = usePreviewFocusSlot();
   if (!preview) return null;
   return (
     <Box sx={{
@@ -19,10 +20,9 @@ export default function PreviewModeIndicator() {
     }}>
       <VisibilityRoundedIcon sx={{ color: '#a16207', fontSize: 18 }} />
       <Typography sx={{ fontWeight: 800, color: '#92400e', fontSize: '0.8125rem' }}>
-        Modo vista previa · slots vacíos visibles · solo admin
-      </Typography>
-      <Typography sx={{ fontSize: '0.7rem', color: '#a16207', fontFamily: 'monospace', ml: 1 }}>
-        ?preview_mode=true
+        {focusSlot
+          ? `Vista previa enfocada en: ${focusSlot}`
+          : 'Modo vista previa · slots vacíos visibles · solo admin'}
       </Typography>
     </Box>
   );

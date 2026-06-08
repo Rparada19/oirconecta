@@ -26,6 +26,10 @@ export default function PreviewSlot({
 
   if (!preview) return null;
 
+  // Si hay un slot focused y no somos ese, ocultamos para que el admin solo
+  // vea el slot del card en el que hizo click.
+  if (focusSlot && !isFocused) return null;
+
   return (
     <Box sx={{
       maxWidth: container ? 1200 : '100%',

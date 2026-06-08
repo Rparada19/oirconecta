@@ -38,6 +38,12 @@ export default function SlotPreviewWrapper({
   // Sin preview: comportamiento normal (render directo, o nada si no hay activa)
   if (!preview) return active ? children : null;
 
+  // Si hay un slot focused y NO somos ese slot → ocultar (el usuario solo quiere
+  // ver el slot del card en el que hizo click).
+  if (focusSlot && !isFocused) {
+    return active ? children : null;
+  }
+
   // Borde + chip — pulsa si es el slot focused
   const borderColor = isFocused ? ACCENT : (active ? ACCENT : '#cbd5e1');
   const borderWidth = isFocused ? 3 : (active ? 3 : 2);
