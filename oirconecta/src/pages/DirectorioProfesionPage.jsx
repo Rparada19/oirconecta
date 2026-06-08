@@ -18,6 +18,8 @@ import BiotechOutlinedIcon from '@mui/icons-material/BiotechOutlined';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import DirectoryCardV2 from '../components/directorio/v2/DirectoryCardV2';
+import BrandCard from '../components/marketing/BrandCard';
+import { fetchActiveCampaignList, rememberUtm } from '../services/marketingPublicApi';
 import DirectoryCardSkeleton from '../components/directorio/v2/DirectoryCardSkeleton';
 import { fetchFeaturedByProfession, searchDirectoryV2 } from '../services/directoryDiscoveryService';
 
@@ -135,6 +137,19 @@ export default function DirectorioProfesionPage() {
         }
       })
       .catch(() => {});
+    return () => { cancelled = true; };
+  }, [slug]);
+
+  // Brand cards activos (publicidad en el directorio)
+  const [brandCards, setBrandCards] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetchActiveCampaignList('BRAND_CARD_DIRECTORY', { limit: 4 })
+      .then((list) => {
+        if (cancelled) return;
+        setBrandCards(list || []);
+        if (list && list[0]) rememberUtm(list[0]);
+      });
     return () => { cancelled = true; };
   }, [slug]);
 
@@ -469,11 +484,31 @@ export default function DirectorioProfesionPage() {
                     <DirectoryCardSkeleton />
                   </Grid>
                 ))
-              : items.map((p) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={p.id}>
-                    <DirectoryCardV2 profile={p} />
-                  </Grid>
-                ))}
+              : (() => {
+                  // Mezcla profesionales con brand cards: por cada `everyN` profesionales,
+                  // intercala una brand card si hay disponibles.
+                  const everyN = 4;
+                  const mixed = [];
+                  let brandIdx = 0;
+                  items.forEach((p, idx) => {
+                    mixed.push({ kind: 'profile', data: p });
+                    if (brandCards.length > 0 && (idx + 1) % everyN === 0 && brandIdx < brandCards.length) {
+                      mixed.push({ kind: 'brand', data: brandCards[brandIdx % brandCards.length] });
+                      brandIdx++;
+                    }
+                  });
+                  return mixed.map((it) =>
+                    it.kind === 'profile' ? (
+                      <Grid item xs={12} sm={6} md={4} lg={3} key={`prof-${it.data.id}`}>
+                        <DirectoryCardV2 profile={it.data} />
+                      </Grid>
+                    ) : (
+                      <Grid item xs={12} sm={6} md={4} lg={3} key={`brand-${it.data.id}`}>
+                        <BrandCard campaign={it.data} />
+                      </Grid>
+                    )
+                  );
+                })()}
           </Grid>
 
           {!loading && items.length === 0 && (

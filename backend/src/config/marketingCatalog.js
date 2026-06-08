@@ -33,17 +33,40 @@ const CATALOG = [
 
   // ─── C. Email / Newsletter ───
   { code: 'NEWSLETTER_MENCION',     categoria: 'EMAIL', label: 'Mención en newsletter',           descripcion: 'Bloque sponsor en newsletter mensual de pacientes (logo + texto + CTA).',         precioSugeridoCOP: 1000000, dim: '600×200', soporta: ['imagen'],     disponible: true },
+  { code: 'NEWSLETTER_SPONSOR',     categoria: 'EMAIL', label: 'Patrocinio newsletter mensual',   descripcion: 'Bloque de 200px en el newsletter mensual: logo + copy + CTA con UTM.',           precioSugeridoCOP: 1200000, dim: '600×200', soporta: ['imagen'],     disponible: true },
   { code: 'NEWSLETTER_DEDICADO',    categoria: 'EMAIL', label: 'Newsletter dedicado',             descripcion: 'Envío exclusivo a toda la base o segmento con contenido del anunciante.',        precioSugeridoCOP: 3000000, dim: '—',       soporta: ['html'],       disponible: true },
   { code: 'EMAIL_BIENVENIDA_PROF',  categoria: 'EMAIL', label: 'Sponsor en bienvenida prof.',     descripcion: 'Bloque patrocinado en el email de bienvenida a nuevos profesionales.',           precioSugeridoCOP: 700000,  dim: '600×150', soporta: ['imagen'],     disponible: true },
+
+  // ─── D. Directorio y búsqueda ───
+  { code: 'BRAND_CARD_DIRECTORY',   categoria: 'DIRECTORIO', label: 'Tarjeta de marca en directorio', descripcion: 'Tarjeta de marca insertada cada N profesionales en el listado del directorio.', precioSugeridoCOP: 1600000, dim: 'grid card', soporta: ['imagen'], disponible: true },
+  { code: 'SPONSORED_PROFESSIONAL', categoria: 'DIRECTORIO', label: 'Perfil profesional patrocinado', descripcion: 'Tarjeta de profesional con badge "Patrocinado" y borde destacado en el directorio.', precioSugeridoCOP: 1000000, dim: 'grid card', soporta: ['perfil'], disponible: true },
+  { code: 'SEARCH_INLINE_AD',       categoria: 'DIRECTORIO', label: 'Anuncio inline en resultados',    descripcion: 'Tarjeta destacada entre los resultados de búsqueda filtrada por ciudad+profesión.', precioSugeridoCOP: 1400000, dim: 'grid card', soporta: ['imagen'], disponible: true },
+
+  // ─── E. Blog y contenido extendido ───
+  { code: 'BRANDED_ARTICLE_SERIES', categoria: 'CONTENIDO', label: 'Serie de artículos de marca', descripcion: '3 artículos patrocinados publicados en 30 días con banner en cada uno.',         precioSugeridoCOP: 5500000, dim: '—', soporta: ['articulo'], disponible: true },
+
+  // ─── F. Comparador ───
+  { code: 'COMPARADOR_PRODUCTO_DESTACADO', categoria: 'COMPARADOR', label: 'Producto destacado en comparador', descripcion: 'Audífono o marca aparece primero en resultados del comparador con badge "Recomendado".', precioSugeridoCOP: 2200000, dim: '—', soporta: ['ficha'], disponible: true },
+
+  // ─── G. Mobile extra ───
+  { code: 'FLOATING_CTA_MOBILE',    categoria: 'MOBILE', label: 'CTA flotante mobile',            descripcion: 'Botón sticky inferior derecho con logo y texto corto del anunciante. Solo mobile.', precioSugeridoCOP: 800000,  dim: '120×48',  soporta: ['imagen'], disponible: true },
+
+  // ─── H. Especiales / takeover ───
+  { code: 'HOMEPAGE_TAKEOVER',      categoria: 'ESPECIAL', label: 'Takeover de homepage',         descripcion: 'La home queda "tomada" por una marca por 24-72h: hero + colores + banner. Solo 1 anunciante por período.', precioSugeridoCOP: 8000000, dim: 'full home', soporta: ['imagen'], disponible: true },
+  { code: 'AUDIFONOS_GUIA_INTERACTIVA', categoria: 'ESPECIAL', label: 'Guía interactiva patrocinada', descripcion: 'La recomendación final del comparador/quiz incluye el producto del anunciante.', precioSugeridoCOP: 3000000, dim: '—', soporta: ['imagen', 'html'], disponible: true },
 ];
 
 const BY_CODE = Object.fromEntries(CATALOG.map((a) => [a.code, a]));
 
 /** Categoría → label en español para UI */
 const CATEGORIES = {
-  DISPLAY:   'Display en sitio web',
-  CONTENIDO: 'Contenido y lead generation',
-  EMAIL:     'Email y newsletter',
+  DISPLAY:     'Display en sitio web',
+  CONTENIDO:   'Contenido y lead generation',
+  EMAIL:       'Email y newsletter',
+  DIRECTORIO:  'Directorio y búsqueda',
+  COMPARADOR:  'Comparador',
+  MOBILE:      'Mobile',
+  ESPECIAL:    'Formatos especiales',
 };
 
 module.exports = { CATALOG, BY_CODE, CATEGORIES };

@@ -1515,6 +1515,13 @@ model MarketingCampaign {
   /// Config específica del tipo de acción (delay, slot, segmentación, etc.)
   config       Json?
 
+  /// Posicionamiento en grids (ej. BRAND_CARD_DIRECTORY: { everyNCards: 3, cities: ['Bogotá'] })
+  positionConfig Json?
+
+  /// Snapshot de timestamps de toggle ON/OFF para mostrar "activado hace X"
+  activatedAt    DateTime?
+  deactivatedAt  DateTime?
+
   metrics MarketingMetric[]
 
   createdAt DateTime @default(now())

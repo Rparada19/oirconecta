@@ -266,15 +266,49 @@ async function updateCampaign(id, data) {
 }
 
 async function toggleCampaignActive(id, isActive) {
+  const now = new Date();
   return prisma.marketingCampaign.update({
     where: { id },
     data: {
       isActive: !!isActive,
-      // Si se enciende y está en DRAFT, pasa a ACTIVE; si se apaga manualmente, queda PAUSED.
       status: isActive ? 'ACTIVE' : 'PAUSED',
+      ...(isActive ? { activatedAt: now } : { deactivatedAt: now }),
     },
     include: { advertiser: true },
   });
+}
+
+/**
+ * Lista campañas activas de un tipo dado (uso público). Devuelve datos
+ * mínimos para renderizar tarjetas en el portal sin exponer info interna.
+ */
+async function getActiveCampaignsByType(actionType, { limit = 12 } = {}) {
+  const now = new Date();
+  const rows = await prisma.marketingCampaign.findMany({
+    where: {
+      actionType,
+      isActive: true,
+      status: 'ACTIVE',
+      startDate: { lte: now },
+      endDate: { gte: now },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    include: { advertiser: { select: { nombre: true, logoUrl: true, sitioWeb: true } } },
+  });
+  return rows.map((c) => ({
+    id: c.id,
+    slug: c.slug,
+    actionType: c.actionType,
+    nombre: c.nombre,
+    creativeUrl: c.creativeUrl,
+    creativeType: c.creativeType,
+    destinationUrl: c.destinationUrl,
+    positionConfig: c.positionConfig,
+    config: c.config,
+    advertiser: c.advertiser,
+    utm: { source: c.utmSource, medium: c.utmMedium, campaign: c.utmCampaign },
+  }));
 }
 
 async function deleteCampaign(id) {
@@ -400,5 +434,6 @@ module.exports = {
   deleteCampaign,
   getDashboardStats,
   getActiveCampaignByActionType,
+  getActiveCampaignsByType,
   recordEvent,
 };

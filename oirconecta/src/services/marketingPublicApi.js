@@ -25,6 +25,17 @@ export async function fetchActiveCampaign(actionType) {
   }
 }
 
+/** Devuelve la lista (no solo una) de campañas activas para un tipo. */
+export async function fetchActiveCampaignList(actionType, { limit = 12 } = {}) {
+  try {
+    const r = await fetch(`${API}/api/marketing/public/active-list?actionType=${encodeURIComponent(actionType)}&limit=${limit}`);
+    const j = await r.json();
+    return j?.data || [];
+  } catch {
+    return [];
+  }
+}
+
 export function trackImpression(campaignId) {
   if (!campaignId) return;
   fetch(`${API}/api/marketing/tracking/impression`, {

@@ -88,6 +88,18 @@ router.get('/public/active', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// Devuelve TODAS las campañas activas de un tipo (para grids que requieren
+// insertar varias tarjetas, como BRAND_CARD_DIRECTORY).
+router.get('/public/active-list', async (req, res) => {
+  try {
+    const { actionType, limit = 12 } = req.query;
+    if (!actionType) return res.json({ success: true, data: [] });
+    const data = await svc.getActiveCampaignsByType(actionType, { limit: parseInt(limit) });
+    res.set('Cache-Control', 'public, max-age=30');
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 router.post('/tracking/impression', async (req, res) => {
   try {
     const { campaignId, sessionId } = req.body || {};

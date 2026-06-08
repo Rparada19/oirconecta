@@ -41,6 +41,14 @@ const STATUS_COLOR = {
 
 const fmtCOP = (n) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-CO') : '—';
+function timeAgo(iso) {
+  if (!iso) return '';
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return 'hace segundos';
+  if (s < 3600) return `hace ${Math.floor(s / 60)} min`;
+  if (s < 86400) return `hace ${Math.floor(s / 3600)} h`;
+  return `hace ${Math.floor(s / 86400)} d`;
+}
 
 function StatCard({ icon: Icon, label, value, color = ACCENT }) {
   return (
@@ -241,6 +249,11 @@ export default function AdminMarketingPage() {
                               <Switch size="small" checked={c.isActive} onChange={() => toggleCampaign(c)}
                                 sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: ACCENT },
                                   '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: ACCENT } }} />
+                              {(c.isActive ? c.activatedAt : c.deactivatedAt) && (
+                                <Typography sx={{ fontSize: '0.65rem', color: '#94a3b8', mt: 0.5 }}>
+                                  {c.isActive ? 'Activada' : 'Apagada'} {timeAgo(c.isActive ? c.activatedAt : c.deactivatedAt)}
+                                </Typography>
+                              )}
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{c.monthImpressions || 0}</TableCell>
                             <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{c.monthClicks || 0}</TableCell>
