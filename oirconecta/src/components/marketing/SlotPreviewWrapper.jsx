@@ -11,9 +11,9 @@
  *   </SlotPreviewWrapper>
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
-import { usePreviewMode } from '../../hooks/usePreviewMode';
+import { usePreviewMode, usePreviewFocusSlot } from '../../hooks/usePreviewMode';
 
 const ACCENT = '#085946';
 
@@ -22,19 +22,45 @@ export default function SlotPreviewWrapper({
   minHeight = 120, inline = false,
 }) {
   const preview = usePreviewMode();
+  const focusSlot = usePreviewFocusSlot();
+  const isFocused = !!slotId && !!focusSlot && slotId === focusSlot;
+  const elRef = useRef(null);
+
+  // Scroll automático al slot resaltado
+  useEffect(() => {
+    if (isFocused && elRef.current) {
+      setTimeout(() => {
+        elRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [isFocused]);
 
   // Sin preview: comportamiento normal (render directo, o nada si no hay activa)
   if (!preview) return active ? children : null;
 
+  // Borde + chip — pulsa si es el slot focused
+  const borderColor = isFocused ? ACCENT : (active ? ACCENT : '#cbd5e1');
+  const borderWidth = isFocused ? 3 : (active ? 3 : 2);
+  const borderStyle = active || isFocused ? 'solid' : 'dashed';
+  const pulse = isFocused ? {
+    animation: 'oc-pulse 1.6s ease-in-out infinite',
+    '@keyframes oc-pulse': {
+      '0%, 100%': { opacity: 1, boxShadow: `0 0 0 0 ${ACCENT}88` },
+      '50%':      { opacity: 0.8, boxShadow: `0 0 0 6px ${ACCENT}00` },
+    },
+  } : {};
+
   // Modo preview + activo: render con overlay verde
   if (active) {
     return (
-      <Box sx={{ position: 'relative', display: inline ? 'inline-block' : 'block' }}>
+      <Box ref={elRef} sx={{ position: 'relative', display: inline ? 'inline-block' : 'block' }}>
         <Box sx={{
           position: 'absolute', inset: -3, borderRadius: '10px',
-          border: `3px solid ${ACCENT}`, pointerEvents: 'none', zIndex: 9998,
+          border: `${borderWidth}px ${borderStyle} ${borderColor}`,
+          pointerEvents: 'none', zIndex: 9998,
+          ...pulse,
         }} />
-        <Chip label={`✓ ACTIVO · ${slotLabel || slotId}`} size="small"
+        <Chip label={`${isFocused ? '⚡ ' : '✓ '}${active ? 'ACTIVO · ' : ''}${slotLabel || slotId}`} size="small"
           sx={{
             position: 'absolute', top: -14, left: 8, zIndex: 9999,
             bgcolor: ACCENT, color: '#fff', fontWeight: 800,
@@ -45,22 +71,28 @@ export default function SlotPreviewWrapper({
     );
   }
 
-  // Modo preview + sin campaña: placeholder
+  // Modo preview + sin campaña: placeholder (con pulse si es focused)
   return (
-    <Box sx={{
+    <Box ref={elRef} sx={{
       width: '100%', minHeight,
-      border: '2px dashed #cbd5e1',
+      border: `${borderWidth}px ${borderStyle} ${borderColor}`,
       borderRadius: '10px',
-      bgcolor: '#f8fafc',
+      bgcolor: isFocused ? '#ecfdf5' : '#f8fafc',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       flexDirection: 'column', gap: 0.5,
-      my: 1,
+      my: 1, position: 'relative',
+      ...pulse,
     }}>
+      {isFocused && (
+        <Chip label={`⚡ ${slotLabel || slotId}`} size="small"
+          sx={{ position: 'absolute', top: -12, left: 12,
+            bgcolor: ACCENT, color: '#fff', fontWeight: 800, fontSize: '0.65rem', height: 22 }} />
+      )}
       <Typography sx={{
         fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em',
-        textTransform: 'uppercase', color: '#94a3b8',
+        textTransform: 'uppercase', color: isFocused ? ACCENT : '#94a3b8',
       }}>
-        Slot vacío
+        {isFocused ? 'Slot resaltado' : 'Slot vacío'}
       </Typography>
       <Typography sx={{ fontWeight: 700, color: '#475569', fontSize: '0.85rem' }}>
         {slotLabel || slotId}

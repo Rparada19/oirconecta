@@ -87,6 +87,8 @@ export default function AdminMarketingPage() {
   const [campDialog, setCampDialog] = useState(null); // null | { actionType?: string, data?: object }
   const [advDetailId, setAdvDetailId] = useState(null); // anunciante abierto en drawer
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewFocusSlot, setPreviewFocusSlot] = useState(null);
+  const [previewCampaign, setPreviewCampaign] = useState(null);
 
   const reload = async () => {
     setLoading(true);
@@ -138,12 +140,6 @@ export default function AdminMarketingPage() {
             Catálogo de acciones, anunciantes y campañas activas.
           </Typography>
         </Box>
-        <Button variant="outlined" startIcon={<VisibilityRoundedIcon />}
-          onClick={() => setPreviewOpen(true)}
-          sx={{ borderColor: ACCENT, color: ACCENT, borderRadius: '8px', textTransform: 'none', fontWeight: 700,
-            '&:hover': { borderColor: '#064a3a', bgcolor: `${ACCENT}10` } }}>
-          Vista previa del portal
-        </Button>
       </Stack>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: '1px solid #e5e7eb',
@@ -203,11 +199,18 @@ export default function AdminMarketingPage() {
                             </Stack>
                             <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{a.dim}</Typography>
                           </CardContent>
-                          <Box sx={{ p: 2, pt: 0 }}>
-                            <Button fullWidth size="small" variant="outlined" startIcon={<AddRoundedIcon />}
+                          <Box sx={{ p: 2, pt: 0, display: 'flex', gap: 1 }}>
+                            <Button size="small" variant="contained" startIcon={<AddRoundedIcon />}
                               onClick={() => setCampDialog({ actionType: a.code })}
-                              sx={{ borderColor: ACCENT, color: ACCENT, textTransform: 'none', fontWeight: 700, borderRadius: '8px' }}>
-                              Crear campaña
+                              sx={{ flex: 1, background: ACCENT, color: '#fff', textTransform: 'none', fontWeight: 700, borderRadius: '8px',
+                                '&:hover': { background: '#064a3a' } }}>
+                              Crear
+                            </Button>
+                            <Button size="small" variant="outlined" startIcon={<VisibilityRoundedIcon />}
+                              onClick={() => { setPreviewOpen(true); setPreviewFocusSlot(a.code); setPreviewCampaign(null); }}
+                              sx={{ flexShrink: 0, borderColor: '#cbd5e1', color: '#475569', textTransform: 'none', fontWeight: 700, borderRadius: '8px' }}
+                              title="Vista previa del slot">
+                              Previa
                             </Button>
                           </Box>
                         </Card>
@@ -278,6 +281,12 @@ export default function AdminMarketingPage() {
                             <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{fmtCOP(c.priceCOP)}</TableCell>
                             <TableCell>
                               <Stack direction="row" spacing={0.5}>
+                                <Tooltip title="Vista previa">
+                                  <IconButton size="small" onClick={() => { setPreviewOpen(true); setPreviewFocusSlot(c.actionType); setPreviewCampaign(c); }}
+                                    sx={{ color: ACCENT }}>
+                                    <VisibilityRoundedIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
                                 <Tooltip title="Editar">
                                   <IconButton size="small" onClick={() => setCampDialog({ data: c })}>
                                     <EditOutlinedIcon fontSize="small" />
@@ -382,7 +391,9 @@ export default function AdminMarketingPage() {
       <AdvertiserDetailDrawer open={!!advDetailId} advertiserId={advDetailId}
         onClose={() => setAdvDetailId(null)} onUpdated={reload} />
 
-      <MarketingPreviewDialog open={previewOpen} onClose={() => setPreviewOpen(false)} />
+      <MarketingPreviewDialog open={previewOpen}
+        focusSlot={previewFocusSlot} campaign={previewCampaign}
+        onClose={() => { setPreviewOpen(false); setPreviewFocusSlot(null); setPreviewCampaign(null); }} />
 
       <CampaignDialog open={!!campDialog} initialActionType={campDialog?.actionType}
         data={campDialog?.data} advertisers={advertisers} catalog={catalog.items}
@@ -533,25 +544,15 @@ function ActionConfigPanel({ actionType, config, onChange }) {
           </>
         )}
         {banner && (
-          <>
-            <Grid item xs={12} md={6}>
-              <TextField fullWidth select size="small" label="Donde aparece"
-                value={cfg.segmento ?? 'all'} onChange={(e) => set('segmento', e.target.value)}>
-                <MenuItem value="all">Todas las páginas</MenuItem>
-                <MenuItem value="home">Solo home</MenuItem>
-                <MenuItem value="directorio">Solo directorio</MenuItem>
-                <MenuItem value="blog">Solo blog</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField fullWidth select size="small" label="Dispositivo"
-                value={cfg.device ?? 'both'} onChange={(e) => set('device', e.target.value)}>
-                <MenuItem value="both">Desktop + mobile</MenuItem>
-                <MenuItem value="desktop">Solo desktop</MenuItem>
-                <MenuItem value="mobile">Solo mobile</MenuItem>
-              </TextField>
-            </Grid>
-          </>
+          <Grid item xs={12}>
+            <TextField fullWidth select size="small" label="Dispositivo"
+              value={cfg.device ?? 'both'} onChange={(e) => set('device', e.target.value)}
+              helperText="La selección de páginas se hace en el bloque de abajo">
+              <MenuItem value="both">Desktop + mobile</MenuItem>
+              <MenuItem value="desktop">Solo desktop</MenuItem>
+              <MenuItem value="mobile">Solo mobile</MenuItem>
+            </TextField>
+          </Grid>
         )}
         {search && (
           <>

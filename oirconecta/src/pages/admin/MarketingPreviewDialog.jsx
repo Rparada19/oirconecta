@@ -34,13 +34,28 @@ const VIEWPORTS = {
   mobile:  { w: 390,     h: 800,    icon: <PhoneIphoneRoundedIcon /> },
 };
 
-export default function MarketingPreviewDialog({ open, onClose }) {
+export default function MarketingPreviewDialog({ open, onClose, focusSlot, campaign }) {
   const [device, setDevice] = useState('desktop');
   const [page, setPage] = useState('/');
 
+  // Si la campaña tiene pagesConfig.specificPaths, usa la primera como default
+  React.useEffect(() => {
+    if (open && campaign?.pagesConfig?.specificPaths?.length) {
+      setPage(campaign.pagesConfig.specificPaths[0]);
+    }
+  }, [open, campaign]);
+
   const base = (typeof window !== 'undefined' ? window.location.origin : 'https://oirconecta.com');
-  const url = `${base}${page}${page.includes('?') ? '&' : '?'}preview_mode=true`;
+  let url = `${base}${page}${page.includes('?') ? '&' : '?'}preview_mode=true`;
+  if (focusSlot) url += `&focus_slot=${encodeURIComponent(focusSlot)}`;
   const vp = VIEWPORTS[device];
+
+  const isCampaignPreview = !!campaign;
+  const headerLabel = isCampaignPreview
+    ? `Vista previa: ${campaign.nombre}`
+    : focusSlot
+      ? `Vista previa del slot: ${focusSlot}`
+      : 'Vista previa del portal';
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth
@@ -48,11 +63,23 @@ export default function MarketingPreviewDialog({ open, onClose }) {
       <DialogTitle sx={{ pb: 1.5, borderBottom: '1px solid #e5e7eb' }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
           <Box>
-            <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '1.1rem' }}>
-              Vista previa del portal
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '1.1rem' }}>
+                {headerLabel}
+              </Typography>
+              {isCampaignPreview && (
+                <Box sx={{
+                  px: 1, py: 0.25, borderRadius: '4px',
+                  bgcolor: campaign.isActive ? '#dcfce7' : '#fef3c7',
+                  color: campaign.isActive ? '#15803d' : '#a16207',
+                  fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.06em',
+                }}>
+                  {campaign.isActive ? 'EN VIVO' : 'PREVIA — no publicada'}
+                </Box>
+              )}
+            </Stack>
             <Typography sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
-              Slots vacíos en gris · slots con campaña activa con borde verde y badge ACTIVO
+              {focusSlot ? `Slot ${focusSlot} resaltado en verde pulsante · resto en gris` : 'Slots vacíos en gris · slots activos con badge verde'}
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.5} alignItems="center">

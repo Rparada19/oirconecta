@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 
 const KEY = 'oc_preview_mode';
+const FOCUS_KEY = 'oc_preview_focus_slot';
 
 export function usePreviewMode() {
   const [enabled, setEnabled] = useState(false);
@@ -19,4 +20,22 @@ export function usePreviewMode() {
     } catch {}
   }, []);
   return enabled;
+}
+
+/** Devuelve el slotId resaltado en preview (focus_slot query param). */
+export function usePreviewFocusSlot() {
+  const [slot, setSlot] = useState(null);
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get('focus_slot');
+      if (fromUrl) {
+        sessionStorage.setItem(FOCUS_KEY, fromUrl);
+        setSlot(fromUrl);
+      } else {
+        setSlot(sessionStorage.getItem(FOCUS_KEY) || null);
+      }
+    } catch {}
+  }, []);
+  return slot;
 }
