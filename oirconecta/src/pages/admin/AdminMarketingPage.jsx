@@ -555,18 +555,38 @@ function CreativeUploader({ value, onChange }) {
 function AdvertiserDialog({ open, data, onClose, onSaved }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (open) setForm(data || { tipo: 'CASA_COMERCIAL' });
+    if (open) {
+      setForm(data || { tipo: 'CASA_COMERCIAL' });
+      setError(null);
+    }
   }, [open, data]);
 
   const save = async () => {
-    setSaving(true);
-    const url = data?.id ? `/api/marketing/admin/advertisers/${data.id}` : '/api/marketing/admin/advertisers';
-    const method = data?.id ? 'PATCH' : 'POST';
-    const r = await adminFetch(url, { method, body: JSON.stringify(form) });
-    setSaving(false);
-    if (r?.data?.success) onSaved();
+    setSaving(true); setError(null);
+    try {
+      const url = data?.id ? `/api/marketing/admin/advertisers/${data.id}` : '/api/marketing/admin/advertisers';
+      const method = data?.id ? 'PATCH' : 'POST';
+      // Limpia el form de relaciones que el endpoint no acepta y campos vacíos
+      const payload = { ...form };
+      delete payload.id; delete payload.contacts; delete payload.activities; delete payload.campaigns; delete payload._count;
+      // Strings vacíos → null para evitar conflictos en campos opcionales
+      ['contactoEmail', 'emailFacturacion', 'sitioWeb', 'linkedinUrl', 'notas', 'nit'].forEach((k) => {
+        if (payload[k] === '') payload[k] = null;
+      });
+      const r = await adminFetch(url, { method, body: JSON.stringify(payload) });
+      if (r?.data?.success) {
+        onSaved();
+      } else {
+        setError(r?.data?.error || `Error ${r?.status || ''} al guardar`);
+      }
+    } catch (e) {
+      setError(e?.message || 'Error de red');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -584,6 +604,7 @@ function AdvertiserDialog({ open, data, onClose, onSaved }) {
           <TextField label="Email facturación" fullWidth value={form.emailFacturacion || ''} onChange={(e) => setForm({ ...form, emailFacturacion: e.target.value })} />
           <TextField label="NIT" fullWidth value={form.nit || ''} onChange={(e) => setForm({ ...form, nit: e.target.value })} />
           <TextField label="Notas internas" fullWidth multiline rows={2} value={form.notas || ''} onChange={(e) => setForm({ ...form, notas: e.target.value })} />
+          {error && <Alert severity="error" sx={{ borderRadius: '8px' }}>{error}</Alert>}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
@@ -620,13 +641,20 @@ function CampaignDialog({ open, data, initialActionType, advertisers, catalog, o
     }
   }, [open, data, initialActionType, catalog]);
 
+  const [error, setError] = useState(null);
   const save = async () => {
-    setSaving(true);
-    const url = data?.id ? `/api/marketing/admin/campaigns/${data.id}` : '/api/marketing/admin/campaigns';
-    const method = data?.id ? 'PATCH' : 'POST';
-    const r = await adminFetch(url, { method, body: JSON.stringify(form) });
-    setSaving(false);
-    if (r?.data?.success) onSaved();
+    setSaving(true); setError(null);
+    try {
+      const url = data?.id ? `/api/marketing/admin/campaigns/${data.id}` : '/api/marketing/admin/campaigns';
+      const method = data?.id ? 'PATCH' : 'POST';
+      const r = await adminFetch(url, { method, body: JSON.stringify(form) });
+      if (r?.data?.success) onSaved();
+      else setError(r?.error || r?.data?.error || `Error ${r?.status || ''} al guardar`);
+    } catch (e) {
+      setError(e?.message || 'Error de red');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const utmsPreview = useMemo(() => {
@@ -696,6 +724,11 @@ function CampaignDialog({ open, data, initialActionType, advertisers, catalog, o
               </Typography>
             </Box>
           </Grid>
+          {error && (
+            <Grid item xs={12}>
+              <Alert severity="error" sx={{ borderRadius: '8px' }}>{error}</Alert>
+            </Grid>
+          )}
         </Grid>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
