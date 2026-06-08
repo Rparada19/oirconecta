@@ -19,6 +19,7 @@ import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
 import { adminFetch } from './adminAuth';
 import AdvertiserDetailDrawer from './AdvertiserDetailDrawer';
 import MarketingPreviewDialog from './MarketingPreviewDialog';
+import CampaignPagesSelector from './CampaignPagesSelector';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 
 const PIPELINE_COLOR = {
@@ -720,6 +721,11 @@ function CampaignDialog({ open, data, initialActionType, advertisers, catalog, o
           <Grid item xs={12}>
             <ActionConfigPanel actionType={form.actionType} config={form.config || {}}
               onChange={(config) => setForm({ ...form, config })} />
+          </Grid>
+          <Grid item xs={12}>
+            <CampaignPagesSelector
+              value={form.pagesConfig}
+              onChange={(pagesConfig) => setForm({ ...form, pagesConfig })} />
           </Grid>
           <Grid item xs={12}>
             <Box sx={{ p: 2, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px dashed #cbd5e1' }}>

@@ -15,9 +15,14 @@ function getSessionId() {
   return id;
 }
 
-export async function fetchActiveCampaign(actionType) {
+function currentPath() {
+  try { return typeof window !== 'undefined' ? (window.location.pathname || '/') : '/'; } catch { return '/'; }
+}
+
+export async function fetchActiveCampaign(actionType, path = null) {
   try {
-    const r = await fetch(`${API}/api/marketing/public/active?actionType=${encodeURIComponent(actionType)}`);
+    const p = path || currentPath();
+    const r = await fetch(`${API}/api/marketing/public/active?actionType=${encodeURIComponent(actionType)}&path=${encodeURIComponent(p)}`);
     const j = await r.json();
     return j?.data || null;
   } catch {
@@ -25,10 +30,10 @@ export async function fetchActiveCampaign(actionType) {
   }
 }
 
-/** Devuelve la lista (no solo una) de campañas activas para un tipo. */
-export async function fetchActiveCampaignList(actionType, { limit = 12 } = {}) {
+export async function fetchActiveCampaignList(actionType, { limit = 12, path = null } = {}) {
   try {
-    const r = await fetch(`${API}/api/marketing/public/active-list?actionType=${encodeURIComponent(actionType)}&limit=${limit}`);
+    const p = path || currentPath();
+    const r = await fetch(`${API}/api/marketing/public/active-list?actionType=${encodeURIComponent(actionType)}&path=${encodeURIComponent(p)}&limit=${limit}`);
     const j = await r.json();
     return j?.data || [];
   } catch {

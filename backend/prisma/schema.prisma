@@ -1518,6 +1518,11 @@ model MarketingCampaign {
   /// Posicionamiento en grids (ej. BRAND_CARD_DIRECTORY: { everyNCards: 3, cities: ['Bogotá'] })
   positionConfig Json?
 
+  /// Páginas donde aparece la campaña.
+  /// Formato: { mode: 'all'|'types'|'specific', types: string[], specificPaths: string[], excludePaths: string[] }
+  /// Default = todas las páginas (mode: 'all').
+  pagesConfig Json?
+
   /// Snapshot de timestamps de toggle ON/OFF para mostrar "activado hace X"
   activatedAt    DateTime?
   deactivatedAt  DateTime?

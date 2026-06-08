@@ -10,6 +10,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 const svc = require('../services/marketing.service');
 const storage = require('../services/storage.service');
 const { CATALOG, CATEGORIES } = require('../config/marketingCatalog');
+const { listPageTypes } = require('../utils/pageTypes');
 
 const router = express.Router();
 const uploader = storage.makeUploader({ folder: 'marketing/creativos', maxSizeMB: 10 });
@@ -80,24 +81,27 @@ setInterval(() => {
 
 router.get('/public/active', async (req, res) => {
   try {
-    const { actionType } = req.query;
+    const { actionType, path } = req.query;
     if (!actionType) return res.json({ success: true, data: null });
-    const data = await svc.getActiveCampaignByActionType(actionType);
-    res.set('Cache-Control', 'public, max-age=30'); // CDN 30s
+    const data = await svc.getActiveCampaignByActionType(actionType, path);
+    res.set('Cache-Control', 'public, max-age=30');
     res.json({ success: true, data });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// Devuelve TODAS las campañas activas de un tipo (para grids que requieren
-// insertar varias tarjetas, como BRAND_CARD_DIRECTORY).
 router.get('/public/active-list', async (req, res) => {
   try {
-    const { actionType, limit = 12 } = req.query;
+    const { actionType, path, limit = 12 } = req.query;
     if (!actionType) return res.json({ success: true, data: [] });
-    const data = await svc.getActiveCampaignsByType(actionType, { limit: parseInt(limit) });
+    const data = await svc.getActiveCampaignsByType(actionType, { limit: parseInt(limit), path });
     res.set('Cache-Control', 'public, max-age=30');
     res.json({ success: true, data });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Catálogo público de tipos de página (para el selector del admin)
+router.get('/public/page-types', (_req, res) => {
+  res.json({ success: true, data: listPageTypes() });
 });
 
 router.post('/tracking/impression', async (req, res) => {

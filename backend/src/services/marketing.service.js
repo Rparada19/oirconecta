@@ -12,6 +12,7 @@
 
 const { PrismaClient } = require('@prisma/client');
 const { CATALOG, BY_CODE } = require('../config/marketingCatalog');
+const { campaignMatchesPath } = require('../utils/pageTypes');
 
 const prisma = new PrismaClient();
 
@@ -227,6 +228,7 @@ async function createCampaign(input) {
     startDate, endDate, priceCOP = 0,
     destinationUrl, internalNotes, especialidad,
     abTestMode = false, autoOptimize = false, config = null,
+    pagesConfig = null, positionConfig = null,
   } = input;
 
   if (!BY_CODE[actionType]) throw new Error(`Tipo de acción inválido: ${actionType}`);
@@ -243,6 +245,7 @@ async function createCampaign(input) {
       destinationUrl, internalNotes,
       ...utms,
       abTestMode, autoOptimize, config,
+      pagesConfig, positionConfig,
       status: 'DRAFT', isActive: false,
     },
     include: { advertiser: true },
@@ -253,6 +256,7 @@ async function updateCampaign(id, data) {
   // Si cambia nombre, no regenero slug (rompe URLs); slug es estable.
   const allowed = ['nombre', 'startDate', 'endDate', 'priceCOP', 'destinationUrl',
     'internalNotes', 'status', 'isActive', 'abTestMode', 'autoOptimize', 'config',
+    'pagesConfig', 'positionConfig',
     'creativeUrl', 'creativePublicId', 'creativeType', 'creativeWidth', 'creativeHeight'];
   const clean = {};
   for (const k of allowed) if (data[k] !== undefined) clean[k] = data[k];
@@ -282,7 +286,7 @@ async function toggleCampaignActive(id, isActive) {
  * Lista campañas activas de un tipo dado (uso público). Devuelve datos
  * mínimos para renderizar tarjetas en el portal sin exponer info interna.
  */
-async function getActiveCampaignsByType(actionType, { limit = 12 } = {}) {
+async function getActiveCampaignsByType(actionType, { limit = 12, path = null } = {}) {
   const now = new Date();
   const rows = await prisma.marketingCampaign.findMany({
     where: {
@@ -296,7 +300,8 @@ async function getActiveCampaignsByType(actionType, { limit = 12 } = {}) {
     take: limit,
     include: { advertiser: { select: { nombre: true, logoUrl: true, sitioWeb: true } } },
   });
-  return rows.map((c) => ({
+  const filtered = path ? rows.filter((c) => campaignMatchesPath(c, path)) : rows;
+  return filtered.map((c) => ({
     id: c.id,
     slug: c.slug,
     actionType: c.actionType,
@@ -319,9 +324,11 @@ async function deleteCampaign(id) {
  * Devuelve la campaña activa para un tipo de acción dado (uso público).
  * Si hay varias (caso raro), retorna la más reciente.
  */
-async function getActiveCampaignByActionType(actionType) {
+async function getActiveCampaignByActionType(actionType, path = null) {
   const now = new Date();
-  const camp = await prisma.marketingCampaign.findFirst({
+  // Si nos pasan path, buscamos varios candidatos y devolvemos el primero que
+  // cumpla con su pagesConfig. Si no, devolvemos la más reciente.
+  const candidates = await prisma.marketingCampaign.findMany({
     where: {
       actionType,
       isActive: true,
@@ -331,7 +338,11 @@ async function getActiveCampaignByActionType(actionType) {
       creativeUrl: { not: null },
     },
     orderBy: { createdAt: 'desc' },
+    take: 10,
   });
+  const camp = path
+    ? candidates.find((c) => campaignMatchesPath(c, path))
+    : candidates[0];
   if (!camp) return null;
   return {
     id: camp.id,
