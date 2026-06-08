@@ -169,9 +169,8 @@ export default function AdminMarketingPage() {
                 <Grid item xs={6} md={3}><StatCard icon={CampaignOutlinedIcon} label="CTR promedio" value={stats?.ctrPromedio ? `${stats.ctrPromedio}%` : '—'} color="#6d28d9" /></Grid>
                 <Grid item xs={6} md={3}><StatCard icon={CampaignOutlinedIcon} label="Leads (mes)" value={stats?.leadsMes ?? '—'} color="#6d28d9" /></Grid>
               </Grid>
-              <Alert severity="info" sx={{ borderRadius: '8px', mb: 3 }}>
-                Las métricas de impresiones, clics, CTR y leads se activan al desplegar M2 (tracking en sitio público).
-              </Alert>
+              <CampaignAnalytics />
+              <Box sx={{ height: 24 }} />
               <CoverageWidget />
             </>
           )}
@@ -405,6 +404,211 @@ export default function AdminMarketingPage() {
         {toast && <Alert severity={toast.severity} onClose={() => setToast(null)} sx={{ borderRadius: '8px' }}>{toast.msg}</Alert>}
       </Snackbar>
     </Box>
+  );
+}
+
+// ─── Analytics ejecutivo de campañas ───
+function CampaignAnalytics() {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    adminFetch('/api/marketing/admin/analytics').then((r) => {
+      if (r?.data?.success) setData(r.data.data);
+    });
+  }, []);
+
+  if (!data) {
+    return (
+      <Card sx={{ borderRadius: '12px', p: 3 }}>
+        <CircularProgress size={20} sx={{ mr: 1 }} /> <Typography component="span">Cargando analytics…</Typography>
+      </Card>
+    );
+  }
+  const { resumen, rankings, distribucion, topAnunciantes } = data;
+
+  return (
+    <Box>
+      {/* Resumen del mes */}
+      <Typography sx={{ fontSize: '0.85rem', fontWeight: 800, color: NAVY, mb: 1.5, letterSpacing: '-0.01em' }}>
+        Resumen del mes
+      </Typography>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={6} md={3}>
+          <StatCard icon={CampaignOutlinedIcon} label="Activadas este mes" value={resumen.campanasActivadasMes} color={ACCENT} />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatCard icon={CampaignOutlinedIcon} label="Creadas este mes" value={resumen.campanasCreadasMes} color="#6d28d9" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatCard icon={EventOutlinedIcon} label="Vencidas este mes" value={resumen.campanasVencidasMes} color="#a16207" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatCard icon={AttachMoneyRoundedIcon} label="Inversión total mes" value={fmtCOP(resumen.inversionTotalCOP)} color={ACCENT} />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatCard icon={VisibilityOutlinedIcon} label="Impr. promedio / campaña" value={resumen.promedioImpresionesPorCampana.toLocaleString('es-CO')} color="#0369a1" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatCard icon={MouseOutlinedIcon} label="CTR promedio" value={resumen.ctrPromedio ? `${resumen.ctrPromedio}%` : '—'} color="#0369a1" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatCard icon={CampaignOutlinedIcon} label="Conversión clic → lead" value={resumen.conversion ? `${resumen.conversion}%` : '—'} color="#15803d" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatCard icon={AttachMoneyRoundedIcon} label="Costo por lead promedio" value={resumen.cplPromedio ? fmtCOP(resumen.cplPromedio) : '—'} color={ACCENT} />
+        </Grid>
+      </Grid>
+
+      {/* Rankings: más / menos efectivas */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={6}>
+          <RankingCard title="🏆 Más efectivas (por CTR)"
+            color="#15803d" bg="#dcfce7"
+            items={rankings.topByCTR}
+            getValue={(c) => `${c.monthCTR}%`}
+            empty="Sin datos suficientes. Las métricas llegan con tracking." />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <RankingCard title="⚠️ Menos efectivas (por CTR, mín 50 impr.)"
+            color="#b91c1c" bg="#fee2e2"
+            items={rankings.bottomByCTR}
+            getValue={(c) => `${c.monthCTR}%`}
+            empty="Sin campañas con métricas suficientes para ranking." />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <RankingCard title="👁 Mayor alcance (impresiones)"
+            color="#0369a1" bg="#e0f2fe"
+            items={rankings.topByImpressions}
+            getValue={(c) => c.monthImpressions.toLocaleString('es-CO')}
+            empty="Aún sin impresiones registradas." />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <RankingCard title="🎯 Más leads generados"
+            color="#6d28d9" bg="#ede9fe"
+            items={rankings.topByLeads}
+            getValue={(c) => `${c.monthLeads} leads${c.cpl ? ` · CPL ${fmtCOP(c.cpl)}` : ''}`}
+            empty="Aún sin leads registrados." />
+        </Grid>
+      </Grid>
+
+      {/* Distribución + Top anunciantes */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
+            <CardContent>
+              <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem', mb: 1.5 }}>
+                Distribución por formato (activas)
+              </Typography>
+              {distribucion.length === 0 ? (
+                <Typography sx={{ fontSize: '0.875rem', color: '#94a3b8' }}>Sin campañas activas.</Typography>
+              ) : (
+                <Stack spacing={1}>
+                  {distribucion.slice(0, 8).map((d) => {
+                    const max = Math.max(...distribucion.map((x) => x.activas));
+                    const pct = max > 0 ? (d.activas / max) * 100 : 0;
+                    return (
+                      <Box key={d.actionType}>
+                        <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>{d.label}</Typography>
+                          <Typography sx={{ fontSize: '0.8125rem', color: ACCENT, fontWeight: 700 }}>
+                            {d.activas} · {fmtCOP(d.inversionCOP)}
+                          </Typography>
+                        </Stack>
+                        <Box sx={{ height: 6, borderRadius: 3, bgcolor: '#e2e8f0' }}>
+                          <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: ACCENT, borderRadius: 3 }} />
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
+            <CardContent>
+              <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem', mb: 1.5 }}>
+                Top anunciantes del mes
+              </Typography>
+              {topAnunciantes.length === 0 ? (
+                <Typography sx={{ fontSize: '0.875rem', color: '#94a3b8' }}>Sin anunciantes con campañas este mes.</Typography>
+              ) : (
+                <Stack spacing={1.25}>
+                  {topAnunciantes.map((a, idx) => (
+                    <Stack key={a.advertiserId} direction="row" alignItems="center" spacing={1.5}>
+                      <Box sx={{
+                        width: 24, height: 24, borderRadius: '50%',
+                        bgcolor: idx === 0 ? '#fef3c7' : '#f1f5f9',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 800, fontSize: '0.75rem',
+                        color: idx === 0 ? '#a16207' : '#64748b',
+                      }}>{idx + 1}</Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>{a.nombre || a.advertiserId.slice(0, 8)}</Typography>
+                        {a.marcaPrincipal && (
+                          <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{a.marcaPrincipal}</Typography>
+                        )}
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography sx={{ fontWeight: 800, color: ACCENT, fontSize: '0.875rem' }}>
+                          {fmtCOP(a.inversionMesCOP)}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                          {a.campanasMes} campaña{a.campanasMes === 1 ? '' : 's'}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  ))}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {(resumen.campanasSinMetricas > 0 || resumen.campanasConMetricas === 0) && (
+        <Alert severity="info" sx={{ borderRadius: '8px', mb: 2 }}>
+          {resumen.campanasSinMetricas} campaña(s) sin impresiones registradas. Las métricas se llenan con el tracking en sitio público.
+        </Alert>
+      )}
+    </Box>
+  );
+}
+
+function RankingCard({ title, color, bg, items, getValue, empty }) {
+  return (
+    <Card sx={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', height: '100%' }}>
+      <CardContent>
+        <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem', mb: 1.5 }}>{title}</Typography>
+        {items.length === 0 ? (
+          <Typography sx={{ fontSize: '0.8125rem', color: '#94a3b8' }}>{empty}</Typography>
+        ) : (
+          <Stack spacing={1}>
+            {items.map((c, idx) => (
+              <Stack key={c.id} direction="row" alignItems="center" spacing={1.5}>
+                <Box sx={{
+                  width: 22, height: 22, borderRadius: '50%',
+                  bgcolor: bg, color, fontWeight: 800, fontSize: '0.7rem',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>{idx + 1}</Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c.nombre}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                    {c.advertiserNombre} · {c.actionType}
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontWeight: 800, color, fontSize: '0.8125rem', flexShrink: 0 }}>
+                  {getValue(c)}
+                </Typography>
+              </Stack>
+            ))}
+          </Stack>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

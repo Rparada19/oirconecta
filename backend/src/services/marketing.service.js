@@ -424,6 +424,137 @@ async function getDashboardStats() {
   };
 }
 
+/**
+ * Analytics ejecutivo: panel de "mejores/peores campañas" y agregados
+ * que ayudan a tomar decisiones (cuáles renovar, cuáles renegociar).
+ */
+async function getCampaignAnalytics() {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [
+    createdThisMonth,
+    activatedThisMonth,
+    expiredThisMonth,
+    allCampaignsWithMetrics,
+    byActionTypeAgg,
+    topAdvertisers,
+  ] = await Promise.all([
+    prisma.marketingCampaign.count({ where: { createdAt: { gte: monthStart } } }),
+    prisma.marketingCampaign.count({ where: { activatedAt: { gte: monthStart } } }),
+    prisma.marketingCampaign.count({
+      where: { endDate: { gte: monthStart, lt: now }, isActive: false },
+    }),
+    prisma.marketingCampaign.findMany({
+      where: {
+        startDate: { lte: now },
+        endDate: { gte: monthStart },
+      },
+      include: {
+        advertiser: { select: { nombre: true } },
+        metrics: { where: { date: { gte: monthStart } } },
+      },
+    }),
+    prisma.marketingCampaign.groupBy({
+      by: ['actionType'],
+      where: { isActive: true, status: 'ACTIVE' },
+      _count: { _all: true },
+      _sum: { priceCOP: true },
+    }),
+    prisma.marketingCampaign.groupBy({
+      by: ['advertiserId'],
+      where: { startDate: { gte: monthStart } },
+      _sum: { priceCOP: true },
+      _count: { _all: true },
+      orderBy: { _sum: { priceCOP: 'desc' } },
+      take: 5,
+    }),
+  ]);
+
+  // Enriquecer campañas con totales del mes y CTR
+  const enriched = allCampaignsWithMetrics.map((c) => {
+    const imp = c.metrics.reduce((a, m) => a + (m.impressions || 0), 0);
+    const clk = c.metrics.reduce((a, m) => a + (m.clicks || 0), 0);
+    const led = c.metrics.reduce((a, m) => a + (m.leads || 0), 0);
+    return {
+      id: c.id,
+      nombre: c.nombre,
+      actionType: c.actionType,
+      advertiserNombre: c.advertiser?.nombre,
+      priceCOP: c.priceCOP,
+      isActive: c.isActive,
+      status: c.status,
+      monthImpressions: imp,
+      monthClicks: clk,
+      monthLeads: led,
+      monthCTR: imp > 0 ? Math.round((clk / imp) * 10000) / 100 : 0,
+      // CPL para ranking: COP por lead. null si sin leads.
+      cpl: led > 0 ? Math.round(c.priceCOP / led) : null,
+    };
+  });
+
+  const withMetrics = enriched.filter((c) => c.monthImpressions > 0);
+  const withoutMetrics = enriched.filter((c) => c.monthImpressions === 0);
+
+  const topByCTR = [...withMetrics].sort((a, b) => b.monthCTR - a.monthCTR).slice(0, 5);
+  const bottomByCTR = [...withMetrics]
+    .filter((c) => c.monthImpressions >= 50) // mínimo significativo
+    .sort((a, b) => a.monthCTR - b.monthCTR).slice(0, 5);
+  const topByImpressions = [...enriched].sort((a, b) => b.monthImpressions - a.monthImpressions).slice(0, 5);
+  const topByLeads = [...enriched].sort((a, b) => b.monthLeads - a.monthLeads)
+    .filter((c) => c.monthLeads > 0).slice(0, 5);
+
+  // Promedios
+  const totalImp = enriched.reduce((a, c) => a + c.monthImpressions, 0);
+  const totalClk = enriched.reduce((a, c) => a + c.monthClicks, 0);
+  const totalLed = enriched.reduce((a, c) => a + c.monthLeads, 0);
+  const totalInversion = enriched.reduce((a, c) => a + (c.priceCOP || 0), 0);
+  const ctrPromedio = totalImp > 0 ? Math.round((totalClk / totalImp) * 10000) / 100 : 0;
+  const cplPromedio = totalLed > 0 ? Math.round(totalInversion / totalLed) : null;
+  const conversion = totalClk > 0 ? Math.round((totalLed / totalClk) * 10000) / 100 : 0;
+
+  // Distribución por actionType
+  const distribucion = byActionTypeAgg.map((b) => ({
+    actionType: b.actionType,
+    label: BY_CODE[b.actionType]?.label || b.actionType,
+    activas: b._count._all,
+    inversionCOP: b._sum.priceCOP || 0,
+  })).sort((a, b) => b.activas - a.activas);
+
+  // Top anunciantes con nombres
+  const advIds = topAdvertisers.map((a) => a.advertiserId);
+  const advs = advIds.length === 0 ? [] : await prisma.marketingAdvertiser.findMany({
+    where: { id: { in: advIds } },
+    select: { id: true, nombre: true, marcaPrincipal: true },
+  });
+  const advsBy = Object.fromEntries(advs.map((a) => [a.id, a]));
+  const topAnunciantes = topAdvertisers.map((t) => ({
+    advertiserId: t.advertiserId,
+    nombre: advsBy[t.advertiserId]?.nombre,
+    marcaPrincipal: advsBy[t.advertiserId]?.marcaPrincipal,
+    campanasMes: t._count._all,
+    inversionMesCOP: t._sum.priceCOP || 0,
+  }));
+
+  return {
+    resumen: {
+      campanasCreadasMes: createdThisMonth,
+      campanasActivadasMes: activatedThisMonth,
+      campanasVencidasMes: expiredThisMonth,
+      campanasConMetricas: withMetrics.length,
+      campanasSinMetricas: withoutMetrics.length,
+      promedioImpresionesPorCampana: enriched.length > 0 ? Math.round(totalImp / enriched.length) : 0,
+      ctrPromedio,
+      cplPromedio,
+      conversion,
+      inversionTotalCOP: totalInversion,
+    },
+    rankings: { topByCTR, bottomByCTR, topByImpressions, topByLeads },
+    distribucion,
+    topAnunciantes,
+  };
+}
+
 module.exports = {
   slugify,
   computeUtms,
@@ -444,6 +575,7 @@ module.exports = {
   toggleCampaignActive,
   deleteCampaign,
   getDashboardStats,
+  getCampaignAnalytics,
   getActiveCampaignByActionType,
   getActiveCampaignsByType,
   recordEvent,

@@ -153,6 +153,13 @@ router.get('/admin/stats', authenticate, authorize('ADMIN'), async (req, res) =>
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+router.get('/admin/analytics', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.getCampaignAnalytics();
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ─── Anunciantes ───
 router.get('/admin/advertisers', authenticate, authorize('ADMIN'), async (req, res) => {
   try {
