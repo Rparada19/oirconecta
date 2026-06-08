@@ -8,18 +8,20 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Box, IconButton, Backdrop } from '@mui/material';
+import { Box, IconButton, Backdrop, Typography } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   fetchActiveCampaign, trackImpression, trackClick,
   buildDestinationUrl, rememberUtm,
 } from '../../services/marketingPublicApi';
+import { usePreviewMode } from '../../hooks/usePreviewMode';
 
 const ACTION_TYPE = 'POPUP_BIENVENIDA';
 const POLL_MS = 60 * 1000;
 const SEEN_KEY = 'oc_popup_seen';
 
 export default function PopupBienvenida() {
+  const preview = usePreviewMode();
   const [camp, setCamp] = useState(null);
   const [shown, setShown] = useState(false);
   const [canClose, setCanClose] = useState(false);
@@ -84,6 +86,28 @@ export default function PopupBienvenida() {
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
   const onClose = (e) => { e.stopPropagation(); setShown(false); };
+
+  // En preview sin campaña: render una etiqueta flotante para que el admin
+  // sepa que este slot existe y dónde aparecería.
+  if (preview && !camp) {
+    return (
+      <Box sx={{
+        position: 'fixed', top: 80, right: 16, zIndex: 9999,
+        bgcolor: '#fff', border: '2px dashed #cbd5e1', borderRadius: '8px',
+        px: 1.5, py: 1, boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      }}>
+        <Typography sx={{ fontSize: '0.6rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Slot vacío
+        </Typography>
+        <Typography sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>
+          Pop-up de bienvenida
+        </Typography>
+        <Typography sx={{ fontSize: '0.65rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+          POPUP_BIENVENIDA
+        </Typography>
+      </Box>
+    );
+  }
 
   if (!camp || !shown) return null;
   const isVideo = camp.creativeType === 'video';

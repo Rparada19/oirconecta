@@ -5,16 +5,28 @@
 import React from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { useMarketingCampaign } from '../../hooks/useMarketingCampaign';
+import { usePreviewMode } from '../../hooks/usePreviewMode';
+import SlotPreviewWrapper from './SlotPreviewWrapper';
 
 export default function BannerSidebar() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const preview = usePreviewMode();
   const { camp, ref, href, onClick } = useMarketingCampaign('BANNER_SIDEBAR', { device: 'desktop' });
 
-  if (isMobile || !camp) return null;
-  const isVideo = camp.creativeType === 'video';
+  if (isMobile) return null;
 
-  return (
+  if (!camp && !preview) return null;
+  if (!camp && preview) {
+    return (
+      <Box sx={{ position: 'sticky', top: 96, alignSelf: 'flex-start', width: 300 }}>
+        <SlotPreviewWrapper slotId="BANNER_SIDEBAR" slotLabel="Banner lateral sticky" active={false} minHeight={600} />
+      </Box>
+    );
+  }
+
+  const isVideo = camp.creativeType === 'video';
+  const content = (
     <Box sx={{ position: 'sticky', top: 96, alignSelf: 'flex-start' }}>
       <Box ref={ref} component={href ? 'a' : 'div'}
         href={href || undefined} target="_blank" rel="noopener noreferrer"
@@ -45,4 +57,10 @@ export default function BannerSidebar() {
       </Box>
     </Box>
   );
+
+  return preview ? (
+    <SlotPreviewWrapper slotId="BANNER_SIDEBAR" slotLabel="Banner lateral sticky" active={!!camp}>
+      {content}
+    </SlotPreviewWrapper>
+  ) : content;
 }

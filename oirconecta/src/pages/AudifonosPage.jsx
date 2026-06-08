@@ -5,6 +5,7 @@ import { Box, Container, Typography, Grid, Button, Chip } from '@mui/material';
 import { Star } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import PreviewSlot from '../components/marketing/PreviewSlot';
 import MarketingCardMedia from '../components/marketing/MarketingCardMedia';
 import SeoBreadcrumbs from '../components/seo/SeoBreadcrumbs';
 
@@ -249,6 +250,8 @@ const AudifonosPage = () => {
         </Box>
       </Container>
 
+      <PreviewSlot slotId="BRANDED_ARTICLE_SERIES" slotLabel="Serie de artículos de marca" minHeight={120} />
+      <PreviewSlot slotId="LEAD_MAGNET" slotLabel="Lead magnet patrocinado" minHeight={100} />
       <Footer />
     </>
   );

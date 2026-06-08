@@ -14,6 +14,7 @@ import HomeVideoSection from '../components/HomeVideoSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import HomeB2BSection from '../components/home/HomeB2BSection';
 import Footer from '../components/Footer';
+import PreviewSlot from '../components/marketing/PreviewSlot';
 
 export default function HomePage() {
   return (
@@ -27,11 +28,14 @@ export default function HomePage() {
         <meta property="og:url" content="https://oirconecta.com/" />
       </Helmet>
       <Header />
+      <PreviewSlot slotId="HOMEPAGE_TAKEOVER" slotLabel="Takeover de homepage (hero)" minHeight={200} />
+      <PreviewSlot slotId="BANNER_HERO" slotLabel="Banner hero rotativo" minHeight={140} />
       <Hero />
       <HomeUserPathsSection />
       <Box id="busqueda-profesionales" sx={{ scrollMarginTop: 96 }}>
         <SearchEngine />
       </Box>
+      <PreviewSlot slotId="EXIT_INTENT" slotLabel="Exit-intent overlay" minHeight={80} />
       <HomeComparadorSection />
       <HomeDiscoverySection />
       <RecommendationOfMonthSection />
@@ -40,6 +44,8 @@ export default function HomePage() {
       <HomeVideoSection />
       <TestimonialsSection />
       <HomeB2BSection />
+      <PreviewSlot slotId="WEB_PUSH_TOAST" slotLabel="Notificación toast" minHeight={80} />
+      <PreviewSlot slotId="FLOATING_CTA_MOBILE" slotLabel="CTA flotante mobile (solo en mobile)" minHeight={70} />
       <Footer />
     </Box>
   );

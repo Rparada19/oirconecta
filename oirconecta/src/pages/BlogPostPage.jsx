@@ -16,6 +16,7 @@ import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import NewsletterCTA from '../components/NewsletterCTA';
+import PreviewSlot from '../components/marketing/PreviewSlot';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
@@ -565,6 +566,9 @@ export default function BlogPostPage() {
         </>
       )}
 
+      <PreviewSlot slotId="BLOG_VIDEO_PREROLL" slotLabel="Video pre-roll en blog" minHeight={140} />
+      <PreviewSlot slotId="BLOG_PATROCINADOR" slotLabel="Patrocinado por (final de artículo)" minHeight={100} />
+      <PreviewSlot slotId="BRANDED_CONTENT" slotLabel="Contenido patrocinado" minHeight={100} />
       <Footer />
     </Box>
   );

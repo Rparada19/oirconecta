@@ -17,6 +17,7 @@ import MedicalServicesOutlinedIcon from '@mui/icons-material/MedicalServicesOutl
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import PreviewSlot from '../components/marketing/PreviewSlot';
 import { isNonWorkingDay, isColombianHoliday, getHolidaysForYear } from '../utils/colombiaHolidays';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
@@ -593,6 +594,8 @@ export default function AgendamientoPage() {
         )}
       </Container>
 
+      <PreviewSlot slotId="WEBINAR" slotLabel="Webinar patrocinado" minHeight={100} />
+      <PreviewSlot slotId="ENCUESTA_NPS" slotLabel="Encuesta patrocinada" minHeight={100} />
       <Footer />
     </Box>
   );

@@ -11,6 +11,7 @@ import StarIcon from '@mui/icons-material/Star';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import PreviewSlot from '../components/marketing/PreviewSlot';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
 
 const formatPrice = (p) => (p == null ? 'Consultar' : new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(p));
@@ -354,6 +355,10 @@ export default function ComparadorPage() {
           )}
         </Container>
 
+        <PreviewSlot slotId="COMPARADOR_BANNER" slotLabel="Banner en Comparador" minHeight={100} />
+        <PreviewSlot slotId="COMPARADOR_PRODUCTO_DESTACADO" slotLabel="Producto destacado en Comparador" minHeight={140} />
+        <PreviewSlot slotId="COMPARADOR_FICHA" slotLabel="Ficha de producto patrocinada" minHeight={100} />
+        <PreviewSlot slotId="AUDIFONOS_GUIA_INTERACTIVA" slotLabel="Guía interactiva patrocinada" minHeight={120} />
         <Footer />
       </div>
     </>

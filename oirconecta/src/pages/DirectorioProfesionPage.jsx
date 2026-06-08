@@ -19,6 +19,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import DirectoryCardV2 from '../components/directorio/v2/DirectoryCardV2';
 import BrandCard from '../components/marketing/BrandCard';
+import PreviewSlot from '../components/marketing/PreviewSlot';
+import BannerSidebar from '../components/marketing/BannerSidebar';
 import { fetchActiveCampaignList, rememberUtm } from '../services/marketingPublicApi';
 import DirectoryCardSkeleton from '../components/directorio/v2/DirectoryCardSkeleton';
 import { fetchFeaturedByProfession, searchDirectoryV2 } from '../services/directoryDiscoveryService';
@@ -534,6 +536,10 @@ export default function DirectorioProfesionPage() {
         </Container>
       </Box>
 
+      <PreviewSlot slotId="SEARCH_INLINE_AD" slotLabel="Anuncio inline en resultados" minHeight={120} />
+      <PreviewSlot slotId="SPONSORED_PROFESSIONAL" slotLabel="Perfil profesional patrocinado" minHeight={140} />
+      <PreviewSlot slotId="SEARCH_DESTACADO" slotLabel="Destacado en búsquedas" minHeight={100} />
+      <BannerSidebar />
       <Footer />
     </Box>
   );

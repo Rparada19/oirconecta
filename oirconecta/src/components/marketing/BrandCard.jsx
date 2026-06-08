@@ -12,6 +12,8 @@ import React, { useEffect, useRef } from 'react';
 import { Box, Typography, Button, Stack } from '@mui/material';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import { trackImpression, trackClick, buildDestinationUrl } from '../../services/marketingPublicApi';
+import { usePreviewMode } from '../../hooks/usePreviewMode';
+import SlotPreviewWrapper from './SlotPreviewWrapper';
 
 const ACCENT = '#085946';
 const NAVY = '#272F50';
@@ -20,6 +22,7 @@ const GOLD = '#C9A86A';
 export default function BrandCard({ campaign }) {
   const ref = useRef(null);
   const impressedRef = useRef(false);
+  const preview = usePreviewMode();
 
   useEffect(() => {
     if (!campaign?.id || !ref.current || impressedRef.current) return;
@@ -43,7 +46,7 @@ export default function BrandCard({ campaign }) {
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  return (
+  const card = (
     <Box
       ref={ref}
       onClick={onClick}
@@ -120,4 +123,10 @@ export default function BrandCard({ campaign }) {
       </Box>
     </Box>
   );
+
+  return preview ? (
+    <SlotPreviewWrapper slotId="BRAND_CARD_DIRECTORY" slotLabel="Tarjeta de marca" active>
+      {card}
+    </SlotPreviewWrapper>
+  ) : card;
 }

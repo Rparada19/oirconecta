@@ -5,12 +5,17 @@
  */
 import { useEffect, useState } from 'react';
 
+const KEY = 'oc_preview_mode';
+
 export function usePreviewMode() {
   const [enabled, setEnabled] = useState(false);
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
-      setEnabled(params.get('preview_mode') === 'true');
+      const fromUrl = params.get('preview_mode') === 'true';
+      const fromSession = sessionStorage.getItem(KEY) === 'true';
+      if (fromUrl) sessionStorage.setItem(KEY, 'true');
+      setEnabled(fromUrl || fromSession);
     } catch {}
   }, []);
   return enabled;
