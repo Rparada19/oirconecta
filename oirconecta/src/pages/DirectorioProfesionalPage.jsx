@@ -649,6 +649,7 @@ export default function DirectorioProfesionalPage() {
               >
                 <Avatar
                   src={photo || undefined}
+                  imgProps={{ style: { objectFit: 'contain', padding: 6 } }}
                   sx={{
                     width: { xs: 112, md: 144 },
                     height: { xs: 112, md: 144 },
@@ -656,7 +657,10 @@ export default function DirectorioProfesionalPage() {
                     fontWeight: 800,
                     border: '4px solid rgba(255,255,255,0.92)',
                     boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
-                    bgcolor: 'primary.light',
+                    // Si hay foto: fondo blanco para que un logo con transparencia se vea limpio.
+                    // Sin foto: fondo de marca para las iniciales del fallback.
+                    bgcolor: photo ? '#ffffff' : 'primary.light',
+                    color: photo ? 'transparent' : 'common.white',
                     flexShrink: 0,
                   }}
                 >
