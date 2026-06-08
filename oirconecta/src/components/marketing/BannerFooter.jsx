@@ -5,17 +5,27 @@
 import React from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { useMarketingCampaign } from '../../hooks/useMarketingCampaign';
+import { usePreviewMode } from '../../hooks/usePreviewMode';
+import SlotPreviewWrapper from './SlotPreviewWrapper';
 
 export default function BannerFooter() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const preview = usePreviewMode();
   const { camp, ref, href, onClick } = useMarketingCampaign('BANNER_FOOTER',
     { device: isMobile ? 'mobile' : 'desktop' });
 
-  if (!camp) return null;
+  if (!camp && !preview) return null;
+  if (!camp && preview) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <SlotPreviewWrapper slotId="BANNER_FOOTER" slotLabel="Banner footer" active={false} minHeight={90} />
+      </Box>
+    );
+  }
   const isVideo = camp.creativeType === 'video';
 
-  return (
+  const content = (
     <Box sx={{
       width: '100%',
       bgcolor: '#0a0a0a',
@@ -50,4 +60,12 @@ export default function BannerFooter() {
       </Box>
     </Box>
   );
+
+  return preview ? (
+    <Box sx={{ p: 1 }}>
+      <SlotPreviewWrapper slotId="BANNER_FOOTER" slotLabel="Banner footer" active={!!camp}>
+        {content}
+      </SlotPreviewWrapper>
+    </Box>
+  ) : content;
 }

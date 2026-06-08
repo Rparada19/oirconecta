@@ -18,6 +18,8 @@ import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
 import { adminFetch } from './adminAuth';
 import AdvertiserDetailDrawer from './AdvertiserDetailDrawer';
+import MarketingPreviewDialog from './MarketingPreviewDialog';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 
 const PIPELINE_COLOR = {
   PROSPECT:    { bg: '#f1f5f9', fg: '#64748b', label: 'Prospecto' },
@@ -83,6 +85,7 @@ export default function AdminMarketingPage() {
   const [advDialog, setAdvDialog] = useState(null); // null | {new}|{edit, data}
   const [campDialog, setCampDialog] = useState(null); // null | { actionType?: string, data?: object }
   const [advDetailId, setAdvDetailId] = useState(null); // anunciante abierto en drawer
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const reload = async () => {
     setLoading(true);
@@ -134,6 +137,12 @@ export default function AdminMarketingPage() {
             Catálogo de acciones, anunciantes y campañas activas.
           </Typography>
         </Box>
+        <Button variant="outlined" startIcon={<VisibilityRoundedIcon />}
+          onClick={() => setPreviewOpen(true)}
+          sx={{ borderColor: ACCENT, color: ACCENT, borderRadius: '8px', textTransform: 'none', fontWeight: 700,
+            '&:hover': { borderColor: '#064a3a', bgcolor: `${ACCENT}10` } }}>
+          Vista previa del portal
+        </Button>
       </Stack>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: '1px solid #e5e7eb',
@@ -370,6 +379,8 @@ export default function AdminMarketingPage() {
 
       <AdvertiserDetailDrawer open={!!advDetailId} advertiserId={advDetailId}
         onClose={() => setAdvDetailId(null)} onUpdated={reload} />
+
+      <MarketingPreviewDialog open={previewOpen} onClose={() => setPreviewOpen(false)} />
 
       <CampaignDialog open={!!campDialog} initialActionType={campDialog?.actionType}
         data={campDialog?.data} advertisers={advertisers} catalog={catalog.items}
