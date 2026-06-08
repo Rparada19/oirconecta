@@ -569,20 +569,27 @@ function AdvertiserDialog({ open, data, onClose, onSaved }) {
     try {
       const url = data?.id ? `/api/marketing/admin/advertisers/${data.id}` : '/api/marketing/admin/advertisers';
       const method = data?.id ? 'PATCH' : 'POST';
-      // Limpia el form de relaciones que el endpoint no acepta y campos vacíos
       const payload = { ...form };
       delete payload.id; delete payload.contacts; delete payload.activities; delete payload.campaigns; delete payload._count;
-      // Strings vacíos → null para evitar conflictos en campos opcionales
       ['contactoEmail', 'emailFacturacion', 'sitioWeb', 'linkedinUrl', 'notas', 'nit'].forEach((k) => {
         if (payload[k] === '') payload[k] = null;
       });
+      console.log('[adv] POST/PATCH', url, payload);
       const r = await adminFetch(url, { method, body: JSON.stringify(payload) });
+      console.log('[adv] response', r);
       if (r?.data?.success) {
         onSaved();
       } else {
-        setError(r?.data?.error || `Error ${r?.status || ''} al guardar`);
+        const msg = r?.data?.error || `HTTP ${r?.status} sin mensaje del backend`;
+        console.error('[adv] save fail', r);
+        setError(msg);
+        // Si es 401, avisa con redirect al login
+        if (r?.status === 401) {
+          setError('Sesión expirada. Cierra sesión y vuelve a entrar al panel admin.');
+        }
       }
     } catch (e) {
+      console.error('[adv] save threw', e);
       setError(e?.message || 'Error de red');
     } finally {
       setSaving(false);
