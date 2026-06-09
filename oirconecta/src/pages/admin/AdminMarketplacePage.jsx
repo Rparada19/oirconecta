@@ -94,15 +94,21 @@ export default function AdminMarketplacePage() {
   const fetchServices = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await adminFetch('/api/marketplace/admin/all');
-    if (err) setError(err);
-    else setServices(data?.data || data || []);
+    const r = await adminFetch('/api/marketplace/admin/all');
+    if (!r?.data?.success) {
+      setError(r?.data?.error || `HTTP ${r?.status || ''} al cargar servicios`);
+      setServices([]);
+    } else {
+      const list = r.data.data;
+      setServices(Array.isArray(list) ? list : Array.isArray(list?.items) ? list.items : []);
+    }
     setLoading(false);
   };
 
+  const servicesArray = Array.isArray(services) ? services : [];
   const filtered = TABS[tab].statuses
-    ? services.filter((s) => TABS[tab].statuses.includes(s.estado || s.status || ''))
-    : services;
+    ? servicesArray.filter((s) => TABS[tab].statuses.includes(s.estado || s.status || ''))
+    : servicesArray;
 
   const handleToggleFeatured = async (item) => {
     const id = item._id || item.id;
@@ -205,8 +211,8 @@ export default function AdminMarketplacePage() {
             >
               {TABS.map((t, i) => {
                 const count = t.statuses
-                  ? services.filter((s) => t.statuses.includes(s.estado || s.status || '')).length
-                  : services.length;
+                  ? servicesArray.filter((s) => t.statuses.includes(s.estado || s.status || '')).length
+                  : servicesArray.length;
                 return <Tab key={t.label} label={`${t.label} (${count})`} />;
               })}
             </Tabs>

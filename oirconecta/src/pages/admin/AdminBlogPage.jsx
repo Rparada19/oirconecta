@@ -119,9 +119,14 @@ export default function AdminBlogPage() {
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await adminFetch('/api/blog/admin/all');
-    if (err) setError(err);
-    else setPosts(data?.data || data || []);
+    const r = await adminFetch('/api/blog/admin/all');
+    if (!r?.data?.success) {
+      setError(r?.data?.error || `HTTP ${r?.status || ''} al cargar blog`);
+      setPosts([]);
+    } else {
+      const list = r.data.data;
+      setPosts(Array.isArray(list) ? list : Array.isArray(list?.items) ? list.items : []);
+    }
     setLoading(false);
   };
 
@@ -270,7 +275,7 @@ export default function AdminBlogPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {posts.map((post, i) => (
+                  {(Array.isArray(posts) ? posts : []).map((post, i) => (
                     <TableRow
                       key={post._id || post.id || i}
                       sx={{ '&:hover': { background: 'rgba(8,89,70,0.03)' }, transition: 'background 0.15s' }}
