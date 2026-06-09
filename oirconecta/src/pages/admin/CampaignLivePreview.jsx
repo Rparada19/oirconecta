@@ -4,14 +4,53 @@
  * en tiempo real con los valores del formulario.
  */
 
-import React from 'react';
-import { Box, Typography, Stack } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import DesktopWindowsRoundedIcon from '@mui/icons-material/DesktopWindowsRounded';
+import PhoneIphoneRoundedIcon from '@mui/icons-material/PhoneIphoneRounded';
 
 const NAVY = '#272F50';
 const ACCENT = '#085946';
 const GOLD = '#C9A86A';
+
+/**
+ * Devuelve la URL de la creatividad a renderizar según el viewport
+ * elegido en la vista previa.
+ * - device='mobile' + form.creativeUrlMobile presente → mobile
+ * - en cualquier otro caso → desktop (creativeUrl)
+ */
+function pickFormCreative(form, device) {
+  if (device === 'mobile' && form?.creativeUrlMobile) {
+    return { url: form.creativeUrlMobile, type: form.creativeType };
+  }
+  return { url: form?.creativeUrl, type: form?.creativeType };
+}
+
+/** Marco de iPhone alrededor de un mockup para reforzar la sensación móvil. */
+function PhoneFrame({ children }) {
+  return (
+    <Box sx={{
+      width: 220, mx: 'auto',
+      borderRadius: '22px', overflow: 'hidden',
+      border: '5px solid #1f2937',
+      boxShadow: '0 18px 40px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.04)',
+      bgcolor: '#000',
+      position: 'relative',
+    }}>
+      <Box sx={{
+        height: 14, bgcolor: '#000',
+        display: 'flex', justifyContent: 'center', alignItems: 'flex-end',
+      }}>
+        <Box sx={{ width: 56, height: 7, bgcolor: '#1f2937', borderRadius: '0 0 7px 7px' }} />
+      </Box>
+      <Box sx={{ bgcolor: '#fff' }}>
+        {children}
+      </Box>
+    </Box>
+  );
+}
 
 const PLACEHOLDER_IMG = (
   <Box sx={{
@@ -360,6 +399,19 @@ export default function CampaignLivePreview({ form, advertisers, catalog }) {
   const advertiser = advertisers?.find((a) => a.id === form.advertiserId);
   const action = catalog?.find((c) => c.code === form.actionType);
   const actionLabel = action?.label;
+  const hasMobileVariant = !!form?.creativeUrlMobile;
+
+  // Default: mobile si hay variante explícita, desktop en otro caso.
+  const [device, setDevice] = useState('desktop');
+
+  // El mock recibe `form` pero le inyectamos la creativeUrl correcta según
+  // el device elegido (sin tocar el formulario real).
+  const effectiveCreative = pickFormCreative(form, device);
+  const formForMock = {
+    ...form,
+    creativeUrl: effectiveCreative.url,
+    creativeType: effectiveCreative.type,
+  };
 
   let Mock;
   switch (form.actionType) {
@@ -395,20 +447,46 @@ export default function CampaignLivePreview({ form, advertisers, catalog }) {
       Mock = (props) => <GenericMock {...props} actionLabel={actionLabel} />;
   }
 
+  // Si Mock es uno que ya viene "mobile-only" (sticky footer o cta flotante),
+  // forzamos device=mobile para que tenga sentido. Lo mismo para banner sidebar
+  // que es solo desktop.
+  const mobileOnly = ['FLOATING_CTA_MOBILE', 'MOBILE_STICKY_FOOTER', 'MOBILE_INTERSTICIAL'].includes(form.actionType);
+  const desktopOnly = ['BANNER_SIDEBAR'].includes(form.actionType);
+  const effectiveDevice = mobileOnly ? 'mobile' : desktopOnly ? 'desktop' : device;
+
+  const wrapInPhone = effectiveDevice === 'mobile' &&
+    !['MOBILE_STICKY_FOOTER', 'NEWSLETTER_SPONSOR', 'NEWSLETTER_MENCION',
+      'NEWSLETTER_DEDICADO', 'EMAIL_BIENVENIDA_PROF'].includes(form.actionType);
+
+  const mockContent = <Mock form={formForMock} advertiser={advertiser} />;
+
   return (
     <Box sx={{
       position: 'sticky', top: 0,
       bgcolor: '#f1f5f9', borderRadius: '12px', p: 2,
       border: '1px solid #e5e7eb', minHeight: 320,
     }}>
-      <Typography sx={{
-        fontSize: '0.7rem', fontWeight: 800, color: '#475569',
-        textTransform: 'uppercase', letterSpacing: '0.1em', mb: 1.5,
-      }}>
-        Vista previa en vivo
-      </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+        <Typography sx={{
+          fontSize: '0.7rem', fontWeight: 800, color: '#475569',
+          textTransform: 'uppercase', letterSpacing: '0.1em',
+        }}>
+          Vista previa en vivo
+        </Typography>
+        {!mobileOnly && !desktopOnly && (
+          <ToggleButtonGroup exclusive size="small" value={device}
+            onChange={(_, v) => v && setDevice(v)}
+            sx={{ '& .MuiToggleButton-root': { px: 1, py: 0.25, textTransform: 'none', fontSize: '0.65rem', fontWeight: 700 } }}>
+            <ToggleButton value="desktop"><DesktopWindowsRoundedIcon sx={{ fontSize: 14, mr: 0.5 }} /> Desktop</ToggleButton>
+            <ToggleButton value="mobile">
+              <PhoneIphoneRoundedIcon sx={{ fontSize: 14, mr: 0.5 }} /> Mobile
+              {hasMobileVariant && <Box sx={{ width: 6, height: 6, ml: 0.5, borderRadius: '50%', bgcolor: ACCENT }} />}
+            </ToggleButton>
+          </ToggleButtonGroup>
+        )}
+      </Stack>
 
-      <Mock form={form} advertiser={advertiser} />
+      {wrapInPhone ? <PhoneFrame>{mockContent}</PhoneFrame> : mockContent}
 
       {!form.actionType && (
         <Typography sx={{ mt: 2, fontSize: '0.75rem', color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>
@@ -418,6 +496,16 @@ export default function CampaignLivePreview({ form, advertisers, catalog }) {
       {form.actionType && !form.creativeUrl && (
         <Typography sx={{ mt: 2, fontSize: '0.75rem', color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>
           Sube una creatividad para ver el anuncio terminado.
+        </Typography>
+      )}
+      {form.actionType && effectiveDevice === 'mobile' && form.creativeUrl && !form.creativeUrlMobile && (
+        <Typography sx={{ mt: 1.5, fontSize: '0.7rem', color: '#a16207', textAlign: 'center', fontStyle: 'italic' }}>
+          No hay variante mobile cargada · se muestra la creatividad principal.
+        </Typography>
+      )}
+      {form.actionType && effectiveDevice === 'mobile' && hasMobileVariant && (
+        <Typography sx={{ mt: 1.5, fontSize: '0.7rem', color: ACCENT, textAlign: 'center', fontWeight: 700 }}>
+          ✓ Usando creatividad mobile dedicada
         </Typography>
       )}
     </Box>
