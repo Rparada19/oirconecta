@@ -20,6 +20,7 @@ import { adminFetch } from './adminAuth';
 import AdvertiserDetailDrawer from './AdvertiserDetailDrawer';
 import MarketingPreviewDialog from './MarketingPreviewDialog';
 import CampaignPagesSelector from './CampaignPagesSelector';
+import CampaignLivePreview from './CampaignLivePreview';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 
 const PIPELINE_COLOR = {
@@ -1003,11 +1004,14 @@ function CampaignDialog({ open, data, initialActionType, advertisers, catalog, o
   }, [form.nombre, form.actionType]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ fontWeight: 800, color: NAVY }}>{data?.id ? 'Editar campaña' : 'Nueva campaña'}</DialogTitle>
       <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 0.5 }}>
+        <Grid container spacing={3} sx={{ mt: 0.5 }}>
+          {/* Columna izquierda — formulario */}
           <Grid item xs={12} md={8}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={8}>
             <TextField label="Nombre de la campaña *" fullWidth size="small"
               value={form.nombre || ''} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
           </Grid>
@@ -1067,10 +1071,17 @@ function CampaignDialog({ open, data, initialActionType, advertisers, catalog, o
             </Box>
           </Grid>
           {error && (
-            <Grid item xs={12}>
-              <Alert severity="error" sx={{ borderRadius: '8px' }}>{error}</Alert>
+                <Grid item xs={12}>
+                  <Alert severity="error" sx={{ borderRadius: '8px' }}>{error}</Alert>
+                </Grid>
+              )}
             </Grid>
-          )}
+          </Grid>
+
+          {/* Columna derecha — vista previa en vivo */}
+          <Grid item xs={12} md={4}>
+            <CampaignLivePreview form={form} advertisers={advertisers} catalog={catalog} />
+          </Grid>
         </Grid>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
