@@ -803,9 +803,37 @@ function ActionConfigPanel({ actionType, config, onChange }) {
 }
 
 // ─── Uploader de creatividad (Cloudinary vía backend) ───
-function CreativeUploader({ value, onChange }) {
+/**
+ * Extrae dimensiones de la cadena `dim` del catálogo.
+ * Ejemplos:
+ *   "1200×300 desktop · 375×200 mobile" → [{ w:1200, h:300, label:'desktop' }, { w:375, h:200, label:'mobile' }]
+ *   "600×400" → [{ w:600, h:400 }]
+ *   "300×600" → [{ w:300, h:600 }]
+ *   "16:9"    → [{ ratio:'16:9' }]
+ */
+function parseDimensions(dim) {
+  if (!dim || typeof dim !== 'string') return [];
+  const out = [];
+  // Buscar todas las apariciones de "NNN×NNN" o "NNNxNNN"
+  const re = /(\d{2,5})\s*[×xX]\s*(\d{2,5})\s*([a-záéíóúñ]*)?/g;
+  let m;
+  while ((m = re.exec(dim))) {
+    out.push({ w: parseInt(m[1]), h: parseInt(m[2]), label: (m[3] || '').trim() });
+  }
+  if (out.length === 0) {
+    // Ratio puro tipo "16:9"
+    const rm = /^(\d{1,2}):(\d{1,2})$/.exec(dim.trim());
+    if (rm) return [{ ratio: dim.trim() }];
+  }
+  return out;
+}
+
+function CreativeUploader({ value, onChange, actionType, catalog }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const action = catalog?.find((c) => c.code === actionType);
+  const dims = parseDimensions(action?.dim);
+  const target = dims[0]; // primera variante (suele ser desktop / principal)
 
   const handleFile = async (file) => {
     if (!file) return;
@@ -835,11 +863,33 @@ function CreativeUploader({ value, onChange }) {
     }
   };
 
+  // Tolerancia 12%: el aspect ratio del archivo subido vs el target.
+  const TOL = 0.12;
+  const matchesTarget = (() => {
+    if (!target || target.ratio) return null;
+    if (!value.creativeWidth || !value.creativeHeight) return null;
+    const targetRatio = target.w / target.h;
+    const uploaded = value.creativeWidth / value.creativeHeight;
+    return Math.abs(uploaded - targetRatio) / targetRatio <= TOL;
+  })();
+
   return (
     <Box>
-      <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', mb: 1, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-        Creatividad
-      </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          Creatividad
+        </Typography>
+        {dims.length > 0 && (
+          <Stack direction="row" spacing={0.5}>
+            {dims.map((d, i) => (
+              <Chip key={i} size="small"
+                label={d.ratio || `${d.w}×${d.h}${d.label ? ` ${d.label}` : ''}`}
+                sx={{ bgcolor: `${ACCENT}10`, color: ACCENT, fontWeight: 700, fontSize: '0.7rem', height: 20, fontFamily: 'monospace' }} />
+            ))}
+          </Stack>
+        )}
+      </Stack>
+
       {value.creativeUrl ? (
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 1.5, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
           <Box sx={{ width: 80, height: 80, borderRadius: '6px', overflow: 'hidden', flexShrink: 0, bgcolor: '#000' }}>
@@ -853,6 +903,11 @@ function CreativeUploader({ value, onChange }) {
             <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: NAVY }}>
               {value.creativeType === 'video' ? 'Video' : 'Imagen'} · {value.creativeWidth}×{value.creativeHeight}
             </Typography>
+            {target && !target.ratio && (
+              <Typography sx={{ fontSize: '0.7rem', color: matchesTarget ? '#15803d' : '#a16207', fontWeight: 700 }}>
+                {matchesTarget ? `✓ proporciones correctas` : `⚠ esperado ${target.w}×${target.h} — la imagen podría recortarse`}
+              </Typography>
+            )}
             <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {value.creativeUrl}
             </Typography>
@@ -864,14 +919,32 @@ function CreativeUploader({ value, onChange }) {
         </Box>
       ) : (
         <Box component="label" sx={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.75,
           py: 3, borderRadius: '8px', border: '2px dashed #cbd5e1', cursor: 'pointer',
           color: '#64748b', '&:hover': { borderColor: ACCENT, color: ACCENT, bgcolor: `${ACCENT}05` },
         }}>
-          {busy ? <CircularProgress size={20} /> : <CloudUploadOutlinedIcon />}
-          <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-            {busy ? 'Subiendo…' : 'Subir imagen, GIF o video (máx 10MB)'}
+          {busy ? <CircularProgress size={24} /> : <CloudUploadOutlinedIcon sx={{ fontSize: 28 }} />}
+          <Typography sx={{ fontSize: '0.875rem', fontWeight: 700 }}>
+            {busy ? 'Subiendo…' : 'Subir imagen, GIF o video'}
           </Typography>
+          {target && !target.ratio ? (
+            <Typography sx={{ fontSize: '0.75rem', color: NAVY, fontWeight: 700 }}>
+              Dimensión recomendada: <span style={{ fontFamily: 'monospace' }}>{target.w}×{target.h}px</span>
+              {target.label ? ` (${target.label})` : ''}
+              {dims.length > 1 ? ` · alternativa: ${dims[1].w}×${dims[1].h}${dims[1].label ? ` ${dims[1].label}` : ''}` : ''}
+            </Typography>
+          ) : target?.ratio ? (
+            <Typography sx={{ fontSize: '0.75rem', color: NAVY, fontWeight: 700 }}>
+              Proporción recomendada: <span style={{ fontFamily: 'monospace' }}>{target.ratio}</span>
+            </Typography>
+          ) : (
+            <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+              JPG, PNG, GIF, WEBP o MP4 · máx 10 MB
+            </Typography>
+          )}
+          {target && !target.ratio && (
+            <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>JPG, PNG, GIF, WEBP o MP4 · máx 10 MB</Typography>
+          )}
           <input type="file" hidden accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"
             onChange={(e) => handleFile(e.target.files?.[0])} />
         </Box>
@@ -1048,7 +1121,8 @@ function CampaignDialog({ open, data, initialActionType, advertisers, catalog, o
               value={form.internalNotes || ''} onChange={(e) => setForm({ ...form, internalNotes: e.target.value })} />
           </Grid>
           <Grid item xs={12}>
-            <CreativeUploader value={form} onChange={(patch) => setForm({ ...form, ...patch })} />
+            <CreativeUploader value={form} onChange={(patch) => setForm({ ...form, ...patch })}
+              actionType={form.actionType} catalog={catalog} />
           </Grid>
           <Grid item xs={12}>
             <ActionConfigPanel actionType={form.actionType} config={form.config || {}}
