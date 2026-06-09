@@ -35,9 +35,17 @@ app.use(cors({
 
 // Rate limiting: desactivado en desarrollo (evita "Demasiadas solicitudes" con polling)
 if (config.nodeEnv !== 'development') {
+  // Más generoso para usuarios autenticados (admins/profesionales) — el token
+  // ya identifica al usuario, no necesitamos límite tan estrecho. Sin token,
+  // mantenemos un cap razonable contra abuso anónimo.
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: (req) => (req.headers.authorization ? 1500 : 200),
+    keyGenerator: (req) => req.headers.authorization
+      ? `auth:${(req.headers.authorization || '').slice(-32)}`
+      : (req.ip || 'anon'),
+    standardHeaders: true,
+    legacyHeaders: false,
     message: { success: false, error: 'Demasiadas solicitudes, intenta de nuevo más tarde' },
   });
   app.use('/api/', limiter);

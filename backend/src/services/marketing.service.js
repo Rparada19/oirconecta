@@ -424,11 +424,25 @@ async function getDashboardStats() {
   };
 }
 
+// Cache simple en memoria para analytics (~30s) — evita recalcular agregados
+// pesados en cada navegación al dashboard. Reset al expirar.
+let _analyticsCache = { ts: 0, data: null };
+const ANALYTICS_TTL_MS = 30 * 1000;
+
 /**
  * Analytics ejecutivo: panel de "mejores/peores campañas" y agregados
  * que ayudan a tomar decisiones (cuáles renovar, cuáles renegociar).
  */
 async function getCampaignAnalytics() {
+  if (_analyticsCache.data && (Date.now() - _analyticsCache.ts) < ANALYTICS_TTL_MS) {
+    return _analyticsCache.data;
+  }
+  const data = await _computeCampaignAnalytics();
+  _analyticsCache = { ts: Date.now(), data };
+  return data;
+}
+
+async function _computeCampaignAnalytics() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
