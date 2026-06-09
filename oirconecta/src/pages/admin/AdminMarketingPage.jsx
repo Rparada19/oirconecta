@@ -90,19 +90,33 @@ export default function AdminMarketingPage() {
   const [previewFocusSlot, setPreviewFocusSlot] = useState(null);
   const [previewCampaign, setPreviewCampaign] = useState(null);
 
+  const [reloadError, setReloadError] = useState(null);
   const reload = async () => {
-    setLoading(true);
-    const [s, c, a, ca] = await Promise.all([
-      adminFetch('/api/marketing/admin/stats'),
-      adminFetch('/api/marketing/catalog'),
-      adminFetch('/api/marketing/admin/advertisers'),
-      adminFetch('/api/marketing/admin/campaigns'),
-    ]);
-    if (s?.data?.success) setStats(s.data.data);
-    if (c?.data?.success) setCatalog(c.data.data);
-    if (a?.data?.success) setAdvertisers(a.data.data.items || []);
-    if (ca?.data?.success) setCampaigns(ca.data.data.items || []);
-    setLoading(false);
+    setLoading(true); setReloadError(null);
+    try {
+      const [s, c, a, ca] = await Promise.all([
+        adminFetch('/api/marketing/admin/stats'),
+        adminFetch('/api/marketing/catalog'),
+        adminFetch('/api/marketing/admin/advertisers'),
+        adminFetch('/api/marketing/admin/campaigns'),
+      ]);
+      // Catálogo es público; si falla, lo trato como crítico para el tab
+      if (c?.data?.success) {
+        setCatalog(c.data.data);
+      } else {
+        setReloadError(c?.data?.error || 'No se pudo cargar el catálogo de acciones');
+      }
+      if (s?.status === 401 || a?.status === 401 || ca?.status === 401) {
+        setReloadError('Sesión expirada. Cierra sesión y vuelve a entrar al panel admin.');
+      }
+      if (s?.data?.success) setStats(s.data.data);
+      if (a?.data?.success) setAdvertisers(a.data.data.items || []);
+      if (ca?.data?.success) setCampaigns(ca.data.data.items || []);
+    } catch (e) {
+      setReloadError(e?.message || 'Error de red al cargar el panel');
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { reload(); }, []);
 
@@ -178,6 +192,18 @@ export default function AdminMarketingPage() {
           {/* ─── TAB 1: CATÁLOGO ─── */}
           {tab === 1 && (
             <Box>
+              {reloadError && (
+                <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }}
+                  action={<Button size="small" onClick={reload}>Reintentar</Button>}>
+                  {reloadError}
+                </Alert>
+              )}
+              {!reloadError && Object.keys(catalog.categories || {}).length === 0 && (
+                <Box sx={{ p: 6, textAlign: 'center' }}>
+                  <CircularProgress />
+                  <Typography sx={{ mt: 2, color: '#64748b' }}>Cargando catálogo…</Typography>
+                </Box>
+              )}
               {Object.entries(catalog.categories || {}).map(([cat, label]) => (
                 <Box key={cat} sx={{ mb: 4 }}>
                   <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.85rem', letterSpacing: '0.1em', textTransform: 'uppercase', mb: 1.5 }}>
