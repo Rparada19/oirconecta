@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
-import { useMarketingCampaign } from '../../hooks/useMarketingCampaign';
+import { useMarketingCampaign, pickCreative } from '../../hooks/useMarketingCampaign';
 import { usePreviewMode } from '../../hooks/usePreviewMode';
 import SlotPreviewWrapper from './SlotPreviewWrapper';
 
@@ -23,6 +23,7 @@ export default function BannerFooter() {
       </Box>
     );
   }
+  const creative = pickCreative(camp, isMobile ? 'mobile' : 'desktop');
   const isVideo = camp.creativeType === 'video';
 
   const content = (
@@ -42,10 +43,10 @@ export default function BannerFooter() {
           borderRadius: '6px', overflow: 'hidden', textDecoration: 'none',
         }}>
         {isVideo ? (
-          <Box component="video" src={camp.creativeUrl} autoPlay muted playsInline loop
+          <Box component="video" src={creative.url} autoPlay muted playsInline loop
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
-          <Box component="img" src={camp.creativeUrl} alt="" loading="lazy"
+          <Box component="img" src={creative.url} alt="" loading="lazy"
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         )}
         <Box sx={{

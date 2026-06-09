@@ -828,12 +828,119 @@ function parseDimensions(dim) {
   return out;
 }
 
+/**
+ * Dropzone individual (desktop o mobile). Subimos a Cloudinary y devolvemos
+ * { url, publicId, type, width, height } al padre via onUploaded.
+ */
+function CreativeDropzone({ slotLabel, target, value, busy, setBusy, error, setError, onUploaded, onClear }) {
+  const TOL = 0.12;
+  const matches = (() => {
+    if (!target || target.ratio) return null;
+    if (!value?.width || !value?.height) return null;
+    const targetRatio = target.w / target.h;
+    const uploaded = value.width / value.height;
+    return Math.abs(uploaded - targetRatio) / targetRatio <= TOL;
+  })();
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    setBusy(true); setError(null);
+    const fd = new FormData();
+    fd.append('file', file);
+    const token = localStorage.getItem('oirconecta_admin_token');
+    try {
+      const r = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/marketing/admin/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || 'Error al subir');
+      onUploaded({
+        url: j.data.url,
+        publicId: j.data.publicId,
+        type: j.data.resourceType === 'video' ? 'video' : 'image',
+        width: j.data.width,
+        height: j.data.height,
+      });
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const labelText = slotLabel + (target ? ` · ${target.ratio || `${target.w}×${target.h}px`}` : '');
+
+  return (
+    <Box>
+      <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 0.75 }}>
+        <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          {slotLabel}
+        </Typography>
+        {target && (
+          <Chip size="small" label={target.ratio || `${target.w}×${target.h}`}
+            sx={{ bgcolor: `${ACCENT}10`, color: ACCENT, fontWeight: 700, fontSize: '0.65rem', height: 18, fontFamily: 'monospace' }} />
+        )}
+      </Stack>
+
+      {value?.url ? (
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+          <Box sx={{ width: 60, height: 60, borderRadius: '6px', overflow: 'hidden', flexShrink: 0, bgcolor: '#000' }}>
+            {value.type === 'video' ? (
+              <video src={value.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <img src={value.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            )}
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: NAVY }}>
+              {value.width}×{value.height}
+            </Typography>
+            {target && !target.ratio && (
+              <Typography sx={{ fontSize: '0.65rem', color: matches ? '#15803d' : '#a16207', fontWeight: 700 }}>
+                {matches ? '✓ proporciones ok' : `⚠ esperado ${target.w}×${target.h}`}
+              </Typography>
+            )}
+          </Box>
+          <Button size="small" onClick={onClear} sx={{ color: '#b91c1c', textTransform: 'none', fontSize: '0.7rem' }}>
+            Quitar
+          </Button>
+        </Box>
+      ) : (
+        <Box component="label" sx={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.5,
+          py: 2, borderRadius: '8px', border: '2px dashed #cbd5e1', cursor: busy ? 'wait' : 'pointer',
+          color: '#64748b', '&:hover': { borderColor: ACCENT, color: ACCENT, bgcolor: `${ACCENT}05` },
+        }}>
+          {busy ? <CircularProgress size={20} /> : <CloudUploadOutlinedIcon sx={{ fontSize: 24 }} />}
+          <Typography sx={{ fontSize: '0.75rem', fontWeight: 700 }}>
+            {busy ? 'Subiendo…' : `Subir ${slotLabel.toLowerCase()}`}
+          </Typography>
+          {target && !target.ratio && (
+            <Typography sx={{ fontSize: '0.65rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+              {target.w}×{target.h}px {target.label}
+            </Typography>
+          )}
+          <input type="file" hidden accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"
+            onChange={(e) => handleFile(e.target.files?.[0])} />
+        </Box>
+      )}
+      {error && <Alert severity="error" sx={{ mt: 0.5, fontSize: '0.75rem' }}>{error}</Alert>}
+    </Box>
+  );
+}
+
 function CreativeUploader({ value, onChange, actionType, catalog }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
+  const [busyDesktop, setBusyDesktop] = useState(false);
+  const [busyMobile, setBusyMobile] = useState(false);
+  const [errorDesktop, setErrorDesktop] = useState(null);
+  const [errorMobile, setErrorMobile] = useState(null);
   const action = catalog?.find((c) => c.code === actionType);
   const dims = parseDimensions(action?.dim);
-  const target = dims[0]; // primera variante (suele ser desktop / principal)
+  const desktopTarget = dims.find((d) => /desktop|escritorio/i.test(d.label || '')) || dims[0];
+  const mobileTarget  = dims.find((d) => /mobile|móvil|movil/i.test(d.label || ''));
+  const hasTwoVariants = !!mobileTarget && mobileTarget !== desktopTarget;
 
   const handleFile = async (file) => {
     if (!file) return;
@@ -863,93 +970,61 @@ function CreativeUploader({ value, onChange, actionType, catalog }) {
     }
   };
 
-  // Tolerancia 12%: el aspect ratio del archivo subido vs el target.
-  const TOL = 0.12;
-  const matchesTarget = (() => {
-    if (!target || target.ratio) return null;
-    if (!value.creativeWidth || !value.creativeHeight) return null;
-    const targetRatio = target.w / target.h;
-    const uploaded = value.creativeWidth / value.creativeHeight;
-    return Math.abs(uploaded - targetRatio) / targetRatio <= TOL;
-  })();
-
   return (
     <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Creatividad
-        </Typography>
-        {dims.length > 0 && (
-          <Stack direction="row" spacing={0.5}>
-            {dims.map((d, i) => (
-              <Chip key={i} size="small"
-                label={d.ratio || `${d.w}×${d.h}${d.label ? ` ${d.label}` : ''}`}
-                sx={{ bgcolor: `${ACCENT}10`, color: ACCENT, fontWeight: 700, fontSize: '0.7rem', height: 20, fontFamily: 'monospace' }} />
-            ))}
-          </Stack>
-        )}
-      </Stack>
+      <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', mb: 1, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        Creatividad
+      </Typography>
 
-      {value.creativeUrl ? (
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 1.5, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
-          <Box sx={{ width: 80, height: 80, borderRadius: '6px', overflow: 'hidden', flexShrink: 0, bgcolor: '#000' }}>
-            {value.creativeType === 'video' ? (
-              <video src={value.creativeUrl} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <img src={value.creativeUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            )}
-          </Box>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: NAVY }}>
-              {value.creativeType === 'video' ? 'Video' : 'Imagen'} · {value.creativeWidth}×{value.creativeHeight}
-            </Typography>
-            {target && !target.ratio && (
-              <Typography sx={{ fontSize: '0.7rem', color: matchesTarget ? '#15803d' : '#a16207', fontWeight: 700 }}>
-                {matchesTarget ? `✓ proporciones correctas` : `⚠ esperado ${target.w}×${target.h} — la imagen podría recortarse`}
-              </Typography>
-            )}
-            <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {value.creativeUrl}
-            </Typography>
-          </Box>
-          <Button size="small" onClick={() => onChange({ creativeUrl: null, creativePublicId: null, creativeType: null, creativeWidth: null, creativeHeight: null })}
-            sx={{ color: '#b91c1c', textTransform: 'none' }}>
-            Cambiar
-          </Button>
-        </Box>
-      ) : (
-        <Box component="label" sx={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.75,
-          py: 3, borderRadius: '8px', border: '2px dashed #cbd5e1', cursor: 'pointer',
-          color: '#64748b', '&:hover': { borderColor: ACCENT, color: ACCENT, bgcolor: `${ACCENT}05` },
-        }}>
-          {busy ? <CircularProgress size={24} /> : <CloudUploadOutlinedIcon sx={{ fontSize: 28 }} />}
-          <Typography sx={{ fontSize: '0.875rem', fontWeight: 700 }}>
-            {busy ? 'Subiendo…' : 'Subir imagen, GIF o video'}
-          </Typography>
-          {target && !target.ratio ? (
-            <Typography sx={{ fontSize: '0.75rem', color: NAVY, fontWeight: 700 }}>
-              Dimensión recomendada: <span style={{ fontFamily: 'monospace' }}>{target.w}×{target.h}px</span>
-              {target.label ? ` (${target.label})` : ''}
-              {dims.length > 1 ? ` · alternativa: ${dims[1].w}×${dims[1].h}${dims[1].label ? ` ${dims[1].label}` : ''}` : ''}
-            </Typography>
-          ) : target?.ratio ? (
-            <Typography sx={{ fontSize: '0.75rem', color: NAVY, fontWeight: 700 }}>
-              Proporción recomendada: <span style={{ fontFamily: 'monospace' }}>{target.ratio}</span>
-            </Typography>
-          ) : (
-            <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-              JPG, PNG, GIF, WEBP o MP4 · máx 10 MB
-            </Typography>
-          )}
-          {target && !target.ratio && (
-            <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>JPG, PNG, GIF, WEBP o MP4 · máx 10 MB</Typography>
-          )}
-          <input type="file" hidden accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"
-            onChange={(e) => handleFile(e.target.files?.[0])} />
-        </Box>
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: hasTwoVariants ? { xs: '1fr', sm: '1fr 1fr' } : '1fr',
+        gap: 2,
+      }}>
+        <CreativeDropzone
+          slotLabel={hasTwoVariants ? 'Desktop' : 'Imagen principal'}
+          target={desktopTarget}
+          value={value.creativeUrl ? {
+            url: value.creativeUrl, type: value.creativeType,
+            width: value.creativeWidth, height: value.creativeHeight,
+          } : null}
+          busy={busyDesktop} setBusy={setBusyDesktop}
+          error={errorDesktop} setError={setErrorDesktop}
+          onUploaded={(u) => onChange({
+            creativeUrl: u.url, creativePublicId: u.publicId,
+            creativeType: u.type, creativeWidth: u.width, creativeHeight: u.height,
+          })}
+          onClear={() => onChange({
+            creativeUrl: null, creativePublicId: null, creativeType: null,
+            creativeWidth: null, creativeHeight: null,
+          })} />
+
+        {hasTwoVariants && (
+          <CreativeDropzone
+            slotLabel="Mobile"
+            target={mobileTarget}
+            value={value.creativeUrlMobile ? {
+              url: value.creativeUrlMobile, type: value.creativeType,
+              width: value.creativeMobileWidth, height: value.creativeMobileHeight,
+            } : null}
+            busy={busyMobile} setBusy={setBusyMobile}
+            error={errorMobile} setError={setErrorMobile}
+            onUploaded={(u) => onChange({
+              creativeUrlMobile: u.url, creativeMobilePublicId: u.publicId,
+              creativeMobileWidth: u.width, creativeMobileHeight: u.height,
+            })}
+            onClear={() => onChange({
+              creativeUrlMobile: null, creativeMobilePublicId: null,
+              creativeMobileWidth: null, creativeMobileHeight: null,
+            })} />
+        )}
+      </Box>
+
+      {hasTwoVariants && (
+        <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', mt: 1, fontStyle: 'italic' }}>
+          Sube ambas variantes para que el anuncio se vea óptimo en cada dispositivo. Si solo subes desktop, mobile usará la misma imagen.
+        </Typography>
       )}
-      {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
     </Box>
   );
 }

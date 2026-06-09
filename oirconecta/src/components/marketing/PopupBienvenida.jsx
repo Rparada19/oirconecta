@@ -8,12 +8,13 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Box, IconButton, Backdrop, Typography } from '@mui/material';
+import { Box, IconButton, Backdrop, Typography, useMediaQuery, useTheme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   fetchActiveCampaign, trackImpression, trackClick,
   buildDestinationUrl, rememberUtm,
 } from '../../services/marketingPublicApi';
+import { pickCreative } from '../../hooks/useMarketingCampaign';
 import { usePreviewMode } from '../../hooks/usePreviewMode';
 
 const ACTION_TYPE = 'POPUP_BIENVENIDA';
@@ -22,6 +23,8 @@ const SEEN_KEY = 'oc_popup_seen';
 
 export default function PopupBienvenida() {
   const preview = usePreviewMode();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [camp, setCamp] = useState(null);
   const [shown, setShown] = useState(false);
   const [canClose, setCanClose] = useState(false);
@@ -110,6 +113,7 @@ export default function PopupBienvenida() {
   }
 
   if (!camp || !shown) return null;
+  const creative = pickCreative(camp, isMobile ? 'mobile' : 'desktop');
   const isVideo = camp.creativeType === 'video';
 
   return (
@@ -145,10 +149,10 @@ export default function PopupBienvenida() {
         }}
       >
         {isVideo ? (
-          <Box component="video" src={camp.creativeUrl} autoPlay muted playsInline loop
+          <Box component="video" src={creative.url} autoPlay muted playsInline loop
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
-          <Box component="img" src={camp.creativeUrl} alt=""
+          <Box component="img" src={creative.url} alt=""
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         )}
 

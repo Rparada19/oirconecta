@@ -257,7 +257,8 @@ async function updateCampaign(id, data) {
   const allowed = ['nombre', 'startDate', 'endDate', 'priceCOP', 'destinationUrl',
     'internalNotes', 'status', 'isActive', 'abTestMode', 'autoOptimize', 'config',
     'pagesConfig', 'positionConfig',
-    'creativeUrl', 'creativePublicId', 'creativeType', 'creativeWidth', 'creativeHeight'];
+    'creativeUrl', 'creativePublicId', 'creativeType', 'creativeWidth', 'creativeHeight',
+    'creativeUrlMobile', 'creativeMobilePublicId', 'creativeMobileWidth', 'creativeMobileHeight'];
   const clean = {};
   for (const k of allowed) if (data[k] !== undefined) clean[k] = data[k];
   if (clean.startDate) clean.startDate = new Date(clean.startDate);
@@ -302,6 +303,9 @@ async function getActiveCampaignsByType(actionType, { limit = 12, path = null } 
   });
   const filtered = path ? rows.filter((c) => campaignMatchesPath(c, path)) : rows;
   return filtered.map((c) => ({
+    creativeUrlMobile: c.creativeUrlMobile,
+    creativeMobileWidth: c.creativeMobileWidth,
+    creativeMobileHeight: c.creativeMobileHeight,
     id: c.id,
     slug: c.slug,
     actionType: c.actionType,
@@ -352,6 +356,9 @@ async function getActiveCampaignByActionType(actionType, path = null) {
     creativeType: camp.creativeType,
     creativeWidth: camp.creativeWidth,
     creativeHeight: camp.creativeHeight,
+    creativeUrlMobile: camp.creativeUrlMobile,
+    creativeMobileWidth: camp.creativeMobileWidth,
+    creativeMobileHeight: camp.creativeMobileHeight,
     destinationUrl: camp.destinationUrl,
     config: camp.config,
     utm: {

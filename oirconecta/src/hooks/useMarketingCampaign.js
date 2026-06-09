@@ -16,6 +16,27 @@ import {
 
 const POLL_MS = 60 * 1000;
 
+/**
+ * Devuelve la creatividad correcta según el viewport actual.
+ * Si la campaña tiene `creativeUrlMobile` y el device es 'mobile' →
+ * usa esa variante. Si no, usa la principal.
+ */
+export function pickCreative(camp, device) {
+  if (!camp) return { url: null, width: null, height: null };
+  if (device === 'mobile' && camp.creativeUrlMobile) {
+    return {
+      url: camp.creativeUrlMobile,
+      width: camp.creativeMobileWidth,
+      height: camp.creativeMobileHeight,
+    };
+  }
+  return {
+    url: camp.creativeUrl,
+    width: camp.creativeWidth,
+    height: camp.creativeHeight,
+  };
+}
+
 export function useMarketingCampaign(actionType, { device } = {}) {
   const [camp, setCamp] = useState(null);
   const impressedRef = useRef(false);

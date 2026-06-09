@@ -1509,6 +1509,13 @@ model MarketingCampaign {
   creativeWidth     Int?
   creativeHeight    Int?
 
+  // Variante mobile opcional. Si está, el portal la usa en viewports < md.
+  // Si está vacía, mobile cae a la versión principal (creativeUrl).
+  creativeUrlMobile      String?
+  creativeMobilePublicId String?
+  creativeMobileWidth    Int?
+  creativeMobileHeight   Int?
+
   // Estructura lista para M3
   abTestMode   Boolean @default(false)
   autoOptimize Boolean @default(false)
