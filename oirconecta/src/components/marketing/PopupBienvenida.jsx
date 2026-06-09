@@ -113,7 +113,19 @@ export default function PopupBienvenida() {
   const isVideo = camp.creativeType === 'video';
 
   return (
-    <Backdrop open sx={{ zIndex: 1500, bgcolor: 'rgba(4,26,18,0.78)', backdropFilter: 'blur(6px)' }}>
+    <Backdrop open sx={{
+      zIndex: 1500,
+      // Vignette suave + blur fuerte: el fondo no se ve "muerto" gris,
+      // sino que el contenido del sitio queda apenas perceptible detrás.
+      background: 'radial-gradient(ellipse at center, rgba(15,25,35,0.55) 0%, rgba(15,25,35,0.78) 100%)',
+      backdropFilter: 'blur(14px) saturate(0.9)',
+      WebkitBackdropFilter: 'blur(14px) saturate(0.9)',
+      animation: 'oc-backdrop-in 0.32s ease-out',
+      '@keyframes oc-backdrop-in': {
+        '0%': { opacity: 0, backdropFilter: 'blur(0)' },
+        '100%': { opacity: 1 },
+      },
+    }}>
       <Box
         onClick={onClick}
         role="dialog"
@@ -123,7 +135,13 @@ export default function PopupBienvenida() {
           width: { xs: '92vw', sm: 600 }, maxWidth: '92vw',
           aspectRatio: { xs: '340 / 480', sm: '600 / 400' },
           borderRadius: '16px', overflow: 'hidden',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.4)', bgcolor: '#000',
+          boxShadow: '0 30px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06)',
+          bgcolor: '#000',
+          animation: 'oc-popup-in 0.36s cubic-bezier(0.16, 1, 0.3, 1)',
+          '@keyframes oc-popup-in': {
+            '0%':   { opacity: 0, transform: 'scale(0.92) translateY(8px)' },
+            '100%': { opacity: 1, transform: 'scale(1) translateY(0)' },
+          },
         }}
       >
         {isVideo ? (
