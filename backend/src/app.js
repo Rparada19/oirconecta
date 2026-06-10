@@ -135,6 +135,8 @@ app.get('/sitemap.xml', async (req, res) => {
     const BRANDS_IMP = ['cochlear','advanced-bionics','med-el'];
     BRANDS_AUD.forEach((b) => STATIC_URLS.push({ loc: `https://oirconecta.com/audifonos/${b}`, priority: '0.7', changefreq: 'monthly' }));
     BRANDS_IMP.forEach((b) => STATIC_URLS.push({ loc: `https://oirconecta.com/implantes/${b}`, priority: '0.7', changefreq: 'monthly' }));
+    const PROFESIONES = ['audiologia','fonoaudiologia','otorrinolaringologia','otologia'];
+    PROFESIONES.forEach((p) => STATIC_URLS.push({ loc: `https://oirconecta.com/directorio/profesion/${p}`, priority: '0.85', changefreq: 'weekly' }));
 
     const blogUrls = posts.map((p) => ({
       loc: `https://oirconecta.com/blog/${p.slug}`,

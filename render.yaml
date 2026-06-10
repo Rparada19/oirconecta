@@ -33,6 +33,10 @@ services:
       - key: VITE_API_URL
         value: https://oirconecta-api.onrender.com
     routes:
+      # Sitemap dinámico: lo sirve el backend (incluye blog posts desde DB).
+      - type: rewrite
+        source: /sitemap.xml
+        destination: https://oirconecta-api.onrender.com/sitemap.xml
       # Rutas heredadas del hack SEO en DreamHost: las enviamos al backend
       # para que responda 410 Gone y Google las desindexe.
       - type: rewrite
