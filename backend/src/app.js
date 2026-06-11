@@ -111,7 +111,7 @@ app.get('/sitemap.xml', async (req, res) => {
     const prisma = new PrismaClient();
     const posts = await prisma.blogPost.findMany({
       where: { estado: 'PUBLICADO' },
-      select: { slug: true, updatedAt: true, publishedAt: true },
+      select: { slug: true, updatedAt: true, publishedAt: true, coverUrl: true, titulo: true },
       orderBy: { publishedAt: 'desc' },
     });
 
@@ -138,17 +138,25 @@ app.get('/sitemap.xml', async (req, res) => {
     const PROFESIONES = ['audiologia','fonoaudiologia','otorrinolaringologia','otologia'];
     PROFESIONES.forEach((p) => STATIC_URLS.push({ loc: `https://oirconecta.com/directorio/profesion/${p}`, priority: '0.85', changefreq: 'weekly' }));
 
+    const escapeXml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+
     const blogUrls = posts.map((p) => ({
       loc: `https://oirconecta.com/blog/${p.slug}`,
       lastmod: (p.updatedAt || p.publishedAt || new Date()).toISOString().split('T')[0],
       changefreq: 'monthly',
       priority: '0.7',
+      image: p.coverUrl ? { loc: p.coverUrl, title: p.titulo } : null,
     }));
 
     const all = [...STATIC_URLS, ...blogUrls];
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${all.map((u) => `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<changefreq>${u.changefreq}</changefreq><priority>${u.priority}</priority></url>`).join('\n')}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${all.map((u) => {
+  const imageTag = u.image
+    ? `\n    <image:image><image:loc>${escapeXml(u.image.loc)}</image:loc><image:title>${escapeXml(u.image.title)}</image:title></image:image>`
+    : '';
+  return `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<changefreq>${u.changefreq}</changefreq><priority>${u.priority}</priority>${imageTag}</url>`;
+}).join('\n')}
 </urlset>`;
     res.set('Content-Type', 'application/xml');
     res.set('Cache-Control', 'public, max-age=3600');
