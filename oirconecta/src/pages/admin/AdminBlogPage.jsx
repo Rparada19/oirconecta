@@ -34,7 +34,67 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { adminFetch, getAdminToken } from './adminAuth';
+import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
+import { adminFetch, getAdminToken, ADMIN_TOKEN_KEY } from './adminAuth';
+
+// Sube imagen al endpoint compartido de Cloudinary (mismo que marketing).
+function CoverUploader({ value, onChange }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const handle = async (file) => {
+    if (!file) return;
+    setBusy(true); setErr(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+      const r = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/marketing/admin/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || 'Error al subir');
+      onChange(j.data.url);
+    } catch (e) { setErr(e.message); }
+    finally { setBusy(false); }
+  };
+  return (
+    <Box>
+      {value ? (
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+          <Box sx={{ width: 64, height: 64, borderRadius: '6px', overflow: 'hidden', flexShrink: 0, bgcolor: '#000' }}>
+            <img src={value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontSize: '0.7rem', color: '#475569', wordBreak: 'break-all' }} noWrap>{value}</Typography>
+          </Box>
+          <Button size="small" component="label" sx={{ textTransform: 'none', fontSize: '0.7rem' }}>
+            Cambiar
+            <input type="file" hidden accept="image/jpeg,image/png,image/webp" onChange={(e) => handle(e.target.files?.[0])} />
+          </Button>
+          <Button size="small" onClick={() => onChange('')} sx={{ color: '#b91c1c', textTransform: 'none', fontSize: '0.7rem' }}>
+            Quitar
+          </Button>
+        </Box>
+      ) : (
+        <Box component="label" sx={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.5,
+          py: 2, borderRadius: '8px', border: '2px dashed #cbd5e1', cursor: busy ? 'wait' : 'pointer',
+          color: '#64748b', '&:hover': { borderColor: '#085946', color: '#085946', bgcolor: 'rgba(8,89,70,0.04)' },
+        }}>
+          {busy ? <CircularProgress size={20} /> : <CloudUploadOutlinedIcon sx={{ fontSize: 24 }} />}
+          <Typography sx={{ fontSize: '0.75rem', fontWeight: 700 }}>
+            {busy ? 'Subiendo…' : 'Subir imagen de portada'}
+          </Typography>
+          <Typography sx={{ fontSize: '0.65rem', color: '#94a3b8' }}>JPG/PNG/WEBP · recomendado 1600×900</Typography>
+          <input type="file" hidden accept="image/jpeg,image/png,image/webp" onChange={(e) => handle(e.target.files?.[0])} />
+        </Box>
+      )}
+      {err && <Alert severity="error" sx={{ mt: 0.5, fontSize: '0.75rem' }}>{err}</Alert>}
+    </Box>
+  );
+}
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.90)',
@@ -402,13 +462,18 @@ export default function AdminBlogPage() {
               />
             </Grid>
             <Grid item xs={12} md={6}>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', mb: 0.75 }}>
+                Imagen de portada
+              </Typography>
+              <CoverUploader value={form.imagenPortada} onChange={(url) => setForm((f) => ({ ...f, imagenPortada: url }))} />
               <TextField
-                label="URL imagen de portada"
+                label="o pega URL"
                 fullWidth
                 value={form.imagenPortada}
                 onChange={handleFormChange('imagenPortada')}
                 variant="outlined"
                 size="small"
+                sx={{ mt: 1 }}
               />
             </Grid>
             <Grid item xs={12} md={6}>
