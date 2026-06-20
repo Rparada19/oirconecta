@@ -154,12 +154,13 @@ app.get('/sitemap.xml', async (req, res) => {
 
     const escapeXml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 
+    const absUrl = (u) => u && u.startsWith('/') ? `https://oirconecta.com${u}` : u;
     const blogUrls = posts.map((p) => ({
       loc: `https://oirconecta.com/blog/${p.slug}`,
       lastmod: (p.updatedAt || p.publishedAt || new Date()).toISOString().split('T')[0],
       changefreq: 'monthly',
       priority: '0.7',
-      image: p.coverUrl ? { loc: p.coverUrl, title: p.titulo } : null,
+      image: p.coverUrl ? { loc: absUrl(p.coverUrl), title: p.titulo } : null,
     }));
 
     const all = [...STATIC_URLS, ...blogUrls];
