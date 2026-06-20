@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: true
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:55:00Z'
-coverUrl: https://images.unsplash.com/photo-1576669801945-7a346954da5a?w=1600&q=80&auto=format&fit=crop
+coverUrl: /img/otorrinolaringologo-paciente.jpg
 ---
 
 "La EPS no cubre audífonos." Es una respuesta que muchos pacientes reciben en la ventanilla y aceptan como verdad. La realidad jurídica en Colombia es más matizada: hay audífonos cubiertos, hay vías administrativas, hay acción de tutela como camino legal cuando proceda. Esta guía explica cómo funciona en 2026 y cómo no quedarte sin opciones.

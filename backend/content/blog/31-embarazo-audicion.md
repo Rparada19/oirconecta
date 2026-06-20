@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:20:00Z'
-coverUrl: https://images.pexels.com/photos/8958906/pexels-photo-8958906.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/testimonios-pacientes-audifonos.jpg
 ---
 
 Muchas mujeres notan cambios en su audición durante el embarazo y se asustan pensando que algo serio está pasando. La realidad es que el oído es uno de los tantos sistemas que reacciona a los cambios hormonales y circulatorios del embarazo, y la mayoría de los cambios son benignos y reversibles. Pero algunos no, y por eso conviene saber distinguirlos.

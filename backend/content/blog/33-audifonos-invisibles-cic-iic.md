@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:30:00Z'
-coverUrl: https://images.pexels.com/photos/3921830/pexels-photo-3921830.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/blog/cuidados-audifono.jpg
 ---
 
 "Quiero uno que no se vea." Es la frase que más escuchan los audiólogos en la primera cita. Y es entendible: el estigma del audífono pesa, sobre todo en la primera vez. Los audífonos invisibles —llamados CIC (Completely-in-the-Canal) e IIC (Invisible-in-the-Canal)— responden exactamente a esa necesidad. Pero no son la mejor opción para todos.

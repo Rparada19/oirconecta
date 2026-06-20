@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:05:00Z'
-coverUrl: https://images.pexels.com/photos/16852335/pexels-photo-16852335.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/directorio-profesionales-audicion.jpg
 ---
 
 La hipertensión arterial es el factor de riesgo cardiovascular más subestimado del mundo. La mayoría de las personas que la tienen no lo saben, o no la tratan en serio porque "no duele". Lo que tampoco sabe la mayoría es que la presión alta también afecta la audición, y no de manera sutil.

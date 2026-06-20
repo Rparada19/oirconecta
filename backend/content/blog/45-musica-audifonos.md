@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:30:00Z'
-coverUrl: https://images.unsplash.com/photo-1631558556874-1d127211f574?w=1600&q=80&auto=format&fit=crop
+coverUrl: /img/prueba-audicion-online.jpg
 ---
 
 Para muchas personas con pérdida auditiva, la pregunta más dolorosa después del diagnóstico es esta: "¿Voy a poder volver a disfrutar de la música?". La respuesta corta: sí, pero requiere ajustes específicos y a veces revisar expectativas. Esta guía explica por qué los audífonos modernos no siempre suenan bien con música y cómo conseguir el mejor resultado.

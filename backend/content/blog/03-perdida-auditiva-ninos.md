@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://images.unsplash.com/photo-1632053002928-1919605ee6f7?w=1600&q=80&auto=format&fit=crop
+coverUrl: /img/audifono-tecnologia-moderna.jpg
 ---
 
 En los niños, la audición no es solo "escuchar bien". Es la base sobre la que se construye el lenguaje, la lectura, el rendimiento escolar y la integración social. Una pérdida auditiva no detectada en los primeros años de vida no se compensa después fácilmente: el cerebro tiene una ventana de plasticidad para aprender a procesar sonidos, y esa ventana es estrecha.

@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:50:00Z'
-coverUrl: https://images.unsplash.com/photo-1576669801945-7a346954da5a?w=1600&q=80&auto=format&fit=crop
+coverUrl: /img/otorrinolaringologo-paciente.jpg
 ---
 
 "Audífonos con inteligencia artificial." Es el nuevo eslogan de la industria. Casi todas las marcas premium —Oticon, Widex, Phonak, Starkey, Signia, ReSound— anuncian IA en sus líneas tope. Y la mayoría de pacientes no tiene claro qué significa eso ni si vale los $2-4 millones extra que cuesta sobre un audífono "normal".

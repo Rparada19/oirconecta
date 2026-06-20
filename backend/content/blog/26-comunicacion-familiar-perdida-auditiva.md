@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T15:00:00Z'
-coverUrl: https://images.pexels.com/photos/8958906/pexels-photo-8958906.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/testimonios-pacientes-audifonos.jpg
 ---
 
 Cuando alguien en una familia desarrolla pérdida auditiva, no es solo "esa persona" la que tiene que adaptarse. Se adaptan todos. Y la mayoría no sabe cómo. Cambian la forma de hablar, suben el volumen, se cansan, terminan repitiendo, evitan ciertos temas, dejan de invitarlo a planes. Sin querer, lo aíslan. La persona con hipoacusia, por su parte, también cambia: pide repetir, finge entender, se retira de las conversaciones de grupo, se queda callada en reuniones. Resultado: distancia emocional creciente que **no tiene nada que ver con afecto, todo con comunicación mal manejada**.

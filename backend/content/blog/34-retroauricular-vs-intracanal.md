@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:35:00Z'
-coverUrl: https://images.pexels.com/photos/9130517/pexels-photo-9130517.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/blog/audifono-vista-cercana.jpg
 ---
 
 Cuando vas por primera vez a una cita de audífonos, te van a mostrar dos grandes familias: retroauriculares (los que tienen un módulo detrás de la oreja) e intracanales (los que van metidos en el oído). La pregunta correcta no es "cuál es mejor" sino "cuál es mejor para mí".

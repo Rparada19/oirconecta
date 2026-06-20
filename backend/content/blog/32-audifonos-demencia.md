@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: true
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:25:00Z'
-coverUrl: https://images.pexels.com/photos/16852335/pexels-photo-16852335.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/directorio-profesionales-audicion.jpg
 ---
 
 Durante años se sospechó. En 2017, la *Lancet Commission on Dementia* puso números sobre la mesa: la pérdida auditiva no tratada en la mediana edad es **el factor de riesgo modificable más importante** para desarrollar demencia más tarde. Más que el tabaquismo, más que el sedentarismo, más que la dieta. El estudio ACHIEVE (2023) confirmó que tratar la hipoacusia con audífonos reduce significativamente la velocidad del deterioro cognitivo en personas de alto riesgo.

@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:55:00Z'
-coverUrl: https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=1600&q=80&auto=format&fit=crop
+coverUrl: /img/blog/familia-conversando-mesa.jpg
 ---
 
 Hasta hace pocos años, todo en audiología requería visita presencial: la audiometría, la programación del audífono, los ajustes posteriores, incluso el cambio de un domo. La pandemia aceleró el desarrollo de telemedicina audiológica, y hoy muchas cosas se pueden hacer a distancia. Pero no todas. Esta guía explica qué sí y qué no.

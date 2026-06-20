@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: true
 autorNombre: OírConecta
 publishedAt: '2026-05-31T15:00:00Z'
-coverUrl: https://images.unsplash.com/photo-1576669801945-7a346954da5a?w=1600&q=80&auto=format&fit=crop
+coverUrl: /img/otorrinolaringologo-paciente.jpg
 ---
 
 Comprar tu primer audífono es una de esas decisiones donde la asimetría de información juega en tu contra. El vendedor sabe todo: marcas, modelos, márgenes, alternativas. Tú llegas con una audiometría que apenas entiendes, sin saber qué preguntar, qué probar y mucho menos cuánto debería costar. El resultado típico: o sales con el más caro porque "es lo mejor", o sales con el más barato y vuelves en seis meses por uno mejor. Ambas situaciones se evitan con una guía clara.

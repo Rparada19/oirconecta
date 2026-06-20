@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T15:00:00Z'
-coverUrl: https://images.pexels.com/photos/5206951/pexels-photo-5206951.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/clinica-audiologia-tratamiento.jpg
 ---
 
 Cuando alguien sospecha que escucha menos de lo normal, lo primero que escucha es "necesitas una audiometría". Lo dice el otorrino, lo dice el médico de cabecera, lo dice la EPS, lo dice el centro auditivo. Y la mayoría llega a la prueba sin saber qué le van a hacer, qué van a medir y qué significa el papel que le entregan al final. Esa falta de claridad es la razón por la que muchos pacientes terminan comprando audífonos que no entienden, basados en cifras que tampoco entienden.

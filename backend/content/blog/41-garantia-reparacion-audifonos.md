@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:10:00Z'
-coverUrl: https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/centro-auditivo-colombia.jpg
 ---
 
 Compraste audífonos de varios millones de pesos y a los 18 meses uno deja de funcionar. ¿Qué pasa ahora? La respuesta depende mucho de la garantía que tengas, de la causa de la falla y de cómo manejes el reclamo. Esta guía explica los derechos reales del consumidor en Colombia y cómo no quedarte con un audífono inservible y la respuesta "ya pasó la garantía".

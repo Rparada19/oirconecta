@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/centro-auditivo-colombia.jpg
 ---
 
 Comprar un audífono es una inversión importante, y una de las primeras preguntas razonables del paciente es: ¿cuánto me va a durar? La respuesta corta es 5 a 7 años en promedio, pero la respuesta completa depende de muchos factores: la calidad del aparato, el cuidado diario, el clima, los cambios en tu propia audición y el ritmo del avance tecnológico.

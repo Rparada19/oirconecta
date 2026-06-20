@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:45:00Z'
-coverUrl: https://images.pexels.com/photos/27567505/pexels-photo-27567505.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/blog/perdida-auditiva-personas-mayores.jpg
 ---
 
 La lectura labial es una de esas habilidades que la mayoría de personas con pérdida auditiva ya practica sin saberlo. Aún sin entrenamiento formal, miramos los labios del que habla para entender mejor. La pregunta es: ¿vale la pena formalizar y entrenar esa habilidad? La respuesta es matizada.

@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T15:00:00Z'
-coverUrl: https://images.pexels.com/photos/9130517/pexels-photo-9130517.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/blog/audifono-vista-cercana.jpg
 ---
 
 En 2020, la mayoría de audífonos premium usaban pilas desechables. En 2026, la situación es la opuesta: el 80% de los lanzamientos premium son recargables, las gamas medias también, y solo en gama económica predomina la pila. La pregunta "¿pila o recargable?" ya no es una elección entre dos tecnologías equivalentes: es una decisión sobre estilo de vida, presupuesto inicial y conectividad.

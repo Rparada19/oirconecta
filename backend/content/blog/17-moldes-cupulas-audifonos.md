@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://images.pexels.com/photos/6319017/pexels-photo-6319017.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/familiar-audifonos-cuidador.jpg
 ---
 
 Cuando compras un audífono, la atención se va al aparato: la marca, la tecnología, las funciones. Pero entre el audífono y tu oído hay una pieza pequeña y muchas veces subestimada que define gran parte de la experiencia: el **molde** o la **cúpula**. Es el punto de contacto físico con el conducto auditivo, y de él dependen el confort, la calidad del sonido, la cantidad de retorno (pitidos) y hasta la prevención de infecciones.

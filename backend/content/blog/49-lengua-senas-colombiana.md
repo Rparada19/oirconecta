@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:50:00Z'
-coverUrl: https://images.unsplash.com/photo-1632053002928-1919605ee6f7?w=1600&q=80&auto=format&fit=crop
+coverUrl: /img/audifono-tecnologia-moderna.jpg
 ---
 
 La Lengua de Señas Colombiana (LSC) es una lengua completa, con su propia gramática, vocabulario y cultura. No es un código basado en el español: tiene su propia estructura y, para muchas personas sordas en Colombia, es su primera lengua. Aprenderla abre puertas que ni los audífonos ni la lectura labial pueden abrir solos. Esta guía es para personas con hipoacusia y sus familias que están considerando este camino.

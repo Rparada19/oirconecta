@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://images.pexels.com/photos/6319017/pexels-photo-6319017.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/familiar-audifonos-cuidador.jpg
 ---
 
 Es de noche, te acuestas, apagas la luz y entonces aparece: un pitido agudo, un zumbido constante, un siseo que parece venir de adentro de tu cabeza. Durante el día casi no lo notas porque el ruido del mundo lo tapa, pero en el silencio se vuelve protagonista. Si esto te suena familiar, tienes tinnitus, y no estás solo: lo experimenta entre el 10 y el 15% de la población adulta.

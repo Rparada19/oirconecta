@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: true
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:00:00Z'
-coverUrl: https://images.pexels.com/photos/9130517/pexels-photo-9130517.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/blog/audifono-vista-cercana.jpg
 ---
 
 Una de las preguntas más comunes en la primera cita: **"¿cuánto cuesta un audífono?"**. Y casi siempre la respuesta es ambigua porque el rango real es enorme: en Colombia en 2026, un par de audífonos puede costar desde $1,5 millones hasta $30 millones. Esta guía explica por qué la diferencia y cómo no terminar pagando de más ni de menos.

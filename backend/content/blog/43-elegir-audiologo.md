@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:20:00Z'
-coverUrl: https://images.pexels.com/photos/5206946/pexels-photo-5206946.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/audiologo-prueba-audicion.jpg
 ---
 
 Hay un dicho en la industria auditiva que es más verdad que cliché: **"el audífono es 30% del resultado; el otro 70% es quien lo programa"**. Dos pacientes con la misma audiometría y el mismo modelo pueden tener experiencias totalmente distintas según quién haya hecho la adaptación. Por eso, antes de elegir audífono, elige bien al audiólogo.

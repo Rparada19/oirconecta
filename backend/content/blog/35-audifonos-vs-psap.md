@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:40:00Z'
-coverUrl: https://images.pexels.com/photos/9130517/pexels-photo-9130517.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/blog/audifono-vista-cercana.jpg
 ---
 
 Si has buscado "audífonos para sordera" en Mercado Libre, Amazon o Aliexpress, te aparecen dispositivos que cuestan $50.000 - $300.000 pesos y prometen lo mismo que un audífono de $5 millones. La gran mayoría de esos productos no son audífonos. Son PSAP: *Personal Sound Amplification Products* (amplificadores personales de sonido). Lo que parece un detalle técnico es en realidad una diferencia enorme en lo que el dispositivo hace por tu audición —y en lo que puede dañar.

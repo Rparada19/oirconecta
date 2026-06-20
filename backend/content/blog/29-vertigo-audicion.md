@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:10:00Z'
-coverUrl: https://images.pexels.com/photos/5206946/pexels-photo-5206946.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/audiologo-prueba-audicion.jpg
 ---
 
 El vértigo —esa sensación de que todo gira o de inestabilidad— es uno de los motivos de consulta más frecuentes en otorrinolaringología. Y aunque mucha gente cree que es un problema "solo de equilibrio", la verdad es que el oído interno hace dos trabajos al mismo tiempo: oír y mantener el equilibrio. Cuando uno falla, casi siempre el otro da información valiosa.

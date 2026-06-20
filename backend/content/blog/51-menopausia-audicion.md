@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T17:00:00Z'
-coverUrl: https://images.pexels.com/photos/16852335/pexels-photo-16852335.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/directorio-profesionales-audicion.jpg
 ---
 
 Sofocos, cambios de ánimo, insomnio, peso. La lista de síntomas de menopausia que todas conocen es larga. Lo que pocas saben es que la audición también cambia, y para algunas mujeres es uno de los primeros signos sutiles de que algo hormonal está moviéndose. Esta guía explica por qué la menopausia afecta el oído y qué hacer al respecto.

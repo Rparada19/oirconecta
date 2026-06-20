@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:15:00Z'
-coverUrl: https://images.pexels.com/photos/6319017/pexels-photo-6319017.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/familiar-audifonos-cuidador.jpg
 ---
 
 "La otitis es de niños." Es uno de los mitos más extendidos sobre salud auditiva, y es falso. Los adultos también tienen otitis, y cuando llegan a la consulta suelen llegar tarde porque pensaron que iba a pasar solo. A veces sí pasa. Otras veces termina en perforación timpánica, pérdida auditiva y semanas con antibióticos.

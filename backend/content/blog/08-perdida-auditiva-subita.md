@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://images.unsplash.com/photo-1631558556874-1d127211f574?w=1600&q=80&auto=format&fit=crop
+coverUrl: /img/prueba-audicion-online.jpg
 ---
 
 Te despiertas y un oído no escucha. O estás en una llamada, cambias el teléfono de lado y descubres que por ese oído casi no oyes. A veces viene con un zumbido fuerte o una sensación de oído tapado. La reacción típica es esperar: "será cera", "se me destapará", "mañana estaré mejor". Y ese es, justamente, el error más caro que se puede cometer con la audición.

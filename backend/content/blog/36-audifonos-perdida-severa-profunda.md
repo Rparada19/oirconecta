@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:45:00Z'
-coverUrl: https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/centro-auditivo-colombia.jpg
 ---
 
 Cuando la audiometría muestra umbrales por debajo de 70 dB en las frecuencias importantes para el lenguaje, ya no estamos hablando de pérdida leve. Una pérdida severa (70-90 dB) o profunda (>90 dB) requiere audífonos diseñados para ese rango, y muchas veces la pregunta correcta no es "qué audífono compro" sino "audífono o implante coclear".

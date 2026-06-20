@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:25:00Z'
-coverUrl: https://images.pexels.com/photos/8958906/pexels-photo-8958906.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/testimonios-pacientes-audifonos.jpg
 ---
 
 "Mi papá necesita audífonos pero no quiere ni oír hablar del tema." Es probablemente la consulta más frecuente que reciben los audiólogos —no del propio paciente, sino de hijos, esposas, hermanas. La negación es parte casi universal del proceso. Entender por qué pasa y cómo abordarla cambia mucho las probabilidades.

@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:35:00Z'
-coverUrl: https://images.pexels.com/photos/3921830/pexels-photo-3921830.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/blog/cuidados-audifono.jpg
 ---
 
 Los audífonos modernos no son solo dispositivos de amplificación: son también auriculares Bluetooth. Puedes escuchar llamadas, música, podcasts y notificaciones directamente desde tu celular sin sacar el teléfono del bolsillo. Pero el emparejamiento puede ser frustrante la primera vez. Esta guía cubre cómo hacerlo bien y resolver los problemas más comunes.

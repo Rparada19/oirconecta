@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:40:00Z'
-coverUrl: https://images.pexels.com/photos/7009459/pexels-photo-7009459.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/blog/molde-cupula-audifono.jpg
 ---
 
 Si vives en la costa colombiana o en cualquier zona de calor y humedad alta, tus audífonos sufren más que los de alguien en Bogotá o Medellín. Es matemática: humedad ambiental + sudor + cerumen + calor = el ambiente perfecto para que la electrónica falle. Pero con una rutina simple se puede triplicar la vida útil de un audífono.

@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://images.pexels.com/photos/9130517/pexels-photo-9130517.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/blog/audifono-vista-cercana.jpg
 ---
 
 Pasa más seguido de lo que la gente cree. Te metes a la ducha sin acordarte. Te agarra un aguacero saliendo del carro. Se te cae al lavamanos. Olvidas que lo tienes puesto y entras al mar. En todos estos casos, la reacción de los siguientes 5 minutos puede ser la diferencia entre salvar el audífono o perderlo. Y la mala noticia es que la mayoría de la gente hace exactamente lo que no debe.

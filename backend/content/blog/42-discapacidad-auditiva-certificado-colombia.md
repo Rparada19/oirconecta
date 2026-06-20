@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T16:15:00Z'
-coverUrl: https://images.pexels.com/photos/8958906/pexels-photo-8958906.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/testimonios-pacientes-audifonos.jpg
 ---
 
 Muchas personas con pérdida auditiva en Colombia tienen derecho a un certificado oficial de discapacidad pero no lo tramitan. Las razones suelen ser desconocimiento del proceso, miedo al estigma o creer que "su pérdida no es suficiente". El certificado abre puertas a beneficios laborales, tributarios, en transporte y educación. Vale la pena entenderlo.

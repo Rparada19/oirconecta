@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-06-10T15:00:00Z'
-coverUrl: https://images.pexels.com/photos/5206951/pexels-photo-5206951.jpeg?w=1600&auto=compress&cs=tinysrgb&fit=crop
+coverUrl: /img/clinica-audiologia-tratamiento.jpg
 ---
 
 Si tienes diabetes, tu otorrino debería preguntarte por tu audición y tu endocrinólogo debería pedirte una audiometría. En la práctica, casi nunca pasa. Y eso es un problema porque las personas con diabetes tienen aproximadamente el doble de probabilidades de desarrollar pérdida auditiva que las que no la tienen, según estudios del NIH publicados en *Annals of Internal Medicine*.

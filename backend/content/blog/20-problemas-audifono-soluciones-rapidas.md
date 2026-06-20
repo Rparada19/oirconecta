@@ -13,7 +13,7 @@ estado: PUBLICADO
 destacado: false
 autorNombre: OírConecta
 publishedAt: '2026-05-31T14:30:11Z'
-coverUrl: https://images.unsplash.com/photo-1631558556874-1d127211f574?w=1600&q=80&auto=format&fit=crop
+coverUrl: /img/prueba-audicion-online.jpg
 ---
 
 Tu audífono empieza a fallar, te angustias y piensas que se dañó. En realidad, la mayoría de las fallas que viven los usuarios son resolubles en casa en 5 minutos, sin tener que llevarlo al servicio técnico. Filtros saturados, cúpulas mal puestas, contactos sucios, humedad acumulada: causas frecuentes con soluciones simples si sabes qué revisar.
