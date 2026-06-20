@@ -74,13 +74,13 @@ const Hero = () => {
               letterSpacing: '-0.018em',
               mb: 3,
             }}>
-              Conectamos tu audición con{' '}
+              Conectamos tu vida con{' '}
               <Box component="span" sx={{
                 fontStyle: 'italic',
                 fontWeight: 500,
                 color: C.verde,
               }}>
-                una vida mejor
+                una mejor audición
               </Box>
               .
             </Typography>
