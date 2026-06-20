@@ -18,7 +18,7 @@ const C = {
   gris: '#6B7280', grisClaro: '#A1A7B1', arena: '#D9CDBF',
 };
 
-const HERO_IMAGE = 'https://images.pexels.com/photos/8101355/pexels-photo-8101355.jpeg?w=1200&h=1400&auto=compress&cs=tinysrgb&fit=crop';
+const HERO_IMAGE = '/img/audiologa-consulta-paciente.jpg';
 
 const ContactoPage = () => {
   const [searchParams] = useSearchParams();

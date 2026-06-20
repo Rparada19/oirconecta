@@ -140,7 +140,7 @@ export default function DirectoryProfessionalCard({
         <Stack direction="row" spacing={2} alignItems="flex-start">
           <Avatar
             src={photo || undefined}
-            alt=""
+            alt={name ? `Foto de ${name}` : 'Foto del profesional'}
             sx={{
               width: isFeatured ? 72 : 56,
               height: isFeatured ? 72 : 56,

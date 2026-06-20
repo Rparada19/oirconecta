@@ -17,7 +17,7 @@ const tiles = [
     to: '/audifonos',
     stat: '13+',
     statLabel: 'marcas',
-    image: 'https://images.pexels.com/photos/16852335/pexels-photo-16852335.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/directorio-profesionales-audicion.jpg',
   },
   {
     kicker: 'Implantes cocleares',
@@ -26,7 +26,7 @@ const tiles = [
     to: '/implantes',
     stat: '3',
     statLabel: 'fabricantes',
-    image: 'https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/centro-auditivo-colombia.jpg',
   },
   {
     kicker: 'Referencia y tienda',
@@ -35,7 +35,7 @@ const tiles = [
     to: '/ecommerce',
     stat: '100+',
     statLabel: 'productos',
-    image: 'https://images.pexels.com/photos/6319017/pexels-photo-6319017.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/familiar-audifonos-cuidador.jpg',
   },
 ];
 

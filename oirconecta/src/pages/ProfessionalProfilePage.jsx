@@ -97,7 +97,7 @@ const BannerContainer = styled(Box)(() => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'url(https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1400&h=600&fit=crop)',
+    background: 'url(/img/consultorio-audiologia-banner.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     opacity: 0.1,
@@ -210,8 +210,8 @@ const ProfessionalProfilePage = () => {
     whatsapp: audiologaEncontrada.celular || audiologaEncontrada.telefono || 'No especificado',
     verified: true,
     premium: audiologaEncontrada.destacado || false,
-    avatar: audiologaEncontrada.foto || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face',
-    banner: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1200&h=300&fit=crop',
+    avatar: audiologaEncontrada.foto || '/img/audiologa-profesional-colombia.jpg',
+    banner: '/img/consultorio-audiologia-banner.jpg',
     // Redes sociales y web
     website: audiologaEncontrada.sitioWeb || 'No especificado',
     instagram: 'No especificado',
@@ -243,8 +243,8 @@ const ProfessionalProfilePage = () => {
     whatsapp: '+57 300 123 4567',
     verified: true,
     premium: true,
-    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face',
-    banner: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1200&h=300&fit=crop',
+    avatar: '/img/audiologa-profesional-colombia.jpg',
+    banner: '/img/consultorio-audiologia-banner.jpg',
     // Redes sociales y web
     website: `https://${id}.com`,
     instagram: `@${id.replace(/-/g, '.')}`,
@@ -324,14 +324,14 @@ const ProfessionalProfilePage = () => {
     {
       id: 1,
       title: '¿Cómo detectar problemas auditivos?',
-      thumbnail: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=200&fit=crop',
+      thumbnail: '/img/audifono-retroauricular-bte.jpg',
       duration: '5:32',
       views: '2.3k'
     },
     {
       id: 2,
       title: 'Cuidados del oído en niños',
-      thumbnail: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=300&h=200&fit=crop',
+      thumbnail: '/img/audifono-intracanal-itc.jpg',
       duration: '8:15',
       views: '1.8k'
     }
@@ -342,19 +342,19 @@ const ProfessionalProfilePage = () => {
     {
       id: 1,
       title: 'Consultorio principal',
-      img: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop',
+      img: '/img/consultorio-audiologia-banner.jpg',
       description: 'Sala de espera y recepción'
     },
     {
       id: 2,
       title: 'Equipo de diagnóstico',
-      img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=400&h=300&fit=crop',
+      img: '/img/audifono-retroauricular-bte.jpg',
       description: 'Tecnología avanzada para evaluaciones'
     },
     {
       id: 3,
       title: 'Sala de procedimientos',
-      img: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=400&h=300&fit=crop',
+      img: '/img/audifono-intracanal-itc.jpg',
       description: 'Ambiente estéril para cirugías'
     }
   ];
@@ -367,7 +367,7 @@ const ProfessionalProfilePage = () => {
   //     excerpt: 'La pérdida auditiva es una condición común en adultos mayores que puede afectar significativamente la calidad de vida...',
   //     date: '15 de Marzo, 2024',
   //     readTime: '5 min',
-  //     image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=400&h=250&fit=crop'
+  //     image: '/img/audifono-retroauricular-bte.jpg'
   //   },
   //   {
   //     id: 2,
@@ -375,7 +375,7 @@ const ProfessionalProfilePage = () => {
   //     excerpt: 'Los audífonos digitales modernos ofrecen una calidad de sonido superior y características avanzadas...',
   //     date: '10 de Marzo, 2024',
   //     readTime: '7 min',
-  //     image: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=400&h=250&fit=crop'
+  //     image: '/img/audifono-intracanal-itc.jpg'
   //   },
   //   {
   //     id: 3,
@@ -383,7 +383,7 @@ const ProfessionalProfilePage = () => {
   //     excerpt: 'El tinnitus es una condición que afecta a millones de personas en todo el mundo...',
   //     date: '5 de Marzo, 2024',
   //     readTime: '6 min',
-  //     image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'
+  //     image: '/img/consultorio-audiologia-banner.jpg'
   //   }
   // ];
 

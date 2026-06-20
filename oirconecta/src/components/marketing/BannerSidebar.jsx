@@ -42,7 +42,7 @@ export default function BannerSidebar() {
           <Box component="video" src={camp.creativeUrl} autoPlay muted playsInline loop
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
-          <Box component="img" src={camp.creativeUrl} alt="" loading="lazy"
+          <Box component="img" src={camp.creativeUrl} alt={camp.titulo || camp.advertiser?.nombre || 'Publicidad'} loading="lazy"
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         )}
         <Box sx={{

@@ -126,7 +126,7 @@ export default function DirectoryRecommendedBrands() {
                       <Box
                         component="img"
                         src={b.logoUrl}
-                        alt=""
+                        alt={`Logo de ${b.nombre || b.name || 'marca de audífonos'}`}
                         sx={{ maxHeight: 48, maxWidth: '85%', objectFit: 'contain' }}
                       />
                     ) : (

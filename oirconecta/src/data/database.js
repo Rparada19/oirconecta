@@ -47,7 +47,7 @@ const otologosFormateados = bdatos_otologos.map((otologo, index) => ({
     linkedin: '',
     twitter: ''
   },
-  foto: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop&crop=face',
+  foto: '/img/profesional-otologia.jpg',
   resena: 'Médico otólogo especializado en diagnóstico y tratamiento de enfermedades del oído, con amplia experiencia en cirugía otológica.',
   calificacion: 4.5 + Math.random() * 0.5,
   reseñas: [],

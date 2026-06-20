@@ -15,7 +15,7 @@ const C = {
   gris: '#6B7280', grisClaro: '#A1A7B1', arena: '#D9CDBF',
 };
 
-const HERO_IMAGE = 'https://images.pexels.com/photos/6129507/pexels-photo-6129507.jpeg?w=1600&h=1100&auto=compress&cs=tinysrgb&fit=crop';
+const HERO_IMAGE = '/img/clinica-auditiva-equipo-profesional.jpg';
 
 const VALORES = [
   { icon: PeopleOutlineOutlined, title: 'Cercanía humana', text: 'Personas que escuchan, no protocolos. La consulta es un encuentro, no un trámite.' },

@@ -231,9 +231,9 @@ const getDepartamento = (ciudad) => {
 
 const getDefaultPhoto = (especialidad) => {
   const fotos = {
-    'Audióloga': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face',
-    'Otorrinolaringólogo': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop&crop=face',
-    'Otólogo': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop&crop=face'
+    'Audióloga': '/img/audiologa-profesional-colombia.jpg',
+    'Otorrinolaringólogo': '/img/otorrinolaringologo-profesional.jpg',
+    'Otólogo': '/img/profesional-otologia.jpg'
   };
   
   return fotos[especialidad] || fotos['Audióloga'];

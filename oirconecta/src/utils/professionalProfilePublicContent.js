@@ -41,16 +41,16 @@ export function studyCategoriesWithContent(studies) {
 export function buildPublicAllies(isAudiologa, audiologa) {
   const base = {
     audifonos: [
-      { name: 'Phonak', description: 'Tecnología y adaptación', image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=200&fit=crop' },
-      { name: 'Oticon', description: 'Soluciones auditivas', image: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=300&h=200&fit=crop' },
+      { name: 'Phonak', description: 'Tecnología y adaptación', image: '/img/audifono-retroauricular-bte.jpg' },
+      { name: 'Oticon', description: 'Soluciones auditivas', image: '/img/audifono-intracanal-itc.jpg' },
     ],
     implantes: [
-      { name: 'Cochlear', description: 'Implantes cocleares', image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=200&fit=crop' },
-      { name: 'MED-EL', description: 'Sistemas implantables', image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=200&fit=crop' },
+      { name: 'Cochlear', description: 'Implantes cocleares', image: '/img/audifono-retroauricular-bte.jpg' },
+      { name: 'MED-EL', description: 'Sistemas implantables', image: '/img/consultorio-audiologia-banner.jpg' },
     ],
     medicamentos: [],
     accesorios: [
-      { name: 'Consumibles y accesorios', description: 'Filtros, domos, pilas y conectividad según prescripción.', image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=200&fit=crop' },
+      { name: 'Consumibles y accesorios', description: 'Filtros, domos, pilas y conectividad según prescripción.', image: '/img/consultorio-audiologia-banner.jpg' },
     ],
   };
 

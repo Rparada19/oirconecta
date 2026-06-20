@@ -85,7 +85,7 @@ const BannerContainer = styled(Box)(() => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'url(https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1400&h=600&fit=crop)',
+    background: 'url(/img/consultorio-audiologia-banner.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     opacity: 0.1,
@@ -166,8 +166,8 @@ const ProfessionalProfileDemoPage = () => {
     whatsapp: '+57 300 123 4567',
     verified: true,
     premium: true,
-    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face',
-    banner: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1200&h=300&fit=crop',
+    avatar: '/img/audiologa-profesional-colombia.jpg',
+    banner: '/img/consultorio-audiologia-banner.jpg',
     // Redes sociales y web
     website: 'https://dr-mendoza.com',
     instagram: '@dr.mendoza.orl',
@@ -194,21 +194,21 @@ const ProfessionalProfileDemoPage = () => {
     {
       id: 1,
       title: '¿Cómo detectar problemas auditivos?',
-      thumbnail: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=200&fit=crop',
+      thumbnail: '/img/audifono-retroauricular-bte.jpg',
       duration: '5:32',
       views: '2.3k'
     },
     {
       id: 2,
       title: 'Cuidados del oído en niños',
-      thumbnail: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=300&h=200&fit=crop',
+      thumbnail: '/img/audifono-intracanal-itc.jpg',
       duration: '8:15',
       views: '1.8k'
     },
     {
       id: 3,
       title: 'Implantes cocleares: Todo lo que debes saber',
-      thumbnail: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=200&fit=crop',
+      thumbnail: '/img/audifono-retroauricular-bte.jpg',
       duration: '12:45',
       views: '3.1k'
     }
@@ -219,19 +219,19 @@ const ProfessionalProfileDemoPage = () => {
     {
       id: 1,
       title: 'Consultorio principal',
-      img: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop',
+      img: '/img/consultorio-audiologia-banner.jpg',
       description: 'Sala de espera y recepción'
     },
     {
       id: 2,
       title: 'Equipo de diagnóstico',
-      img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=400&h=300&fit=crop',
+      img: '/img/audifono-retroauricular-bte.jpg',
       description: 'Tecnología avanzada para evaluaciones'
     },
     {
       id: 3,
       title: 'Sala de procedimientos',
-      img: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=400&h=300&fit=crop',
+      img: '/img/audifono-intracanal-itc.jpg',
       description: 'Ambiente estéril para cirugías'
     }
   ];
@@ -244,7 +244,7 @@ const ProfessionalProfileDemoPage = () => {
       excerpt: 'La pérdida auditiva es una condición común en adultos mayores que puede afectar significativamente la calidad de vida...',
       date: '15 de Marzo, 2024',
       readTime: '5 min',
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=400&h=250&fit=crop'
+      image: '/img/audifono-retroauricular-bte.jpg'
     },
     {
       id: 2,
@@ -252,7 +252,7 @@ const ProfessionalProfileDemoPage = () => {
       excerpt: 'Los audífonos actuales incorporan tecnología avanzada que permite una audición natural y cómoda...',
       date: '8 de Marzo, 2024',
       readTime: '7 min',
-      image: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=400&h=250&fit=crop'
+      image: '/img/audifono-intracanal-itc.jpg'
     }
   ];
 
@@ -261,37 +261,37 @@ const ProfessionalProfileDemoPage = () => {
     {
       id: 1,
       name: 'Phonak',
-      logo: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=150&h=80&fit=crop',
+      logo: '/img/audifono-retroauricular-bte.jpg',
       description: 'Audífonos de alta tecnología'
     },
     {
       id: 2,
       name: 'Oticon',
-      logo: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=150&h=80&fit=crop',
+      logo: '/img/audifono-intracanal-itc.jpg',
       description: 'Soluciones auditivas innovadoras'
     },
     {
       id: 3,
       name: 'Starkey',
-      logo: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=150&h=80&fit=crop',
+      logo: '/img/consultorio-audiologia-banner.jpg',
       description: 'Audífonos personalizados'
     },
     {
       id: 4,
       name: 'Cochlear',
-      logo: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=150&h=80&fit=crop',
+      logo: '/img/audifono-retroauricular-bte.jpg',
       description: 'Implantes cocleares'
     },
     {
       id: 5,
       name: 'Med-El',
-      logo: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=150&h=80&fit=crop',
+      logo: '/img/audifono-intracanal-itc.jpg',
       description: 'Tecnología de implantes'
     },
     {
       id: 6,
       name: 'Advanced Bionics',
-      logo: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=150&h=80&fit=crop',
+      logo: '/img/consultorio-audiologia-banner.jpg',
       description: 'Sistemas de implantes'
     }
   ];
@@ -304,7 +304,7 @@ const ProfessionalProfileDemoPage = () => {
       rating: 5,
       date: 'Hace 2 semanas',
       comment: 'Excelente atención. El Dr. Mendoza es muy profesional y me ayudó mucho con mi problema auditivo. Muy recomendado.',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=50&h=50&fit=crop&crop=face'
+      avatar: '/img/avatar-paciente-3.jpg'
     },
     {
       id: 2,
@@ -312,7 +312,7 @@ const ProfessionalProfileDemoPage = () => {
       rating: 5,
       date: 'Hace 1 mes',
       comment: 'Muy buen diagnóstico y tratamiento. El consultorio es moderno y la atención es personalizada.',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face'
+      avatar: '/img/avatar-paciente-4.jpg'
     },
     {
       id: 3,
@@ -320,7 +320,7 @@ const ProfessionalProfileDemoPage = () => {
       rating: 5,
       date: 'Hace 3 semanas',
       comment: 'El Dr. Mendoza es muy paciente y explica todo muy bien. Me siento muy satisfecha con el tratamiento.',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face'
+      avatar: '/img/avatar-paciente-1.jpg'
     },
     {
       id: 4,
@@ -328,7 +328,7 @@ const ProfessionalProfileDemoPage = () => {
       rating: 5,
       date: 'Hace 2 meses',
       comment: 'Excelente profesional. Me ayudó a resolver mi problema de audición con tecnología de vanguardia.',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face'
+      avatar: '/img/avatar-paciente-2.jpg'
     }
   ];
 
@@ -382,19 +382,19 @@ const ProfessionalProfileDemoPage = () => {
       title: 'Médico Cirujano',
       institution: 'Universidad Nacional de Colombia',
       year: '2005-2011',
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=200&h=150&fit=crop'
+      image: '/img/audifono-retroauricular-bte.jpg'
     },
     {
       title: 'Especialización en Otorrinolaringología',
       institution: 'Universidad de los Andes',
       year: '2012-2016',
-      image: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=200&h=150&fit=crop'
+      image: '/img/audifono-intracanal-itc.jpg'
     },
     {
       title: 'Fellowship en Cirugía Endoscópica',
       institution: 'Hospital Johns Hopkins',
       year: '2017',
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=200&h=150&fit=crop'
+      image: '/img/audifono-retroauricular-bte.jpg'
     }
   ];
 
@@ -404,13 +404,13 @@ const ProfessionalProfileDemoPage = () => {
       title: 'Mejor Otorrinolaringólogo del Año',
       organization: 'Asociación Colombiana de Otorrinolaringología',
       year: '2023',
-      image: 'https://images.unsplash.com/photo-1576091160550-2173fba988a5?w=200&h=150&fit=crop'
+      image: '/img/audifono-intracanal-itc.jpg'
     },
     {
       title: 'Premio a la Excelencia Médica',
       organization: 'Ministerio de Salud',
       year: '2022',
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=200&h=150&fit=crop'
+      image: '/img/audifono-retroauricular-bte.jpg'
     }
   ];
 
@@ -424,7 +424,7 @@ const ProfessionalProfileDemoPage = () => {
   //     city: 'Bogotá',
   //     phone: '+57 1 234 5678',
   //     hours: 'Lun-Vie: 8:00 AM - 6:00 PM',
-  //     image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'
+  //     image: '/img/consultorio-audiologia-banner.jpg'
   //   },
   //   {
   //     name: 'Centro Médico Norte',
@@ -432,7 +432,7 @@ const ProfessionalProfileDemoPage = () => {
   //     city: 'Bogotá',
   //     phone: '+57 1 345 6789',
   //     hours: 'Lun-Vie: 9:00 AM - 5:00 PM',
-  //     image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=400&h=250&fit=crop'
+  //     image: '/img/audifono-retroauricular-bte.jpg'
   //   }
   // ];
 

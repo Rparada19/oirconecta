@@ -67,7 +67,7 @@ export default function ProfessionalListCard({ professional, roleLabel, toProfil
         <div className="card-image-container">
           <div className={`card-image ${fotoUrl ? 'card-image--has-photo' : ''}`}>
             {fotoUrl ? (
-              <img src={fotoUrl} alt="" loading="lazy" decoding="async" />
+              <img src={fotoUrl} alt={`Foto de ${nombre}, ${roleLabel}${ciudad ? ` en ${ciudad}` : ''}`} loading="lazy" decoding="async" />
             ) : (
               <span className="professional-card-initials" aria-hidden>
                 {initials}

@@ -7,7 +7,7 @@ const C = {
   oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280',
 };
 
-const HERO_BG = 'https://images.pexels.com/photos/8958906/pexels-photo-8958906.jpeg?w=2200&h=1400&auto=compress&cs=tinysrgb&fit=crop';
+const HERO_BG = '/img/testimonios-pacientes-audifonos.jpg';
 
 const STORIES = [
   {

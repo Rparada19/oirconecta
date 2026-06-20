@@ -18,7 +18,7 @@ const BENEFITS = [
   'Aprobación y acompañamiento del equipo OírConecta',
 ];
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=1200&h=1400&q=80&auto=format&fit=crop';
+const HERO_IMAGE = '/img/profesional-audiologia-colombia.jpg';
 
 export default function HomeB2BSection() {
   return (

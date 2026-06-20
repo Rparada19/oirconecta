@@ -96,7 +96,7 @@ export default function HomeComparadorSection() {
             <Grid item xs={12} md={5} sx={{ position: 'relative' }}>
               <Box sx={{
                 height: '100%', minHeight: { xs: 280, md: 'auto' },
-                background: 'url("https://images.pexels.com/photos/6677156/pexels-photo-6677156.jpeg?w=900&h=900&auto=compress&cs=tinysrgb&fit=crop")',
+                background: 'url("/img/audifono-adulto-mayor.jpg")',
                 backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
                 '&::after': {
                   content: '""', position: 'absolute', inset: 0,

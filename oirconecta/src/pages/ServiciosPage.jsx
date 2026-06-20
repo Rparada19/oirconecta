@@ -20,37 +20,37 @@ const SERVICIOS = [
     titulo: 'Evaluación auditiva',
     descripcion: 'Audiometría, impedanciometría y pruebas complementarias para caracterizar tu audición y orientar el tratamiento.',
     icon: AssessmentOutlined,
-    image: 'https://images.pexels.com/photos/5206951/pexels-photo-5206951.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/clinica-audiologia-tratamiento.jpg',
   },
   {
     titulo: 'Adaptación de audífonos',
     descripcion: 'Selección, prueba en consulta y ajuste fino según tu estilo de vida, tipo de pérdida y preferencias.',
     icon: HearingOutlined,
-    image: 'https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/centro-auditivo-colombia.jpg',
   },
   {
     titulo: 'Implantes cocleares',
     descripcion: 'Información sobre candidatura, proceso multidisciplinario y seguimiento; coordinación con marcas líderes.',
     icon: SupportOutlined,
-    image: 'https://images.pexels.com/photos/14682242/pexels-photo-14682242.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/centro-auditivo-colombia.jpg',
   },
   {
     titulo: 'Rehabilitación y terapia',
     descripcion: 'Acompañamiento en habla auditiva y adaptación a dispositivos para niños y adultos.',
     icon: PsychologyOutlined,
-    image: 'https://images.pexels.com/photos/8613122/pexels-photo-8613122.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/audiologo-paciente-consulta.jpg',
   },
   {
     titulo: 'Audiología pediátrica',
     descripcion: 'Tamizaje, evaluación adaptada a la edad y seguimiento familiar con enfoque sensible.',
     icon: SchoolOutlined,
-    image: 'https://images.unsplash.com/photo-1632053002928-1919605ee6f7?w=900&h=700&q=80&auto=format&fit=crop',
+    image: '/img/audifono-tecnologia-moderna.jpg',
   },
   {
     titulo: 'Audiología laboral',
     descripcion: 'Evaluaciones ocupacionales y recomendaciones para conservación auditiva en entornos de ruido.',
     icon: GroupOutlined,
-    image: 'https://images.pexels.com/photos/29988954/pexels-photo-29988954.jpeg?w=900&h=700&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/accesorios-audifonos-pilas.jpg',
   },
 ];
 

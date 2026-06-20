@@ -7,9 +7,7 @@
     "dev": "ulimit -n 65536 2>/dev/null; vite",
     "optimize": "vite optimize --force",
     "dev:fresh": "rm -rf node_modules/.vite && vite --force",
-    "prebuild": "node scripts/generate-sitemap.js",
     "build": "vite build",
-    "sitemap": "node scripts/generate-sitemap.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

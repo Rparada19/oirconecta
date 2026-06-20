@@ -24,7 +24,7 @@ const paths = [
   {
     title: 'Encontrar especialista',
     blurb: 'Busca por ciudad o especialidad. Tú eliges con quién hablar primero.',
-    image: 'https://images.unsplash.com/photo-1631558556874-1d127211f574?w=800&h=600&q=80&auto=format&fit=crop',
+    image: '/img/prueba-audicion-online.jpg',
     alt: 'Audióloga conversando con paciente',
     mode: 'scroll',
     target: 'busqueda-profesionales',
@@ -33,7 +33,7 @@ const paths = [
   {
     title: 'Explorar audífonos',
     blurb: 'Marcas y tecnologías explicadas sin prisa ni presión comercial.',
-    image: 'https://images.pexels.com/photos/6677156/pexels-photo-6677156.jpeg?w=800&h=600&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/audifono-adulto-mayor.jpg',
     alt: 'Audífono moderno detrás de la oreja',
     mode: 'route',
     to: '/audifonos',
@@ -42,7 +42,7 @@ const paths = [
   {
     title: 'Conocer la red',
     blurb: 'Nuestra misión, criterios de selección y profesionales suscritos.',
-    image: 'https://images.pexels.com/photos/6129507/pexels-photo-6129507.jpeg?w=800&h=600&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/clinica-auditiva-equipo-profesional.jpg',
     alt: 'Equipo de profesionales auditivos',
     mode: 'route',
     to: '/nosotros',
@@ -51,7 +51,7 @@ const paths = [
   {
     title: 'Aprender sobre audición',
     blurb: 'Señales comunes, qué esperar en consulta y cómo prevenir pérdida.',
-    image: 'https://images.unsplash.com/photo-1534768654272-e97681c3a2c7?w=800&h=600&q=80&auto=format&fit=crop',
+    image: '/img/audiologo-trabajando-clinica.jpg',
     alt: 'Pareja escuchando atenta en casa',
     mode: 'scroll',
     target: 'aprender-audicion',

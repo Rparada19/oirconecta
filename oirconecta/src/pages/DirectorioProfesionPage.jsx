@@ -38,7 +38,7 @@ const CIUDADES = [
 const PROFESSION_CONTEXT = {
   fonoaudiologia: {
     icon: RecordVoiceOverOutlinedIcon,
-    image: 'https://images.pexels.com/photos/8613122/pexels-photo-8613122.jpeg?w=1200&h=900&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/audiologo-paciente-consulta.jpg',
     descripcion: 'El fonoaudiólogo evalúa y rehabilita la comunicación: lenguaje, habla, voz y audición. Es clave en la adaptación de audífonos y en la terapia auditivo-verbal de niños y adultos.',
     queHacen: [
       'Evaluación de lenguaje, habla y voz',
@@ -55,7 +55,7 @@ const PROFESSION_CONTEXT = {
   },
   audiologia: {
     icon: HearingOutlinedIcon,
-    image: 'https://images.unsplash.com/photo-1576669801945-7a346954da5a?w=1200&h=900&q=80&auto=format&fit=crop',
+    image: '/img/otorrinolaringologo-paciente.jpg',
     descripcion: 'El audiólogo es el especialista en la evaluación, diagnóstico y adaptación de audífonos. Hace tu audiometría, te orienta sobre tecnología y te acompaña en la programación y seguimiento.',
     queHacen: [
       'Audiometrías y pruebas auditivas completas',
@@ -72,7 +72,7 @@ const PROFESSION_CONTEXT = {
   },
   otorrinolaringologia: {
     icon: MedicalServicesOutlinedIcon,
-    image: 'https://images.pexels.com/photos/5206946/pexels-photo-5206946.jpeg?w=1200&h=900&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/audiologo-prueba-audicion.jpg',
     descripcion: 'El otorrinolaringólogo (ORL) es el médico especialista en oído, nariz y garganta. Diagnostica y trata enfermedades del oído, prescribe medicamentos y realiza cirugías cuando hace falta.',
     queHacen: [
       'Diagnóstico médico de enfermedades del oído',
@@ -90,7 +90,7 @@ const PROFESSION_CONTEXT = {
   },
   otologia: {
     icon: BiotechOutlinedIcon,
-    image: 'https://images.pexels.com/photos/5206942/pexels-photo-5206942.jpeg?w=1200&h=900&auto=compress&cs=tinysrgb&fit=crop',
+    image: '/img/otologo-examinando-oido.jpg',
     descripcion: 'El otólogo es el ORL sub-especializado en oído. Maneja casos complejos: implantes cocleares, cirugías de oído medio, schwannomas y patologías del nervio auditivo.',
     queHacen: [
       'Cirugía de implante coclear',

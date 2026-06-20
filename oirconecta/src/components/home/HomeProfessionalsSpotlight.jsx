@@ -9,7 +9,7 @@ const pros = [
     text: 'Encuentra audiólogos que te explican con paciencia y ajustan a tu vida real.',
     to: '/profesionales/audiologos',
     cta: 'Ver audiólogos',
-    img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400&h=300&fit=crop',
+    img: '/img/audifono-retroauricular-bte.jpg',
   },
   {
     role: 'Medicina del oído',
@@ -17,7 +17,7 @@ const pros = [
     text: 'Otólogos y ORL de la red para casos que requieren criterio médico especializado.',
     to: '/profesionales/otologos',
     cta: 'Ver otólogos y ORL',
-    img: 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=400&h=300&fit=crop',
+    img: '/img/audicion-bienestar-mayor.jpg',
   },
 ];
 

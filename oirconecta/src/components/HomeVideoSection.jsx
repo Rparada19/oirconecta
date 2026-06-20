@@ -10,7 +10,7 @@ const C = {
   oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280', arena: '#D9CDBF',
 };
 
-const POSTER = 'https://images.pexels.com/photos/5206950/pexels-photo-5206950.jpeg?w=1400&h=900&auto=compress&cs=tinysrgb&fit=crop';
+const POSTER = '/img/audiologa-atendiendo-paciente.jpg';
 
 export default function HomeVideoSection() {
   const hasVideo = Boolean(HOME_VIDEO_EMBED_URL && HOME_VIDEO_EMBED_URL.trim());

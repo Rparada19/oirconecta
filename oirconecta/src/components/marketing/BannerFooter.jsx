@@ -46,7 +46,7 @@ export default function BannerFooter() {
           <Box component="video" src={creative.url} autoPlay muted playsInline loop
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
-          <Box component="img" src={creative.url} alt="" loading="lazy"
+          <Box component="img" src={creative.url} alt={camp.titulo || camp.advertiser?.nombre || 'Publicidad'} loading="lazy"
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         )}
         <Box sx={{
