@@ -8,7 +8,10 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 const C = {
   navy: '#272F50', verde: '#085946', verdeProfundo: '#00382B',
-  oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280',
+  oro: '#C9A86A', oroSuave: '#E0C28A',
+  blanco: '#FBFAF8', cremaCalida: '#F5EFE6',
+  arena: '#D9CDBF', border: '#E5E0D6',
+  gris: '#6B7280',
 };
 
 const BENEFITS = [
@@ -28,21 +31,17 @@ export default function HomeB2BSection() {
       aria-labelledby="heading-b2b"
       sx={{
         position: 'relative', overflow: 'hidden',
-        background: `linear-gradient(135deg, ${C.navy} 0%, #1f2545 50%, ${C.verdeProfundo} 100%)`,
-        color: '#fff', scrollMarginTop: 88, py: { xs: 6, md: 9 },
+        bgcolor: C.cremaCalida,
+        color: C.navy, scrollMarginTop: 88, py: { xs: 6, md: 9 },
+        borderTop: `1px solid ${C.border}`,
       }}
     >
-      {/* Blob oro decorativo */}
+      {/* Blob arena decorativo */}
       <Box sx={{
         position: 'absolute', top: '20%', left: '-10%',
         width: 480, height: 480, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.oro}1a 0%, transparent 70%)`,
-        filter: 'blur(60px)', pointerEvents: 'none',
-      }} />
-      {/* Patrón ruido */}
-      <Box sx={{
-        position: 'absolute', inset: 0, opacity: 0.04, pointerEvents: 'none',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        background: `radial-gradient(circle, ${C.arena}55 0%, transparent 70%)`,
+        filter: 'blur(70px)', pointerEvents: 'none',
       }} />
 
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
@@ -50,20 +49,20 @@ export default function HomeB2BSection() {
           {/* Texto */}
           <Grid item xs={12} md={7}>
             <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 3 }}>
-              <Box sx={{ width: 28, height: 2, bgcolor: C.oro }} />
+              <Box sx={{ width: 28, height: 2, bgcolor: C.navy }} />
               <Typography sx={{
                 fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
-                fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.oro,
+                fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.navy,
               }}>Para profesionales auditivos</Typography>
             </Stack>
 
             <Typography id="heading-b2b" component="h2" sx={{
               fontFamily: '"Playfair Display", Georgia, serif',
               fontSize: { xs: '2rem', md: '3rem' }, fontWeight: 600, lineHeight: 1.08,
-              color: '#fff', letterSpacing: '-0.02em', mb: 3,
+              color: C.navy, letterSpacing: '-0.02em', mb: 3,
             }}>
               Forma parte de una{' '}
-              <Box component="span" sx={{ fontStyle: 'italic', color: C.oro, fontWeight: 500 }}>
+              <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
                 red verificada
               </Box>
               {' '}en Colombia
@@ -71,7 +70,7 @@ export default function HomeB2BSection() {
 
             <Typography sx={{
               fontFamily: '"DM Sans", sans-serif', fontSize: { xs: '1.0625rem', md: '1.1875rem' },
-              color: 'rgba(255,255,255,0.80)', lineHeight: 1.6, mb: 4, maxWidth: 580,
+              color: C.gris, lineHeight: 1.6, mb: 4, maxWidth: 580,
             }}>
               Si eres audiólogo, otorrino, fonoaudiólogo o tienes un centro auditivo, súmate a la red. Acompañamiento, visibilidad y pacientes que ya buscan especialistas de confianza.
             </Typography>
@@ -79,10 +78,10 @@ export default function HomeB2BSection() {
             <Stack spacing={1.5} sx={{ mb: 4.5 }}>
               {BENEFITS.map((b) => (
                 <Box key={b} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <CheckCircleOutlineIcon sx={{ fontSize: 20, color: C.oro }} />
+                  <CheckCircleOutlineIcon sx={{ fontSize: 20, color: C.verde }} />
                   <Typography sx={{
                     fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem',
-                    color: 'rgba(255,255,255,0.90)',
+                    color: C.navy,
                   }}>{b}</Typography>
                 </Box>
               ))}
@@ -98,10 +97,10 @@ export default function HomeB2BSection() {
                 endIcon={<ArrowForwardIcon />}
                 sx={{
                   fontFamily: '"DM Sans", sans-serif',
-                  background: '#C9A86A !important', color: '#272F50 !important', fontWeight: 700, fontSize: '0.9375rem',
+                  background: '#272F50 !important', color: '#fff !important', fontWeight: 700, fontSize: '0.9375rem',
                   px: 3.5, py: 1.75, borderRadius: '6px', letterSpacing: '0.01em',
-                  boxShadow: `0 8px 24px ${C.oro}55`,
-                  '&:hover': { background: '#D4B97A !important', transform: 'translateY(-2px)' },
+                  boxShadow: `0 8px 24px ${C.navy}33`,
+                  '&:hover': { background: '#1B2240 !important', transform: 'translateY(-2px)', boxShadow: `0 12px 28px ${C.navy}44` },
                 }}
               >Suscribir mi perfil</Button>
               <Button
@@ -112,9 +111,9 @@ export default function HomeB2BSection() {
                 startIcon={<LoginIcon />}
                 sx={{
                   fontFamily: '"DM Sans", sans-serif',
-                  color: '#fff', borderColor: 'rgba(255,255,255,0.40)', borderWidth: '1.5px',
+                  color: C.navy, borderColor: `${C.navy}66`, borderWidth: '1.5px',
                   fontWeight: 600, fontSize: '0.9375rem', px: 3.5, py: 1.75, borderRadius: '6px',
-                  '&:hover': { borderColor: '#fff', borderWidth: '1.5px', bgcolor: 'rgba(255,255,255,0.08)' },
+                  '&:hover': { borderColor: C.navy, borderWidth: '1.5px', bgcolor: `${C.navy}08` },
                 }}
               >Ya soy parte</Button>
             </Stack>
@@ -125,7 +124,7 @@ export default function HomeB2BSection() {
             <Box sx={{
               position: 'relative',
               borderRadius: '10px', overflow: 'hidden',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
+              boxShadow: `0 24px 60px ${C.navy}22`,
               aspectRatio: '4/5', maxHeight: 520,
             }}>
               <Box component="img" src={HERO_IMAGE}
