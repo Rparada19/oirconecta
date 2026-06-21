@@ -1,0 +1,65 @@
+name: Weekly blog post
+
+on:
+  schedule:
+    # Lunes 14:00 UTC = 09:00 Bogotá. Ajustar si quieres otro día/hora.
+    - cron: '0 14 * * 1'
+  workflow_dispatch:
+    inputs:
+      auto_publish:
+        description: 'Marcar como PUBLICADO directo (sin pasar por BORRADOR)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate weekly post
+        working-directory: backend
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: claude-sonnet-4-6
+          AUTO_PUBLISH: ${{ inputs.auto_publish || 'false' }}
+        run: node scripts/generate-weekly-post.js
+
+      - name: Commit & push
+        run: |
+          git config user.name "OírConecta Bot"
+          git config user.email "bot@oirconecta.com"
+          git add backend/content/blog/ backend/content/blog_topic_queue.md
+          if git diff --cached --quiet; then
+            echo "Sin cambios"
+            exit 0
+          fi
+          git commit -m "blog: artículo semanal generado automáticamente"
+          git push
+
+      - name: Install backend deps (para seed)
+        if: env.DATABASE_URL != ''
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm ci
+
+      - name: Seed DB con el nuevo post
+        if: env.DATABASE_URL != ''
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          npx prisma generate
+          node scripts/seed_blog_articles.js
