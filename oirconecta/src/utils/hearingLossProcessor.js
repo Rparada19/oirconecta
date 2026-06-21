@@ -64,6 +64,8 @@ export class HearingLossProcessor {
     this.noiseSource = null;
     this.noiseGain = null;
     this.currentLevel = 'normal';
+    this.targetNoiseLevel = 0;
+    this.isPlaying = false;
   }
 
   attach(audioEl) {
@@ -129,9 +131,23 @@ export class HearingLossProcessor {
     this.compressor.ratio.value = p.compRatio;
     this.compressor.attack.value = 0.005;
     this.compressor.release.value = 0.15;
-    this.noiseGain.gain.cancelScheduledValues(t);
-    this.noiseGain.gain.linearRampToValueAtTime(p.noiseLevel, t + 0.15);
     this.currentLevel = level;
+    this.targetNoiseLevel = p.noiseLevel;
+    // El ruido solo suena si el audio está reproduciéndose; setPlaying lo gestiona.
+    this.applyNoise();
+  }
+
+  setPlaying(isPlaying) {
+    this.isPlaying = isPlaying;
+    this.applyNoise();
+  }
+
+  applyNoise() {
+    if (!this.ctx || !this.noiseGain) return;
+    const t = this.ctx.currentTime;
+    const target = (this.isPlaying ? (this.targetNoiseLevel || 0) : 0);
+    this.noiseGain.gain.cancelScheduledValues(t);
+    this.noiseGain.gain.linearRampToValueAtTime(target, t + 0.12);
   }
 
   async ensureRunning() {
