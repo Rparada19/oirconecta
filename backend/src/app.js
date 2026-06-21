@@ -136,6 +136,8 @@ app.get('/sitemap.xml', async (req, res) => {
         image: img('otorrinolaringologo-profesional.jpg', 'Otólogos y otorrinolaringólogos en Colombia') },
       { loc: 'https://oirconecta.com/comparador', priority: '0.8', changefreq: 'weekly',
         image: img('audifono-tecnologia-moderna.jpg', 'Comparador de audífonos con tecnología moderna') },
+      { loc: 'https://oirconecta.com/ponte-en-sus-oidos', priority: '0.9', changefreq: 'monthly',
+        image: img('familia-disfrutando-mejor-audicion.jpg', 'Simulador de pérdida auditiva: escucha como tu familiar con hipoacusia') },
       { loc: 'https://oirconecta.com/ecommerce', priority: '0.8', changefreq: 'weekly',
         image: img('accesorios-audifonos-pilas.jpg', 'Accesorios para audífonos: pilas, filtros y domos') },
       { loc: 'https://oirconecta.com/audifonos', priority: '0.9', changefreq: 'weekly',

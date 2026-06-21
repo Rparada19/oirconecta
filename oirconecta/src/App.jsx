@@ -21,6 +21,7 @@ const ImplantesPage = lazy(() => import('./pages/ImplantesPage'));
 const ContactoPage = lazy(() => import('./pages/ContactoPage'));
 const EcommercePage = lazy(() => import('./pages/EcommercePage'));
 const ComparadorPage = lazy(() => import('./pages/ComparadorPage'));
+const PonteEnSusOidosPage = lazy(() => import('./pages/PonteEnSusOidosPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const AgendamientoPage = lazy(() => import('./pages/AgendamientoPage'));
@@ -157,6 +158,8 @@ export default function App() {
           <Route path="/contacto" element={<ContactoPage />} />
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/nosotros" element={<NosotrosPage />} />
+          <Route path="/ponte-en-sus-oidos" element={<PonteEnSusOidosPage />} />
+          <Route path="/simulador-audicion" element={<PonteEnSusOidosPage />} />
           <Route path="/servicios" element={<ServiciosPage />} />
           <Route path="/audifonos" element={<AudifonosPage />} />
           <Route path="/audifonos/widex" element={<AudifonosWidexPage />} />
