@@ -8,13 +8,14 @@ import { Link as RouterLink } from 'react-router-dom';
 import {
   PlayArrow, Pause, RestartAlt, ArrowForward, FavoriteOutlined,
   HearingOutlined, ShareOutlined, CheckCircleOutline,
-  HomeOutlined, RestaurantOutlined, PhoneInTalkOutlined, RecordVoiceOverOutlined,
-  TvOutlined, MedicalServicesOutlined, WineBarOutlined, RingVolumeOutlined,
-  HeadphonesOutlined, PlayCircleOutlined, TuneOutlined, GroupsOutlined,
 } from '@mui/icons-material';
 import { HearingLossProcessor, LEVELS } from '../utils/hearingLossProcessor';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import {
+  IcCasa, IcCena, IcLlamada, IcSusurro, IcTV, IcEstetoscopio, IcCopa, IcTelefonoFijo,
+  IcAudifonos, IcPlay, IcSlider, IcCompartir,
+} from '../components/simulator/SimulatorIcons';
 
 const C = {
   navy: '#272F50',
@@ -32,21 +33,21 @@ const C = {
 };
 
 const SCENES = [
-  { id: 'familia_casa',  src: '/audio/familia_conversacion.wav',             titulo: 'Conversación en casa',     Icon: HomeOutlined,            desc: 'Una charla cotidiana entre mamá e hija.' },
-  { id: 'familia',       src: '/audio/cena_familiar.wav',                    titulo: 'Cena con la familia',      Icon: RestaurantOutlined,      desc: 'Varias voces hablando al tiempo en la mesa.' },
-  { id: 'nieto',         src: '/audio/nieto_llamada.wav',                    titulo: 'Llamada del nieto',        Icon: PhoneInTalkOutlined,     desc: '"Abuelita, ¿cuándo nos visitas?".' },
-  { id: 'te_amo',        src: '/audio/te_amo.wav',                           titulo: 'Un "te amo" en voz baja',  Icon: RecordVoiceOverOutlined, desc: 'La frase más importante, susurrada al oído.' },
-  { id: 'tv',            src: '/audio/television.wav',                       titulo: 'Las noticias en la TV',    Icon: TvOutlined,              desc: 'El presentador frente al televisor.' },
-  { id: 'doctor',        src: '/audio/consulta_medica.wav',                  titulo: 'En la consulta médica',    Icon: MedicalServicesOutlined, desc: 'Instrucciones que no se pueden perder.' },
-  { id: 'restaurante',   src: '/audio/familia_conversacion_restaurante.wav', titulo: 'En un restaurante',        Icon: WineBarOutlined,         desc: 'Voces y ruido de fondo al ordenar.' },
-  { id: 'telefono',      src: '/audio/llamada_telefono.wav',                 titulo: 'Llamada del banco',        Icon: RingVolumeOutlined,      desc: 'Sin poder ver los labios del otro.' },
+  { id: 'familia_casa',  src: '/audio/familia_conversacion.wav',             titulo: 'Conversación en casa',     Icon: IcCasa,          desc: 'Una charla cotidiana entre mamá e hija.' },
+  { id: 'familia',       src: '/audio/cena_familiar.wav',                    titulo: 'Cena con la familia',      Icon: IcCena,          desc: 'Varias voces hablando al tiempo en la mesa.' },
+  { id: 'nieto',         src: '/audio/nieto_llamada.wav',                    titulo: 'Llamada del nieto',        Icon: IcLlamada,       desc: '"Abuelita, ¿cuándo nos visitas?".' },
+  { id: 'te_amo',        src: '/audio/te_amo.wav',                           titulo: 'Un "te amo" en voz baja',  Icon: IcSusurro,       desc: 'La frase más importante, susurrada al oído.' },
+  { id: 'tv',            src: '/audio/television.wav',                       titulo: 'Las noticias en la TV',    Icon: IcTV,            desc: 'El presentador frente al televisor.' },
+  { id: 'doctor',        src: '/audio/consulta_medica.wav',                  titulo: 'En la consulta médica',    Icon: IcEstetoscopio,  desc: 'Instrucciones que no se pueden perder.' },
+  { id: 'restaurante',   src: '/audio/familia_conversacion_restaurante.wav', titulo: 'En un restaurante',        Icon: IcCopa,          desc: 'Voces y ruido de fondo al ordenar.' },
+  { id: 'telefono',      src: '/audio/llamada_telefono.wav',                 titulo: 'Llamada del banco',        Icon: IcTelefonoFijo,  desc: 'Sin poder ver los labios del otro.' },
 ];
 
 const PASOS = [
-  { n: 1, titulo: 'Elige una escena',              desc: 'Selecciona un momento del día a día que quieras escuchar.',          Icon: HeadphonesOutlined },
-  { n: 2, titulo: 'Dale play y sube el volumen',   desc: 'Idealmente con audífonos o parlantes de buena calidad.',             Icon: PlayCircleOutlined },
-  { n: 3, titulo: 'Cambia el nivel de pérdida',    desc: 'Mientras suena, alterna entre Normal, Leve, Moderada y Severa.',     Icon: TuneOutlined },
-  { n: 4, titulo: 'Compártelo con tu familia',     desc: 'La empatía empieza cuando todos lo viven.',                          Icon: GroupsOutlined },
+  { n: 1, titulo: 'Elige una escena',              desc: 'Selecciona un momento del día a día que quieras escuchar.',          Icon: IcAudifonos },
+  { n: 2, titulo: 'Dale play y sube el volumen',   desc: 'Idealmente con audífonos o parlantes de buena calidad.',             Icon: IcPlay },
+  { n: 3, titulo: 'Cambia el nivel de pérdida',    desc: 'Mientras suena, alterna entre Normal, Leve, Moderada y Severa.',     Icon: IcSlider },
+  { n: 4, titulo: 'Compártelo con tu familia',     desc: 'La empatía empieza cuando todos lo viven.',                          Icon: IcCompartir },
 ];
 
 // Audiograma: umbral promedio de audición por frecuencia (Hz) en cada nivel.
@@ -60,16 +61,16 @@ const FREQS = [250, 500, 1000, 2000, 3000, 4000, 8000];
 
 function Audiogram({ level, compact = false }) {
   const W = compact ? 420 : 520;
-  const H = compact ? 200 : 280;
+  const H = compact ? 220 : 280;
   const PAD_L = compact ? 40 : 50;
   const PAD_R = compact ? 14 : 18;
   const PAD_T = compact ? 16 : 24;
-  const PAD_B = compact ? 30 : 38;
+  const PAD_B = compact ? 44 : 52;
   const plotW = W - PAD_L - PAD_R;
   const plotH = H - PAD_T - PAD_B;
   const xFor = (i) => PAD_L + (i / (FREQS.length - 1)) * plotW;
   const yFor = (db) => PAD_T + (db / 100) * plotH;
-  const colors = { normal: '#22c55e', leve: '#facc15', moderada: '#f97316', severa: '#dc2626' };
+  const colors = { normal: C.navy, leve: '#E8B14C', moderada: '#D17A3B', severa: '#B7423B' };
   const activeData = AUDIOGRAM[level] || AUDIOGRAM.normal;
   const points = activeData.map((db, i) => `${xFor(i)},${yFor(db)}`).join(' ');
   return (
@@ -83,8 +84,8 @@ function Audiogram({ level, compact = false }) {
           </g>
         ))}
         {/* Banda de habla (20-60 dB, 500-4000 Hz) */}
-        <rect x={xFor(1)} y={yFor(20)} width={xFor(5) - xFor(1)} height={yFor(60) - yFor(20)} fill={`${C.verde}10`} stroke={`${C.verde}33`} strokeDasharray="2 3" />
-        <text x={xFor(3)} y={yFor(20) - 6} textAnchor="middle" fontSize="10" fill={C.verde} fontFamily='"DM Sans", sans-serif' fontWeight="600" letterSpacing="0.1em">ZONA DEL HABLA</text>
+        <rect x={xFor(1)} y={yFor(20)} width={xFor(5) - xFor(1)} height={yFor(60) - yFor(20)} fill={`${C.oro}1a`} stroke={`${C.oro}55`} strokeDasharray="2 3" />
+        <text x={xFor(3)} y={yFor(20) - 6} textAnchor="middle" fontSize="10" fill={C.gris} fontFamily='"DM Sans", sans-serif' fontWeight="600" letterSpacing="0.1em">ZONA DEL HABLA</text>
         {/* Línea fantasma del normal para referencia */}
         <polyline fill="none" stroke={`${C.gris}55`} strokeWidth="1.5" strokeDasharray="4 4" points={AUDIOGRAM.normal.map((db, i) => `${xFor(i)},${yFor(db)}`).join(' ')} />
         {/* Línea activa */}
@@ -99,7 +100,13 @@ function Audiogram({ level, compact = false }) {
             {f >= 1000 ? `${f / 1000}k` : f}
           </text>
         ))}
-        <text x={W / 2} y={H - 6} textAnchor="middle" fontSize="11" fill={C.gris} fontFamily='"DM Sans", sans-serif' letterSpacing="0.08em">FRECUENCIA (Hz)</text>
+      </Box>
+      <Box sx={{
+        textAlign: 'center', mt: 0.5,
+        fontFamily: '"DM Sans", sans-serif',
+        fontSize: '0.65rem', color: C.gris, letterSpacing: '0.12em',
+      }}>
+        FRECUENCIA (Hz)
       </Box>
     </Box>
   );
@@ -367,7 +374,7 @@ export default function PonteEnSusOidosPage() {
             <Typography sx={{
               fontFamily: '"DM Sans", sans-serif',
               fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.18em',
-              textTransform: 'uppercase', color: C.verde, mb: 1.5,
+              textTransform: 'uppercase', color: C.navy, mb: 1.5,
             }}>
               Cómo funciona
             </Typography>
@@ -399,12 +406,13 @@ export default function PonteEnSusOidosPage() {
                     {p.n}
                   </Box>
                   <Box sx={{
-                    width: 48, height: 48, borderRadius: '10px',
-                    bgcolor: `${C.oro}1c`,
+                    width: 52, height: 52, borderRadius: '10px',
+                    bgcolor: `${C.navy}08`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     mt: 1, mb: 1.75,
+                    color: C.navy,
                   }}>
-                    <p.Icon sx={{ fontSize: 24, color: C.oro }} />
+                    <p.Icon width={26} height={26} />
                   </Box>
                   <Typography sx={{
                     fontFamily: '"DM Sans", sans-serif',
@@ -432,7 +440,7 @@ export default function PonteEnSusOidosPage() {
             <Typography sx={{
               fontFamily: '"DM Sans", sans-serif',
               fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.18em',
-              textTransform: 'uppercase', color: C.verde, mb: 1.5,
+              textTransform: 'uppercase', color: C.navy, mb: 1.5,
             }}>
               Paso 1 · Elige una escena
             </Typography>
@@ -477,12 +485,13 @@ export default function PonteEnSusOidosPage() {
                     }}
                   >
                     <Box sx={{
-                      width: 48, height: 48, borderRadius: '10px',
+                      width: 52, height: 52, borderRadius: '10px',
                       bgcolor: isActive ? '#ffffff15' : `${C.navy}08`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       mb: 2,
+                      color: isActive ? C.oro : C.navy,
                     }}>
-                      <s.Icon sx={{ fontSize: 24, color: isActive ? C.oro : C.navy }} />
+                      <s.Icon width={26} height={26} />
                     </Box>
                     <Typography sx={{
                       fontWeight: 700, fontSize: '1rem',
@@ -533,11 +542,12 @@ export default function PonteEnSusOidosPage() {
                 </Typography>
                 <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
                   <Box sx={{
-                    width: 44, height: 44, borderRadius: '10px',
+                    width: 48, height: 48, borderRadius: '10px',
                     bgcolor: `${C.oro}25`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: C.oro,
                   }}>
-                    <activeScene.Icon sx={{ fontSize: 22, color: C.oro }} />
+                    <activeScene.Icon width={24} height={24} />
                   </Box>
                   <Typography component="h2" sx={{
                     fontFamily: '"Playfair Display", Georgia, serif',
@@ -640,14 +650,14 @@ export default function PonteEnSusOidosPage() {
                     <Typography sx={{
                       fontFamily: '"DM Sans", sans-serif',
                       fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em',
-                      textTransform: 'uppercase', color: C.verde,
+                      textTransform: 'uppercase', color: C.navy,
                     }}>
                       Audiograma equivalente
                     </Typography>
                     <Chip
                       label={activeLevel.label}
                       size="small"
-                      sx={{ bgcolor: `${C.verde}15`, color: C.verde, fontWeight: 700, fontSize: '0.7rem', height: 22 }}
+                      sx={{ bgcolor: `${C.navy}0d`, color: C.navy, fontWeight: 700, fontSize: '0.7rem', height: 22 }}
                     />
                   </Stack>
                   <Audiogram level={level} compact />
@@ -678,11 +688,11 @@ export default function PonteEnSusOidosPage() {
             {LEVELS.map((l) => (
               <Grid item xs={12} sm={6} md={3} key={l.id}>
                 <Box sx={{ bgcolor: '#fff', borderRadius: '12px', p: 3, border: `1px solid ${C.border}`, height: '100%' }}>
-                  <Box sx={{ borderTop: `3px solid ${C.verde}`, width: 36, mb: 2 }} />
+                  <Box sx={{ borderTop: `3px solid ${C.oro}`, width: 36, mb: 2 }} />
                   <Typography sx={{
                     fontFamily: '"DM Sans", sans-serif',
                     fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em',
-                    textTransform: 'uppercase', color: C.verde, mb: 0.75,
+                    textTransform: 'uppercase', color: C.navy, mb: 0.75,
                   }}>
                     {l.shortDb}
                   </Typography>
@@ -713,7 +723,7 @@ export default function PonteEnSusOidosPage() {
               <Typography sx={{
                 fontFamily: '"DM Sans", sans-serif',
                 fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.18em',
-                textTransform: 'uppercase', color: C.verde, mb: 1.5,
+                textTransform: 'uppercase', color: C.navy, mb: 1.5,
               }}>
                 ¿Necesitas orientación?
               </Typography>
@@ -723,7 +733,7 @@ export default function PonteEnSusOidosPage() {
                 color: C.navy, lineHeight: 1.1, mb: 2,
               }}>
                 Solicita más{' '}
-                <Box component="span" sx={{ fontStyle: 'italic', color: C.verde }}>información.</Box>
+                <Box component="span" sx={{ fontStyle: 'italic', color: C.oro }}>información.</Box>
               </Typography>
               <Typography sx={{
                 fontFamily: '"DM Sans", sans-serif',

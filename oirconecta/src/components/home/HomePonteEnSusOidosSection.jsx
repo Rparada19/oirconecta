@@ -23,7 +23,7 @@ export default function HomePonteEnSusOidosSection() {
       <Box sx={{
         position: 'absolute', top: -160, right: -160, width: 460, height: 460,
         borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.verde}55 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${C.oro}33 0%, transparent 70%)`,
         filter: 'blur(80px)', pointerEvents: 'none',
       }} />
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
@@ -73,11 +73,11 @@ export default function HomePonteEnSusOidosSection() {
                 endIcon={<ArrowForward />}
                 sx={{
                   fontFamily: '"DM Sans", sans-serif',
-                  bgcolor: C.verde, color: '#fff',
+                  background: `${C.oro} !important`, color: `${C.navy} !important`,
                   fontWeight: 700, fontSize: '0.95rem',
                   px: 3.5, py: 1.75, borderRadius: '6px',
-                  boxShadow: `0 8px 24px ${C.verde}55`,
-                  '&:hover': { bgcolor: '#0a6a54' },
+                  boxShadow: `0 8px 24px ${C.oro}55`,
+                  '&:hover': { background: '#D4B97A !important' },
                 }}
               >
                 Probar la experiencia
@@ -109,7 +109,7 @@ export default function HomePonteEnSusOidosSection() {
               <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
                 <Box sx={{
                   width: 40, height: 40, borderRadius: '8px',
-                  bgcolor: `${C.verde}33`, display: 'flex',
+                  bgcolor: `${C.oro}33`, display: 'flex',
                   alignItems: 'center', justifyContent: 'center',
                 }}>
                   <HearingOutlined sx={{ color: C.arena, fontSize: 22 }} />
