@@ -49,7 +49,7 @@ export default function AuditionGuideSection() {
               }}>
                 Si te identificas con varias de estas situaciones, una valoración auditiva es el primer paso —sin presión, sin venta. Solo claridad sobre lo que pasa.
               </Typography>
-              <Button component={RouterLink} to="/agendar" variant="contained" size="large"
+              <Button component={RouterLink} to="/contacto" variant="contained" size="large"
                 endIcon={<ArrowForwardIcon />}
                 sx={{
                   fontFamily: '"DM Sans", sans-serif', background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #00382B 100%) !important', color: '#fff !important',
@@ -58,7 +58,7 @@ export default function AuditionGuideSection() {
                   boxShadow: '0 6px 18px rgba(8,89,70,0.35)',
                   '&:hover': { background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%) !important', transform: 'translateY(-2px)', boxShadow: '0 10px 24px rgba(8,89,70,0.45)' },
                 }}
-              >Agendar una valoración</Button>
+              >Solicitar una valoración</Button>
             </Box>
           </Grid>
           <Grid item xs={12} md={7}>
