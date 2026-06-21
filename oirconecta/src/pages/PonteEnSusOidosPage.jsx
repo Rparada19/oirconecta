@@ -10,6 +10,8 @@ import {
   HearingOutlined, ShareOutlined, CheckCircleOutline,
 } from '@mui/icons-material';
 import { HearingLossProcessor, LEVELS } from '../utils/hearingLossProcessor';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const C = {
   navy: '#272F50',
@@ -53,8 +55,13 @@ const AUDIOGRAM = {
 };
 const FREQS = [250, 500, 1000, 2000, 3000, 4000, 8000];
 
-function Audiogram({ level }) {
-  const W = 520, H = 280, PAD_L = 50, PAD_R = 18, PAD_T = 24, PAD_B = 38;
+function Audiogram({ level, compact = false }) {
+  const W = compact ? 420 : 520;
+  const H = compact ? 200 : 280;
+  const PAD_L = compact ? 40 : 50;
+  const PAD_R = compact ? 14 : 18;
+  const PAD_T = compact ? 16 : 24;
+  const PAD_B = compact ? 30 : 38;
   const plotW = W - PAD_L - PAD_R;
   const plotH = H - PAD_T - PAD_B;
   const xFor = (i) => PAD_L + (i / (FREQS.length - 1)) * plotW;
@@ -214,7 +221,8 @@ export default function PonteEnSusOidosPage() {
   };
 
   return (
-    <>
+    <Box component="main" sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+      <Header />
       <Helmet>
         <title>Ponte en sus oídos · Simulador de pérdida auditiva | OírConecta</title>
         <meta name="description" content="Simulador gratuito de pérdida auditiva en español. Escucha cómo oyen las personas con hipoacusia leve, moderada y severa en situaciones del día a día." />
@@ -319,8 +327,8 @@ export default function PonteEnSusOidosPage() {
               }}>
                 <Box
                   component="img"
-                  src="/img/familia-disfrutando-mejor-audicion.jpg"
-                  alt="Abuela y nieta riendo juntas tras una buena adaptación auditiva"
+                  src="/img/abuelo-nieto-conversando.jpg"
+                  alt="Abuelo escuchando atentamente a su nieto en un momento íntimo"
                   loading="eager"
                   decoding="async"
                   sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -583,50 +591,40 @@ export default function PonteEnSusOidosPage() {
                 </Stack>
                 <Box sx={{
                   bgcolor: '#ffffff0d', border: '1px solid #ffffff1f',
-                  borderRadius: '10px', p: 2.5,
+                  borderRadius: '10px', p: 2, mb: 2,
                 }}>
                   <Typography sx={{
                     fontFamily: '"Playfair Display", Georgia, serif',
-                    fontSize: '1.15rem', fontStyle: 'italic', color: '#fff', lineHeight: 1.5,
+                    fontSize: '1.05rem', fontStyle: 'italic', color: '#fff', lineHeight: 1.4,
                   }}>
                     "{activeLevel.tagline}"
                   </Typography>
                 </Box>
-              </Grid>
 
-              {/* Audiograma */}
-              <Grid item xs={12}>
+                {/* Audiograma compacto, en blanco, dentro del player */}
                 <Box sx={{
-                  bgcolor: '#fff', borderRadius: '14px', p: { xs: 2.5, md: 3.5 },
-                  mt: { xs: 1, md: 3 },
+                  bgcolor: '#fff', borderRadius: '12px', p: 2,
                 }}>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1} sx={{ mb: 1.5 }}>
-                    <Box>
-                      <Typography sx={{
-                        fontFamily: '"DM Sans", sans-serif',
-                        fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.18em',
-                        textTransform: 'uppercase', color: C.verde, mb: 0.5,
-                      }}>
-                        Audiograma equivalente
-                      </Typography>
-                      <Typography sx={{
-                        fontFamily: '"Playfair Display", Georgia, serif',
-                        fontSize: '1.25rem', fontWeight: 600, color: C.navy,
-                      }}>
-                        Así se vería esta pérdida en una audiometría real.
-                      </Typography>
-                    </Box>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif',
+                      fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em',
+                      textTransform: 'uppercase', color: C.verde,
+                    }}>
+                      Audiograma equivalente
+                    </Typography>
                     <Chip
-                      label={`${activeLevel.label} · ${activeLevel.shortDb}`}
-                      sx={{ bgcolor: `${C.verde}15`, color: C.verde, fontWeight: 700 }}
+                      label={activeLevel.label}
+                      size="small"
+                      sx={{ bgcolor: `${C.verde}15`, color: C.verde, fontWeight: 700, fontSize: '0.7rem', height: 22 }}
                     />
                   </Stack>
-                  <Audiogram level={level} />
+                  <Audiogram level={level} compact />
                   <Typography sx={{
                     fontFamily: '"DM Sans", sans-serif',
-                    fontSize: '0.8rem', color: C.gris, mt: 1, textAlign: 'center',
+                    fontSize: '0.7rem', color: C.gris, textAlign: 'center', mt: 0.5,
                   }}>
-                    Línea punteada = audición sana de referencia · Banda verde = zona donde vive el habla
+                    Punteada = audición sana · Banda verde = zona del habla
                   </Typography>
                 </Box>
               </Grid>
@@ -826,6 +824,8 @@ export default function PonteEnSusOidosPage() {
           </Stack>
         </Container>
       </Box>
-    </>
+
+      <Footer />
+    </Box>
   );
 }
