@@ -8,6 +8,9 @@ import { Link as RouterLink } from 'react-router-dom';
 import {
   PlayArrow, Pause, RestartAlt, ArrowForward, FavoriteOutlined,
   HearingOutlined, ShareOutlined, CheckCircleOutline,
+  HomeOutlined, RestaurantOutlined, PhoneInTalkOutlined, RecordVoiceOverOutlined,
+  TvOutlined, MedicalServicesOutlined, WineBarOutlined, RingVolumeOutlined,
+  HeadphonesOutlined, PlayCircleOutlined, TuneOutlined, GroupsOutlined,
 } from '@mui/icons-material';
 import { HearingLossProcessor, LEVELS } from '../utils/hearingLossProcessor';
 import Header from '../components/Header';
@@ -29,21 +32,21 @@ const C = {
 };
 
 const SCENES = [
-  { id: 'familia_casa',  src: '/audio/familia_conversacion.wav',             titulo: 'Conversación en casa',     emoji: '🏠', desc: 'Una charla cotidiana entre mamá e hija.' },
-  { id: 'familia',       src: '/audio/cena_familiar.wav',                    titulo: 'Cena con la familia',      emoji: '🍲', desc: 'Varias voces hablando al tiempo en la mesa.' },
-  { id: 'nieto',         src: '/audio/nieto_llamada.wav',                    titulo: 'Llamada del nieto',        emoji: '📞', desc: '"Abuelita, ¿cuándo nos visitas?".' },
-  { id: 'te_amo',        src: '/audio/te_amo.wav',                           titulo: 'Un "te amo" en voz baja',  emoji: '💛', desc: 'La frase más importante, susurrada al oído.' },
-  { id: 'tv',            src: '/audio/television.wav',                       titulo: 'Las noticias en la TV',    emoji: '📺', desc: 'El presentador frente al televisor.' },
-  { id: 'doctor',        src: '/audio/consulta_medica.wav',                  titulo: 'En la consulta médica',    emoji: '🩺', desc: 'Instrucciones que no se pueden perder.' },
-  { id: 'restaurante',   src: '/audio/familia_conversacion_restaurante.wav', titulo: 'En un restaurante',        emoji: '🍷', desc: 'Voces y ruido de fondo al ordenar.' },
-  { id: 'telefono',      src: '/audio/llamada_telefono.wav',                 titulo: 'Llamada del banco',        emoji: '☎️', desc: 'Sin poder ver los labios del otro.' },
+  { id: 'familia_casa',  src: '/audio/familia_conversacion.wav',             titulo: 'Conversación en casa',     Icon: HomeOutlined,            desc: 'Una charla cotidiana entre mamá e hija.' },
+  { id: 'familia',       src: '/audio/cena_familiar.wav',                    titulo: 'Cena con la familia',      Icon: RestaurantOutlined,      desc: 'Varias voces hablando al tiempo en la mesa.' },
+  { id: 'nieto',         src: '/audio/nieto_llamada.wav',                    titulo: 'Llamada del nieto',        Icon: PhoneInTalkOutlined,     desc: '"Abuelita, ¿cuándo nos visitas?".' },
+  { id: 'te_amo',        src: '/audio/te_amo.wav',                           titulo: 'Un "te amo" en voz baja',  Icon: RecordVoiceOverOutlined, desc: 'La frase más importante, susurrada al oído.' },
+  { id: 'tv',            src: '/audio/television.wav',                       titulo: 'Las noticias en la TV',    Icon: TvOutlined,              desc: 'El presentador frente al televisor.' },
+  { id: 'doctor',        src: '/audio/consulta_medica.wav',                  titulo: 'En la consulta médica',    Icon: MedicalServicesOutlined, desc: 'Instrucciones que no se pueden perder.' },
+  { id: 'restaurante',   src: '/audio/familia_conversacion_restaurante.wav', titulo: 'En un restaurante',        Icon: WineBarOutlined,         desc: 'Voces y ruido de fondo al ordenar.' },
+  { id: 'telefono',      src: '/audio/llamada_telefono.wav',                 titulo: 'Llamada del banco',        Icon: RingVolumeOutlined,      desc: 'Sin poder ver los labios del otro.' },
 ];
 
 const PASOS = [
-  { n: 1, titulo: 'Elige una escena', desc: 'Selecciona un momento del día a día que quieras escuchar.', emoji: '🎧' },
-  { n: 2, titulo: 'Dale play y sube el volumen', desc: 'Idealmente con audífonos o parlantes de buena calidad.', emoji: '▶️' },
-  { n: 3, titulo: 'Cambia el nivel de pérdida', desc: 'Mientras suena, alterna entre Normal, Leve, Moderada y Severa.', emoji: '🎚️' },
-  { n: 4, titulo: 'Compártelo con tu familia', desc: 'La empatía empieza cuando todos lo viven.', emoji: '💛' },
+  { n: 1, titulo: 'Elige una escena',              desc: 'Selecciona un momento del día a día que quieras escuchar.',          Icon: HeadphonesOutlined },
+  { n: 2, titulo: 'Dale play y sube el volumen',   desc: 'Idealmente con audífonos o parlantes de buena calidad.',             Icon: PlayCircleOutlined },
+  { n: 3, titulo: 'Cambia el nivel de pérdida',    desc: 'Mientras suena, alterna entre Normal, Leve, Moderada y Severa.',     Icon: TuneOutlined },
+  { n: 4, titulo: 'Compártelo con tu familia',     desc: 'La empatía empieza cuando todos lo viven.',                          Icon: GroupsOutlined },
 ];
 
 // Audiograma: umbral promedio de audición por frecuencia (Hz) en cada nivel.
@@ -291,11 +294,16 @@ export default function PonteEnSusOidosPage() {
                   onClick={() => document.getElementById('escenas')?.scrollIntoView({ behavior: 'smooth' })}
                   sx={{
                     fontFamily: '"DM Sans", sans-serif',
-                    background: `linear-gradient(135deg, ${C.verdeClaro} 0%, ${C.verde} 60%, ${C.verdeProfundo} 100%)`,
-                    color: '#fff', fontWeight: 700, fontSize: '0.9375rem',
+                    background: `${C.navy} !important`, color: '#fff !important',
+                    fontWeight: 700, fontSize: '0.9375rem',
                     px: 3.5, py: 1.75, borderRadius: '6px',
-                    boxShadow: `0 8px 22px ${C.verde}55`,
-                    '&:hover': { background: `linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%)` },
+                    letterSpacing: '0.01em',
+                    boxShadow: `0 8px 22px ${C.navy}33`,
+                    '&:hover': {
+                      background: `${C.navyDark} !important`,
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 12px 28px ${C.navy}44`,
+                    },
                   }}
                 >
                   Empezar la experiencia
@@ -314,7 +322,7 @@ export default function PonteEnSusOidosPage() {
                 </Button>
               </Stack>
               <Stack direction="row" spacing={1.25} flexWrap="wrap" sx={{ gap: 1, mt: 4 }}>
-                <Chip icon={<HearingOutlined />} label="Mejor con audífonos" sx={{ bgcolor: `${C.verde}10`, color: C.verde, fontWeight: 600 }} />
+                <Chip icon={<HearingOutlined />} label="Mejor con audífonos" sx={{ bgcolor: `${C.navy}0d`, color: C.navy, fontWeight: 600 }} />
                 <Chip icon={<FavoriteOutlined />} label="Gratis y sin registro" sx={{ bgcolor: `${C.oro}22`, color: C.navy, fontWeight: 600 }} />
               </Stack>
             </Grid>
@@ -382,15 +390,22 @@ export default function PonteEnSusOidosPage() {
                   <Box sx={{
                     position: 'absolute', top: -16, left: 20,
                     width: 36, height: 36, borderRadius: '50%',
-                    bgcolor: C.verde, color: '#fff',
+                    bgcolor: C.navy, color: C.oro,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontFamily: '"Playfair Display", Georgia, serif',
                     fontWeight: 700, fontSize: '1.05rem',
-                    boxShadow: `0 4px 12px ${C.verde}55`,
+                    boxShadow: `0 4px 12px ${C.navy}55`,
                   }}>
                     {p.n}
                   </Box>
-                  <Box sx={{ fontSize: '2rem', mt: 1, mb: 1.5 }}>{p.emoji}</Box>
+                  <Box sx={{
+                    width: 48, height: 48, borderRadius: '10px',
+                    bgcolor: `${C.oro}1c`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    mt: 1, mb: 1.75,
+                  }}>
+                    <p.Icon sx={{ fontSize: 24, color: C.oro }} />
+                  </Box>
                   <Typography sx={{
                     fontFamily: '"DM Sans", sans-serif',
                     fontWeight: 700, fontSize: '1.05rem', color: C.navy, mb: 0.75,
@@ -448,20 +463,27 @@ export default function PonteEnSusOidosPage() {
                     sx={{
                       width: '100%', textAlign: 'left', cursor: 'pointer',
                       fontFamily: '"DM Sans", sans-serif',
-                      bgcolor: isActive ? C.verde : '#fff',
+                      bgcolor: isActive ? C.navy : '#fff',
                       color: isActive ? '#fff' : C.navy,
-                      border: `1.5px solid ${isActive ? C.verde : C.border}`,
-                      borderRadius: '14px', p: 3,
-                      transition: 'all 0.2s ease',
-                      boxShadow: isActive ? `0 16px 32px ${C.verde}44` : '0 1px 2px rgba(0,0,0,0.03)',
+                      border: `1.5px solid ${isActive ? C.navy : C.border}`,
+                      borderRadius: '10px', p: 3,
+                      transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
+                      boxShadow: isActive ? `0 16px 32px ${C.navy}33` : '0 1px 2px rgba(0,0,0,0.03)',
                       '&:hover': {
-                        borderColor: C.verde,
-                        transform: 'translateY(-3px)',
-                        boxShadow: `0 12px 24px ${C.navy}1f`,
+                        borderColor: C.navy,
+                        transform: 'translateY(-4px)',
+                        boxShadow: `0 12px 28px ${C.navy}1f`,
                       },
                     }}
                   >
-                    <Box sx={{ fontSize: '2rem', mb: 1.5 }}>{s.emoji}</Box>
+                    <Box sx={{
+                      width: 48, height: 48, borderRadius: '10px',
+                      bgcolor: isActive ? '#ffffff15' : `${C.navy}08`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      mb: 2,
+                    }}>
+                      <s.Icon sx={{ fontSize: 24, color: isActive ? C.oro : C.navy }} />
+                    </Box>
                     <Typography sx={{
                       fontWeight: 700, fontSize: '1rem',
                       mb: 0.5, lineHeight: 1.3,
@@ -509,13 +531,22 @@ export default function PonteEnSusOidosPage() {
                 }}>
                   Paso 2 · Reproduce
                 </Typography>
-                <Typography component="h2" sx={{
-                  fontFamily: '"Playfair Display", Georgia, serif',
-                  fontSize: { xs: '1.75rem', md: '2.15rem' }, fontWeight: 600,
-                  lineHeight: 1.15, mb: 1.5,
-                }}>
-                  {activeScene.emoji} {activeScene.titulo}
-                </Typography>
+                <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
+                  <Box sx={{
+                    width: 44, height: 44, borderRadius: '10px',
+                    bgcolor: `${C.oro}25`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <activeScene.Icon sx={{ fontSize: 22, color: C.oro }} />
+                  </Box>
+                  <Typography component="h2" sx={{
+                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontSize: { xs: '1.6rem', md: '2rem' }, fontWeight: 600,
+                    lineHeight: 1.15,
+                  }}>
+                    {activeScene.titulo}
+                  </Typography>
+                </Stack>
                 <Typography sx={{
                   fontFamily: '"DM Sans", sans-serif',
                   fontSize: '0.95rem', color: '#D9CDBFcc', mb: 3, lineHeight: 1.55,
@@ -524,9 +555,9 @@ export default function PonteEnSusOidosPage() {
                 </Typography>
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   <IconButton onClick={handlePlayPause} aria-label={playing ? 'Pausar' : 'Reproducir'} sx={{
-                    bgcolor: C.verde, color: '#fff', width: 60, height: 60,
-                    boxShadow: `0 8px 22px ${C.verde}88`,
-                    '&:hover': { bgcolor: C.verdeClaro },
+                    bgcolor: C.oro, color: C.navy, width: 60, height: 60,
+                    boxShadow: `0 8px 22px ${C.oro}66`,
+                    '&:hover': { bgcolor: '#D4B97A' },
                   }}>
                     {playing ? <Pause fontSize="large" /> : <PlayArrow fontSize="large" />}
                   </IconButton>
@@ -573,12 +604,12 @@ export default function PonteEnSusOidosPage() {
                         onClick={() => setLevel(l.id)}
                         sx={{
                           fontFamily: '"DM Sans", sans-serif',
-                          bgcolor: isActive ? C.verde : 'transparent',
-                          border: `1.5px solid ${isActive ? C.verde : '#ffffff33'}`,
-                          color: '#fff',
+                          bgcolor: isActive ? C.oro : 'transparent',
+                          border: `1.5px solid ${isActive ? C.oro : '#ffffff33'}`,
+                          color: isActive ? C.navy : '#fff',
                           textTransform: 'none', fontWeight: 700,
                           px: 2.5, py: 1.25, borderRadius: '8px',
-                          '&:hover': { bgcolor: isActive ? C.verdeClaro : '#ffffff10' },
+                          '&:hover': { bgcolor: isActive ? '#D4B97A' : '#ffffff10' },
                           flexDirection: 'column', alignItems: 'flex-start',
                           minWidth: 130,
                         }}
@@ -691,13 +722,14 @@ export default function PonteEnSusOidosPage() {
                 fontSize: { xs: '1.85rem', md: '2.4rem' }, fontWeight: 600,
                 color: C.navy, lineHeight: 1.1, mb: 2,
               }}>
-                Cuéntanos qué reconociste.
+                Solicita más{' '}
+                <Box component="span" sx={{ fontStyle: 'italic', color: C.verde }}>información.</Box>
               </Typography>
               <Typography sx={{
                 fontFamily: '"DM Sans", sans-serif',
                 fontSize: '1rem', color: C.gris, lineHeight: 1.6,
               }}>
-                Si la simulación te recordó a alguien, déjanos tus datos. Un asesor humano te responde con orientación sin compromiso y, si quieres, te conecta con un audiólogo verificado cerca de ti.
+                Déjanos tus datos y un profesional del equipo OírConecta te contacta para resolver tus dudas sobre pérdida auditiva, opciones de audífonos o cómo agendar una valoración.
               </Typography>
             </Grid>
             <Grid item xs={12} md={7}>
@@ -748,20 +780,21 @@ export default function PonteEnSusOidosPage() {
                       endIcon={formState.loading ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : <ArrowForward />}
                       sx={{
                         fontFamily: '"DM Sans", sans-serif',
-                        background: `linear-gradient(135deg, ${C.verdeClaro} 0%, ${C.verde} 60%, ${C.verdeProfundo} 100%)`,
-                        color: '#fff', fontWeight: 700, fontSize: '0.95rem',
+                        background: `${C.navy} !important`, color: '#fff !important',
+                        fontWeight: 700, fontSize: '0.95rem',
                         px: 4, py: 1.5, borderRadius: '6px',
-                        boxShadow: `0 8px 22px ${C.verde}55`,
-                        '&:hover': { background: `linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%)` },
+                        letterSpacing: '0.01em',
+                        boxShadow: `0 8px 22px ${C.navy}33`,
+                        '&:hover': { background: `${C.navyDark} !important`, boxShadow: `0 12px 28px ${C.navy}44` },
                       }}
                     >
-                      {formState.loading ? 'Enviando…' : 'Solicitar orientación'}
+                      {formState.loading ? 'Enviando…' : 'Solicitar información'}
                     </Button>
                     <Typography sx={{
                       fontFamily: '"DM Sans", sans-serif',
                       fontSize: '0.78rem', color: C.gris,
                     }}>
-                      Al enviar aceptas que un asesor de OírConecta te contacte. No compartimos tus datos con terceros.
+                      Tus datos se usan únicamente para responder tu solicitud. No compartimos información con terceros.
                     </Typography>
                   </Stack>
                 )}
@@ -772,20 +805,39 @@ export default function PonteEnSusOidosPage() {
       </Box>
 
       {/* CTA final */}
-      <Box component="section" sx={{ bgcolor: C.verdeProfundo, color: '#fff', py: { xs: 7, md: 9 } }}>
-        <Container maxWidth="md" sx={{ textAlign: 'center' }}>
+      <Box component="section" sx={{
+        bgcolor: C.navy, color: '#fff', py: { xs: 7, md: 9 },
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <Box sx={{
+          position: 'absolute', top: -120, right: -120, width: 380, height: 380,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${C.oro}33 0%, transparent 70%)`,
+          filter: 'blur(60px)', pointerEvents: 'none',
+        }} />
+        <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: C.oro, mb: 1.5,
+          }}>
+            Directorio nacional
+          </Typography>
           <Typography component="h2" sx={{
             fontFamily: '"Playfair Display", Georgia, serif',
             fontSize: { xs: '1.85rem', md: '2.5rem' }, fontWeight: 600,
             lineHeight: 1.15, mb: 2.5,
           }}>
-            O conéctate directamente con un audiólogo.
+            O conéctate con{' '}
+            <Box component="span" sx={{ fontStyle: 'italic', color: C.oro }}>
+              un audiólogo verificado.
+            </Box>
           </Typography>
           <Typography sx={{
             fontFamily: '"DM Sans", sans-serif',
             fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4, maxWidth: 600, mx: 'auto',
           }}>
-            Profesionales verificados en toda Colombia. Una valoración auditiva toma 45 minutos y muchas EPS la cubren.
+            Audiólogos, fonoaudiólogos y otorrinolaringólogos verificados en toda Colombia. Filtra por ciudad y especialidad, agenda directo.
           </Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
             <Button
@@ -796,16 +848,15 @@ export default function PonteEnSusOidosPage() {
               endIcon={<ArrowForward />}
               sx={{
                 fontFamily: '"DM Sans", sans-serif',
-                background: `linear-gradient(135deg, ${C.verdeClaro} 0%, ${C.verde} 60%, ${C.verdeProfundo} 100%) !important`,
-                color: '#ffffff !important',
+                background: `${C.oro} !important`, color: `${C.navy} !important`,
                 fontWeight: 700, fontSize: '0.95rem',
                 px: 4, py: 1.75, borderRadius: '6px',
-                border: '1.5px solid #ffffff66',
-                boxShadow: `0 8px 22px ${C.verde}55`,
-                '&:hover': { background: `linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%) !important` },
+                letterSpacing: '0.01em',
+                boxShadow: `0 8px 24px ${C.oro}55`,
+                '&:hover': { background: '#D4B97A !important', boxShadow: `0 12px 32px ${C.oro}66`, transform: 'translateY(-2px)' },
               }}
             >
-              Buscar audiólogo cerca
+              Buscar profesional en el directorio
             </Button>
             <Button
               onClick={handleShare}
