@@ -798,10 +798,13 @@ export default function PonteEnSusOidosPage() {
               endIcon={<ArrowForward />}
               sx={{
                 fontFamily: '"DM Sans", sans-serif',
-                bgcolor: '#fff !important', color: `${C.verdeProfundo} !important`,
+                background: `linear-gradient(135deg, ${C.verdeClaro} 0%, ${C.verde} 60%, ${C.verdeProfundo} 100%) !important`,
+                color: '#ffffff !important',
                 fontWeight: 700, fontSize: '0.95rem',
                 px: 4, py: 1.75, borderRadius: '6px',
-                '&:hover': { bgcolor: `${C.arena} !important` },
+                border: '1.5px solid #ffffff66',
+                boxShadow: `0 8px 22px ${C.verde}55`,
+                '&:hover': { background: `linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%) !important` },
               }}
             >
               Buscar audiólogo cerca
