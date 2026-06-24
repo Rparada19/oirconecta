@@ -1,218 +1,233 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { Box, Container, Typography, Stack } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Container, Typography, Grid, Stack, Button } from '@mui/material';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import {
+  PageHero, SectionEyebrow, SectionTitle, CTAArrowLink, C,
+} from '../components/editorial/EditorialKit';
+import { useReveal } from '../hooks/useReveal';
 import {
   AssessmentOutlined, HearingOutlined, SupportOutlined,
   PsychologyOutlined, SchoolOutlined, GroupOutlined, ArrowForward,
 } from '@mui/icons-material';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-
-const C = {
-  navy: '#272F50', verde: '#085946', verdeProfundo: '#00382B',
-  oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280', grisClaro: '#A1A7B1',
-  arena: '#D9CDBF',
-};
 
 const SERVICIOS = [
   {
+    n: '01',
     titulo: 'Evaluación auditiva',
-    descripcion: 'Audiometría, impedanciometría y pruebas complementarias para caracterizar tu audición y orientar el tratamiento.',
-    icon: AssessmentOutlined,
-    image: '/img/clinica-audiologia-tratamiento.jpg',
+    desc: 'Audiometría, impedanciometría y pruebas complementarias para caracterizar tu pérdida y orientar el tratamiento.',
+    Icon: AssessmentOutlined,
+    image: '/img/audiologo-prueba-audicion.jpg',
+    tag: 'Diagnóstico',
   },
   {
+    n: '02',
     titulo: 'Adaptación de audífonos',
-    descripcion: 'Selección, prueba en consulta y ajuste fino según tu estilo de vida, tipo de pérdida y preferencias.',
-    icon: HearingOutlined,
-    image: '/img/centro-auditivo-colombia.jpg',
-  },
-  {
-    titulo: 'Implantes cocleares',
-    descripcion: 'Información sobre candidatura, proceso multidisciplinario y seguimiento; coordinación con marcas líderes.',
-    icon: SupportOutlined,
-    image: '/img/centro-auditivo-colombia.jpg',
-  },
-  {
-    titulo: 'Rehabilitación y terapia',
-    descripcion: 'Acompañamiento en habla auditiva y adaptación a dispositivos para niños y adultos.',
-    icon: PsychologyOutlined,
-    image: '/img/audiologo-paciente-consulta.jpg',
-  },
-  {
-    titulo: 'Audiología pediátrica',
-    descripcion: 'Tamizaje, evaluación adaptada a la edad y seguimiento familiar con enfoque sensible.',
-    icon: SchoolOutlined,
+    desc: 'Selección, prueba en consulta y ajuste fino según tu estilo de vida, tipo de pérdida y preferencias estéticas.',
+    Icon: HearingOutlined,
     image: '/img/audifono-tecnologia-moderna.jpg',
+    tag: 'Tratamiento',
   },
   {
+    n: '03',
+    titulo: 'Implantes cocleares',
+    desc: 'Información sobre candidatura, proceso multidisciplinario y seguimiento; coordinación con marcas líderes.',
+    Icon: SupportOutlined,
+    image: '/img/centro-auditivo-colombia.jpg',
+    tag: 'Avanzado',
+  },
+  {
+    n: '04',
+    titulo: 'Rehabilitación y terapia',
+    desc: 'Acompañamiento en habla auditiva y adaptación a dispositivos para niños, jóvenes y adultos mayores.',
+    Icon: PsychologyOutlined,
+    image: '/img/audiologo-paciente-consulta.jpg',
+    tag: 'Acompañamiento',
+  },
+  {
+    n: '05',
+    titulo: 'Audiología pediátrica',
+    desc: 'Tamizaje neonatal, evaluación adaptada a la edad y seguimiento con enfoque familiar sensible.',
+    Icon: SchoolOutlined,
+    image: '/img/clinica-audiologia-tratamiento.jpg',
+    tag: 'Niños',
+  },
+  {
+    n: '06',
     titulo: 'Audiología laboral',
-    descripcion: 'Evaluaciones ocupacionales y recomendaciones para conservación auditiva en entornos de ruido.',
-    icon: GroupOutlined,
-    image: '/img/accesorios-audifonos-pilas.jpg',
+    desc: 'Evaluaciones ocupacionales y recomendaciones para conservación auditiva en entornos de alto ruido.',
+    Icon: GroupOutlined,
+    image: '/img/clinica-auditiva-equipo-profesional.jpg',
+    tag: 'Empresas',
   },
 ];
 
-const ServiciosPage = () => (
-  <>
-    <Helmet>
-      <title>Servicios en la red - OírConecta</title>
-      <meta name="description" content="Tipos de servicios auditivos que promueven los profesionales y centros suscritos en OírConecta." />
-      <link rel="canonical" href="https://oirconecta.com/servicios" />
-    </Helmet>
-    <Header />
-
-    {/* HERO */}
-    <Box sx={{ position: 'relative', overflow: 'hidden', pt: { xs: 14, md: 16 }, pb: { xs: 5, md: 7 }, bgcolor: C.blanco }}>
+function ServicioRow({ s, reverse, delay }) {
+  const { ref, visible } = useReveal({ threshold: 0.18 });
+  return (
+    <Box ref={ref} sx={{
+      display: 'grid',
+      gridTemplateColumns: { xs: '1fr', md: reverse ? '5fr 7fr' : '7fr 5fr' },
+      gap: { xs: 4, md: 8 }, alignItems: 'center',
+      py: { xs: 5, md: 10 },
+      borderBottom: `1px solid ${C.border}`,
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(28px)',
+      transition: `all 0.95s cubic-bezier(0.2,0.7,0.2,1) ${delay}s`,
+    }}>
+      {/* Texto */}
       <Box sx={{
-        position: 'absolute', top: -180, right: -180,
-        width: 540, height: 540, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.arena}50 0%, transparent 70%)`,
-        filter: 'blur(60px)', pointerEvents: 'none',
-      }} />
-      <Container maxWidth="md" sx={{ position: 'relative', textAlign: 'center', zIndex: 1 }}>
-        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25} sx={{ mb: 3 }}>
-          <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
+        order: { xs: 2, md: reverse ? 2 : 1 },
+        pr: { md: reverse ? 0 : 4 }, pl: { md: reverse ? 4 : 0 },
+      }}>
+        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2.5 }}>
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
-            fontWeight: 600, letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: C.verde,
-          }}>Servicios</Typography>
-          <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontStyle: 'italic', fontSize: '1.5rem', color: C.oro, fontWeight: 600,
+          }}>
+            №{s.n}
+          </Typography>
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.22em',
+            textTransform: 'uppercase', color: C.navy,
+          }}>
+            · {s.tag}
+          </Typography>
         </Stack>
-        <Typography component="h1" sx={{
+        <Typography component="h2" sx={{
           fontFamily: '"Playfair Display", Georgia, serif',
-          fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 600,
-          lineHeight: 1.08, color: C.navy, letterSpacing: '-0.018em', mb: 2.5,
+          fontSize: { xs: '2rem', md: '3rem' }, fontWeight: 500,
+          color: C.navy, lineHeight: 1.05, letterSpacing: '-0.025em', mb: 2.5,
         }}>
-          Lo que hace la{' '}
-          <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
-            red OírConecta
-          </Box>
+          {s.titulo}
         </Typography>
         <Typography sx={{
           fontFamily: '"DM Sans", sans-serif',
-          fontSize: { xs: '1.0625rem', md: '1.1875rem' },
-          color: C.gris, lineHeight: 1.6, maxWidth: 620, mx: 'auto',
+          fontSize: { xs: '1rem', md: '1.15rem' }, lineHeight: 1.6,
+          color: C.gris, mb: 4, maxWidth: 540,
         }}>
-          Servicios auditivos integrales ofrecidos por los profesionales suscritos. Cada uno con la misma promesa: atención humana, honesta y técnica.
+          {s.desc}
         </Typography>
-      </Container>
-    </Box>
+        <CTAArrowLink to="/directorio/listado" label="Buscar profesional" primary />
+      </Box>
 
-    {/* GRID SERVICIOS */}
-    <Box component="section" sx={{ py: { xs: 4, md: 7 }, bgcolor: '#fff' }}>
-      <Container maxWidth="lg">
-        <Grid container spacing={{ xs: 3, md: 4 }}>
-          {SERVICIOS.map((s) => {
-            const Icon = s.icon;
-            return (
-              <Grid item xs={12} sm={6} md={4} key={s.titulo}>
-                <Box sx={{
-                  display: 'flex', flexDirection: 'column', height: '100%',
-                  borderRadius: '10px', overflow: 'hidden', bgcolor: '#fff',
-                  border: `1px solid ${C.grisClaro}33`,
-                  transition: 'all 0.4s cubic-bezier(0.4,0,0.2,1)',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: `0 18px 40px ${C.navy}14`,
-                    borderColor: `${C.navy}33`,
-                    '& .srv-cover': { transform: 'scale(1.05)' },
-                  },
-                }}>
-                  <Box sx={{ position: 'relative', paddingTop: '60%', overflow: 'hidden' }}>
-                    <Box
-                      className="srv-cover"
-                      component="img"
-                      src={s.image}
-                      alt={s.titulo}
-                      loading="lazy"
-                      sx={{
-                        position: 'absolute', inset: 0,
-                        width: '100%', height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.6s cubic-bezier(0.4,0,0.2,1)',
-                      }}
-                    />
-                    <Box sx={{
-                      position: 'absolute', top: 14, left: 14,
-                      width: 44, height: 44, borderRadius: '8px',
-                      bgcolor: 'rgba(255,255,255,0.95)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-                    }}>
-                      <Icon sx={{ fontSize: 22, color: C.verde }} />
-                    </Box>
-                  </Box>
-                  <Box sx={{ p: { xs: 3, md: 3.5 }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Typography component="h3" sx={{
-                      fontFamily: '"Playfair Display", Georgia, serif',
-                      fontSize: { xs: '1.25rem', md: '1.375rem' }, fontWeight: 600,
-                      color: C.navy, letterSpacing: '-0.01em', lineHeight: 1.2, mb: 1.5,
-                    }}>{s.titulo}</Typography>
-                    <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem',
-                      color: C.gris, lineHeight: 1.6, flexGrow: 1,
-                    }}>{s.descripcion}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-            );
-          })}
-        </Grid>
-      </Container>
-    </Box>
-
-    {/* CTA */}
-    <Box component="section" sx={{
-      py: { xs: 6, md: 9 }, background: '#272F50 !important', color: '#fff !important',
-      position: 'relative', overflow: 'hidden',
-    }}>
+      {/* Imagen */}
       <Box sx={{
-        position: 'absolute', top: -100, right: -100,
-        width: 380, height: 380, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.oro}26 0%, transparent 70%)`,
-        filter: 'blur(60px)', pointerEvents: 'none',
-      }} />
-      <Container maxWidth="md" sx={{ position: 'relative', textAlign: 'center' }}>
-        <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
-          fontWeight: 600, letterSpacing: '0.18em',
-          textTransform: 'uppercase', color: C.oro, mb: 2,
-        }}>¿Buscas a alguien específico?</Typography>
-        <Typography component="h2" sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
-          fontSize: { xs: '2rem', md: '2.875rem' }, fontWeight: 600,
-          lineHeight: 1.15, color: '#fff', letterSpacing: '-0.018em', mb: 2.5,
+        order: { xs: 1, md: reverse ? 1 : 2 },
+        position: 'relative',
+        borderRadius: '12px', overflow: 'hidden',
+        aspectRatio: { xs: '16/10', md: '4/5' },
+        maxHeight: { md: 540 },
+        boxShadow: `0 24px 60px ${C.navy}1f`,
+      }}>
+        <Box component="img" src={s.image} alt={s.titulo} loading="lazy"
+          sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        {/* Ícono flotante */}
+        <Box sx={{
+          position: 'absolute', top: 20, left: 20,
+          width: 56, height: 56, borderRadius: '12px',
+          bgcolor: 'rgba(255,255,255,0.96)', color: C.navy,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(8px)',
         }}>
-          Encuentra al{' '}
-          <Box component="span" sx={{ fontStyle: 'italic', color: C.oro }}>
-            profesional correcto
-          </Box>
-        </Typography>
-        <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif', fontSize: '1.0625rem',
-          color: 'rgba(255,255,255,0.80)', mb: 4, maxWidth: 560, mx: 'auto',
-        }}>
-          Filtra por ciudad, especialidad y servicio. Conecta directamente con quien necesitas.
-        </Typography>
-        <Button
-          component={RouterLink} to="/directorio/listado"
-          variant="contained" endIcon={<ArrowForward />}
-          sx={{
-            fontFamily: '"DM Sans", sans-serif', background: '#C9A86A !important', color: '#272F50 !important',
-            fontWeight: 700, fontSize: '0.9375rem', px: 4, py: 1.75,
-            borderRadius: '6px',
-            boxShadow: `0 8px 24px ${C.oro}55`,
-            '&:hover': { background: '#D4B97A !important', transform: 'translateY(-2px)' },
-          }}
-        >Ir al directorio</Button>
-      </Container>
+          <s.Icon sx={{ fontSize: 28 }} />
+        </Box>
+      </Box>
     </Box>
+  );
+}
 
-    <Footer />
-  </>
-);
+export default function ServiciosPage() {
+  return (
+    <Box component="main" sx={{ bgcolor: C.blanco, minHeight: '100vh' }}>
+      <Helmet>
+        <title>Servicios — OírConecta · Salud auditiva en Colombia</title>
+        <meta name="description" content="Servicios auditivos que ofrecen los profesionales verificados de OírConecta: evaluación, adaptación de audífonos, implantes cocleares, rehabilitación y más." />
+        <link rel="canonical" href="https://oirconecta.com/servicios" />
+        <meta property="og:title" content="Servicios — OírConecta" />
+        <meta property="og:url" content="https://oirconecta.com/servicios" />
+        <meta property="og:image" content="https://oirconecta.com/img/audiologo-prueba-audicion.jpg" />
+      </Helmet>
 
-export default ServiciosPage;
+      <Header />
+
+      <PageHero
+        eyebrow="Servicios · Seis áreas"
+        titleBefore="Lo que los"
+        titleAccent="profesionales"
+        titleAfter="hacen por ti."
+        intro="Cada profesional del directorio OírConecta cubre uno o varios de estos servicios. Conoce qué incluye cada uno antes de agendar tu primera consulta."
+        image="/img/audiologo-prueba-audicion.jpg"
+        imageAlt="Audiólogo realizando prueba de audición"
+        imageTag="Servicios · 2026"
+        cta={{ label: 'Buscar especialista', to: '/directorio/listado' }}
+        ctaSecondary={{ label: 'Ver señales de alerta', to: '/blog/tipos-de-perdida-auditiva' }}
+      />
+
+      {/* SERVICIOS — filas alternadas */}
+      <Box component="section" sx={{ bgcolor: C.blanco, py: { xs: 4, md: 6 } }}>
+        <Container maxWidth="lg">
+          <Box sx={{ mb: { xs: 4, md: 6 } }}>
+            <SectionEyebrow color={C.navy} dash={C.oro} sx={{ mb: 3 }}>
+              Catálogo editorial
+            </SectionEyebrow>
+            <SectionTitle before="Seis maneras de" accent="cuidar tu audición." size="md" />
+          </Box>
+          <Box sx={{ borderTop: `1px solid ${C.border}` }}>
+            {SERVICIOS.map((s, i) => (
+              <ServicioRow key={s.n} s={s} reverse={i % 2 === 1} delay={i * 0.05} />
+            ))}
+          </Box>
+        </Container>
+      </Box>
+
+      {/* CTA */}
+      <Box component="section" sx={{ bgcolor: C.cremaCalida, py: { xs: 8, md: 12 } }}>
+        <Container maxWidth="md" sx={{ textAlign: 'center' }}>
+          <SectionEyebrow color={C.navy} dash={C.verde} sx={{ mb: 3, justifyContent: 'center', display: 'inline-flex' }}>
+            ¿Listo?
+          </SectionEyebrow>
+          <SectionTitle
+            before="Cada servicio empieza con una"
+            accent="conversación."
+            size="md"
+            sx={{ textAlign: 'center', mb: 3 }}
+          />
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '1.05rem', color: C.gris, mb: 4, maxWidth: 560, mx: 'auto',
+          }}>
+            Encuentra a un profesional cerca de ti, filtra por especialidad o cobertura, y agenda directamente.
+          </Typography>
+          <Box
+            component={RouterLink}
+            to="/directorio/listado"
+            sx={{
+              display: 'inline-flex', alignItems: 'center', gap: 1.25,
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '0.95rem', fontWeight: 700,
+              bgcolor: C.navy, color: '#fff',
+              px: 4, py: 1.85, borderRadius: '6px',
+              textDecoration: 'none', letterSpacing: '0.02em',
+              boxShadow: `0 10px 28px ${C.navy}33`,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                bgcolor: C.navyDark,
+                transform: 'translateY(-2px)',
+                boxShadow: `0 14px 32px ${C.navy}44`,
+              },
+            }}
+          >
+            Explorar el directorio
+            <ArrowForward sx={{ fontSize: 18 }} />
+          </Box>
+        </Container>
+      </Box>
+
+      <Footer />
+    </Box>
+  );
+}

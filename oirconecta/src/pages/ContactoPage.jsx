@@ -2,23 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import {
-  Box, Container, Typography, Grid, TextField, Button,
-  FormControl, InputLabel, Select, MenuItem, Alert, Snackbar, Stack,
+  Box, Container, Typography, Grid, TextField, Button, Stack,
+  FormControl, InputLabel, Select, MenuItem, Alert, Snackbar,
 } from '@mui/material';
 import {
-  PhoneOutlined, EmailOutlined, LocationOnOutlined,
-  ScheduleOutlined, Send, WhatsApp, LockOutlined, BoltOutlined,
+  PhoneOutlined, EmailOutlined, LocationOnOutlined, ScheduleOutlined,
+  Send, WhatsApp, LockOutlined, BoltOutlined, ArrowForward,
 } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-
-const C = {
-  navy: '#272F50', navyLight: '#4054B2', verde: '#085946',
-  verdeProfundo: '#00382B', oro: '#C9A86A', blanco: '#FBFAF8',
-  gris: '#6B7280', grisClaro: '#A1A7B1', arena: '#D9CDBF',
-};
-
-const HERO_IMAGE = '/img/audiologa-consulta-paciente.jpg';
+import {
+  PageHero, SectionEyebrow, SectionTitle, C,
+} from '../components/editorial/EditorialKit';
+import { useReveal } from '../hooks/useReveal';
 
 const ContactoPage = () => {
   const [searchParams] = useSearchParams();
@@ -29,15 +25,12 @@ const ContactoPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [submitting, setSubmitting] = useState(false);
 
-  // Si llega con asunto en la URL (ej. desde una marca), prellena
   useEffect(() => {
     if (asuntoFromUrl) setFormData((f) => ({ ...f, asunto: asuntoFromUrl }));
   }, [asuntoFromUrl]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // Si el asunto viene desde una marca (?asunto=Solicitud de información - Widex)
-  // extraer la marca y rutear al endpoint del comparador que guarda lead en BD.
   const extractMarca = (asunto) => {
     const m = /Solicitud de información\s*-\s*(.+)/i.exec(asunto || '');
     return m ? m[1].trim() : null;
@@ -51,7 +44,6 @@ const ContactoPage = () => {
     try {
       let res;
       if (marca) {
-        // Ruta de marca → guarda como lead en Comparador (visible en admin)
         if (!formData.nombre || !formData.telefono) {
           throw new Error('Nombre y teléfono son requeridos');
         }
@@ -67,7 +59,6 @@ const ContactoPage = () => {
           }),
         });
       } else {
-        // Contacto general
         res = await fetch(`${API}/api/public/contact`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -97,354 +88,130 @@ const ContactoPage = () => {
   };
 
   const INFO = [
-    { icon: PhoneOutlined,    title: 'Teléfono / WhatsApp', value: '+57 315 793 9569', sub: 'Lun a Vie · 8:00 AM – 6:00 PM',
+    { Icon: PhoneOutlined,    n: '01', title: 'Teléfono / WhatsApp',
+      value: '+57 315 793 9569', sub: 'Lun a Vie · 8:00 – 18:00',
       href: 'https://wa.me/573157939569' },
-    { icon: EmailOutlined,    title: 'Correo electrónico', value: 'conversemos@oirconecta.com', sub: 'Respuesta en menos de 24h',
+    { Icon: EmailOutlined,    n: '02', title: 'Correo electrónico',
+      value: 'conversemos@oirconecta.com', sub: 'Respuesta en menos de 24h',
       href: 'mailto:conversemos@oirconecta.com' },
-    { icon: LocationOnOutlined, title: 'Consultorio', value: 'Cr 10 #96-25 Cons. 320', sub: 'Edificio Centro Ejecutivo, Bogotá',
+    { Icon: LocationOnOutlined, n: '03', title: 'Consultorio Bogotá',
+      value: 'Cr 10 #96-25 Cons. 320', sub: 'Edificio Centro Ejecutivo',
       href: 'https://maps.google.com/?q=Carrera+10+%2396-25+Bogota' },
-    { icon: ScheduleOutlined, title: 'Horario', value: 'Lunes a Viernes', sub: '8:00 AM – 6:00 PM' },
+    { Icon: ScheduleOutlined, n: '04', title: 'Horario de atención',
+      value: 'Lunes a Viernes', sub: '8:00 AM – 6:00 PM' },
   ];
 
   return (
-    <>
+    <Box component="main" sx={{ bgcolor: C.blanco, minHeight: '100vh' }}>
       <Helmet>
-        <title>Contacto - OírConecta | Hablemos de tu salud auditiva</title>
-        <meta name="description" content="Escríbenos, llámanos o agenda una conversación. Respondemos en menos de 24 horas." />
+        <title>Contacto — OírConecta · Hablemos de tu salud auditiva</title>
+        <meta name="description" content="Escríbenos, llámanos o agenda una conversación con el equipo de OírConecta. Respondemos en menos de 24 horas, sin presión comercial." />
         <link rel="canonical" href="https://oirconecta.com/contacto" />
+        <meta property="og:title" content="Contacto — OírConecta" />
+        <meta property="og:url" content="https://oirconecta.com/contacto" />
+        <meta property="og:image" content="https://oirconecta.com/img/audiologa-consulta-paciente.jpg" />
       </Helmet>
 
       <Header />
 
-      {/* HERO */}
-      <Box sx={{ position: 'relative', overflow: 'hidden', pt: { xs: 14, md: 16 }, pb: { xs: 5, md: 7 }, bgcolor: C.blanco }}>
-        <Box sx={{
-          position: 'absolute', top: -180, right: -180,
-          width: 540, height: 540, borderRadius: '50%',
-          background: `radial-gradient(circle, ${C.arena}50 0%, transparent 70%)`,
-          filter: 'blur(60px)', pointerEvents: 'none',
-        }} />
-        <Container maxWidth="md" sx={{ position: 'relative', textAlign: 'center', zIndex: 1 }}>
-          <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25} sx={{ mb: 3 }}>
-            <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
+      <PageHero
+        eyebrow="Contacto · Hablemos"
+        titleBefore="¿Cómo podemos"
+        titleAccent="ayudarte?"
+        intro="Escríbenos, llámanos o agenda una conversación. Una persona del equipo OírConecta lee tu mensaje y responde con calma — sin chatbots, sin presión comercial."
+        image="/img/audiologa-consulta-paciente.jpg"
+        imageAlt="Audióloga conversando con paciente en consulta"
+        imageTag="Atención humana"
+        imageCaption="No bots, no formularios infinitos. Personas que escuchan."
+        cta={{ label: 'Escribir por WhatsApp', to: 'https://wa.me/573157939569' }}
+        ctaSecondary={{ label: 'Buscar audiólogo cerca', to: '/directorio/listado' }}
+      />
+
+      {/* FORMULARIO */}
+      <FormBlock
+        formData={formData}
+        handleChange={handleChange}
+        handleSubmit={handleSubmit}
+        submitting={submitting}
+        asuntoFromUrl={asuntoFromUrl}
+      />
+
+      {/* CANALES DE CONTACTO — lista editorial */}
+      <Box component="section" sx={{ bgcolor: C.blanco, py: { xs: 7, md: 12 } }}>
+        <Container maxWidth="lg">
+          <Box sx={{
+            display: 'grid', gridTemplateColumns: { xs: '1fr', md: '5fr 7fr' },
+            gap: { xs: 4, md: 6 }, alignItems: 'end', mb: { xs: 5, md: 8 },
+          }}>
+            <Box>
+              <SectionEyebrow color={C.navy} dash={C.oro} sx={{ mb: 3 }}>
+                Otros canales
+              </SectionEyebrow>
+              <SectionTitle before="Cuatro formas de" accent="encontrarnos." size="md" />
+            </Box>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
-              fontWeight: 600, letterSpacing: '0.18em',
-              textTransform: 'uppercase', color: C.verde,
-            }}>Hablemos</Typography>
-            <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
-          </Stack>
-          <Typography component="h1" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
-            fontSize: { xs: '2.5rem', md: '3.75rem' }, fontWeight: 600,
-            lineHeight: 1.08, color: C.navy, letterSpacing: '-0.018em', mb: 2.5,
-          }}>
-            ¿Cómo podemos{' '}
-            <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
-              ayudarte
-            </Box>?
-          </Typography>
-          <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
-            fontSize: { xs: '1.0625rem', md: '1.1875rem' },
-            color: C.gris, lineHeight: 1.6, maxWidth: 620, mx: 'auto',
-          }}>
-            Escríbenos, llámanos o agenda una conversación. Respondemos en menos de 24 horas, sin presión comercial.
-          </Typography>
-        </Container>
-      </Box>
-
-      {/* FORMULARIO + IMAGEN */}
-      <Box component="section" sx={{ py: { xs: 4, md: 7 }, bgcolor: '#fff' }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
-            {/* Imagen editorial */}
-            <Grid item xs={12} md={5}>
-              <Box sx={{
-                position: 'relative', borderRadius: '12px', overflow: 'hidden',
-                boxShadow: `0 20px 50px ${C.navy}1f`,
-                height: { xs: 320, md: '100%' }, minHeight: { md: 560 },
-              }}>
-                <Box component="img" src={HERO_IMAGE} alt="Conversación con asesor OírConecta"
-                  loading="lazy"
-                  sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
-                <Box sx={{
-                  position: 'absolute', inset: 0,
-                  background: `linear-gradient(180deg, transparent 40%, ${C.verdeProfundo}DD 100%)`,
-                }} />
-                <Box sx={{
-                  position: 'absolute', bottom: 28, left: 28, right: 28, color: '#fff',
-                }}>
-                  <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
-                    fontWeight: 600, letterSpacing: '0.18em',
-                    textTransform: 'uppercase', color: C.oro, mb: 1.25,
-                  }}>Atención humana</Typography>
-                  <Typography sx={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
-                    fontSize: { xs: '1.375rem', md: '1.75rem' }, fontWeight: 600,
-                    lineHeight: 1.2, mb: 1.5,
-                  }}>
-                    Personas que{' '}
-                    <Box component="span" sx={{ fontStyle: 'italic', color: C.oro }}>
-                      escuchan
-                    </Box>
-                  </Typography>
-                  <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem',
-                    color: 'rgba(255,255,255,0.85)', lineHeight: 1.55,
-                  }}>
-                    No bots. No formularios infinitos. Una persona del equipo lee tu mensaje y te responde con calma.
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-            {/* Formulario */}
-            <Grid item xs={12} md={7}>
-              <Box
-                component="form"
-                onSubmit={handleSubmit}
-                sx={{
-                  p: { xs: 3.5, md: 5 },
-                  borderRadius: '12px',
-                  bgcolor: C.blanco,
-                  border: `1px solid ${C.grisClaro}33`,
-                  height: '100%',
-                }}
-              >
-                <Typography component="h2" sx={{
-                  fontFamily: '"Playfair Display", Georgia, serif',
-                  fontSize: { xs: '1.5rem', md: '1.875rem' }, fontWeight: 600,
-                  color: C.navy, letterSpacing: '-0.01em', mb: 1,
-                }}>Envíanos un mensaje</Typography>
-                <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem',
-                  color: C.gris, mb: 3.5,
-                }}>
-                  Cuéntanos qué necesitas y te contactamos.
-                </Typography>
-
-                <Grid container spacing={2.5}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth required name="nombre" label="Nombre completo"
-                      value={formData.nombre} onChange={handleChange}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth required type="email" name="email" label="Correo electrónico"
-                      value={formData.email} onChange={handleChange}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth name="telefono" label={asuntoFromUrl ? "Teléfono *" : "Teléfono (opcional)"} required={Boolean(asuntoFromUrl)}
-                      value={formData.telefono} onChange={handleChange}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    {asuntoFromUrl ? (
-                      <TextField fullWidth required name="asunto" label="Asunto"
-                        value={formData.asunto} onChange={handleChange}
-                        helperText="Prellenado según la marca que estabas viendo"
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
-                      />
-                    ) : (
-                      <FormControl fullWidth required>
-                        <InputLabel sx={{ fontFamily: '"DM Sans", sans-serif' }}>Asunto</InputLabel>
-                        <Select
-                          name="asunto" value={formData.asunto} onChange={handleChange} label="Asunto"
-                          sx={{ borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' }}
-                        >
-                          <MenuItem value="consulta-general">Consulta general</MenuItem>
-                          <MenuItem value="audifonos">Audífonos</MenuItem>
-                          <MenuItem value="implantes">Implantes cocleares</MenuItem>
-                          <MenuItem value="profesional">Soy profesional auditivo</MenuItem>
-                          <MenuItem value="cita">Quiero agendar</MenuItem>
-                          <MenuItem value="otro">Otro</MenuItem>
-                        </Select>
-                      </FormControl>
-                    )}
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField fullWidth required multiline rows={5}
-                      name="mensaje" label="Tu mensaje"
-                      value={formData.mensaje} onChange={handleChange}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      fullWidth
-                      disabled={submitting}
-                      endIcon={<Send />}
-                      sx={{
-                        fontFamily: '"DM Sans", sans-serif',
-                        background: '#C9A86A !important', color: '#272F50 !important',
-                        fontWeight: 700, fontSize: '0.9375rem',
-                        py: 1.75, borderRadius: '6px',
-                        boxShadow: `0 8px 24px ${C.oro}55`,
-                        '&:hover': { background: '#D4B97A !important', transform: 'translateY(-2px)' },
-                        '&:disabled': { background: '#D8DADF !important', color: '#6B7280 !important' },
-                      }}
-                    >
-                      {submitting ? 'Enviando…' : 'Enviar mensaje'}
-                    </Button>
-                  </Grid>
-                </Grid>
-
-                {/* Trust signals bajo el form */}
-                <Box sx={{ mt: 3.5, pt: 3, borderTop: `1px solid ${C.grisClaro}33` }}>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.5, sm: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <LockOutlined sx={{ fontSize: 18, color: C.verde }} />
-                      <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: C.gris }}>
-                        Datos protegidos · No compartimos tu información
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <BoltOutlined sx={{ fontSize: 18, color: C.verde }} />
-                      <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: C.gris }}>
-                        Respuesta en menos de 24h
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
-
-      {/* INFO CARDS */}
-      <Box component="section" sx={{ py: { xs: 4, md: 8 }, bgcolor: C.blanco }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 }, maxWidth: 620, mx: 'auto' }}>
-            <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25} sx={{ mb: 2 }}>
-              <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
-              <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
-                fontWeight: 600, letterSpacing: '0.18em',
-                textTransform: 'uppercase', color: C.verde,
-              }}>Otras formas de contacto</Typography>
-              <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
-            </Stack>
-            <Typography component="h2" sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
-              fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 600,
-              color: C.navy, letterSpacing: '-0.018em', lineHeight: 1.15,
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: { xs: '1rem', md: '1.1rem' }, color: C.gris,
+              lineHeight: 1.6, maxWidth: 540,
             }}>
-              ¿Prefieres{' '}
-              <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
-                otro canal
-              </Box>?
+              Si prefieres no llenar formularios, escoge el canal que te quede más cómodo.
+              Todos llegan al mismo equipo humano.
             </Typography>
           </Box>
-          <Grid container spacing={{ xs: 2.5, md: 3 }}>
-            {INFO.map((i) => {
-              const Icon = i.icon;
-              const Wrapper = i.href ? 'a' : 'div';
-              return (
-                <Grid item xs={12} sm={6} md={3} key={i.title}>
-                  <Box
-                    component={Wrapper}
-                    href={i.href}
-                    target={i.href?.startsWith('http') ? '_blank' : undefined}
-                    rel={i.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    sx={{
-                      display: 'flex', flexDirection: 'column',
-                      textDecoration: 'none', height: '100%',
-                      p: 3, borderRadius: '10px', bgcolor: '#fff',
-                      border: `1px solid ${C.grisClaro}33`,
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        borderColor: `${C.verde}55`, transform: 'translateY(-4px)',
-                        boxShadow: `0 12px 28px ${C.navy}12`,
-                      },
-                    }}>
-                    <Box sx={{
-                      width: 48, height: 48, borderRadius: '8px',
-                      bgcolor: `${C.verde}12`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2,
-                    }}><Icon sx={{ fontSize: 24, color: C.verde }} /></Box>
-                    <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem',
-                      fontWeight: 700, letterSpacing: '0.12em',
-                      textTransform: 'uppercase', color: C.gris, mb: 0.75,
-                    }}>{i.title}</Typography>
-                    <Typography sx={{
-                      fontFamily: '"Playfair Display", Georgia, serif',
-                      fontSize: '1.0625rem', fontWeight: 600,
-                      color: C.navy, lineHeight: 1.25, mb: 0.75,
-                    }}>{i.value}</Typography>
-                    <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem',
-                      color: C.gris, lineHeight: 1.5,
-                    }}>{i.sub}</Typography>
-                  </Box>
-                </Grid>
-              );
-            })}
-          </Grid>
+
+          <Box sx={{ borderTop: `1px solid ${C.border}` }}>
+            {INFO.map((i, idx) => <InfoRow key={i.n} info={i} delay={idx * 0.06} />)}
+          </Box>
         </Container>
       </Box>
 
       {/* CTA WhatsApp final */}
       <Box component="section" sx={{
-        py: { xs: 5, md: 7 }, bgcolor: C.verdeProfundo, color: '#fff',
+        py: { xs: 8, md: 12 }, bgcolor: C.navy, color: '#fff',
         position: 'relative', overflow: 'hidden',
       }}>
-        <Box sx={{
+        <Box aria-hidden sx={{
           position: 'absolute', top: -100, right: -100,
           width: 380, height: 380, borderRadius: '50%',
-          background: `radial-gradient(circle, ${C.oro}26 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${C.oro}33 0%, transparent 70%)`,
           filter: 'blur(60px)', pointerEvents: 'none',
         }} />
         <Container maxWidth="md" sx={{ position: 'relative', textAlign: 'center' }}>
+          <SectionEyebrow color={C.oro} dash={C.oro} sx={{ mb: 3, justifyContent: 'center', display: 'inline-flex' }}>
+            Lo más rápido
+          </SectionEyebrow>
+          <SectionTitle
+            before="¿Quieres una"
+            accent="respuesta ahora?"
+            size="md"
+            sx={{ color: '#fff', mb: 3 }}
+          />
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
-            fontWeight: 600, letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: C.oro, mb: 2,
-          }}>Lo más rápido</Typography>
-          <Typography component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
-            fontSize: { xs: '1.875rem', md: '2.5rem' }, fontWeight: 600,
-            lineHeight: 1.15, color: '#fff', letterSpacing: '-0.018em', mb: 2,
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4, maxWidth: 540, mx: 'auto',
           }}>
-            ¿Quieres una{' '}
-            <Box component="span" sx={{ fontStyle: 'italic', color: C.oro }}>
-              respuesta ahora
-            </Box>?
+            Escríbenos por WhatsApp y te atendemos directo, en horario de oficina.
           </Typography>
-          <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif', fontSize: '1.0625rem',
-            color: 'rgba(255,255,255,0.80)', mb: 3.5, maxWidth: 540, mx: 'auto',
-          }}>
-            Escríbenos por WhatsApp y te atendemos directo —en horario de oficina.
-          </Typography>
-          <Button
+          <Box
             component="a"
             href="https://wa.me/573157939569"
             target="_blank"
             rel="noopener noreferrer"
-            variant="contained"
-            startIcon={<WhatsApp />}
             sx={{
+              display: 'inline-flex', alignItems: 'center', gap: 1.25,
+              bgcolor: '#25D366', color: '#fff',
               fontFamily: '"DM Sans", sans-serif',
-              background: '#25D366 !important', color: '#fff !important',
-              fontWeight: 700, fontSize: '0.9375rem', px: 4, py: 1.75, borderRadius: '6px',
-              boxShadow: '0 8px 24px rgba(37,211,102,0.40)',
-              '&:hover': { background: '#1ebe57 !important', transform: 'translateY(-2px)' },
+              fontSize: '0.95rem', fontWeight: 700,
+              px: 4, py: 1.85, borderRadius: '6px',
+              textDecoration: 'none', letterSpacing: '0.02em',
+              boxShadow: '0 10px 28px rgba(37,211,102,0.45)',
+              transition: 'all 0.3s ease',
+              '&:hover': { bgcolor: '#1ebe57', transform: 'translateY(-2px)' },
             }}
           >
+            <WhatsApp sx={{ fontSize: 20 }} />
             Escribir por WhatsApp
-          </Button>
+          </Box>
         </Container>
       </Box>
 
@@ -460,8 +227,222 @@ const ContactoPage = () => {
       </Snackbar>
 
       <Footer />
-    </>
+    </Box>
   );
 };
+
+// ───────────────────────────────────────────────────────────────────────────
+
+function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFromUrl }) {
+  const { ref, visible } = useReveal({ threshold: 0.15 });
+  return (
+    <Box component="section" sx={{ bgcolor: C.cremaCalida, py: { xs: 8, md: 12 } }}>
+      <Container maxWidth="lg" ref={ref} sx={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(20px)',
+        transition: 'all 0.95s cubic-bezier(0.2,0.7,0.2,1)',
+      }}>
+        <Box sx={{
+          display: 'grid', gridTemplateColumns: { xs: '1fr', md: '4fr 8fr' },
+          gap: { xs: 4, md: 7 }, alignItems: 'start',
+        }}>
+          {/* Lado izquierdo: contexto editorial */}
+          <Box sx={{ position: { md: 'sticky' }, top: { md: 120 } }}>
+            <SectionEyebrow color={C.navy} dash={C.verde} sx={{ mb: 3 }}>
+              Escríbenos
+            </SectionEyebrow>
+            <SectionTitle
+              before="Cuéntanos"
+              accent="qué"
+              after="necesitas."
+              size="md"
+              sx={{ mb: 3 }}
+            />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '1rem', color: C.gris, lineHeight: 1.65,
+            }}>
+              Si llegaste desde una página de marca, tu mensaje irá al equipo correspondiente.
+              Si es una consulta general, te responde el equipo de OírConecta directamente.
+            </Typography>
+
+            <Stack spacing={1.5} sx={{ mt: 4 }}>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <LockOutlined sx={{ fontSize: 18, color: C.verde }} />
+                <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.85rem', color: C.gris }}>
+                  Datos protegidos · No los compartimos
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <BoltOutlined sx={{ fontSize: 18, color: C.verde }} />
+                <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.85rem', color: C.gris }}>
+                  Respuesta en menos de 24h
+                </Typography>
+              </Stack>
+            </Stack>
+          </Box>
+
+          {/* Formulario */}
+          <Box component="form" onSubmit={handleSubmit} sx={{
+            bgcolor: '#fff', borderRadius: '14px', p: { xs: 3, md: 5 },
+            border: `1px solid ${C.border}`,
+            boxShadow: `0 24px 60px ${C.navy}0d`,
+          }}>
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth required name="nombre" label="Nombre completo"
+                  value={formData.nombre} onChange={handleChange}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth required type="email" name="email" label="Correo electrónico"
+                  value={formData.email} onChange={handleChange}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth name="telefono"
+                  label={asuntoFromUrl ? "Teléfono *" : "Teléfono (opcional)"}
+                  required={Boolean(asuntoFromUrl)}
+                  value={formData.telefono} onChange={handleChange}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                {asuntoFromUrl ? (
+                  <TextField fullWidth required name="asunto" label="Asunto"
+                    value={formData.asunto} onChange={handleChange}
+                    helperText="Prellenado según la marca que estabas viendo"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                  />
+                ) : (
+                  <FormControl fullWidth required>
+                    <InputLabel sx={{ fontFamily: '"DM Sans", sans-serif' }}>Asunto</InputLabel>
+                    <Select
+                      name="asunto" value={formData.asunto} onChange={handleChange} label="Asunto"
+                      sx={{ borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' }}
+                    >
+                      <MenuItem value="consulta-general">Consulta general</MenuItem>
+                      <MenuItem value="audifonos">Audífonos</MenuItem>
+                      <MenuItem value="implantes">Implantes cocleares</MenuItem>
+                      <MenuItem value="profesional">Soy profesional auditivo</MenuItem>
+                      <MenuItem value="cita">Quiero agendar</MenuItem>
+                      <MenuItem value="otro">Otro</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
+              </Grid>
+              <Grid item xs={12}>
+                <TextField fullWidth required multiline rows={5}
+                  name="mensaje" label="Tu mensaje"
+                  value={formData.mensaje} onChange={handleChange}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  size="large"
+                  fullWidth
+                  disabled={submitting}
+                  endIcon={<Send />}
+                  sx={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    background: `${C.navy} !important`, color: '#fff !important',
+                    fontWeight: 700, fontSize: '0.9375rem',
+                    py: 1.85, borderRadius: '6px',
+                    letterSpacing: '0.02em',
+                    boxShadow: `0 10px 28px ${C.navy}33`,
+                    '&:hover': { background: `${C.navyDark} !important`, transform: 'translateY(-2px)' },
+                    '&:disabled': { background: '#D8DADF !important', color: '#6B7280 !important' },
+                  }}
+                >
+                  {submitting ? 'Enviando…' : 'Enviar mensaje'}
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        </Box>
+      </Container>
+    </Box>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+
+function InfoRow({ info, delay }) {
+  const { ref, visible } = useReveal({ threshold: 0.2 });
+  const Wrapper = info.href ? 'a' : 'div';
+  return (
+    <Box
+      ref={ref}
+      component={Wrapper}
+      href={info.href}
+      target={info.href?.startsWith('http') ? '_blank' : undefined}
+      rel={info.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '60px 1fr', md: '90px 60px 1fr auto' },
+        gap: { xs: 2, md: 4 }, alignItems: 'center',
+        py: { xs: 3.5, md: 4.5 },
+        borderBottom: `1px solid ${C.border}`,
+        textDecoration: 'none', cursor: info.href ? 'pointer' : 'default',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(16px)',
+        transition: `all 0.8s cubic-bezier(0.2,0.7,0.2,1) ${delay}s`,
+        '&:hover .oc-icon-wrap': info.href ? { borderColor: C.navy, color: C.navy } : {},
+        '&:hover .oc-info-arrow': info.href ? { color: C.verde, transform: 'translateX(6px)' } : {},
+      }}
+    >
+      <Typography sx={{
+        fontFamily: '"Playfair Display", Georgia, serif',
+        fontSize: { xs: '1.5rem', md: '2.25rem' }, fontWeight: 600,
+        color: `${C.navy}55`, lineHeight: 1,
+      }}>
+        {info.n}
+      </Typography>
+      <Box className="oc-icon-wrap" sx={{
+        display: { xs: 'none', md: 'flex' },
+        width: 48, height: 48, borderRadius: '50%',
+        border: `1.5px solid ${C.arena}`, color: C.gris,
+        alignItems: 'center', justifyContent: 'center',
+        transition: 'all 0.3s ease',
+      }}>
+        <info.Icon sx={{ fontSize: 22 }} />
+      </Box>
+      <Box>
+        <Typography sx={{
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.2em',
+          textTransform: 'uppercase', color: C.gris, mb: 0.75,
+        }}>
+          {info.title}
+        </Typography>
+        <Typography sx={{
+          fontFamily: '"Playfair Display", Georgia, serif',
+          fontSize: { xs: '1.15rem', md: '1.5rem' }, fontWeight: 500,
+          color: C.navy, lineHeight: 1.2, mb: 0.5,
+        }}>
+          {info.value}
+        </Typography>
+        <Typography sx={{
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: '0.85rem', color: C.gris,
+        }}>
+          {info.sub}
+        </Typography>
+      </Box>
+      {info.href && (
+        <Box className="oc-info-arrow" sx={{
+          display: { xs: 'none', md: 'flex' }, color: C.gris,
+          transition: 'all 0.3s ease',
+        }}>
+          <ArrowForward />
+        </Box>
+      )}
+    </Box>
+  );
+}
 
 export default ContactoPage;

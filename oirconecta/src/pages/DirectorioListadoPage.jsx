@@ -171,24 +171,28 @@ export default function DirectorioListadoPage() {
         <meta property="og:url" content="https://oirconecta.com/directorio/listado" />
       </Helmet>
       <Header />
-      <Box sx={{ height: 72 }} />
 
-      <Box
-        sx={{
-          position: 'relative', overflow: 'hidden',
-          bgcolor: '#FBFAF8',
-          borderBottom: '1px solid rgba(39,47,80,0.06)',
-          py: { xs: 4, md: 6 },
-        }}
-      >
-        <Box sx={{
-          position: 'absolute', top: -120, right: -120,
-          width: 400, height: 400, borderRadius: '50%',
-          background: 'radial-gradient(circle, #D9CDBF50 0%, transparent 70%)',
-          filter: 'blur(60px)', pointerEvents: 'none',
+      {/* Hero editorial — asimétrico, más respiro */}
+      <Box sx={{
+        position: 'relative', overflow: 'hidden',
+        bgcolor: '#FBFAF8',
+        pt: { xs: 14, md: 16 }, pb: { xs: 5, md: 7 },
+      }}>
+        {/* Halo arena decorativo */}
+        <Box aria-hidden sx={{
+          position: 'absolute', top: -180, right: -180,
+          width: 540, height: 540, borderRadius: '50%',
+          background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+          filter: 'blur(80px)', pointerEvents: 'none',
         }} />
+        {/* Línea editorial */}
+        <Box aria-hidden sx={{
+          position: 'absolute', top: { md: 110 }, left: '8%', right: '8%', height: 1,
+          bgcolor: 'rgba(39,47,80,0.06)', display: { xs: 'none', md: 'block' },
+        }} />
+
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, px: { xs: 2, sm: 3 } }}>
-          <Breadcrumbs separator={<NavigateNext fontSize="small" sx={{ color: '#A1A7B1' }} />} sx={{ mb: 2.5, '& .MuiBreadcrumbs-separator': { mx: 0.5 } }}>
+          <Breadcrumbs separator={<NavigateNext fontSize="small" sx={{ color: '#A1A7B1' }} />} sx={{ mb: 3.5, '& .MuiBreadcrumbs-separator': { mx: 0.5 } }}>
             <Button component={RouterLink} to="/directorio" sx={{
               textTransform: 'none', fontWeight: 600, color: '#6B7280',
               fontFamily: '"DM Sans", sans-serif', minWidth: 0, p: 0,
@@ -201,47 +205,60 @@ export default function DirectorioListadoPage() {
             }}>Listado</Typography>
           </Breadcrumbs>
 
-          <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 2 }}>
-            <Box sx={{ width: 28, height: 2, bgcolor: '#085946' }} />
-            <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
-              fontWeight: 600, letterSpacing: '0.18em',
-              textTransform: 'uppercase', color: '#085946',
-            }}>Encuentra a tu especialista</Typography>
-          </Stack>
-
-          <Typography component="h1" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
-            fontSize: { xs: '2.25rem', md: '3.25rem' }, fontWeight: 600,
-            letterSpacing: '-0.018em', lineHeight: 1.08,
-            color: '#272F50', mb: 2,
+          <Box sx={{
+            display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
+            gap: { xs: 3, md: 6 }, alignItems: 'end',
           }}>
-            Buscar{' '}
-            <Box component="span" sx={{ fontStyle: 'italic', color: '#085946', fontWeight: 500 }}>
-              profesionales
+            <Box>
+              <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.7rem',
+                  fontWeight: 700, letterSpacing: '0.24em',
+                  textTransform: 'uppercase', color: '#272F50',
+                }}>
+                  Directorio nacional · Red verificada
+                </Typography>
+              </Stack>
+
+              <Typography component="h1" sx={{
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
+                fontWeight: 500, letterSpacing: '-0.025em', lineHeight: 0.98,
+                color: '#272F50', mb: { xs: 2.5, md: 3 },
+              }}>
+                Encuentra a tu{' '}
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
+                  especialista.
+                </Box>
+              </Typography>
             </Box>
-          </Typography>
 
-          <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
-            fontSize: { xs: '1.0625rem', md: '1.1875rem' },
-            color: '#6B7280', maxWidth: 720, lineHeight: 1.6,
-          }}>
-            Filtra por especialidad, ciudad o póliza. También puedes buscar por nombre del profesional o del consultorio.
-          </Typography>
+            <Box sx={{ pb: { md: 1.5 } }}>
+              <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+                color: '#6B7280', lineHeight: 1.55, maxWidth: 480,
+              }}>
+                Audiólogos, otorrinolaringólogos y fonoaudiólogos verificados en toda Colombia.
+                Filtra por especialidad, ciudad o cobertura.
+              </Typography>
+            </Box>
+          </Box>
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 }, flex: 1, px: { xs: 2, sm: 3 } }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, flex: 1, px: { xs: 2, sm: 3 } }}>
         <Paper
           id="buscar-directorio"
           elevation={0}
           sx={{
-            p: { xs: 2, md: 3 },
-            mb: 4,
-            borderRadius: 3,
-            border: '1px solid rgba(8, 89, 70, 0.12)',
-            bgcolor: 'background.paper',
+            p: { xs: 2.5, md: 3.5 },
+            mb: 5,
+            borderRadius: '14px',
+            border: '1px solid #E5E0D6',
+            bgcolor: '#fff',
+            boxShadow: '0 24px 60px rgba(39,47,80,0.08)',
             scrollMarginTop: 96,
           }}
         >
