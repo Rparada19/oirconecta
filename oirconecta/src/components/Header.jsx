@@ -4,6 +4,7 @@ import { Box, Container, Typography, IconButton, Stack, InputBase } from '@mui/m
 import {
   Menu as MenuIcon, Close as CloseIcon, Search as SearchIcon,
   ArrowForward, WhatsApp, ExpandLess, ExpandMore,
+  ShoppingBagOutlined,
 } from '@mui/icons-material';
 import { PROFESIONES_CATALOGO } from '../utils/profesionFilter';
 import { directoryProfesionToSlug } from '../utils/directoryPresentation';
@@ -135,6 +136,22 @@ function MegaAudifonos({ navigate, onClose }) {
             </Box>
           ))}
         </Stack>
+        <Box sx={{ mt: 3, pt: 2, borderTop: `1px solid ${C.border}` }}>
+          <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 1.5 }}>
+            Tienda
+          </Typography>
+          <Box component={RouterLink} to="/ecommerce" onClick={onClose} sx={{
+            display: 'inline-flex', alignItems: 'center', gap: 1,
+            fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem', fontWeight: 700,
+            color: C.navy, textDecoration: 'none',
+            '&:hover': { gap: 1.5, color: C.verde },
+            transition: 'all 0.25s ease',
+          }}>
+            <ShoppingBagOutlined sx={{ fontSize: 18 }} />
+            Accesorios y consumibles
+            <ArrowForward sx={{ fontSize: 14 }} />
+          </Box>
+        </Box>
       </Box>
 
       <Box>
@@ -442,6 +459,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
       { label: 'Ver todos los profesionales', to: '/directorio/listado' },
     ] },
     { key: 'simulador', label: 'Ponte en sus oídos', to: '/ponte-en-sus-oidos' },
+    { key: 'tienda', label: 'Tienda', to: '/ecommerce' },
     { key: 'blog', label: 'Blog', children: [
       { label: 'Todos los artículos', to: '/blog' },
       ...BLOG_CATEGORIAS,
@@ -615,6 +633,7 @@ function SearchOverlay({ open, onClose }) {
     { label: 'Implantes Cochlear', to: '/implantes/cochlear' },
     { label: 'Ponte en sus oídos', to: '/ponte-en-sus-oidos' },
     { label: 'Cómo elegir tu primer audífono', to: '/blog/guia-elegir-primer-audifono' },
+    { label: 'Tienda · Accesorios y consumibles', to: '/ecommerce' },
   ];
 
   return (
@@ -860,6 +879,14 @@ export default function Header() {
               <IconButton onClick={() => setSearchOpen(true)} aria-label="Buscar (Cmd+K)"
                 sx={{ color: C.navy, display: { xs: 'none', sm: 'inline-flex' } }}>
                 <SearchIcon />
+              </IconButton>
+              <IconButton
+                component={RouterLink}
+                to="/ecommerce"
+                aria-label="Ir a la tienda"
+                sx={{ color: C.navy, display: { xs: 'none', sm: 'inline-flex' } }}
+              >
+                <ShoppingBagOutlined />
               </IconButton>
               <Box
                 component={RouterLink}
