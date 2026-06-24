@@ -7,6 +7,7 @@ import SearchEngine from '../components/SearchEngine';
 import HomeUserPathsSection from '../components/home/HomeUserPathsSection';
 import HomeDiscoverySection from '../components/home/HomeDiscoverySection';
 import HomePonteEnSusOidosSection from '../components/home/HomePonteEnSusOidosSection';
+import HomeManifestoSection from '../components/home/HomeManifestoSection';
 import HomeComparadorSection from '../components/home/HomeComparadorSection';
 import RecommendationOfMonthSection from '../components/RecommendationOfMonthSection';
 import HomeProfessionalsSpotlight from '../components/home/HomeProfessionalsSpotlight';
@@ -39,6 +40,7 @@ export default function HomePage() {
       <PreviewSlot slotId="EXIT_INTENT" slotLabel="Exit-intent overlay" minHeight={80} />
       <HomeComparadorSection />
       <HomeDiscoverySection />
+      <HomeManifestoSection />
       <HomePonteEnSusOidosSection />
       <RecommendationOfMonthSection />
       <HomeProfessionalsSpotlight />

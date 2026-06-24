@@ -1,17 +1,17 @@
 import React from 'react';
-import { Box, Container, Typography, Button, Stack, Grid } from '@mui/material';
-import { ArrowForward, ChatOutlined, VerifiedOutlined, FavoriteBorderOutlined, GroupsOutlined } from '@mui/icons-material';
+import { Box, Container, Typography, Stack } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { getWhatsAppHref } from '../config/publicSite';
+import { ArrowForward, VerifiedOutlined, FavoriteBorderOutlined, GroupsOutlined } from '@mui/icons-material';
+import { Swoosh } from './brand/BrandMark';
+import { useReveal } from '../hooks/useReveal';
 
 const C = {
   navy: '#272F50',
-  navyLight: '#4054B2',
   verde: '#085946',
-  verdeProfundo: '#00382B',
   oro: '#C9A86A',
+  oroSuave: '#E0C28A',
   arena: '#D9CDBF',
-  beige: '#C9B8A6',
+  cremaCalida: '#F5EFE6',
   blanco: '#FBFAF8',
   gris: '#6B7280',
   grisClaro: '#A1A7B1',
@@ -19,270 +19,239 @@ const C = {
 
 const HERO_IMAGE = '/img/familia-disfrutando-mejor-audicion.jpg';
 
-const TRUST_ITEMS = [
-  { icon: VerifiedOutlined, label: 'Profesionales verificados' },
-  { icon: FavoriteBorderOutlined, label: 'Acompañamiento humano' },
-  { icon: GroupsOutlined, label: 'Red nacional' },
+const TRUST = [
+  { Icon: VerifiedOutlined, label: 'Profesionales verificados' },
+  { Icon: FavoriteBorderOutlined, label: 'Acompañamiento humano' },
+  { Icon: GroupsOutlined, label: 'Red nacional' },
 ];
 
-const Hero = () => {
-  const waHref = getWhatsAppHref();
+export default function Hero() {
+  const t = useReveal({ threshold: 0.1 });
+  const i = useReveal({ threshold: 0.15 });
 
   return (
-    <Box component="section" aria-label="Banner principal de OírConecta" sx={{
-      position: 'relative',
-      overflow: 'hidden',
-      pt: { xs: 14, md: 16 },
-      pb: { xs: 6, md: 8 },
-      bgcolor: C.blanco,
+    <Box component="section" aria-label="Hero principal de OírConecta" sx={{
+      position: 'relative', overflow: 'hidden',
+      bgcolor: C.blanco, color: C.navy,
+      pt: { xs: 12, md: 14 }, pb: { xs: 0, md: 0 },
+      minHeight: { md: '92vh' },
+      display: 'flex', alignItems: 'center',
     }}>
-      {/* Forma decorativa sutil arena en esquina */}
-      <Box sx={{
-        position: 'absolute', top: -180, right: -180,
-        width: 540, height: 540, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.arena}50 0%, transparent 70%)`,
-        filter: 'blur(60px)',
-        pointerEvents: 'none',
+      {/* Swoosh signature gigante de fondo */}
+      <Box aria-hidden sx={{
+        position: 'absolute', top: { xs: '50%', md: '8%' }, left: { xs: -180, md: -120 },
+        width: { xs: 520, md: 760 }, opacity: 0.06, pointerEvents: 'none',
+        transform: t.visible ? 'translateY(0) rotate(-8deg)' : 'translateY(40px) rotate(-12deg)',
+        transition: 'transform 1.4s cubic-bezier(0.2,0.7,0.2,1)',
+      }}>
+        <Swoosh width="100%" color={C.navy} accent={C.oro} />
+      </Box>
+
+      {/* Línea vertical decorativa estilo editorial */}
+      <Box aria-hidden sx={{
+        position: 'absolute', top: 0, bottom: 0, left: '50%',
+        width: 1, bgcolor: `${C.navy}0a`, display: { xs: 'none', md: 'block' },
       }} />
 
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-        <Grid container spacing={{ xs: 5, md: 8 }} alignItems="center">
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
+          alignItems: 'center',
+          gap: { xs: 6, md: 0 },
+        }}>
           {/* COLUMNA TEXTO */}
-          <Grid item xs={12} md={6}>
-            {/* Eyebrow tagline */}
-            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
-              <Box sx={{ width: 32, height: 2, bgcolor: C.verde }} />
+          <Box ref={t.ref} sx={{
+            pr: { md: 8 }, pl: { md: 2 },
+            opacity: t.visible ? 1 : 0,
+            transform: t.visible ? 'translateY(0)' : 'translateY(28px)',
+            transition: 'all 0.9s cubic-bezier(0.2,0.7,0.2,1)',
+          }}>
+            {/* Número de capítulo editorial */}
+            <Stack direction="row" spacing={2} alignItems="baseline" sx={{ mb: 4 }}>
+              <Typography sx={{
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: '0.95rem', fontWeight: 600, color: C.oro,
+                fontStyle: 'italic',
+              }}>
+                — Edición №01
+              </Typography>
               <Typography sx={{
                 fontFamily: '"DM Sans", sans-serif',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: C.verde,
+                fontSize: '0.7rem', letterSpacing: '0.28em', fontWeight: 700,
+                textTransform: 'uppercase', color: C.navy,
               }}>
-                Escucha · Conecta · Vive mejor
+                Salud auditiva, sin presión
               </Typography>
             </Stack>
 
-            {/* Título principal serif */}
+            {/* Headline gigante */}
             <Typography component="h1" sx={{
               fontFamily: '"Playfair Display", Georgia, serif',
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem', lg: '4rem' },
-              fontWeight: 600,
-              lineHeight: 1.08,
+              fontSize: { xs: '3rem', sm: '3.75rem', md: '4.75rem', lg: '5.75rem' },
+              fontWeight: 500, lineHeight: 0.98,
+              letterSpacing: '-0.025em',
               color: C.navy,
-              letterSpacing: '-0.018em',
-              mb: 3,
+              mb: { xs: 3, md: 4 },
             }}>
-              Conectamos tu vida con{' '}
+              Tu vida{' '}
+              <Box component="span" sx={{ color: C.gris }}>con</Box>{' '}
               <Box component="span" sx={{
-                fontStyle: 'italic',
-                fontWeight: 500,
-                color: C.verde,
+                display: 'inline-block', position: 'relative',
+                fontStyle: 'italic', color: C.verde, fontWeight: 500,
               }}>
-                una mejor audición
+                una mejor
+                {/* Subrayado oro a mano alzada */}
+                <Box aria-hidden sx={{
+                  position: 'absolute', left: '-2%', right: '-2%', bottom: '-0.04em',
+                  height: '0.18em',
+                  background: `linear-gradient(180deg, transparent 35%, ${C.oroSuave}80 35%)`,
+                  zIndex: -1, borderRadius: '999px',
+                }} />
+              </Box>{' '}
+              <Box component="span" sx={{ fontStyle: 'italic', color: C.verde, fontWeight: 500 }}>
+                audición.
               </Box>
-              .
             </Typography>
 
-            {/* Subtítulo */}
             <Typography sx={{
               fontFamily: '"DM Sans", sans-serif',
-              fontSize: { xs: '1.0625rem', md: '1.1875rem' },
-              lineHeight: 1.6,
-              color: C.gris,
-              fontWeight: 400,
-              mb: 4.5,
-              maxWidth: 540,
+              fontSize: { xs: '1.125rem', md: '1.3125rem' }, lineHeight: 1.55,
+              color: C.gris, mb: { xs: 4, md: 5 }, maxWidth: 580, fontWeight: 400,
             }}>
-              Encuentra especialistas, centros auditivos y soluciones confiables para tu bienestar. Sin presión, sin marketing.
+              Encuentra especialistas, centros auditivos y soluciones confiables.
+              Sin presión, sin marketing — solo personas cuidando personas.
             </Typography>
 
-            {/* CTAs duales */}
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
-              <Button
+            {/* CTA editorial: enlace con flecha en vez de botón pesado */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={4} alignItems={{ sm: 'center' }} sx={{ mb: { xs: 5, md: 7 } }}>
+              <Box
                 component={RouterLink}
                 to="/directorio/listado"
-                variant="contained"
-                size="large"
-                endIcon={<ArrowForward />}
                 sx={{
                   fontFamily: '"DM Sans", sans-serif',
-                  background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #00382B 100%) !important', color: '#fff !important',
-                  fontWeight: 700,
-                  fontSize: '0.9375rem',
-                  px: 3.5, py: 1.75,
-                  borderRadius: '6px',
-                  letterSpacing: '0.01em',
-                  boxShadow: '0 6px 18px rgba(8,89,70,0.35)',
-                  transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%) !important',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 10px 24px rgba(8,89,70,0.45)',
-                  },
+                  fontSize: '1.05rem', fontWeight: 700,
+                  color: C.navy, textDecoration: 'none',
+                  display: 'inline-flex', alignItems: 'center', gap: 1.25,
+                  position: 'relative', pb: 0.5,
+                  borderBottom: `2px solid ${C.navy}`,
+                  transition: 'gap 0.3s ease, color 0.3s ease',
+                  '&:hover': { gap: 2, color: C.verde, borderColor: C.verde },
                 }}
               >
                 Buscar especialista
-              </Button>
-              <Button
+                <ArrowForward sx={{ fontSize: 20 }} />
+              </Box>
+              <Box
                 component={RouterLink}
-                to="/nosotros"
-                variant="outlined"
-                size="large"
+                to="/ponte-en-sus-oidos"
                 sx={{
                   fontFamily: '"DM Sans", sans-serif',
-                  color: C.navy,
-                  borderColor: C.grisClaro,
-                  borderWidth: '1.5px',
-                  fontWeight: 600,
-                  fontSize: '0.9375rem',
-                  px: 3.5, py: 1.75,
-                  borderRadius: '6px',
-                  '&:hover': {
-                    borderColor: C.navy,
-                    borderWidth: '1.5px',
-                    bgcolor: 'rgba(39,47,80,0.04)',
-                  },
+                  fontSize: '0.95rem', fontWeight: 600,
+                  color: C.gris, textDecoration: 'none',
+                  display: 'inline-flex', alignItems: 'center', gap: 1,
+                  '&:hover': { color: C.navy },
                 }}
               >
-                Conocer más
-              </Button>
+                Probar el simulador de audición →
+              </Box>
             </Stack>
 
-            {/* Trust signals row */}
-            <Box sx={{
-              display: 'flex',
-              gap: { xs: 2.5, sm: 4 },
-              flexWrap: 'wrap',
-              pt: 3,
-              borderTop: `1px solid ${C.grisClaro}40`,
+            {/* Trust en columna separada por divisores */}
+            <Stack direction="row" spacing={{ xs: 2, md: 4 }} divider={<Box sx={{ width: 1, bgcolor: `${C.navy}22` }} />} sx={{
+              flexWrap: 'wrap', rowGap: 2,
             }}>
-              {TRUST_ITEMS.map(({ icon: Icon, label }) => (
-                <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{
-                    width: 32, height: 32, borderRadius: '6px',
-                    bgcolor: `${C.verde}12`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <Icon sx={{ fontSize: 17, color: C.verde }} />
-                  </Box>
+              {TRUST.map(({ Icon, label }) => (
+                <Stack key={label} direction="row" spacing={1.25} alignItems="center">
+                  <Icon sx={{ fontSize: 18, color: C.verde }} />
                   <Typography sx={{
                     fontFamily: '"DM Sans", sans-serif',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: C.navy,
+                    fontSize: '0.825rem', fontWeight: 600, color: C.navy,
                   }}>
                     {label}
                   </Typography>
-                </Box>
+                </Stack>
               ))}
-            </Box>
-          </Grid>
+            </Stack>
+          </Box>
 
-          {/* COLUMNA IMAGEN */}
-          <Grid item xs={12} md={6}>
+          {/* COLUMNA IMAGEN — sangra al borde derecho */}
+          <Box ref={i.ref} sx={{
+            position: 'relative',
+            height: { xs: 460, sm: 540, md: '88vh' },
+            maxHeight: { md: 820 },
+            mx: { xs: -3, md: 0 },
+            mr: { md: 'calc(-1 * (100vw - 100%) / 2 - 0px)' },
+            overflow: 'hidden',
+          }}>
+            <Box
+              component="img"
+              src={HERO_IMAGE}
+              alt="Familia disfrutando momentos juntos gracias a una mejor audición"
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
+              sx={{
+                width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                transform: i.visible ? 'scale(1)' : 'scale(1.08)',
+                transition: 'transform 1.6s cubic-bezier(0.2,0.7,0.2,1)',
+              }}
+            />
+            {/* Gradient inferior para legibilidad de la stat card */}
+            <Box aria-hidden sx={{
+              position: 'absolute', inset: 0,
+              background: `linear-gradient(180deg, transparent 55%, ${C.navy}aa 100%)`,
+            }} />
+
+            {/* Stat card flotante estilo Widex */}
             <Box sx={{
-              position: 'relative',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: `0 20px 50px ${C.navy}1f`,
-              aspectRatio: { xs: '4/3', md: '5/6' },
-              maxHeight: { md: 640 },
+              position: 'absolute', left: { xs: 16, md: 32 }, bottom: { xs: 16, md: 32 },
+              bgcolor: C.blanco, color: C.navy,
+              borderRadius: '12px', px: { xs: 2.5, md: 3.5 }, py: { xs: 2, md: 2.5 },
+              boxShadow: `0 24px 64px ${C.navy}33`,
+              maxWidth: 340,
+              opacity: i.visible ? 1 : 0,
+              transform: i.visible ? 'translateY(0)' : 'translateY(20px)',
+              transition: 'all 1s cubic-bezier(0.2,0.7,0.2,1) 0.4s',
             }}>
-              <Box
-                component="img"
-                src={HERO_IMAGE}
-                alt="Familia disfrutando momentos juntos gracias a una mejor audición"
-                loading="eager"
-                decoding="async"
-                fetchpriority="high"
-                sx={{
-                  width: '100%', height: '100%',
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-              />
-
-              {/* Floating badge: Card de credencial */}
-              <Box sx={{
-                position: 'absolute',
-                bottom: { xs: 16, md: 24 },
-                left: { xs: 16, md: 24 },
-                right: { xs: 16, md: 'auto' },
-                maxWidth: { md: 280 },
-                bgcolor: '#fff',
-                borderRadius: '8px',
-                p: 2.25,
-                boxShadow: '0 10px 30px rgba(39,47,80,0.18)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-              }}>
-                <Box sx={{
-                  width: 44, height: 44, borderRadius: '50%',
-                  bgcolor: `${C.verde}15`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
+              <Stack direction="row" spacing={2.5} alignItems="center">
+                <Typography sx={{
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontSize: { xs: '2.25rem', md: '3rem' }, fontWeight: 700,
+                  color: C.navy, lineHeight: 1,
                 }}>
-                  <VerifiedOutlined sx={{ fontSize: 22, color: C.verde }} />
-                </Box>
+                  98<Box component="span" sx={{ color: C.oro, fontSize: '0.6em' }}>%</Box>
+                </Typography>
                 <Box>
                   <Typography sx={{
                     fontFamily: '"DM Sans", sans-serif',
-                    fontSize: '0.75rem',
-                    color: C.gris,
-                    fontWeight: 500,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    mb: 0.25,
+                    fontSize: '0.85rem', fontWeight: 700, color: C.navy, lineHeight: 1.25,
                   }}>
-                    Profesionales
+                    de quienes adaptan audífonos mejoran su calidad de vida
                   </Typography>
                   <Typography sx={{
-                    fontFamily: '"Playfair Display", serif',
-                    fontSize: '1.0625rem',
-                    color: C.navy,
-                    fontWeight: 700,
-                    lineHeight: 1.2,
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: '0.65rem', color: C.gris, mt: 0.5, letterSpacing: '0.1em', textTransform: 'uppercase',
                   }}>
-                    100+ verificados
+                    Lancet Commission, 2024
                   </Typography>
                 </Box>
-              </Box>
-
-              {/* Tag oro arriba derecha */}
-              <Box sx={{
-                position: 'absolute',
-                top: { xs: 16, md: 24 },
-                right: { xs: 16, md: 24 },
-                bgcolor: '#fff',
-                borderRadius: '999px',
-                px: 1.75, py: 0.75,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.75,
-                boxShadow: '0 6px 20px rgba(0,0,0,0.10)',
-              }}>
-                <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: C.oro }} />
-                <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
-                  fontSize: '0.6875rem',
-                  fontWeight: 700,
-                  color: C.navy,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}>
-                  Salud auditiva premium
-                </Typography>
-              </Box>
+              </Stack>
             </Box>
-          </Grid>
-        </Grid>
+
+            {/* Tag editorial sobre la imagen */}
+            <Box sx={{
+              position: 'absolute', top: { xs: 16, md: 32 }, right: { xs: 16, md: 32 },
+              bgcolor: 'rgba(255,255,255,0.92)', color: C.navy,
+              px: 2, py: 0.75, borderRadius: '4px',
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
+            }}>
+              Historia real
+            </Box>
+          </Box>
+        </Box>
       </Container>
     </Box>
   );
-};
-
-export default Hero;
+}

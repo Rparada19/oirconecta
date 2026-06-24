@@ -1,237 +1,239 @@
-import React, { useState } from 'react';
-import { Box, Container, Typography, IconButton, Stack, Rating } from '@mui/material';
-import { FormatQuote, ArrowBackIos, ArrowForwardIos, LocationOnOutlined } from '@mui/icons-material';
+import React, { useState, useRef, useEffect } from 'react';
+import { Box, Container, Typography, IconButton, Stack } from '@mui/material';
+import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { BigQuote } from './brand/BrandMark';
+import { useReveal } from '../hooks/useReveal';
 
 const C = {
-  navy: '#272F50', verde: '#085946', verdeProfundo: '#00382B',
-  oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280',
+  navy: '#272F50',
+  navyDark: '#1B2240',
+  verde: '#085946',
+  oro: '#C9A86A',
+  arena: '#D9CDBF',
+  cremaCalida: '#F5EFE6',
+  blanco: '#FBFAF8',
 };
 
-const HERO_BG = '/img/testimonios-pacientes-audifonos.jpg';
-
-const STORIES = [
+const TESTIMONIOS = [
   {
-    id: 1,
-    name: 'Elena',
-    age: 68,
-    place: 'Bogotá',
-    tag: 'Volvió a disfrutar las reuniones',
-    rating: 5,
-    text: 'Me daba pena decir "¿me lo repites?". Hoy vuelvo a reírme con mis nietos en la mesa. No fue magia: fue encontrar a alguien que me explicó con paciencia y me acompañó en cada ajuste.',
+    quote: 'Pensé que mi mamá ya no me quería oír. Cuando lo probé en el simulador, entendí que el problema no era yo.',
+    nombre: 'Catalina M.',
+    rol: 'Hija · Medellín',
+    avatar: '/img/avatar-paciente-1.jpg',
   },
   {
-    id: 2,
-    name: 'Andrés',
-    age: 45,
-    place: 'Medellín',
-    tag: 'Dejó de evitar el teléfono',
-    rating: 5,
-    text: 'Trabajo con clientes todo el día. Estaba agotado de adivinar palabras por llamada. Pedir ayuda me quitó un peso: entendí qué pasaba y qué podía hacer, sin sentirme "viejo".',
+    quote: 'En 45 minutos me hicieron la prueba y me explicaron todo sin tecnicismos. Por primera vez sentí que entendí mi diagnóstico.',
+    nombre: 'Jorge R.',
+    rol: 'Paciente · Bogotá',
+    avatar: '/img/avatar-paciente-2.jpg',
   },
   {
-    id: 3,
-    name: 'Lucía',
-    age: 52,
-    place: 'Cali',
-    tag: 'Recuperó confianza',
-    rating: 5,
-    text: 'Tenía miedo de que me dijeran que "era normal". Me escucharon de verdad. Hoy entiendo mi oído y me siento dueña de mis decisiones, con calma.',
+    quote: 'Probé tres centros antes de encontrar OírConecta. Ningún vendedor me presionó. Solo me dieron información honesta.',
+    nombre: 'Marta G.',
+    rol: 'Paciente · Cali',
+    avatar: '/img/avatar-paciente-3.jpg',
+  },
+  {
+    quote: 'Mi papá se negaba a usar audífonos por orgullo. Ver el simulador con mis hijos lo convenció más que años de discusiones.',
+    nombre: 'Andrés P.',
+    rol: 'Hijo · Barranquilla',
+    avatar: '/img/avatar-paciente-4.jpg',
   },
 ];
 
 export default function TestimonialsSection() {
   const [idx, setIdx] = useState(0);
-  const t = STORIES[idx];
-  const prev = () => setIdx((i) => (i === 0 ? STORIES.length - 1 : i - 1));
-  const next = () => setIdx((i) => (i === STORIES.length - 1 ? 0 : i + 1));
+  const track = useRef(null);
+  const { ref, visible } = useReveal({ threshold: 0.15 });
+  const dragRef = useRef({ startX: 0, dragging: false, moved: 0 });
+
+  const go = (n) => {
+    const next = (n + TESTIMONIOS.length) % TESTIMONIOS.length;
+    setIdx(next);
+  };
+
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    if (paused) return undefined;
+    const id = setInterval(() => setIdx((p) => (p + 1) % TESTIMONIOS.length), 9000);
+    return () => clearInterval(id);
+  }, [paused]);
+
+  const onPointerDown = (e) => {
+    dragRef.current.dragging = true;
+    dragRef.current.startX = e.clientX || e.touches?.[0]?.clientX || 0;
+    dragRef.current.moved = 0;
+    setPaused(true);
+  };
+  const onPointerMove = (e) => {
+    if (!dragRef.current.dragging) return;
+    const x = e.clientX || e.touches?.[0]?.clientX || 0;
+    dragRef.current.moved = x - dragRef.current.startX;
+  };
+  const onPointerUp = () => {
+    if (!dragRef.current.dragging) return;
+    const m = dragRef.current.moved;
+    dragRef.current.dragging = false;
+    if (m > 60) go(idx - 1);
+    else if (m < -60) go(idx + 1);
+    setTimeout(() => setPaused(false), 6000);
+  };
+
+  const t = TESTIMONIOS[idx];
 
   return (
-    <Box
-      component="section"
-      aria-label="Historias de personas como tú"
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        py: { xs: 8, md: 12 },
-        minHeight: { md: 640 },
-        display: 'flex', alignItems: 'center',
-      }}
-    >
-      {/* Full-bleed image */}
-      <Box sx={{
-        position: 'absolute', inset: 0,
-        backgroundImage: `url("${HERO_BG}")`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+    <Box component="section" sx={{
+      position: 'relative', overflow: 'hidden',
+      bgcolor: C.navy, color: '#fff',
+      py: { xs: 8, md: 14 },
+    }}>
+      <Box aria-hidden sx={{
+        position: 'absolute', top: -180, right: -180, width: 540, height: 540,
+        borderRadius: '50%',
+        background: `radial-gradient(circle, ${C.oro}26 0%, transparent 70%)`,
+        filter: 'blur(80px)',
       }} />
-      {/* Overlay degradado navy */}
-      <Box sx={{
-        position: 'absolute', inset: 0,
-        background: `linear-gradient(135deg, ${C.navy}EE 0%, ${C.navy}D5 40%, ${C.verdeProfundo}CC 100%)`,
-      }} />
-      {/* Patrón ruido */}
-      <Box sx={{
-        position: 'absolute', inset: 0, opacity: 0.06, pointerEvents: 'none',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+      <Box aria-hidden sx={{
+        position: 'absolute', top: 0, left: '8%', right: '8%', height: 1, bgcolor: '#ffffff14',
       }} />
 
-      <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, textAlign: 'center', color: '#fff' }}>
-        {/* Eyebrow */}
-        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25} sx={{ mb: 3 }}>
-          <Box sx={{ width: 28, height: 2, bgcolor: C.oro }} />
-          <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
-            fontSize: '0.75rem', fontWeight: 600,
-            letterSpacing: '0.18em', textTransform: 'uppercase',
-            color: C.oro,
-          }}>
-            Historias reales
-          </Typography>
-          <Box sx={{ width: 28, height: 2, bgcolor: C.oro }} />
-        </Stack>
-
-        {/* Heading */}
-        <Typography component="h2" sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
-          fontSize: { xs: '1.875rem', md: '2.625rem' },
-          fontWeight: 600,
-          lineHeight: 1.15,
-          letterSpacing: '-0.018em',
-          mb: 5,
-          color: '#fff',
-        }}>
-          Lo que cambió cuando{' '}
-          <Box component="span" sx={{ fontStyle: 'italic', color: C.oro, fontWeight: 500 }}>
-            pidieron ayuda
-          </Box>
-        </Typography>
-
-        {/* Carrusel */}
-        <Box sx={{ position: 'relative', maxWidth: 760, mx: 'auto' }}>
-          <FormatQuote sx={{
-            fontSize: 88,
-            color: C.oro,
-            opacity: 0.45,
-            position: 'absolute',
-            top: { xs: -40, md: -60 },
-            left: { xs: 0, md: -40 },
-            transform: 'scaleX(-1)',
-          }} />
-
-          <Box sx={{
-            position: 'relative',
-            transition: 'opacity 0.4s ease',
-          }}>
-            <Rating value={t.rating} readOnly sx={{
-              color: C.oro,
-              fontSize: 22,
-              mb: 3,
-            }} />
-
-            <Typography sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
-              fontStyle: 'italic',
-              fontWeight: 400,
-              fontSize: { xs: '1.25rem', md: '1.625rem' },
-              lineHeight: 1.5,
-              color: 'rgba(255,255,255,0.95)',
-              mb: 4,
-              letterSpacing: '-0.005em',
-            }}>
-              "{t.text}"
-            </Typography>
-
-            <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ mb: 1 }}>
-              <Box sx={{
-                width: 52, height: 52, borderRadius: '50%',
-                bgcolor: `${C.oro}26`,
-                border: `1.5px solid ${C.oro}77`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: '"Playfair Display", serif',
-                fontSize: '1.375rem',
-                fontWeight: 600,
-                fontStyle: 'italic',
-                color: C.oro,
-              }}>
-                {t.name.charAt(0)}
-              </Box>
-              <Box sx={{ textAlign: 'left' }}>
-                <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  color: '#fff',
-                  lineHeight: 1.2,
-                }}>
-                  {t.name}, {t.age}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-                  <LocationOnOutlined sx={{ fontSize: 14, color: 'rgba(255,255,255,0.55)' }} />
-                  <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
-                    fontSize: '0.8125rem',
-                    color: 'rgba(255,255,255,0.65)',
-                  }}>
-                    {t.place}
-                  </Typography>
-                </Box>
-              </Box>
-            </Stack>
-
+      <Container maxWidth="lg" ref={ref} sx={{ position: 'relative' }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: { xs: 5, md: 8 } }}>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Box sx={{ width: 32, height: 2, bgcolor: C.oro }} />
             <Typography sx={{
               fontFamily: '"DM Sans", sans-serif',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: C.oro,
-              mt: 1.5,
+              fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.22em',
+              textTransform: 'uppercase', color: C.oro,
             }}>
-              {t.tag}
+              Historias reales
             </Typography>
+          </Stack>
+          <Typography sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: '0.9rem', fontStyle: 'italic', color: '#ffffff77',
+          }}>
+            №{String(idx + 1).padStart(2, '0')} / {TESTIMONIOS.length}
+          </Typography>
+        </Stack>
+
+        <Box
+          onMouseDown={onPointerDown}
+          onMouseMove={onPointerMove}
+          onMouseUp={onPointerUp}
+          onMouseLeave={onPointerUp}
+          onTouchStart={onPointerDown}
+          onTouchMove={onPointerMove}
+          onTouchEnd={onPointerUp}
+          onMouseEnter={() => setPaused(true)}
+          sx={{ position: 'relative', userSelect: 'none', cursor: 'grab', '&:active': { cursor: 'grabbing' } }}
+        >
+          <Box aria-hidden sx={{
+            position: 'absolute', top: { xs: -40, md: -90 }, left: { xs: -20, md: -10 },
+            opacity: 0.18, pointerEvents: 'none',
+            transform: visible ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'transform 1.2s ease',
+          }}>
+            <BigQuote color={C.oro} size={260} />
           </Box>
 
-          {/* Controles */}
-          <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ mt: 5 }}>
-            <IconButton onClick={prev} aria-label="Anterior" sx={{
-              width: 44, height: 44, borderRadius: '50%',
-              bgcolor: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.20)',
-              color: '#fff',
-              '&:hover': { background: '#C9A86A !important', color: '#272F50 !important', border: `1px solid ${C.oro}` },
-            }}>
-              <ArrowBackIos sx={{ fontSize: 14, ml: 0.5 }} />
-            </IconButton>
+          <Box ref={track} sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '4fr 1fr' },
+            gap: { xs: 6, md: 8 }, alignItems: 'center',
+            position: 'relative', zIndex: 1,
+            opacity: visible ? 1 : 0,
+            transform: visible ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 1s cubic-bezier(0.2,0.7,0.2,1)',
+          }}>
+            <Typography
+              key={t.quote}
+              component="blockquote"
+              sx={{
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: { xs: '1.6rem', sm: '2rem', md: '2.85rem', lg: '3.4rem' },
+                fontWeight: 400, fontStyle: 'italic',
+                lineHeight: 1.18, letterSpacing: '-0.015em',
+                color: '#fff', m: 0,
+                animation: 'oc-quote-in 0.8s cubic-bezier(0.2,0.7,0.2,1)',
+                '@keyframes oc-quote-in': {
+                  '0%': { opacity: 0, transform: 'translateX(20px)' },
+                  '100%': { opacity: 1, transform: 'translateX(0)' },
+                },
+              }}
+            >
+              “{t.quote}”
+            </Typography>
 
-            {/* Dots */}
-            <Stack direction="row" spacing={1}>
-              {STORIES.map((_, i) => (
-                <Box
-                  key={i}
-                  onClick={() => setIdx(i)}
-                  sx={{
-                    cursor: 'pointer',
-                    width: i === idx ? 28 : 8,
-                    height: 8,
-                    borderRadius: 4,
-                    bgcolor: i === idx ? C.oro : 'rgba(255,255,255,0.30)',
-                    transition: 'all 0.3s ease',
-                  }}
-                />
-              ))}
+            <Stack spacing={2} alignItems={{ xs: 'flex-start', md: 'center' }}>
+              <Box
+                key={t.avatar}
+                sx={{
+                  width: { xs: 64, md: 86 }, height: { xs: 64, md: 86 },
+                  borderRadius: '50%', overflow: 'hidden',
+                  border: `2px solid ${C.oro}`,
+                  animation: 'oc-portrait-in 0.9s cubic-bezier(0.2,0.7,0.2,1)',
+                  '@keyframes oc-portrait-in': {
+                    '0%': { opacity: 0, transform: 'scale(0.85)' },
+                    '100%': { opacity: 1, transform: 'scale(1)' },
+                  },
+                }}
+              >
+                <Box component="img" src={t.avatar} alt={`Foto de ${t.nombre}`}
+                  sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </Box>
+              <Box sx={{ textAlign: { xs: 'left', md: 'center' } }}>
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem',
+                  fontWeight: 700, color: '#fff',
+                }}>{t.nombre}</Typography>
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.78rem',
+                  color: '#ffffff99', mt: 0.25,
+                }}>{t.rol}</Typography>
+              </Box>
             </Stack>
+          </Box>
+        </Box>
 
-            <IconButton onClick={next} aria-label="Siguiente" sx={{
-              width: 44, height: 44, borderRadius: '50%',
-              bgcolor: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.20)',
-              color: '#fff',
-              '&:hover': { background: '#C9A86A !important', color: '#272F50 !important', border: `1px solid ${C.oro}` },
-            }}>
-              <ArrowForwardIos sx={{ fontSize: 14 }} />
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: { xs: 5, md: 8 } }}>
+          <Stack direction="row" spacing={1.5}>
+            {TESTIMONIOS.map((_, i) => (
+              <Box
+                key={i}
+                onClick={() => { setIdx(i); setPaused(true); }}
+                sx={{
+                  cursor: 'pointer',
+                  width: i === idx ? 32 : 8, height: 4, borderRadius: '999px',
+                  bgcolor: i === idx ? C.oro : '#ffffff33',
+                  transition: 'all 0.4s ease',
+                }}
+              />
+            ))}
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <IconButton onClick={() => { go(idx - 1); setPaused(true); }}
+              aria-label="Anterior"
+              sx={{ color: '#fff', border: '1px solid #ffffff33',
+                '&:hover': { borderColor: '#fff', bgcolor: '#ffffff10' } }}>
+              <ChevronLeft />
+            </IconButton>
+            <IconButton onClick={() => { go(idx + 1); setPaused(true); }}
+              aria-label="Siguiente"
+              sx={{ color: '#fff', border: '1px solid #ffffff33',
+                '&:hover': { borderColor: '#fff', bgcolor: '#ffffff10' } }}>
+              <ChevronRight />
             </IconButton>
           </Stack>
-        </Box>
+        </Stack>
+
+        <Typography sx={{
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: '0.7rem', color: '#ffffff66', mt: 3, textAlign: 'center',
+          letterSpacing: '0.12em', textTransform: 'uppercase',
+        }}>
+          Arrastra o desliza para cambiar de testimonio
+        </Typography>
       </Container>
     </Box>
   );
