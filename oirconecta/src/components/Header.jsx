@@ -890,7 +890,7 @@ export default function Header() {
               </IconButton>
               <Box
                 component={RouterLink}
-                to="/contacto"
+                to="/directorio/listado"
                 sx={{
                   display: { xs: 'none', md: 'inline-flex' },
                   alignItems: 'center', gap: 1,
