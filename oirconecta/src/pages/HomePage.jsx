@@ -5,14 +5,9 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import SearchEngine from '../components/SearchEngine';
 import HomeUserPathsSection from '../components/home/HomeUserPathsSection';
-import HomeDiscoverySection from '../components/home/HomeDiscoverySection';
 import HomePonteEnSusOidosSection from '../components/home/HomePonteEnSusOidosSection';
 import HomeManifestoSection from '../components/home/HomeManifestoSection';
-import HomeComparadorSection from '../components/home/HomeComparadorSection';
-import RecommendationOfMonthSection from '../components/RecommendationOfMonthSection';
-import HomeProfessionalsSpotlight from '../components/home/HomeProfessionalsSpotlight';
 import AuditionGuideSection from '../components/AuditionGuideSection';
-import HomeVideoSection from '../components/HomeVideoSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import HomeB2BSection from '../components/home/HomeB2BSection';
 import Footer from '../components/Footer';
@@ -32,22 +27,34 @@ export default function HomePage() {
       <Header />
       <PreviewSlot slotId="HOMEPAGE_TAKEOVER" slotLabel="Takeover de homepage (hero)" minHeight={200} />
       <PreviewSlot slotId="BANNER_HERO" slotLabel="Banner hero rotativo" minHeight={140} />
+
+      {/* 1. Entrada */}
       <Hero />
+
+      {/* 2. ¿Quién eres? */}
       <HomeUserPathsSection />
+
+      {/* 3. Acción inmediata */}
       <Box id="busqueda-profesionales" sx={{ scrollMarginTop: 96 }}>
         <SearchEngine />
       </Box>
       <PreviewSlot slotId="EXIT_INTENT" slotLabel="Exit-intent overlay" minHeight={80} />
-      <HomeComparadorSection />
-      <HomeDiscoverySection />
-      <HomeManifestoSection />
+
+      {/* 4. Wow / diferencial */}
       <HomePonteEnSusOidosSection />
-      <RecommendationOfMonthSection />
-      <HomeProfessionalsSpotlight />
+
+      {/* 5. Pausa editorial */}
+      <HomeManifestoSection />
+
+      {/* 6. Educa + captura lead al buzón */}
       <AuditionGuideSection />
-      <HomeVideoSection />
+
+      {/* 7. Prueba social */}
       <TestimonialsSection />
+
+      {/* 8. Para profesionales */}
       <HomeB2BSection />
+
       <PreviewSlot slotId="WEB_PUSH_TOAST" slotLabel="Notificación toast" minHeight={80} />
       <PreviewSlot slotId="FLOATING_CTA_MOBILE" slotLabel="CTA flotante mobile (solo en mobile)" minHeight={70} />
       <Footer />
