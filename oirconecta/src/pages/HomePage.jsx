@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import Box from '@mui/material/Box';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
-import SearchEngine from '../components/SearchEngine';
+import HomeSearchSection from '../components/home/HomeSearchSection';
 import HomeUserPathsSection from '../components/home/HomeUserPathsSection';
 import HomePonteEnSusOidosSection from '../components/home/HomePonteEnSusOidosSection';
 import HomeManifestoSection from '../components/home/HomeManifestoSection';
@@ -35,9 +35,7 @@ export default function HomePage() {
       <HomeUserPathsSection />
 
       {/* 3. Acción inmediata */}
-      <Box id="busqueda-profesionales" sx={{ scrollMarginTop: 96 }}>
-        <SearchEngine />
-      </Box>
+      <HomeSearchSection />
       <PreviewSlot slotId="EXIT_INTENT" slotLabel="Exit-intent overlay" minHeight={80} />
 
       {/* 4. Wow / diferencial */}
