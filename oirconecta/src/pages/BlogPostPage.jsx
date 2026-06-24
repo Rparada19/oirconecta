@@ -41,7 +41,7 @@ const CAT_COLOR = {
   guias: '#085946',
   cuidados: '#0d7a5f',
   comparativas: '#1a2240',
-  glosario: '#6ee7c8',
+  glosario: '#C9A86A',
   tecnologia: '#272F50',
   lanzamientos: '#d97706',
   casos: '#71A095',
@@ -90,27 +90,28 @@ function formatDate(iso) {
 }
 
 const MD_COMPONENTS = {
-  h1: ({ children }) => <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.25rem' }, fontWeight: 900, color: '#0f1923', mt: 6, mb: 2.5, letterSpacing: '-0.02em', lineHeight: 1.15 }}>{children}</Typography>,
+  h1: ({ children }) => <Typography component="h1" sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: { xs: '2rem', md: '2.625rem' }, fontWeight: 600, color: '#272F50', mt: 6, mb: 2.5, letterSpacing: '-0.02em', lineHeight: 1.1 }}>{children}</Typography>,
   h2: ({ children }) => (
     <Typography component="h2" sx={{
-      fontSize: { xs: '1.5rem', md: '1.875rem' },
-      fontWeight: 800,
-      color: '#0f1923',
-      mt: 7,
-      mb: 2.5,
+      fontFamily: '"Playfair Display", Georgia, serif',
+      fontSize: { xs: '1.75rem', md: '2.25rem' },
+      fontWeight: 600,
+      color: '#272F50',
+      mt: 8,
+      mb: 3,
       pb: 1.5,
       letterSpacing: '-0.02em',
-      lineHeight: 1.25,
-      borderBottom: '3px solid #6ee7c8',
+      lineHeight: 1.15,
+      borderBottom: '2px solid #C9A86A',
       display: 'inline-block',
       pr: 2,
     }}>
       {children}
     </Typography>
   ),
-  h3: ({ children }) => <Typography component="h3" sx={{ fontSize: { xs: '1.1875rem', md: '1.375rem' }, fontWeight: 700, color: '#0f1923', mt: 4.5, mb: 1.5, letterSpacing: '-0.01em' }}>{children}</Typography>,
-  h4: ({ children }) => <Typography component="h4" sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#0f1923', mt: 3, mb: 1 }}>{children}</Typography>,
-  p: ({ children }) => <Typography sx={{ fontSize: { xs: '1.0625rem', md: '1.125rem' }, color: '#1f2937', lineHeight: 1.85, mb: 2.75, letterSpacing: '0.005em' }}>{children}</Typography>,
+  h3: ({ children }) => <Typography component="h3" sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: { xs: '1.25rem', md: '1.5rem' }, fontWeight: 600, color: '#272F50', mt: 5, mb: 1.75, letterSpacing: '-0.01em' }}>{children}</Typography>,
+  h4: ({ children }) => <Typography component="h4" sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.15rem', fontWeight: 600, color: '#272F50', mt: 3.5, mb: 1.25 }}>{children}</Typography>,
+  p: ({ children }) => <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: { xs: '1.0625rem', md: '1.15rem' }, color: '#272F50', lineHeight: 1.75, mb: 3, letterSpacing: '0.003em' }}>{children}</Typography>,
   ul: ({ children }) => (
     <Box component="ul" sx={{
       pl: 0,
@@ -174,7 +175,7 @@ const MD_COMPONENTS = {
     </Box>
   ),
   li: ({ children }) => <li>{children}</li>,
-  strong: ({ children }) => <Box component="strong" sx={{ fontWeight: 700, color: '#0f1923' }}>{children}</Box>,
+  strong: ({ children }) => <Box component="strong" sx={{ fontWeight: 700, color: '#272F50' }}>{children}</Box>,
   em: ({ children }) => <Box component="em" sx={{ fontStyle: 'italic' }}>{children}</Box>,
   a: ({ href, children }) => {
     const isExternal = href && /^https?:\/\//i.test(href);
@@ -190,7 +191,7 @@ const MD_COMPONENTS = {
     );
   },
   blockquote: ({ children }) => (
-    <Box sx={{ borderLeft: '4px solid #6ee7c8', pl: 2.5, py: 1, my: 3, bgcolor: 'rgba(110,231,200,0.08)', borderRadius: '0 8px 8px 0', '& p': { color: '#0f1923', fontStyle: 'italic' } }}>
+    <Box sx={{ borderLeft: '4px solid #C9A86A', pl: 2.5, py: 1, my: 3, bgcolor: 'rgba(201,168,106,0.08)', borderRadius: '0 8px 8px 0', '& p': { color: '#272F50', fontStyle: 'italic' } }}>
       {children}
     </Box>
   ),
@@ -198,7 +199,7 @@ const MD_COMPONENTS = {
     inline ? (
       <Box component="code" sx={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace', bgcolor: '#f3f4f6', px: 0.75, py: 0.25, borderRadius: 0.5, fontSize: '0.9375em' }}>{children}</Box>
     ) : (
-      <Box component="pre" sx={{ fontFamily: 'ui-monospace, monospace', bgcolor: '#0f1923', color: '#e5e7eb', p: 2, borderRadius: 1, overflow: 'auto', my: 2 }}>
+      <Box component="pre" sx={{ fontFamily: 'ui-monospace, monospace', bgcolor: '#272F50', color: '#e5e7eb', p: 2, borderRadius: 1, overflow: 'auto', my: 2 }}>
         <code>{children}</code>
       </Box>
     ),
@@ -217,7 +218,7 @@ const MD_COMPONENTS = {
       '&::after': { ml: 2 },
       '&::before': { mr: 2 },
     }}>
-      <Box sx={{ color: '#6ee7c8', fontSize: '1.5rem', lineHeight: 1 }}>◆</Box>
+      <Box sx={{ color: '#C9A86A', fontSize: '1.5rem', lineHeight: 1 }}>◆</Box>
     </Box>
   ),
   table: ({ children }) => (
@@ -362,14 +363,14 @@ export default function BlogPostPage() {
           {/* HERO con cover de fondo */}
           <Box sx={{
             position: 'relative',
-            minHeight: { xs: 520, md: 620 },
+            minHeight: { xs: 560, md: 700 },
             display: 'flex',
             alignItems: 'flex-end',
             color: '#fff',
-            pt: { xs: 14, md: 16 },
-            pb: { xs: 6, md: 8 },
+            pt: { xs: 14, md: 18 },
+            pb: { xs: 7, md: 10 },
             overflow: 'hidden',
-            background: heroCover ? 'transparent' : 'linear-gradient(160deg, #063c2c 0%, #085946 50%, #1a2240 100%)',
+            background: heroCover ? 'transparent' : 'linear-gradient(160deg, #1B2240 0%, #272F50 50%, #085946 100%)',
           }}>
             {/* Background image */}
             {heroCover && (
@@ -378,21 +379,21 @@ export default function BlogPostPage() {
                 backgroundImage: `url("${heroCover}")`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                transform: 'scale(1.05)',
-                filter: 'brightness(0.55)',
+                transform: 'scale(1.04)',
+                filter: 'brightness(0.65) saturate(0.9)',
               }} />
             )}
-            {/* Overlay degradado */}
+            {/* Overlay degradado navy */}
             <Box sx={{
               position: 'absolute', inset: 0,
               background: heroCover
-                ? 'linear-gradient(180deg, rgba(6,60,44,0.55) 0%, rgba(6,60,44,0.25) 40%, rgba(8,89,70,0.85) 80%, rgba(26,34,64,0.95) 100%)'
-                : 'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(13,122,92,0.42) 0%, transparent 55%)',
+                ? 'linear-gradient(180deg, rgba(27,34,64,0.55) 0%, rgba(27,34,64,0.30) 35%, rgba(27,34,64,0.85) 85%, rgba(27,34,64,0.97) 100%)'
+                : 'radial-gradient(ellipse 90% 70% at 10% 20%, rgba(201,168,106,0.20) 0%, transparent 55%)',
             }} />
             {/* Forma decorativa */}
             <Box sx={{
-              position: 'absolute', bottom: -1, left: 0, right: 0, height: 60,
-              background: 'linear-gradient(to top, #fafafa, transparent)',
+              position: 'absolute', bottom: -1, left: 0, right: 0, height: 80,
+              background: 'linear-gradient(to top, #FBFAF8, transparent)',
               pointerEvents: 'none',
             }} />
             <Container maxWidth="md" sx={{ position: 'relative', zIndex: 2, width: '100%' }}>
@@ -400,48 +401,43 @@ export default function BlogPostPage() {
                 sx={{
                   color: 'rgba(255,255,255,0.90)', mb: 4, fontWeight: 600, p: 0,
                   textTransform: 'none', fontSize: '0.875rem',
-                  '&:hover': { color: '#6ee7c8', bgcolor: 'transparent' },
+                  '&:hover': { color: '#C9A86A', bgcolor: 'transparent' },
                 }}>
                 Volver al blog
               </Button>
-              <Chip
-                label={catLabel}
-                size="small"
-                sx={{
-                  display: 'inline-flex',
-                  mb: 3,
-                  fontWeight: 800,
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  px: 1.5,
-                  height: 28,
-                  bgcolor: 'rgba(110,231,200,0.18)',
-                  color: '#6ee7c8',
-                  border: '1px solid rgba(110,231,200,0.45)',
-                  backdropFilter: 'blur(8px)',
-                }}
-              />
+              <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
+                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+                  textTransform: 'uppercase', color: '#C9A86A',
+                }}>
+                  {catLabel}
+                </Typography>
+              </Stack>
               <Typography component="h1" sx={{
-                fontSize: { xs: '2rem', md: '3.25rem' },
-                fontWeight: 900,
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: { xs: '2.25rem', sm: '2.75rem', md: '4rem', lg: '4.5rem' },
+                fontWeight: 500,
                 letterSpacing: '-0.025em',
-                lineHeight: 1.12,
+                lineHeight: 1.04,
                 color: '#fff',
                 mb: 3.5,
-                textShadow: heroCover ? '0 2px 12px rgba(0,0,0,0.35)' : 'none',
-                maxWidth: 820,
+                textShadow: heroCover ? '0 2px 16px rgba(0,0,0,0.4)' : 'none',
+                maxWidth: 900,
               }}>
                 {post.titulo}
               </Typography>
               {post.resumen && (
                 <Typography sx={{
-                  fontSize: { xs: '1rem', md: '1.1875rem' },
-                  color: 'rgba(255,255,255,0.85)',
-                  lineHeight: 1.6,
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontStyle: 'italic',
+                  fontSize: { xs: '1.1rem', md: '1.4rem' },
+                  color: 'rgba(255,255,255,0.92)',
+                  lineHeight: 1.45,
                   fontWeight: 400,
-                  mb: 4,
-                  maxWidth: 720,
+                  mb: 4.5,
+                  maxWidth: 780,
                 }}>
                   {post.resumen}
                 </Typography>
@@ -450,11 +446,11 @@ export default function BlogPostPage() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                   <Box sx={{
                     width: 32, height: 32, borderRadius: '50%',
-                    bgcolor: 'rgba(110,231,200,0.20)',
+                    bgcolor: 'rgba(201,168,106,0.20)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: '1.5px solid rgba(110,231,200,0.40)',
+                    border: '1.5px solid rgba(201,168,106,0.40)',
                   }}>
-                    <PersonOutlineIcon sx={{ fontSize: 17, color: '#6ee7c8' }} />
+                    <PersonOutlineIcon sx={{ fontSize: 17, color: '#C9A86A' }} />
                   </Box>
                   <Typography sx={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{post.autorNombre}</Typography>
                 </Box>
@@ -491,7 +487,7 @@ export default function BlogPostPage() {
               <IconButton onClick={() => handleShare('facebook')} aria-label="Compartir en Facebook" sx={{ bgcolor: '#1877F2', color: '#fff', '&:hover': { bgcolor: '#0f62cf' }, width: 40, height: 40 }}>
                 <FacebookIcon sx={{ fontSize: 20 }} />
               </IconButton>
-              <IconButton onClick={() => handleShare('copy')} aria-label="Copiar enlace" sx={{ bgcolor: '#f3f4f6', color: '#0f1923', '&:hover': { bgcolor: '#e5e7eb' }, width: 40, height: 40 }}>
+              <IconButton onClick={() => handleShare('copy')} aria-label="Copiar enlace" sx={{ bgcolor: '#f3f4f6', color: '#272F50', '&:hover': { bgcolor: '#e5e7eb' }, width: 40, height: 40 }}>
                 <LinkIcon sx={{ fontSize: 20 }} />
               </IconButton>
             </Box>
@@ -536,7 +532,7 @@ export default function BlogPostPage() {
               alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2.5,
             }}>
               <Box>
-                <Typography sx={{ fontWeight: 800, color: '#0f1923', fontSize: '1.0625rem', mb: 0.5 }}>
+                <Typography sx={{ fontWeight: 800, color: '#272F50', fontSize: '1.0625rem', mb: 0.5 }}>
                   ¿Te resultó útil este artículo?
                 </Typography>
                 <Typography sx={{ fontSize: '0.9375rem', color: '#4b5563' }}>
@@ -550,7 +546,7 @@ export default function BlogPostPage() {
                 <IconButton onClick={() => handleShare('facebook')} aria-label="Facebook" sx={{ bgcolor: '#1877F2', color: '#fff', '&:hover': { bgcolor: '#0f62cf' } }}>
                   <FacebookIcon />
                 </IconButton>
-                <IconButton onClick={() => handleShare('copy')} aria-label="Copiar enlace" sx={{ bgcolor: '#fff', color: '#0f1923', border: '1px solid #d1d5db', '&:hover': { bgcolor: '#f9fafb' } }}>
+                <IconButton onClick={() => handleShare('copy')} aria-label="Copiar enlace" sx={{ bgcolor: '#fff', color: '#272F50', border: '1px solid #d1d5db', '&:hover': { bgcolor: '#f9fafb' } }}>
                   <LinkIcon />
                 </IconButton>
               </Stack>

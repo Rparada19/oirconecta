@@ -104,7 +104,7 @@ function FeaturedCard({ post }) {
             border: '1px solid rgba(255,255,255,0.30)',
             backdropFilter: 'blur(12px)',
           }}>
-            <Icon sx={{ fontSize: 15, color: '#6ee7c8' }} />
+            <Icon sx={{ fontSize: 15, color: '#C9A86A' }} />
             <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fff' }}>
               {m.label}
             </Typography>
@@ -119,7 +119,7 @@ function FeaturedCard({ post }) {
           </Box>
         </Box>
         <Box>
-          <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#6ee7c8', letterSpacing: '0.1em', textTransform: 'uppercase', mb: 1.5 }}>
+          <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#C9A86A', letterSpacing: '0.1em', textTransform: 'uppercase', mb: 1.5 }}>
             ★ Artículo destacado
           </Typography>
           <Typography component="h2" sx={{
@@ -204,7 +204,7 @@ function CompactCard({ post }) {
           <Typography
             className="title"
             sx={{
-              fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923',
+              fontWeight: 800, fontSize: '0.9375rem', color: '#272F50',
               lineHeight: 1.35, letterSpacing: '-0.005em',
               display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               transition: 'color 0.2s ease',
@@ -284,7 +284,7 @@ function PostCard({ post }) {
       <Box sx={{ flex: 1, p: { xs: 2.5, md: 3 }, display: 'flex', flexDirection: 'column' }}>
         <Typography component="h3" sx={{
           fontWeight: 800, fontSize: { xs: '1.0625rem', md: '1.1875rem' },
-          color: '#0f1923', lineHeight: 1.3,
+          color: '#272F50', lineHeight: 1.3,
           letterSpacing: '-0.012em', mb: 1.5,
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>
@@ -329,7 +329,7 @@ function CategoryCard({ slug, label, count, active, onClick }) {
         cursor: 'pointer',
         p: 2.5, borderRadius: 2,
         bgcolor: active ? m.color : '#fff',
-        color: active ? '#fff' : '#0f1923',
+        color: active ? '#fff' : '#272F50',
         border: `1.5px solid ${active ? m.color : '#e5e7eb'}`,
         transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
         display: 'flex', flexDirection: 'column', gap: 1.5,
@@ -422,96 +422,81 @@ export default function BlogPage() {
       <NewsletterPopup source="blog-popup" />
       <Header />
 
-      {/* ────────── HERO EDITORIAL ────────── */}
+      {/* ────────── HERO EDITORIAL OC 2026 ────────── */}
       <Box sx={{
         position: 'relative', overflow: 'hidden',
-        background: '#0a2018',
-        color: '#fff',
-        pt: { xs: 12, md: 14 },
+        bgcolor: '#FBFAF8',
+        color: '#272F50',
+        pt: { xs: 14, md: 16 },
         pb: { xs: 6, md: 8 },
       }}>
-        {/* Blobs decorativos */}
-        <Box sx={{
-          position: 'absolute', top: -100, right: -100,
-          width: 400, height: 400, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(110,231,200,0.18) 0%, transparent 70%)',
-          filter: 'blur(40px)',
-        }} />
-        <Box sx={{
-          position: 'absolute', bottom: -80, left: -80,
-          width: 350, height: 350, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(39,47,80,0.4) 0%, transparent 70%)',
-          filter: 'blur(40px)',
-        }} />
-        <Box sx={{
-          position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")`,
+        {/* Halo arena editorial */}
+        <Box aria-hidden sx={{
+          position: 'absolute', top: -180, right: -180,
+          width: 540, height: 540, borderRadius: '50%',
+          background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+          filter: 'blur(80px)',
         }} />
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
-            <Grid item xs={12} md={5}>
-              <Box sx={{
-                display: 'inline-flex', alignItems: 'center', gap: 1,
-                px: 1.75, py: 0.875,
-                borderRadius: '8px',
-                background: 'rgba(110,231,200,0.12)',
-                border: '1px solid rgba(110,231,200,0.30)',
-                mb: 3,
-                backdropFilter: 'blur(10px)',
-              }}>
-                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#6ee7c8' }} />
-                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6ee7c8' }}>
-                  El blog OírConecta
+            <Grid item xs={12} md={6}>
+              <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
+                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+                  textTransform: 'uppercase', color: '#272F50',
+                }}>
+                  El blog OírConecta · Edición №01
                 </Typography>
-              </Box>
+              </Stack>
               <Typography component="h1" sx={{
-                fontSize: { xs: '2.5rem', md: '3.75rem', lg: '4.25rem' },
-                fontWeight: 900,
-                letterSpacing: '-0.035em',
-                lineHeight: 1.02,
-                color: '#fff', mb: 3,
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
+                fontWeight: 500,
+                letterSpacing: '-0.025em',
+                lineHeight: 0.98,
+                color: '#272F50', mb: 3,
               }}>
                 Todo sobre tu{' '}
                 <Box component="span" sx={{
-                  background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  position: 'relative',
-                  display: 'inline-block',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute', bottom: '-4px', left: 0, right: 0,
-                    height: 4,
-                    background: 'linear-gradient(90deg, #6ee7c8 0%, #a7f3d0 100%)',
-                    borderRadius: 2,
-                    opacity: 0.3,
-                  },
+                  fontStyle: 'italic', color: '#085946', fontWeight: 500,
                 }}>
-                  audición
-                </Box>{', '}
+                  audición,
+                </Box>{' '}
                 en un solo lugar.
               </Typography>
               <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
-                color: 'rgba(255,255,255,0.75)',
-                lineHeight: 1.6,
+                color: '#6B7280',
+                lineHeight: 1.55,
                 mb: 4,
-                maxWidth: 480,
+                maxWidth: 540,
               }}>
-                Guías, comparativas y consejos honestos de audiólogos. Sin marketing, sin promesas vacías.
+                Guías, comparativas y consejos honestos de audiólogos. Sin marketing, sin promesas vacías — solo información útil.
               </Typography>
               <Stack direction="row" spacing={4} sx={{ mb: 1 }}>
                 <Box>
-                  <Typography sx={{ fontSize: { xs: '1.875rem', md: '2.25rem' }, fontWeight: 900, color: '#6ee7c8', lineHeight: 1 }}>
+                  <Typography sx={{
+                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontSize: { xs: '2rem', md: '2.75rem' }, fontWeight: 600,
+                    color: '#272F50', lineHeight: 1, letterSpacing: '-0.025em',
+                  }}>
                     {totalPosts || posts.length}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', fontWeight: 600, mt: 0.5, letterSpacing: '0.05em' }}>
-                    ARTÍCULOS PUBLICADOS
+                  <Typography sx={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: '0.7rem', color: '#6B7280', fontWeight: 700, mt: 1,
+                    letterSpacing: '0.18em', textTransform: 'uppercase',
+                  }}>
+                    Artículos publicados
                   </Typography>
                 </Box>
-                <Box sx={{ width: '1px', height: 56, bgcolor: 'rgba(255,255,255,0.15)' }} />
+                <Box sx={{ width: '1px', height: 56, bgcolor: 'rgba(39,47,80,0.15)' }} />
                 <Box>
-                  <Typography sx={{ fontSize: { xs: '1.875rem', md: '2.25rem' }, fontWeight: 900, color: '#6ee7c8', lineHeight: 1 }}>
+                  <Typography sx={{ fontSize: { xs: '1.875rem', md: '2.25rem' }, fontWeight: 900, color: '#C9A86A', lineHeight: 1 }}>
                     {sections.length || 7}
                   </Typography>
                   <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', fontWeight: 600, mt: 0.5, letterSpacing: '0.05em' }}>
@@ -523,29 +508,28 @@ export default function BlogPage() {
 
             {/* Featured preview a la derecha */}
             {featured && (
-              <Grid item xs={12} md={7}>
+              <Grid item xs={12} md={6}>
                 <Box
                   component={RouterLink}
                   to={`/blog/${featured.slug}`}
                   sx={{
                     display: 'block', textDecoration: 'none',
-                    borderRadius: 2, overflow: 'hidden',
+                    borderRadius: '12px', overflow: 'hidden',
                     position: 'relative',
-                    height: { xs: 340, md: 420 },
-                    boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
-                    transform: { md: 'rotate(0deg)' },
+                    height: { xs: 360, md: 480 },
+                    boxShadow: '0 24px 60px rgba(39,47,80,0.22)',
                     transition: 'transform 0.4s ease',
-                    '&:hover': { transform: { md: 'rotate(0deg) scale(1.01)' }, '& .arrow-corner': { transform: 'translate(4px,-4px)' } },
+                    '&:hover': { transform: 'translateY(-4px)', '& .arrow-corner': { transform: 'translate(4px,-4px) scale(1.05)' } },
                   }}
                 >
                   <Box sx={{
                     position: 'absolute', inset: 0,
-                    backgroundImage: featured.coverUrl ? `url("${featured.coverUrl}")` : 'linear-gradient(135deg,#085946,#1a2240)',
+                    backgroundImage: featured.coverUrl ? `url("${featured.coverUrl}")` : 'linear-gradient(135deg,#272F50,#085946)',
                     backgroundSize: 'cover', backgroundPosition: 'center',
                   }} />
                   <Box sx={{
                     position: 'absolute', inset: 0,
-                    background: 'linear-gradient(180deg, transparent 30%, rgba(10,32,24,0.95) 100%)',
+                    background: 'linear-gradient(180deg, transparent 35%, rgba(27,34,64,0.95) 100%)',
                   }} />
                   <Box sx={{
                     position: 'absolute', inset: 0,
@@ -561,30 +545,36 @@ export default function BlogPage() {
                         boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                       }}>
                         <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ef4444' }} />
-                        <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#0f1923', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                        <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#272F50', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                           Destacado
                         </Typography>
                       </Box>
                       <Box className="arrow-corner" sx={{
-                        width: 44, height: 44, borderRadius: '50%',
-                        bgcolor: '#6ee7c8', color: '#0a2018',
+                        width: 48, height: 48, borderRadius: '50%',
+                        bgcolor: '#C9A86A', color: '#272F50',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         transition: 'transform 0.3s ease',
+                        boxShadow: '0 8px 22px rgba(201,168,106,0.55)',
                       }}>
                         <NorthEastIcon sx={{ fontSize: 22 }} />
                       </Box>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#6ee7c8', letterSpacing: '0.1em', textTransform: 'uppercase', mb: 1 }}>
+                      <Typography sx={{
+                        fontFamily: '"DM Sans", sans-serif',
+                        fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.22em',
+                        textTransform: 'uppercase', color: '#C9A86A', mb: 1.5,
+                      }}>
                         {metaFor(featured.categoria).label}
                       </Typography>
                       <Typography sx={{
-                        fontSize: { xs: '1.375rem', md: '1.75rem' },
-                        fontWeight: 900,
+                        fontFamily: '"Playfair Display", Georgia, serif',
+                        fontSize: { xs: '1.5rem', md: '1.875rem' },
+                        fontWeight: 500,
                         color: '#fff', lineHeight: 1.2,
-                        letterSpacing: '-0.02em', mb: 1.5,
+                        letterSpacing: '-0.015em', mb: 1.5,
                         textShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                        display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                       }}>
                         {featured.titulo}
                       </Typography>
@@ -610,7 +600,7 @@ export default function BlogPage() {
               <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#085946', letterSpacing: '0.12em', textTransform: 'uppercase', mb: 1 }}>
                 Explora por tema
               </Typography>
-              <Typography component="h2" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 900, color: '#0f1923', letterSpacing: '-0.02em' }}>
+              <Typography component="h2" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 900, color: '#272F50', letterSpacing: '-0.02em' }}>
                 ¿Qué necesitas saber hoy?
               </Typography>
             </Box>
@@ -649,7 +639,7 @@ export default function BlogPage() {
                 <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#085946', letterSpacing: '0.12em', textTransform: 'uppercase', mb: 1 }}>
                   Lo más reciente
                 </Typography>
-                <Typography component="h2" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 900, color: '#0f1923', letterSpacing: '-0.02em' }}>
+                <Typography component="h2" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 900, color: '#272F50', letterSpacing: '-0.02em' }}>
                   Para empezar
                 </Typography>
               </Box>
@@ -688,7 +678,7 @@ export default function BlogPage() {
                 <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#085946', letterSpacing: '0.12em', textTransform: 'uppercase', mb: 1 }}>
                   {categoriaParam ? metaFor(categoriaParam).label : 'Todos los artículos'}
                 </Typography>
-                <Typography component="h2" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 900, color: '#0f1923', letterSpacing: '-0.02em' }}>
+                <Typography component="h2" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 900, color: '#272F50', letterSpacing: '-0.02em' }}>
                   {categoriaParam ? `${posts.length} ${posts.length === 1 ? 'artículo' : 'artículos'}` : 'Sigue explorando'}
                 </Typography>
               </Box>
@@ -706,7 +696,7 @@ export default function BlogPage() {
 
       {/* ────────── NEWSLETTER BIG CTA ────────── */}
       <Box sx={{
-        bgcolor: '#0a2018',
+        bgcolor: '#272F50',
         color: '#fff',
         py: { xs: 6, md: 8 },
         position: 'relative', overflow: 'hidden',
@@ -714,11 +704,11 @@ export default function BlogPage() {
         <Box sx={{
           position: 'absolute', top: -50, right: -50,
           width: 300, height: 300, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(110,231,200,0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(201,168,106,0.15) 0%, transparent 70%)',
           filter: 'blur(40px)',
         }} />
         <Container maxWidth="md" sx={{ position: 'relative', textAlign: 'center' }}>
-          <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#6ee7c8', letterSpacing: '0.12em', textTransform: 'uppercase', mb: 2 }}>
+          <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#C9A86A', letterSpacing: '0.12em', textTransform: 'uppercase', mb: 2 }}>
             Newsletter
           </Typography>
           <Typography component="h2" sx={{
@@ -743,13 +733,13 @@ export default function BlogPage() {
             variant="contained"
             endIcon={<ArrowForwardIcon />}
             sx={{
-              bgcolor: '#6ee7c8', color: '#0a2018',
+              bgcolor: '#C9A86A', color: '#272F50',
               fontWeight: 800, fontSize: '0.9375rem',
               px: 4, py: 1.5,
               borderRadius: '8px',
               textTransform: 'none',
-              boxShadow: '0 10px 25px rgba(110,231,200,0.3)',
-              '&:hover': { bgcolor: '#a7f3d0', boxShadow: '0 14px 30px rgba(110,231,200,0.4)' },
+              boxShadow: '0 10px 25px rgba(201,168,106,0.3)',
+              '&:hover': { bgcolor: '#E0C28A', boxShadow: '0 14px 30px rgba(201,168,106,0.4)' },
             }}
           >
             Suscribirme al newsletter
