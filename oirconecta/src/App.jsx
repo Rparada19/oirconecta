@@ -7,6 +7,7 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { buildTheme } from './theme';
 import { BrowserRouter as Router, Routes, Route, Link as RouterLink } from 'react-router-dom';
 import HomePage from './pages/HomePage';
+import FloatingWhatsApp from './components/FloatingWhatsApp';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/crm/ProtectedRoute';
 import ProtectedRouteByRole from './components/crm/ProtectedRouteByRole';
@@ -258,6 +259,7 @@ export default function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <FloatingWhatsApp />
         </Suspense>
         </AuthProvider>
       </Router>
