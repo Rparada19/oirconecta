@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import {
   Container, Typography, Grid, Card, CardContent, FormControl, InputLabel,
-  Select, MenuItem, Box, Chip, Divider, CircularProgress, Button, Alert, Paper, TextField,
+  Select, MenuItem, Box, Stack, Chip, Divider, CircularProgress, Button, Alert, Paper, TextField,
 } from '@mui/material';
 import PhoneInTalkOutlinedIcon from '@mui/icons-material/PhoneInTalkOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -169,17 +169,54 @@ export default function ComparadorPage() {
         <link rel="canonical" href="https://oirconecta.com/comparador" />
       </Helmet>
 
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box component="main" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#FBFAF8' }}>
         <Header />
-        <div style={{ height: '80px' }} />
 
-        <Container maxWidth="lg" sx={{ py: 8, flex: 1 }}>
-          <Typography variant="h2" component="h1" gutterBottom sx={{ textAlign: 'center', fontWeight: 700, color: '#085946', mb: 2 }}>
-            Comparador de audífonos
-          </Typography>
-          <Typography variant="h6" component="p" sx={{ textAlign: 'center', color: '#6b7280', mb: 6, maxWidth: 820, mx: 'auto' }}>
-            Elige hasta 3 opciones (marca, tecnología y plataforma), responde un breve test y la IA te muestra fortalezas, debilidades, precios reales y cuál te conviene según tu pérdida.
-          </Typography>
+        {/* HERO editorial */}
+        <Box sx={{
+          position: 'relative', overflow: 'hidden',
+          pt: { xs: 14, md: 16 }, pb: { xs: 5, md: 7 },
+          bgcolor: '#FBFAF8',
+        }}>
+          <Box aria-hidden sx={{
+            position: 'absolute', top: -180, right: -180, width: 540, height: 540,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+            filter: 'blur(80px)', pointerEvents: 'none',
+          }} />
+          <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+              <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+              <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+                textTransform: 'uppercase', color: '#272F50',
+              }}>
+                Comparador inteligente · Edición №01
+              </Typography>
+            </Stack>
+            <Typography component="h1" sx={{
+              fontFamily: '"Playfair Display", Georgia, serif',
+              fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
+              fontWeight: 500, lineHeight: 0.98, letterSpacing: '-0.025em',
+              color: '#272F50', mb: 3,
+            }}>
+              Compara hasta tres{' '}
+              <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
+                audífonos.
+              </Box>
+            </Typography>
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+              color: '#6B7280', lineHeight: 1.55, maxWidth: 720,
+            }}>
+              Elige marcas, tecnología y plataforma. Responde un breve test. La IA te muestra fortalezas, debilidades, precios reales en Colombia y cuál se adapta mejor a tu pérdida.
+            </Typography>
+          </Container>
+        </Box>
+
+        <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, flex: 1 }}>
 
           {loadingItems ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: '#085946' }} /></Box>
@@ -360,7 +397,7 @@ export default function ComparadorPage() {
         <PreviewSlot slotId="COMPARADOR_FICHA" slotLabel="Ficha de producto patrocinada" minHeight={100} />
         <PreviewSlot slotId="AUDIFONOS_GUIA_INTERACTIVA" slotLabel="Guía interactiva patrocinada" minHeight={120} />
         <Footer />
-      </div>
+      </Box>
     </>
   );
 }

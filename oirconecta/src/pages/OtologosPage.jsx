@@ -11,6 +11,7 @@ import { recordMatchesProfesion, PROFESION_LABEL_TODAS, profesionesParaListing }
 import { POLIZAS_COLOMBIA, POLIZA_LABEL_TODAS } from '../config/polizasColombia';
 import { slugForOtologoList } from '../utils/professionalSlug';
 import ProfessionalListCard from '../components/professionals/ProfessionalListCard';
+import { Box, Container, Typography, Stack } from '@mui/material';
 
 // Generar datos de otólogos fuera del componente para evitar re-renderizados
 const prepagadasDisponibles = [
@@ -179,32 +180,83 @@ const OtologosPage = () => {
         <meta property="og:url" content="https://oirconecta.com/profesionales/otologos" />
       </Helmet>
       <Header />
-      <div style={{ height: '80px' }}></div>
 
-      {/* Hero Section */}
-      <div className="hero-header">
-        <div className="hero-content">
-          <div className="hero-icon">
-            <FaUserMd size={40} />
-          </div>
-          <h1 className="hero-title">Encuentra tu Otólogo</h1>
-          <p className="hero-subtitle">Especialistas certificados en otología y audiología para el cuidado de tu salud auditiva</p>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <div className="stat-number">{otologosConPrepagadas.length}</div>
-              <div className="stat-label">Especialistas</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">{ciudades.length}</div>
-              <div className="stat-label">Ciudades</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">4.8</div>
-              <div className="stat-label">Calificación Promedio</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* HERO editorial */}
+      <Box sx={{
+        position: 'relative', overflow: 'hidden',
+        pt: { xs: 14, md: 16 }, pb: { xs: 6, md: 8 },
+        bgcolor: '#FBFAF8',
+      }}>
+        <Box aria-hidden sx={{
+          position: 'absolute', top: -180, right: -180, width: 540, height: 540,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+          filter: 'blur(80px)', pointerEvents: 'none',
+        }} />
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+          <Box sx={{
+            display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
+            gap: { xs: 3, md: 6 }, alignItems: 'end',
+          }}>
+            <Box>
+              <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+                  textTransform: 'uppercase', color: '#272F50',
+                }}>
+                  Profesionales · Otología
+                </Typography>
+              </Stack>
+              <Typography component="h1" sx={{
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
+                fontWeight: 500, lineHeight: 0.98, letterSpacing: '-0.025em',
+                color: '#272F50', mb: 3,
+              }}>
+                Encuentra a tu{' '}
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
+                  otorrinolaringólogo.
+                </Box>
+              </Typography>
+            </Box>
+            <Box sx={{ pb: { md: 1.5 } }}>
+              <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+                color: '#6B7280', lineHeight: 1.55, maxWidth: 460, mb: 3,
+              }}>
+                Médicos especialistas en otología y otorrinolaringología verificados, con perfil público para el cuidado de tu salud auditiva.
+              </Typography>
+              <Stack direction="row" spacing={3} divider={<Box sx={{ width: 1, bgcolor: 'rgba(39,47,80,0.15)' }} />}>
+                {[
+                  { num: otologosConPrepagadas.length, label: 'Especialistas' },
+                  { num: ciudades.length, label: 'Ciudades' },
+                  { num: '4.8', label: 'Promedio' },
+                ].map((s) => (
+                  <Box key={s.label}>
+                    <Typography sx={{
+                      fontFamily: '"Playfair Display", Georgia, serif',
+                      fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 600,
+                      color: '#272F50', lineHeight: 1, letterSpacing: '-0.02em',
+                    }}>
+                      {s.num}
+                    </Typography>
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.7rem',
+                      fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase',
+                      color: '#6B7280', mt: 0.75,
+                    }}>
+                      {s.label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          </Box>
+        </Container>
+      </Box>
 
       {/* SearchEngine */}
       <div style={{ marginTop: '-20px', marginBottom: '40px' }}>

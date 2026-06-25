@@ -82,7 +82,7 @@ function MiniCalendar({ selectedDate, onSelect, availableDays }) {
           sx={{ color:'#085946', '&:hover':{ bgcolor:'rgba(8,89,70,0.08)' }, '&.Mui-disabled':{ opacity:0.3 } }}>
           <ChevronLeftIcon />
         </IconButton>
-        <Typography sx={{ fontWeight:700, fontSize:'0.9375rem', color:'#0f1923' }}>
+        <Typography sx={{ fontWeight:700, fontSize:'0.9375rem', color:'#272F50' }}>
           {MONTHS[month]} {year}
         </Typography>
         <IconButton size="small" onClick={nextMonth} sx={{ color:'#085946', '&:hover':{ bgcolor:'rgba(8,89,70,0.08)' } }}>
@@ -120,7 +120,7 @@ function MiniCalendar({ selectedDate, onSelect, availableDays }) {
                 borderRadius:'10px', cursor: disabled ? 'default' : 'pointer', position:'relative',
                 fontSize:'0.8125rem', fontWeight: selected ? 700 : isToday ? 600 : 500,
                 bgcolor: selected ? '#085946' : isToday ? 'rgba(8,89,70,0.08)' : 'transparent',
-                color: selected ? '#fff' : disabled ? '#d1d5db' : '#0f1923',
+                color: selected ? '#fff' : disabled ? '#d1d5db' : '#272F50',
                 border: isToday && !selected ? '1.5px solid rgba(8,89,70,0.40)' : '1.5px solid transparent',
                 transition:'all 0.15s ease',
                 '&:hover': disabled ? {} : { bgcolor: selected ? '#085946' : 'rgba(8,89,70,0.10)', transform:'scale(1.08)' },
@@ -288,69 +288,74 @@ export default function AgendamientoPage() {
       {/* HERO editorial */}
       <Box sx={{
         position: 'relative', overflow: 'hidden',
-        pt: { xs: 14, md: 16 }, pb: { xs: 5, md: 7 },
+        pt: { xs: 14, md: 16 }, pb: { xs: 6, md: 8 },
         bgcolor: '#FBFAF8',
       }}>
-        <Box sx={{
+        <Box aria-hidden sx={{
           position: 'absolute', top: -180, right: -180,
-          width: 480, height: 480, borderRadius: '50%',
-          background: 'radial-gradient(circle, #D9CDBF50 0%, transparent 70%)',
-          filter: 'blur(60px)', pointerEvents: 'none',
+          width: 540, height: 540, borderRadius: '50%',
+          background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+          filter: 'blur(80px)', pointerEvents: 'none',
         }} />
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 2.5 }}>
-            <Box sx={{ width: 28, height: 2, bgcolor: '#085946' }} />
-            <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
-              fontWeight: 600, letterSpacing: '0.18em',
-              textTransform: 'uppercase', color: '#085946',
-            }}>Agendamiento en línea</Typography>
-          </Stack>
-
-          <Typography component="h1" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
-            fontSize: { xs: '2.25rem', sm: '3rem', md: '3.75rem' },
-            fontWeight: 600, lineHeight: 1.08, color: '#272F50',
-            letterSpacing: '-0.018em', mb: 2.5,
+          <Box sx={{
+            display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
+            gap: { xs: 3, md: 6 }, alignItems: 'end',
           }}>
-            Agenda tu valoración{' '}
-            <Box component="span" sx={{ fontStyle: 'italic', color: '#085946', fontWeight: 500 }}>
-              auditiva
-            </Box>
-          </Typography>
-
-          <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
-            fontSize: { xs: '1.0625rem', md: '1.1875rem' },
-            color: '#6B7280', lineHeight: 1.6,
-            mb: 3.5, maxWidth: 620,
-          }}>
-            Selecciona el día y hora que mejor te convenga. Las citas son de{' '}
-            <Box component="strong" sx={{ color: '#272F50', fontWeight: 700 }}>50 minutos</Box>,
-            de lunes a viernes de 8:00 AM a 4:00 PM.
-          </Typography>
-
-          {/* Info pills */}
-          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
-            {[
-              { icon: <LocationOnOutlinedIcon sx={{ fontSize: 15 }} />, text: 'Cr 10 #96-25 Cons. 320, Bogotá' },
-              { icon: <AccessTimeIcon sx={{ fontSize: 15 }} />, text: 'Lun – Vie · 8:00 AM – 4:00 PM' },
-              { icon: <CheckCircleIcon sx={{ fontSize: 15 }} />, text: 'Confirmación inmediata por email' },
-            ].map(c => (
-              <Box key={c.text} sx={{
-                display: 'flex', alignItems: 'center', gap: 0.75,
-                px: 1.5, py: 0.75, borderRadius: '6px',
-                bgcolor: 'rgba(8,89,70,0.06)',
-                border: '1px solid rgba(8,89,70,0.18)',
-              }}>
-                <Box sx={{ color: '#085946', display: 'flex' }}>{c.icon}</Box>
+            <Box>
+              <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem',
-                  color: '#272F50', fontWeight: 600,
-                }}>{c.text}</Typography>
-              </Box>
-            ))}
-          </Stack>
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+                  textTransform: 'uppercase', color: '#272F50',
+                }}>
+                  Agendamiento en línea
+                </Typography>
+              </Stack>
+
+              <Typography component="h1" sx={{
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
+                fontWeight: 500, lineHeight: 0.98, letterSpacing: '-0.025em',
+                color: '#272F50', mb: { xs: 2.5, md: 3 },
+              }}>
+                Agenda tu valoración{' '}
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
+                  auditiva.
+                </Box>
+              </Typography>
+            </Box>
+
+            <Box sx={{ pb: { md: 1.5 } }}>
+              <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+                color: '#6B7280', lineHeight: 1.55, maxWidth: 460, mb: 3,
+              }}>
+                Selecciona el día y la hora. Las citas duran 50 minutos, de lunes a viernes de 8:00 AM a 4:00 PM. Confirmación inmediata por correo.
+              </Typography>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                {[
+                  { icon: <LocationOnOutlinedIcon sx={{ fontSize: 15 }} />, text: 'Bogotá · Cr 10 #96-25' },
+                  { icon: <CheckCircleIcon sx={{ fontSize: 15 }} />, text: 'Confirmación inmediata' },
+                ].map(c => (
+                  <Box key={c.text} sx={{
+                    display: 'inline-flex', alignItems: 'center', gap: 0.75,
+                    px: 1.5, py: 0.75, borderRadius: '6px',
+                    bgcolor: 'rgba(39,47,80,0.06)',
+                    border: '1px solid rgba(39,47,80,0.14)',
+                  }}>
+                    <Box sx={{ color: '#272F50', display: 'flex' }}>{c.icon}</Box>
+                    <Typography sx={{
+                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.8rem',
+                      color: '#272F50', fontWeight: 600,
+                    }}>{c.text}</Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          </Box>
         </Container>
       </Box>
 
@@ -378,7 +383,7 @@ export default function AgendamientoPage() {
             <Grid item xs={12} md={7}>
               <Box sx={{ borderRadius:'20px', p:3, bgcolor:'#fff',
                 border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)' }}>
-                <Typography sx={{ fontWeight:800, fontSize:'1.125rem', color:'#0f1923', mb:3, letterSpacing:'-0.01em' }}>
+                <Typography sx={{ fontWeight:800, fontSize:'1.125rem', color:'#272F50', mb:3, letterSpacing:'-0.01em' }}>
                   <CalendarMonthIcon sx={{ verticalAlign:'middle', mr:1, color:'#085946', fontSize:20 }} />
                   Selecciona una fecha
                 </Typography>
@@ -388,7 +393,7 @@ export default function AgendamientoPage() {
             <Grid item xs={12} md={5}>
               <Box sx={{ borderRadius:'20px', p:3, bgcolor:'#fff',
                 border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)', height:'100%' }}>
-                <Typography sx={{ fontWeight:700, fontSize:'0.9375rem', color:'#0f1923', mb:2.5 }}>
+                <Typography sx={{ fontWeight:700, fontSize:'0.9375rem', color:'#272F50', mb:2.5 }}>
                   Información importante
                 </Typography>
                 {[
@@ -403,7 +408,7 @@ export default function AgendamientoPage() {
                       {item.icon}
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize:'0.8125rem', fontWeight:700, color:'#0f1923' }}>{item.title}</Typography>
+                      <Typography sx={{ fontSize:'0.8125rem', fontWeight:700, color:'#272F50' }}>{item.title}</Typography>
                       <Typography sx={{ fontSize:'0.8125rem', color:'#6b7280', lineHeight:1.6, whiteSpace:'pre-line' }}>{item.desc}</Typography>
                     </Box>
                   </Box>
@@ -419,7 +424,7 @@ export default function AgendamientoPage() {
             border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)' }}>
             <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:3, flexWrap:'wrap', gap:2 }}>
               <Box>
-                <Typography sx={{ fontWeight:800, fontSize:'1.125rem', color:'#0f1923', letterSpacing:'-0.01em' }}>
+                <Typography sx={{ fontWeight:800, fontSize:'1.125rem', color:'#272F50', letterSpacing:'-0.01em' }}>
                   <AccessTimeIcon sx={{ verticalAlign:'middle', mr:1, color:'#085946', fontSize:20 }} />
                   Selecciona un horario
                 </Typography>
@@ -459,7 +464,7 @@ export default function AgendamientoPage() {
                         '&:hover':{ bgcolor: sel ? '#085946' : 'rgba(8,89,70,0.06)', transform:'translateY(-2px)', boxShadow:'0 6px 18px rgba(8,89,70,0.12)' },
                       }}>
                         <AccessTimeIcon sx={{ fontSize:18, color: sel ? '#6ee7c8' : '#085946', mb:0.5 }} />
-                        <Typography sx={{ fontSize:'0.9375rem', fontWeight:700, color: sel ? '#fff' : '#0f1923', lineHeight:1.3 }}>
+                        <Typography sx={{ fontSize:'0.9375rem', fontWeight:700, color: sel ? '#fff' : '#272F50', lineHeight:1.3 }}>
                           {formatSlot(slot).split('–')[0].trim()}
                         </Typography>
                         <Typography sx={{ fontSize:'0.75rem', color: sel ? 'rgba(255,255,255,0.75)' : '#6b7280' }}>
@@ -481,7 +486,7 @@ export default function AgendamientoPage() {
               <Box sx={{ borderRadius:'20px', p:{ xs:3, md:4 }, bgcolor:'#fff',
                 border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)' }}>
                 <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:3, flexWrap:'wrap', gap:2 }}>
-                  <Typography sx={{ fontWeight:800, fontSize:'1.125rem', color:'#0f1923', letterSpacing:'-0.01em' }}>
+                  <Typography sx={{ fontWeight:800, fontSize:'1.125rem', color:'#272F50', letterSpacing:'-0.01em' }}>
                     <PersonOutlineIcon sx={{ verticalAlign:'middle', mr:1, color:'#085946', fontSize:20 }} />
                     Tus datos
                   </Typography>
@@ -528,7 +533,7 @@ export default function AgendamientoPage() {
             <Grid item xs={12} md={5}>
               <Box sx={{ borderRadius:'20px', p:3, bgcolor:'#fff',
                 border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)' }}>
-                <Typography sx={{ fontWeight:700, fontSize:'0.9375rem', color:'#0f1923', mb:2.5 }}>
+                <Typography sx={{ fontWeight:700, fontSize:'0.9375rem', color:'#272F50', mb:2.5 }}>
                   Resumen de tu cita
                 </Typography>
                 {[
@@ -540,7 +545,7 @@ export default function AgendamientoPage() {
                   <Box key={r.label} sx={{ display:'flex', flexDirection:'column', mb:2,
                     pb:2, borderBottom:'1px solid rgba(8,89,70,0.06)', '&:last-child':{ border:'none', mb:0, pb:0 } }}>
                     <Typography sx={{ fontSize:'0.75rem', fontWeight:700, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.06em' }}>{r.label}</Typography>
-                    <Typography sx={{ fontSize:'0.9375rem', color:'#0f1923', fontWeight:600, mt:0.25, whiteSpace:'pre-line' }}>{r.value}</Typography>
+                    <Typography sx={{ fontSize:'0.9375rem', color:'#272F50', fontWeight:600, mt:0.25, whiteSpace:'pre-line' }}>{r.value}</Typography>
                   </Box>
                 ))}
               </Box>
@@ -555,7 +560,7 @@ export default function AgendamientoPage() {
               display:'flex', alignItems:'center', justifyContent:'center', mx:'auto', mb:3 }}>
               <CheckCircleIcon sx={{ fontSize:44, color:'#085946' }} />
             </Box>
-            <Typography sx={{ fontWeight:900, fontSize:'2rem', color:'#0f1923', letterSpacing:'-0.03em', mb:1.5 }}>
+            <Typography sx={{ fontWeight:900, fontSize:'2rem', color:'#272F50', letterSpacing:'-0.03em', mb:1.5 }}>
               ¡Cita confirmada!
             </Typography>
             <Typography sx={{ fontSize:'1rem', color:'#6b7280', mb:4, lineHeight:1.7 }}>
@@ -575,7 +580,7 @@ export default function AgendamientoPage() {
               ].map(([k,v]) => (
                 <Box key={k} sx={{ display:'flex', justifyContent:'space-between', mb:1 }}>
                   <Typography sx={{ fontSize:'0.875rem', color:'#6b7280', fontWeight:600 }}>{k}</Typography>
-                  <Typography sx={{ fontSize:'0.875rem', color:'#0f1923', fontWeight:500, textAlign:'right', maxWidth:'60%' }}>{v}</Typography>
+                  <Typography sx={{ fontSize:'0.875rem', color:'#272F50', fontWeight:500, textAlign:'right', maxWidth:'60%' }}>{v}</Typography>
                 </Box>
               ))}
             </Box>
