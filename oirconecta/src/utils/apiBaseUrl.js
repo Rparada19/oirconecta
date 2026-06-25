@@ -9,6 +9,11 @@ export function getApiBaseUrl() {
   if (raw != null && String(raw).trim() !== '') {
     return String(raw).replace(/\/$/, '');
   }
-  // Tanto en DEV como en producción sin VITE_API_URL: rutas relativas al mismo servidor.
+  // En producción (oirconecta.com), si el build no recibió VITE_API_URL,
+  // apuntar al backend conocido en lugar de rutas relativas (que devolverían el SPA).
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('oirconecta.com')) {
+    return 'https://oirconecta-api.onrender.com';
+  }
+  // DEV: rutas relativas; Vite proxea a localhost:3001.
   return '';
 }
