@@ -1,0 +1,194 @@
+/**
+ * Hooks de notificaciones para Appointments.
+ * Encolan los Reminders apenas se crea/actualiza una cita.
+ *
+ * Variables expuestas a las plantillas:
+ *   nombre, fechaCita ("lun 21 ene"), horaCita ("10:30"),
+ *   tipoConsulta, linkConfirm, linkReagendar, sede
+ */
+
+const { scheduleReminder } = require('../index');
+
+const TZ = 'America/Bogota';
+const PUBLIC_BASE = process.env.PUBLIC_BASE_URL || 'https://oirconecta.com';
+
+function formatFechaLarga(date) {
+  return new Intl.DateTimeFormat('es-CO', {
+    timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short',
+  }).format(new Date(date));
+}
+
+function subMinutes(dateLike, mins) {
+  return new Date(new Date(dateLike).getTime() - mins * 60_000);
+}
+
+function citaStartDate(appointment) {
+  // appointment.fecha es DateTime con hora 00; hora es "HH:mm"
+  const f = new Date(appointment.fecha);
+  const [h, m] = (appointment.hora || '00:00').split(':').map(Number);
+  const local = new Date(f);
+  local.setHours(h, m, 0, 0);
+  return local;
+}
+
+function buildVars(appointment) {
+  const start = citaStartDate(appointment);
+  return {
+    nombre: appointment.patient?.nombre || appointment.patientName || 'paciente',
+    fechaCita: formatFechaLarga(start),
+    horaCita: appointment.hora || '',
+    tipoConsulta: appointment.tipoConsulta || 'consulta',
+    linkConfirm: `${PUBLIC_BASE}/cita/confirmar/${appointment.rescheduleToken}`,
+    linkReagendar: `${PUBLIC_BASE}/cita/reagendar/${appointment.rescheduleToken}`,
+    sede: 'OÍR Conecta',
+  };
+}
+
+/**
+ * Encola las 3 notificaciones de una cita recién creada.
+ * - CITA_AGENDADA (WhatsApp + Email) inmediato
+ * - RECORDATORIO_24H (WhatsApp + Email) a T-24h
+ * - RECORDATORIO_2H  (WhatsApp + SMS)   a T-2h
+ *
+ * Solo encola para citas con patientId real (no para registros sueltos sin paciente).
+ */
+async function onAppointmentCreated(appointment) {
+  if (!appointment?.patientId) return { skipped: 'sin patientId' };
+
+  const vars = buildVars(appointment);
+  const start = citaStartDate(appointment);
+  const now = new Date();
+
+  const targetType = 'Appointment';
+  const targetId = appointment.id;
+  const patientId = appointment.patientId;
+  const payload = vars;
+
+  const results = [];
+
+  // CITA_AGENDADA — inmediato
+  for (const channel of ['WHATSAPP', 'EMAIL']) {
+    results.push(await scheduleReminder({
+      patientId, eventCode: 'CITA_AGENDADA', channel,
+      templateCode: 'cita_agendada',
+      targetType, targetId, payload,
+      scheduledFor: now,
+    }));
+  }
+
+  // RECORDATORIO_24H — solo si la cita es >24h en el futuro
+  const t24 = subMinutes(start, 24 * 60);
+  if (t24.getTime() > now.getTime()) {
+    for (const channel of ['WHATSAPP', 'EMAIL']) {
+      results.push(await scheduleReminder({
+        patientId, eventCode: 'RECORDATORIO_24H', channel,
+        templateCode: 'recordatorio_24h',
+        targetType, targetId, payload,
+        scheduledFor: t24,
+      }));
+    }
+  }
+
+  // RECORDATORIO_2H — solo si la cita es >2h en el futuro
+  const t2 = subMinutes(start, 2 * 60);
+  if (t2.getTime() > now.getTime()) {
+    for (const channel of ['WHATSAPP', 'SMS']) {
+      results.push(await scheduleReminder({
+        patientId, eventCode: 'RECORDATORIO_2H', channel,
+        templateCode: 'recordatorio_2h',
+        targetType, targetId, payload,
+        scheduledFor: t2,
+      }));
+    }
+  }
+
+  return { scheduled: results.filter(Boolean).length };
+}
+
+/**
+ * Cita reprogramada → mensaje inmediato + reset de futuros.
+ * Por simplicidad en F1: cancela todos los Reminder PENDING de esta cita y
+ * vuelve a encolar 24h/2h. El "cita_agendada" no se reenvía; va `reprogramacion`.
+ */
+async function onAppointmentRescheduled(appointment, prisma) {
+  if (!appointment?.patientId) return { skipped: 'sin patientId' };
+
+  // Cancelar pendientes anteriores
+  await prisma.reminder.updateMany({
+    where: {
+      targetType: 'Appointment',
+      targetId: appointment.id,
+      status: { in: ['PENDING', 'QUEUED'] },
+    },
+    data: { status: 'CANCELLED', lastError: 'reprogramada' },
+  });
+
+  const vars = buildVars(appointment);
+  const start = citaStartDate(appointment);
+  const now = new Date();
+  const targetType = 'Appointment';
+  const targetId = appointment.id;
+  const patientId = appointment.patientId;
+
+  for (const channel of ['WHATSAPP', 'EMAIL']) {
+    await scheduleReminder({
+      patientId, eventCode: 'REPROGRAMACION', channel,
+      templateCode: 'reprogramacion',
+      targetType, targetId, payload: vars,
+      scheduledFor: now,
+    });
+  }
+  const t24 = subMinutes(start, 24 * 60);
+  if (t24.getTime() > now.getTime()) {
+    for (const channel of ['WHATSAPP', 'EMAIL']) {
+      await scheduleReminder({
+        patientId, eventCode: 'RECORDATORIO_24H', channel,
+        templateCode: 'recordatorio_24h',
+        targetType, targetId, payload: vars, scheduledFor: t24,
+      });
+    }
+  }
+  const t2 = subMinutes(start, 2 * 60);
+  if (t2.getTime() > now.getTime()) {
+    for (const channel of ['WHATSAPP', 'SMS']) {
+      await scheduleReminder({
+        patientId, eventCode: 'RECORDATORIO_2H', channel,
+        templateCode: 'recordatorio_2h',
+        targetType, targetId, payload: vars, scheduledFor: t2,
+      });
+    }
+  }
+  return { ok: true };
+}
+
+async function onAppointmentCancelled(appointment, prisma) {
+  if (!appointment?.patientId) return { skipped: 'sin patientId' };
+  await prisma.reminder.updateMany({
+    where: {
+      targetType: 'Appointment',
+      targetId: appointment.id,
+      status: { in: ['PENDING', 'QUEUED'] },
+    },
+    data: { status: 'CANCELLED', lastError: 'cancelada' },
+  });
+  const vars = buildVars(appointment);
+  for (const channel of ['WHATSAPP', 'EMAIL']) {
+    await scheduleReminder({
+      patientId: appointment.patientId,
+      eventCode: 'CANCELACION',
+      channel,
+      templateCode: 'cancelacion',
+      targetType: 'Appointment',
+      targetId: appointment.id,
+      payload: vars,
+      scheduledFor: new Date(),
+    });
+  }
+  return { ok: true };
+}
+
+module.exports = {
+  onAppointmentCreated,
+  onAppointmentRescheduled,
+  onAppointmentCancelled,
+};

@@ -91,23 +91,23 @@ model DirectoryProfile {
   parentProfile       DirectoryProfile?    @relation("DirectoryCentroProfesionales", fields: [parentProfileId], references: [id], onDelete: SetNull)
   profesionalesCentro DirectoryProfile[]   @relation("DirectoryCentroProfesionales")
 
-  nombreConsultorio String?
+  nombreConsultorio      String?
   /// Texto libre legacy (se mantiene durante backfill). Para búsqueda/ranking se usa `professionId`.
-  profesion         String?
+  profesion              String?
   /// Profesión canónica (lookup `professions`). Se llena con `normalizeProfesion()` al guardar/registrar.
-  professionId      String?
-  profession        Profession? @relation(fields: [professionId], references: [id], onDelete: SetNull)
+  professionId           String?
+  profession             Profession? @relation(fields: [professionId], references: [id], onDelete: SetNull)
   /// Para perfiles JURIDICA (centros/clínicas/empresas): lista adicional de
   /// profesiones que el centro presta. Se guardan nombres canónicos
   /// ("Audiología", "Fonoaudiología", "Otorrinolaringología", "Otología").
   /// Para NATURAL siempre es []. La profesión "primaria" sigue en `profesion`.
-  profesionesAdicionales String[] @default([])
+  profesionesAdicionales String[]    @default([])
   /// Ciudad principal canónica (lookup `cities`). El primer workplace puede sembrarlo si está vacío.
-  cityId            String?
-  city              City?       @relation(fields: [cityId], references: [id], onDelete: SetNull)
-  polizasAceptadas  String[]    @default([])
+  cityId                 String?
+  city                   City?       @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  polizasAceptadas       String[]    @default([])
   /// Texto público en primera persona (MASCULINO | FEMENINO). Solo aplica a persona natural; null = redacción neutra.
-  generoFicha       String?
+  generoFicha            String?
 
   /// Cache: promedio de ratings de reviews APPROVED.
   ratingAvg        Float     @default(0)
@@ -317,6 +317,13 @@ model Lead {
   personaRecomendacion    String?
   agendamientoManualTipo  String?
 
+  // Sede destino (Fase 1: preparado para multi-sede)
+  sedeId String?
+  sede   Sede?   @relation(fields: [sedeId], references: [id], onDelete: SetNull)
+
+  // Soft delete
+  archivedAt DateTime?
+
   // Relaciones
   createdById   String?
   createdBy     User?        @relation("LeadCreatedBy", fields: [createdById], references: [id])
@@ -327,6 +334,8 @@ model Lead {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([sedeId])
+  @@index([archivedAt])
   @@map("leads")
 }
 
@@ -347,7 +356,7 @@ enum LeadEstado {
 model Patient {
   id                        String    @id @default(uuid())
   nombre                    String
-  email                     String    @unique
+  email                     String?
   telefono                  String
   direccion                 String?
   ciudad                    String?
@@ -369,6 +378,13 @@ model Patient {
   anamnesisClinica Json? // motivoConsulta, sintomasAuditivos, antecedentes, desarrollo, resultadosEvaluacion, etc.
   anamnesisSocial  Json? // estadoCivil, ocupacion, nivelEducativo, contextoFamiliar, contextoLaboral, habitos, etc.
 
+  // Sede asignada (Fase 1: multi-sede preparado, hoy 1 sola)
+  sedeId String?
+  sede   Sede?   @relation(fields: [sedeId], references: [id], onDelete: SetNull)
+
+  // Soft delete (HC nunca se borra física; Res. 839/2017 — 15 años)
+  archivedAt DateTime?
+
   // Relación con lead original
   leadId String? @unique
   lead   Lead?   @relation(fields: [leadId], references: [id])
@@ -380,10 +396,20 @@ model Patient {
   consultations Consultation[]
   maintenances  Maintenance[]
   interactions  Interaction[]
+  consents      Consent[]
+  preferences   PatientPreferences?
+  reminders     Reminder[]
+  notifications Notification[]
+  tasks         Task[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Unicidad clínica por documento (cuando ambos están presentes).
+  // Postgres trata NULL como distinto: filas sin documento no chocan.
+  @@unique([tipoDocumento, numeroDocumento])
+  @@index([sedeId])
+  @@index([archivedAt])
   @@map("patients")
 }
 
@@ -473,7 +499,13 @@ model Appointment {
   patientPhone String?
 
   // Profesional (ID desde configuración del centro)
-  professionalId String?
+  professionalId  String?
+  /// True cuando la cita entró por self-service multi-profesional y recepción debe asignar.
+  needsAssignment Boolean @default(false)
+
+  // Sede (Fase 1: 1 sola; preparado multi-sede)
+  sedeId String?
+  sede   Sede?   @relation(fields: [sedeId], references: [id], onDelete: SetNull)
 
   /// Si la cita se originó desde la ficha pública del directorio (métrica automática).
   directoryProfileId String?
@@ -502,6 +534,8 @@ model Appointment {
 
   @@index([directoryProfileId])
   @@index([rescheduleToken])
+  @@index([sedeId])
+  @@index([needsAssignment])
   @@map("appointments")
 }
 
@@ -1266,10 +1300,10 @@ enum SubscriptionStatus {
 }
 
 enum PlanCode {
-  TRIAL_90D   // Trial gratuito (45 días desde 2026-06; nombre legacy)
-  MENSUAL     // Independiente: $20.000/mes
-  ANUAL       // Independiente: $200.000/año
-  EMPRESA     // Persona jurídica: $20.000/mes por sede (sin descuento anual)
+  TRIAL_90D // Trial gratuito (45 días desde 2026-06; nombre legacy)
+  MENSUAL // Independiente: $20.000/mes
+  ANUAL // Independiente: $200.000/año
+  EMPRESA // Persona jurídica: $20.000/mes por sede (sin descuento anual)
 }
 
 model Plan {
@@ -1394,7 +1428,7 @@ model Payment {
 // ─────────────────────────────────────────────────────────────
 
 model MarketingAdvertiser {
-  id               String @id @default(uuid())
+  id               String  @id @default(uuid())
   nombre           String
   /// CASA_COMERCIAL | PROFESIONAL | CLINICA | MARCA | OTRO
   tipo             String  @default("OTRO")
@@ -1412,7 +1446,7 @@ model MarketingAdvertiser {
   /// Marca principal asociada (slug: phonak, widex, oticon, etc.)
   marcaPrincipal      String?
   /// PROSPECT | NEGOCIATING | ACTIVE | PAUSED | LOST
-  pipelineStage       String  @default("PROSPECT")
+  pipelineStage       String    @default("PROSPECT")
   region              String?
   ciudad              String?
   presupuestoAnualCOP Int?
@@ -1435,7 +1469,7 @@ model MarketingAdvertiser {
 
 /// Contactos múltiples por anunciante (decision maker, comprador, etc.)
 model MarketingAdvertiserContact {
-  id           String @id @default(uuid())
+  id           String              @id @default(uuid())
   advertiserId String
   advertiser   MarketingAdvertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
 
@@ -1454,16 +1488,16 @@ model MarketingAdvertiserContact {
 
 /// Bitácora de la relación con el anunciante (llamadas, reuniones, propuestas, notas)
 model MarketingAdvertiserActivity {
-  id           String @id @default(uuid())
+  id           String              @id @default(uuid())
   advertiserId String
   advertiser   MarketingAdvertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
 
   /// LLAMADA | REUNION | EMAIL | PROPUESTA | CONTRATO | NOTA
   tipo        String
-  descripcion String  @db.Text
+  descripcion String    @db.Text
   /// Email del admin que registró la actividad (trazabilidad)
   autorEmail  String?
-  fecha       DateTime @default(now())
+  fecha       DateTime  @default(now())
   reminderAt  DateTime?
 
   createdAt DateTime @default(now())
@@ -1474,18 +1508,18 @@ model MarketingAdvertiserActivity {
 }
 
 model MarketingCampaign {
-  id           String @id @default(uuid())
+  id           String              @id @default(uuid())
   advertiserId String
   advertiser   MarketingAdvertiser @relation(fields: [advertiserId], references: [id], onDelete: Restrict)
 
-  nombre String
-  slug   String @unique
+  nombre     String
+  slug       String @unique
   /// Referencia al catálogo (POPUP_BIENVENIDA, BANNER_HERO, etc.)
   actionType String
 
   startDate DateTime
   endDate   DateTime
-  priceCOP  Int @default(0)
+  priceCOP  Int      @default(0)
 
   /// DRAFT | SCHEDULED | ACTIVE | PAUSED | ENDED
   status   String  @default("DRAFT")
@@ -1503,11 +1537,11 @@ model MarketingCampaign {
   utmTerm     String?
 
   // Creatividad (M2 — una por campaña; M3 usará MarketingVariant para A/B)
-  creativeUrl       String?
-  creativePublicId  String?  // referencia Cloudinary para borrar
-  creativeType      String?  // 'image' | 'video'
-  creativeWidth     Int?
-  creativeHeight    Int?
+  creativeUrl      String?
+  creativePublicId String? // referencia Cloudinary para borrar
+  creativeType     String? // 'image' | 'video'
+  creativeWidth    Int?
+  creativeHeight   Int?
 
   // Variante mobile opcional. Si está, el portal la usa en viewports < md.
   // Si está vacía, mobile cae a la versión principal (creativeUrl).
@@ -1531,8 +1565,8 @@ model MarketingCampaign {
   pagesConfig Json?
 
   /// Snapshot de timestamps de toggle ON/OFF para mostrar "activado hace X"
-  activatedAt    DateTime?
-  deactivatedAt  DateTime?
+  activatedAt   DateTime?
+  deactivatedAt DateTime?
 
   metrics MarketingMetric[]
 
@@ -1564,15 +1598,15 @@ model MarketingPage {
 
   /// Si false → la página fue removida o despublicada. Se conserva la fila
   /// para que las campañas con specific_paths la marquen como "eliminada".
-  active      Boolean @default(true)
+  active Boolean @default(true)
 
   /// FK opcional al recurso de origen (BlogPost.id, DirectoryProfile.id, etc.)
-  entityId    String?
+  entityId   String?
   /// Tipo de la entidad ('BlogPost', 'DirectoryProfile', 'Brand', ...)
-  entityType  String?
+  entityType String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   deactivatedAt DateTime?
 
   @@index([type, active])
@@ -1582,13 +1616,13 @@ model MarketingPage {
 
 /// Métricas diarias agregadas por campaña (M2). M3 las particionará por variante.
 model MarketingMetric {
-  id          String   @id @default(uuid())
+  id          String            @id @default(uuid())
   campaignId  String
   campaign    MarketingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  date        DateTime @db.Date
-  impressions Int      @default(0)
-  clicks      Int      @default(0)
-  leads       Int      @default(0)
+  date        DateTime          @db.Date
+  impressions Int               @default(0)
+  clicks      Int               @default(0)
+  leads       Int               @default(0)
 
   @@unique([campaignId, date])
   @@index([date])
@@ -1620,4 +1654,340 @@ model Invoice {
 
   @@index([subscriptionId])
   @@map("invoices")
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FASE 1 — CRM CLÍNICO OÍR CONECTA
+// Sede, Consent, AuditLog, DataAccessLog,
+// Reminder, Notification, NotificationTemplate, PatientPreferences, Task
+// ═══════════════════════════════════════════════════════════════════
+
+/// Sedes propias de OÍR Conecta donde se atienden pacientes del CRM.
+/// Fase 1: arranca con 1. Multi-sede operativo en Fase 4.
+model Sede {
+  id         String   @id @default(uuid())
+  slug       String   @unique
+  nombre     String
+  direccion  String?
+  ciudad     String?
+  telefono   String?
+  email      String?
+  /// Código REPS de habilitación de servicios (Colombia).
+  repsCodigo String?
+  /// Horario [{ dia, abre, cierra }] o estructura libre.
+  horario    Json?
+  activo     Boolean  @default(true)
+  orden      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  patients     Patient[]
+  leads        Lead[]
+  appointments Appointment[]
+
+  @@map("sedes")
+}
+
+// ───────────────────────────────────────────────────────────────────
+// CONSENTIMIENTOS (Ley 1581/2012 + Res. 2003/2014 + Res. 2654/2019)
+// Versionados, fechados, con IP y método de firma. PDF archivado.
+// ───────────────────────────────────────────────────────────────────
+
+model Consent {
+  id        String  @id @default(uuid())
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  type          ConsentType
+  /// Versión del texto aceptado (incrementa cuando cambia la política).
+  version       String
+  signedAt      DateTime    @default(now())
+  /// CLICK | OTP_WHATSAPP | OTP_SMS | WET_SIGN_SCAN | BIOMETRIC
+  method        String
+  ip            String?
+  userAgent     String?     @db.Text
+  /// URL del PDF firmado archivado (S3/Cloudinary).
+  pdfUrl        String?
+  /// Hash SHA-256 del PDF para integridad.
+  pdfHash       String?
+  /// Si el titular revoca, se marca pero no se borra (Habeas Data).
+  revokedAt     DateTime?
+  revokedReason String?     @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([patientId, type])
+  @@index([type, version])
+  @@index([signedAt])
+  @@map("consents")
+}
+
+enum ConsentType {
+  DATA_TREATMENT // Tratamiento de datos personales (Ley 1581)
+  CLINICAL // Consentimiento informado clínico (Res. 2003/2014)
+  TELEMEDICINE // Específico de telesalud (Res. 2654/2019)
+  MARKETING // Comunicaciones comerciales (opt-in revocable)
+  IMAGE_USE // Uso de fotos/audios con fines clínicos o educativos
+}
+
+// ───────────────────────────────────────────────────────────────────
+// AUDIT LOG — toda mutación sobre entidades sensibles.
+// Habeas Data art. 17 + Res. 1995/1999 integridad de HC.
+// ───────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  /// Quién hizo el cambio (User CRM). Null si fue sistema/cron.
+  userId    String?
+  userEmail String?
+  action    AuditAction
+  /// Nombre del modelo Prisma: 'Patient', 'Consultation', 'Quote', etc.
+  entity    String
+  entityId  String
+  /// Estado antes (null si CREATE).
+  before    Json?
+  /// Estado después (null si DELETE).
+  after     Json?
+  ip        String?
+  userAgent String?     @db.Text
+  /// Motivo declarado por el usuario (para exportes, accesos justificados).
+  reason    String?     @db.Text
+  at        DateTime    @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId, at])
+  @@index([action, at])
+  @@index([at])
+  @@map("audit_logs")
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  ARCHIVE
+  RESTORE
+  SIGN
+  EXPORT
+  LOGIN
+  LOGOUT
+}
+
+// ───────────────────────────────────────────────────────────────────
+// DATA ACCESS LOG — toda LECTURA de datos sensibles (HC).
+// Habeas Data exige registrar accesos, no solo cambios.
+// Una fila por consulta a HC del paciente.
+// ───────────────────────────────────────────────────────────────────
+
+model DataAccessLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  userEmail String?
+  patientId String
+  /// Entidad consultada: 'MedicalRecord', 'Consultation', 'Audiometry', 'Patient'...
+  entity    String
+  /// READ | EXPORT | PRINT | DOWNLOAD
+  action    String   @default("READ")
+  /// Motivo opcional (puede ser obligatorio para EXPORT).
+  reason    String?  @db.Text
+  ip        String?
+  userAgent String?  @db.Text
+  at        DateTime @default(now())
+
+  @@index([patientId, at])
+  @@index([userId, at])
+  @@index([at])
+  @@map("data_access_logs")
+}
+
+// ───────────────────────────────────────────────────────────────────
+// NOTIFICACIONES — Reminder (cola), Notification (sent log), Template
+// Multi-canal en paralelo: WhatsApp + Email + SMS + Voz IVR.
+// ───────────────────────────────────────────────────────────────────
+
+/// Cola de envíos programados. Worker BullMQ lee scheduledFor <= now.
+model Reminder {
+  id        String  @id @default(uuid())
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  /// Código de la plantilla a usar.
+  templateCode String
+  /// WHATSAPP | EMAIL | SMS | VOICE_IVR
+  channel      String
+
+  /// A qué entidad responde (para idempotencia: no duplicar recordatorio
+  /// de la misma cita en el mismo evento).
+  /// targetType: 'Appointment' | 'Maintenance' | 'OwnedDevice' | 'Order' | 'Task' | 'Cumpleanos' | ...
+  targetType String?
+  targetId   String?
+  /// Evento lógico: 'CITA_AGENDADA' | 'RECORDATORIO_24H' | 'RECORDATORIO_2H' | 'GARANTIA_60D' | ...
+  eventCode  String
+
+  /// Variables a interpolar en la plantilla (nombre, fecha, link, etc.).
+  payload Json?
+
+  scheduledFor   DateTime
+  status         ReminderStatus @default(PENDING)
+  attempts       Int            @default(0)
+  lastError      String?        @db.Text
+  sentAt         DateTime?
+  /// FK a la notificación enviada (si status=SENT).
+  notificationId String?        @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, scheduledFor])
+  @@index([patientId, eventCode])
+  @@index([targetType, targetId, eventCode])
+  @@map("reminders")
+}
+
+enum ReminderStatus {
+  PENDING
+  QUEUED
+  SENT
+  FAILED
+  CANCELLED
+  SKIPPED // ej. paciente con opt-out, fuera de quietHours definitivo
+}
+
+/// Log de notificaciones enviadas (una por canal/intento exitoso).
+/// Webhook del proveedor actualiza status (DELIVERED, READ, FAILED).
+model Notification {
+  id        String  @id @default(uuid())
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  templateCode      String
+  channel           String
+  eventCode         String
+  /// Destino real usado (número WA, email, número SMS).
+  toAddress         String
+  /// HTML/JSON/texto renderizado tras interpolar variables.
+  renderedPayload   Json?
+  /// Provider: 'meta_whatsapp_cloud' | 'resend' | 'twilio_sms' | 'twilio_voice'
+  provider          String
+  providerMessageId String?
+  /// SENT | DELIVERED | READ | FAILED | UNDELIVERABLE
+  status            String  @default("SENT")
+  errorCode         String?
+  errorMessage      String? @db.Text
+  /// Costo en COP para reporting.
+  costCOP           Int?
+
+  sentAt      DateTime  @default(now())
+  deliveredAt DateTime?
+  readAt      DateTime?
+  failedAt    DateTime?
+
+  /// Eventos crudos del webhook del proveedor.
+  webhookEvents Json?
+
+  @@index([patientId, sentAt])
+  @@index([providerMessageId])
+  @@index([eventCode, sentAt])
+  @@index([status])
+  @@map("notifications")
+}
+
+/// Plantillas de mensajes (WhatsApp pre-aprobadas por Meta, email, SMS, voz).
+/// Una plantilla por (code, channel, locale).
+model NotificationTemplate {
+  id      String @id @default(uuid())
+  /// Ej: 'cita_agendada', 'recordatorio_24h', 'garantia_30d'.
+  code    String
+  channel String // WHATSAPP | EMAIL | SMS | VOICE_IVR
+  locale  String @default("es-CO")
+
+  /// Subject para email; ignorado en otros canales.
+  subject          String?
+  /// Cuerpo con placeholders {{var}}. Para WhatsApp: nombre de plantilla Meta.
+  body             String   @db.Text
+  /// Para WhatsApp Cloud API: nombre exacto registrado en Meta.
+  metaTemplateName String?
+  /// Variables esperadas: ["nombre","fechaCita","linkConfirm"].
+  variables        String[] @default([])
+  /// Categoría WhatsApp: 'TRANSACTIONAL' | 'MARKETING' | 'AUTHENTICATION'.
+  category         String   @default("TRANSACTIONAL")
+  /// Si el paciente puede silenciarlo (true) o no (false: cita, HC, garantía).
+  optOutAllowed    Boolean  @default(false)
+  activo           Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([code, channel, locale])
+  @@index([channel, activo])
+  @@map("notification_templates")
+}
+
+/// Preferencias del paciente: canal preferido, horario silencioso, idioma.
+model PatientPreferences {
+  patientId String  @id
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  /// Canal preferido cuando hay múltiples disponibles para un evento.
+  channelPreferred String    @default("WHATSAPP")
+  /// Si está en false: NO se envían comunicaciones de MARKETING.
+  marketingOptIn   Boolean   @default(false)
+  /// Hora local de inicio del silencio (formato HH:mm). Ej. "20:00".
+  quietHoursStart  String?   @default("20:00")
+  quietHoursEnd    String?   @default("07:00")
+  /// Idioma para plantillas.
+  locale           String    @default("es-CO")
+  /// True si el paciente respondió BAJA a un mensaje marketing.
+  hardOptOutAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("patient_preferences")
+}
+
+/// Tareas humanas (recepción/audiólogas). Se crean automáticas (cron, IVR sin
+/// respuesta) o manuales. Distinto de Reminder (Reminder envía mensaje al
+/// paciente; Task asigna trabajo a un usuario CRM).
+model Task {
+  id        String   @id @default(uuid())
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  /// CALL | FOLLOWUP | ASSIGN_APPOINTMENT | REVIEW_GARANTIA | OTHER
+  type        String
+  title       String
+  description String? @db.Text
+
+  /// Usuario CRM asignado (FK suelta: no relación Prisma para no recargar User).
+  assignedToId String?
+  /// Quién la creó (usuario o "system").
+  createdBy    String?
+
+  dueAt    DateTime?
+  status   TaskStatus @default(OPEN)
+  priority String     @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+
+  /// Para tareas originadas en automatizaciones (IVR sin respuesta, etc.).
+  sourceEventCode  String?
+  sourceReminderId String?
+
+  resolvedAt DateTime?
+  resolution String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([assignedToId, status])
+  @@index([patientId, status])
+  @@index([dueAt])
+  @@index([status, priority])
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  CANCELLED
 }

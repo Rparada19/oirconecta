@@ -276,6 +276,20 @@ const create = async (data, createdById) => {
       .catch((e) => console.error('[appointments.create] admin email notify:', e.message));
   }
 
+  // Nuevo sistema de notificaciones (Fase 1):
+  // encola CITA_AGENDADA inmediato + RECORDATORIO_24H + RECORDATORIO_2H.
+  // Solo si la cita tiene patientId (paciente registrado).
+  if (appointment.patientId) {
+    try {
+      const { onAppointmentCreated } = require('../notifications/events/appointments');
+      onAppointmentCreated(appointment).catch((e) => {
+        console.error('[appointments.create] notifications enqueue:', e.message);
+      });
+    } catch (e) {
+      console.error('[appointments.create] notifications module:', e.message);
+    }
+  }
+
   return appointment;
 };
 
@@ -284,7 +298,7 @@ const create = async (data, createdById) => {
  */
 const update = async (id, data) => {
   const updateData = { ...data };
-  
+
   if (data.fecha) {
     const fecha = new Date(data.fecha);
     fecha.setHours(0, 0, 0, 0);
@@ -295,13 +309,28 @@ const update = async (id, data) => {
     updateData.patientEmail = data.patientEmail.toLowerCase();
   }
 
-  return prisma.appointment.update({
+  const previous = await prisma.appointment.findUnique({ where: { id } });
+  const appointment = await prisma.appointment.update({
     where: { id },
     data: updateData,
-    include: {
-      patient: true,
-    },
+    include: { patient: true },
   });
+
+  // Si cambió fecha u hora → reprogramación
+  const fechaCambio = data.fecha && previous && new Date(previous.fecha).getTime() !== new Date(appointment.fecha).getTime();
+  const horaCambio = data.hora && previous && previous.hora !== appointment.hora;
+  if (appointment.patientId && (fechaCambio || horaCambio)) {
+    try {
+      const { onAppointmentRescheduled } = require('../notifications/events/appointments');
+      onAppointmentRescheduled(appointment, prisma).catch((e) => {
+        console.error('[appointments.update] notifications:', e.message);
+      });
+    } catch (e) {
+      console.error('[appointments.update] notifications module:', e.message);
+    }
+  }
+
+  return appointment;
 };
 
 /**
@@ -318,10 +347,22 @@ const updateStatus = async (id, estado) => {
  * Cancelar cita
  */
 const cancel = async (id) => {
-  return prisma.appointment.update({
+  const appointment = await prisma.appointment.update({
     where: { id },
     data: { estado: 'CANCELLED' },
+    include: { patient: true },
   });
+  if (appointment.patientId) {
+    try {
+      const { onAppointmentCancelled } = require('../notifications/events/appointments');
+      onAppointmentCancelled(appointment, prisma).catch((e) => {
+        console.error('[appointments.cancel] notifications:', e.message);
+      });
+    } catch (e) {
+      console.error('[appointments.cancel] notifications module:', e.message);
+    }
+  }
+  return appointment;
 };
 
 /** Obtener cita por rescheduleToken (público) */

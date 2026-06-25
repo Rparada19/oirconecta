@@ -69,6 +69,16 @@ const startServer = async () => {
     console.log(`🚀 Servidor corriendo en http://localhost:${actualPort}`);
     console.log(`📦 Entorno: ${config.nodeEnv}`);
 
+    // Worker de notificaciones in-process (opcional). En producción es preferible
+    // levantar `npm run notifications:worker` como servicio aparte.
+    if (process.env.NOTIFICATIONS_WORKER_INPROCESS === 'true') {
+      try {
+        require('./notifications/worker').start();
+      } catch (e) {
+        console.error('[notifications] worker in-process no arrancó:', e.message);
+      }
+    }
+
     const shutdown = async () => {
       console.log('\n🛑 Cerrando servidor...');
       if (httpServer) {
