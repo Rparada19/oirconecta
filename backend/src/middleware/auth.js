@@ -71,6 +71,14 @@ const authenticate = async (req, res, next) => {
 
     // Adjuntar usuario a la request
     req.user = user;
+    // Rellenar el contexto de auditoría con el usuario autenticado
+    try {
+      const ctx = require('../auditContext').getAuditContext();
+      if (ctx) {
+        ctx.userId = user.id;
+        ctx.userEmail = user.email;
+      }
+    } catch { /* opcional */ }
     next();
   } catch (error) {
     console.error('Error en autenticación:', error);
@@ -134,6 +142,13 @@ const optionalAuth = async (req, res, next) => {
 
       if (user && user.activo) {
         req.user = user;
+        try {
+          const ctx = require('../auditContext').getAuditContext();
+          if (ctx) {
+            ctx.userId = user.id;
+            ctx.userEmail = user.email;
+          }
+        } catch { /* opcional */ }
       }
     } catch (error) {
       // Ignorar errores de token, continuar sin usuario
