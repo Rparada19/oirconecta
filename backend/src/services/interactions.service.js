@@ -2,9 +2,9 @@
  * Servicio de interacciones CRM (llamadas, mensajes, correos, visitas, seguimiento consumibles)
  */
 
-const { PrismaClient } = require('@prisma/client');
+// Cliente Prisma único con extensión de AuditLog (Habeas Data)
 
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 const getPatientByEmail = async (email) => {
   if (!email || !String(email).trim()) return null;

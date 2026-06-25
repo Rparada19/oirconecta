@@ -68,6 +68,10 @@ if (config.nodeEnv === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Contexto de auditoría por request (AsyncLocalStorage). Captura ip y
+// user-agent siempre; userId/userEmail solo si la ruta corrió antes auth.
+app.use(require('./middleware/auditContextMiddleware'));
+
 // ===========================================
 // RUTAS
 // ===========================================

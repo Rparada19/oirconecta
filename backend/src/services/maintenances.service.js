@@ -3,9 +3,9 @@
  * Resuelve paciente por email y persiste en PostgreSQL.
  */
 
-const { PrismaClient } = require('@prisma/client');
+// Cliente Prisma único con extensión de AuditLog (Habeas Data)
 
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 /**
  * Formatea fecha DateTime a YYYY-MM-DD para el frontend

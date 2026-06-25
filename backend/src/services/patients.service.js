@@ -2,9 +2,9 @@
  * Servicio de pacientes
  */
 
-const { PrismaClient } = require('@prisma/client');
+// Cliente Prisma único con extensión de AuditLog (Habeas Data)
 
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 /**
  * Obtener todos los pacientes.

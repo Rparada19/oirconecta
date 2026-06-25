@@ -2,9 +2,9 @@
  * Servicio de consultas (historia clínica)
  */
 
-const { PrismaClient } = require('@prisma/client');
+// Cliente Prisma único con extensión de AuditLog (Habeas Data)
 
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 /**
  * Obtener consultas de un paciente por email

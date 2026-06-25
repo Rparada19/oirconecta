@@ -3,6 +3,7 @@
  */
 
 const patientsService = require('../services/patients.service');
+const { logPatientRead } = require('../dataAccessLog');
 
 const getAll = async (req, res, next) => {
   try {
@@ -68,6 +69,8 @@ const getById = async (req, res, next) => {
       }
     }
 
+    await logPatientRead({ patientId: patient.id, entity: 'Patient' });
+
     res.json({
       success: true,
       data: patient,
@@ -101,6 +104,8 @@ const getProfile = async (req, res, next) => {
         });
       }
     }
+
+    await logPatientRead({ patientId: profile.id, entity: 'MedicalRecord' });
 
     res.json({
       success: true,

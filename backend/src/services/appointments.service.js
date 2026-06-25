@@ -3,10 +3,10 @@
  */
 
 const crypto = require('crypto');
-const { PrismaClient } = require('@prisma/client');
+// Cliente Prisma único con extensión de AuditLog (Habeas Data)
 const { isColombianHoliday } = require('../utils/colombiaHolidays');
 
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 // Slots: 50 min de consulta + 10 min de buffer = 1 cita por hora
 // Lun-Vie 08:00 – 16:00 (última cita; termina a las 16:50)

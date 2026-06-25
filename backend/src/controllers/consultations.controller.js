@@ -3,6 +3,7 @@
  */
 
 const consultationsService = require('../services/consultations.service');
+const { logPatientReadBatch } = require('../dataAccessLog');
 
 const getByPatientEmail = async (req, res, next) => {
   try {
@@ -14,6 +15,10 @@ const getByPatientEmail = async (req, res, next) => {
       });
     }
     const consultations = await consultationsService.getByPatientEmail(patientEmail);
+    const patientIds = [...new Set((consultations || []).map((c) => c.patientId).filter(Boolean))];
+    if (patientIds.length) {
+      await logPatientReadBatch({ patientIds, entity: 'Consultation' });
+    }
     res.json({
       success: true,
       data: consultations,
