@@ -5,7 +5,17 @@
 
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
 
-const BASE_URL = getApiBaseUrl();
+// Resolver perezosamente: en runtime conoce `window.location` y elige
+// el backend correcto incluso si el build no recibió VITE_API_URL.
+const PROD_FALLBACK = 'https://oirconecta-api.onrender.com';
+function resolveBase() {
+  const v = getApiBaseUrl();
+  if (v) return v;
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('oirconecta.com')) {
+    return PROD_FALLBACK;
+  }
+  return '';
+}
 const TOKEN_KEY = 'oirconecta_crm_token';
 
 export const getToken = () => {
@@ -39,7 +49,8 @@ export const clearToken = () => {
  */
 export async function request(path, options = {}) {
   const { skipAuth = false, ...fetchOptions } = options;
-  const url = path.startsWith('http') ? path : `${BASE_URL.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+  const base = resolveBase();
+  const url = path.startsWith('http') ? path : `${base.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
   const headers = {
     'Content-Type': 'application/json',
     ...(fetchOptions.headers || {}),
@@ -71,7 +82,7 @@ export async function request(path, options = {}) {
     const isNetwork = /load failed|failed to fetch|network error|err_connection_refused/i.test(raw);
     const devHint =
       import.meta.env.DEV &&
-      ` Comprueba que el backend esté en marcha${BASE_URL ? ` (${BASE_URL})` : ' (proxy /api → puerto 3001)'}.`;
+      ` Comprueba que el backend esté en marcha${base ? ` (${base})` : ' (proxy /api → puerto 3001)'}.`;
     const msg = isNetwork
       ? `No se pudo conectar con el servidor.${devHint || ' Comprueba tu conexión o inténtalo más tarde.'}`
       : raw || 'Error de conexión con el servidor';
