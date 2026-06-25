@@ -128,6 +128,20 @@ export async function getAllLeadsCombined() {
   const processedEmails = new Set();
   const processedPhones = new Set();
 
+  // Primero los leads MANUALES (entidad propia en BD). Ganan sobre los
+  // sintéticos derivados de citas para no quedar ocultos por dedupe.
+  manualLeads.forEach((lead) => {
+    const { emailKey, phoneKey } = normLead(lead);
+    combined.push({
+      ...lead,
+      estado: lead.estado || 'nuevo',
+      appointmentId: lead.appointmentId || null,
+    });
+    if (emailKey) processedEmails.add(emailKey);
+    if (phoneKey) processedPhones.add(phoneKey);
+  });
+
+  // Después los sintéticos desde citas, solo si su contacto no aparece ya.
   leadsFromAppointments.forEach((lead) => {
     const { emailKey, phoneKey } = normLead(lead);
     const exists = (emailKey && processedEmails.has(emailKey)) || (phoneKey && processedPhones.has(phoneKey));
@@ -135,33 +149,6 @@ export async function getAllLeadsCombined() {
     combined.push({
       ...lead,
       appointmentId: lead.appointmentId || (lead.id?.replace?.('lead_from_apt_', '') || null),
-    });
-    if (emailKey) processedEmails.add(emailKey);
-    if (phoneKey) processedPhones.add(phoneKey);
-  });
-
-  manualLeads.forEach((lead) => {
-    const { emailKey, phoneKey } = normLead(lead);
-    const exists = (emailKey && processedEmails.has(emailKey)) || (phoneKey && processedPhones.has(phoneKey));
-
-    if (lead.estado === 'convertido' && lead.appointmentId) {
-      const idx = combined.findIndex((l) => {
-        const { emailKey: ek, phoneKey: pk } = normLead(l);
-        const match = (emailKey && ek === emailKey) || (phoneKey && pk === phoneKey);
-        return match && l.appointmentId && String(l.id || '').startsWith('lead_from_apt_');
-      });
-      if (idx !== -1) combined.splice(idx, 1);
-      combined.push({ ...lead, estado: 'convertido', appointmentId: lead.appointmentId });
-      if (emailKey) processedEmails.add(emailKey);
-      if (phoneKey) processedPhones.add(phoneKey);
-      return;
-    }
-    if (exists) return;
-
-    combined.push({
-      ...lead,
-      estado: lead.estado || 'nuevo',
-      appointmentId: lead.appointmentId || null,
     });
     if (emailKey) processedEmails.add(emailKey);
     if (phoneKey) processedPhones.add(phoneKey);
