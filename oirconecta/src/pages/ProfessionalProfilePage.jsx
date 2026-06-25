@@ -80,38 +80,28 @@ import {
 
 // Componentes estilizados
 const BannerContainer = styled(Box)(() => ({
-  height: '600px',
+  minHeight: '520px',
   width: '100%',
-  background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+  background: '#FBFAF8',
   position: 'relative',
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
-  color: '#1e293b',
-  marginTop: '64px',
+  color: '#272F50',
+  paddingTop: '120px',
+  paddingBottom: '80px',
   overflow: 'hidden',
   '&::before': {
     content: '""',
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'url(/img/consultorio-audiologia-banner.jpg)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    opacity: 0.1,
-    zIndex: 1
-  },
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'linear-gradient(45deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.9) 100%)',
-    zIndex: 2
+    top: -180,
+    right: -180,
+    width: 540,
+    height: 540,
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+    filter: 'blur(80px)',
+    zIndex: 1,
+    pointerEvents: 'none',
   }
 }));
 
@@ -507,67 +497,73 @@ const ProfessionalProfilePage = () => {
         <meta name="twitter:image" content={professional.avatar} />
       </Helmet>
 
-      {/* Banner y foto profesional */}
-      <BannerContainer sx={{ zIndex: 1, position: 'relative' }}>
-        <Container maxWidth="xl" sx={{ height: '100%' }}>
-          <Box sx={{ 
-            position: 'relative', 
-            zIndex: 3, 
-            textAlign: 'center',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
+      {/* Banner editorial asimétrico */}
+      <BannerContainer>
+        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2 }}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '5fr 7fr' },
+            gap: { xs: 4, md: 6 }, alignItems: 'center',
           }}>
-            <ProfessionalAvatar src={professional.avatar} alt={professional.name} />
-            <Typography variant="h2" sx={{ 
-              mt: 4, 
-              fontWeight: 900, 
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' },
-              letterSpacing: '0.02em',
-              textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-            }}>
-              {professional.name}
-            </Typography>
-            <Typography variant="h4" sx={{ 
-              mt: 2, 
-              opacity: 0.95, 
-              fontSize: { xs: '1.3rem', sm: '1.6rem', md: '1.9rem' },
-              fontWeight: 300,
-              letterSpacing: '0.05em',
-              textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-            }}>
-              {professional.specialty}
-            </Typography>
-            
-            {/* Extracto del profesional */}
-            <Typography variant="body1" sx={{ 
-              mt: 3, 
-              maxWidth: '600px',
-              fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' },
-              lineHeight: 1.6,
-              opacity: 0.9,
-              textAlign: 'center',
-              textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-            }}>
-              Especialista con {professional.experience} de experiencia en el diagnóstico y tratamiento de problemas auditivos. 
-              Comprometido con la excelencia médica y la atención personalizada para cada paciente.
-            </Typography>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 5, gap: 3, flexWrap: 'wrap' }}>
-              <Rating value={professional.rating} precision={0.1} readOnly size="large" />
-              <Typography variant="h6" sx={{ fontWeight: 600, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
-                {professional.rating} ({professional.reviews} reseñas)
-              </Typography>
-              {professional.verified && (
-                <Chip icon={<VerifiedUser />} label="Verificado" color="primary" size="large" />
-              )}
-              {professional.premium && (
-                <Chip icon={<Star />} label="Premium" color="warning" size="large" />
-              )}
+            <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
+              <ProfessionalAvatar src={professional.avatar} alt={professional.name} />
             </Box>
-            {/* NO BOTONES EN EL BANNER - SOLO INFORMACIÓN */}
+
+            <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+              <Box sx={{
+                display: 'inline-flex', alignItems: 'center', gap: 1.5, mb: 2.5,
+              }}>
+                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+                <Typography sx={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+                  textTransform: 'uppercase', color: '#272F50',
+                }}>
+                  {professional.specialty}
+                </Typography>
+              </Box>
+
+              <Typography component="h1" sx={{
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.75rem' },
+                fontWeight: 500, lineHeight: 1.02, letterSpacing: '-0.025em',
+                color: '#272F50', mb: 2.5,
+              }}>
+                {professional.name}
+              </Typography>
+
+              <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: { xs: '1rem', md: '1.125rem' },
+                color: '#6B7280', lineHeight: 1.6, mb: 3, maxWidth: 600,
+                mx: { xs: 'auto', md: 0 },
+              }}>
+                Especialista con {professional.experience} de experiencia en el diagnóstico
+                y tratamiento de problemas auditivos. Atención personalizada en {professional.city}.
+              </Typography>
+
+              <Stack direction="row" spacing={2.5} flexWrap="wrap"
+                justifyContent={{ xs: 'center', md: 'flex-start' }}
+                alignItems="center" sx={{ rowGap: 1.5 }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Rating value={professional.rating} precision={0.1} readOnly size="small" />
+                  <Typography sx={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: '0.85rem', fontWeight: 700, color: '#272F50',
+                  }}>
+                    {professional.rating} · {professional.reviews} reseñas
+                  </Typography>
+                </Stack>
+                {professional.verified && (
+                  <Chip icon={<VerifiedUser sx={{ fontSize: 16 }} />} label="Verificado" size="small"
+                    sx={{ bgcolor: 'rgba(8,89,70,0.08)', color: '#085946', fontWeight: 700 }} />
+                )}
+                {professional.premium && (
+                  <Chip icon={<Star sx={{ fontSize: 16 }} />} label="Premium" size="small"
+                    sx={{ bgcolor: 'rgba(201,168,106,0.18)', color: '#272F50', fontWeight: 700 }} />
+                )}
+              </Stack>
+            </Box>
           </Box>
         </Container>
       </BannerContainer>

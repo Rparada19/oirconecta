@@ -15,6 +15,7 @@ import {
   MenuItem,
   Button,
   Box,
+  Stack,
   Chip,
   Rating,
   IconButton,
@@ -157,29 +158,54 @@ const EcommercePage = () => {
         <script type="application/ld+json">{JSON.stringify(catalogJsonLd)}</script>
       </Helmet>
 
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box component="main" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#FBFAF8' }}>
         <Header />
-        <div style={{ height: '80px' }}></div>
 
-        <Container maxWidth="lg" sx={{ py: 8, flex: 1 }}>
-          <Typography variant="h2" component="h1" gutterBottom sx={{
-            textAlign: 'center',
-            fontWeight: 700,
-            color: '#085946',
-            mb: 6
-          }}>
-            Tienda OírConecta
-          </Typography>
+        {/* HERO editorial */}
+        <Box sx={{
+          position: 'relative', overflow: 'hidden',
+          pt: { xs: 14, md: 16 }, pb: { xs: 5, md: 7 },
+          bgcolor: '#FBFAF8',
+        }}>
+          <Box aria-hidden sx={{
+            position: 'absolute', top: -180, right: -180, width: 540, height: 540,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+            filter: 'blur(80px)', pointerEvents: 'none',
+          }} />
+          <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+              <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+              <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+                textTransform: 'uppercase', color: '#272F50',
+              }}>
+                Tienda · Accesorios para audífonos
+              </Typography>
+            </Stack>
+            <Typography component="h1" sx={{
+              fontFamily: '"Playfair Display", Georgia, serif',
+              fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
+              fontWeight: 500, lineHeight: 0.98, letterSpacing: '-0.025em',
+              color: '#272F50', mb: 3,
+            }}>
+              Lo que tu audífono{' '}
+              <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
+                necesita.
+              </Box>
+            </Typography>
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+              color: '#6B7280', lineHeight: 1.55, maxWidth: 680,
+            }}>
+              Baterías de todas las marcas, filtros, olivas, domos y accesorios de conectividad — verificados por audiólogos. Envíos a toda Colombia. No vendemos audífonos (eso lo hace tu profesional).
+            </Typography>
+          </Container>
+        </Box>
 
-          <Typography variant="h5" component="p" sx={{
-            textAlign: 'center',
-            color: '#6b7280',
-            mb: 8,
-            maxWidth: '800px',
-            mx: 'auto'
-          }}>
-            Baterías de todas las marcas, filtros, olivas y accesorios de conectividad para tus audífonos. Envíos en Colombia.
-          </Typography>
+        <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, flex: 1 }}>
 
           {/* Filtros y Búsqueda */}
           <Box sx={{ mb: 6 }}>
@@ -384,7 +410,7 @@ const EcommercePage = () => {
         <ShopCartDialog open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} setCart={setCart} />
 
         <Footer />
-      </div>
+      </Box>
     </>
   );
 };
