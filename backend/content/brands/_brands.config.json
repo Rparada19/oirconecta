@@ -1,0 +1,22 @@
+{
+  "audifonos": [
+    { "slug": "widex",        "nombre": "Widex",         "fabricante": "WS Audiology",    "origen": "Dinamarca", "sitio_oficial": "https://www.widex.com" },
+    { "slug": "oticon",       "nombre": "Oticon",        "fabricante": "Demant",          "origen": "Dinamarca", "sitio_oficial": "https://www.oticon.com" },
+    { "slug": "phonak",       "nombre": "Phonak",        "fabricante": "Sonova",          "origen": "Suiza",     "sitio_oficial": "https://www.phonak.com" },
+    { "slug": "signia",       "nombre": "Signia",        "fabricante": "WS Audiology",    "origen": "Alemania",  "sitio_oficial": "https://www.signia.net" },
+    { "slug": "resound",      "nombre": "ReSound",       "fabricante": "GN Hearing",      "origen": "Dinamarca", "sitio_oficial": "https://www.resound.com" },
+    { "slug": "starkey",      "nombre": "Starkey",       "fabricante": "Starkey",         "origen": "Estados Unidos", "sitio_oficial": "https://www.starkey.com" },
+    { "slug": "beltone",      "nombre": "Beltone",       "fabricante": "GN Hearing",      "origen": "Estados Unidos", "sitio_oficial": "https://www.beltone.com" },
+    { "slug": "rexton",       "nombre": "Rexton",        "fabricante": "WS Audiology",    "origen": "Alemania",  "sitio_oficial": "https://www.rexton.com" },
+    { "slug": "bernafon",     "nombre": "Bernafon",      "fabricante": "Demant",          "origen": "Suiza",     "sitio_oficial": "https://www.bernafon.com" },
+    { "slug": "audioservice", "nombre": "AudioService",  "fabricante": "Independiente",   "origen": "Alemania",  "sitio_oficial": "https://www.audioservice.com" },
+    { "slug": "hansaton",     "nombre": "Hansaton",      "fabricante": "Sonova",          "origen": "Alemania",  "sitio_oficial": "https://www.hansaton.com" },
+    { "slug": "unitron",      "nombre": "Unitron",       "fabricante": "Sonova",          "origen": "Canadá",    "sitio_oficial": "https://www.unitron.com" },
+    { "slug": "sonic",        "nombre": "Sonic",         "fabricante": "Demant",          "origen": "Estados Unidos", "sitio_oficial": "https://www.sonici.com" }
+  ],
+  "implantes": [
+    { "slug": "cochlear",         "nombre": "Cochlear",         "fabricante": "Cochlear Ltd.",        "origen": "Australia",  "sitio_oficial": "https://www.cochlear.com" },
+    { "slug": "advanced-bionics", "nombre": "Advanced Bionics", "fabricante": "Sonova",               "origen": "Estados Unidos", "sitio_oficial": "https://www.advancedbionics.com" },
+    { "slug": "medel",            "nombre": "MED-EL",           "fabricante": "MED-EL",               "origen": "Austria",    "sitio_oficial": "https://www.medel.com" }
+  ]
+}

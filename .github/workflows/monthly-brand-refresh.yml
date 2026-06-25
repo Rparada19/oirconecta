@@ -1,0 +1,62 @@
+name: Monthly brand data refresh
+
+on:
+  schedule:
+    # Día 1 de cada mes a las 12:00 UTC (07:00 Bogotá)
+    - cron: '0 12 1 * *'
+  workflow_dispatch:
+    inputs:
+      brand:
+        description: 'Slug de una marca específica (vacío = todas)'
+        required: false
+        default: ''
+      skip_existing:
+        description: 'Saltar marcas que ya tienen JSON'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Refresh brand data
+        working-directory: backend
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: claude-sonnet-4-6
+          WEB_SEARCH_MAX_USES: 6
+        run: |
+          if [ -n "${{ inputs.brand }}" ]; then
+            FLAGS="--brand ${{ inputs.brand }}"
+          else
+            FLAGS=""
+          fi
+          if [ "${{ inputs.skip_existing }}" = "true" ]; then
+            FLAGS="$FLAGS --skip-existing"
+          fi
+          node scripts/refresh-brand-data.js $FLAGS
+
+      - name: Commit & push
+        run: |
+          git config user.name "OírConecta Bot"
+          git config user.email "bot@oirconecta.com"
+          git add backend/content/brands/
+          if git diff --cached --quiet; then
+            echo "Sin cambios"
+            exit 0
+          fi
+          git commit -m "data(brands): refresh mensual de información de marcas"
+          git push
