@@ -38,7 +38,7 @@ services:
       # relativas y siempre cae aquí.
       - type: rewrite
         source: /api/*
-        destination: https://oirconecta-api.onrender.com/api/*
+        destination: https://oirconecta-api.onrender.com/api/:splat
       # Sitemap dinámico: lo sirve el backend (incluye blog posts desde DB).
       - type: rewrite
         source: /sitemap.xml
