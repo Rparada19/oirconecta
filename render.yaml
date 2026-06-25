@@ -33,6 +33,12 @@ services:
       - key: VITE_API_URL
         value: https://oirconecta-api.onrender.com
     routes:
+      # Proxy del API: `oirconecta.com/api/*` → backend. Mismo origen → no CORS
+      # y no depende de VITE_API_URL en build time. El frontend usa rutas
+      # relativas y siempre cae aquí.
+      - type: rewrite
+        source: /api/*
+        destination: https://oirconecta-api.onrender.com/api/*
       # Sitemap dinámico: lo sirve el backend (incluye blog posts desde DB).
       - type: rewrite
         source: /sitemap.xml
