@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { buildTheme } from './theme';
-import { BrowserRouter as Router, Routes, Route, Link as RouterLink } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link as RouterLink, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import { AuthProvider } from './context/AuthContext';
@@ -224,7 +224,10 @@ export default function App() {
           
           {/* Portal y rutas CRM (protegidas) — envueltas por el shell del CRM */}
           <Route path="/portal-crm" element={<ProtectedRoute><CrmShell /></ProtectedRoute>}>
-            <Route index element={<PortalCRMPage />} />
+            {/* Home del CRM ahora es "Acciones del día"; el viejo PortalCRMPage
+                queda accesible en /portal-crm/inicio para no romper enlaces. */}
+            <Route index element={<Navigate to="acciones-dia" replace />} />
+            <Route path="inicio" element={<PortalCRMPage />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="acciones-dia" element={<AccionesDiaPage />} />
             <Route path="citas" element={<CitasPage />} />

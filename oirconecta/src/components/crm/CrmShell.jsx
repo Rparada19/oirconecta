@@ -131,18 +131,18 @@ function SidebarContent({ allowedKeys, currentPath, onNavigate, onClose }) {
         ))}
       </Box>
 
-      {/* Volver al portal */}
+      {/* Ir al sitio público */}
       <Box sx={{ borderTop: '1px solid #f0f2f4', p: 1.5 }}>
         <Box
           role="button"
           tabIndex={0}
-          onClick={() => handleClick('/portal-crm')}
+          onClick={() => handleClick('/')}
           sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 1,
             borderRadius: 1.5, cursor: 'pointer', color: OC_COLORS.grisMedio,
             '&:hover': { bgcolor: '#f3f4f6' } }}
         >
           <ArrowBack sx={{ fontSize: 17 }} />
-          <Typography sx={{ fontSize: 12.5 }}>Portal</Typography>
+          <Typography sx={{ fontSize: 12.5 }}>Sitio público</Typography>
         </Box>
       </Box>
     </Box>
@@ -287,8 +287,8 @@ export default function CrmShell() {
                 </Typography>
               </Box>
               <Divider />
-              <MenuItem onClick={() => { setUserMenu(null); navigate('/portal-crm'); }}>
-                Volver al portal
+              <MenuItem onClick={() => { setUserMenu(null); navigate('/'); }}>
+                Ir al sitio público
               </MenuItem>
               <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
                 <Logout sx={{ fontSize: 17, mr: 1 }} /> Cerrar sesión
