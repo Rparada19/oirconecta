@@ -622,8 +622,17 @@ const LeadsPage = () => {
     { label: 'Convertidos a Paciente', value: leads.filter((l) => l.estado === 'paciente').length, gradient: 'linear-gradient(135deg,#059669,#047857)', glow: 'rgba(5,150,105,0.22)' },
   ];
 
+  // KPI map al kit nuevo
+  const KPI_LEADS = [
+    { label: 'Nuevos sin contactar', value: activeLeads.filter((l) => l.estado === 'nuevo').length, tone: 'info' },
+    { label: 'Contactados + convertidos', value: activeLeads.filter((l) => l.estado === 'contactado').length + leads.filter((l) => l.appointmentId && l.estado !== 'paciente').length + leads.filter((l) => l.estado === 'paciente').length, tone: 'warning' },
+    { label: 'Total pendientes', value: activeLeads.length, tone: 'neutral' },
+    { label: 'Convertidos a cita', value: leads.filter((l) => l.appointmentId && l.estado !== 'paciente').length, tone: 'violet' },
+    { label: 'Convertidos a paciente', value: leads.filter((l) => l.estado === 'paciente').length, tone: 'success' },
+  ];
+
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4f2 0%, #f8fafc 100%)' }}>
+    <Box sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: '#f8fafc' }}>
       {leadsLoading && (
         <Box sx={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
           bgcolor: 'rgba(255,255,255,0.80)', backdropFilter: 'blur(6px)', zIndex: 9999 }}>
@@ -632,26 +641,11 @@ const LeadsPage = () => {
       )}
       <PageHeader icon={PersonAdd} title="Leads" subtitle="Gestiona y sigue tus prospectos comerciales" />
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Stats strip */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          {LEAD_STATS.map((stat) => (
-            <Grid item xs={6} sm={4} md={2.4} key={stat.label}>
-              <Box sx={{ p: 2, borderRadius: '8px',
-                background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.70)',
-                boxShadow: '0 2px 12px rgba(8,89,70,0.06)',
-                transition: 'all 0.24s ease',
-                '&:hover': { transform: 'translateY(-4px)', boxShadow: `0 12px 30px ${stat.glow}` } }}>
-                <Typography sx={{ fontWeight: 900, fontSize: '2rem', letterSpacing: '-0.04em',
-                  background: stat.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1 }}>
-                  {stat.value}
-                </Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#4a5568', fontWeight: 600, mt: 0.5, lineHeight: 1.3 }}>{stat.label}</Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        {/* KPIs limpios */}
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
+          {KPI_LEADS.map((k) => <KpiCard key={k.label} {...k} />)}
+        </Box>
 
         {/* Search & Filters */}
         <Box sx={{ mb: 3, p: 2.5, borderRadius: '8px',

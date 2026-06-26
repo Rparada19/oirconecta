@@ -40,6 +40,9 @@ import { formatProcedencia } from '../../utils/procedenciaUtils';
 import PatientProfileDialog from '../../components/patient/PatientProfileDialog';
 import PageHeader from '../../components/crm/ui/PageHeader';
 import KpiCard from '../../components/crm/ui/KpiCard';
+import SearchBar from '../../components/crm/ui/SearchBar';
+import Toolbar from '../../components/crm/ui/Toolbar';
+import DataTableCard from '../../components/crm/ui/DataTableCard';
 
 const PacientesPage = () => {
   const navigate = useNavigate();
@@ -181,24 +184,24 @@ const PacientesPage = () => {
           <KpiCard label="Promedio citas / paciente" value={avgCitas} tone="violet" />
         </Box>
 
-        {/* Search */}
-        <Box sx={{ mb: 3, p: 2.5, borderRadius: '8px',
-          background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.70)',
-          boxShadow: '0 2px 12px rgba(8,89,70,0.06)' }}>
-          <TextField fullWidth placeholder="Buscar por nombre, cédula o teléfono..."
-            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{ startAdornment: (<InputAdornment position="start"><Search sx={{ color: '#085946' }} /></InputAdornment>) }}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px',
-              '&:hover fieldset': { borderColor: '#085946' },
-              '&.Mui-focused fieldset': { borderColor: '#085946' } } }} />
-        </Box>
+        {/* Toolbar: búsqueda + contador */}
+        <Toolbar
+          left={
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Buscar por nombre, cédula o teléfono…"
+            />
+          }
+          right={
+            <Box sx={{ fontSize: 12.5, color: '#6b7280', whiteSpace: 'nowrap' }}>
+              {filteredPatients.length} de {patients.length} pacientes
+            </Box>
+          }
+        />
 
-        {/* Table */}
-        <Box sx={{ borderRadius: '22px', overflow: 'hidden',
-          background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.70)',
-          boxShadow: '0 2px 16px rgba(8,89,70,0.07)' }}>
+        {/* Tabla */}
+        <DataTableCard>
           {filteredPatients.length > 0 ? (
             <TableContainer>
               <Table>
@@ -269,7 +272,7 @@ const PacientesPage = () => {
               </Typography>
             </Box>
           )}
-        </Box>
+        </DataTableCard>
       </Container>
 
       <PatientProfileDialog

@@ -617,60 +617,19 @@ const DashboardPage = () => {
           </Grid>
         </Box>
 
-        {/* KPI Cards */}
-        <Grid container spacing={2.5} sx={{ mb: 4 }}>
-          {KPI_CARDS.map((kpi) => (
-            <Grid item xs={12} sm={6} md={4} key={kpi.label}>
-              <Box
-                sx={{
-                  height: '100%', borderRadius: '22px',
-                  background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255,255,255,0.70)',
-                  boxShadow: '0 2px 16px rgba(8,89,70,0.07)',
-                  p: 3, position: 'relative', overflow: 'hidden',
-                  transition: 'all 0.28s cubic-bezier(0.4,0,0.2,1)',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: `0 16px 40px ${kpi.glow}, 0 4px 12px rgba(0,0,0,0.05)`,
-                  },
-                  cursor: kpi.action ? 'pointer' : 'default',
-                }}
-                onClick={kpi.action ? () => navigate(kpi.action.path) : undefined}
-              >
-                {/* Number watermark */}
-                <Typography aria-hidden sx={{ position: 'absolute', top: 12, right: 16,
-                  fontSize: '4rem', fontWeight: 900, letterSpacing: '-0.05em',
-                  color: 'rgba(8,89,70,0.04)', lineHeight: 1, userSelect: 'none' }}>
-                  {String(KPI_CARDS.indexOf(kpi) + 1).padStart(2, '0')}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2.5 }}>
-                  <Box sx={{ width: 52, height: 52, borderRadius: '14px',
-                    background: kpi.gradient, color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: `0 6px 20px ${kpi.glow}`, flexShrink: 0 }}>
-                    <kpi.icon sx={{ fontSize: 26 }} />
-                  </Box>
-                  {kpi.action && (
-                    <Box sx={{ width: 28, height: 28, borderRadius: '8px',
-                      background: 'rgba(8,89,70,0.07)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <ArrowForward sx={{ fontSize: 16, color: '#085946' }} />
-                    </Box>
-                  )}
-                </Box>
-                <Typography sx={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f1923',
-                  letterSpacing: '-0.04em', lineHeight: 1, mb: 0.5 }}>
-                  {kpi.value}
-                </Typography>
-                <Typography sx={{ fontWeight: 600, fontSize: '0.9375rem', color: '#4a5568', mb: kpi.filter || kpi.sub ? 1.5 : 0 }}>
-                  {kpi.label}
-                </Typography>
-                {kpi.sub && <Typography sx={{ fontSize: '0.8125rem', color: '#86899C' }}>{kpi.sub}</Typography>}
-                {kpi.filter}
-              </Box>
-            </Grid>
+        {/* KPI Cards — limpios y comparables */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 4 }}>
+          {[
+            { label: 'Leads totales',     value: leads.length,                                                        tone: 'warning', onClick: () => navigate('/portal-crm/leads') },
+            { label: 'Citas totales',     value: citasFiltradas.length,                                               tone: 'success' },
+            { label: 'Citas hoy',         value: citasHoy,                                                            tone: 'info' },
+            { label: 'Pacientes',         value: getPacientesStats(),                                                 tone: 'violet' },
+            { label: 'Tasa confirmación', value: `${appointments.length > 0 ? Math.round((appointments.filter(a => a.status === 'confirmed').length / appointments.length) * 100) : 0}%`, tone: 'success' },
+            { label: 'Leads agendados',   value: leads.filter(l => l.estado === 'agendado').length,                   tone: 'neutral', hint: `${leads.filter(l => l.estado === 'nuevo').length} nuevos sin contactar` },
+          ].map((kpi) => (
+            <KpiCard key={kpi.label} {...kpi} />
           ))}
-        </Grid>
+        </Box>
 
         {/* Quick Access */}
         <Grid container spacing={2.5} sx={{ mb: 4 }}>
