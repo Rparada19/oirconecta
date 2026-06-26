@@ -144,7 +144,7 @@ const HC_ACC_DET_SX = {
   borderTop: '1px solid rgba(8, 89, 70, 0.08)',
 };
 
-const PatientProfileDialog = ({ open, onClose, appointment, lead, patient = null, readOnly = false, openEvolucionarOnMount = false, evolucionarForcePrimeraVez = false }) => {
+const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patient = null, readOnly = false, openEvolucionarOnMount = false, evolucionarForcePrimeraVez = false }) => {
   const { user } = useAuth();
   const canSales = canAddAndInvoiceProducts(user?.role); // RECEPCIÓN puede agregar productos y facturar
   const readOnlyDatosGenerales = readOnly || !canEditDatosGenerales(user?.role);
@@ -1705,6 +1705,10 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, patient = null
 
     setIsEditing(false);
     setSnackbar({ open: true, message: 'Perfil guardado exitosamente', severity: 'success' });
+    // Avisar al padre para que refresque su listado sin recargar página.
+    if (typeof onSaved === 'function') {
+      try { onSaved(); } catch (e) { console.warn('[PatientProfileDialog] onSaved:', e?.message); }
+    }
   };
 
   // Guardar solo Datos Generales
@@ -1817,6 +1821,9 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, patient = null
       }
 
       setSnackbar({ open: true, message: 'Datos generales guardados exitosamente', severity: 'success' });
+      if (typeof onSaved === 'function') {
+        try { onSaved(); } catch (e) { console.warn('[PatientProfileDialog] onSaved:', e?.message); }
+      }
     } else {
       setSnackbar({ open: true, message: 'Error al guardar los datos generales', severity: 'error' });
     }

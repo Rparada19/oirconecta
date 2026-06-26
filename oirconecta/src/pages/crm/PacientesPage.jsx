@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -48,67 +48,67 @@ const PacientesPage = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [patientProfileDialogOpen, setPatientProfileDialogOpen] = useState(false);
 
+  const loadPatientsList = useCallback(async () => {
+    const emailNorm = (e) => (e || '').trim().toLowerCase();
+
+    const fromApi = await getPatients({ limit: 500 }).catch((err) => {
+      console.warn('[PacientesPage] getPatients error:', err);
+      return { patients: [] };
+    });
+    const apiPatients = fromApi.patients || [];
+    const apiList = apiPatients.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      email: p.email,
+      telefono: p.telefono || '',
+      totalCitas: 0,
+      ultimaCita: '',
+      procedencia: p.procedencia || 'visita-medica',
+      primeraCita: '',
+    }));
+
+    const allAppointments = await getAllAppointments();
+    const patientAppointments = allAppointments.filter((apt) => apt.status === 'patient');
+    setAppointments(patientAppointments);
+    const byEmailFromApts = new Map();
+    patientAppointments.forEach((apt) => {
+      const email = emailNorm(apt.patientEmail);
+      if (!email) return;
+      if (!byEmailFromApts.has(email)) {
+        byEmailFromApts.set(email, {
+          id: apt.patientEmail,
+          nombre: apt.patientName,
+          email: apt.patientEmail,
+          telefono: apt.patientPhone || '',
+          totalCitas: 1,
+          ultimaCita: apt.date,
+          procedencia: apt.procedencia || 'visita-medica',
+          primeraCita: apt.date,
+        });
+      } else {
+        const row = byEmailFromApts.get(email);
+        row.totalCitas += 1;
+        if (new Date(apt.date) > new Date(row.ultimaCita)) row.ultimaCita = apt.date;
+        if (new Date(apt.date) < new Date(row.primeraCita)) row.primeraCita = apt.date;
+      }
+    });
+    const fromAppointments = Array.from(byEmailFromApts.values());
+
+    const seen = new Set(apiList.map((p) => emailNorm(p.email)));
+    fromAppointments.forEach((p) => {
+      if (!seen.has(emailNorm(p.email))) {
+        seen.add(emailNorm(p.email));
+        apiList.push(p);
+      }
+    });
+    setPatients(apiList);
+  }, []);
+
   useEffect(() => {
-    const loadPatientsList = async () => {
-      const emailNorm = (e) => (e || '').trim().toLowerCase();
-
-      const fromApi = await getPatients({ limit: 500 }).catch((err) => {
-        console.warn('[PacientesPage] getPatients error:', err);
-        return { patients: [] };
-      });
-      const apiPatients = fromApi.patients || [];
-      const apiList = apiPatients.map((p) => ({
-        id: p.id,
-        nombre: p.nombre,
-        email: p.email,
-        telefono: p.telefono || '',
-        totalCitas: 0,
-        ultimaCita: '',
-        procedencia: p.procedencia || 'visita-medica',
-        primeraCita: '',
-      }));
-
-      const allAppointments = await getAllAppointments();
-      const patientAppointments = allAppointments.filter((apt) => apt.status === 'patient');
-      setAppointments(patientAppointments);
-      const byEmailFromApts = new Map();
-      patientAppointments.forEach((apt) => {
-        const email = emailNorm(apt.patientEmail);
-        if (!email) return;
-        if (!byEmailFromApts.has(email)) {
-          byEmailFromApts.set(email, {
-            id: apt.patientEmail,
-            nombre: apt.patientName,
-            email: apt.patientEmail,
-            telefono: apt.patientPhone || '',
-            totalCitas: 1,
-            ultimaCita: apt.date,
-            procedencia: apt.procedencia || 'visita-medica',
-            primeraCita: apt.date,
-          });
-        } else {
-          const row = byEmailFromApts.get(email);
-          row.totalCitas += 1;
-          if (new Date(apt.date) > new Date(row.ultimaCita)) row.ultimaCita = apt.date;
-          if (new Date(apt.date) < new Date(row.primeraCita)) row.primeraCita = apt.date;
-        }
-      });
-      const fromAppointments = Array.from(byEmailFromApts.values());
-
-      const seen = new Set(apiList.map((p) => emailNorm(p.email)));
-      fromAppointments.forEach((p) => {
-        if (!seen.has(emailNorm(p.email))) {
-          seen.add(emailNorm(p.email));
-          apiList.push(p);
-        }
-      });
-      setPatients(apiList);
-    };
-
     loadPatientsList();
     const interval = setInterval(loadPatientsList, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadPatientsList]);
 
   const filteredPatients = patients.filter(
     (patient) => {
@@ -331,7 +331,15 @@ const PacientesPage = () => {
 
       <PatientProfileDialog
         open={patientProfileDialogOpen}
-        onClose={() => { setPatientProfileDialogOpen(false); setSelectedPatient(null); setSelectedAppointment(null); }}
+        onClose={() => {
+          setPatientProfileDialogOpen(false);
+          setSelectedPatient(null);
+          setSelectedAppointment(null);
+          // Refresca el listado al cerrar para reflejar cambios persistidos
+          // sin tener que recargar la página.
+          loadPatientsList();
+        }}
+        onSaved={loadPatientsList}
         appointment={selectedAppointment}
         patient={selectedPatient}
       />
