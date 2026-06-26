@@ -39,6 +39,9 @@ import KpiCard from '../../components/crm/ui/KpiCard';
 import SectionBucket from '../../components/crm/ui/SectionBucket';
 import ActionRow from '../../components/crm/ui/ActionRow';
 import EmptyState from '../../components/crm/ui/EmptyState';
+import DailyBriefing from '../../components/crm/ui/DailyBriefing';
+import RecommendationCard, { recommendationsForAction } from '../../components/crm/ui/RecommendationCard';
+import PreparationChecklist from '../../components/crm/ui/PreparationChecklist';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -291,6 +294,16 @@ const AccionesDiaPage = () => {
       />
 
       <Container maxWidth="lg" sx={{ py: 3 }}>
+        {/* Briefing del día: saludo, contexto y tip */}
+        <DailyBriefing
+          userName={user?.nombre || user?.email}
+          kpis={[
+            { key: 'vencidas', value: buckets.vencidas.length },
+            { key: 'hoy',      value: buckets.hoy.length },
+            { key: 'proximas', value: buckets.proximas.length },
+          ]}
+        />
+
         {/* KPIs */}
         <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
           <KpiCard label="Hoy" value={buckets.hoy.length} tone="info" hint="Tareas con fecha hoy" />
@@ -449,10 +462,21 @@ const AccionesDiaPage = () => {
               </Typography>
               {detailAction.description && <Typography variant="body2" sx={{ mb: 1 }}>{detailAction.description}</Typography>}
 
+              {/* Recomendaciones contextuales según tipo y motivo */}
+              {recommendationsForAction(detailAction).length > 0 && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1.5, mb: 2 }}>
+                  {recommendationsForAction(detailAction).map((r, i) => (
+                    <RecommendationCard key={i} tone={r.tone} title={r.title} compact>
+                      {r.body}
+                    </RecommendationCard>
+                  ))}
+                </Box>
+              )}
+
               {(detailAction._synthetic || detailAction.type === 'cita_agenda' || String(detailAction.id || '').startsWith('cita-')) ? (
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  Esta entrada proviene de la agenda. Para reprogramar o cambiar estado use el módulo <strong>Agenda</strong>. Antes de la cita conviene confirmar asistencia, recordar documentación y revisar si el paciente tiene pendientes en CRM (consumibles o garantía).
-                </Alert>
+                <Box sx={{ mb: 2 }}>
+                  <PreparationChecklist action={detailAction} />
+                </Box>
               ) : (
                 <>
                   <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>Comentarios</Typography>
