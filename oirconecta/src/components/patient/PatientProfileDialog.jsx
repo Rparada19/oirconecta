@@ -1639,8 +1639,10 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, patient = null
     }
   };
 
-  const handleSave = () => {
-    const email = appointment?.patientEmail || lead?.email;
+  const handleSave = async () => {
+    // Prioriza el email del propio paciente (cuando entra desde Pacientes) y
+    // cae a appointment/lead para los demás caminos.
+    const email = patient?.email || formData.email || appointment?.patientEmail || lead?.email;
     if (!email) return;
 
     const profileData = {
@@ -1673,13 +1675,36 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, patient = null
     };
 
     const result = savePatientProfile(email, profileData);
-    if (result.success) {
-      setPatientProfile(result.profile);
-      setIsEditing(false);
-      setSnackbar({ open: true, message: 'Perfil guardado exitosamente', severity: 'success' });
-    } else {
+    if (!result.success) {
       setSnackbar({ open: true, message: 'Error al guardar el perfil', severity: 'error' });
+      return;
     }
+    setPatientProfile(result.profile);
+
+    // Persistir los datos básicos al backend si hay id real del paciente.
+    // Sin esto el cambio quedaba sólo en localStorage del navegador.
+    if (patient?.id) {
+      const apiResult = await updatePatientApi(patient.id, {
+        nombre: formData.nombre,
+        email: formData.email,
+        telefono: formData.telefono,
+        direccion: formData.direccion,
+        ciudad: formData.ciudad,
+        fechaNacimiento: formData.fechaNacimiento,
+        genero: formData.genero,
+        tipoDocumento: formData.documentoIdentidad?.tipo,
+        numeroDocumento: formData.documentoIdentidad?.numero,
+      });
+      if (!apiResult.success) {
+        console.error('[PatientProfileDialog] updatePatient API:', apiResult.error);
+        setSnackbar({ open: true, message: 'Guardado local, pero el servidor rechazó el cambio: ' + (apiResult.error || ''), severity: 'warning' });
+        setIsEditing(false);
+        return;
+      }
+    }
+
+    setIsEditing(false);
+    setSnackbar({ open: true, message: 'Perfil guardado exitosamente', severity: 'success' });
   };
 
   // Guardar solo Datos Generales
