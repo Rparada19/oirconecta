@@ -1,43 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Container,
   Typography,
-  Card,
-  CardContent,
   Button,
   Chip,
   List,
   ListItem,
   ListItemText,
-  ListItemButton,
   CircularProgress,
   Alert,
   TextField,
-  Tabs,
-  Tab,
-  Paper,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
   Link,
+  ToggleButton,
+  ToggleButtonGroup,
+  Paper,
 } from '@mui/material';
 import {
-  Build,
-  Assignment,
   Notifications,
-  Person,
   Refresh,
   CalendarToday,
-  ArrowBack,
   CheckCircle,
-  Comment as CommentIcon,
   Event,
   ViewList,
   Call,
+  FlashOn,
+  AccessTime,
+  WarningAmber,
+  TaskAlt,
+  Schedule,
 } from '@mui/icons-material';
+import PageHeader from '../../components/crm/ui/PageHeader';
+import KpiCard from '../../components/crm/ui/KpiCard';
+import SectionBucket from '../../components/crm/ui/SectionBucket';
+import ActionRow from '../../components/crm/ui/ActionRow';
+import EmptyState from '../../components/crm/ui/EmptyState';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -233,52 +234,71 @@ const AccionesDiaPage = () => {
   const calendarRows = getDaysInMonth(calendarMonth.year, calendarMonth.month);
   const monthLabel = new Date(calendarMonth.year, calendarMonth.month).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', py: 3 }}>
-      <Container maxWidth="md">
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 2 }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#272F50' }}>
-              Acciones del día
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-              Citas próximas (preparación de atención), seguimiento de consumibles, garantías y recordatorios
-            </Typography>
-          </Box>
-          <Button startIcon={<Refresh />} onClick={load} disabled={loading} variant="outlined" sx={{ borderColor: '#085946', color: '#085946' }}>
-            Actualizar
-          </Button>
-        </Box>
+  // Agrupar por urgencia temporal (antes era por tipo).
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().slice(0, 10);
+  const buckets = useMemo(() => {
+    const vencidas = [];
+    const hoy = [];
+    const proximas = [];
+    const cumplidasHoy = [];
+    actions.forEach((a) => {
+      const due = a.dueDate ? a.dueDate.slice(0, 10) : null;
+      if (a.resolvedAt) {
+        if (a.resolvedAt.slice(0, 10) === todayStr) cumplidasHoy.push(a);
+        return;
+      }
+      if (!due) { proximas.push(a); return; }
+      if (due < todayStr) vencidas.push(a);
+      else if (due === todayStr) hoy.push(a);
+      else proximas.push(a);
+    });
+    return { vencidas, hoy, proximas, cumplidasHoy };
+  }, [actions, todayStr]);
 
-        {/* Métricas: alertas activas, vencidas, cumplidas */}
-        {!loading && (
-          <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-            <Card sx={{ flex: 1, minWidth: 100, bgcolor: '#e8f5e9', borderLeft: 4, borderColor: '#2e7d32' }}>
-              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Typography variant="caption" sx={{ color: '#1b5e20' }}>Alertas activas</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#272F50' }}>{metrics.activas}</Typography>
-              </CardContent>
-            </Card>
-            <Card sx={{ flex: 1, minWidth: 100, bgcolor: '#ffebee', borderLeft: 4, borderColor: '#c62828' }}>
-              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Typography variant="caption" sx={{ color: '#b71c1c' }}>Alertas vencidas</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#272F50' }}>{metrics.vencidas}</Typography>
-              </CardContent>
-            </Card>
-            <Card sx={{ flex: 1, minWidth: 100, bgcolor: '#e8eaf6', borderLeft: 4, borderColor: '#3949ab' }}>
-              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Typography variant="caption" sx={{ color: '#283593' }}>Citas en ventana</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#272F50' }}>{citasAgendaCount}</Typography>
-              </CardContent>
-            </Card>
-            <Card sx={{ flex: 1, minWidth: 100, bgcolor: '#e3f2fd', borderLeft: 4, borderColor: '#1565c0' }}>
-              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Typography variant="caption" sx={{ color: '#0d47a1' }}>Alertas cumplidas</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#272F50' }}>{metrics.cumplidas}</Typography>
-              </CardContent>
-            </Card>
-          </Box>
-        )}
+  return (
+    <Box sx={{ bgcolor: '#f8fafc', minHeight: 'calc(100vh - 64px)' }}>
+      <PageHeader
+        icon={FlashOn}
+        title="Acciones del día"
+        subtitle={`Citas próximas, consumibles, garantías y recordatorios (próximos ${daysAhead} días)`}
+        actions={
+          <>
+            <ToggleButtonGroup
+              size="small"
+              value={viewMode}
+              exclusive
+              onChange={(_, v) => v && setViewMode(v)}
+              sx={{
+                '& .MuiToggleButton-root': { px: 1.5, py: 0.5, textTransform: 'none', fontSize: 12.5 },
+              }}
+            >
+              <ToggleButton value="lista"><ViewList sx={{ fontSize: 16, mr: 0.5 }} /> Lista</ToggleButton>
+              <ToggleButton value="calendario"><Event sx={{ fontSize: 16, mr: 0.5 }} /> Calendario</ToggleButton>
+            </ToggleButtonGroup>
+            <Button
+              size="small"
+              startIcon={<Refresh sx={{ fontSize: 16 }} />}
+              onClick={load}
+              disabled={loading}
+              variant="outlined"
+              sx={{ borderColor: '#085946', color: '#085946', textTransform: 'none', fontWeight: 600 }}
+            >
+              Actualizar
+            </Button>
+          </>
+        }
+      />
+
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        {/* KPIs */}
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
+          <KpiCard label="Hoy" value={buckets.hoy.length} tone="info" hint="Tareas con fecha hoy" />
+          <KpiCard label="Vencidas" value={buckets.vencidas.length} tone="danger" hint="Requieren acción inmediata" />
+          <KpiCard label="Próximas" value={buckets.proximas.length} tone="warning" hint={`Siguientes ${daysAhead} días`} />
+          <KpiCard label="Cumplidas hoy" value={buckets.cumplidasHoy.length} tone="success" />
+          <KpiCard label="Citas en ventana" value={citasAgendaCount} tone="violet" />
+        </Box>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -286,145 +306,121 @@ const AccionesDiaPage = () => {
           </Alert>
         )}
 
-        {/* Tabs Lista / Calendario */}
-        <Tabs value={viewMode} onChange={(_, v) => setViewMode(v)} sx={{ mb: 2 }}>
-          <Tab value="lista" label="Lista" icon={<ViewList />} iconPosition="start" />
-          <Tab value="calendario" label="Calendario" icon={<Event />} iconPosition="start" />
-        </Tabs>
-
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress sx={{ color: '#085946' }} />
           </Box>
         ) : viewMode === 'calendario' ? (
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" sx={{ textTransform: 'capitalize' }}>{monthLabel}</Typography>
-                <Box>
-                  <Button size="small" onClick={() => setCalendarMonth((m) => ({ ...m, month: m.month - 1 }))}>Ant</Button>
-                  <Button size="small" onClick={() => setCalendarMonth((m) => ({ ...m, month: m.month + 1 }))}>Sig</Button>
-                </Box>
+          <Box sx={{ bgcolor: '#fff', border: '1px solid #e5e7eb', borderRadius: 2, p: 2.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography sx={{ fontSize: 15, fontWeight: 600, textTransform: 'capitalize', color: '#272F50' }}>
+                {monthLabel}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <Button size="small" onClick={() => setCalendarMonth((m) => ({ ...m, month: m.month - 1 }))} sx={{ textTransform: 'none' }}>← Ant</Button>
+                <Button size="small" onClick={() => setCalendarMonth((m) => ({ ...m, month: m.month + 1 }))} sx={{ textTransform: 'none' }}>Sig →</Button>
               </Box>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5, textAlign: 'center' }}>
-                {WEEKDAYS.map((d) => (
-                  <Typography key={d} variant="caption" sx={{ fontWeight: 600, color: '#86899C' }}>{d}</Typography>
-                ))}
-                {calendarRows.flat().map((cell, idx) => {
-                  const day = cell;
-                  if (day == null) return <Box key={idx} sx={{ minHeight: 64 }} />;
-                  const dateStr = `${calendarMonth.year}-${String(calendarMonth.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                  const dayActions = actionsByDate[dateStr] || [];
-                  const isToday =
-                    new Date().getDate() === day &&
-                    new Date().getMonth() === calendarMonth.month &&
-                    new Date().getFullYear() === calendarMonth.year;
-                  return (
-                    <Paper
-                      key={idx}
-                      elevation={0}
-                      sx={{
-                        p: 0.5,
-                        minHeight: 64,
-                        bgcolor: isToday ? '#e3f2fd' : dayActions.length ? '#fff8e1' : 'transparent',
-                        border: isToday ? '2px solid #1565c0' : '1px solid #e0e0e0',
-                        cursor: dayActions.length ? 'pointer' : 'default',
-                      }}
-                      onClick={() => dayActions.length >= 1 && setDetailAction(dayActions[0])}
-                    >
-                      <Typography variant="body2" sx={{ fontWeight: isToday ? 700 : 400 }}>{day}</Typography>
-                      {dayActions.length > 0 && (
-                        <Chip size="small" label={dayActions.length} sx={{ mt: 0.5, bgcolor: '#085946', color: '#fff', fontSize: '0.7rem' }} />
-                      )}
-                    </Paper>
-                  );
-                })}
-              </Box>
-            </CardContent>
-          </Card>
-        ) : actions.length === 0 ? (
-          <Card sx={{ p: 4, textAlign: 'center' }}>
-            <Notifications sx={{ fontSize: 48, color: '#86899C', opacity: 0.6, mb: 1 }} />
-            <Typography variant="body1" sx={{ color: '#86899C' }}>
-              No hay acciones pendientes para los próximos {daysAhead} días.
-            </Typography>
-          </Card>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {[['cita_agenda', byType.cita_agenda], ['consumibles', byType.consumibles], ['garantia', byType.garantia], ['reminder', byType.reminder]].map(([type, list]) =>
-              list.length > 0 ? (
-                <Card key={type} sx={{ borderLeft: 4, borderColor: typeColors[type] }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                      {type === 'cita_agenda' && <Event sx={{ color: typeColors[type] }} />}
-                      {type === 'consumibles' && <Build sx={{ color: typeColors[type] }} />}
-                      {type === 'garantia' && <Assignment sx={{ color: typeColors[type] }} />}
-                      {type === 'reminder' && <CalendarToday sx={{ color: typeColors[type] }} />}
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#272F50' }}>
-                        {typeLabels[type]}
-                      </Typography>
-                      <Chip size="small" label={list.length} sx={{ bgcolor: typeColors[type], color: '#fff' }} />
-                    </Box>
-                    <List disablePadding>
-                      {list.map((a) => (
-                        <ListItem
-                          key={a.id}
-                          disablePadding
-                          secondaryAction={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <IconButton size="small" onClick={() => setDetailAction(a)} title="Ver detalle">
-                                <CommentIcon fontSize="small" />
-                              </IconButton>
-                              {!a.resolvedAt && (
-                                <Chip
-                                  size="small"
-                                  label={
-                                    a.type === 'cita_agenda'
-                                      ? (a.kind === 'hoy' ? 'Hoy' : 'Próxima')
-                                      : a.kind === 'vencido'
-                                        ? 'Vencido'
-                                        : a.kind === 'reclamacion'
-                                          ? 'Reclamación'
-                                          : a.kind === 'vencida'
-                                            ? 'Vencida'
-                                            : 'Próximo'
-                                  }
-                                  color={
-                                    a.type === 'cita_agenda'
-                                      ? (a.kind === 'hoy' ? 'primary' : 'default')
-                                      : a.kind === 'vencido' || a.kind === 'vencida'
-                                        ? 'error'
-                                        : 'default'
-                                  }
-                                />
-                              )}
-                              {a.resolvedAt && <Chip size="small" icon={<CheckCircle />} label="Cumplida" color="success" />}
-                            </Box>
-                          }
-                        >
-                          <ListItemButton onClick={() => openPatient(a.patientEmail)}>
-                            <ListItemText
-                              primary={a.title}
-                              secondary={
-                                <>
-                                  {a.patientName || a.patientEmail}
-                                  {a.patientPhone && ` · Tel: ${a.patientPhone}`}
-                                  {' · '}{a.dueDate ? new Date(a.dueDate).toLocaleDateString('es-ES') : '—'}
-                                  {a.responsibleName && ` · Responsable: ${a.responsibleName}`}
-                                  {a.description && ` · ${a.description}`}
-                                </>
-                              }
-                            />
-                            <Person sx={{ color: '#085946', ml: 0.5 }} fontSize="small" />
-                          </ListItemButton>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </CardContent>
-                </Card>
-              ) : null
-            )}
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5 }}>
+              {WEEKDAYS.map((d) => (
+                <Typography key={d} sx={{ fontSize: 10.5, fontWeight: 700, color: '#6b7280',
+                  textTransform: 'uppercase', textAlign: 'center', py: 0.5,
+                  letterSpacing: '0.06em' }}>{d}</Typography>
+              ))}
+              {calendarRows.flat().map((cell, idx) => {
+                const day = cell;
+                if (day == null) return <Box key={idx} sx={{ minHeight: 68 }} />;
+                const dateStr = `${calendarMonth.year}-${String(calendarMonth.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayActions = actionsByDate[dateStr] || [];
+                const isToday = dateStr === todayStr;
+                return (
+                  <Paper
+                    key={idx}
+                    elevation={0}
+                    sx={{
+                      p: 0.75, minHeight: 68,
+                      bgcolor: isToday ? 'rgba(59,130,246,0.06)' : '#fff',
+                      border: isToday ? '1.5px solid #3b82f6' : '1px solid #eef0f2',
+                      borderRadius: 1.5,
+                      cursor: dayActions.length ? 'pointer' : 'default',
+                      transition: 'border-color 120ms ease',
+                      '&:hover': dayActions.length ? { borderColor: '#085946' } : {},
+                    }}
+                    onClick={() => dayActions.length >= 1 && setDetailAction(dayActions[0])}
+                  >
+                    <Typography sx={{ fontSize: 12.5, fontWeight: isToday ? 700 : 500,
+                      color: isToday ? '#3b82f6' : '#272F50' }}>{day}</Typography>
+                    {dayActions.length > 0 && (
+                      <Chip size="small" label={dayActions.length}
+                        sx={{ mt: 0.5, height: 16, bgcolor: '#085946', color: '#fff',
+                          fontSize: '0.65rem', '& .MuiChip-label': { px: 0.75 } }} />
+                    )}
+                  </Paper>
+                );
+              })}
+            </Box>
           </Box>
+        ) : actions.length === 0 ? (
+          <EmptyState
+            icon={Notifications}
+            title="Todo en orden por ahora"
+            description={`No hay acciones pendientes para los próximos ${daysAhead} días. Disfruta del momento.`}
+            tone="success"
+          />
+        ) : (
+          <>
+            {buckets.vencidas.length > 0 && (
+              <SectionBucket
+                title="Vencidas"
+                count={buckets.vencidas.length}
+                icon={WarningAmber}
+                tone="danger"
+              >
+                {buckets.vencidas.map((a) => (
+                  <ActionRow key={a.id} action={a} onOpen={setDetailAction} onOpenPatient={openPatient} />
+                ))}
+              </SectionBucket>
+            )}
+
+            {buckets.hoy.length > 0 && (
+              <SectionBucket
+                title="Hoy"
+                count={buckets.hoy.length}
+                icon={AccessTime}
+                tone="info"
+              >
+                {buckets.hoy.map((a) => (
+                  <ActionRow key={a.id} action={a} onOpen={setDetailAction} onOpenPatient={openPatient} />
+                ))}
+              </SectionBucket>
+            )}
+
+            {buckets.proximas.length > 0 && (
+              <SectionBucket
+                title="Próximas"
+                count={buckets.proximas.length}
+                icon={Schedule}
+                tone="warning"
+              >
+                {buckets.proximas.map((a) => (
+                  <ActionRow key={a.id} action={a} onOpen={setDetailAction} onOpenPatient={openPatient} />
+                ))}
+              </SectionBucket>
+            )}
+
+            {buckets.cumplidasHoy.length > 0 && (
+              <SectionBucket
+                title="Cumplidas hoy"
+                count={buckets.cumplidasHoy.length}
+                icon={TaskAlt}
+                tone="success"
+              >
+                {buckets.cumplidasHoy.map((a) => (
+                  <ActionRow key={a.id} action={a} onOpen={setDetailAction} onOpenPatient={openPatient} dense />
+                ))}
+              </SectionBucket>
+            )}
+          </>
         )}
       </Container>
 
