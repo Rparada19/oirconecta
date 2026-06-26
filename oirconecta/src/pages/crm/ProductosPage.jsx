@@ -36,6 +36,8 @@ import {
   esProductoAccesorio,
 } from '../../utils/marketplaceProduct';
 import ProductoCatalogoForm from './ProductoCatalogoForm';
+import PageHeader from '../../components/crm/ui/PageHeader';
+import KpiCard from '../../components/crm/ui/KpiCard';
 
 const MAX_FICHA_BYTES = 4 * 1024 * 1024;
 
@@ -224,45 +226,24 @@ const ProductosPage = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4f2 0%, #f8fafc 100%)' }}>
-      <Box sx={{
-        position: 'relative', overflow: 'hidden',
-        background: 'radial-gradient(ellipse 80% 60% at 5% 50%, rgba(13,122,92,0.38) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 60% 80% at 95% 20%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'linear-gradient(135deg, #063c2c 0%, #085946 40%, #1a2240 75%, #272F50 100%)',
-        color: '#fff', pt: 4, pb: 4,
-      }}>
-        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.25, pointerEvents: 'none',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, px: { xs: 2, sm: 3 } }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-            <Box>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
-                borderRadius: '8px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 1.5 }}>
-                <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.80)' }}>CRM · CATÁLOGO</Typography>
-              </Box>
-              <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.5rem' }, fontWeight: 900,
-                letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff' }}>
-                Productos y{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                  Catálogo
-                </Box>
-              </Typography>
-              <Typography sx={{ mt: 0.75, color: 'rgba(255,255,255,0.68)', fontSize: '0.9375rem' }}>
-                Catálogo para cotización y facturación vinculable a campañas
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-              <Button startIcon={<Save />} onClick={handleSaveCatalog}
-                sx={{ color: '#085946', fontWeight: 700, px: 2.5, py: 1.25, borderRadius: '12px',
-                  background: '#fff', '&:hover': { background: 'rgba(255,255,255,0.90)' } }}>
-                Guardar todo
-              </Button>
-            </Box>
-          </Box>
-        </Container>
-      </Box>
+    <Box sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: '#f8fafc' }}>
+      <PageHeader
+        icon={ShoppingBag}
+        title="Productos y catálogo"
+        subtitle="Catálogo para cotización y facturación vinculable a campañas"
+        actions={(
+          <Button
+            startIcon={<Save sx={{ fontSize: 16 }} />}
+            onClick={handleSaveCatalog}
+            size="small"
+            variant="contained"
+            sx={{ bgcolor: '#085946', fontWeight: 600, textTransform: 'none',
+              '&:hover': { bgcolor: '#064a3a' } }}
+          >
+            Guardar todo
+          </Button>
+        )}
+      />
 
       <Container maxWidth="lg" sx={{ py: 4, px: { xs: 2, sm: 3 } }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>

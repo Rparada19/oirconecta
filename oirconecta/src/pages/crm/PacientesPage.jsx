@@ -38,6 +38,8 @@ import { getAllAppointments } from '../../services/appointmentService';
 import { getPatients } from '../../services/patientService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
 import PatientProfileDialog from '../../components/patient/PatientProfileDialog';
+import PageHeader from '../../components/crm/ui/PageHeader';
+import KpiCard from '../../components/crm/ui/KpiCard';
 
 const PacientesPage = () => {
   const navigate = useNavigate();
@@ -164,72 +166,20 @@ const PacientesPage = () => {
   const avgCitas = patients.length > 0 ? Math.round(appointments.length / patients.length) : 0;
 
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4f2 0%, #f8fafc 100%)' }}>
-      {/* Hero Header */}
-      <Box sx={{
-        position: 'relative', overflow: 'hidden',
-        background: 'radial-gradient(ellipse 80% 60% at 5% 50%, rgba(13,122,92,0.38) 0%, transparent 55%),' +
-          'radial-gradient(ellipse 60% 80% at 95% 20%, rgba(39,47,80,0.55) 0%, transparent 55%),' +
-          'linear-gradient(135deg, #063c2c 0%, #085946 40%, #1a2240 75%, #272F50 100%)',
-        color: '#fff', pt: 4, pb: 4,
-      }}>
-        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.25, pointerEvents: 'none',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")` }} />
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-            <Box>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
-                borderRadius: '8px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', mb: 1.5 }}>
-                <People sx={{ fontSize: 14, color: 'rgba(255,255,255,0.80)' }} />
-                <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.80)' }}>PACIENTES</Typography>
-              </Box>
-              <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.5rem' }, fontWeight: 900,
-                letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff' }}>
-                Base de Datos de{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                  Pacientes
-                </Box>
-              </Typography>
-              <Typography sx={{ mt: 0.75, color: 'rgba(255,255,255,0.68)', fontSize: '0.9375rem' }}>
-                Gestiona la información de todos los pacientes
-              </Typography>
-            </Box>
-          </Box>
-        </Container>
-      </Box>
+    <Box sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: '#f8fafc' }}>
+      <PageHeader
+        icon={People}
+        title="Pacientes"
+        subtitle="Gestiona la información de todos los pacientes del consultorio"
+      />
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Stats */}
-        <Grid container spacing={2.5} sx={{ mb: 3 }}>
-          {[
-            { label: 'Total Pacientes', value: patients.length, gradient: 'linear-gradient(135deg,#0d7a5c,#085946)', glow: 'rgba(8,89,70,0.22)', icon: People },
-            { label: 'Citas como Paciente', value: appointments.length, gradient: 'linear-gradient(135deg,#0284c7,#0369a1)', glow: 'rgba(2,132,199,0.22)', icon: People },
-            { label: 'Promedio Citas/Paciente', value: avgCitas, gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)', glow: 'rgba(124,58,237,0.22)', icon: People },
-          ].map((stat) => (
-            <Grid item xs={12} sm={4} key={stat.label}>
-              <Box sx={{ p: 3, borderRadius: '8px',
-                background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.70)',
-                boxShadow: '0 2px 16px rgba(8,89,70,0.06)',
-                transition: 'all 0.28s ease',
-                '&:hover': { transform: 'translateY(-4px)', boxShadow: `0 14px 36px ${stat.glow}` },
-                display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ width: 52, height: 52, borderRadius: '14px', background: stat.gradient,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  boxShadow: `0 6px 20px ${stat.glow}` }}>
-                  <stat.icon sx={{ color: '#fff', fontSize: 24 }} />
-                </Box>
-                <Box>
-                  <Typography sx={{ fontWeight: 900, fontSize: '2rem', color: '#0f1923', letterSpacing: '-0.04em', lineHeight: 1 }}>
-                    {stat.value}
-                  </Typography>
-                  <Typography sx={{ fontSize: '0.8125rem', color: '#4a5568', fontWeight: 600 }}>{stat.label}</Typography>
-                </Box>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        {/* KPIs */}
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
+          <KpiCard label="Total pacientes" value={patients.length} tone="success" />
+          <KpiCard label="Citas como paciente" value={appointments.length} tone="info" />
+          <KpiCard label="Promedio citas / paciente" value={avgCitas} tone="violet" />
+        </Box>
 
         {/* Search */}
         <Box sx={{ mb: 3, p: 2.5, borderRadius: '8px',

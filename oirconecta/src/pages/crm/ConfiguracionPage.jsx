@@ -65,6 +65,8 @@ import { etiquetaProductoCatalogo } from '../../utils/marketplaceProduct';
 import { useAuth } from '../../context/AuthContext';
 import { fetchCrmUsers, createCrmUser, updateCrmUser } from '../../services/crmUserService';
 import { ROLES } from '../../utils/rolePermissions';
+import PageHeader from '../../components/crm/ui/PageHeader';
+import KpiCard from '../../components/crm/ui/KpiCard';
 
 const ROLE_LABELS = {
   [ROLES.ADMIN]: 'Administrador',
@@ -230,29 +232,12 @@ const ConfiguracionPage = () => {
   if (!config) return <Box sx={{ p: 4 }}>Cargando...</Box>;
 
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4f2 0%, #f8fafc 100%)' }}>
-      <Box sx={{
-        position: 'relative', overflow: 'hidden',
-        background: 'radial-gradient(ellipse 80% 60% at 5% 50%, rgba(13,122,92,0.38) 0%, transparent 55%),' +
-          'linear-gradient(135deg, #063c2c 0%, #085946 40%, #1a2240 75%, #272F50 100%)',
-        color: '#fff', pt: 4, pb: 4,
-      }}>
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-            <Box>
-              <Typography component="h1" sx={{ fontSize: { xs: '1.875rem', md: '2.5rem' }, fontWeight: 900,
-                letterSpacing: '-0.03em', lineHeight: 1.1, color: '#fff' }}>
-                Configuración del{' '}
-                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7c8 0%, #a7f3d0 100%)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                  Sistema
-                </Box>
-              </Typography>
-              <Typography sx={{ mt: 0.75, color: 'rgba(255,255,255,0.68)', fontSize: '0.9375rem' }}>Ajusta los parámetros del sistema</Typography>
-            </Box>
-          </Box>
-        </Container>
-      </Box>
+    <Box sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: '#f8fafc' }}>
+      <PageHeader
+        icon={Settings}
+        title="Configuración del sistema"
+        subtitle="Ajusta los parámetros del sistema"
+      />
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
