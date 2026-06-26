@@ -84,6 +84,7 @@ import {
 } from '@mui/icons-material';
 import html2pdf from 'html2pdf.js';
 import { getPatientProfile, savePatientProfile, initializePatientProfile, generateCodigoHistoriaClinica, deletePatientProfile } from '../../services/patientProfileService';
+import { updatePatient as updatePatientApi } from '../../services/patientService';
 import { getAllAppointments } from '../../services/appointmentService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
 import { getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
@@ -143,7 +144,7 @@ const HC_ACC_DET_SX = {
   borderTop: '1px solid rgba(8, 89, 70, 0.08)',
 };
 
-const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = false, openEvolucionarOnMount = false, evolucionarForcePrimeraVez = false }) => {
+const PatientProfileDialog = ({ open, onClose, appointment, lead, patient = null, readOnly = false, openEvolucionarOnMount = false, evolucionarForcePrimeraVez = false }) => {
   const { user } = useAuth();
   const canSales = canAddAndInvoiceProducts(user?.role); // RECEPCIÓN puede agregar productos y facturar
   const readOnlyDatosGenerales = readOnly || !canEditDatosGenerales(user?.role);
@@ -466,11 +467,22 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
 
   const loadPatientData = async () => {
     try {
-      const sourceData = appointment || lead;
-      const email = appointment?.patientEmail || lead?.email;
-      
+      // Si el componente recibe `patient` (caso entrada desde Pacientes),
+      // lo normalizamos al shape esperado por el resto del código (patientEmail,
+      // patientName, patientPhone) y lo usamos como sourceData prioritario.
+      const patientAsSource = patient
+        ? {
+            ...patient,
+            patientName: patient.nombre,
+            patientEmail: patient.email,
+            patientPhone: patient.telefono,
+          }
+        : null;
+      const sourceData = patientAsSource || appointment || lead;
+      const email = patientAsSource?.patientEmail || appointment?.patientEmail || lead?.email;
+
       if (!email) {
-        console.warn('[PatientProfileDialog] No email found in appointment or lead');
+        console.warn('[PatientProfileDialog] No email found in patient/appointment/lead');
         return;
       }
 
@@ -1661,7 +1673,7 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
   };
 
   // Guardar solo Datos Generales
-  const handleSaveDatosGenerales = () => {
+  const handleSaveDatosGenerales = async () => {
     // Priorizar: formData.email > appointment?.patientEmail > lead?.email
     const email = formData.email || appointment?.patientEmail || lead?.email;
     
@@ -1744,6 +1756,31 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, readOnly = fal
     const result = savePatientProfile(email, profileData);
     if (result.success) {
       setPatientProfile(result.profile);
+
+      // Persistir datos básicos al backend si tenemos el id real del paciente.
+      // Sin esto el cambio solo vivía en localStorage del navegador.
+      const realPatientId = patient?.id;
+      if (realPatientId) {
+        const apiResult = await updatePatientApi(realPatientId, {
+          nombre: profileData.nombre,
+          email: profileData.email,
+          telefono: profileData.telefono,
+          direccion: profileData.direccion,
+          ciudad: profileData.ciudad,
+          fechaNacimiento: profileData.fechaNacimiento,
+          genero: profileData.genero,
+          tipoDocumento: profileData.documentoIdentidad?.tipo,
+          numeroDocumento: profileData.documentoIdentidad?.numero,
+        });
+        if (!apiResult.success) {
+          console.error('[PatientProfileDialog] updatePatient API:', apiResult.error);
+          setSnackbar({ open: true, message: 'Guardado local, pero el servidor rechazó el cambio: ' + (apiResult.error || ''), severity: 'warning' });
+          return;
+        }
+      } else {
+        console.warn('[PatientProfileDialog] sin patient.id, solo localStorage (legacy)');
+      }
+
       setSnackbar({ open: true, message: 'Datos generales guardados exitosamente', severity: 'success' });
     } else {
       setSnackbar({ open: true, message: 'Error al guardar los datos generales', severity: 'error' });

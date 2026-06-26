@@ -55,3 +55,25 @@ export async function ensurePatient(payload) {
   const p = data.data;
   return { id: p.id, nombre: p.nombre, email: p.email, telefono: p.telefono };
 }
+
+/**
+ * Actualiza datos básicos de un paciente en el backend.
+ * Solo envía los campos que el backend conoce; el resto del perfil clínico
+ * (anamnesis, etc.) sigue en localStorage hasta el refactor de Fase 2.
+ */
+export async function updatePatient(id, fields) {
+  if (!id) return { success: false, error: 'id requerido' };
+  const body = {};
+  const allowed = ['nombre', 'email', 'telefono', 'direccion', 'ciudad',
+    'fechaNacimiento', 'genero', 'tipoDocumento', 'numeroDocumento',
+    'ocupacion', 'estadoCivil', 'eps', 'notas'];
+  for (const k of allowed) {
+    if (fields[k] !== undefined && fields[k] !== null && fields[k] !== '') {
+      body[k] = k === 'email' ? String(fields[k]).trim().toLowerCase() : fields[k];
+    }
+  }
+  if (Object.keys(body).length === 0) return { success: true, patient: null };
+  const { data, error } = await api.put(`/api/patients/${id}`, body);
+  if (error) return { success: false, error };
+  return { success: true, patient: data?.data || null };
+}

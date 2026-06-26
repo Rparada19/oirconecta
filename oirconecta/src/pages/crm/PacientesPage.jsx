@@ -333,6 +333,7 @@ const PacientesPage = () => {
         open={patientProfileDialogOpen}
         onClose={() => { setPatientProfileDialogOpen(false); setSelectedPatient(null); setSelectedAppointment(null); }}
         appointment={selectedAppointment}
+        patient={selectedPatient}
       />
     </Box>
   );
