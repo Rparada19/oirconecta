@@ -472,12 +472,6 @@ const CampanasPage = () => {
                   Nueva campaña
                 </Button>
               )}
-              <Button startIcon={<ArrowBack />} onClick={() => navigate('/portal-crm')}
-                sx={{ color: '#fff', fontWeight: 700, px: 2.5, py: 1.25, borderRadius: '12px',
-                  border: '1.5px solid rgba(255,255,255,0.30)', background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(10px)',
-                  '&:hover': { background: 'rgba(255,255,255,0.18)' } }}>
-                Portal
-              </Button>
             </Box>
           </Box>
         </Container>

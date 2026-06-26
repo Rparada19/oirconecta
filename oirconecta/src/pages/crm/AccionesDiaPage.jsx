@@ -237,18 +237,13 @@ const AccionesDiaPage = () => {
     <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', py: 3 }}>
       <Container maxWidth="md">
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <Button startIcon={<ArrowBack />} onClick={() => navigate('/portal-crm')} variant="outlined" sx={{ borderColor: '#272F50', color: '#272F50' }}>
-              Volver
-            </Button>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#272F50' }}>
-                Acciones del día
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
-                Citas próximas (preparación de atención), seguimiento de consumibles, garantías y recordatorios
-              </Typography>
-            </Box>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#272F50' }}>
+              Acciones del día
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#86899C', mt: 0.5 }}>
+              Citas próximas (preparación de atención), seguimiento de consumibles, garantías y recordatorios
+            </Typography>
           </Box>
           <Button startIcon={<Refresh />} onClick={load} disabled={loading} variant="outlined" sx={{ borderColor: '#085946', color: '#085946' }}>
             Actualizar
