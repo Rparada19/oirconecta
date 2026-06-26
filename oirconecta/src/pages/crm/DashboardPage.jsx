@@ -55,6 +55,7 @@ import { getConfig } from '../../services/configService';
 import { getDailyActionsMetrics } from '../../services/interactionService';
 import PageHeader from '../../components/crm/ui/PageHeader';
 import KpiCard from '../../components/crm/ui/KpiCard';
+import InsightCard from '../../components/crm/ui/InsightCard';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -618,7 +619,7 @@ const DashboardPage = () => {
         </Box>
 
         {/* KPI Cards — limpios y comparables */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 4 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
           {[
             { label: 'Leads totales',     value: leads.length,                                                        tone: 'warning', onClick: () => navigate('/portal-crm/leads') },
             { label: 'Citas totales',     value: citasFiltradas.length,                                               tone: 'success' },
@@ -630,6 +631,87 @@ const DashboardPage = () => {
             <KpiCard key={kpi.label} {...kpi} />
           ))}
         </Box>
+
+        {/* Insights interpretados: el sistema ya no solo muestra números, los explica */}
+        {(() => {
+          const leadsNuevosSinContacto = leads.filter((l) => (l.estado || '').toLowerCase() === 'nuevo').length;
+          const totalConfirmed = appointments.filter((a) => a.status === 'confirmed').length;
+          const totalAppts = appointments.length || 0;
+          const tasaConfirmacion = totalAppts > 0 ? Math.round((totalConfirmed / totalAppts) * 100) : 0;
+          const noShowCount = appointments.filter((a) => a.status === 'no-show').length;
+          const tasaNoShow = totalAppts > 0 ? Math.round((noShowCount / totalAppts) * 100) : 0;
+          const accionesVencidas = actionMetrics?.vencidas || 0;
+
+          const insights = [];
+          if (leadsNuevosSinContacto > 0) {
+            insights.push({
+              tone: leadsNuevosSinContacto >= 5 ? 'warning' : 'attention',
+              icon: People,
+              title: 'Leads esperando primer contacto',
+              metric: leadsNuevosSinContacto,
+              body: leadsNuevosSinContacto >= 5
+                ? 'Tienes varios prospectos sin contactar. Cada hora reduce la probabilidad de conversión a la mitad.'
+                : 'Un contacto rápido al primer día aumenta la conversión por 3.',
+              actionLabel: 'Ir a Leads',
+              onAction: () => navigate('/portal-crm/leads'),
+            });
+          }
+          if (accionesVencidas > 0) {
+            insights.push({
+              tone: 'warning',
+              icon: EventBusy,
+              title: 'Acciones vencidas requieren atención',
+              metric: accionesVencidas,
+              body: 'Garantías o consumibles fuera de su ventana ideal. Resolverlos primero evita afectar adherencia y renovaciones.',
+              actionLabel: 'Acciones del día',
+              onAction: () => navigate('/portal-crm/acciones-dia'),
+            });
+          }
+          if (totalAppts >= 10 && tasaNoShow >= 15) {
+            insights.push({
+              tone: 'warning',
+              icon: Cancel,
+              title: 'Tasa de no-show alta',
+              metric: `${tasaNoShow}%`,
+              body: 'Implementa confirmación 24 h y 2 h antes por WhatsApp para reducir hasta 40% el ausentismo.',
+            });
+          } else if (totalAppts >= 5 && tasaConfirmacion >= 80) {
+            insights.push({
+              tone: 'positive',
+              icon: CheckCircle,
+              title: 'Excelente confirmación',
+              metric: `${tasaConfirmacion}%`,
+              body: 'Los pacientes están llegando. Mantén la disciplina de confirmación previa.',
+            });
+          }
+          if (citasHoy > 0) {
+            insights.push({
+              tone: 'attention',
+              icon: Schedule,
+              title: 'Atención de hoy',
+              metric: citasHoy,
+              body: 'Revisa los perfiles de cada paciente 30 min antes; los detalles (último audífono, garantía, motivos) marcan la diferencia.',
+              actionLabel: 'Ver agenda',
+              onAction: () => navigate('/portal-crm/citas'),
+            });
+          }
+          if (insights.length === 0) {
+            insights.push({
+              tone: 'positive', icon: CheckCircle,
+              title: 'Todo bajo control',
+              body: 'No hay alertas críticas. Buen momento para revisar el catálogo y planificar campañas.',
+            });
+          }
+          return (
+            <Box sx={{
+              display: 'grid', mb: 4,
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(auto-fit, minmax(280px, 1fr))' },
+              gap: 1.5,
+            }}>
+              {insights.map((ins, i) => <InsightCard key={i} {...ins} />)}
+            </Box>
+          );
+        })()}
 
         {/* Quick Access */}
         <Grid container spacing={2.5} sx={{ mb: 4 }}>

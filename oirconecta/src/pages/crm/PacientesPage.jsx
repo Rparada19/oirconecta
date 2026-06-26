@@ -43,6 +43,7 @@ import KpiCard from '../../components/crm/ui/KpiCard';
 import SearchBar from '../../components/crm/ui/SearchBar';
 import Toolbar from '../../components/crm/ui/Toolbar';
 import DataTableCard from '../../components/crm/ui/DataTableCard';
+import PatientFlags, { computePatientFlags } from '../../components/crm/ui/PatientFlags';
 
 const PacientesPage = () => {
   const navigate = useNavigate();
@@ -223,7 +224,12 @@ const PacientesPage = () => {
                           <Avatar sx={{ width: 38, height: 38, bgcolor: '#085946', fontWeight: 700, fontSize: '0.9rem' }}>
                             {patient.nombre.charAt(0).toUpperCase()}
                           </Avatar>
-                          <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: '#0f1923' }}>{patient.nombre}</Typography>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: '#0f1923' }}>{patient.nombre}</Typography>
+                            <Box sx={{ mt: 0.5 }}>
+                              <PatientFlags flags={computePatientFlags(patient)} dense />
+                            </Box>
+                          </Box>
                         </Box>
                       </TableCell>
                       <TableCell>

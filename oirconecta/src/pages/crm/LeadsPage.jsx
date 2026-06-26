@@ -80,6 +80,7 @@ import TimeSelector from '../../components/appointments/TimeSelector';
 import otologosData from '../../data/bdatos_otologos.json';
 import PageHeader from '../../components/crm/ui/PageHeader';
 import KpiCard from '../../components/crm/ui/KpiCard';
+import PatientFlags, { computeLeadFlags } from '../../components/crm/ui/PatientFlags';
 
 const LeadsPage = () => {
   const navigate = useNavigate();
@@ -956,6 +957,9 @@ const LeadsPage = () => {
                                   Desde cita
                                 </Typography>
                               )}
+                              <Box sx={{ mt: 0.5 }}>
+                                <PatientFlags flags={computeLeadFlags(lead)} dense />
+                              </Box>
                             </Box>
                           </Box>
                         </TableCell>
