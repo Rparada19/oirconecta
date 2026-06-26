@@ -71,6 +71,7 @@ const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
 
 // Portal CRM (lazy)
 const PortalCRMPage = lazy(() => import('./pages/PortalCRMPage'));
+const CrmShell = lazy(() => import('./components/crm/CrmShell'));
 const DashboardPage = lazy(() => import('./pages/crm/DashboardPage'));
 const CitasPage = lazy(() => import('./pages/crm/CitasPage'));
 const LeadsPage = lazy(() => import('./pages/crm/LeadsPage'));
@@ -221,17 +222,19 @@ export default function App() {
           <Route path="/login-crm" element={<LoginCRMPage />} />
           <Route path="/crm-login" element={<LoginCRMPage />} />
           
-          {/* Portal y rutas CRM (protegidas) */}
-          <Route path="/portal-crm" element={<ProtectedRoute><PortalCRMPage /></ProtectedRoute>} />
-          <Route path="/portal-crm/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/portal-crm/acciones-dia" element={<ProtectedRoute><AccionesDiaPage /></ProtectedRoute>} />
-          <Route path="/portal-crm/citas" element={<ProtectedRoute><CitasPage /></ProtectedRoute>} />
-          <Route path="/portal-crm/leads" element={<ProtectedRoute><LeadsPage /></ProtectedRoute>} />
-          <Route path="/portal-crm/pacientes" element={<ProtectedRoute><PacientesPage /></ProtectedRoute>} />
-          <Route path="/portal-crm/campanas" element={<ProtectedRoute><CampanasPage /></ProtectedRoute>} />
-          <Route path="/portal-crm/reportes" element={<ProtectedRoute><ReportesPage /></ProtectedRoute>} />
-          <Route path="/portal-crm/configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />
-          <Route path="/portal-crm/productos" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ProductosPage /></ProtectedRouteByRole>} />
+          {/* Portal y rutas CRM (protegidas) — envueltas por el shell del CRM */}
+          <Route path="/portal-crm" element={<ProtectedRoute><CrmShell /></ProtectedRoute>}>
+            <Route index element={<PortalCRMPage />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="acciones-dia" element={<AccionesDiaPage />} />
+            <Route path="citas" element={<CitasPage />} />
+            <Route path="leads" element={<LeadsPage />} />
+            <Route path="pacientes" element={<PacientesPage />} />
+            <Route path="campanas" element={<CampanasPage />} />
+            <Route path="reportes" element={<ReportesPage />} />
+            <Route path="configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />
+            <Route path="productos" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ProductosPage /></ProtectedRouteByRole>} />
+          </Route>
 
           {/* Portal del Profesional (directorio) */}
           <Route path="/portal-profesional" element={<ProfesionalLayout />}>
