@@ -533,7 +533,17 @@ const PatientProfileDialog = ({ open, onClose, appointment, lead, patient = null
         hipoacusia: { presente: false, familiar: '', grado: '' },
         otrasPatologias: [],
       };
-      
+
+      // Faltaba esta constante: la usa formData.factoresRiesgoAuditivo y
+      // sin ella loadPatientData lanzaba ReferenceError, abortando todo el
+      // setFormData (y por tanto el flujo de edición posterior).
+      const defaultFactoresRiesgo = {
+        exposicionRuido: { presente: false, tipo: '', duracion: '' },
+        ototoxicos: { presente: false, sustancias: '' },
+        traumatismosCraneoencefalicos: { presente: false, descripcion: '' },
+        otros: '',
+      };
+
       const defaultDesarrollo = {
         embarazo: { normal: true, complicaciones: '' },
         parto: { normal: true, tipo: '', complicaciones: '' },
