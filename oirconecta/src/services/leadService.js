@@ -249,3 +249,16 @@ export async function findLeadByEmailOrPhone(email, telefono, excludeLeadId) {
   if (error || !data?.data?.existingLead) return null;
   return mapLeadFromApi(data.data.existingLead);
 }
+
+/**
+ * Convierte un lead en paciente vía backend.
+ * Crea el Patient en BD y actualiza el lead a estado PACIENTE.
+ * @param {string} leadId
+ * @param {{ notas?: string, tienePerdidaAuditiva?: boolean }} [additionalData]
+ */
+export async function convertLeadToPatient(leadId, additionalData = {}) {
+  if (!leadId) return { success: false, error: 'leadId requerido' };
+  const { data, error } = await api.post(`/api/leads/${leadId}/convert-to-patient`, additionalData);
+  if (error) return { success: false, error };
+  return { success: true, patient: data?.data?.patient || null, lead: data?.data?.lead || null };
+}

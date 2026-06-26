@@ -69,6 +69,7 @@ import {
   deleteLead,
   getAllLeads,
   findLeadByEmailOrPhone,
+  convertLeadToPatient,
 } from '../../services/leadService';
 import { createAppointment, getAllAppointments, getAppointmentById, updateAppointmentStatus, getAvailableTimeSlots } from '../../services/appointmentService';
 import { initializePatientProfile } from '../../services/patientProfileService';
@@ -304,21 +305,21 @@ const LeadsPage = () => {
         console.error('[LeadsPage] Error al inicializar perfil de paciente:', error);
       }
       
-      // 3. Actualizar el lead a estado 'paciente'
-      const result = await updateLead(selectedLead.id, { 
-        estado: 'paciente',
-        notas: `${selectedLead.notas || ''}\n\n[Convertido a Paciente] ${new Date().toLocaleDateString()}\nPérdida auditiva confirmada.\n${patientData.notes || ''}`.trim(),
+      // 3. Convertir el lead a paciente vía backend (crea Patient en BD).
+      const notasFinal = `${selectedLead.notas || ''}\n\n[Convertido a Paciente] ${new Date().toLocaleDateString()}\nPérdida auditiva confirmada.\n${patientData.notes || ''}`.trim();
+      const result = await convertLeadToPatient(selectedLead.id, {
+        tienePerdidaAuditiva: true,
+        notas: notasFinal,
       });
-      
+
       if (result.success) {
-        console.log('[LeadsPage] ✅ Lead actualizado a estado "paciente"');
+        console.log('[LeadsPage] ✅ Lead convertido a paciente (backend)', result.patient?.id);
         await loadLeads();
         setPatientDialogOpen(false);
         setPatientData({ hasHearingLoss: false, notes: '' });
         showSnackbar('Lead convertido a paciente exitosamente. Ahora aparece en la sección de Pacientes.', 'success');
-        // El lead desaparecerá de la lista porque el filtro excluye pacientes
       } else {
-        console.error('[LeadsPage] Error al actualizar lead:', result.error);
+        console.error('[LeadsPage] Error al convertir lead:', result.error);
         showSnackbar(result.error || 'Error al convertir el lead', 'error');
       }
     } else {
