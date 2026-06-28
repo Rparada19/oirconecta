@@ -48,27 +48,36 @@ export default function TrialBadge({ profile, variant = 'sidebar' }) {
     danger: { fg: '#fca5a5', bg: 'rgba(252,165,165,0.12)', bar: '#ef4444' },
   }[tone];
 
+  const colorsLight = {
+    ok:     { fg: '#047857', bg: '#ecfdf5',  bar: '#10b981' },
+    warn:   { fg: '#b45309', bg: '#fffbeb',  bar: '#f59e0b' },
+    danger: { fg: '#b91c1c', bg: '#fef2f2',  bar: '#ef4444' },
+  }[tone];
+
   if (variant === 'sidebar') {
     return (
       <Box sx={{
-        mx: 2, mb: 1.5, px: 1.5, py: 1.25, borderRadius: 1.5,
-        bgcolor: colors.bg, border: `1px solid ${colors.fg}40`,
+        px: 1.5, py: 1.25, borderRadius: 1.5,
+        bgcolor: colorsLight.bg, border: `1px solid ${colorsLight.fg}25`,
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
-          <WorkspacePremiumOutlined sx={{ fontSize: 14, color: colors.fg }} />
-          <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: colors.fg, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+          <WorkspacePremiumOutlined sx={{ fontSize: 13, color: colorsLight.fg }} />
+          <Typography sx={{
+            fontSize: 9.5, fontWeight: 700, color: colorsLight.fg,
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+          }}>
             Plan gratuito
           </Typography>
         </Box>
-        <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#e2f5f0', mb: 0.5 }}>
-          {left === 0 ? 'Hoy vence' : `${left} día${left === 1 ? '' : 's'} restantes`}
+        <Typography sx={{ fontSize: 12, fontWeight: 700, color: colorsLight.fg, mb: 0.75, lineHeight: 1.2 }}>
+          {left === 0 ? 'Vence hoy' : `${left} día${left === 1 ? '' : 's'} restantes`}
         </Typography>
         <LinearProgress
           variant="determinate"
           value={pct}
           sx={{
-            height: 3, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.08)',
-            '& .MuiLinearProgress-bar': { bgcolor: colors.bar, borderRadius: 2 },
+            height: 4, borderRadius: 2, bgcolor: `${colorsLight.fg}15`,
+            '& .MuiLinearProgress-bar': { bgcolor: colorsLight.bar, borderRadius: 2 },
           }}
         />
       </Box>
@@ -78,29 +87,29 @@ export default function TrialBadge({ profile, variant = 'sidebar' }) {
   // variant === 'card'
   return (
     <Box sx={{
-      p: 2, borderRadius: 2, bgcolor: '#fff',
-      border: `1px solid ${colors.fg}55`, borderLeft: `4px solid ${colors.bar}`,
+      p: 1.5, borderRadius: 1.5, bgcolor: colorsLight.bg,
+      border: `1px solid ${colorsLight.fg}25`,
     }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-        <WorkspacePremiumOutlined sx={{ fontSize: 18, color: colors.bar }} />
-        <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#085946', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-          Plan gratuito 120 días
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+        <WorkspacePremiumOutlined sx={{ fontSize: 13, color: colorsLight.fg }} />
+        <Typography sx={{
+          fontSize: 9.5, fontWeight: 700, color: colorsLight.fg,
+          letterSpacing: '0.06em', textTransform: 'uppercase',
+        }}>
+          Plan gratuito · 120 d
         </Typography>
       </Box>
-      <Typography sx={{ fontSize: 22, fontWeight: 800, color: '#041a12', lineHeight: 1 }}>
-        {left === 0 ? 'Vence hoy' : `${left} ${left === 1 ? 'día' : 'días'} restantes`}
+      <Typography sx={{ fontSize: 14, fontWeight: 700, color: colorsLight.fg, mb: 0.75, lineHeight: 1.2 }}>
+        {left === 0 ? 'Vence hoy' : `${left} día${left === 1 ? '' : 's'} restantes`}
       </Typography>
       <LinearProgress
         variant="determinate"
         value={pct}
         sx={{
-          mt: 1.25, height: 5, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.06)',
-          '& .MuiLinearProgress-bar': { bgcolor: colors.bar, borderRadius: 2 },
+          height: 4, borderRadius: 2, bgcolor: `${colorsLight.fg}15`,
+          '& .MuiLinearProgress-bar': { bgcolor: colorsLight.bar, borderRadius: 2 },
         }}
       />
-      <Typography sx={{ fontSize: 11.5, color: '#6b7280', mt: 0.75 }}>
-        Disfruta todas las funciones sin tarjeta. Activa tu plan antes para no perder visibilidad.
-      </Typography>
     </Box>
   );
 }

@@ -90,18 +90,21 @@ export default function ProfesionalSuscripcionPage() {
       />
 
       {/* Card principal de estado */}
-      <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', mb: 3, overflow: 'hidden' }}>
-        <Box sx={{ p: 3, background: `linear-gradient(135deg, ${ACCENT} 0%, #00382B 100%)`, color: '#fff' }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2}>
+      <Card sx={{
+        borderRadius: 2.5, mb: 3, overflow: 'hidden',
+        border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(15,23,35,0.04)',
+      }}>
+        <Box sx={{ px: 3, py: 2.25, borderBottom: '1px solid #f0f2f4' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.5}>
             <Box>
-              <Typography sx={{ fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.8, mb: 0.5 }}>
+              <Typography sx={{ fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, mb: 0.25 }}>
                 Plan actual
               </Typography>
-              <Typography sx={{ fontSize: '1.75rem', fontWeight: 800, lineHeight: 1.1 }}>
+              <Typography sx={{ fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.15, color: NAVY }}>
                 {s.plan?.nombre}
               </Typography>
             </Box>
-            <Chip label={meta.label} sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 800, fontSize: '0.8125rem', px: 1 }} />
+            <Chip label={meta.label} sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 700, fontSize: '0.75rem', px: 1, height: 26 }} />
           </Stack>
         </Box>
         <CardContent sx={{ p: 3 }}>

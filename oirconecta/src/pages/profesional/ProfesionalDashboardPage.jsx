@@ -28,7 +28,7 @@ import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import ProfesionalInsights from '../../components/profesional/ProfesionalInsights';
-import TrialBadge from '../../components/profesional/TrialBadge';
+import KpiCard from '../../components/crm/ui/KpiCard';
 
 const glassCard = {
   background: 'rgba(255,255,255,0.90)',
@@ -142,11 +142,6 @@ export default function ProfesionalDashboardPage() {
         subtitle="Resumen de tu actividad en el directorio OírConecta"
       />
 
-      {/* Plan gratuito 120 días */}
-      <Box sx={{ mb: 3 }}>
-        <TrialBadge profile={p} variant="card" />
-      </Box>
-
       {/* Recomendaciones interpretadas */}
       <ProfesionalInsights
         profile={p}
@@ -183,69 +178,38 @@ export default function ProfesionalDashboardPage() {
       )}
 
       {/* Stats del mes */}
-      <Typography variant="body2" sx={{ fontWeight: 700, color: '#085946', mb: 1.5, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+      <Typography sx={{
+        fontSize: 11, fontWeight: 700, color: '#085946', mb: 1.25,
+        letterSpacing: '0.08em', textTransform: 'uppercase',
+      }}>
         Este mes
       </Typography>
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            icon={<VisibilityOutlined sx={{ color: '#085946' }} />}
-            iconBg="rgba(8,89,70,0.10)"
-            label="Visitas al perfil"
-            value={stats?.visitas?.mes ?? 0}
-            sub={`${stats?.visitas?.total ?? p?.perfilVisitas ?? 0} en total`}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            icon={<MailOutlined sx={{ color: '#3B82F6' }} />}
-            iconBg="rgba(59,130,246,0.10)"
-            label="Consultas enviadas"
-            value={stats?.consultas?.mes ?? 0}
-            sub={`${stats?.consultas?.total ?? inquiries.length} en total · ${newCount} nuevas`}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            icon={<WhatsApp sx={{ color: '#10B981' }} />}
-            iconBg="rgba(16,185,129,0.10)"
-            label="Clics en WhatsApp"
-            value={stats?.whatsapp?.mes ?? 0}
-            sub={`${stats?.whatsapp?.total ?? p?.whatsappClickCount ?? 0} en total`}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            icon={<PhoneInTalkOutlined sx={{ color: '#F59E0B' }} />}
-            iconBg="rgba(245,158,11,0.12)"
-            label="Llamadas directas"
-            value={stats?.llamadas?.mes ?? 0}
-            sub={`${stats?.llamadas?.total ?? p?.callClickCount ?? 0} en total`}
-          />
-        </Grid>
-      </Grid>
-
-      {/* Estado del perfil */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={0} sx={glassCard}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
-                <Avatar sx={{ bgcolor: `${statusCfg.color}18`, width: 44, height: 44 }}>
-                  <VerifiedOutlined sx={{ color: statusCfg.color }} />
-                </Avatar>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
-                  Estado del perfil
-                </Typography>
-              </Box>
-              <Chip
-                label={statusCfg.label}
-                sx={{ bgcolor: statusCfg.bg, color: statusCfg.color, fontWeight: 800, fontSize: '0.85rem', px: 1 }}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
+        <KpiCard
+          label="Visitas al perfil"
+          value={stats?.visitas?.mes ?? 0}
+          hint={`${stats?.visitas?.total ?? p?.perfilVisitas ?? 0} en total`}
+          tone="success"
+        />
+        <KpiCard
+          label="Consultas"
+          value={stats?.consultas?.mes ?? 0}
+          hint={`${stats?.consultas?.total ?? inquiries.length} en total · ${newCount} nuevas`}
+          tone="info"
+        />
+        <KpiCard
+          label="Clics WhatsApp"
+          value={stats?.whatsapp?.mes ?? 0}
+          hint={`${stats?.whatsapp?.total ?? p?.whatsappClickCount ?? 0} en total`}
+          tone="success"
+        />
+        <KpiCard
+          label="Llamadas directas"
+          value={stats?.llamadas?.mes ?? 0}
+          hint={`${stats?.llamadas?.total ?? p?.callClickCount ?? 0} en total`}
+          tone="warning"
+        />
+      </Box>
 
       {/* Últimas consultas */}
       <Card elevation={0} sx={glassCard}>

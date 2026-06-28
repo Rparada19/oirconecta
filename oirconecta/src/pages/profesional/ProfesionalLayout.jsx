@@ -1,75 +1,238 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+/**
+ * Shell del Portal Profesional. Misma plantilla visual que el CRM:
+ * sidebar blanco con secciones y barra de acento verde en el item activo,
+ * topbar blanca con bottom border, área de contenido con bg #f8fafc.
+ */
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Box,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  Chip,
-  Avatar,
-  Divider,
-  IconButton,
-  AppBar,
-  Toolbar,
-  Badge,
-  Tooltip,
-  CircularProgress,
+  Box, Drawer, IconButton, AppBar, Toolbar, Typography,
+  Avatar, Menu, MenuItem, Divider, Tooltip, Badge, useMediaQuery,
 } from '@mui/material';
 import {
+  Menu as MenuIcon,
   DashboardOutlined,
   PersonOutlined,
   StorefrontOutlined,
   MailOutlined,
   WorkspacePremiumOutlined,
   OpenInNew,
-  LogoutOutlined,
-  MenuOutlined,
+  Logout,
+  ArrowBack,
 } from '@mui/icons-material';
 import { directoryApi, clearDirectoryToken, getDirectoryToken } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
+import { OC_COLORS } from '../../theme';
 import TrialBadge from '../../components/profesional/TrialBadge';
 
-const SIDEBAR_W = 240;
+const SIDEBAR_W = 244;
+const TOPBAR_H = 64;
 
-const NAV_ITEMS = [
-  { label: 'Mi panel', icon: <DashboardOutlined />, path: '/portal-profesional' },
-  { label: 'Mi perfil', icon: <PersonOutlined />, path: '/portal-profesional/perfil' },
-  { label: 'Consultas recibidas', icon: <MailOutlined />, path: '/portal-profesional/consultas', inquiriesBadge: true },
-  { label: 'Mi suscripción', icon: <WorkspacePremiumOutlined />, path: '/portal-profesional/suscripcion' },
+const NAV_SECTIONS = [
+  {
+    key: 'principal',
+    label: 'Principal',
+    items: [
+      { label: 'Mi panel', icon: DashboardOutlined, path: '/portal-profesional' },
+    ],
+  },
+  {
+    key: 'cuenta',
+    label: 'Cuenta',
+    items: [
+      { label: 'Mi perfil',    icon: PersonOutlined,    path: '/portal-profesional/perfil' },
+      { label: 'Mis servicios',icon: StorefrontOutlined,path: '/portal-profesional/servicios' },
+      { label: 'Consultas',    icon: MailOutlined,      path: '/portal-profesional/consultas', inquiriesBadge: true },
+    ],
+  },
+  {
+    key: 'planes',
+    label: 'Plan',
+    items: [
+      { label: 'Mi suscripción', icon: WorkspacePremiumOutlined, path: '/portal-profesional/suscripcion' },
+    ],
+  },
 ];
+
+function SidebarContent({ profile, newInquiries, currentPath, onNavigate, onLogout, onClose }) {
+  const profileId = profile?.id || profile?.profileId || profile?.slug;
+
+  const handleClick = (path) => {
+    onNavigate(path);
+    if (onClose) onClose();
+  };
+
+  return (
+    <Box sx={{
+      width: SIDEBAR_W, height: '100%', display: 'flex', flexDirection: 'column',
+      bgcolor: '#fff', borderRight: '1px solid #e5e7eb',
+    }}>
+      {/* Brand */}
+      <Box sx={{
+        display: 'flex', alignItems: 'center', gap: 1.5, px: 2.5, py: 2,
+        borderBottom: '1px solid #f0f2f4', minHeight: TOPBAR_H,
+      }}>
+        <Box sx={{
+          width: 32, height: 32, borderRadius: 1.5, bgcolor: OC_COLORS.verdeBienestar,
+          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontWeight: 700, fontSize: 14,
+        }}>
+          OC
+        </Box>
+        <Box>
+          <Typography sx={{ fontSize: 13, fontWeight: 700, color: OC_COLORS.navyPrincipal, lineHeight: 1.1 }}>
+            OÍR Conecta
+          </Typography>
+          <Typography sx={{ fontSize: 11, color: OC_COLORS.grisMedio }}>
+            Portal Profesional
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Plan badge en variante "light" sobre sidebar blanco */}
+      <Box sx={{ px: 2, pt: 1.75, pb: 0.5 }}>
+        <TrialBadge profile={profile} variant="card" />
+      </Box>
+
+      {/* Nav sections */}
+      <Box sx={{ flex: 1, overflowY: 'auto', py: 1.5 }}>
+        {NAV_SECTIONS.map((section) => (
+          <Box key={section.key} sx={{ mb: 1.5 }}>
+            <Typography sx={{
+              px: 2.5, py: 0.5, fontSize: 10.5, fontWeight: 700,
+              letterSpacing: '0.06em', color: OC_COLORS.grisClaro, textTransform: 'uppercase',
+            }}>
+              {section.label}
+            </Typography>
+            {section.items.map((item) => {
+              const Icon = item.icon;
+              const active = item.path === '/portal-profesional'
+                ? currentPath === '/portal-profesional'
+                : currentPath.startsWith(item.path);
+              return (
+                <Box
+                  key={item.path}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleClick(item.path)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(item.path); }}
+                  sx={{
+                    mx: 1, my: 0.25, px: 1.5, py: 1, borderRadius: 1.5,
+                    display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer',
+                    color: active ? OC_COLORS.verdeBienestar : OC_COLORS.grisOscuro,
+                    bgcolor: active ? 'rgba(8,89,70,0.08)' : 'transparent',
+                    fontWeight: active ? 600 : 500,
+                    position: 'relative',
+                    transition: 'background-color 120ms ease',
+                    '&:hover': { bgcolor: active ? 'rgba(8,89,70,0.10)' : '#f3f4f6' },
+                    '&:before': active ? {
+                      content: '""', position: 'absolute', left: -8, top: 8, bottom: 8, width: 3,
+                      bgcolor: OC_COLORS.verdeBienestar, borderRadius: 1.5,
+                    } : {},
+                  }}
+                >
+                  {item.inquiriesBadge && newInquiries > 0 ? (
+                    <Badge badgeContent={newInquiries} color="error"
+                      sx={{ '& .MuiBadge-badge': { fontSize: 9, height: 16, minWidth: 16 } }}>
+                      <Icon sx={{ fontSize: 19 }} />
+                    </Badge>
+                  ) : (
+                    <Icon sx={{ fontSize: 19 }} />
+                  )}
+                  <Typography sx={{ fontSize: 13.5, fontWeight: 'inherit' }}>{item.label}</Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        ))}
+
+        {/* Ver ficha pública */}
+        {profileId && (
+          <Box sx={{ mt: 0.5 }}>
+            <Typography sx={{
+              px: 2.5, py: 0.5, fontSize: 10.5, fontWeight: 700,
+              letterSpacing: '0.06em', color: OC_COLORS.grisClaro, textTransform: 'uppercase',
+            }}>
+              Vista pública
+            </Typography>
+            <Box
+              role="button"
+              tabIndex={0}
+              onClick={() => window.open(`/directorio/profesional/${profileId}`, '_blank')}
+              sx={{
+                mx: 1, my: 0.25, px: 1.5, py: 1, borderRadius: 1.5,
+                display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer',
+                color: OC_COLORS.grisOscuro, fontWeight: 500,
+                '&:hover': { bgcolor: '#f3f4f6' },
+              }}
+            >
+              <OpenInNew sx={{ fontSize: 19 }} />
+              <Typography sx={{ fontSize: 13.5 }}>Ver mi ficha</Typography>
+            </Box>
+          </Box>
+        )}
+      </Box>
+
+      {/* Footer: sitio público + logout */}
+      <Box sx={{ borderTop: '1px solid #f0f2f4', p: 1.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box
+          role="button"
+          tabIndex={0}
+          onClick={() => handleClick('/')}
+          sx={{
+            display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 1,
+            borderRadius: 1.5, cursor: 'pointer', color: OC_COLORS.grisMedio,
+            '&:hover': { bgcolor: '#f3f4f6' },
+          }}
+        >
+          <ArrowBack sx={{ fontSize: 17 }} />
+          <Typography sx={{ fontSize: 12.5 }}>Sitio público</Typography>
+        </Box>
+        <Box
+          role="button"
+          tabIndex={0}
+          onClick={onLogout}
+          sx={{
+            display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 1,
+            borderRadius: 1.5, cursor: 'pointer', color: '#b91c1c',
+            '&:hover': { bgcolor: 'rgba(239,68,68,0.08)' },
+          }}
+        >
+          <Logout sx={{ fontSize: 17 }} />
+          <Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>Cerrar sesión</Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
 
 function statusChip(status) {
   const map = {
-    PENDING: { label: 'En revisión', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
-    APPROVED: { label: 'Aprobado', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
-    REJECTED: { label: 'Rechazado', color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
+    PENDING:  { label: 'En revisión', color: '#b45309', bg: '#fef3c7' },
+    APPROVED: { label: 'Aprobado',    color: '#047857', bg: '#d1fae5' },
+    REJECTED: { label: 'Rechazado',   color: '#b91c1c', bg: '#fee2e2' },
   };
-  const s = map[status] || { label: status || 'Sin estado', color: '#9CA3AF', bg: 'rgba(156,163,175,0.15)' };
+  const s = map[status] || { label: status || '—', color: '#6b7280', bg: '#f3f4f6' };
   return (
-    <Chip
-      label={s.label}
-      size="small"
-      sx={{
-        bgcolor: s.bg,
-        color: s.color,
-        fontWeight: 700,
-        fontSize: '0.7rem',
-        border: `1px solid ${s.color}40`,
-      }}
-    />
+    <Box sx={{
+      display: 'inline-flex', alignItems: 'center', px: 1, py: 0.25,
+      bgcolor: s.bg, color: s.color, borderRadius: 1,
+      fontSize: 10.5, fontWeight: 700, letterSpacing: '0.02em',
+    }}>
+      {s.label}
+    </Box>
   );
 }
 
 export default function ProfesionalLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useMediaQuery('(max-width:900px)');
   const [profile, setProfile] = useState(null);
   const [newInquiries, setNewInquiries] = useState(0);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [userMenu, setUserMenu] = useState(null);
 
   useEffect(() => {
     if (!getDirectoryToken()) {
@@ -86,214 +249,111 @@ export default function ProfesionalLayout() {
     });
   }, [navigate]);
 
-  function handleLogout() {
+  const handleLogout = () => {
     clearDirectoryToken();
     navigate('/login-directorio', { replace: true });
-  }
+  };
 
-  const profileId = profile?.id || profile?.profileId || profile?.slug;
   const nombreMostrado = profile?.nombreConsultorio || profile?.nombre || profile?.email || 'Profesional';
-  const iniciales = nombreMostrado.slice(0, 2).toUpperCase();
-
-  const sidebarContent = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Logo / Brand */}
-      <Box sx={{ px: 3, py: 3 }}>
-        <Typography
-          variant="h6"
-          sx={{ fontWeight: 800, color: '#6ee7c8', letterSpacing: '-0.5px', mb: 0.25 }}
-        >
-          OírConecta
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(110,231,200,0.60)', fontWeight: 500 }}>
-          Portal Profesional
-        </Typography>
-      </Box>
-
-      <Divider sx={{ borderColor: 'rgba(110,231,200,0.15)' }} />
-
-      {/* Profesional info */}
-      <Box sx={{ px: 2.5, py: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Avatar sx={{ width: 40, height: 40, bgcolor: '#085946', color: '#6ee7c8', fontWeight: 700, fontSize: '1rem' }}>
-          {iniciales}
-        </Avatar>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography
-            variant="body2"
-            sx={{ color: '#e2f5f0', fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-          >
-            {nombreMostrado}
-          </Typography>
-          {profile && statusChip(profile.status)}
-        </Box>
-      </Box>
-
-      <Divider sx={{ borderColor: 'rgba(110,231,200,0.15)' }} />
-
-      {/* Plan gratuito */}
-      <Box sx={{ pt: 1.5 }}>
-        <TrialBadge profile={profile} variant="sidebar" />
-      </Box>
-
-      {/* Nav */}
-      <List sx={{ flex: 1, px: 1, py: 1.5 }}>
-        {NAV_ITEMS.map((item) => {
-          const isActive =
-            item.path === '/portal-profesional'
-              ? location.pathname === '/portal-profesional'
-              : location.pathname.startsWith(item.path);
-          return (
-            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                component={RouterLink}
-                to={item.path}
-                onClick={() => setMobileOpen(false)}
-                sx={{
-                  borderRadius: '10px',
-                  px: 2,
-                  py: 1,
-                  bgcolor: isActive ? 'rgba(110,231,200,0.12)' : 'transparent',
-                  border: isActive ? '1px solid rgba(110,231,200,0.25)' : '1px solid transparent',
-                  '&:hover': { bgcolor: 'rgba(110,231,200,0.08)' },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 36, color: isActive ? '#6ee7c8' : 'rgba(255,255,255,0.55)' }}>
-                  {item.inquiriesBadge && newInquiries > 0 ? (
-                    <Badge badgeContent={newInquiries} color="error" sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem' } }}>
-                      {item.icon}
-                    </Badge>
-                  ) : (
-                    item.icon
-                  )}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{
-                    fontSize: '0.875rem',
-                    fontWeight: isActive ? 700 : 500,
-                    color: isActive ? '#6ee7c8' : 'rgba(255,255,255,0.75)',
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
-
-        {/* Ver ficha pública */}
-        {profileId && (
-          <ListItem disablePadding sx={{ mb: 0.5 }}>
-            <ListItemButton
-              component="a"
-              href={`/directorio/profesional/${profileId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{
-                borderRadius: '10px',
-                px: 2,
-                py: 1,
-                '&:hover': { bgcolor: 'rgba(110,231,200,0.08)' },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 36, color: 'rgba(255,255,255,0.55)' }}>
-                <OpenInNew fontSize="small" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Ver mi ficha pública"
-                primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500, color: 'rgba(255,255,255,0.75)' }}
-              />
-            </ListItemButton>
-          </ListItem>
-        )}
-      </List>
-
-      <Divider sx={{ borderColor: 'rgba(110,231,200,0.15)' }} />
-
-      {/* Cerrar sesión */}
-      <Box sx={{ p: 1.5 }}>
-        <ListItemButton
-          onClick={handleLogout}
-          sx={{
-            borderRadius: '10px',
-            px: 2,
-            py: 1,
-            '&:hover': { bgcolor: 'rgba(239,68,68,0.10)' },
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 36, color: 'rgba(239,68,68,0.75)' }}>
-            <LogoutOutlined fontSize="small" />
-          </ListItemIcon>
-          <ListItemText
-            primary="Cerrar sesión"
-            primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500, color: 'rgba(239,68,68,0.75)' }}
-          />
-        </ListItemButton>
-      </Box>
-    </Box>
-  );
+  const userInitials = nombreMostrado
+    .split(/\s+/).map((s) => s[0]).slice(0, 2).join('').toUpperCase();
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f7fa' }}>
-      {/* Sidebar desktop */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          display: { xs: 'none', md: 'block' },
-          width: SIDEBAR_W,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: SIDEBAR_W,
-            boxSizing: 'border-box',
-            background: '#041a12',
-            border: 'none',
-          },
-        }}
-      >
-        {sidebarContent}
-      </Drawer>
-
-      {/* Sidebar mobile */}
-      <Drawer
-        variant="temporary"
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': {
-            width: SIDEBAR_W,
-            background: '#041a12',
-            border: 'none',
-          },
-        }}
-      >
-        {sidebarContent}
-      </Drawer>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f8fafc' }}>
+      {/* Sidebar */}
+      {isMobile ? (
+        <Drawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          ModalProps={{ keepMounted: true }}
+        >
+          <SidebarContent
+            profile={profile}
+            newInquiries={newInquiries}
+            currentPath={location.pathname}
+            onNavigate={navigate}
+            onLogout={handleLogout}
+            onClose={() => setDrawerOpen(false)}
+          />
+        </Drawer>
+      ) : (
+        <Box sx={{
+          width: SIDEBAR_W, flexShrink: 0, position: 'sticky', top: 0,
+          height: '100vh', alignSelf: 'flex-start',
+        }}>
+          <SidebarContent
+            profile={profile}
+            newInquiries={newInquiries}
+            currentPath={location.pathname}
+            onNavigate={navigate}
+            onLogout={handleLogout}
+          />
+        </Box>
+      )}
 
       {/* Main */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* Mobile AppBar */}
         <AppBar
-          position="sticky"
-          elevation={0}
+          position="sticky" elevation={0}
           sx={{
-            display: { md: 'none' },
-            bgcolor: '#041a12',
-            borderBottom: '1px solid rgba(110,231,200,0.15)',
+            bgcolor: '#fff', color: OC_COLORS.navyPrincipal,
+            borderBottom: '1px solid #e5e7eb',
+            height: TOPBAR_H, justifyContent: 'center',
           }}
         >
-          <Toolbar>
-            <IconButton color="inherit" onClick={() => setMobileOpen(true)} edge="start" sx={{ mr: 1 }}>
-              <MenuOutlined />
-            </IconButton>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: '#6ee7c8', flex: 1 }}>
-              OírConecta
-            </Typography>
+          <Toolbar sx={{ minHeight: `${TOPBAR_H}px !important`, gap: 1.5 }}>
+            {isMobile && (
+              <IconButton edge="start" onClick={() => setDrawerOpen(true)}>
+                <MenuIcon />
+              </IconButton>
+            )}
+
+            <Box sx={{ flex: 1 }} />
+
+            {/* Estado del perfil */}
             {profile && statusChip(profile.status)}
+
+            {/* Usuario */}
+            <Tooltip title={profile?.email || ''}>
+              <IconButton onClick={(e) => setUserMenu(e.currentTarget)} size="small">
+                <Avatar sx={{
+                  width: 32, height: 32, fontSize: 12,
+                  bgcolor: OC_COLORS.verdeBienestar, color: '#fff', fontWeight: 600,
+                }}>
+                  {userInitials}
+                </Avatar>
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={userMenu}
+              open={Boolean(userMenu)}
+              onClose={() => setUserMenu(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <Box sx={{ px: 2, py: 1 }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+                  {nombreMostrado}
+                </Typography>
+                <Typography sx={{ fontSize: 11.5, color: OC_COLORS.grisMedio }}>
+                  {profile?.email}
+                </Typography>
+              </Box>
+              <Divider />
+              <MenuItem onClick={() => { setUserMenu(null); navigate('/portal-profesional/perfil'); }}>
+                Editar mi perfil
+              </MenuItem>
+              <MenuItem onClick={() => { setUserMenu(null); navigate('/'); }}>
+                Ir al sitio público
+              </MenuItem>
+              <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                <Logout sx={{ fontSize: 17, mr: 1 }} /> Cerrar sesión
+              </MenuItem>
+            </Menu>
           </Toolbar>
         </AppBar>
 
-        {/* Content */}
-        <Box sx={{ flex: 1, p: { xs: 2, sm: 3 } }}>
+        <Box component="main" sx={{ flex: 1, minWidth: 0, p: { xs: 2, sm: 3 } }}>
           <Outlet context={{ profile, newInquiries, setNewInquiries }} />
         </Box>
       </Box>
