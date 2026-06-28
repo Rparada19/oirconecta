@@ -1,3 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" role="img" aria-label="Bernafon">
-  <text x="100" y="43" text-anchor="middle" font-family="-apple-system, system-ui, 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="31" letter-spacing="-0.5" fill="#C8102E">Bernafon</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" role="img" aria-label="Bernafon">
+  <circle cx="22" cy="30" r="10" fill="#C8102E"/>
+  <circle cx="22" cy="30" r="4" fill="#fff"/>
+  <text x="145" y="43" text-anchor="middle" font-family="-apple-system, system-ui, 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="31" letter-spacing="-0.5" fill="#C8102E">Bernafon</text>
 </svg>
