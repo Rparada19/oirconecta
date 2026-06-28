@@ -3,7 +3,7 @@
  * F2 añadirá Wompi (capture, webhook, factura PDF).
  *
  * Reglas de negocio:
- *  - Profesional natural recibe TRIAL_90D (45 días reales) al crearse perfil.
+ *  - Profesional natural recibe TRIAL_90D (120 días reales) al crearse perfil.
  *  - Empresa (persona jurídica) paga $20.000 × sede × mes (sin descuento anual).
  *  - Independiente: $20.000/mes o $200.000/año (10 meses precio anual).
  *  - El status se recalcula on-read si no se ha materializado.
@@ -17,12 +17,12 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const IVA_RATE = 0.19;
-const TRIAL_DAYS = 45;
+const TRIAL_DAYS = 120;
 
 const PLAN_DEFAULTS = [
   // El code se mantiene como TRIAL_90D por compatibilidad con datos previos;
-  // la duración real es 45 días.
-  { code: 'TRIAL_90D', nombre: 'Prueba gratuita (45 días)', precioCOP: 0,      duracionDias: TRIAL_DAYS,
+  // la duración real es 120 días (lanzamiento comercial 2026-06).
+  { code: 'TRIAL_90D', nombre: 'Prueba gratuita (120 días)', precioCOP: 0,      duracionDias: TRIAL_DAYS,
     beneficios: ['Acceso completo al portal', 'Perfil visible en directorio', 'Recepción de solicitudes', 'Estadísticas'] },
   { code: 'MENSUAL',   nombre: 'Profesional independiente · mensual', precioCOP: 20000,  duracionDias: 30,
     beneficios: ['Perfil activo', 'Aparición en búsquedas', 'Recepción de solicitudes', 'Acceso a estadísticas'] },

@@ -145,7 +145,7 @@ export default function ProfesionalSuscripcionPage() {
 
           {s.status === 'TRIAL' && (
             <Alert severity="info" sx={{ mt: 3, borderRadius: '8px' }}>
-              Estás disfrutando de tu prueba gratuita de 45 días. Al vencer, elige un plan para mantener tu perfil activo.
+              Estás disfrutando de tu prueba gratuita de 120 días. Al vencer, elige un plan para mantener tu perfil activo.
             </Alert>
           )}
           {(s.status === 'PAST_DUE' || s.status === 'SUSPENDED') && (

@@ -208,7 +208,7 @@ export default function AdminSuscripcionesPage() {
           </TableHead>
           <TableBody>
             {[
-              { plan: 'Prueba gratuita', target: 'Todos los registros nuevos',          precio: 0,       vig: '45 días' },
+              { plan: 'Prueba gratuita', target: 'Todos los registros nuevos',          precio: 0,       vig: '120 días' },
               { plan: 'Mensual',         target: 'Profesional independiente',           precio: 20000,   vig: '30 días' },
               { plan: 'Anual',           target: 'Profesional independiente',           precio: 200000,  vig: '12 meses',  badge: 'Ahorra $40.000' },
               { plan: 'Empresa o centro', target: 'Persona jurídica · por sede',        precio: 20000,   vig: '30 días',   nota: '× cada sede registrada' },
