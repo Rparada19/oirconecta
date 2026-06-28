@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import { directoryApi, clearDirectoryToken, getDirectoryToken } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
+import TrialBadge from '../../components/profesional/TrialBadge';
 
 const SIDEBAR_W = 240;
 
@@ -128,6 +129,11 @@ export default function ProfesionalLayout() {
       </Box>
 
       <Divider sx={{ borderColor: 'rgba(110,231,200,0.15)' }} />
+
+      {/* Plan gratuito */}
+      <Box sx={{ pt: 1.5 }}>
+        <TrialBadge profile={profile} variant="sidebar" />
+      </Box>
 
       {/* Nav */}
       <List sx={{ flex: 1, px: 1, py: 1.5 }}>

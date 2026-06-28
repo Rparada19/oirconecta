@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useOutletContext, Link as RouterLink } from 'react-router-dom';
+import { useOutletContext, Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -22,9 +22,13 @@ import {
   InfoOutlined,
   ErrorOutline,
   PhoneInTalkOutlined,
+  DashboardOutlined,
 } from '@mui/icons-material';
 import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
+import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
+import ProfesionalInsights from '../../components/profesional/ProfesionalInsights';
+import TrialBadge from '../../components/profesional/TrialBadge';
 
 const glassCard = {
   background: 'rgba(255,255,255,0.90)',
@@ -95,6 +99,7 @@ function inquiryStatusChip(status) {
 
 export default function ProfesionalDashboardPage() {
   const { profile: ctxProfile } = useOutletContext() || {};
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [inquiries, setInquiries] = useState([]);
   const [stats, setStats] = useState(null);
@@ -131,15 +136,24 @@ export default function ProfesionalDashboardPage() {
 
   return (
     <Box>
-      {/* Page title */}
+      <ProfesionalPageHeader
+        icon={DashboardOutlined}
+        title="Mi panel"
+        subtitle="Resumen de tu actividad en el directorio OírConecta"
+      />
+
+      {/* Plan gratuito 120 días */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: '#041a12', letterSpacing: '-0.5px' }}>
-          Mi panel
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Resumen de tu actividad en el directorio OírConecta
-        </Typography>
+        <TrialBadge profile={p} variant="card" />
       </Box>
+
+      {/* Recomendaciones interpretadas */}
+      <ProfesionalInsights
+        profile={p}
+        stats={stats}
+        inquiries={inquiries}
+        onNavigate={(path) => navigate(path)}
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>
