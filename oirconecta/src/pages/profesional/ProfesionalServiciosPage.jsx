@@ -231,52 +231,89 @@ export default function ProfesionalServiciosPage() {
       {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
 
       {servicios.length === 0 ? (
-        <Card elevation={0} sx={{
-          bgcolor: '#fff', border: '1px solid #e5e7eb', borderRadius: 2.5,
-          boxShadow: '0 1px 3px rgba(15,23,35,0.04)',
-          textAlign: 'center', py: 6, px: 3, maxWidth: 640, mx: 'auto',
-        }}>
+        <Box>
+          {/* Hero con gradiente */}
           <Box sx={{
-            width: 64, height: 64, mx: 'auto', mb: 2, borderRadius: 2,
-            bgcolor: 'rgba(8,89,70,0.08)', color: '#085946',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            position: 'relative', borderRadius: 3, overflow: 'hidden',
+            background: 'linear-gradient(135deg, #272F50 0%, #1f3a6b 50%, #085946 100%)',
+            color: '#fff', p: { xs: 2.5, sm: 3.25 }, mb: 2.5,
           }}>
-            <StorefrontOutlined sx={{ fontSize: 32 }} />
+            <Box sx={{
+              position: 'absolute', right: -60, top: -60, width: 200, height: 200, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(110,231,200,0.22), rgba(110,231,200,0) 70%)',
+            }} />
+            <Box sx={{ position: 'relative', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2.5, alignItems: { md: 'center' }, justifyContent: 'space-between' }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#6ee7c8', mb: 0.75 }}>
+                  Empieza a vender en OírConecta
+                </Typography>
+                <Typography sx={{ fontSize: { xs: 20, sm: 24 }, fontWeight: 800, mb: 0.5, lineHeight: 1.2 }}>
+                  Publica tu primer servicio
+                </Typography>
+                <Typography sx={{ fontSize: 13.5, color: 'rgba(255,255,255,0.80)', maxWidth: 540 }}>
+                  Aparecen en el marketplace y en tu ficha. Los pacientes te encuentran
+                  por especialidad, modalidad y precio.
+                </Typography>
+              </Box>
+              <Button
+                onClick={openNew}
+                startIcon={<AddOutlined />}
+                sx={{
+                  bgcolor: '#fff', color: '#272F50', fontWeight: 700, textTransform: 'none',
+                  px: 2.25, py: 1, borderRadius: 1.5, fontSize: 13.5,
+                  '&:hover': { bgcolor: '#f3f4f6' },
+                }}
+              >
+                Crear servicio
+              </Button>
+            </Box>
           </Box>
-          <Typography sx={{ fontWeight: 800, fontSize: 18, color: '#041a12', mb: 0.75 }}>
-            Empieza a publicar tus servicios
-          </Typography>
-          <Typography sx={{ color: '#5b6b7a', fontSize: 14, mb: 2.5, maxWidth: 480, mx: 'auto' }}>
-            Tus servicios aparecen en el marketplace y en tu ficha pública.
-            Pacientes te encuentran filtrando por especialidad, modalidad y precio.
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddOutlined />}
-            onClick={openNew}
-            sx={{ bgcolor: '#085946', borderRadius: '10px', fontWeight: 700, textTransform: 'none', px: 3, py: 1, '&:hover': { bgcolor: '#064a38' } }}
-          >
-            Crear mi primer servicio
-          </Button>
-          <Box sx={{
-            mt: 3, pt: 2.5, borderTop: '1px solid #f0f2f5',
-            display: 'flex', flexDirection: 'column', gap: 0.75,
-            textAlign: 'left', maxWidth: 420, mx: 'auto',
+
+          {/* Plantillas sugeridas en colores */}
+          <Typography sx={{
+            fontSize: 11, fontWeight: 700, color: '#4054B2', mb: 1.25,
+            letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
-            <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#085946', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>
-              Tips rápidos
-            </Typography>
-            <Typography sx={{ fontSize: 12.5, color: '#5b6b7a' }}>
-              • Pon precio claro — los servicios con precio se contactan 3× más.
-            </Typography>
-            <Typography sx={{ fontSize: 12.5, color: '#5b6b7a' }}>
-              • Indica duración aproximada (30, 45 o 60 min).
-            </Typography>
-            <Typography sx={{ fontSize: 12.5, color: '#5b6b7a' }}>
-              • Si haces virtual o domicilio, márcalo: hay alta demanda.
-            </Typography>
+            Plantillas sugeridas
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 2 }}>
+            {[
+              { title: 'Audiometría tonal', dur: '45 min', precio: '$ 80.000', cat: 'Audiología',  c: '#4054B2', bg: '#eef0fb' },
+              { title: 'Adaptación de audífono', dur: '60 min', precio: '$ 150.000', cat: 'Audiología', c: '#8b5cf6', bg: '#f3edff' },
+              { title: 'Valoración fonoaudiológica', dur: '60 min', precio: '$ 110.000', cat: 'Fonoaudiología', c: '#10b981', bg: '#ecfdf5' },
+              { title: 'Limpieza de oído', dur: '20 min', precio: '$ 50.000', cat: 'ORL', c: '#f59e0b', bg: '#fef3c7' },
+              { title: 'Terapia de lenguaje', dur: '45 min', precio: '$ 90.000', cat: 'Rehabilitación', c: '#ef4444', bg: '#fef2f2' },
+              { title: 'Audiometría infantil', dur: '45 min', precio: '$ 95.000', cat: 'Audiología', c: '#ec4899', bg: '#fdf2f8' },
+            ].map((t) => (
+              <Box key={t.title}
+                onClick={openNew}
+                sx={{
+                  cursor: 'pointer', bgcolor: '#fff', border: '1px solid #e5e7eb',
+                  borderLeft: `4px solid ${t.c}`, borderRadius: 2, p: 2,
+                  transition: 'transform 120ms ease, box-shadow 120ms ease',
+                  '&:hover': { transform: 'translateY(-1px)', boxShadow: `0 4px 12px ${t.c}25` },
+                }}
+              >
+                <Box sx={{
+                  display: 'inline-block', px: 0.875, py: 0.125, mb: 1, borderRadius: 0.75,
+                  bgcolor: t.bg, color: t.c, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em',
+                }}>
+                  {t.cat}
+                </Box>
+                <Typography sx={{ fontSize: 14.5, fontWeight: 700, color: '#041a12', mb: 0.5 }}>
+                  {t.title}
+                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <Typography sx={{ fontSize: 12.5, color: '#5b6b7a' }}>{t.dur}</Typography>
+                  <Typography sx={{ fontSize: 14, fontWeight: 800, color: t.c }}>{t.precio}</Typography>
+                </Box>
+              </Box>
+            ))}
           </Box>
-        </Card>
+          <Typography sx={{ fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
+            Toca una plantilla para crear tu servicio con esos valores como punto de partida.
+          </Typography>
+        </Box>
       ) : (
         <Grid container spacing={2.5}>
           {servicios.map((serv) => (

@@ -30,6 +30,7 @@ import {
 import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
+import ShareProfileCard from '../../components/profesional/ShareProfileCard';
 
 const glassCard = {
   background: 'rgba(255,255,255,0.90)',
@@ -106,10 +107,10 @@ export default function ProfesionalConsultasPage() {
   }
 
   const FILTER_OPTS = [
-    { key: 'ALL', label: 'Todas' },
-    { key: 'NEW', label: 'Nuevas' },
-    { key: 'READ', label: 'Leídas' },
-    { key: 'ARCHIVED', label: 'Archivadas' },
+    { key: 'ALL',      label: 'Todas',      color: '#272F50', bg: '#eef0fb' },
+    { key: 'NEW',      label: 'Nuevas',     color: '#4054B2', bg: '#eef0fb' },
+    { key: 'READ',     label: 'Leídas',     color: '#085946', bg: '#ecfdf5' },
+    { key: 'ARCHIVED', label: 'Archivadas', color: '#6b7280', bg: '#f3f4f6' },
   ];
 
   const filtered = filter === 'ALL' ? inquiries : inquiries.filter((i) => i.status === filter);
@@ -144,11 +145,11 @@ export default function ProfesionalConsultasPage() {
               clickable
               onClick={() => setFilter(opt.key)}
               sx={{
-                fontWeight: 700,
-                borderRadius: '10px',
-                bgcolor: active ? '#085946' : 'rgba(8,89,70,0.08)',
-                color: active ? '#fff' : '#085946',
-                border: active ? '1px solid #085946' : '1px solid rgba(8,89,70,0.20)',
+                fontWeight: 700, borderRadius: '10px',
+                bgcolor: active ? opt.color : opt.bg,
+                color: active ? '#fff' : opt.color,
+                border: `1px solid ${active ? opt.color : `${opt.color}25`}`,
+                '&:hover': { bgcolor: active ? opt.color : `${opt.color}18` },
               }}
             />
           );
@@ -157,27 +158,70 @@ export default function ProfesionalConsultasPage() {
 
       {/* Lista */}
       {filtered.length === 0 ? (
-        <Card elevation={0} sx={{
-          bgcolor: '#fff', border: '1px solid #e5e7eb', borderRadius: 2.5,
-          boxShadow: '0 1px 3px rgba(15,23,35,0.04)',
-          textAlign: 'center', py: 6, px: 3,
-        }}>
-          <Box sx={{
-            width: 56, height: 56, mx: 'auto', mb: 1.5, borderRadius: 2,
-            bgcolor: 'rgba(8,89,70,0.08)', color: '#085946',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <MailOutlined sx={{ fontSize: 28 }} />
+        filter === 'ALL' ? (
+          <Box>
+            <ShareProfileCard profile={ctx?.profile} />
+            <Box sx={{
+              mt: 2.5, p: 2.5, bgcolor: '#fff', border: '1px solid #e5e7eb',
+              borderRadius: 2.5, boxShadow: '0 1px 3px rgba(15,23,35,0.04)',
+            }}>
+              <Typography sx={{
+                fontSize: 11, fontWeight: 700, color: '#4054B2',
+                letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1.25,
+              }}>
+                Qué pasa cuando llega una consulta
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+                {[
+                  { num: '1', color: '#4054B2', bg: '#eef0fb', title: 'Recibes notificación',
+                    body: 'Aparece en tu panel y te avisamos por email.' },
+                  { num: '2', color: '#8b5cf6', bg: '#f3edff', title: 'Lees y respondes',
+                    body: 'Ve nombre, teléfono, mensaje y agendamiento sugerido.' },
+                  { num: '3', color: '#10b981', bg: '#ecfdf5', title: 'Marcas estado',
+                    body: 'Nueva → Leída → Archivada para no perder el hilo.' },
+                ].map((s) => (
+                  <Box key={s.num} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                    <Box sx={{
+                      width: 28, height: 28, borderRadius: '50%', bgcolor: s.bg, color: s.color,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 800, fontSize: 13, flexShrink: 0,
+                    }}>
+                      {s.num}
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: '#041a12', mb: 0.25 }}>
+                        {s.title}
+                      </Typography>
+                      <Typography sx={{ fontSize: 12.5, color: '#5b6b7a', lineHeight: 1.5 }}>
+                        {s.body}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
           </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: 15, color: '#041a12', mb: 0.5 }}>
-            {filter === 'ALL' ? 'Aún no recibes consultas' : 'No hay consultas en esta categoría'}
-          </Typography>
-          <Typography sx={{ color: '#5b6b7a', fontSize: 13 }}>
-            {filter === 'ALL'
-              ? 'Comparte tu ficha pública para empezar a recibir mensajes.'
-              : 'Cambia el filtro para ver otros estados.'}
-          </Typography>
-        </Card>
+        ) : (
+          <Card elevation={0} sx={{
+            bgcolor: '#fff', border: '1px solid #e5e7eb', borderRadius: 2.5,
+            boxShadow: '0 1px 3px rgba(15,23,35,0.04)',
+            textAlign: 'center', py: 6, px: 3,
+          }}>
+            <Box sx={{
+              width: 56, height: 56, mx: 'auto', mb: 1.5, borderRadius: 2,
+              bgcolor: 'rgba(64,84,178,0.10)', color: '#4054B2',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <MailOutlined sx={{ fontSize: 28 }} />
+            </Box>
+            <Typography sx={{ fontWeight: 700, fontSize: 15, color: '#041a12', mb: 0.5 }}>
+              No hay consultas en esta categoría
+            </Typography>
+            <Typography sx={{ color: '#5b6b7a', fontSize: 13 }}>
+              Cambia el filtro para ver otros estados.
+            </Typography>
+          </Card>
+        )
       ) : (
         <Grid container spacing={2}>
           {filtered.map((inq) => (
