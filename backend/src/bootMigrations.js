@@ -162,6 +162,15 @@ async function ensureDirectoryAccountColumns(prisma) {
   }
 }
 
+async function ensureSalesGoalsColumn(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "salesGoals" JSONB;`);
+    console.log('[boot-migrate] users.salesGoals OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureSalesGoalsColumn falló (no bloqueante):', e.message);
+  }
+}
+
 /**
  * Punto único: corre todas las migraciones idempotentes.
  */
@@ -169,6 +178,7 @@ async function runBootMigrations(prisma) {
   await extendTrialsTo120(prisma);
   await ensureSalesCrmSchema(prisma);
   await ensureDirectoryAccountColumns(prisma);
+  await ensureSalesGoalsColumn(prisma);
 }
 
 module.exports = { runBootMigrations };

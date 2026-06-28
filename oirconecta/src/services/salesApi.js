@@ -43,6 +43,12 @@ export const salesApi = {
 
   // KPIs
   stats:        (params = {}) => json(`/api/sales/stats?${new URLSearchParams(params)}`),
+  revenue:      (params = {}) => json(`/api/sales/revenue?${new URLSearchParams(params)}`),
+
+  // Metas
+  getGoals:        (userId)        => json(`/api/sales/goals${userId ? `?userId=${userId}` : ''}`),
+  setGoals:        (goals, userId) => json('/api/sales/goals', { method: 'PATCH', body: JSON.stringify({ ...goals, ...(userId ? { userId } : {}) }) }),
+  goalsProgress:   (userId)        => json(`/api/sales/goals/progress${userId ? `?userId=${userId}` : ''}`),
 
   // Email
   emailTemplates: () => json('/api/sales/email-templates'),
@@ -121,3 +127,17 @@ export const STATUS_META = {
 };
 
 export const PIPELINE_STAGES = ['NUEVO','CONTACTADO','INTERESADO','DEMO_AGENDADA','EN_PRUEBA','CONVERTIDO','PERDIDO'];
+
+export const RANGE_OPTIONS = [
+  { key: 'day',     label: 'Hoy' },
+  { key: 'week',    label: 'Semana' },
+  { key: 'biweek',  label: 'Quincena' },
+  { key: 'month',   label: 'Mes' },
+  { key: 'quarter', label: 'Trimestre' },
+  { key: 'year',    label: 'Año' },
+  { key: 'all',     label: 'Histórico' },
+];
+
+export function fmtCOP(n) {
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(n) || 0);
+}

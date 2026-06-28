@@ -37,6 +37,10 @@ model User {
   salesActivitiesDone   SalesActivity[]  @relation("SalesActivityUser")
   salesTasksAssigned    SalesTask[]      @relation("SalesTaskAssignee")
 
+  /// Metas comerciales del ejecutivo. Ejemplo:
+  /// { "callsPerDay": 25, "emailsPerDay": 15, "demosPerWeek": 6, "conversionsPerMonth": 12 }
+  salesGoals            Json?
+
   @@map("users")
 }
 

@@ -302,7 +302,42 @@ router.post('/leads/import-csv', async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     const ownerId = req.user.role === 'ADMIN' ? (req.query.ownerId || undefined) : req.user.id;
-    const data = await sales.stats({ ownerId });
+    const data = await sales.stats({ ownerId, range: req.query.range || 'all' });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.get('/revenue', async (req, res) => {
+  try {
+    const ownerId = req.user.role === 'ADMIN' ? (req.query.ownerId || undefined) : req.user.id;
+    const data = await sales.revenue({ ownerId, range: req.query.range || 'all' });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+/* ─── Metas y progreso ──────────────────────────────────── */
+
+router.get('/goals', async (req, res) => {
+  try {
+    const userId = (req.user.role === 'ADMIN' && req.query.userId) || req.user.id;
+    const goals = await sales.getGoals(userId);
+    res.json({ success: true, data: goals });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.patch('/goals', async (req, res) => {
+  try {
+    // El ejecutivo edita las propias; ADMIN puede pasar userId para editar las de otro.
+    const userId = (req.user.role === 'ADMIN' && req.body?.userId) || req.user.id;
+    const goals = await sales.setGoals(userId, req.body || {});
+    res.json({ success: true, data: goals });
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+
+router.get('/goals/progress', async (req, res) => {
+  try {
+    const userId = (req.user.role === 'ADMIN' && req.query.userId) || req.user.id;
+    const data = await sales.goalsProgress(userId);
     res.json({ success: true, data });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });

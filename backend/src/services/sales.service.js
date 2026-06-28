@@ -280,57 +280,201 @@ async function importCsv(rows, ownerId) {
   return { imported, skipped, errors: errors.slice(0, 10) };
 }
 
-/* ─── KPIs ──────────────────────────────────────────────── */
-
-async function stats({ ownerId } = {}) {
-  const where = ownerId ? { ownerId } : {};
-  const [byStatus, today, week, month] = await Promise.all([
-    prisma.salesLead.groupBy({ by: ['status'], _count: { _all: true }, where }),
-    prisma.salesActivity.count({
-      where: {
-        ...(ownerId ? { userId: ownerId } : {}),
-        ts: { gte: startOf('day') },
-      },
-    }),
-    prisma.salesActivity.count({
-      where: {
-        ...(ownerId ? { userId: ownerId } : {}),
-        ts: { gte: startOf('week') },
-      },
-    }),
-    prisma.salesActivity.count({
-      where: {
-        ...(ownerId ? { userId: ownerId } : {}),
-        ts: { gte: startOf('month') },
-      },
-    }),
-  ]);
-  const counts = Object.fromEntries(byStatus.map((b) => [b.status, b._count._all]));
-  const open = PIPELINE_OPEN.reduce((s, k) => s + (counts[k] || 0), 0);
-  const closed = PIPELINE_CLOSED.reduce((s, k) => s + (counts[k] || 0), 0);
-  const conversionRate = open + closed > 0 ? Math.round(((counts.CONVERTIDO || 0) / (open + closed)) * 100) : 0;
-  return {
-    byStatus: counts,
-    open, closed,
-    conversionRate,
-    activities: { today, week, month },
-  };
-}
+/* ─── Rangos de tiempo ──────────────────────────────────── */
 
 function startOf(period) {
   const d = new Date();
   if (period === 'day') { d.setHours(0,0,0,0); return d; }
   if (period === 'week') {
-    const day = d.getDay() || 7; // Mon=1, Sun=7
+    const day = d.getDay() || 7;
     d.setDate(d.getDate() - (day - 1));
     d.setHours(0,0,0,0);
+    return d;
+  }
+  if (period === 'biweek') {
+    d.setDate(d.getDate() - 14); d.setHours(0,0,0,0);
     return d;
   }
   if (period === 'month') {
     d.setDate(1); d.setHours(0,0,0,0);
     return d;
   }
+  if (period === 'quarter') {
+    const q = Math.floor(d.getMonth() / 3) * 3;
+    d.setMonth(q, 1); d.setHours(0,0,0,0);
+    return d;
+  }
+  if (period === 'year') {
+    d.setMonth(0, 1); d.setHours(0,0,0,0);
+    return d;
+  }
   return d;
+}
+
+const RANGE_LABELS = {
+  day: 'Hoy', week: 'Esta semana', biweek: 'Últimos 15 días',
+  month: 'Este mes', quarter: 'Este trimestre', year: 'Este año', all: 'Histórico',
+};
+
+function rangeWhere(range, field = 'ts') {
+  if (!range || range === 'all') return {};
+  return { [field]: { gte: startOf(range) } };
+}
+
+/* ─── KPIs ──────────────────────────────────────────────── */
+
+async function stats({ ownerId, range = 'all' } = {}) {
+  const where = ownerId ? { ownerId } : {};
+  const activityWhereBase = ownerId ? { userId: ownerId } : {};
+
+  const [byStatus, today, week, month, rangeCount, rangeByType] = await Promise.all([
+    prisma.salesLead.groupBy({ by: ['status'], _count: { _all: true }, where }),
+    prisma.salesActivity.count({ where: { ...activityWhereBase, ts: { gte: startOf('day') } } }),
+    prisma.salesActivity.count({ where: { ...activityWhereBase, ts: { gte: startOf('week') } } }),
+    prisma.salesActivity.count({ where: { ...activityWhereBase, ts: { gte: startOf('month') } } }),
+    prisma.salesActivity.count({ where: { ...activityWhereBase, ...rangeWhere(range) } }),
+    prisma.salesActivity.groupBy({
+      by: ['type'], _count: { _all: true },
+      where: { ...activityWhereBase, ...rangeWhere(range) },
+    }),
+  ]);
+
+  const counts = Object.fromEntries(byStatus.map((b) => [b.status, b._count._all]));
+  const open = PIPELINE_OPEN.reduce((s, k) => s + (counts[k] || 0), 0);
+  const closed = PIPELINE_CLOSED.reduce((s, k) => s + (counts[k] || 0), 0);
+  const conversionRate = open + closed > 0
+    ? Math.round(((counts.CONVERTIDO || 0) / (open + closed)) * 100) : 0;
+
+  const activitiesByType = Object.fromEntries(rangeByType.map((b) => [b.type, b._count._all]));
+
+  return {
+    range, rangeLabel: RANGE_LABELS[range] || range,
+    byStatus: counts,
+    open, closed,
+    conversionRate,
+    activities: { today, week, month, rangeTotal: rangeCount, byType: activitiesByType },
+  };
+}
+
+/**
+ * Revenue trackeado a través de los profesionales que cada ejecutivo
+ * captó: DirectoryAccount.createdByUserId → DirectoryProfile → Subscription
+ * → Payments APPROVED.
+ */
+async function revenue({ ownerId, range = 'all' } = {}) {
+  const accountWhere = ownerId ? { createdByUserId: ownerId } : { createdByUserId: { not: null } };
+  const accounts = await prisma.directoryAccount.findMany({
+    where: accountWhere,
+    select: {
+      id: true, email: true, nombre: true, createdByUserId: true, createdAt: true,
+      profile: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+  const accountIds = accounts.map((a) => a.id);
+  if (accountIds.length === 0) {
+    return { activeAccounts: 0, totalAccounts: 0, paidAccounts: 0, payments: { count: 0, totalCOP: 0 }, breakdown: [] };
+  }
+
+  // Buscar las subscriptions de esos accounts (vía profile.id en Subscription.profileId)
+  const profiles = await prisma.directoryProfile.findMany({
+    where: { accountId: { in: accountIds } },
+    select: { id: true, accountId: true, status: true },
+  });
+  const profileIds = profiles.map((p) => p.id);
+  const subs = profileIds.length === 0 ? [] : await prisma.subscription.findMany({
+    where: { profileId: { in: profileIds } },
+    select: { id: true, profileId: true, status: true },
+  });
+  const subIds = subs.map((s) => s.id);
+
+  const paymentsWhere = {
+    status: 'APPROVED',
+    subscriptionId: { in: subIds },
+    ...rangeWhere(range, 'paidAt'),
+  };
+  const payments = subIds.length === 0
+    ? { _count: { _all: 0 }, _sum: { totalCOP: 0 } }
+    : await prisma.payment.aggregate({ where: paymentsWhere, _count: { _all: true }, _sum: { totalCOP: true } });
+
+  // Breakdown por ejecutivo (solo útil cuando ADMIN no filtra ownerId)
+  const breakdown = [];
+  if (!ownerId) {
+    const byExec = {};
+    for (const a of accounts) {
+      if (!a.createdByUserId) continue;
+      byExec[a.createdByUserId] = byExec[a.createdByUserId] || { ownerId: a.createdByUserId, accounts: 0 };
+      byExec[a.createdByUserId].accounts += 1;
+    }
+    breakdown.push(...Object.values(byExec));
+  }
+
+  return {
+    range, rangeLabel: RANGE_LABELS[range] || range,
+    totalAccounts: accounts.length,
+    paidAccounts: subs.filter((s) => ['ACTIVE','EXPIRING_SOON'].includes(s.status)).length,
+    payments: {
+      count: payments._count?._all || 0,
+      totalCOP: payments._sum?.totalCOP || 0,
+    },
+    breakdown,
+  };
+}
+
+/* ─── Metas ─────────────────────────────────────────────── */
+
+const DEFAULT_GOALS = {
+  callsPerDay: 25,
+  emailsPerDay: 15,
+  whatsappPerDay: 10,
+  demosPerWeek: 6,
+  conversionsPerMonth: 8,
+};
+
+async function getGoals(userId) {
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { salesGoals: true } });
+  return { ...DEFAULT_GOALS, ...(u?.salesGoals || {}) };
+}
+
+async function setGoals(userId, goals) {
+  const clean = {};
+  for (const k of Object.keys(DEFAULT_GOALS)) {
+    if (goals[k] != null) {
+      const n = Number(goals[k]);
+      if (!Number.isFinite(n) || n < 0) throw new Error(`Meta inválida: ${k}`);
+      clean[k] = Math.floor(n);
+    }
+  }
+  await prisma.user.update({ where: { id: userId }, data: { salesGoals: clean } });
+  return { ...DEFAULT_GOALS, ...clean };
+}
+
+/**
+ * Progreso del día / semana / mes contra metas.
+ */
+async function goalsProgress(userId) {
+  const goals = await getGoals(userId);
+  const [callsToday, emailsToday, whatsappToday, demosWeek, conversionsMonth] = await Promise.all([
+    prisma.salesActivity.count({ where: { userId, type: 'CALL',     ts: { gte: startOf('day') } } }),
+    prisma.salesActivity.count({ where: { userId, type: 'EMAIL',    ts: { gte: startOf('day') } } }),
+    prisma.salesActivity.count({ where: { userId, type: 'WHATSAPP', ts: { gte: startOf('day') } } }),
+    prisma.salesActivity.count({ where: { userId, type: 'MEETING',  ts: { gte: startOf('week') } } }),
+    prisma.salesLead.count({ where: { ownerId: userId, status: 'CONVERTIDO', convertedAt: { gte: startOf('month') } } }),
+  ]);
+  const safe = (a, b) => b > 0 ? Math.min(100, Math.round((a / b) * 100)) : 0;
+  return {
+    goals,
+    items: [
+      { key: 'calls',       label: 'Llamadas hoy',         actual: callsToday,       goal: goals.callsPerDay,        pct: safe(callsToday, goals.callsPerDay) },
+      { key: 'emails',      label: 'Emails hoy',           actual: emailsToday,      goal: goals.emailsPerDay,       pct: safe(emailsToday, goals.emailsPerDay) },
+      { key: 'whatsapp',    label: 'WhatsApp hoy',         actual: whatsappToday,    goal: goals.whatsappPerDay,     pct: safe(whatsappToday, goals.whatsappPerDay) },
+      { key: 'demos',       label: 'Demos esta semana',    actual: demosWeek,        goal: goals.demosPerWeek,       pct: safe(demosWeek, goals.demosPerWeek) },
+      { key: 'conversions', label: 'Conversiones del mes', actual: conversionsMonth, goal: goals.conversionsPerMonth, pct: safe(conversionsMonth, goals.conversionsPerMonth) },
+    ],
+  };
 }
 
 module.exports = {
@@ -341,4 +485,7 @@ module.exports = {
   convertLeadToTrial,
   importCsv,
   stats,
+  revenue,
+  getGoals, setGoals, goalsProgress,
+  DEFAULT_GOALS, RANGE_LABELS,
 };
