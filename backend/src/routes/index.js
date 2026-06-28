@@ -29,6 +29,7 @@ const subscriptionRoutes = require('./subscription.routes');
 const marketingRoutes = require('./marketing.routes');
 const auditRoutes = require('./audit.routes');
 const consentsRoutes = require('./consents.routes');
+const salesRoutes = require('./sales.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
@@ -55,6 +56,7 @@ router.use('/subscriptions', subscriptionRoutes);
 router.use('/marketing', marketingRoutes);
 router.use('/audit', auditRoutes);
 router.use('/consents', consentsRoutes);
+router.use('/sales', salesRoutes);
 
 // Info de la API
 router.get('/', (req, res) => {
