@@ -10,6 +10,8 @@ import { DIRECTORY_API } from '../../config/directoryApi';
 import { getServiciosSugeridos } from '../../config/serviciosPorProfesion';
 import PhotoUploader from '../../components/profesional/PhotoUploader';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
+import ProfileCompleteness from '../../components/profesional/ProfileCompleteness';
+import BrandLogo from '../../components/profesional/BrandLogo';
 import { PersonOutlined } from '@mui/icons-material';
 
 const glassCard = {
@@ -368,15 +370,37 @@ export default function ProfesionalPerfilPage() {
         subtitle="Edita la información que aparece en tu ficha pública del directorio"
       />
 
+      <ProfileCompleteness profile={form} onJumpTab={(t) => setTab(t)} />
+
       {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
 
-      <Card elevation={0} sx={glassCard}>
+      <Card elevation={0} sx={{
+        bgcolor: '#fff', border: '1px solid #e5e7eb', borderRadius: 2.5,
+        boxShadow: '0 1px 3px rgba(15,23,35,0.04)',
+      }}>
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
-            sx={{ mb: 0, '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }, '& .Mui-selected': { color: GREEN, fontWeight: 700 }, '& .MuiTabs-indicator': { bgcolor: GREEN } }}>
+          <Tabs
+            value={tab}
+            onChange={(_, v) => setTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              mb: 0,
+              borderBottom: '1px solid #f0f2f4',
+              '& .MuiTab-root': {
+                textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem',
+                color: '#5b6b7a', minHeight: 40, py: 1, px: 1.5,
+                transition: 'color 120ms ease',
+              },
+              '& .Mui-selected': { color: '#4054B2', fontWeight: 700 },
+              '& .MuiTabs-indicator': {
+                background: 'linear-gradient(90deg, #4054B2 0%, #085946 100%)',
+                height: 3, borderRadius: 1.5,
+              },
+            }}
+          >
             {TABS.map((t, i) => <Tab key={i} label={t} />)}
           </Tabs>
-          <Divider sx={{ mb: 0 }} />
 
           {/* 0 — Datos básicos */}
           <TabPanel value={tab} index={0}>
@@ -507,21 +531,85 @@ export default function ProfesionalPerfilPage() {
 
           {/* 4 — Marcas */}
           <TabPanel value={tab} index={4}>
+            <Box sx={{
+              mb: 3, p: 2, borderRadius: 2,
+              bgcolor: '#eef0fb', border: '1px solid #4054B225',
+              display: 'flex', gap: 1.5, alignItems: 'flex-start',
+            }}>
+              <Box sx={{
+                width: 32, height: 32, borderRadius: 1, bgcolor: '#4054B2', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 16, fontWeight: 800, flexShrink: 0,
+              }}>🎧</Box>
+              <Box>
+                <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: '#272F50', mb: 0.25 }}>
+                  Marca solo las marcas con las que realmente trabajas
+                </Typography>
+                <Typography sx={{ fontSize: 12.5, color: '#5b6b7a', lineHeight: 1.5 }}>
+                  Tu perfil aparecerá en las búsquedas filtradas por marca.
+                  Pacientes con audífono de una marca específica buscan especialistas que la manejen.
+                </Typography>
+              </Box>
+            </Box>
+
             <SectionTitle>Audífonos</SectionTitle>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Widex, Oticon, Signia, Phonak, ReSound, Starkey, Beltone, Rexton, Audioservice, Bernafon, Hansaton, Sonic, Unitron</Typography>
-            <ChipToggle
-              options={MARCAS_AUDIFONOS}
-              selected={(Array.isArray(form.allies) ? form.allies : []).filter(a => MARCAS_AUDIFONOS.includes(a))}
-              onChange={v => set('allies', [...v, ...(Array.isArray(form.allies) ? form.allies.filter(a => MARCAS_IMPLANTES.includes(a)) : [])])}
-            />
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(3, 1fr)', sm: 'repeat(5, 1fr)', md: 'repeat(7, 1fr)' },
+              gap: 1.25, mb: 3,
+            }}>
+              {MARCAS_AUDIFONOS.map((m) => {
+                const allies = Array.isArray(form.allies) ? form.allies : [];
+                const selected = allies.includes(m);
+                return (
+                  <BrandLogo
+                    key={m}
+                    brand={m}
+                    size="md"
+                    showName
+                    selected={selected}
+                    onClick={() => {
+                      const next = selected ? allies.filter(a => a !== m) : [...allies, m];
+                      set('allies', next);
+                    }}
+                  />
+                );
+              })}
+            </Box>
+
             <Divider sx={{ my: 3 }} />
+
             <SectionTitle>Implantes cocleares</SectionTitle>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Cochlear, Advanced Bionics, MED-EL</Typography>
-            <ChipToggle
-              options={MARCAS_IMPLANTES}
-              selected={(Array.isArray(form.allies) ? form.allies : []).filter(a => MARCAS_IMPLANTES.includes(a))}
-              onChange={v => set('allies', [...v, ...(Array.isArray(form.allies) ? form.allies.filter(a => MARCAS_AUDIFONOS.includes(a)) : [])])}
-            />
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(3, 1fr)', sm: 'repeat(5, 1fr)' },
+              gap: 1.25,
+            }}>
+              {MARCAS_IMPLANTES.map((m) => {
+                const allies = Array.isArray(form.allies) ? form.allies : [];
+                const selected = allies.includes(m);
+                return (
+                  <BrandLogo
+                    key={m}
+                    brand={m}
+                    size="md"
+                    showName
+                    selected={selected}
+                    onClick={() => {
+                      const next = selected ? allies.filter(a => a !== m) : [...allies, m];
+                      set('allies', next);
+                    }}
+                  />
+                );
+              })}
+            </Box>
+
+            <Box sx={{
+              mt: 3, p: 1.75, borderRadius: 1.5, bgcolor: '#fffbeb', border: '1px solid #f59e0b25',
+              fontSize: 12, color: '#92400e',
+            }}>
+              <strong>Tip:</strong> si trabajas todas las marcas principales, márcalas todas — los pacientes valoran versatilidad. Si solo manejas una o dos, mejor sé honesto: aparecerás como especialista.
+            </Box>
           </TabPanel>
 
           {/* 5 — Aseguradoras */}
