@@ -7,6 +7,7 @@ require('dotenv').config();
 const app = require('./app');
 const config = require('./config');
 const { PrismaClient } = require('@prisma/client');
+const { runBootMigrations } = require('./bootMigrations');
 
 const prisma = new PrismaClient();
 
@@ -68,6 +69,11 @@ const startServer = async () => {
 
     console.log(`🚀 Servidor corriendo en http://localhost:${actualPort}`);
     console.log(`📦 Entorno: ${config.nodeEnv}`);
+
+    // Migraciones idempotentes (no bloquean si fallan)
+    runBootMigrations(prisma).catch((e) =>
+      console.warn('[boot-migrate] error general:', e.message)
+    );
 
     // Worker de notificaciones in-process (opcional). En producción es preferible
     // levantar `npm run notifications:worker` como servicio aparte.
