@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Button, Container, TextField, MenuItem, Avatar,
   CircularProgress, Snackbar, Alert, IconButton, Tooltip, Divider,
+  Dialog, DialogTitle, DialogContent, DialogActions, Chip,
 } from '@mui/material';
 import {
   ArrowBack, PhoneOutlined, WhatsApp, EmailOutlined, EventOutlined,
@@ -37,6 +38,11 @@ export default function SalesLeadDetailPage() {
   const [logType, setLogType] = useState('CALL');
   const [logOutcome, setLogOutcome] = useState('Sin respuesta');
   const [logBody, setLogBody] = useState('');
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [emailTemplates, setEmailTemplates] = useState([]);
+  const [emailSending, setEmailSending] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -46,6 +52,38 @@ export default function SalesLeadDetailPage() {
   }, [id]);
 
   useEffect(() => { reload(); }, [reload]);
+  useEffect(() => {
+    salesApi.emailTemplates().then(setEmailTemplates).catch(() => {});
+  }, []);
+
+  const openEmail = async (templateId = null) => {
+    setEmailOpen(true);
+    if (templateId) {
+      try {
+        const r = await salesApi.renderTemplate(id, templateId);
+        setEmailSubject(r.subject); setEmailBody(r.body);
+      } catch (e) { setSnack({ severity: 'error', msg: e.message }); }
+    } else if (!emailSubject) {
+      setEmailSubject(`Hola ${lead?.nombre || ''}`);
+      setEmailBody(`Hola ${lead?.nombre || ''},\n\n`);
+    }
+  };
+
+  const sendEmail = async () => {
+    if (!emailSubject.trim() || !emailBody.trim()) {
+      setSnack({ severity: 'error', msg: 'Asunto y cuerpo son requeridos' });
+      return;
+    }
+    setEmailSending(true);
+    try {
+      await salesApi.sendEmail(id, emailSubject, emailBody);
+      setSnack({ severity: 'success', msg: 'Email enviado y actividad registrada' });
+      setEmailOpen(false);
+      setEmailSubject(''); setEmailBody('');
+      reload();
+    } catch (e) { setSnack({ severity: 'error', msg: e.message }); }
+    finally { setEmailSending(false); }
+  };
 
   const logActivity = async () => {
     try {
@@ -122,7 +160,8 @@ export default function SalesLeadDetailPage() {
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {tel && <HeroAction href={tel} icon={PhoneOutlined} label="Llamar" color="#4054B2" />}
             {wa && <HeroAction href={wa} external icon={WhatsApp} label="WhatsApp" color="#25D366" />}
-            {mail && <HeroAction href={mail} icon={EmailOutlined} label="Email" color="#8b5cf6" />}
+            {lead.email && <HeroAction onClick={() => openEmail()} icon={EmailOutlined} label="Email CRM" color="#8b5cf6" />}
+            {mail && <HeroAction href={mail} icon={EmailOutlined} label="Email cliente" color="#5b6b7a" />}}
           </Box>
         </Box>
       </Box>
@@ -250,6 +289,44 @@ export default function SalesLeadDetailPage() {
         )}
       </Box>
 
+      {/* Dialog: enviar email outbound */}
+      <Dialog open={emailOpen} onClose={() => setEmailOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: '#272F50' }}>
+          Enviar email a {lead.nombre}
+          <Typography sx={{ fontSize: 12, color: '#5b6b7a', fontWeight: 500, mt: 0.25 }}>
+            Desde servicioalcliente@oirconecta.com · responde llega a ti
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          {emailTemplates.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#5b6b7a', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 0.875 }}>
+                Plantillas
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                {emailTemplates.map((t) => (
+                  <Chip key={t.id} label={t.label} clickable onClick={() => openEmail(t.id)}
+                    sx={{ bgcolor: '#eef0fb', color: '#4054B2', fontWeight: 700, borderRadius: 1 }} />
+                ))}
+              </Box>
+            </Box>
+          )}
+          <TextField label="Asunto" value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} fullWidth size="small" sx={{ mb: 1.5 }} />
+          <TextField label="Mensaje" value={emailBody} onChange={(e) => setEmailBody(e.target.value)} multiline rows={10} fullWidth size="small"
+            placeholder="Escribe el mensaje. Las plantillas reemplazan {nombre}, {ciudad}, {empresa}." />
+          <Typography sx={{ fontSize: 11.5, color: '#5b6b7a', mt: 1 }}>
+            Se registra una actividad EMAIL en el historial al enviar.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEmailOpen(false)} sx={{ textTransform: 'none', color: '#5b6b7a' }}>Cancelar</Button>
+          <Button onClick={sendEmail} disabled={emailSending} variant="contained" startIcon={<EmailOutlined />}
+            sx={{ bgcolor: '#8b5cf6', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#7c3aed' } }}>
+            {emailSending ? 'Enviando…' : 'Enviar email'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar open={!!snack} autoHideDuration={2400} onClose={() => setSnack(null)}>
         {snack ? <Alert severity={snack.severity} variant="filled">{snack.msg}</Alert> : null}
       </Snackbar>
@@ -266,15 +343,20 @@ function FieldRow({ label, value }) {
   );
 }
 
-function HeroAction({ href, icon: Icon, label, color, external }) {
+function HeroAction({ href, onClick, icon: Icon, label, color, external }) {
+  const props = href ? {
+    component: 'a', href,
+    target: external ? '_blank' : undefined,
+    rel: external ? 'noopener noreferrer' : undefined,
+  } : { component: 'button', onClick, type: 'button' };
   return (
-    <Box component="a" href={href}
-      target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}
+    <Box {...props}
       sx={{
         display: 'inline-flex', alignItems: 'center', gap: 0.875,
         bgcolor: '#fff', color: '#272F50', fontWeight: 700,
         px: 1.5, py: 0.75, borderRadius: 1.5, fontSize: 12.5,
         textDecoration: 'none', boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+        border: 'none', cursor: 'pointer', fontFamily: 'inherit',
         '&:hover': { bgcolor: '#f3f4f6' },
       }}>
       <Icon sx={{ fontSize: 16, color }} /> {label}

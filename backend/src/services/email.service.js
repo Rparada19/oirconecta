@@ -126,7 +126,7 @@ function highlight(rows) {
 }
 
 // ─── Delivery ────────────────────────────────────────────────────────────────
-async function deliver({ to, toName, subject, html, text }) {
+async function deliver({ to, toName, subject, html, text, fromEmail, fromName, replyTo }) {
   const isProd = process.env.NODE_ENV === 'production';
 
   // ── Sender.com (primario) ──
@@ -140,11 +140,12 @@ async function deliver({ to, toName, subject, html, text }) {
           Accept: 'application/json',
         },
         body: JSON.stringify({
-          from: { name: FROM_NAME, email: FROM_EMAIL },
+          from: { name: fromName || FROM_NAME, email: fromEmail || FROM_EMAIL },
           to: [{ name: toName || to, email: to }],
           subject,
           html,
           ...(text ? { text } : {}),
+          ...(replyTo ? { reply_to: [{ email: replyTo }] } : {}),
         }),
         signal: AbortSignal.timeout(15000),
       });
@@ -170,7 +171,11 @@ async function deliver({ to, toName, subject, html, text }) {
           Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ from: `${FROM_NAME} <${FROM_EMAIL}>`, to, subject, html }),
+        body: JSON.stringify({
+          from: `${fromName || FROM_NAME} <${fromEmail || FROM_EMAIL}>`,
+          to, subject, html,
+          ...(replyTo ? { reply_to: replyTo } : {}),
+        }),
         signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) console.error('[email] Resend error', res.status);
@@ -187,6 +192,43 @@ async function deliver({ to, toName, subject, html, text }) {
   } else {
     console.log(`\n📧 [email → dev]\nTo: ${to}\nSubject: ${subject}\n${text || '(HTML only)'}\n`);
   }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 0. SALES OUTREACH — email directo del ejecutivo comercial al profesional
+// ════════════════════════════════════════════════════════════════════════════
+const SALES_FROM_EMAIL = process.env.SALES_FROM_EMAIL || 'servicioalcliente@oirconecta.com';
+const SALES_FROM_NAME  = process.env.SALES_FROM_NAME  || 'OírConecta · Servicio al cliente';
+
+/**
+ * Email outbound desde el CRM Sales hacia un lead profesional.
+ * @param {{ to, toName, subject, bodyText, executiveName, executiveEmail }} input
+ *   - executiveName / executiveEmail van como reply-to para que la respuesta
+ *     llegue directo al ejecutivo (no al buzón central).
+ */
+async function sendSalesOutreach({ to, toName, subject, bodyText, executiveName, executiveEmail }) {
+  if (!to || !subject || !bodyText) throw new Error('to, subject y bodyText son requeridos');
+
+  const cleanBody = String(bodyText).replace(/\n/g, '<br/>');
+  const html = baseTemplate({
+    title: subject,
+    bodyHtml: `
+      ${h1(subject)}
+      ${p(cleanBody)}
+      ${divider()}
+      ${p(`${executiveName ? `<strong>${executiveName}</strong><br/>` : ''}${executiveEmail ? `<a href="mailto:${executiveEmail}" style="color:#085946;">${executiveEmail}</a><br/>` : ''}OírConecta · Red de profesionales auditivos en Colombia`)}
+    `,
+  });
+
+  await deliver({
+    to,
+    toName: toName || to,
+    subject,
+    html,
+    fromEmail: SALES_FROM_EMAIL,
+    fromName:  SALES_FROM_NAME,
+    replyTo:   executiveEmail || undefined,
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -840,6 +882,7 @@ async function sendSubscriptionReactivated({ email, nombre }) {
 }
 
 module.exports = {
+  sendSalesOutreach,
   sendBookingConfirmation,
   sendProfessionalWelcome,
   sendNewsletterWelcome,

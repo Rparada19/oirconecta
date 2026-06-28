@@ -42,6 +42,15 @@ export const salesApi = {
   // KPIs
   stats:        (params = {}) => json(`/api/sales/stats?${new URLSearchParams(params)}`),
 
+  // Email
+  emailTemplates: () => json('/api/sales/email-templates'),
+  renderTemplate: (leadId, templateId) => json(`/api/sales/leads/${leadId}/render-template`, {
+    method: 'POST', body: JSON.stringify({ templateId }),
+  }),
+  sendEmail:    (leadId, subject, body) => json(`/api/sales/leads/${leadId}/send-email`, {
+    method: 'POST', body: JSON.stringify({ subject, body }),
+  }),
+
   // Admin: usuarios
   listUsers:    () => json('/api/sales/admin/users'),
   createUser:   (data) => json('/api/sales/admin/users', { method: 'POST', body: JSON.stringify(data) }),

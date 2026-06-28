@@ -25,8 +25,63 @@ const router = express.Router();
 
 const { authenticate, authorize } = require('../middleware/auth');
 const sales = require('../services/sales.service');
+const emailService = require('../services/email.service');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+
+/* ─── Templates de email outbound ───────────────────────── */
+const TEMPLATES = {
+  presentacion: {
+    label: 'Presentación inicial',
+    subject: 'OírConecta — Espacio para profesionales auditivos en Colombia',
+    body: `Hola {nombre},
+
+Te escribo desde OírConecta, la red más grande de profesionales auditivos en Colombia. Estamos contactando especialistas en {ciudad} para ofrecerles un espacio dedicado en nuestro directorio.
+
+Te traemos pacientes que ya están buscando atención: filtran por ciudad, marca de audífono y aseguradora. Tu perfil aparece, te encuentran y te escriben directo.
+
+Lanzamos con 120 días gratis, sin tarjeta. ¿Tienes 10 minutos para una demo esta semana?
+
+Quedo atento.`,
+  },
+  seguimiento_24h: {
+    label: 'Seguimiento 24h',
+    subject: 'Te seguimos guardando un cupo en OírConecta',
+    body: `Hola {nombre},
+
+Te escribí hace unos días por el espacio para profesionales en OírConecta. Sé que la agenda está apretada, así que solo te recuerdo: tu cupo en el directorio sigue disponible y el trial de 120 días está activo.
+
+Si te interesa, dime un horario para mostrártelo en 10 minutos.`,
+  },
+  demo: {
+    label: 'Confirmación de demo',
+    subject: 'Confirmamos demo de OírConecta',
+    body: `Hola {nombre},
+
+¡Quedó confirmada nuestra demo! Te muestro cómo aparecen los pacientes en tu perfil, cómo se gestionan las consultas y cómo activas tu trial.
+
+Si necesitas reagendar, respóndeme directo a este correo.`,
+  },
+  bienvenida_trial: {
+    label: 'Bienvenida al trial',
+    subject: 'Tu cuenta OírConecta está lista (120 días gratis)',
+    body: `Hola {nombre},
+
+Ya activamos tu cuenta. Recibirás un correo aparte para definir tu contraseña y completar tu perfil.
+
+Durante 120 días tienes acceso completo: panel, consultas, estadísticas, sin compromiso. Cualquier duda, escríbeme.`,
+  },
+};
+
+const renderTemplate = (templateId, lead) => {
+  const t = TEMPLATES[templateId];
+  if (!t) return null;
+  const replace = (s) => String(s || '')
+    .replace(/\{nombre\}/g, lead.nombre || 'estimado/a profesional')
+    .replace(/\{ciudad\}/g, lead.ciudad || 'tu ciudad')
+    .replace(/\{empresa\}/g, lead.empresa || '');
+  return { subject: replace(t.subject), body: replace(t.body), label: t.label };
+};
 
 // Todas las rutas requieren autenticación.
 router.use(authenticate);
@@ -137,6 +192,54 @@ router.patch('/tasks/:id', async (req, res) => {
     }
     const task = await sales.updateTask(req.params.id, req.body);
     res.json({ success: true, data: task });
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+
+/* ─── Email outbound ────────────────────────────────────── */
+
+router.get('/email-templates', async (req, res) => {
+  const list = Object.entries(TEMPLATES).map(([id, t]) => ({ id, label: t.label, subject: t.subject, body: t.body }));
+  res.json({ success: true, data: list });
+});
+
+router.post('/leads/:id/render-template', isOwnerOfLeadOrAdmin, async (req, res) => {
+  try {
+    const { templateId } = req.body || {};
+    const lead = await prisma.salesLead.findUnique({ where: { id: req.params.id } });
+    if (!lead) return res.status(404).json({ success: false, error: 'Lead no existe' });
+    const rendered = renderTemplate(templateId, lead);
+    if (!rendered) return res.status(400).json({ success: false, error: 'Template no existe' });
+    res.json({ success: true, data: rendered });
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+
+router.post('/leads/:id/send-email', isOwnerOfLeadOrAdmin, async (req, res) => {
+  try {
+    const { subject, body } = req.body || {};
+    if (!subject || !body) return res.status(400).json({ success: false, error: 'subject y body son requeridos' });
+    const lead = await prisma.salesLead.findUnique({ where: { id: req.params.id } });
+    if (!lead) return res.status(404).json({ success: false, error: 'Lead no existe' });
+    if (!lead.email) return res.status(400).json({ success: false, error: 'Lead sin email' });
+    if (lead.doNotContact) return res.status(403).json({ success: false, error: 'Lead marcado como No-Contactar' });
+
+    await emailService.sendSalesOutreach({
+      to: lead.email,
+      toName: lead.nombre,
+      subject,
+      bodyText: body,
+      executiveName:  req.user.nombre,
+      executiveEmail: req.user.email,
+    });
+
+    // Log de actividad
+    const activity = await sales.logActivity(req.params.id, req.user.id, {
+      type: 'EMAIL',
+      subject,
+      body,
+      outcome: 'Enviado',
+      status: 'sent',
+    });
+    res.json({ success: true, data: { activity } });
   } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 
