@@ -28,6 +28,7 @@ import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import ProfesionalInsights from '../../components/profesional/ProfesionalInsights';
+import WelcomeHero from '../../components/profesional/WelcomeHero';
 import KpiCard from '../../components/crm/ui/KpiCard';
 
 const glassCard = {
@@ -136,10 +137,12 @@ export default function ProfesionalDashboardPage() {
 
   return (
     <Box>
-      <ProfesionalPageHeader
-        icon={DashboardOutlined}
-        title="Mi panel"
-        subtitle="Resumen de tu actividad en el directorio OírConecta"
+      {/* Hero con gradiente navy→verde, saludo, trial y CTA */}
+      <WelcomeHero
+        profile={p}
+        stats={stats}
+        inquiriesNew={newCount}
+        onActivate={() => navigate('/portal-profesional/suscripcion')}
       />
 
       {/* Recomendaciones interpretadas */}
@@ -189,13 +192,13 @@ export default function ProfesionalDashboardPage() {
           label="Visitas al perfil"
           value={stats?.visitas?.mes ?? 0}
           hint={`${stats?.visitas?.total ?? p?.perfilVisitas ?? 0} en total`}
-          tone="success"
+          tone="info"
         />
         <KpiCard
           label="Consultas"
           value={stats?.consultas?.mes ?? 0}
           hint={`${stats?.consultas?.total ?? inquiries.length} en total · ${newCount} nuevas`}
-          tone="info"
+          tone="violet"
         />
         <KpiCard
           label="Clics WhatsApp"

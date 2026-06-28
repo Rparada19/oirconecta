@@ -74,9 +74,11 @@ function SidebarContent({ profile, newInquiries, currentPath, onNavigate, onLogo
         borderBottom: '1px solid #f0f2f4', minHeight: TOPBAR_H,
       }}>
         <Box sx={{
-          width: 32, height: 32, borderRadius: 1.5, bgcolor: OC_COLORS.verdeBienestar,
+          width: 32, height: 32, borderRadius: 1.5,
+          background: 'linear-gradient(135deg, #4054B2 0%, #085946 100%)',
           color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 700, fontSize: 14,
+          boxShadow: '0 2px 6px rgba(64,84,178,0.25)',
         }}>
           OC
         </Box>
