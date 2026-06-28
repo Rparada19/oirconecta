@@ -43,6 +43,11 @@ export default function SalesLeadDetailPage() {
   const [emailBody, setEmailBody] = useState('');
   const [emailTemplates, setEmailTemplates] = useState([]);
   const [emailSending, setEmailSending] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [convertPassword, setConvertPassword] = useState('');
+  const [convertSendEmail, setConvertSendEmail] = useState(true);
+  const [converting, setConverting] = useState(false);
+  const [convertResult, setConvertResult] = useState(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -102,14 +107,42 @@ export default function SalesLeadDetailPage() {
     } catch (e) { setSnack({ severity: 'error', msg: e.message }); }
   };
 
-  const convertLead = async () => {
+  const generatePassword = () => {
+    const adj = ['Audio','Sonus','Claro','Onda','Voz','Eco','Logos','Ritmo','Pulso'];
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s = ''; for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    const n = Math.floor(1000 + Math.random() * 9000);
+    return `${adj[Math.floor(Math.random() * adj.length)]}-${s}-${n}`;
+  };
+
+  const openConvert = () => {
     if (!lead?.email) { setSnack({ severity: 'error', msg: 'Lead sin email — agrégalo primero' }); return; }
-    if (!confirm(`Convertir a ${lead.nombre} en cuenta de profesional con trial 120 días?`)) return;
+    setConvertPassword(generatePassword());
+    setConvertSendEmail(true);
+    setConvertResult(null);
+    setConvertOpen(true);
+  };
+
+  const doConvert = async () => {
+    setConverting(true);
     try {
-      const result = await salesApi.convertLead(id);
-      setSnack({ severity: 'success', msg: `Cuenta creada: ${result.account.email}` });
+      const result = await salesApi.convertLead(id, convertPassword, convertSendEmail);
+      setConvertResult(result);
+      setSnack({ severity: 'success',
+        msg: result.alreadyExisted
+          ? `Cuenta ya existía: ${result.account.email}. Estado actualizado a EN_PRUEBA.`
+          : `Cuenta creada: ${result.account.email}${convertSendEmail ? ' — email enviado' : ''}`,
+      });
       reload();
     } catch (e) { setSnack({ severity: 'error', msg: e.message }); }
+    finally { setConverting(false); }
+  };
+
+  const copyCreds = async () => {
+    if (!convertResult) return;
+    const text = `Portal: https://oirconecta.com/login-directorio\nEmail: ${convertResult.account.email}\nClave temporal: ${convertResult.tempPassword || convertPassword}`;
+    try { await navigator.clipboard.writeText(text); setSnack({ severity: 'success', msg: 'Credenciales copiadas' }); }
+    catch { setSnack({ severity: 'error', msg: 'No se pudo copiar' }); }
   };
 
   if (loading || !lead) {
@@ -186,7 +219,7 @@ export default function SalesLeadDetailPage() {
             </Box>
           ))}
           {lead.status !== 'EN_PRUEBA' && lead.status !== 'CONVERTIDO' && (
-            <Button onClick={convertLead} variant="contained" startIcon={<RocketLaunchOutlined />}
+            <Button onClick={openConvert} variant="contained" startIcon={<RocketLaunchOutlined />}
               sx={{ ml: 'auto', bgcolor: '#10b981', textTransform: 'none', fontWeight: 700, borderRadius: 1.5, '&:hover': { bgcolor: '#0d9469' } }}>
               Crear cuenta trial 120d
             </Button>
@@ -289,6 +322,71 @@ export default function SalesLeadDetailPage() {
         )}
       </Box>
 
+      {/* Dialog: convertir a cuenta trial 120d */}
+      <Dialog open={convertOpen} onClose={() => !converting && setConvertOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: '#272F50' }}>
+          {convertResult ? 'Cuenta lista' : `Convertir a ${lead?.nombre}`}
+          <Typography sx={{ fontSize: 12, color: '#5b6b7a', fontWeight: 500, mt: 0.25 }}>
+            {convertResult ? 'Comparte estas credenciales con el profesional.' : 'Trial gratuito 120 días. La clave es temporal y el profesional la cambiará al primer login.'}
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          {!convertResult ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75, pt: 1 }}>
+              <TextField label="Email del profesional" value={lead?.email || ''} size="small" disabled />
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <TextField label="Clave temporal" value={convertPassword} onChange={(e) => setConvertPassword(e.target.value)} size="small" fullWidth helperText="Mínimo 8 caracteres. Se envía por email al profesional." />
+                <Button onClick={() => setConvertPassword(generatePassword())} size="small" sx={{ mt: 0.5, textTransform: 'none', fontWeight: 700, color: '#4054B2' }}>
+                  Regenerar
+                </Button>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1.25, bgcolor: '#eef0fb', borderRadius: 1, fontSize: 12.5, color: '#272F50' }}>
+                <input type="checkbox" checked={convertSendEmail} onChange={(e) => setConvertSendEmail(e.target.checked)} id="sendEmailChk" />
+                <label htmlFor="sendEmailChk" style={{ cursor: 'pointer', flex: 1 }}>
+                  Enviar email de bienvenida con credenciales desde <strong>servicioalcliente@oirconecta.com</strong>
+                </label>
+              </Box>
+            </Box>
+          ) : (
+            <Box sx={{ pt: 1 }}>
+              <Box sx={{ p: 2, bgcolor: '#ecfdf5', border: '1px solid #10b98140', borderRadius: 1.5, mb: 1.5 }}>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#047857', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1 }}>
+                  Credenciales
+                </Typography>
+                <CredRow label="Portal" value="https://oirconecta.com/login-directorio" />
+                <CredRow label="Email" value={convertResult.account.email} />
+                <CredRow label="Clave temporal" value={convertResult.tempPassword || convertPassword} mono />
+              </Box>
+              <Button onClick={copyCreds} size="small" startIcon={<EmailOutlined />}
+                sx={{ textTransform: 'none', fontWeight: 700, color: '#4054B2', bgcolor: '#eef0fb', '&:hover': { bgcolor: '#dde0f5' } }}>
+                Copiar credenciales
+              </Button>
+              {convertResult.alreadyExisted && (
+                <Typography sx={{ fontSize: 12.5, color: '#b45309', mt: 1.5 }}>
+                  La cuenta ya existía. No se sobrescribió la clave; comparte la que el profesional ya conoce.
+                </Typography>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {!convertResult ? (
+            <>
+              <Button onClick={() => setConvertOpen(false)} disabled={converting} sx={{ textTransform: 'none', color: '#5b6b7a' }}>Cancelar</Button>
+              <Button onClick={doConvert} disabled={converting || convertPassword.length < 8} variant="contained" startIcon={<RocketLaunchOutlined />}
+                sx={{ bgcolor: '#10b981', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#0d9469' } }}>
+                {converting ? 'Creando…' : 'Crear cuenta'}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setConvertOpen(false)} variant="contained"
+              sx={{ bgcolor: '#272F50', textTransform: 'none', fontWeight: 700 }}>
+              Listo
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
       {/* Dialog: enviar email outbound */}
       <Dialog open={emailOpen} onClose={() => setEmailOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ fontWeight: 800, color: '#272F50' }}>
@@ -339,6 +437,20 @@ function FieldRow({ label, value }) {
     <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75, borderBottom: '1px solid #f0f2f4', '&:last-child': { borderBottom: 'none' } }}>
       <Typography sx={{ fontSize: 12, color: '#5b6b7a', fontWeight: 600 }}>{label}</Typography>
       <Typography sx={{ fontSize: 13, color: '#0f1923', fontWeight: 500 }}>{value}</Typography>
+    </Box>
+  );
+}
+
+function CredRow({ label, value, mono }) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, py: 0.5 }}>
+      <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#047857', minWidth: 110 }}>{label}</Typography>
+      <Typography sx={{
+        fontSize: 13, fontWeight: 700, color: '#041a12', flex: 1, wordBreak: 'break-all',
+        fontFamily: mono ? 'ui-monospace, monospace' : 'inherit',
+      }}>
+        {value}
+      </Typography>
     </Box>
   );
 }

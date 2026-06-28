@@ -21,7 +21,7 @@ import {
   Logout,
   ArrowBack,
 } from '@mui/icons-material';
-import { directoryApi, clearDirectoryToken, getDirectoryToken } from '../../services/directoryAccountApi';
+import { directoryApi, clearDirectoryToken, getDirectoryToken, getDirectoryMustChangePassword } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
 import { OC_COLORS } from '../../theme';
 import TrialBadge from '../../components/profesional/TrialBadge';
@@ -239,6 +239,10 @@ export default function ProfesionalLayout() {
   useEffect(() => {
     if (!getDirectoryToken()) {
       navigate('/login-directorio', { replace: true });
+      return;
+    }
+    if (getDirectoryMustChangePassword()) {
+      navigate('/portal-profesional/cambiar-clave', { replace: true });
       return;
     }
     directoryApi.get(DIRECTORY_API.me).then(({ data }) => {

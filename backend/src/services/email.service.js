@@ -231,6 +231,36 @@ async function sendSalesOutreach({ to, toName, subject, bodyText, executiveName,
   });
 }
 
+/**
+ * Bienvenida con credenciales temporales para profesional captado por
+ * el Ejecutivo Comercial. Incluye email + clave temporal y CTA al portal
+ * profesional. El destinatario DEBE cambiar la clave al primer login.
+ */
+async function sendDirectoryWelcomeWithCredentials({ to, nombre, tempPassword, executiveName, executiveEmail }) {
+  const portalUrl = `${SITE_URL}/login-directorio`;
+  const html = baseTemplate({
+    title: 'Bienvenido a OírConecta',
+    bodyHtml: `
+      ${h1(`Hola ${nombre || 'profesional'},`)}
+      ${p(`Ya te registramos en <strong>OírConecta</strong>. Tu cuenta queda activa por <strong>120 días gratis</strong> en el portal profesional.`)}
+      ${highlight([
+        ['Email', to],
+        ['Clave temporal', `<code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-family:ui-monospace,monospace">${tempPassword}</code>`],
+      ])}
+      ${p(`Al ingresar por primera vez te pediremos que <strong>cambies la clave</strong> por una propia.`)}
+      ${btn(portalUrl, 'Entrar al portal profesional')}
+      ${divider()}
+      ${p(`Tu contacto de captación:<br/><strong>${executiveName || 'Equipo OírConecta'}</strong><br/>${executiveEmail ? `<a href="mailto:${executiveEmail}" style="color:#085946;">${executiveEmail}</a>` : ''}`)}
+    `,
+  });
+  await deliver({
+    to, toName: nombre, subject: 'Bienvenido a OírConecta — tus credenciales',
+    html,
+    fromEmail: SALES_FROM_EMAIL, fromName: SALES_FROM_NAME,
+    replyTo: executiveEmail || undefined,
+  });
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // 1. CONFIRMACIÓN DE CITA
 // ════════════════════════════════════════════════════════════════════════════
@@ -883,6 +913,7 @@ async function sendSubscriptionReactivated({ email, nombre }) {
 
 module.exports = {
   sendSalesOutreach,
+  sendDirectoryWelcomeWithCredentials,
   sendBookingConfirmation,
   sendProfessionalWelcome,
   sendNewsletterWelcome,

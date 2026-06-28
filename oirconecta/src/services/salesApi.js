@@ -32,7 +32,9 @@ export const salesApi = {
   }),
 
   // Conversión
-  convertLead:  (id) => json(`/api/sales/leads/${id}/convert`, { method: 'POST' }),
+  convertLead:  (id, password = '', sendEmail = true) => json(`/api/sales/leads/${id}/convert`, {
+    method: 'POST', body: JSON.stringify({ password, sendEmail }),
+  }),
 
   // Import CSV
   importCsv:    (rows, ownerId) => json('/api/sales/leads/import-csv', {

@@ -18,7 +18,6 @@ const directoryLogin = async (req, res, next) => {
     next(e);
   }
 };
-
 const getMe = async (req, res, next) => {
   try {
     const profile = await directoryService.getMyDirectoryProfile(req.directoryAccount.id);
@@ -29,6 +28,13 @@ const getMe = async (req, res, next) => {
   } catch (e) {
     next(e);
   }
+};
+
+const changeMyPassword = async (req, res, next) => {
+  try {
+    const out = await directoryService.changeMyPassword(req.directoryAccount.id, req.body || {});
+    res.json({ success: true, data: out });
+  } catch (e) { next(e); }
 };
 
 const patchMe = async (req, res, next) => {
@@ -182,6 +188,7 @@ const patchMyInquiry = async (req, res, next) => {
 
 module.exports = {
   register,
+  changeMyPassword,
   directoryLogin,
   getMe,
   patchMe,

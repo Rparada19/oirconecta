@@ -6,6 +6,7 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 const PIPELINE_OPEN = ['NUEVO','CONTACTADO','INTERESADO','DEMO_AGENDADA','EN_PRUEBA'];
@@ -164,25 +165,49 @@ async function listMyTasks(assigneeId, { onlyPending = true, dueBefore } = {}) {
 /* ─── Conversión a profesional del directorio ───────────── */
 
 /**
- * Marca el lead como EN_PRUEBA y crea (si no existe) la DirectoryAccount
- * + DirectoryProfile con trial 120 d. Devuelve la cuenta creada / vinculada.
- * No envía email (lo dispara el servicio de email tras este paso).
+ * Genera una clave temporal robusta tipo "Marca-XYZW-2491".
  */
-async function convertLeadToTrial(leadId) {
+function generateTempPassword() {
+  const adjectives = ['Audio','Sonus','Claro','Onda','Voz','Eco','Logos','Ritmo','Aliento','Pulso'];
+  const a = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  const n = Math.floor(1000 + Math.random() * 9000);
+  return `${a}-${s}-${n}`;
+}
+
+/**
+ * Marca el lead como EN_PRUEBA y crea (si no existe) la DirectoryAccount.
+ * El Ejecutivo Comercial define una clave inicial; queda marcada como
+ * temporal (mustChangePassword=true). El profesional la cambia al primer
+ * login en /portal-profesional.
+ *
+ * @param {string} leadId
+ * @param {{ password?: string, createdByUserId?: string }} opts
+ * @returns {{ account, lead, tempPassword, alreadyExisted }}
+ */
+async function convertLeadToTrial(leadId, opts = {}) {
   const lead = await prisma.salesLead.findUnique({ where: { id: leadId } });
   if (!lead) throw new Error('Lead no existe');
   if (!lead.email) throw new Error('Lead sin email — no se puede crear cuenta del directorio');
 
   const email = lead.email.toLowerCase();
-  let account = await prisma.directoryAccount.findUnique({ where: { email } });
-  if (!account) {
-    // Crea cuenta sin password (debe activar con link). El servicio email
-    // envía la invitación con set-password.
+  const existing = await prisma.directoryAccount.findUnique({ where: { email } });
+  let account = existing;
+  let tempPassword = null;
+
+  if (!existing) {
+    tempPassword = (opts.password && String(opts.password).trim()) || generateTempPassword();
+    if (tempPassword.length < 8) throw new Error('La clave temporal debe tener mínimo 8 caracteres');
+    const hash = await bcrypt.hash(tempPassword, 10);
     account = await prisma.directoryAccount.create({
       data: {
         email,
         nombre: lead.nombre,
-        // No seteamos password aquí — el profesional la define al activar.
+        password: hash,
+        mustChangePassword: true,
+        createdByUserId: opts.createdByUserId || null,
       },
     });
   }
@@ -196,7 +221,7 @@ async function convertLeadToTrial(leadId) {
     },
   });
 
-  return { account, lead };
+  return { account, lead, tempPassword, alreadyExisted: !!existing };
 }
 
 /* ─── Importación CSV ───────────────────────────────────── */

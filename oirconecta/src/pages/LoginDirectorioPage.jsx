@@ -15,7 +15,7 @@ import {
   Stack,
 } from '@mui/material';
 import { Person, Lock, Visibility, VisibilityOff, Login as LoginIcon, PersonAddAltOutlined } from '@mui/icons-material';
-import { directoryApi, setDirectoryToken, getDirectoryToken } from '../services/directoryAccountApi';
+import { directoryApi, setDirectoryToken, getDirectoryToken, setDirectoryMustChangePassword } from '../services/directoryAccountApi';
 import { DIRECTORY_API } from '../config/directoryApi';
 
 function isDirectorySchemaError(raw) {
@@ -69,7 +69,9 @@ export default function LoginDirectorioPage() {
       return;
     }
     setDirectoryToken(token);
-    navigate('/portal-profesional', { replace: true });
+    const mustChange = !!data?.data?.account?.mustChangePassword;
+    setDirectoryMustChangePassword(mustChange);
+    navigate(mustChange ? '/portal-profesional/cambiar-clave' : '/portal-profesional', { replace: true });
   };
 
   return (

@@ -194,8 +194,38 @@ async function loginDirectoryAccount(email, password) {
   }
   return {
     token: generateDirectoryToken(account),
-    account: { id: account.id, email: account.email, nombre: account.nombre },
+    account: {
+      id: account.id, email: account.email, nombre: account.nombre,
+      mustChangePassword: !!account.mustChangePassword,
+    },
   };
+}
+
+/**
+ * Cambio de clave del titular. Verifica la actual y deja la nueva.
+ * Limpia mustChangePassword para que deje de pedirla.
+ */
+async function changeMyPassword(accountId, { currentPassword, newPassword }) {
+  if (!newPassword || String(newPassword).length < 8) {
+    const e = new Error('La nueva clave debe tener mínimo 8 caracteres');
+    e.statusCode = 400; throw e;
+  }
+  const account = await prisma.directoryAccount.findUnique({ where: { id: accountId } });
+  if (!account) {
+    const e = new Error('Cuenta no existe');
+    e.statusCode = 404; throw e;
+  }
+  const valid = await comparePassword(currentPassword || '', account.password);
+  if (!valid) {
+    const e = new Error('La clave actual no es correcta');
+    e.statusCode = 401; throw e;
+  }
+  const hash = await hashPassword(newPassword);
+  await prisma.directoryAccount.update({
+    where: { id: accountId },
+    data: { password: hash, mustChangePassword: false },
+  });
+  return { success: true };
 }
 
 /**
@@ -998,6 +1028,7 @@ async function getAdminDirectoryStats() {
 module.exports = {
   registerProfessional,
   loginDirectoryAccount,
+  changeMyPassword,
   recordPublicCallClick,
   getStatsForAccount,
   getAdminDirectoryStats,

@@ -47,6 +47,11 @@ model DirectoryAccount {
   password  String
   nombre    String
   activo    Boolean  @default(true)
+  /// True cuando la cuenta fue creada por el Ejecutivo Comercial con clave temporal.
+  /// Al primer login el profesional debe definir su propia clave antes de operar.
+  mustChangePassword Boolean @default(false)
+  /// Quién creó la cuenta (opcional — útil para reportería de captación).
+  createdByUserId    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

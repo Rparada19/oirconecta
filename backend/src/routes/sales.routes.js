@@ -247,8 +247,41 @@ router.post('/leads/:id/send-email', isOwnerOfLeadOrAdmin, async (req, res) => {
 
 router.post('/leads/:id/convert', isOwnerOfLeadOrAdmin, async (req, res) => {
   try {
-    const { account, lead } = await sales.convertLeadToTrial(req.params.id);
-    res.json({ success: true, data: { account, lead } });
+    const { password, sendEmail = true } = req.body || {};
+    const result = await sales.convertLeadToTrial(req.params.id, {
+      password: password && String(password).trim() ? password : undefined,
+      createdByUserId: req.user.id,
+    });
+    const { account, lead, tempPassword, alreadyExisted } = result;
+
+    // Si la cuenta acaba de nacer, enviamos credenciales por email.
+    if (!alreadyExisted && tempPassword && sendEmail) {
+      try {
+        await emailService.sendDirectoryWelcomeWithCredentials({
+          to: account.email, nombre: account.nombre,
+          tempPassword,
+          executiveName:  req.user.nombre,
+          executiveEmail: req.user.email,
+        });
+        // Loguea la actividad
+        await sales.logActivity(req.params.id, req.user.id, {
+          type: 'EMAIL', outcome: 'Bienvenida enviada',
+          subject: 'Bienvenido a OírConecta — credenciales',
+          body: `Cuenta creada con clave temporal y email enviado a ${account.email}`,
+          status: 'sent',
+        });
+      } catch (mailErr) {
+        console.warn('[sales] convert — email no enviado:', mailErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        account: { id: account.id, email: account.email, nombre: account.nombre },
+        lead, tempPassword, alreadyExisted,
+      },
+    });
   } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 

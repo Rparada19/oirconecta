@@ -149,11 +149,26 @@ async function ensureSalesCrmSchema(prisma) {
 }
 
 /**
+ * Agrega campos a directory_accounts: mustChangePassword (clave temporal
+ * cuando la cuenta nace por captación) + createdByUserId (quién la creó).
+ */
+async function ensureDirectoryAccountColumns(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "directory_accounts" ADD COLUMN IF NOT EXISTS "mustChangePassword" BOOLEAN NOT NULL DEFAULT false;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "directory_accounts" ADD COLUMN IF NOT EXISTS "createdByUserId" TEXT;`);
+    console.log('[boot-migrate] directory_accounts columns OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureDirectoryAccountColumns falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * Punto único: corre todas las migraciones idempotentes.
  */
 async function runBootMigrations(prisma) {
   await extendTrialsTo120(prisma);
   await ensureSalesCrmSchema(prisma);
+  await ensureDirectoryAccountColumns(prisma);
 }
 
 module.exports = { runBootMigrations };

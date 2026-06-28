@@ -86,6 +86,7 @@ router.post(
 
 router.get('/me', authenticateDirectoryAccount, directoryController.getMe);
 router.get('/me/stats', authenticateDirectoryAccount, directoryController.getMyStats);
+router.post('/me/change-password', authenticateDirectoryAccount, directoryController.changeMyPassword);
 
 // Upload de imagen del profesional (foto perfil, banner, galería)
 router.post('/me/upload', authenticateDirectoryAccount, (req, res) => {

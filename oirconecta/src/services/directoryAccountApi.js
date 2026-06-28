@@ -25,10 +25,30 @@ export function setDirectoryToken(token) {
 
 export function clearDirectoryToken() {
   try {
-    if (typeof window !== 'undefined') localStorage.removeItem(DIRECTORY_TOKEN_KEY);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(DIRECTORY_TOKEN_KEY);
+      localStorage.removeItem(DIRECTORY_MUST_CHANGE_KEY);
+    }
   } catch (e) {
     console.error('Error al borrar token de directorio:', e);
   }
+}
+
+export const DIRECTORY_MUST_CHANGE_KEY = 'oirconecta_directory_must_change_pwd';
+
+export function setDirectoryMustChangePassword(flag) {
+  try {
+    if (typeof window !== 'undefined') {
+      if (flag) localStorage.setItem(DIRECTORY_MUST_CHANGE_KEY, '1');
+      else localStorage.removeItem(DIRECTORY_MUST_CHANGE_KEY);
+    }
+  } catch {}
+}
+
+export function getDirectoryMustChangePassword() {
+  try {
+    return typeof window !== 'undefined' && localStorage.getItem(DIRECTORY_MUST_CHANGE_KEY) === '1';
+  } catch { return false; }
 }
 
 /**

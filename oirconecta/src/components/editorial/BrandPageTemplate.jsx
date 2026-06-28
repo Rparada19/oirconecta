@@ -167,12 +167,15 @@ function BrandHero({ brand, productosCount }) {
                 boxShadow: `0 24px 60px ${C.navy}1a`,
                 p: { xs: 3, md: 3.5 },
               }}>
-                {/* Logo de marca — librería interna React-SVG */}
+                {/* Logo de marca — librería interna React-SVG.
+                    Fondo blanco (antes crema) para no chocar con los azules y rojos
+                    de varias marcas. */}
                 <Box sx={{
-                  bgcolor: C.cremaCalida,
+                  bgcolor: '#fff',
                   borderRadius: '10px', p: 3.5, mb: 3,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   minHeight: 120,
+                  border: '1px solid #eef0f2',
                   borderLeft: `4px solid ${brand.color}`,
                 }}>
                   {isBrand(brand.nombre) ? (

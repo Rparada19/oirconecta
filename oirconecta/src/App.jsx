@@ -107,6 +107,7 @@ const SalesDiaPage = lazy(() => import('./pages/admin/sales/SalesDiaPage'));
 const SalesLeadsPage = lazy(() => import('./pages/admin/sales/SalesLeadsPage'));
 const SalesLeadDetailPage = lazy(() => import('./pages/admin/sales/SalesLeadDetailPage'));
 const SalesReportesPage = lazy(() => import('./pages/admin/sales/SalesReportesPage'));
+const CambiarClavePage = lazy(() => import('./pages/profesional/CambiarClavePage'));
 const PopupBienvenida = lazy(() => import('./components/marketing/PopupBienvenida'));
 const PreviewModeIndicator = lazy(() => import('./components/marketing/PreviewModeIndicator'));
 
@@ -242,6 +243,9 @@ export default function App() {
             <Route path="configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />
             <Route path="productos" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ProductosPage /></ProtectedRouteByRole>} />
           </Route>
+
+          {/* Cambio de clave forzado (fuera del shell) */}
+          <Route path="/portal-profesional/cambiar-clave" element={<CambiarClavePage />} />
 
           {/* Portal del Profesional (directorio) */}
           <Route path="/portal-profesional" element={<ProfesionalLayout />}>
