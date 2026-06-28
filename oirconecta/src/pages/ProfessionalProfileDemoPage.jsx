@@ -65,6 +65,7 @@ import { styled } from '@mui/material/styles';
 import { Helmet } from 'react-helmet';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import BrandLogo, { isBrand } from '../components/profesional/BrandLogo';
 
 // Componentes estilizados
 const BannerContainer = styled(Box)(() => ({
@@ -1083,11 +1084,17 @@ const ProfessionalProfileDemoPage = () => {
                     <Grid item xs={6} md={4} key={brand.id}>
                       <SectionCard>
                         <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                          <img
-                            src={brand.logo}
-                            alt={brand.name}
-                            style={{ width: '100%', height: '80px', objectFit: 'contain', marginBottom: '16px' }}
-                          />
+                          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2, minHeight: 80, alignItems: 'center' }}>
+                            {isBrand(brand.name) ? (
+                              <BrandLogo brand={brand.name} height={56} layout="row" />
+                            ) : (
+                              <img
+                                src={brand.logo}
+                                alt={brand.name}
+                                style={{ width: '100%', height: '80px', objectFit: 'contain' }}
+                              />
+                            )}
+                          </Box>
                           <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
                             {brand.name}
                           </Typography>

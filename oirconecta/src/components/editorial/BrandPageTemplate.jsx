@@ -29,6 +29,7 @@ import {
 } from './EditorialKit';
 import { useReveal } from '../../hooks/useReveal';
 import { Swoosh } from '../brand/BrandMark';
+import BrandLogo, { isBrand } from '../profesional/BrandLogo';
 
 function BrandHero({ brand, productosCount }) {
   const text = useReveal({ threshold: 0.1 });
@@ -166,7 +167,7 @@ function BrandHero({ brand, productosCount }) {
                 boxShadow: `0 24px 60px ${C.navy}1a`,
                 p: { xs: 3, md: 3.5 },
               }}>
-                {/* Logo grande */}
+                {/* Logo de marca — librería interna React-SVG */}
                 <Box sx={{
                   bgcolor: C.cremaCalida,
                   borderRadius: '10px', p: 3.5, mb: 3,
@@ -174,9 +175,13 @@ function BrandHero({ brand, productosCount }) {
                   minHeight: 120,
                   borderLeft: `4px solid ${brand.color}`,
                 }}>
-                  <Box component="img" src={brand.logo} alt={brand.nombre}
-                    sx={{ maxHeight: 72, maxWidth: '85%', objectFit: 'contain' }}
-                  />
+                  {isBrand(brand.nombre) ? (
+                    <BrandLogo brand={brand.nombre} height={64} layout="row" />
+                  ) : (
+                    <Box component="img" src={brand.logo} alt={brand.nombre}
+                      sx={{ maxHeight: 72, maxWidth: '85%', objectFit: 'contain' }}
+                    />
+                  )}
                 </Box>
 
                 {/* Stats */}
