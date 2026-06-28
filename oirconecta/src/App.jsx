@@ -103,6 +103,10 @@ const AdminNewsletterPage = lazy(() => import('./pages/admin/AdminNewsletterPage
 const AdminContactosPage = lazy(() => import('./pages/admin/AdminContactosPage'));
 const AdminSuscripcionesPage = lazy(() => import('./pages/admin/AdminSuscripcionesPage'));
 const AdminMarketingPage = lazy(() => import('./pages/admin/AdminMarketingPage'));
+const SalesDiaPage = lazy(() => import('./pages/admin/sales/SalesDiaPage'));
+const SalesLeadsPage = lazy(() => import('./pages/admin/sales/SalesLeadsPage'));
+const SalesLeadDetailPage = lazy(() => import('./pages/admin/sales/SalesLeadDetailPage'));
+const SalesReportesPage = lazy(() => import('./pages/admin/sales/SalesReportesPage'));
 const PopupBienvenida = lazy(() => import('./components/marketing/PopupBienvenida'));
 const PreviewModeIndicator = lazy(() => import('./components/marketing/PreviewModeIndicator'));
 
@@ -261,6 +265,11 @@ export default function App() {
             <Route path="contactos" element={<AdminContactosPage />} />
             <Route path="suscripciones" element={<AdminSuscripcionesPage />} />
             <Route path="marketing" element={<AdminMarketingPage />} />
+            {/* CRM Sales — captación outbound de profesionales */}
+            <Route path="sales" element={<SalesDiaPage />} />
+            <Route path="sales/leads" element={<SalesLeadsPage />} />
+            <Route path="sales/leads/:id" element={<SalesLeadDetailPage />} />
+            <Route path="sales/reportes" element={<SalesReportesPage />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

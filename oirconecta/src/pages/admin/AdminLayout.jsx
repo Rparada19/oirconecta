@@ -25,16 +25,67 @@ import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOu
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LogoutIcon from '@mui/icons-material/Logout';
+import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
+import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
 import { getAdminToken, clearAdminToken, getAdminUser } from './adminAuth';
+import { canAccessAllAdminPages, canUseSalesCrm, ROLES } from '../../utils/rolePermissions';
 
 const SIDEBAR_WIDTH = 240;
+
+function NavSection({ title, items, isActive, accent, activeBg, hoverBg }) {
+  return (
+    <Box sx={{ mb: 1.5 }}>
+      <Typography sx={{ px: 3, py: 0.5, fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', color: 'rgba(110,231,200,0.55)', textTransform: 'uppercase' }}>
+        {title}
+      </Typography>
+      <List disablePadding>
+        {items.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <ListItem key={item.path} disablePadding sx={{ px: 1.5, mb: 0.5 }}>
+              <ListItemButton
+                component={RouterLink}
+                to={item.path}
+                sx={{
+                  borderRadius: '12px', py: 1, px: 1.5,
+                  background: active ? activeBg : 'transparent',
+                  border: active ? `1px solid rgba(110,231,200,0.22)` : '1px solid transparent',
+                  '&:hover': { background: hoverBg },
+                  transition: 'all 0.2s',
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 36, color: active ? accent : 'rgba(255,255,255,0.55)' }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontSize: '0.875rem',
+                    fontWeight: active ? 700 : 500,
+                    color: active ? '#fff' : 'rgba(255,255,255,0.65)',
+                    letterSpacing: '-0.01em',
+                  }}
+                />
+                {active && (
+                  <Box sx={{ width: 4, height: 20, borderRadius: '2px', background: `linear-gradient(180deg, ${accent}, #085946)` }} />
+                )}
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+    </Box>
+  );
+}
 
 const SIDEBAR_BG = 'linear-gradient(180deg, #041a12 0%, #063c2c 60%, #0d1f3c 100%)';
 const ACCENT = '#6ee7c8';
 const NAV_ACTIVE_BG = 'rgba(110,231,200,0.13)';
 const NAV_HOVER_BG = 'rgba(110,231,200,0.07)';
 
-const navItems = [
+// Items full admin (todo) — solo ADMIN.
+const ADMIN_FULL_NAV = [
   { label: 'Dashboard', icon: <DashboardOutlinedIcon />, path: '/portal-admin' },
   { label: 'Blog', icon: <ArticleOutlinedIcon />, path: '/portal-admin/blog' },
   { label: 'Profesionales', icon: <PeopleOutlinedIcon />, path: '/portal-admin/profesionales' },
@@ -45,6 +96,13 @@ const navItems = [
   { label: 'Marketing & Ventas', icon: <CampaignOutlinedIcon />, path: '/portal-admin/marketing' },
   { label: 'Buzón de contacto', icon: <InboxOutlinedIcon />, path: '/portal-admin/contactos' },
   { label: 'Suscripciones', icon: <WorkspacePremiumOutlinedIcon />, path: '/portal-admin/suscripciones' },
+];
+
+// Items del CRM Sales (captación outbound) — ADMIN + EJECUTIVO_COMERCIAL.
+const SALES_NAV = [
+  { label: 'Mi día',   icon: <WbSunnyOutlinedIcon />,    path: '/portal-admin/sales' },
+  { label: 'Leads',    icon: <PeopleAltOutlinedIcon />,  path: '/portal-admin/sales/leads' },
+  { label: 'Reportes', icon: <InsightsOutlinedIcon />,   path: '/portal-admin/sales/reportes' },
 ];
 
 export default function AdminLayout() {
@@ -63,6 +121,9 @@ export default function AdminLayout() {
   const user = getAdminUser();
   const userName = user?.nombre || user?.name || user?.email || 'Admin';
   const userInitial = userName.charAt(0).toUpperCase();
+  const role = user?.role || ROLES.ADMIN;
+  const showFullAdmin = canAccessAllAdminPages(role);
+  const showSales = canUseSalesCrm(role);
 
   const isActive = (path) => {
     if (path === '/portal-admin') return location.pathname === '/portal-admin';
@@ -131,56 +192,12 @@ export default function AdminLayout() {
 
         {/* Nav items */}
         <Box sx={{ flex: 1, py: 2 }}>
-          <List disablePadding>
-            {navItems.map((item) => {
-              const active = isActive(item.path);
-              return (
-                <ListItem key={item.path} disablePadding sx={{ px: 1.5, mb: 0.5 }}>
-                  <ListItemButton
-                    component={RouterLink}
-                    to={item.path}
-                    sx={{
-                      borderRadius: '12px',
-                      py: 1,
-                      px: 1.5,
-                      background: active ? NAV_ACTIVE_BG : 'transparent',
-                      border: active ? `1px solid rgba(110,231,200,0.22)` : '1px solid transparent',
-                      '&:hover': { background: NAV_HOVER_BG },
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 36,
-                        color: active ? ACCENT : 'rgba(255,255,255,0.55)',
-                      }}
-                    >
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{
-                        fontSize: '0.875rem',
-                        fontWeight: active ? 700 : 500,
-                        color: active ? '#fff' : 'rgba(255,255,255,0.65)',
-                        letterSpacing: '-0.01em',
-                      }}
-                    />
-                    {active && (
-                      <Box
-                        sx={{
-                          width: 4,
-                          height: 20,
-                          borderRadius: '2px',
-                          background: `linear-gradient(180deg, ${ACCENT}, #085946)`,
-                        }}
-                      />
-                    )}
-                  </ListItemButton>
-                </ListItem>
-              );
-            })}
-          </List>
+          {showFullAdmin && (
+            <NavSection title="Administración" items={ADMIN_FULL_NAV} isActive={isActive} accent={ACCENT} activeBg={NAV_ACTIVE_BG} hoverBg={NAV_HOVER_BG} />
+          )}
+          {showSales && (
+            <NavSection title="Captación comercial" items={SALES_NAV} isActive={isActive} accent={ACCENT} activeBg={NAV_ACTIVE_BG} hoverBg={NAV_HOVER_BG} />
+          )}
 
           <Divider sx={{ borderColor: 'rgba(110,231,200,0.12)', mx: 2, my: 2 }} />
 
