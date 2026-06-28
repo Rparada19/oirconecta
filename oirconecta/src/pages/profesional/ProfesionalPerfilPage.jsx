@@ -9,6 +9,8 @@ import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
 import { getServiciosSugeridos } from '../../config/serviciosPorProfesion';
 import PhotoUploader from '../../components/profesional/PhotoUploader';
+import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
+import { PersonOutlined } from '@mui/icons-material';
 
 const glassCard = {
   background: 'rgba(255,255,255,0.90)',
@@ -360,10 +362,11 @@ export default function ProfesionalPerfilPage() {
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: '#041a12', letterSpacing: '-0.5px' }}>Mi perfil</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Edita la información que aparece en tu ficha pública del directorio</Typography>
-      </Box>
+      <ProfesionalPageHeader
+        icon={PersonOutlined}
+        title="Mi perfil"
+        subtitle="Edita la información que aparece en tu ficha pública del directorio"
+      />
 
       {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
 

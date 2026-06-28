@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
+import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 
 const glassCard = {
   background: 'rgba(255,255,255,0.90)',
@@ -123,14 +124,11 @@ export default function ProfesionalConsultasPage() {
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: '#041a12', letterSpacing: '-0.5px' }}>
-          Consultas recibidas
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Mensajes enviados por pacientes desde tu ficha pública
-        </Typography>
-      </Box>
+      <ProfesionalPageHeader
+        icon={MailOutlined}
+        title="Consultas recibidas"
+        subtitle="Mensajes enviados por pacientes desde tu ficha pública"
+      />
 
       {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
 

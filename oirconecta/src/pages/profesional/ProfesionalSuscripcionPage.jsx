@@ -7,7 +7,9 @@ import {
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
+import WorkspacePremiumOutlined from '@mui/icons-material/WorkspacePremiumOutlined';
 import { directoryApi } from '../../services/directoryAccountApi';
+import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 
 const ACCENT = '#085946';
 const NAVY = '#272F50';
@@ -80,13 +82,12 @@ export default function ProfesionalSuscripcionPage() {
   const progress = Math.max(0, Math.min(100, ((totalDuracion - s.diasRestantes) / totalDuracion) * 100));
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1100, mx: 'auto' }}>
-      <Typography variant="h4" sx={{ fontWeight: 800, color: NAVY, mb: 0.5, letterSpacing: '-0.02em' }}>
-        Mi suscripción
-      </Typography>
-      <Typography sx={{ color: '#64748b', mb: 3 }}>
-        Estado, vigencia y planes disponibles.
-      </Typography>
+    <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
+      <ProfesionalPageHeader
+        icon={WorkspacePremiumOutlined}
+        title="Mi suscripción"
+        subtitle="Estado, vigencia y planes disponibles"
+      />
 
       {/* Card principal de estado */}
       <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', mb: 3, overflow: 'hidden' }}>

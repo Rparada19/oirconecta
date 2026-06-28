@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import { directoryApi, getDirectoryToken } from '../../services/directoryAccountApi';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
+import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 
 const BASE_URL = getApiBaseUrl();
 
@@ -211,24 +212,21 @@ export default function ProfesionalServiciosPage() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#041a12', letterSpacing: '-0.5px' }}>
-            Mis servicios
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Gestiona los servicios que ofreces en el marketplace de OírConecta
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddOutlined />}
-          onClick={openNew}
-          sx={{ bgcolor: '#085946', borderRadius: '12px', fontWeight: 700, textTransform: 'none', px: 3, '&:hover': { bgcolor: '#064a38' } }}
-        >
-          Nuevo servicio
-        </Button>
-      </Box>
+      <ProfesionalPageHeader
+        icon={StorefrontOutlined}
+        title="Mis servicios"
+        subtitle="Gestiona los servicios que ofreces en el marketplace de OírConecta"
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddOutlined />}
+            onClick={openNew}
+            sx={{ bgcolor: '#085946', borderRadius: '12px', fontWeight: 700, textTransform: 'none', px: 3, '&:hover': { bgcolor: '#064a38' } }}
+          >
+            Nuevo servicio
+          </Button>
+        }
+      />
 
       {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
 
