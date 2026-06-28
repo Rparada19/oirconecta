@@ -157,10 +157,25 @@ export default function ProfesionalConsultasPage() {
 
       {/* Lista */}
       {filtered.length === 0 ? (
-        <Card elevation={0} sx={{ ...glassCard, textAlign: 'center', py: 6 }}>
-          <MailOutlined sx={{ fontSize: 48, color: 'rgba(8,89,70,0.25)', mb: 1 }} />
-          <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 600 }}>
-            No hay consultas en esta categoría
+        <Card elevation={0} sx={{
+          bgcolor: '#fff', border: '1px solid #e5e7eb', borderRadius: 2.5,
+          boxShadow: '0 1px 3px rgba(15,23,35,0.04)',
+          textAlign: 'center', py: 6, px: 3,
+        }}>
+          <Box sx={{
+            width: 56, height: 56, mx: 'auto', mb: 1.5, borderRadius: 2,
+            bgcolor: 'rgba(8,89,70,0.08)', color: '#085946',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <MailOutlined sx={{ fontSize: 28 }} />
+          </Box>
+          <Typography sx={{ fontWeight: 700, fontSize: 15, color: '#041a12', mb: 0.5 }}>
+            {filter === 'ALL' ? 'Aún no recibes consultas' : 'No hay consultas en esta categoría'}
+          </Typography>
+          <Typography sx={{ color: '#5b6b7a', fontSize: 13 }}>
+            {filter === 'ALL'
+              ? 'Comparte tu ficha pública para empezar a recibir mensajes.'
+              : 'Cambia el filtro para ver otros estados.'}
           </Typography>
         </Card>
       ) : (
@@ -170,11 +185,17 @@ export default function ProfesionalConsultasPage() {
               <Card
                 elevation={0}
                 sx={{
-                  ...glassCard,
+                  bgcolor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 2.5,
+                  boxShadow: '0 1px 3px rgba(15,23,35,0.04)',
                   cursor: 'pointer',
-                  transition: 'transform 0.15s, box-shadow 0.15s',
-                  '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 32px rgba(0,0,0,0.11)' },
-                  borderLeft: inq.status === 'NEW' ? '4px solid #3B82F6' : '4px solid transparent',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
+                  '&:hover': {
+                    borderColor: 'rgba(8,89,70,0.30)',
+                    boxShadow: '0 4px 14px rgba(15,23,35,0.07)',
+                  },
+                  borderLeft: inq.status === 'NEW' ? '4px solid #3B82F6' : '1px solid #e5e7eb',
                 }}
                 onClick={() => openDrawer(inq)}
               >

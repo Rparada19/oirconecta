@@ -232,7 +232,7 @@ export default function ProfesionalLayout() {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f0f4f8' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f7fa' }}>
       {/* Sidebar desktop */}
       <Drawer
         variant="permanent"
@@ -243,7 +243,7 @@ export default function ProfesionalLayout() {
           '& .MuiDrawer-paper': {
             width: SIDEBAR_W,
             boxSizing: 'border-box',
-            background: 'linear-gradient(180deg, #041a12 0%, #063c2c 60%, #0d1f3c 100%)',
+            background: '#041a12',
             border: 'none',
           },
         }}
@@ -261,7 +261,7 @@ export default function ProfesionalLayout() {
           display: { xs: 'block', md: 'none' },
           '& .MuiDrawer-paper': {
             width: SIDEBAR_W,
-            background: 'linear-gradient(180deg, #041a12 0%, #063c2c 60%, #0d1f3c 100%)',
+            background: '#041a12',
             border: 'none',
           },
         }}

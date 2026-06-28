@@ -231,22 +231,51 @@ export default function ProfesionalServiciosPage() {
       {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
 
       {servicios.length === 0 ? (
-        <Card elevation={0} sx={{ ...glassCard, textAlign: 'center', py: 8 }}>
-          <StorefrontOutlined sx={{ fontSize: 56, color: 'rgba(8,89,70,0.20)', mb: 2 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#041a12', mb: 1 }}>
-            Aún no tienes servicios publicados
+        <Card elevation={0} sx={{
+          bgcolor: '#fff', border: '1px solid #e5e7eb', borderRadius: 2.5,
+          boxShadow: '0 1px 3px rgba(15,23,35,0.04)',
+          textAlign: 'center', py: 6, px: 3, maxWidth: 640, mx: 'auto',
+        }}>
+          <Box sx={{
+            width: 64, height: 64, mx: 'auto', mb: 2, borderRadius: 2,
+            bgcolor: 'rgba(8,89,70,0.08)', color: '#085946',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <StorefrontOutlined sx={{ fontSize: 32 }} />
+          </Box>
+          <Typography sx={{ fontWeight: 800, fontSize: 18, color: '#041a12', mb: 0.75 }}>
+            Empieza a publicar tus servicios
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Crea tu primer servicio para que pacientes puedan encontrarte en el marketplace.
+          <Typography sx={{ color: '#5b6b7a', fontSize: 14, mb: 2.5, maxWidth: 480, mx: 'auto' }}>
+            Tus servicios aparecen en el marketplace y en tu ficha pública.
+            Pacientes te encuentran filtrando por especialidad, modalidad y precio.
           </Typography>
           <Button
             variant="contained"
             startIcon={<AddOutlined />}
             onClick={openNew}
-            sx={{ bgcolor: '#085946', borderRadius: '12px', fontWeight: 700, textTransform: 'none', '&:hover': { bgcolor: '#064a38' } }}
+            sx={{ bgcolor: '#085946', borderRadius: '10px', fontWeight: 700, textTransform: 'none', px: 3, py: 1, '&:hover': { bgcolor: '#064a38' } }}
           >
-            + Nuevo servicio
+            Crear mi primer servicio
           </Button>
+          <Box sx={{
+            mt: 3, pt: 2.5, borderTop: '1px solid #f0f2f5',
+            display: 'flex', flexDirection: 'column', gap: 0.75,
+            textAlign: 'left', maxWidth: 420, mx: 'auto',
+          }}>
+            <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#085946', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>
+              Tips rápidos
+            </Typography>
+            <Typography sx={{ fontSize: 12.5, color: '#5b6b7a' }}>
+              • Pon precio claro — los servicios con precio se contactan 3× más.
+            </Typography>
+            <Typography sx={{ fontSize: 12.5, color: '#5b6b7a' }}>
+              • Indica duración aproximada (30, 45 o 60 min).
+            </Typography>
+            <Typography sx={{ fontSize: 12.5, color: '#5b6b7a' }}>
+              • Si haces virtual o domicilio, márcalo: hay alta demanda.
+            </Typography>
+          </Box>
         </Card>
       ) : (
         <Grid container spacing={2.5}>
