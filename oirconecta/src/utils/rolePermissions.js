@@ -13,6 +13,8 @@ export const ROLES = {
   AUDIOLOGA: 'AUDIOLOGA',
   VENDEDOR: 'VENDEDOR',
   SOLO_LECTURA: 'SOLO_LECTURA',
+  /// Ejecutivo de captación comercial outbound — solo CRM Sales en portal-admin
+  EJECUTIVO_COMERCIAL: 'EJECUTIVO_COMERCIAL',
 };
 
 export const MENU_KEYS = {
@@ -34,7 +36,33 @@ const MENU_BY_ROLE = {
   [ROLES.AUDIOLOGA]: [MENU_KEYS.DASHBOARD, MENU_KEYS.ACCIONES_DIA, MENU_KEYS.CITAS, MENU_KEYS.LEADS, MENU_KEYS.PACIENTES, MENU_KEYS.REPORTES],
   [ROLES.VENDEDOR]: [MENU_KEYS.DASHBOARD, MENU_KEYS.ACCIONES_DIA, MENU_KEYS.CITAS, MENU_KEYS.LEADS, MENU_KEYS.PACIENTES, MENU_KEYS.REPORTES],
   [ROLES.SOLO_LECTURA]: [MENU_KEYS.DASHBOARD, MENU_KEYS.ACCIONES_DIA, MENU_KEYS.CITAS, MENU_KEYS.LEADS, MENU_KEYS.PACIENTES, MENU_KEYS.REPORTES],
+  // EJECUTIVO_COMERCIAL no opera el CRM clínico; queda vacío para portal-crm.
+  [ROLES.EJECUTIVO_COMERCIAL]: [],
 };
+
+/// Menú visible en portal-admin (administración del sitio + CRM Sales).
+export const ADMIN_MENU_KEYS = {
+  DASHBOARD:      'admin-dashboard',
+  BLOG:           'admin-blog',
+  PROFESIONALES:  'admin-profesionales',
+  MARKETPLACE:    'admin-marketplace',
+  PEDIDOS:        'admin-pedidos',
+  COMPARADOR:     'admin-comparador',
+  NEWSLETTER:     'admin-newsletter',
+  CONTACTOS:      'admin-contactos',
+  SUSCRIPCIONES:  'admin-suscripciones',
+  MARKETING:      'admin-marketing',
+  SALES_DIA:      'admin-sales-dia',
+  SALES_LEADS:    'admin-sales-leads',
+  SALES_REPORTES: 'admin-sales-reportes',
+};
+
+const ADMIN_MENU_FULL = Object.values(ADMIN_MENU_KEYS);
+const ADMIN_MENU_SALES_ONLY = [
+  ADMIN_MENU_KEYS.SALES_DIA,
+  ADMIN_MENU_KEYS.SALES_LEADS,
+  ADMIN_MENU_KEYS.SALES_REPORTES,
+];
 
 const normalizeRole = (r) => (typeof r === 'string' ? r.toUpperCase() : r);
 
@@ -104,4 +132,29 @@ export function canEditAnamnesisAfterFilled(role) {
 
 export function isSoloLectura(role) {
   return normalizeRole(role) === ROLES.SOLO_LECTURA;
+}
+
+/// Portal-admin: items de sidebar visibles por rol.
+export function getAdminMenuForRole(role) {
+  const r = normalizeRole(role);
+  if (r === ROLES.ADMIN) return ADMIN_MENU_FULL;
+  if (r === ROLES.EJECUTIVO_COMERCIAL) return ADMIN_MENU_SALES_ONLY;
+  return [];
+}
+
+/// ¿El rol puede entrar al portal-admin?
+export function canAccessAdmin(role) {
+  const r = normalizeRole(role);
+  return r === ROLES.ADMIN || r === ROLES.EJECUTIVO_COMERCIAL;
+}
+
+/// ¿El rol ve todas las páginas del portal-admin (no solo Sales)?
+export function canAccessAllAdminPages(role) {
+  return normalizeRole(role) === ROLES.ADMIN;
+}
+
+/// ¿El rol puede operar el CRM Sales (outbound captación)?
+export function canUseSalesCrm(role) {
+  const r = normalizeRole(role);
+  return r === ROLES.ADMIN || r === ROLES.EJECUTIVO_COMERCIAL;
 }
