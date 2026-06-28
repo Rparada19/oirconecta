@@ -77,6 +77,7 @@ import {
   alliesCategoriesWithContent,
   studyCategoriesWithContent,
 } from '../utils/professionalProfilePublicContent';
+import { BrandMark, BrandWordmark } from '../components/profesional/BrandLogo';
 
 // Componentes estilizados
 const BannerContainer = styled(Box)(() => ({
@@ -1455,26 +1456,16 @@ const ProfessionalProfilePage = () => {
                       {(alliesByCategory[cat.key] || []).map((partner) => (
                         <Grid item xs={12} sm={6} md={4} key={partner.name}>
                           <SectionCard>
-                            {partner.image ? (
-                              <img
-                                src={partner.image}
-                                alt={partner.name}
-                                style={{
-                                  width: '100%',
-                                  height: 150,
-                                  objectFit: 'cover',
-                                  borderTopLeftRadius: '8px',
-                                  borderTopRightRadius: '8px',
-                                }}
-                              />
-                            ) : null}
                             <CardContent>
-                              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                                {partner.name}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {partner.description}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: partner.description ? 1.5 : 0 }}>
+                                <BrandMark brand={partner.name} size="lg" />
+                                <BrandWordmark brand={partner.name} size="lg" />
+                              </Box>
+                              {partner.description ? (
+                                <Typography variant="body2" color="text.secondary">
+                                  {partner.description}
+                                </Typography>
+                              ) : null}
                             </CardContent>
                           </SectionCard>
                         </Grid>

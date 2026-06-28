@@ -29,6 +29,7 @@ import {
   directoryProfilePhoto,
   waMeHrefFromPhone,
 } from '../../utils/directoryPresentation';
+import { BrandMark, isBrand } from '../profesional/BrandLogo';
 
 /**
  * Tarjeta de profesional del directorio público (API Prisma).
@@ -264,9 +265,16 @@ export default function DirectoryProfessionalCard({
         ) : null}
 
         {!dense && allies.length > 0 ? (
-          <Typography variant="caption" sx={{ color: 'text.disabled', letterSpacing: '0.02em' }}>
-            Trabaja con: {allies.join(' · ')}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+            <Typography variant="caption" sx={{ color: 'text.disabled', letterSpacing: '0.02em', mr: 0.25 }}>
+              Trabaja con:
+            </Typography>
+            {allies.map((b) => (
+              isBrand(b)
+                ? <BrandMark key={b} brand={b} size="xs" title={b} />
+                : <Typography key={b} variant="caption" sx={{ color: 'text.disabled' }}>{b}</Typography>
+            ))}
+          </Box>
         ) : null}
 
         <Box sx={{ flexGrow: 1 }} />
