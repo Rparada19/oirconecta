@@ -390,7 +390,33 @@ function AvailabilityTab({ availability, setAvailability, showSnack }) {
   const [saving, setSaving] = useState(false);
   useEffect(() => { setRows(availability); }, [availability]);
 
-  const addRow = (dow) => setRows((r) => [...r, { dayOfWeek: dow, startTime: '09:00', endTime: '12:00', active: true, _tmp: Math.random() }]);
+  const toMin = (t) => { const [h, m] = (t || '00:00').split(':').map(Number); return h * 60 + m; };
+  const toHHMM = (mins) => `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+
+  // Defaults inteligentes: si ya hay franja(s) en el día, la nueva arranca
+  // 2h después del fin de la última (típico hueco de almuerzo). Si no, 07:00-12:00.
+  const addRow = (dow) => setRows((r) => {
+    const existing = r.filter((x) => x.dayOfWeek === dow);
+    let start = '07:00', end = '12:00';
+    if (existing.length > 0) {
+      const lastEnd = Math.max(...existing.map((x) => toMin(x.endTime)));
+      const newStart = Math.min(lastEnd + 120, 22 * 60); // +2h, tope 22:00
+      start = toHHMM(newStart);
+      end = toHHMM(Math.min(newStart + 180, 23 * 60));   // bloque de 3h por defecto
+    }
+    return [...r, { dayOfWeek: dow, startTime: start, endTime: end, active: true, _tmp: Math.random() }];
+  });
+
+  // Divide automáticamente el día en mañana 07-12 y tarde 14-17 (típico Colombia).
+  const splitDay = (dow) => setRows((r) => {
+    const others = r.filter((x) => x.dayOfWeek !== dow);
+    return [
+      ...others,
+      { dayOfWeek: dow, startTime: '07:00', endTime: '12:00', active: true, _tmp: Math.random() },
+      { dayOfWeek: dow, startTime: '14:00', endTime: '17:00', active: true, _tmp: Math.random() + 1 },
+    ];
+  });
+
   const updRow = (idx, k, v) => setRows((r) => r.map((row, i) => i === idx ? { ...row, [k]: v } : row));
   const delRow = (idx) => setRows((r) => r.filter((_, i) => i !== idx));
 
@@ -410,11 +436,16 @@ function AvailabilityTab({ availability, setAvailability, showSnack }) {
   return (
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Typography sx={{ color: '#475569', fontSize: '0.875rem' }}>
-          Define en qué franjas trabajas cada día. Puedes tener varias franjas por día (ej. mañana y tarde).
-        </Typography>
+        <Box>
+          <Typography sx={{ color: '#475569', fontSize: '0.875rem' }}>
+            Define en qué franjas trabajas cada día. Puedes tener <strong>varias franjas por día</strong> (ej. mañana 07:00–12:00, tarde 14:00–17:00).
+          </Typography>
+          <Typography sx={{ color: '#94a3b8', fontSize: '0.75rem', mt: 0.25 }}>
+            Tip: para días con hueco de almuerzo usa el botón "Mañana + tarde" — agrega ambas franjas de un click.
+          </Typography>
+        </Box>
         <Button variant="contained" startIcon={<SaveOutlined />} onClick={save} disabled={saving}
-          sx={{ background: ACCENT, textTransform: 'none', fontWeight: 700, borderRadius: '8px' }}>
+          sx={{ background: ACCENT, textTransform: 'none', fontWeight: 700, borderRadius: '8px', flexShrink: 0, ml: 2 }}>
           {saving ? 'Guardando…' : 'Guardar semana'}
         </Button>
       </Stack>
@@ -425,9 +456,16 @@ function AvailabilityTab({ availability, setAvailability, showSnack }) {
           <Card key={dow} sx={{ mb: 2, border: '1px solid #e5e7eb', borderRadius: '10px' }}>
             <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
               <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: dayRows.length ? 1.5 : 0 }}>
-                <Typography sx={{ fontWeight: 700, color: NAVY, minWidth: 110 }}>{label}</Typography>
-                <Button size="small" startIcon={<AddOutlined />} onClick={() => addRow(dow)}
-                  sx={{ textTransform: 'none', color: ACCENT }}>Agregar franja</Button>
+                <Typography sx={{ fontWeight: 700, color: NAVY, minWidth: 110 }}>
+                  {label} {dayRows.length > 1 && <Chip size="small" label={`${dayRows.length} franjas`}
+                    sx={{ ml: 0.5, height: 18, fontSize: '0.65rem', bgcolor: '#e0f2fe', color: '#0369a1' }} />}
+                </Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button size="small" onClick={() => splitDay(dow)}
+                    sx={{ textTransform: 'none', color: '#0369a1' }}>Mañana + tarde</Button>
+                  <Button size="small" startIcon={<AddOutlined />} onClick={() => addRow(dow)}
+                    sx={{ textTransform: 'none', color: ACCENT }}>Agregar franja</Button>
+                </Stack>
               </Stack>
               {dayRows.length === 0 ? (
                 <Typography sx={{ fontSize: '0.8125rem', color: '#94a3b8', pl: 0.5 }}>
