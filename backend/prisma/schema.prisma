@@ -796,8 +796,16 @@ model BlogPost {
   id          String         @id @default(uuid())
   slug        String         @unique
   titulo      String
+  /// Descripción / entradilla (1-2 párrafos). Si está vacía se usa como meta description.
   resumen     String?        @db.Text
+  /// Desarrollo del tema (markdown).
   contenido   String         @db.Text
+  /// Cierre / conclusiones del artículo (markdown). Sección final destacada.
+  cierre      String?        @db.Text
+  /// Llamado a la acción al final (texto del botón).
+  ctaTexto    String?
+  /// URL del CTA (relativa o absoluta).
+  ctaUrl      String?
   coverUrl    String?
   categoria   String         @default("general")
   tags        String[]       @default([])

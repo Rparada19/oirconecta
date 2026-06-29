@@ -508,6 +508,76 @@ export default function BlogPostPage() {
               {renderContent(post.contenido || '')}
             </Box>
 
+            {/* Cierre / Conclusiones (si existe) */}
+            {post.cierre && post.cierre.trim() && (
+              <Box sx={{
+                mt: 5, p: { xs: 3, sm: 4 },
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #f8fafc 0%, #eef0fb 100%)',
+                border: '1px solid #e5e7eb',
+                borderLeft: '4px solid #4054B2',
+              }}>
+                <Typography sx={{
+                  fontSize: 11, fontWeight: 800, letterSpacing: '0.12em',
+                  textTransform: 'uppercase', color: '#4054B2', mb: 1.25,
+                }}>
+                  Cierre · Lo que debes recordar
+                </Typography>
+                <Box sx={{
+                  fontSize: { xs: '1rem', md: '1.0625rem' }, color: '#272F50',
+                  lineHeight: 1.7, '& p': { mt: 1.5, mb: 0 },
+                  '& h2, & h3': { mt: 2, mb: 1, fontWeight: 800, color: '#272F50' },
+                  '& ul, & ol': { mt: 1, pl: 3 }, '& li': { mb: 0.5 },
+                  '& strong': { color: '#085946' },
+                }}>
+                  {renderContent(post.cierre)}
+                </Box>
+              </Box>
+            )}
+
+            {/* CTA — llamado a la acción */}
+            {post.ctaTexto && post.ctaTexto.trim() && (
+              <Box sx={{
+                mt: 4, p: { xs: 3, sm: 4 },
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #085946 0%, #064a38 100%)',
+                color: '#fff',
+                display: 'flex', flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2.5,
+                boxShadow: '0 6px 24px rgba(8,89,70,0.25)',
+              }}>
+                <Box>
+                  <Typography sx={{
+                    fontSize: 10.5, fontWeight: 800, letterSpacing: '0.12em',
+                    textTransform: 'uppercase', color: '#6ee7c8', mb: 0.5,
+                  }}>
+                    Tu próximo paso
+                  </Typography>
+                  <Typography sx={{ fontSize: { xs: '1.0625rem', md: '1.1875rem' }, fontWeight: 800, lineHeight: 1.3 }}>
+                    {post.ctaTexto}
+                  </Typography>
+                </Box>
+                {post.ctaUrl && (
+                  <Box
+                    component={post.ctaUrl.startsWith('http') ? 'a' : RouterLink}
+                    {...(post.ctaUrl.startsWith('http')
+                      ? { href: post.ctaUrl, target: '_blank', rel: 'noopener noreferrer' }
+                      : { to: post.ctaUrl })}
+                    sx={{
+                      display: 'inline-flex', alignItems: 'center', gap: 0.75,
+                      bgcolor: '#fff', color: '#085946',
+                      px: 2.5, py: 1.25, borderRadius: 1.5,
+                      fontWeight: 800, fontSize: 14, textDecoration: 'none',
+                      whiteSpace: 'nowrap', flexShrink: 0,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      '&:hover': { bgcolor: '#f0fdf4' },
+                    }}>
+                    Continuar →
+                  </Box>
+                )}
+              </Box>
+            )}
+
             {/* Tags */}
             {Array.isArray(post.tags) && post.tags.length > 0 && (
               <Box sx={{ mt: 6, mb: 4 }}>

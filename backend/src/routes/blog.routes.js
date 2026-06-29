@@ -71,12 +71,14 @@ router.get('/admin/all', authenticate, async (req, res) => {
 // ── Admin: crear post ──
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { titulo, resumen, contenido, coverUrl, categoria, tags, estado, destacado, autorNombre, slug } = req.body;
+    const { titulo, resumen, contenido, cierre, ctaTexto, ctaUrl, coverUrl, categoria, tags, estado, destacado, autorNombre, slug } = req.body;
     if (!titulo || !contenido) return res.status(400).json({ success: false, error: 'Título y contenido son requeridos' });
     const finalSlug = slug || titulo.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const post = await prisma.blogPost.create({
       data: {
-        slug: finalSlug, titulo, resumen, contenido, coverUrl,
+        slug: finalSlug, titulo, resumen, contenido,
+        cierre: cierre || null, ctaTexto: ctaTexto || null, ctaUrl: ctaUrl || null,
+        coverUrl,
         categoria: normalizeSection(categoria), tags: tags || [],
         estado: estado || 'BORRADOR', destacado: destacado || false,
         autorNombre: autorNombre || 'OírConecta',
@@ -105,7 +107,7 @@ router.post('/', authenticate, async (req, res) => {
 // ── Admin: actualizar post ──
 router.patch('/:id', authenticate, async (req, res) => {
   try {
-    const { titulo, resumen, contenido, coverUrl, categoria, tags, estado, destacado, autorNombre } = req.body;
+    const { titulo, resumen, contenido, cierre, ctaTexto, ctaUrl, coverUrl, categoria, tags, estado, destacado, autorNombre } = req.body;
     const existing = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ success: false, error: 'Post no encontrado' });
     const wasPublished = existing.estado === 'PUBLICADO';
@@ -114,7 +116,11 @@ router.patch('/:id', authenticate, async (req, res) => {
       where: { id: req.params.id },
       data: {
         ...(titulo && { titulo }), ...(resumen !== undefined && { resumen }),
-        ...(contenido && { contenido }), ...(coverUrl !== undefined && { coverUrl }),
+        ...(contenido && { contenido }),
+        ...(cierre !== undefined && { cierre }),
+        ...(ctaTexto !== undefined && { ctaTexto }),
+        ...(ctaUrl !== undefined && { ctaUrl }),
+        ...(coverUrl !== undefined && { coverUrl }),
         ...(categoria && { categoria: normalizeSection(categoria) }), ...(tags && { tags }),
         ...(estado && { estado }), ...(destacado !== undefined && { destacado }),
         ...(autorNombre && { autorNombre }),

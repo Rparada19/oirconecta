@@ -180,6 +180,17 @@ async function ensureSalesActivityDirection(prisma) {
   }
 }
 
+async function ensureBlogPostStructure(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "blog_posts" ADD COLUMN IF NOT EXISTS "cierre" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "blog_posts" ADD COLUMN IF NOT EXISTS "ctaTexto" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "blog_posts" ADD COLUMN IF NOT EXISTS "ctaUrl" TEXT;`);
+    console.log('[boot-migrate] blog_posts structure OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureBlogPostStructure falló:', e.message);
+  }
+}
+
 /**
  * F1 nuevos planes (Plan 2 con agenda, Plan 3 con IA).
  * Agrega valores al enum PlanCode + columnas nuevas a plans y subscriptions.
@@ -308,6 +319,7 @@ async function runBootMigrations(prisma) {
   await ensureDirectoryAccountColumns(prisma);
   await ensureSalesGoalsColumn(prisma);
   await ensureSalesActivityDirection(prisma);
+  await ensureBlogPostStructure(prisma);
   await ensurePlanFeatureColumns(prisma);
   await ensureMultiTenantAgendaSchema(prisma);
 }

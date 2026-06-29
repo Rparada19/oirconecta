@@ -131,6 +131,9 @@ const EMPTY_FORM = {
   slug: '',
   resumen: '',
   contenido: '',
+  cierre: '',
+  ctaTexto: '',
+  ctaUrl: '',
   imagenPortada: '',
   categoria: 'general',
   tags: '',
@@ -204,6 +207,9 @@ export default function AdminBlogPage() {
       slug: post.slug || '',
       resumen: post.resumen || post.summary || '',
       contenido: post.contenido || post.content || '',
+      cierre: post.cierre || '',
+      ctaTexto: post.ctaTexto || '',
+      ctaUrl: post.ctaUrl || '',
       imagenPortada: post.imagenPortada || post.coverImage || '',
       categoria: post.categoria || post.category || 'general',
       tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
@@ -236,6 +242,9 @@ export default function AdminBlogPage() {
       slug: form.slug,
       resumen: form.resumen,
       contenido: form.contenido,
+      cierre: form.cierre || null,
+      ctaTexto: form.ctaTexto || null,
+      ctaUrl: form.ctaUrl || null,
       imagenPortada: form.imagenPortada,
       categoria: form.categoria,
       tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
@@ -438,7 +447,7 @@ export default function AdminBlogPage() {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Resumen"
+                label="Descripción (resumen / entradilla)"
                 fullWidth
                 value={form.resumen}
                 onChange={handleFormChange('resumen')}
@@ -446,19 +455,59 @@ export default function AdminBlogPage() {
                 size="small"
                 multiline
                 rows={2}
+                helperText="1-2 frases que invitan a leer. También se usa como meta description en buscadores."
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Contenido"
+                label="Desarrollo del tema (Contenido)"
                 fullWidth
                 value={form.contenido}
                 onChange={handleFormChange('contenido')}
                 variant="outlined"
                 size="small"
                 multiline
-                rows={8}
-                placeholder="Markdown soportado"
+                rows={10}
+                placeholder="Markdown soportado · este es el cuerpo del artículo"
+                helperText="Estructura sugerida: introduce el problema, desarrolla con 2-4 sub-secciones (##), apoya con ejemplos."
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Cierre / Conclusiones"
+                fullWidth
+                value={form.cierre}
+                onChange={handleFormChange('cierre')}
+                variant="outlined"
+                size="small"
+                multiline
+                rows={4}
+                placeholder="Resume las 2-3 ideas clave del artículo. Aparece destacado en azul al final."
+                helperText="Opcional pero recomendado: el lector se queda con el cierre."
+              />
+            </Grid>
+            <Grid item xs={12} md={7}>
+              <TextField
+                label="Llamado a la acción (texto)"
+                fullWidth
+                value={form.ctaTexto}
+                onChange={handleFormChange('ctaTexto')}
+                variant="outlined"
+                size="small"
+                placeholder="Ej: Encuentra un audiólogo cerca de ti"
+                helperText="Si lo dejas vacío no aparece el bloque verde de CTA."
+              />
+            </Grid>
+            <Grid item xs={12} md={5}>
+              <TextField
+                label="URL del CTA"
+                fullWidth
+                value={form.ctaUrl}
+                onChange={handleFormChange('ctaUrl')}
+                variant="outlined"
+                size="small"
+                placeholder="/directorio/listado o https://..."
+                helperText="Interna (/...) o externa (https://...)."
               />
             </Grid>
             <Grid item xs={12} md={6}>
