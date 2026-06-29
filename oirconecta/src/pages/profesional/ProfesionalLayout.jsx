@@ -17,6 +17,7 @@ import {
   StorefrontOutlined,
   MailOutlined,
   WorkspacePremiumOutlined,
+  EventOutlined,
   OpenInNew,
   Logout,
   ArrowBack,
@@ -42,6 +43,7 @@ const NAV_SECTIONS = [
     label: 'Cuenta',
     items: [
       { label: 'Mi perfil',    icon: PersonOutlined,    path: '/portal-profesional/perfil' },
+      { label: 'Mi agenda',    icon: EventOutlined,     path: '/portal-profesional/agenda' },
       { label: 'Mis servicios',icon: StorefrontOutlined,path: '/portal-profesional/servicios' },
       { label: 'Consultas',    icon: MailOutlined,      path: '/portal-profesional/consultas', inquiriesBadge: true },
     ],

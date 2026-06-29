@@ -114,4 +114,6 @@ export const directoryApi = {
   get: (path, opts) => directoryRequest(path, { ...opts, method: 'GET' }),
   post: (path, body, opts) => directoryRequest(path, { ...opts, method: 'POST', body: serializeBody(body) }),
   patch: (path, body, opts) => directoryRequest(path, { ...opts, method: 'PATCH', body: serializeBody(body) }),
+  put: (path, body, opts) => directoryRequest(path, { ...opts, method: 'PUT', body: serializeBody(body) }),
+  delete: (path, opts) => directoryRequest(path, { ...opts, method: 'DELETE' }),
 };

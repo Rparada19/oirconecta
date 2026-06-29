@@ -91,6 +91,7 @@ const ProfesionalPerfilPage = lazy(() => import('./pages/profesional/Profesional
 const ProfesionalConsultasPage = lazy(() => import('./pages/profesional/ProfesionalConsultasPage'));
 const ProfesionalServiciosPage = lazy(() => import('./pages/profesional/ProfesionalServiciosPage'));
 const ProfesionalSuscripcionPage = lazy(() => import('./pages/profesional/ProfesionalSuscripcionPage'));
+const ProfesionalAgendaPage = lazy(() => import('./pages/profesional/ProfesionalAgendaPage'));
 
 // Portal Admin (lazy)
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
@@ -256,6 +257,7 @@ export default function App() {
             <Route path="servicios" element={<ProfesionalServiciosPage />} />
             <Route path="consultas" element={<ProfesionalConsultasPage />} />
             <Route path="suscripcion" element={<ProfesionalSuscripcionPage />} />
+            <Route path="agenda" element={<ProfesionalAgendaPage />} />
           </Route>
 
           {/* Portal Administración del sitio — auth independiente del CRM */}
