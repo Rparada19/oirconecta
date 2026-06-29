@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { salesApi, telHref, waMeHref, mailtoHref } from '../../../services/salesApi';
 import { SalesPageHeader, softCard, StatusPill } from './SalesShell';
 import { DailyTipCard, GoalsCard } from './SalesWidgets';
+import DayAgendaCalendar from './DayAgendaCalendar';
 
 const TYPE_ICON = {
   CALL: PhoneOutlined, EMAIL: EmailOutlined, WHATSAPP: WhatsApp,
@@ -116,6 +117,9 @@ export default function SalesDiaPage() {
 
       {/* Tip de coaching */}
       <DailyTipCard />
+
+      {/* Agenda visual del día */}
+      <DayAgendaCalendar tasks={tasks} />
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: '#085946' }} /></Box>
