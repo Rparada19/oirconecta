@@ -241,7 +241,7 @@ const create = async (data, createdById) => {
       estado: 'CONFIRMED',
       notas: data.notas,
       tipoConsulta: data.tipoConsulta,
-      durationMinutes: 50,
+      durationMinutes: data.durationMinutes ?? 50,
       professionalId: data.professionalId || null,
       directoryProfileId,
       professionalNotifyEmail: data.professionalNotifyEmail
