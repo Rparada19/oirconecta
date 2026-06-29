@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { Helmet } from 'react-helmet';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import ContactoProfesionalDialog from '../components/directorio/ContactoProfesionalDialog';
+import AgendarConProfesionalDialog from '../components/directorio/AgendarConProfesionalDialog';
+import { getApiBaseUrl } from '../utils/apiBaseUrl';
 import {
   Box,
   Typography,
@@ -435,6 +437,23 @@ export default function DirectorioProfesionalPage() {
   );
 
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  // null = aún no chequeado; true = profesional acepta reservas online (Plan 2/3 con agenda activa);
+  // false = no acepta → flujo legacy (retail directo o contacto).
+  const [agendaOnline, setAgendaOnline] = useState(null);
+  useEffect(() => {
+    if (!profileId) { setAgendaOnline(false); return; }
+    let cancel = false;
+    const base = getApiBaseUrl().replace(/\/$/, '');
+    fetch(`${base}/api/booking/public/${profileId}/types`)
+      .then((r) => r.json().catch(() => null).then((j) => ({ ok: r.ok, j })))
+      .then(({ ok, j }) => {
+        if (cancel) return;
+        setAgendaOnline(!!ok && Array.isArray(j?.data) && j.data.length > 0);
+      })
+      .catch(() => { if (!cancel) setAgendaOnline(false); });
+    return () => { cancel = true; };
+  }, [profileId]);
   const [contactInitialMessage, setContactInitialMessage] = useState('');
 
   const askSecondOpinion = useCallback(() => {
@@ -448,6 +467,16 @@ export default function DirectorioProfesionalPage() {
    * - Si NO es propio → props que abren el dialog de contacto
    */
   const agendarButtonProps = useMemo(() => {
+    // 1) Profesional con agenda online (Plan 2/3 con agendaActiva) → wizard de reserva
+    if (agendaOnline === true) {
+      return {
+        onClick: () => {
+          trackContactEvent(profileId, 'agendar');
+          setBookingDialogOpen(true);
+        },
+      };
+    }
+    // 2) OirConecta retail (Piedad Marin) → flujo legacy /agendar
     if (isOirConectaOwn && agendarDesdeDirectorio) {
       return {
         component: RouterLink,
@@ -455,13 +484,14 @@ export default function DirectorioProfesionalPage() {
         onClick: () => trackContactEvent(profileId, 'agendar'),
       };
     }
+    // 3) Sin agenda online → abrir dialog de contacto (mensaje al profesional)
     return {
       onClick: () => {
         trackContactEvent(profileId, 'agendar');
         setContactDialogOpen(true);
       },
     };
-  }, [isOirConectaOwn, agendarDesdeDirectorio, profileId]);
+  }, [agendaOnline, isOirConectaOwn, agendarDesdeDirectorio, profileId]);
 
   const onWhatsappTrack = useCallback(() => {
     trackDirectoryWhatsAppClick(profileId).catch(() => {});
@@ -2227,6 +2257,13 @@ export default function DirectorioProfesionalPage() {
         profileId={profileId}
         profesionalNombre={name}
         initialMessage={contactInitialMessage}
+      />
+
+      <AgendarConProfesionalDialog
+        open={bookingDialogOpen}
+        onClose={() => setBookingDialogOpen(false)}
+        profileId={profileId}
+        profesionalNombre={name}
       />
     </Box>
   );
