@@ -40,6 +40,7 @@ import {
   trackDirectoryWhatsAppClick,
   trackDirectoryCallClick,
 } from '../services/directorySearchService';
+import { trackContactEvent } from '../services/directoryTracking';
 import { getWhatsAppHrefWithText } from '../config/publicSite';
 import { DEMO_PROFILE_MAP } from '../data/directoryDemoData';
 import {
@@ -440,10 +441,19 @@ export default function DirectorioProfesionalPage() {
    */
   const agendarButtonProps = useMemo(() => {
     if (isOirConectaOwn && agendarDesdeDirectorio) {
-      return { component: RouterLink, to: agendarDesdeDirectorio };
+      return {
+        component: RouterLink,
+        to: agendarDesdeDirectorio,
+        onClick: () => trackContactEvent(profileId, 'agendar'),
+      };
     }
-    return { onClick: () => setContactDialogOpen(true) };
-  }, [isOirConectaOwn, agendarDesdeDirectorio]);
+    return {
+      onClick: () => {
+        trackContactEvent(profileId, 'agendar');
+        setContactDialogOpen(true);
+      },
+    };
+  }, [isOirConectaOwn, agendarDesdeDirectorio, profileId]);
 
   const onWhatsappTrack = useCallback(() => {
     trackDirectoryWhatsAppClick(profileId).catch(() => {});
@@ -451,6 +461,14 @@ export default function DirectorioProfesionalPage() {
 
   const onCallTrack = useCallback(() => {
     trackDirectoryCallClick(profileId).catch(() => {});
+  }, [profileId]);
+
+  const onEmailTrack = useCallback(() => {
+    trackContactEvent(profileId, 'email');
+  }, [profileId]);
+
+  const onAgendarTrack = useCallback(() => {
+    trackContactEvent(profileId, 'agendar');
   }, [profileId]);
 
   const telHref = useMemo(() => {
@@ -796,7 +814,7 @@ export default function DirectorioProfesionalPage() {
                           <Email sx={{ fontSize: 20, opacity: 0.95 }} />
                           <Typography
                             component="a"
-                            href={mailtoProfessionalHref}
+                            href={mailtoProfessionalHref} onClick={onEmailTrack}
                             sx={{
                               color: 'inherit',
                               fontWeight: 700,
@@ -933,7 +951,7 @@ export default function DirectorioProfesionalPage() {
                     ) : null}
                     {mailtoProfessionalHref ? (
                       <Button
-                        href={mailtoProfessionalHref}
+                        href={mailtoProfessionalHref} onClick={onEmailTrack}
                         variant="text"
                         size="small"
                         startIcon={<Email />}
@@ -2040,7 +2058,7 @@ export default function DirectorioProfesionalPage() {
                   ) : null}
                   {mailtoProfessionalHref ? (
                     <Button
-                      href={mailtoProfessionalHref}
+                      href={mailtoProfessionalHref} onClick={onEmailTrack}
                       variant="text"
                       size="medium"
                       startIcon={<Email />}
@@ -2143,7 +2161,7 @@ export default function DirectorioProfesionalPage() {
                 ) : null}
                 {mailtoProfessionalHref ? (
                   <Button
-                    href={mailtoProfessionalHref}
+                    href={mailtoProfessionalHref} onClick={onEmailTrack}
                     variant="text"
                     size="medium"
                     startIcon={<Email />}

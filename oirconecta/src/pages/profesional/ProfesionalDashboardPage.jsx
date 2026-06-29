@@ -212,7 +212,22 @@ export default function ProfesionalDashboardPage() {
           hint={`${stats?.llamadas?.total ?? p?.callClickCount ?? 0} en total`}
           tone="warning"
         />
+        <KpiCard
+          label="Clics en Email"
+          value={stats?.email?.mes ?? 0}
+          hint={`${stats?.email?.total ?? 0} en total`}
+          tone="violet"
+        />
+        <KpiCard
+          label="Clics en Agendar"
+          value={stats?.agendar?.mes ?? 0}
+          hint={`${stats?.agendar?.total ?? 0} en total`}
+          tone="info"
+        />
       </Box>
+      <Typography sx={{ fontSize: 11.5, color: '#5b6b7a', mb: 3, fontStyle: 'italic' }}>
+        Solo cuentas los contactos: no almacenamos ni leemos los mensajes que te envían los pacientes desde la ficha pública.
+      </Typography>
 
       {/* Últimas consultas */}
       <Card elevation={0} sx={glassCard}>

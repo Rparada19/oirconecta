@@ -64,6 +64,20 @@ router.post(
 );
 
 router.post(
+  '/profiles/:profileId/stats/email',
+  [param('profileId').isUUID()],
+  validateRequest,
+  directoryController.recordPublicEmailClick
+);
+
+router.post(
+  '/profiles/:profileId/stats/agendar',
+  [param('profileId').isUUID()],
+  validateRequest,
+  directoryController.recordPublicAgendarClick
+);
+
+router.post(
   '/register',
   [
     body('email').isEmail(),

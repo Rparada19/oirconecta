@@ -11,6 +11,8 @@ export const DIRECTORY_API = {
   profileInquiry: (profileId) => `${B}/profiles/${encodeURIComponent(profileId)}/inquiry`,
   profileWhatsappStat: (profileId) => `${B}/profiles/${encodeURIComponent(profileId)}/stats/whatsapp`,
   profileCallStat: (profileId) => `${B}/profiles/${encodeURIComponent(profileId)}/stats/call`,
+  profileEmailStat: (profileId) => `${B}/profiles/${encodeURIComponent(profileId)}/stats/email`,
+  profileAgendarStat: (profileId) => `${B}/profiles/${encodeURIComponent(profileId)}/stats/agendar`,
   register: `${B}/register`,
   login: `${B}/auth/login`,
   me: `${B}/me`,

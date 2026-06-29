@@ -941,6 +941,25 @@ async function recordPublicCallClick(profileId) {
   return { ok: true };
 }
 
+/**
+ * Registra un click genérico (EMAIL, AGENDAR, etc.) sin contadores
+ * dedicados — solo va a la tabla directory_events. Útil para canales
+ * cuyo conteo no requiere columna persistente en DirectoryProfile.
+ */
+async function recordPublicEventClick(profileId, type) {
+  const ok = await prisma.directoryProfile.findFirst({
+    where: { id: profileId, status: 'APPROVED' },
+    select: { id: true },
+  });
+  if (!ok) {
+    const err = new Error('Perfil no encontrado');
+    err.statusCode = 404;
+    throw err;
+  }
+  await prisma.directoryEvent.create({ data: { profileId, type } });
+  return { ok: true };
+}
+
 /** Inicio del mes actual (para métricas "este mes"). */
 function startOfMonth() {
   const d = new Date();
@@ -960,18 +979,24 @@ async function getStatsForAccount(accountId) {
   }
   const since = startOfMonth();
   const pid = profile.id;
-  const [viewsMonth, inquiriesTotal, inquiriesMonth, waMonth, callMonth] = await Promise.all([
+  const [viewsMonth, inquiriesTotal, inquiriesMonth, waMonth, callMonth, emailMonth, emailTotal, agendarMonth, agendarTotal] = await Promise.all([
     prisma.profileView.count({ where: { profileId: pid, viewedAt: { gte: since } } }),
     prisma.directoryInquiry.count({ where: { profileId: pid } }),
     prisma.directoryInquiry.count({ where: { profileId: pid, createdAt: { gte: since } } }),
     prisma.directoryEvent.count({ where: { profileId: pid, type: 'WHATSAPP', createdAt: { gte: since } } }),
-    prisma.directoryEvent.count({ where: { profileId: pid, type: 'CALL', createdAt: { gte: since } } }),
+    prisma.directoryEvent.count({ where: { profileId: pid, type: 'CALL',     createdAt: { gte: since } } }),
+    prisma.directoryEvent.count({ where: { profileId: pid, type: 'EMAIL',    createdAt: { gte: since } } }),
+    prisma.directoryEvent.count({ where: { profileId: pid, type: 'EMAIL' } }),
+    prisma.directoryEvent.count({ where: { profileId: pid, type: 'AGENDAR',  createdAt: { gte: since } } }),
+    prisma.directoryEvent.count({ where: { profileId: pid, type: 'AGENDAR' } }),
   ]);
   return {
-    visitas: { mes: viewsMonth, total: profile.perfilVisitas },
-    consultas: { mes: inquiriesMonth, total: inquiriesTotal },
-    whatsapp: { mes: waMonth, total: profile.whatsappClickCount },
-    llamadas: { mes: callMonth, total: profile.callClickCount },
+    visitas:    { mes: viewsMonth,    total: profile.perfilVisitas },
+    consultas:  { mes: inquiriesMonth, total: inquiriesTotal },
+    whatsapp:   { mes: waMonth,       total: profile.whatsappClickCount },
+    llamadas:   { mes: callMonth,     total: profile.callClickCount },
+    email:      { mes: emailMonth,    total: emailTotal },
+    agendar:    { mes: agendarMonth,  total: agendarTotal },
   };
 }
 
@@ -1030,6 +1055,7 @@ module.exports = {
   loginDirectoryAccount,
   changeMyPassword,
   recordPublicCallClick,
+  recordPublicEventClick,
   getStatsForAccount,
   getAdminDirectoryStats,
   getApprovedPublicProfileById,

@@ -113,6 +113,26 @@ const recordPublicCallClick = async (req, res, next) => {
   }
 };
 
+const recordPublicEmailClick = async (req, res, next) => {
+  try {
+    await directoryService.recordPublicEventClick(req.params.profileId, 'EMAIL');
+    return res.status(204).send();
+  } catch (e) {
+    if (e.statusCode === 404) return res.status(204).send();
+    next(e);
+  }
+};
+
+const recordPublicAgendarClick = async (req, res, next) => {
+  try {
+    await directoryService.recordPublicEventClick(req.params.profileId, 'AGENDAR');
+    return res.status(204).send();
+  } catch (e) {
+    if (e.statusCode === 404) return res.status(204).send();
+    next(e);
+  }
+};
+
 const getMyStats = async (req, res, next) => {
   try {
     const stats = await directoryService.getStatsForAccount(req.directoryAccount.id);
@@ -200,6 +220,8 @@ module.exports = {
   publicProfileById,
   recordPublicWhatsappClick,
   recordPublicCallClick,
+  recordPublicEmailClick,
+  recordPublicAgendarClick,
   getMyStats,
   getAdminStats,
   submitProfileInquiry,
