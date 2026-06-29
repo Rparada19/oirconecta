@@ -206,6 +206,100 @@ async function ensurePlanFeatureColumns(prisma) {
 }
 
 /**
+ * F2.1 — Schema multi-tenant de agenda por profesional del directorio.
+ * Crea 5 tablas + índices. Idempotente.
+ */
+async function ensureMultiTenantAgendaSchema(prisma) {
+  try {
+    // 1) ProfessionalScheduleConfig (singleton por perfil)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "professional_schedule_config" (
+        "id" TEXT PRIMARY KEY,
+        "profileId" TEXT NOT NULL UNIQUE REFERENCES "directory_profiles"("id") ON DELETE CASCADE,
+        "defaultSlotMinutes" INTEGER NOT NULL DEFAULT 30,
+        "bufferMinutes" INTEGER NOT NULL DEFAULT 0,
+        "bookingWindowDays" INTEGER NOT NULL DEFAULT 60,
+        "minNoticeHours" INTEGER NOT NULL DEFAULT 2,
+        "autoConfirm" BOOLEAN NOT NULL DEFAULT true,
+        "timezone" TEXT NOT NULL DEFAULT 'America/Bogota',
+        "agendaActiva" BOOLEAN NOT NULL DEFAULT false,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 2) ProfessionalAvailability (horario semanal)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "professional_availability" (
+        "id" TEXT PRIMARY KEY,
+        "profileId" TEXT NOT NULL REFERENCES "directory_profiles"("id") ON DELETE CASCADE,
+        "dayOfWeek" INTEGER NOT NULL,
+        "startTime" TEXT NOT NULL,
+        "endTime" TEXT NOT NULL,
+        "active" BOOLEAN NOT NULL DEFAULT true,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "professional_availability_profileId_dayOfWeek_idx" ON "professional_availability"("profileId","dayOfWeek");`);
+
+    // 3) AppointmentType (tipos de consulta)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "appointment_types" (
+        "id" TEXT PRIMARY KEY,
+        "profileId" TEXT NOT NULL REFERENCES "directory_profiles"("id") ON DELETE CASCADE,
+        "nombre" TEXT NOT NULL,
+        "descripcion" TEXT,
+        "durationMinutes" INTEGER NOT NULL DEFAULT 30,
+        "priceCOP" INTEGER,
+        "color" TEXT,
+        "activo" BOOLEAN NOT NULL DEFAULT true,
+        "orden" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "appointment_types_profileId_activo_orden_idx" ON "appointment_types"("profileId","activo","orden");`);
+
+    // 4) ProfessionalBlock (bloqueos, vacaciones)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "professional_blocks" (
+        "id" TEXT PRIMARY KEY,
+        "profileId" TEXT NOT NULL REFERENCES "directory_profiles"("id") ON DELETE CASCADE,
+        "allDay" BOOLEAN NOT NULL DEFAULT false,
+        "startAt" TIMESTAMP(3) NOT NULL,
+        "endAt" TIMESTAMP(3) NOT NULL,
+        "motivo" TEXT,
+        "tipo" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "professional_blocks_profileId_range_idx" ON "professional_blocks"("profileId","startAt","endAt");`);
+
+    // 5) PatientProfessionalRelation (expediente independiente)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "patient_professional_relations" (
+        "id" TEXT PRIMARY KEY,
+        "patientId" TEXT NOT NULL REFERENCES "patients"("id") ON DELETE CASCADE,
+        "profileId" TEXT NOT NULL REFERENCES "directory_profiles"("id") ON DELETE CASCADE,
+        "notasPrivadas" TEXT,
+        "tags" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+        "archivedAt" TIMESTAMP(3),
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "patient_professional_relations_patientId_profileId_key" UNIQUE ("patientId","profileId")
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patient_professional_relations_profileId_archivedAt_idx" ON "patient_professional_relations"("profileId","archivedAt");`);
+
+    console.log('[boot-migrate] multi-tenant agenda schema OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureMultiTenantAgendaSchema falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * Punto único: corre todas las migraciones idempotentes.
  */
 async function runBootMigrations(prisma) {
@@ -215,6 +309,7 @@ async function runBootMigrations(prisma) {
   await ensureSalesGoalsColumn(prisma);
   await ensureSalesActivityDirection(prisma);
   await ensurePlanFeatureColumns(prisma);
+  await ensureMultiTenantAgendaSchema(prisma);
 }
 
 module.exports = { runBootMigrations };

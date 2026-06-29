@@ -184,6 +184,13 @@ model DirectoryProfile {
   listings     MarketplaceListing[]
   subscription Subscription?
 
+  // ── F2 Multi-tenant agenda ──
+  availabilityWeekly ProfessionalAvailability[]
+  scheduleConfig     ProfessionalScheduleConfig?
+  appointmentTypes   AppointmentType[]
+  professionalBlocks ProfessionalBlock[]
+  patientRelations   PatientProfessionalRelation[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -405,17 +412,19 @@ model Patient {
   lead   Lead?   @relation(fields: [leadId], references: [id])
 
   // Relaciones
-  appointments  Appointment[]
-  quotes        Quote[]
-  sales         Sale[]
-  consultations Consultation[]
-  maintenances  Maintenance[]
-  interactions  Interaction[]
-  consents      Consent[]
-  preferences   PatientPreferences?
-  reminders     Reminder[]
-  notifications Notification[]
-  tasks         Task[]
+  appointments          Appointment[]
+  quotes                Quote[]
+  sales                 Sale[]
+  consultations         Consultation[]
+  maintenances          Maintenance[]
+  interactions          Interaction[]
+  consents              Consent[]
+  preferences           PatientPreferences?
+  reminders             Reminder[]
+  notifications         Notification[]
+  tasks                 Task[]
+  // F2: expediente independiente por profesional del directorio
+  professionalRelations PatientProfessionalRelation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2153,4 +2162,117 @@ model SalesTask {
   @@index([assigneeId, status, dueAt])
   @@index([leadId, status])
   @@map("sales_tasks")
+}
+
+// ─────────────────────────────────────────────────────────────
+// F2 — Agenda multi-tenant por profesional del directorio.
+// Cada modelo se scopea por `profileId` (DirectoryProfile). Cualquier
+// query DEBE filtrar por profileId para preservar aislamiento.
+// ─────────────────────────────────────────────────────────────
+
+/// Configuración general de la agenda del profesional (singleton por perfil).
+model ProfessionalScheduleConfig {
+  id                 String           @id @default(uuid())
+  profileId          String           @unique
+  profile            DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// Duración por defecto de una cita en minutos. Cada AppointmentType puede override.
+  defaultSlotMinutes Int              @default(30)
+  /// Minutos de respiro entre citas (transición). 0 = sin buffer.
+  bufferMinutes      Int              @default(0)
+  /// Ventana de anticipación máxima para reservar (en días).
+  bookingWindowDays  Int              @default(60)
+  /// Anticipación mínima requerida (en horas) para una nueva reserva.
+  minNoticeHours     Int              @default(2)
+  /// Si true, las reservas desde el perfil público quedan CONFIRMED. Si false, PENDING (recepción aprueba).
+  autoConfirm        Boolean          @default(true)
+  /// IANA TZ (ej. "America/Bogota").
+  timezone           String           @default("America/Bogota")
+  /// Activa el módulo de agenda (gating Plan 2+). Se cruza con features del Plan.
+  agendaActiva       Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@map("professional_schedule_config")
+}
+
+/// Horario recurrente por día de semana. Múltiples filas para el mismo día = bloques (mañana/tarde).
+model ProfessionalAvailability {
+  id        String           @id @default(uuid())
+  profileId String
+  profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// 0 = domingo, 6 = sábado (estándar JS Date.getDay).
+  dayOfWeek Int
+  /// HH:MM (24h, local timezone del profesional).
+  startTime String
+  endTime   String
+  active    Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([profileId, dayOfWeek])
+  @@map("professional_availability")
+}
+
+/// Tipos de consulta del profesional (cada uno con su duración propia).
+model AppointmentType {
+  id              String           @id @default(uuid())
+  profileId       String
+  profile         DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  nombre          String
+  descripcion     String?
+  durationMinutes Int              @default(30)
+  /// Precio público COP sin IVA. Null = no se muestra precio en el perfil público.
+  priceCOP        Int?
+  /// Hex color para diferenciación visual en el calendario.
+  color           String?
+  activo          Boolean          @default(true)
+  orden           Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([profileId, activo, orden])
+  @@map("appointment_types")
+}
+
+/// Bloqueos puntuales: vacaciones, día libre, hora específica. Por profesional.
+/// Diferente al BlockedSlot legacy (que se ata a usuario CRM, no a profesional del directorio).
+model ProfessionalBlock {
+  id        String           @id @default(uuid())
+  profileId String
+  profile   DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// Si true, ignora la hora de startAt/endAt y bloquea el rango de días completo.
+  allDay    Boolean          @default(false)
+  startAt   DateTime
+  endAt     DateTime
+  motivo    String?
+  /// VACACIONES | ENFERMEDAD | PERSONAL | FERIADO | OTRO
+  tipo      String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([profileId, startAt, endAt])
+  @@map("professional_blocks")
+}
+
+/// Relación N-N Paciente ↔ Profesional. Cada par tiene su propio expediente.
+/// El paciente es global (mismo Patient.id puede atenderse con varios profesionales);
+/// las notas/etiquetas/diagnóstico de cada profesional viven aquí (privados a ese profesional).
+model PatientProfessionalRelation {
+  id            String           @id @default(uuid())
+  patientId     String
+  patient       Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  profileId     String
+  profile       DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// Notas privadas del profesional sobre este paciente (NO visibles a otros).
+  notasPrivadas String?          @db.Text
+  /// Tags privados (filtros, segmentación interna del profesional).
+  tags          String[]         @default([])
+  /// Soft archive desde el punto de vista del profesional. No oculta al paciente globalmente.
+  archivedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([patientId, profileId])
+  @@index([profileId, archivedAt])
+  @@map("patient_professional_relations")
 }
