@@ -571,11 +571,11 @@ async function changePlan(profileId, targetPlanCode, { changedByAdmin = false } 
 
   const now = new Date();
   const end = addDays(now, targetPlan.duracionDias);
-  const commitmentEnd = targetPlan.minCommitmentMonths
-    ? new Date(now.getTime()).setMonth(now.getMonth() + targetPlan.minCommitmentMonths) && (() => {
-        const c = new Date(now); c.setMonth(c.getMonth() + targetPlan.minCommitmentMonths); return c;
-      })()
-    : null;
+  let commitmentEnd = null;
+  if (targetPlan.minCommitmentMonths) {
+    commitmentEnd = new Date(now);
+    commitmentEnd.setMonth(commitmentEnd.getMonth() + targetPlan.minCommitmentMonths);
+  }
 
   const data = {
     planId: targetPlan.id,

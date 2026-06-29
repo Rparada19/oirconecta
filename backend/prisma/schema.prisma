@@ -27,37 +27,37 @@ model User {
   updatedAt            DateTime @updatedAt
 
   // Relaciones
-  leadsCreados          Lead[]        @relation("LeadCreatedBy")
-  citasCreadas          Appointment[] @relation("AppointmentCreatedBy")
-  ventasCreadas         Sale[]        @relation("SaleCreatedBy")
-  blockedSlotsRequested BlockedSlot[] @relation("BlockedSlotRequestedBy")
-  blockedSlotsApproved  BlockedSlot[] @relation("BlockedSlotApprovedBy")
+  leadsCreados          Lead[]          @relation("LeadCreatedBy")
+  citasCreadas          Appointment[]   @relation("AppointmentCreatedBy")
+  ventasCreadas         Sale[]          @relation("SaleCreatedBy")
+  blockedSlotsRequested BlockedSlot[]   @relation("BlockedSlotRequestedBy")
+  blockedSlotsApproved  BlockedSlot[]   @relation("BlockedSlotApprovedBy")
   // Sales CRM (outbound — ejecutivo comercial captando profesionales)
-  salesLeadsOwned       SalesLead[]      @relation("SalesLeadOwner")
-  salesActivitiesDone   SalesActivity[]  @relation("SalesActivityUser")
-  salesTasksAssigned    SalesTask[]      @relation("SalesTaskAssignee")
+  salesLeadsOwned       SalesLead[]     @relation("SalesLeadOwner")
+  salesActivitiesDone   SalesActivity[] @relation("SalesActivityUser")
+  salesTasksAssigned    SalesTask[]     @relation("SalesTaskAssignee")
 
   /// Metas comerciales del ejecutivo. Ejemplo:
   /// { "callsPerDay": 25, "emailsPerDay": 15, "demosPerWeek": 6, "conversionsPerMonth": 12 }
-  salesGoals            Json?
+  salesGoals Json?
 
   @@map("users")
 }
 
 /// Cuenta del directorio público (negocio aparte del CRM; no referencia a `User`).
 model DirectoryAccount {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  nombre    String
-  activo    Boolean  @default(true)
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  password           String
+  nombre             String
+  activo             Boolean  @default(true)
   /// True cuando la cuenta fue creada por el Ejecutivo Comercial con clave temporal.
   /// Al primer login el profesional debe definir su propia clave antes de operar.
-  mustChangePassword Boolean @default(false)
+  mustChangePassword Boolean  @default(false)
   /// Quién creó la cuenta (opcional — útil para reportería de captación).
   createdByUserId    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   profile DirectoryProfile?
 
@@ -1337,15 +1337,15 @@ model Plan {
   updatedAt    DateTime @updatedAt
 
   /// Capacidades habilitadas. Ej: { "marketing": true, "agenda": true, "ia": false }
-  features Json @default("{}")
+  features                 Json @default("{}")
   /// Días de prueba al contratar este plan por primera vez. 0 = sin trial.
-  trialDays Int @default(0)
+  trialDays                Int  @default(0)
   /// Meses mínimos de permanencia. Null = sin compromiso. Plan 3 = 12.
-  minCommitmentMonths Int?
+  minCommitmentMonths      Int?
   /// Tope mensual de conversaciones del agente IA. Null = no aplica.
   monthlyConversationLimit Int?
   /// Orden de presentación en pricing público (asc).
-  displayOrder Int @default(0)
+  displayOrder             Int  @default(0)
 
   subscriptions Subscription[]
 
@@ -1386,9 +1386,9 @@ model Subscription {
   metadata Json?
 
   /// Plan 3: fin del periodo de permanencia mínima (12 meses). Cancelar antes implica penalidad.
-  commitmentEnd DateTime?
+  commitmentEnd           DateTime?
   /// Plan 3: conversaciones IA usadas en el periodo de cuota actual.
-  iaConversationsUsed Int @default(0)
+  iaConversationsUsed     Int       @default(0)
   /// Plan 3: inicio del periodo de cuota IA (rotación mensual independiente del periodo de facturación).
   iaConversationsPeriodAt DateTime?
 
@@ -2034,13 +2034,13 @@ enum TaskStatus {
 // ─────────────────────────────────────────────────────────
 
 enum SalesLeadStatus {
-  NUEVO              // Recién cargado, sin contactar
-  CONTACTADO         // Intentó comunicación (con o sin respuesta)
-  INTERESADO         // Mostró interés; espera más info
-  DEMO_AGENDADA      // Demo / llamada agendada
-  EN_PRUEBA          // Convertido a DirectoryAccount, en trial 120d
-  CONVERTIDO         // Pagó plan (mensual / anual / empresa)
-  PERDIDO            // Descartado (no interés / no calidad / no contesta)
+  NUEVO // Recién cargado, sin contactar
+  CONTACTADO // Intentó comunicación (con o sin respuesta)
+  INTERESADO // Mostró interés; espera más info
+  DEMO_AGENDADA // Demo / llamada agendada
+  EN_PRUEBA // Convertido a DirectoryAccount, en trial 120d
+  CONVERTIDO // Pagó plan (mensual / anual / empresa)
+  PERDIDO // Descartado (no interés / no calidad / no contesta)
 }
 
 enum SalesActivityType {
@@ -2067,14 +2067,14 @@ enum SalesTaskStatus {
 }
 
 model SalesLead {
-  id          String @id @default(uuid())
-  nombre      String
-  email       String?
-  telefono    String?
-  profesion   String?  // Audióloga / Fonoaudióloga / ORL / Centro / etc.
-  empresa     String?  // Nombre del consultorio o centro
-  ciudad      String?
-  source      String?  // 'csv-import' | 'manual' | 'web-form' | 'referido'
+  id        String  @id @default(uuid())
+  nombre    String
+  email     String?
+  telefono  String?
+  profesion String? // Audióloga / Fonoaudióloga / ORL / Centro / etc.
+  empresa   String? // Nombre del consultorio o centro
+  ciudad    String?
+  source    String? // 'csv-import' | 'manual' | 'web-form' | 'referido'
 
   status SalesLeadStatus @default(NUEVO)
   score  Int             @default(0) // 0-100; heurística simple
@@ -2106,26 +2106,26 @@ model SalesLead {
 }
 
 model SalesActivity {
-  id     String            @id @default(uuid())
+  id     String    @id @default(uuid())
   leadId String
-  lead   SalesLead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead   SalesLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   userId String
-  user   User              @relation("SalesActivityUser", fields: [userId], references: [id])
+  user   User   @relation("SalesActivityUser", fields: [userId], references: [id])
 
   type        SalesActivityType
   /// Para WhatsApp / Email: 'out' (enviado por el ejecutivo) o 'in' (respuesta del prospecto).
   /// Para CALL: 'out' siempre.
   direction   String?           @default("out")
-  outcome     String?           // 'no-respondio' | 'agendado' | 'interesado' | etc.
+  outcome     String? // 'no-respondio' | 'agendado' | 'interesado' | etc.
   subject     String?
   body        String?           @db.Text
-  durationSec Int?              // para CALL
+  durationSec Int? // para CALL
   ts          DateTime          @default(now())
 
   /// Para tracking de entrega cuando aplica (email/whatsapp)
   externalRef String?
-  status      String?  // 'sent' | 'delivered' | 'failed' | 'read'
+  status      String? // 'sent' | 'delivered' | 'failed' | 'read'
 
   @@index([leadId, ts])
   @@index([userId, ts])
@@ -2133,19 +2133,19 @@ model SalesActivity {
 }
 
 model SalesTask {
-  id     String       @id @default(uuid())
+  id     String    @id @default(uuid())
   leadId String
-  lead   SalesLead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead   SalesLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   assigneeId String
-  assignee   User     @relation("SalesTaskAssignee", fields: [assigneeId], references: [id])
+  assignee   User   @relation("SalesTaskAssignee", fields: [assigneeId], references: [id])
 
   type   SalesTaskType
   status SalesTaskStatus @default(PENDING)
 
-  dueAt DateTime
+  dueAt  DateTime
   doneAt DateTime?
-  notes String?  @db.Text
+  notes  String?   @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

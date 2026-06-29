@@ -51,7 +51,26 @@ router.post('/me/cancel', authenticateDirectoryAccount, async (req, res) => {
     });
     res.json({ success: true, data: { id: updated.id, status: updated.status, cancelAtPeriodEnd: updated.cancelAtPeriodEnd, currentPeriodEnd: updated.currentPeriodEnd } });
   } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    const code = e.code === 'COMMITMENT_ACTIVE' ? 409 : 500;
+    res.status(code).json({ success: false, error: e.message, code: e.code });
+  }
+});
+
+// Profesional cambia de plan (upgrade/downgrade). Pago real lo confirma webhook.
+router.post('/me/change-plan', authenticateDirectoryAccount, async (req, res) => {
+  try {
+    const { planCode } = req.body || {};
+    if (!planCode) return res.status(400).json({ success: false, error: 'planCode requerido' });
+    const profile = await prisma.directoryProfile.findUnique({
+      where: { accountId: req.directoryAccount.id },
+      select: { id: true },
+    });
+    if (!profile) return res.status(404).json({ success: false, error: 'Perfil no encontrado' });
+    const updated = await subService.changePlan(profile.id, planCode, { changedByAdmin: false });
+    res.json({ success: true, data: { id: updated.id, status: updated.status, plan: updated.plan?.code, currentPeriodEnd: updated.currentPeriodEnd, commitmentEnd: updated.commitmentEnd } });
+  } catch (e) {
+    const code = e.code === 'COMMITMENT_ACTIVE' ? 409 : 400;
+    res.status(code).json({ success: false, error: e.message, code: e.code });
   }
 });
 
@@ -126,6 +145,20 @@ router.post('/admin/:id/cancel', authenticate, authorize('ADMIN'), async (req, r
     res.json({ success: true, data: updated });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Admin fuerza cambio de plan (ignora compromiso). Útil para soporte / correcciones.
+router.post('/admin/:id/change-plan', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const { planCode } = req.body || {};
+    if (!planCode) return res.status(400).json({ success: false, error: 'planCode requerido' });
+    const sub = await prisma.subscription.findUnique({ where: { id: req.params.id }, select: { profileId: true } });
+    if (!sub) return res.status(404).json({ success: false, error: 'Suscripción no encontrada' });
+    const updated = await subService.changePlan(sub.profileId, planCode, { changedByAdmin: true });
+    res.json({ success: true, data: { id: updated.id, status: updated.status, plan: updated.plan?.code, currentPeriodEnd: updated.currentPeriodEnd, commitmentEnd: updated.commitmentEnd } });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
   }
 });
 
