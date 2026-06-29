@@ -12,25 +12,35 @@
 import { DIRECTORY_API } from '../config/directoryApi';
 import { directoryRequest } from './directoryAccountApi';
 
-const ENDPOINTS = {
+const DEDICATED_ENDPOINTS = {
   whatsapp: DIRECTORY_API.profileWhatsappStat,
   call:     DIRECTORY_API.profileCallStat,
   email:    DIRECTORY_API.profileEmailStat,
   agendar:  DIRECTORY_API.profileAgendarStat,
 };
 
-const VALID = new Set(Object.keys(ENDPOINTS));
+const GENERIC_EVENTS = new Set(['share', 'favorite', 'map', 'segunda_opinion']);
 
 /**
  * @param {string} profileId
- * @param {'whatsapp'|'call'|'email'|'agendar'} kind
+ * @param {'whatsapp'|'call'|'email'|'agendar'|'share'|'favorite'|'map'|'segunda_opinion'} kind
  */
 export function trackContactEvent(profileId, kind) {
-  if (!profileId || !VALID.has(kind)) return;
-  const url = ENDPOINTS[kind](profileId);
+  if (!profileId) return;
   try {
-    // Anónimo: no enviamos token. El endpoint es público.
-    directoryRequest(url, { method: 'POST', skipAuth: true }).catch(() => {});
+    if (DEDICATED_ENDPOINTS[kind]) {
+      directoryRequest(DEDICATED_ENDPOINTS[kind](profileId), {
+        method: 'POST', skipAuth: true,
+      }).catch(() => {});
+      return;
+    }
+    if (GENERIC_EVENTS.has(kind)) {
+      directoryRequest(`/api/directory/profiles/${encodeURIComponent(profileId)}/stats/event`, {
+        method: 'POST', skipAuth: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: kind.toUpperCase() }),
+      }).catch(() => {});
+    }
   } catch {
     /* no-op */
   }

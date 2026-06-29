@@ -133,6 +133,22 @@ const recordPublicAgendarClick = async (req, res, next) => {
   }
 };
 
+const ALLOWED_PUBLIC_EVENT_TYPES = new Set(['SHARE', 'FAVORITE', 'MAP', 'SEGUNDA_OPINION']);
+
+const recordPublicGenericEvent = async (req, res, next) => {
+  try {
+    const type = String(req.body?.type || '').toUpperCase();
+    if (!ALLOWED_PUBLIC_EVENT_TYPES.has(type)) {
+      return res.status(400).json({ success: false, error: 'Tipo no permitido' });
+    }
+    await directoryService.recordPublicEventClick(req.params.profileId, type);
+    return res.status(204).send();
+  } catch (e) {
+    if (e.statusCode === 404) return res.status(204).send();
+    next(e);
+  }
+};
+
 const getMyStats = async (req, res, next) => {
   try {
     const stats = await directoryService.getStatsForAccount(req.directoryAccount.id);
@@ -222,6 +238,7 @@ module.exports = {
   recordPublicCallClick,
   recordPublicEmailClick,
   recordPublicAgendarClick,
+  recordPublicGenericEvent,
   getMyStats,
   getAdminStats,
   submitProfileInquiry,

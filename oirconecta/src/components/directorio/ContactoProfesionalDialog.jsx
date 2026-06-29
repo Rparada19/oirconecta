@@ -19,11 +19,16 @@ const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com
 const ACCENT = '#085946';
 const NAVY = '#272F50';
 
-export default function ContactoProfesionalDialog({ open, onClose, profileId, profesionalNombre }) {
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', mensaje: '' });
+export default function ContactoProfesionalDialog({ open, onClose, profileId, profesionalNombre, initialMessage = '' }) {
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', mensaje: initialMessage });
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
+
+  React.useEffect(() => {
+    if (open) setForm((f) => ({ ...f, mensaje: initialMessage || f.mensaje }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialMessage]);
 
   const reset = () => {
     setForm({ nombre: '', email: '', telefono: '', mensaje: '' });

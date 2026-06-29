@@ -78,6 +78,13 @@ router.post(
 );
 
 router.post(
+  '/profiles/:profileId/stats/event',
+  [param('profileId').isUUID(), body('type').isString().isLength({ min: 2, max: 40 })],
+  validateRequest,
+  directoryController.recordPublicGenericEvent
+);
+
+router.post(
   '/register',
   [
     body('email').isEmail(),

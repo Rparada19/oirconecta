@@ -41,6 +41,7 @@ import {
   trackDirectoryCallClick,
 } from '../services/directorySearchService';
 import { trackContactEvent } from '../services/directoryTracking';
+import PatientActionBar from '../components/directorio/PatientActionBar';
 import { getWhatsAppHrefWithText } from '../config/publicSite';
 import { DEMO_PROFILE_MAP } from '../data/directoryDemoData';
 import {
@@ -434,6 +435,13 @@ export default function DirectorioProfesionalPage() {
   );
 
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [contactInitialMessage, setContactInitialMessage] = useState('');
+
+  const askSecondOpinion = useCallback(() => {
+    trackContactEvent(profileId, 'segunda_opinion');
+    setContactInitialMessage(`Hola${name ? ` ${name}` : ''}, me gustaría solicitar una segunda opinión sobre mi caso. Te cuento mi situación a continuación:\n\n`);
+    setContactDialogOpen(true);
+  }, [profileId, name]);
   /**
    * Para usar en los botones "Agendar/Reservar cita":
    * - Si es perfil propio → props para link a /agendar
@@ -1064,6 +1072,39 @@ export default function DirectorioProfesionalPage() {
                   </Button>
                 </Stack>
               </Stack>
+            </Box>
+          </Box>
+
+          {/* ——— Barra unificada de acciones del paciente ——— */}
+          <Box sx={{ ...dirBleed({ bgcolor: '#fff' }), borderTop: '1px solid #f0f2f4', borderBottom: '1px solid #f0f2f4' }}>
+            <Box sx={dirContentSx}>
+              <PatientActionBar
+                profileId={profileId}
+                nombre={name}
+                ciudad={city}
+                direccion={direccionPublica}
+                mapsLugar={mapsLugar}
+                telHref={telHref}
+                waHref={wa}
+                mailtoHref={mailtoProfessionalHref}
+                agendarProps={agendarButtonProps}
+              />
+              {/* Solicitar segunda opinión — sutil bajo la action bar */}
+              <Box
+                role="button"
+                tabIndex={0}
+                onClick={askSecondOpinion}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') askSecondOpinion(); }}
+                sx={{
+                  display: 'inline-flex', alignItems: 'center', gap: 0.75,
+                  px: 1.25, py: 0.5, borderRadius: 1,
+                  fontSize: 12.5, fontWeight: 700, color: '#085946',
+                  bgcolor: 'rgba(8,89,70,0.06)', border: '1px dashed rgba(8,89,70,0.30)',
+                  cursor: 'pointer', mt: 0.5,
+                  '&:hover': { bgcolor: 'rgba(8,89,70,0.10)' },
+                }}>
+                💬 ¿Quieres una segunda opinión sobre tu caso?
+              </Box>
             </Box>
           </Box>
 
@@ -2182,9 +2223,10 @@ export default function DirectorioProfesionalPage() {
 
       <ContactoProfesionalDialog
         open={contactDialogOpen}
-        onClose={() => setContactDialogOpen(false)}
+        onClose={() => { setContactDialogOpen(false); setContactInitialMessage(''); }}
         profileId={profileId}
         profesionalNombre={name}
+        initialMessage={contactInitialMessage}
       />
     </Box>
   );
