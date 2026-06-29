@@ -31,7 +31,7 @@ const STATUS_COLOR = {
 };
 
 const ESTADOS = ['', 'TRIAL', 'ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
-const PLANES = ['', 'TRIAL_90D', 'MENSUAL', 'ANUAL', 'EMPRESA'];
+const PLANES = ['', 'TRIAL_90D', 'ANUAL', 'PLAN_2_ANUAL', 'PLAN_3_MENSUAL', 'MENSUAL', 'EMPRESA'];
 const PROFESIONES = [
   { slug: '', label: 'Todas' },
   { slug: 'fonoaudiologia', label: 'Fonoaudiología' },
@@ -208,10 +208,12 @@ export default function AdminSuscripcionesPage() {
           </TableHead>
           <TableBody>
             {[
-              { plan: 'Prueba gratuita', target: 'Todos los registros nuevos',          precio: 0,       vig: '120 días' },
-              { plan: 'Mensual',         target: 'Profesional independiente',           precio: 20000,   vig: '30 días' },
-              { plan: 'Anual',           target: 'Profesional independiente',           precio: 200000,  vig: '12 meses',  badge: 'Ahorra $40.000' },
-              { plan: 'Empresa o centro', target: 'Persona jurídica · por sede',        precio: 20000,   vig: '30 días',   nota: '× cada sede registrada' },
+              { plan: 'Prueba gratuita',        target: 'Todos los registros nuevos',                 precio: 0,       vig: '120 días' },
+              { plan: 'Plan 1 · Anual',         target: 'Directorio + Marketing',                     precio: 200000,  vig: '12 meses',  badge: 'Trial 120 días' },
+              { plan: 'Plan 2 · Anual',         target: '+ Sistema de Agendamiento (Google Calendar)', precio: 500000,  vig: '12 meses',  badge: 'Trial 120 días' },
+              { plan: 'Plan 3 · Mensual',       target: '+ Agente IA (hasta 300 conv/mes)',           precio: 120000,  vig: '1 mes',     badge: 'Permanencia 12 meses' },
+              { plan: 'Mensual (legacy)',       target: 'Profesional independiente',                  precio: 20000,   vig: '30 días',   nota: 'plan legacy — no se ofrece a nuevos' },
+              { plan: 'Empresa o centro (legacy)', target: 'Persona jurídica · por sede',             precio: 20000,   vig: '30 días',   nota: '× cada sede · plan legacy' },
             ].map((row) => {
               const iva = Math.round(row.precio * 0.19);
               return (

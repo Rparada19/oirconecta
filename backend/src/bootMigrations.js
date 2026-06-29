@@ -311,6 +311,22 @@ async function ensureMultiTenantAgendaSchema(prisma) {
 }
 
 /**
+ * Tras crear columnas vía ensurePlanFeatureColumns, siembra/sincroniza las
+ * filas de la tabla `plans` con PLAN_DEFAULTS. Sin esto, PLAN_2_ANUAL y
+ * PLAN_3_MENSUAL no aparecen en `getMySubscription().plansDisponibles`.
+ */
+async function seedPlanDefaults(prisma) {
+  try {
+    // Carga perezosa: requiere que las migraciones de schema ya hayan corrido.
+    const subService = require('./services/subscription.service');
+    await subService.ensurePlans();
+    console.log('[boot-migrate] plan defaults seeded');
+  } catch (e) {
+    console.warn('[boot-migrate] seedPlanDefaults falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * Punto único: corre todas las migraciones idempotentes.
  */
 async function runBootMigrations(prisma) {
@@ -322,6 +338,7 @@ async function runBootMigrations(prisma) {
   await ensureBlogPostStructure(prisma);
   await ensurePlanFeatureColumns(prisma);
   await ensureMultiTenantAgendaSchema(prisma);
+  await seedPlanDefaults(prisma);
 }
 
 module.exports = { runBootMigrations };

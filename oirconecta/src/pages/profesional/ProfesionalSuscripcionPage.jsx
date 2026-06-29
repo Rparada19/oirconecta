@@ -170,32 +170,44 @@ export default function ProfesionalSuscripcionPage() {
           Tu cuenta está registrada como <strong>empresa o centro</strong>: la facturación es de $20.000 mensuales por cada sede registrada.
         </Alert>
       )}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid container spacing={2} sx={{ mb: 4 }} alignItems="stretch">
         {data.plansDisponibles?.map((p) => {
-          const isAnual = p.code === 'ANUAL';
           const isEmpresa = p.code === 'EMPRESA';
-          const highlight = isAnual; // solo anual tiene badge "mejor valor"
+          const isMensual = (p.duracionDias || 30) < 90;
+          // Plan 2 es el destacado por defecto (entrada al ecosistema completo)
+          const highlight = p.code === 'PLAN_2_ANUAL';
+          const badge = highlight ? 'MÁS POPULAR'
+            : p.code === 'PLAN_3_MENSUAL' ? 'CON IA'
+            : null;
           const sedeCount = p.detalle?.sedeCount || 1;
+          const periodoLabel = isMensual ? 'mes' : 'año';
+          const commitmentMonths = p.minCommitmentMonths;
+          // 3 columnas para Plan 1/2/3; full width para legacy EMPRESA
+          const colSize = isEmpresa ? 12 : 4;
           return (
-            <Grid item xs={12} md={isEmpresa ? 12 : 6} key={p.id}>
+            <Grid item xs={12} md={colSize} key={p.id}>
               <Card sx={{
-                borderRadius: '14px', border: highlight ? `2px solid ${GOLD}` : '1px solid #e5e7eb',
+                borderRadius: '14px',
+                border: highlight ? `2px solid ${GOLD}` : '1px solid #e5e7eb',
                 position: 'relative', height: '100%',
+                display: 'flex', flexDirection: 'column',
               }}>
-                {highlight && (
-                  <Chip label="MEJOR VALOR" size="small"
-                    sx={{ position: 'absolute', top: 12, right: 12, bgcolor: GOLD, color: '#fff', fontWeight: 800, fontSize: '0.65rem' }} />
+                {badge && (
+                  <Chip label={badge} size="small"
+                    sx={{ position: 'absolute', top: 12, right: 12,
+                      bgcolor: highlight ? GOLD : ACCENT, color: '#fff',
+                      fontWeight: 800, fontSize: '0.65rem' }} />
                 )}
-                <CardContent sx={{ p: 3 }}>
-                  <Typography sx={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, mb: 0.5 }}>
-                    {isEmpresa ? 'Empresa o centro' : isAnual ? 'Anual' : 'Mensual'}
+                <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <Typography sx={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, mb: 0.5, minHeight: 18 }}>
+                    {p.nombre}
                   </Typography>
                   <Stack direction="row" alignItems="baseline" spacing={0.5}>
                     <Typography sx={{ fontSize: '2rem', fontWeight: 900, color: NAVY }}>
                       {fmtCOP(p.precioCOP)}
                     </Typography>
                     <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>
-                      / {isAnual ? 'año' : 'mes'}
+                      / {periodoLabel}
                     </Typography>
                   </Stack>
                   {isEmpresa && p.detalle && (
@@ -203,11 +215,17 @@ export default function ProfesionalSuscripcionPage() {
                       {fmtCOP(p.detalle.unitCOP)} × {sedeCount} sede{sedeCount === 1 ? '' : 's'}
                     </Typography>
                   )}
-                  <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', mb: 2 }}>
+                  <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', mb: 0.5 }}>
                     + IVA 19% → total {fmtCOP(p.totalCOP)}
                   </Typography>
+                  {commitmentMonths && (
+                    <Typography sx={{ fontSize: '0.75rem', color: '#a16207', mb: 2, fontWeight: 600 }}>
+                      Permanencia mínima {commitmentMonths} meses
+                    </Typography>
+                  )}
+                  {!commitmentMonths && <Box sx={{ mb: 2 }} />}
 
-                  <Stack spacing={0.75} sx={{ mb: 3 }}>
+                  <Stack spacing={0.75} sx={{ mb: 3, flex: 1 }}>
                     {(p.beneficios || []).map((b) => (
                       <Stack key={b} direction="row" spacing={1} alignItems="flex-start">
                         <CheckCircleOutlineIcon sx={{ color: ACCENT, fontSize: 18, mt: '2px' }} />
@@ -223,7 +241,7 @@ export default function ProfesionalSuscripcionPage() {
                       borderRadius: '8px', textTransform: 'none', fontWeight: 700,
                       '&.Mui-disabled': { background: '#cbd5e1', color: '#64748b' },
                     }}>
-                    Pagos disponibles pronto (Wompi)
+                    Pagos disponibles pronto
                   </Button>
                 </CardContent>
               </Card>
