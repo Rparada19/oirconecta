@@ -579,7 +579,9 @@ async function changePlan(profileId, targetPlanCode, { changedByAdmin = false } 
 
   const data = {
     planId: targetPlan.id,
-    status: 'PENDING', // pago pendiente; webhook lo pasa a ACTIVE
+    // Admin cambio = ACTIVE directo (admin validó manualmente, sin gateway).
+    // Self-service queda PENDING hasta que webhook confirme pago.
+    status: changedByAdmin ? 'ACTIVE' : 'PENDING',
     currentPeriodStart: now,
     currentPeriodEnd: end,
     nextChargeAt: end,
@@ -602,8 +604,8 @@ async function changePlan(profileId, targetPlanCode, { changedByAdmin = false } 
       subscriptionId: sub.id,
       tipo: 'PLAN_CHANGED',
       fromStatus: sub.status,
-      toStatus: 'PENDING',
-      notas: `${sub.plan?.code || '—'} → ${targetPlan.code}${changedByAdmin ? ' (admin)' : ''}`,
+      toStatus: data.status,
+      notas: `${sub.plan?.code || '—'} → ${targetPlan.code}${changedByAdmin ? ' (admin · ACTIVE directo)' : ' (pendiente pago)'}`,
       metadata: { fromPlanCode: sub.plan?.code, toPlanCode: targetPlan.code, changedByAdmin },
     },
   });

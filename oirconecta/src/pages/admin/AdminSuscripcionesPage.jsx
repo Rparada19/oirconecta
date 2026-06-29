@@ -14,6 +14,7 @@ import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
+import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded';
 import { adminFetch } from './adminAuth';
 
 const ACCENT = '#085946';
@@ -73,6 +74,8 @@ export default function AdminSuscripcionesPage() {
   const [q, setQ] = useState('');
   const [cancelTarget, setCancelTarget] = useState(null); // sub a cancelar
   const [cancelMotivo, setCancelMotivo] = useState('');
+  const [planTarget, setPlanTarget] = useState(null); // sub a cambiar de plan
+  const [planNuevo, setPlanNuevo] = useState('PLAN_3_MENSUAL');
   const [working, setWorking] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -117,6 +120,23 @@ export default function AdminSuscripcionesPage() {
       fetchAll();
     } else {
       setToast({ severity: 'error', msg: r?.error || 'No se pudo cancelar' });
+    }
+  };
+
+  const handleChangePlan = async () => {
+    if (!planTarget || !planNuevo) return;
+    setWorking(true);
+    const r = await adminFetch(`/api/subscriptions/admin/${planTarget.id}/change-plan`, {
+      method: 'POST',
+      body: JSON.stringify({ planCode: planNuevo }),
+    });
+    setWorking(false);
+    if (r?.data?.success) {
+      setToast({ severity: 'success', msg: `Plan cambiado a ${planNuevo}. La suscripción quedó PENDING; queda activa al confirmar pago.` });
+      setPlanTarget(null);
+      fetchAll();
+    } else {
+      setToast({ severity: 'error', msg: r?.error || 'No se pudo cambiar el plan' });
     }
   };
 
@@ -332,21 +352,30 @@ export default function AdminSuscripcionesPage() {
                       </TableCell>
                       <TableCell sx={{ fontSize: '0.8125rem' }}>{fmtDate(s.lastPaymentAt)}</TableCell>
                       <TableCell>
-                        {s.status === 'CANCELED' || s.status === 'SUSPENDED' ? (
-                          <Tooltip title="Reactivar">
-                            <IconButton size="small" disabled={working} onClick={() => handleReactivate(s)}
-                              sx={{ color: ACCENT, '&:hover': { bgcolor: `${ACCENT}10` } }}>
-                              <RestartAltRoundedIcon fontSize="small" />
+                        <Stack direction="row" spacing={0.5}>
+                          <Tooltip title="Cambiar plan">
+                            <IconButton size="small" disabled={working}
+                              onClick={() => { setPlanTarget(s); setPlanNuevo(s.planCode || 'PLAN_3_MENSUAL'); }}
+                              sx={{ color: '#0369a1', '&:hover': { bgcolor: '#e0f2fe' } }}>
+                              <SwapHorizRoundedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                        ) : (
-                          <Tooltip title="Dar de baja">
-                            <IconButton size="small" disabled={working} onClick={() => setCancelTarget(s)}
-                              sx={{ color: '#b91c1c', '&:hover': { bgcolor: '#fee2e2' } }}>
-                              <PersonOffOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
+                          {s.status === 'CANCELED' || s.status === 'SUSPENDED' ? (
+                            <Tooltip title="Reactivar">
+                              <IconButton size="small" disabled={working} onClick={() => handleReactivate(s)}
+                                sx={{ color: ACCENT, '&:hover': { bgcolor: `${ACCENT}10` } }}>
+                                <RestartAltRoundedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip title="Dar de baja">
+                              <IconButton size="small" disabled={working} onClick={() => setCancelTarget(s)}
+                                sx={{ color: '#b91c1c', '&:hover': { bgcolor: '#fee2e2' } }}>
+                                <PersonOffOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   );
@@ -391,6 +420,35 @@ export default function AdminSuscripcionesPage() {
             startIcon={working ? <CircularProgress size={16} color="inherit" /> : <PersonOffOutlinedIcon />}
             sx={{ background: '#b91c1c', '&:hover': { background: '#991b1b' } }}>
             Dar de baja
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog cambio de plan */}
+      <Dialog open={!!planTarget} onClose={() => !working && setPlanTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: NAVY }}>Cambiar plan</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Cambiar plan de <strong>{planTarget?.nombre || planTarget?.email}</strong>.
+            Plan actual: <strong>{planTarget?.planCode || '—'}</strong>.
+          </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            La suscripción quedará en <strong>PENDING</strong> hasta confirmar pago (gateway aún en stub).
+            Plan 3 incluye permanencia mínima 12 meses. Para pruebas, usa PLAN_3_MENSUAL (incluye todas las features).
+          </Alert>
+          <TextField select fullWidth size="small" label="Nuevo plan"
+            value={planNuevo} onChange={(e) => setPlanNuevo(e.target.value)}>
+            <MenuItem value="ANUAL">Plan 1 · Anual — $200.000/año (marketing)</MenuItem>
+            <MenuItem value="PLAN_2_ANUAL">Plan 2 · Anual — $500.000/año (+ agenda)</MenuItem>
+            <MenuItem value="PLAN_3_MENSUAL">Plan 3 · Mensual — $120.000/mes (+ IA, 12 meses mín.)</MenuItem>
+          </TextField>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setPlanTarget(null)} disabled={working}>Cancelar</Button>
+          <Button onClick={handleChangePlan} disabled={working || !planNuevo} variant="contained"
+            startIcon={working ? <CircularProgress size={16} color="inherit" /> : <SwapHorizRoundedIcon />}
+            sx={{ background: '#0369a1', '&:hover': { background: '#075985' } }}>
+            Cambiar plan
           </Button>
         </DialogActions>
       </Dialog>
