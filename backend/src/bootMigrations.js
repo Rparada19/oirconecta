@@ -171,6 +171,40 @@ async function ensureSalesGoalsColumn(prisma) {
   }
 }
 
+async function ensureSalesActivityDirection(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "sales_activities" ADD COLUMN IF NOT EXISTS "direction" TEXT DEFAULT 'out';`);
+    console.log('[boot-migrate] sales_activities.direction OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureSalesActivityDirection falló:', e.message);
+  }
+}
+
+/**
+ * F1 nuevos planes (Plan 2 con agenda, Plan 3 con IA).
+ * Agrega valores al enum PlanCode + columnas nuevas a plans y subscriptions.
+ */
+async function ensurePlanFeatureColumns(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TYPE "PlanCode" ADD VALUE IF NOT EXISTS 'PLAN_2_ANUAL'`);
+    await prisma.$executeRawUnsafe(`ALTER TYPE "PlanCode" ADD VALUE IF NOT EXISTS 'PLAN_3_MENSUAL'`);
+
+    await prisma.$executeRawUnsafe(`ALTER TABLE "plans" ADD COLUMN IF NOT EXISTS "features" JSONB NOT NULL DEFAULT '{}';`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "plans" ADD COLUMN IF NOT EXISTS "trialDays" INTEGER NOT NULL DEFAULT 0;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "plans" ADD COLUMN IF NOT EXISTS "minCommitmentMonths" INTEGER;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "plans" ADD COLUMN IF NOT EXISTS "monthlyConversationLimit" INTEGER;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "plans" ADD COLUMN IF NOT EXISTS "displayOrder" INTEGER NOT NULL DEFAULT 0;`);
+
+    await prisma.$executeRawUnsafe(`ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "commitmentEnd" TIMESTAMP(3);`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "iaConversationsUsed" INTEGER NOT NULL DEFAULT 0;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "iaConversationsPeriodAt" TIMESTAMP(3);`);
+
+    console.log('[boot-migrate] plan feature columns OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensurePlanFeatureColumns falló (no bloqueante):', e.message);
+  }
+}
+
 /**
  * Punto único: corre todas las migraciones idempotentes.
  */
@@ -179,6 +213,8 @@ async function runBootMigrations(prisma) {
   await ensureSalesCrmSchema(prisma);
   await ensureDirectoryAccountColumns(prisma);
   await ensureSalesGoalsColumn(prisma);
+  await ensureSalesActivityDirection(prisma);
+  await ensurePlanFeatureColumns(prisma);
 }
 
 module.exports = { runBootMigrations };

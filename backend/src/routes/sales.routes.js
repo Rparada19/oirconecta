@@ -243,6 +243,85 @@ router.post('/leads/:id/send-email', isOwnerOfLeadOrAdmin, async (req, res) => {
   } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 
+/* ─── Lead scoring ──────────────────────────────────────── */
+
+router.get('/leads/:id/score', isOwnerOfLeadOrAdmin, async (req, res) => {
+  try {
+    const data = await sales.getLeadScore(req.params.id);
+    res.json({ success: true, data });
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+
+/* ─── Agendar reunión + invite al prospecto ─────────────── */
+
+router.post('/leads/:id/schedule-meeting', isOwnerOfLeadOrAdmin, async (req, res) => {
+  try {
+    const { startAt, durationMin = 30, title, location = 'Llamada virtual / Google Meet', notes = '', sendEmail = true } = req.body || {};
+    if (!startAt) return res.status(400).json({ success: false, error: 'startAt requerido' });
+
+    const lead = await prisma.salesLead.findUnique({ where: { id: req.params.id } });
+    if (!lead) return res.status(404).json({ success: false, error: 'Lead no existe' });
+
+    const start = new Date(startAt);
+    const end   = new Date(start.getTime() + Number(durationMin) * 60 * 1000);
+    const meetingTitle = title || `Demo OírConecta · ${lead.nombre}`;
+    const description  = notes || `Reunión coordinada por ${req.user.nombre} (OírConecta).`;
+    const attendees    = lead.email ? [lead.email] : [];
+
+    const gcalUrl = sales.buildGoogleCalendarUrl({
+      title: meetingTitle, description, location,
+      startISO: start.toISOString(), endISO: end.toISOString(), attendees,
+    });
+
+    // Crear tarea en la agenda del ejecutivo
+    const task = await sales.createTask(req.params.id, {
+      type: 'MEETING', dueAt: start.toISOString(),
+      notes: `${meetingTitle} (${durationMin} min). ${notes}`,
+    }, req.user.id);
+
+    // Registrar actividad de agendamiento
+    const activity = await sales.logActivity(req.params.id, req.user.id, {
+      type: 'MEETING', outcome: 'Agendada', subject: meetingTitle,
+      body: `Programada para ${start.toLocaleString('es-CO')} (${durationMin} min). Lugar: ${location}.`,
+      direction: 'out',
+    });
+
+    // Avanzar stage si está más atrás
+    if (['NUEVO','CONTACTADO','INTERESADO'].includes(lead.status)) {
+      await sales.updateLead(req.params.id, { status: 'DEMO_AGENDADA' });
+    }
+
+    // Enviar invite por email al prospecto
+    let mailed = false;
+    if (sendEmail && lead.email) {
+      try {
+        await emailService.sendSalesOutreach({
+          to: lead.email, toName: lead.nombre,
+          subject: `Confirmación de reunión · ${meetingTitle}`,
+          bodyText:
+`Hola ${lead.nombre},
+
+Confirmo nuestra reunión:
+
+📅 ${start.toLocaleString('es-CO', { dateStyle: 'full', timeStyle: 'short' })}
+⏱ ${durationMin} minutos
+📍 ${location}
+
+Para guardarla en tu calendario (Google, Outlook o Apple):
+${gcalUrl}
+
+${notes ? `Notas: ${notes}\n\n` : ''}Cualquier cosa, responde a este correo y lo ajustamos.`,
+          executiveName:  req.user.nombre,
+          executiveEmail: req.user.email,
+        });
+        mailed = true;
+      } catch (e) { console.warn('[sales] meeting email no enviado:', e.message); }
+    }
+
+    res.json({ success: true, data: { task, activity, gcalUrl, mailed } });
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+
 /* ─── Conversión ────────────────────────────────────────── */
 
 router.post('/leads/:id/convert', isOwnerOfLeadOrAdmin, async (req, res) => {

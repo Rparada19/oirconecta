@@ -36,6 +36,12 @@ export const salesApi = {
     method: 'POST', body: JSON.stringify({ password, sendEmail }),
   }),
 
+  // Scoring y reuniones
+  leadScore:    (id) => json(`/api/sales/leads/${id}/score`),
+  scheduleMeeting: (id, payload) => json(`/api/sales/leads/${id}/schedule-meeting`, {
+    method: 'POST', body: JSON.stringify(payload),
+  }),
+
   // Import CSV
   importCsv:    (rows, ownerId) => json('/api/sales/leads/import-csv', {
     method: 'POST', body: JSON.stringify({ rows, ownerId }),

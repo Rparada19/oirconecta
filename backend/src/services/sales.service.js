@@ -96,6 +96,7 @@ async function logActivity(leadId, userId, data) {
     data: {
       leadId, userId,
       type:        data.type,
+      direction:   data.direction || 'out',
       outcome:     data.outcome || null,
       subject:     data.subject || null,
       body:        data.body    || null,
@@ -105,12 +106,10 @@ async function logActivity(leadId, userId, data) {
       status:      data.status || null,
     },
   });
-  // Toca lastActivityAt del lead
   await prisma.salesLead.update({
     where: { id: leadId },
     data: { lastActivityAt: created.ts },
   });
-  // Reglas de avance automático sugerido — el ejecutivo decide el status real.
   return created;
 }
 
@@ -160,6 +159,108 @@ async function listMyTasks(assigneeId, { onlyPending = true, dueBefore } = {}) {
       lead: { select: { id: true, nombre: true, telefono: true, email: true, ciudad: true, status: true } },
     },
   });
+}
+
+/* ─── Lead scoring (probabilidad de cierre) ─────────────── */
+
+/**
+ * Scoring determinístico — más confiable y barato que un LLM. Combina
+ * señales reales del pipeline:
+ *  - Etapa actual (gran peso): NUEVO 5%, CONTACTADO 20%, INTERESADO 45%,
+ *    DEMO_AGENDADA 65%, EN_PRUEBA 85%, CONVERTIDO 100%, PERDIDO 0%.
+ *  - Reciprocidad: respuestas entrantes (direction='in') suman fuerte.
+ *  - Profundidad: cantidad y variedad de canales tocados.
+ *  - Recencia: actividad en las últimas 72h suma; >14 días resta.
+ *  - Datos completos: email + teléfono confirmados.
+ *
+ * Devuelve { score: 0-100, label, reasons: string[] }.
+ */
+function scoreLead(lead, activities = []) {
+  const stage = lead.status || 'NUEVO';
+  if (stage === 'CONVERTIDO') return { score: 100, label: 'Cliente', reasons: ['Cuenta activa y pagando.'] };
+  if (stage === 'PERDIDO')    return { score: 0,   label: 'Perdido', reasons: ['Marcado como perdido.'] };
+
+  const STAGE_BASE = { NUEVO: 5, CONTACTADO: 20, INTERESADO: 45, DEMO_AGENDADA: 65, EN_PRUEBA: 85 };
+  let score = STAGE_BASE[stage] ?? 10;
+  const reasons = [`Etapa actual: ${stage.replace('_', ' ').toLowerCase()} (+${STAGE_BASE[stage]}).`];
+
+  // Reciprocidad — el prospecto respondió
+  const incoming = activities.filter((a) => a.direction === 'in').length;
+  if (incoming > 0) {
+    const bump = Math.min(15, incoming * 5);
+    score += bump;
+    reasons.push(`${incoming} respuesta${incoming > 1 ? 's' : ''} del prospecto (+${bump}).`);
+  }
+
+  // Profundidad y variedad
+  const channels = new Set(activities.map((a) => a.type));
+  if (channels.size >= 3) { score += 7; reasons.push('Tres o más canales tocados (+7).'); }
+  else if (channels.size === 2) { score += 3; reasons.push('Dos canales tocados (+3).'); }
+
+  // Reuniones (demo) suman
+  const meetings = activities.filter((a) => a.type === 'MEETING').length;
+  if (meetings > 0) { const bump = Math.min(10, meetings * 5); score += bump; reasons.push(`${meetings} reunión${meetings > 1 ? 'es' : ''} (+${bump}).`); }
+
+  // Recencia
+  if (lead.lastActivityAt) {
+    const days = Math.floor((Date.now() - new Date(lead.lastActivityAt).getTime()) / 86400000);
+    if (days <= 3) { score += 5; reasons.push('Actividad en los últimos 3 días (+5).'); }
+    else if (days >= 14 && stage !== 'EN_PRUEBA') { score -= 10; reasons.push(`Sin actividad hace ${days} días (-10).`); }
+    else if (days >= 7) { score -= 4; reasons.push(`Inactivo ${days} días (-4).`); }
+  } else {
+    score -= 5; reasons.push('Sin actividad aún (-5).');
+  }
+
+  // Datos completos
+  if (lead.email && lead.telefono) { score += 3; reasons.push('Email y teléfono presentes (+3).'); }
+  else if (!lead.email && !lead.telefono) { score -= 10; reasons.push('Sin email ni teléfono (-10).'); }
+
+  // Outcomes positivos recientes
+  const positives = activities.filter((a) => /interesado|agend|convert|pidi/i.test(a.outcome || '')).length;
+  if (positives > 0) { const bump = Math.min(10, positives * 4); score += bump; reasons.push(`${positives} resultado${positives > 1 ? 's' : ''} positivo${positives > 1 ? 's' : ''} (+${bump}).`); }
+
+  // No-Contactar fuerza a cero
+  if (lead.doNotContact) return { score: 0, label: 'No contactar', reasons: ['Lead marcado como No-Contactar.'] };
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  const label = score >= 80 ? 'Muy probable cierre'
+              : score >= 60 ? 'Probable cierre'
+              : score >= 35 ? 'En desarrollo'
+              : score >= 15 ? 'Frío'
+              : 'Muy frío';
+  return { score, label, reasons };
+}
+
+/**
+ * Devuelve el scoring actual de un lead (carga sus actividades primero).
+ */
+async function getLeadScore(leadId) {
+  const lead = await prisma.salesLead.findUnique({ where: { id: leadId } });
+  if (!lead) throw new Error('Lead no existe');
+  const activities = await prisma.salesActivity.findMany({
+    where: { leadId }, orderBy: { ts: 'desc' }, take: 50,
+  });
+  return scoreLead(lead, activities);
+}
+
+/* ─── Calendar helper (Google Calendar template URL) ────── */
+
+/**
+ * Construye un link "Add to Calendar" de Google con los datos de una reunión.
+ * Es la opción universal y no requiere .ics ni OAuth: el prospecto hace click
+ * y elige guardar en su Google/Outlook/Apple Calendar.
+ */
+function buildGoogleCalendarUrl({ title, description, location, startISO, endISO, attendees = [] }) {
+  const fmt = (d) => new Date(d).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title || 'Reunión',
+    details: description || '',
+    location: location || '',
+    dates: `${fmt(startISO)}/${fmt(endISO)}`,
+  });
+  if (attendees.length > 0) params.set('add', attendees.join(','));
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
 /* ─── Conversión a profesional del directorio ───────────── */
@@ -488,4 +589,6 @@ module.exports = {
   revenue,
   getGoals, setGoals, goalsProgress,
   DEFAULT_GOALS, RANGE_LABELS,
+  scoreLead, getLeadScore,
+  buildGoogleCalendarUrl,
 };

@@ -19,18 +19,66 @@ const prisma = new PrismaClient();
 const IVA_RATE = 0.19;
 const TRIAL_DAYS = 120;
 
+/**
+ * Capacidades del producto. Usadas por `hasFeature()` y por gating de endpoints.
+ * Cualquier feature nueva (telemedicina, HC, etc.) se añade aquí y se marca en `Plan.features`.
+ */
+const FEATURES = {
+  MARKETING: 'marketing', // Directorio + visibilidad + campañas
+  AGENDA: 'agenda',       // Sistema multi-tenant de agendamiento (Plan 2+)
+  IA: 'ia',               // Agente virtual con tools de calendario (Plan 3)
+};
+
 const PLAN_DEFAULTS = [
-  // El code se mantiene como TRIAL_90D por compatibilidad con datos previos;
-  // la duración real es 120 días (lanzamiento comercial 2026-06).
-  { code: 'TRIAL_90D', nombre: 'Prueba gratuita (120 días)', precioCOP: 0,      duracionDias: TRIAL_DAYS,
-    beneficios: ['Acceso completo al portal', 'Perfil visible en directorio', 'Recepción de solicitudes', 'Estadísticas'] },
-  { code: 'MENSUAL',   nombre: 'Profesional independiente · mensual', precioCOP: 20000,  duracionDias: 30,
-    beneficios: ['Perfil activo', 'Aparición en búsquedas', 'Recepción de solicitudes', 'Acceso a estadísticas'] },
-  { code: 'ANUAL',     nombre: 'Profesional independiente · anual',   precioCOP: 200000, duracionDias: 365,
-    beneficios: ['Todo del plan mensual', 'Prioridad en búsquedas', 'Insignia "Profesional Verificado"', 'Ahorras $40.000 al año'] },
-  { code: 'EMPRESA',   nombre: 'Empresa o centro · mensual por sede', precioCOP: 20000,  duracionDias: 30,
-    beneficios: ['Una ficha por sede', '$20.000 mensuales por cada sede', 'Aparición en búsquedas en todas las ciudades', 'Sin compromiso anual'] },
+  // ── Trial ──
+  { code: 'TRIAL_90D', nombre: 'Prueba gratuita (120 días)', precioCOP: 0, duracionDias: TRIAL_DAYS,
+    beneficios: ['Acceso completo al portal', 'Perfil visible en directorio', 'Recepción de solicitudes', 'Estadísticas'],
+    features: { marketing: true }, trialDays: TRIAL_DAYS, displayOrder: 0 },
+
+  // ── Plan 1: Directorio + Marketing (= ANUAL) ──
+  { code: 'ANUAL', nombre: 'Plan 1 · Directorio + Marketing', precioCOP: 200000, duracionDias: 365,
+    beneficios: ['Perfil verificado en el directorio', 'Aparición prioritaria en búsquedas', 'Paquetes de marketing', 'Prueba gratis de 120 días'],
+    features: { marketing: true }, trialDays: TRIAL_DAYS, displayOrder: 1 },
+
+  // ── Plan 2: + Agendamiento ──
+  { code: 'PLAN_2_ANUAL', nombre: 'Plan 2 · Marketing + Agendamiento', precioCOP: 500000, duracionDias: 365,
+    beneficios: ['Todo lo de Plan 1', 'Sistema de agendamiento propio', 'Reservas desde tu perfil público', 'Integración con Google Calendar', 'Recordatorios automáticos'],
+    features: { marketing: true, agenda: true }, trialDays: TRIAL_DAYS, displayOrder: 2 },
+
+  // ── Plan 3: + Agente IA ──
+  { code: 'PLAN_3_MENSUAL', nombre: 'Plan 3 · Marketing + Agendamiento + Agente IA', precioCOP: 120000, duracionDias: 30,
+    beneficios: ['Todo lo de Plan 2', 'Agente IA que agenda, reagenda y resuelve FAQ', 'Hasta 300 conversaciones/mes', 'Permanencia 12 meses'],
+    features: { marketing: true, agenda: true, ia: true }, trialDays: 0,
+    minCommitmentMonths: 12, monthlyConversationLimit: 300, displayOrder: 3 },
+
+  // ── Legacy (mantenidos solo para suscripciones existentes; no se ofrecen a nuevos) ──
+  { code: 'MENSUAL', nombre: 'Profesional independiente · mensual (legacy)', precioCOP: 20000, duracionDias: 30,
+    beneficios: ['Perfil activo', 'Aparición en búsquedas', 'Recepción de solicitudes'],
+    features: { marketing: true }, trialDays: 0, displayOrder: 90, activo: false },
+  { code: 'EMPRESA', nombre: 'Empresa por sede (legacy)', precioCOP: 20000, duracionDias: 30,
+    beneficios: ['Una ficha por sede', '$20.000 mensuales por cada sede'],
+    features: { marketing: true }, trialDays: 0, displayOrder: 91, activo: false },
 ];
+
+/** Códigos de los planes ofrecidos a nuevos profesionales (Plan 1/2/3). */
+const OFFERED_PLAN_CODES = ['ANUAL', 'PLAN_2_ANUAL', 'PLAN_3_MENSUAL'];
+
+/** Lee features del plan asociado a una suscripción. Devuelve {marketing,agenda,ia} normalizado. */
+function getActiveFeatures(sub) {
+  const raw = sub?.plan?.features || {};
+  return {
+    marketing: !!raw.marketing,
+    agenda: !!raw.agenda,
+    ia: !!raw.ia,
+  };
+}
+
+function hasFeature(sub, feature) {
+  if (!sub) return false;
+  // Estados que NO dan acceso: SUSPENDED, CANCELED. PAST_DUE conserva acceso (gracia).
+  if (sub.status === 'SUSPENDED' || sub.status === 'CANCELED') return false;
+  return getActiveFeatures(sub)[feature] === true;
+}
 
 /**
  * Precio mensual de empresa = $20.000 × (#sedes o 1).
@@ -42,13 +90,25 @@ function priceEmpresa(profile) {
   return { unitCOP, sedeCount, totalCOP: unitCOP * sedeCount };
 }
 
-/** Asegura que existan los 3 planes en BD. Idempotente. */
+/** Asegura que existan todos los planes en BD. Idempotente. Sincroniza features/precios. */
 async function ensurePlans() {
   for (const p of PLAN_DEFAULTS) {
+    const payload = {
+      nombre: p.nombre,
+      precioCOP: p.precioCOP,
+      duracionDias: p.duracionDias,
+      beneficios: p.beneficios,
+      features: p.features || {},
+      trialDays: p.trialDays ?? 0,
+      minCommitmentMonths: p.minCommitmentMonths ?? null,
+      monthlyConversationLimit: p.monthlyConversationLimit ?? null,
+      displayOrder: p.displayOrder ?? 0,
+      activo: p.activo !== false,
+    };
     await prisma.plan.upsert({
       where: { code: p.code },
-      update: { nombre: p.nombre, precioCOP: p.precioCOP, duracionDias: p.duracionDias, beneficios: p.beneficios, activo: true },
-      create: p,
+      update: payload,
+      create: { code: p.code, ...payload },
     });
   }
 }
@@ -182,10 +242,14 @@ async function getMySubscription(profileId) {
     select: { id: true, totalCOP: true, metodo: true, paidAt: true, gatewayRef: true },
   });
 
-  // Plan disponible depende del tipo de persona.
+  // Plan 1/2/3 son la oferta canónica para todos los profesionales nuevos.
+  // EMPRESA sigue visible si el profesional ya es JURIDICA (legacy).
   const isEmpresa = profile?.personaTipo === 'JURIDICA';
-  const planCodes = isEmpresa ? ['EMPRESA'] : ['MENSUAL', 'ANUAL'];
-  const plans = await prisma.plan.findMany({ where: { activo: true, code: { in: planCodes } } });
+  const planCodes = isEmpresa ? [...OFFERED_PLAN_CODES, 'EMPRESA'] : OFFERED_PLAN_CODES;
+  const plans = await prisma.plan.findMany({
+    where: { code: { in: planCodes } },
+    orderBy: { displayOrder: 'asc' },
+  });
 
   const empresa = isEmpresa ? priceEmpresa(profile) : null;
 
@@ -206,12 +270,16 @@ async function getMySubscription(profileId) {
     };
   });
 
+  const features = getActiveFeatures(sub);
+  const commitmentActive = sub.commitmentEnd && new Date(sub.commitmentEnd) > now;
+
   return {
     perfil: { personaTipo: profile?.personaTipo || 'NATURAL', sedes: profile?.workplaces || [] },
     subscription: {
       id: sub.id,
       status: sub.status,
       plan: sub.plan,
+      features,
       currentPeriodStart: sub.currentPeriodStart,
       currentPeriodEnd: sub.currentPeriodEnd,
       diasRestantes,
@@ -219,6 +287,10 @@ async function getMySubscription(profileId) {
       lastPaymentAt: sub.lastPaymentAt,
       nextChargeAt: sub.nextChargeAt,
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+      commitmentEnd: sub.commitmentEnd,
+      commitmentActive,
+      iaConversationsUsed: sub.iaConversationsUsed || 0,
+      iaConversationsLimit: sub.plan?.monthlyConversationLimit || null,
     },
     payments,
     plansDisponibles,
@@ -368,6 +440,14 @@ async function cancelSubscription(subscriptionId, { motivo, immediate = false, c
   if (!sub) throw new Error('Suscripción no encontrada');
   if (sub.status === 'CANCELED') return sub;
 
+  // Plan 3 (u otros con compromiso): el profesional no puede cancelar auto-servicio
+  // antes de commitmentEnd. Admin sí puede (con motivo en metadata).
+  if (!canceledByAdmin && sub.commitmentEnd && new Date(sub.commitmentEnd) > new Date()) {
+    const err = new Error(`No es posible cancelar antes de la permanencia mínima (hasta ${sub.commitmentEnd.toISOString().slice(0,10)}). Contacta soporte.`);
+    err.code = 'COMMITMENT_ACTIVE';
+    throw err;
+  }
+
   const now = new Date();
   const data = immediate
     ? { status: 'CANCELED', canceledAt: now, currentPeriodEnd: now, cancelAtPeriodEnd: false }
@@ -463,10 +543,80 @@ async function reactivateSubscription(subscriptionId, { extendDays = 30 } = {}) 
   return updated;
 }
 
+/**
+ * Cambia de plan una suscripción existente. Sin pasarela aún: deja el nuevo
+ * periodo como PENDING (pago a confirmar) — la integración real lo pasará a ACTIVE
+ * al recibir webhook del proveedor.
+ *
+ * Reglas:
+ *  - No permite downgrade auto-servicio si el plan actual tiene compromiso vigente.
+ *  - Setea commitmentEnd cuando el plan destino tiene minCommitmentMonths.
+ *  - Resetea contador IA al cambiar a/desde Plan 3.
+ */
+async function changePlan(profileId, targetPlanCode, { changedByAdmin = false } = {}) {
+  await ensurePlans();
+  const [sub, targetPlan] = await Promise.all([
+    prisma.subscription.findUnique({ where: { profileId }, include: { plan: true } }),
+    prisma.plan.findUnique({ where: { code: targetPlanCode } }),
+  ]);
+  if (!sub) throw new Error('Suscripción no encontrada');
+  if (!targetPlan || !targetPlan.activo) throw new Error('Plan destino inválido o inactivo');
+  if (sub.planId === targetPlan.id) return sub;
+
+  if (!changedByAdmin && sub.commitmentEnd && new Date(sub.commitmentEnd) > new Date()) {
+    const err = new Error(`No es posible cambiar de plan antes de la permanencia mínima (hasta ${sub.commitmentEnd.toISOString().slice(0,10)}).`);
+    err.code = 'COMMITMENT_ACTIVE';
+    throw err;
+  }
+
+  const now = new Date();
+  const end = addDays(now, targetPlan.duracionDias);
+  const commitmentEnd = targetPlan.minCommitmentMonths
+    ? new Date(now.getTime()).setMonth(now.getMonth() + targetPlan.minCommitmentMonths) && (() => {
+        const c = new Date(now); c.setMonth(c.getMonth() + targetPlan.minCommitmentMonths); return c;
+      })()
+    : null;
+
+  const data = {
+    planId: targetPlan.id,
+    status: 'PENDING', // pago pendiente; webhook lo pasa a ACTIVE
+    currentPeriodStart: now,
+    currentPeriodEnd: end,
+    nextChargeAt: end,
+    cancelAtPeriodEnd: false,
+    canceledAt: null,
+    diasMora: 0,
+    commitmentEnd,
+    iaConversationsUsed: 0,
+    iaConversationsPeriodAt: targetPlan.monthlyConversationLimit ? now : null,
+  };
+
+  const updated = await prisma.subscription.update({
+    where: { id: sub.id },
+    data,
+    include: { plan: true },
+  });
+
+  await prisma.subscriptionEvent.create({
+    data: {
+      subscriptionId: sub.id,
+      tipo: 'PLAN_CHANGED',
+      fromStatus: sub.status,
+      toStatus: 'PENDING',
+      notas: `${sub.plan?.code || '—'} → ${targetPlan.code}${changedByAdmin ? ' (admin)' : ''}`,
+      metadata: { fromPlanCode: sub.plan?.code, toPlanCode: targetPlan.code, changedByAdmin },
+    },
+  });
+
+  return updated;
+}
+
 module.exports = {
   IVA_RATE,
   TRIAL_DAYS,
+  FEATURES,
   PLAN_DEFAULTS,
+  OFFERED_PLAN_CODES,
   priceEmpresa,
   ensurePlans,
   createTrialForProfile,
@@ -477,4 +627,7 @@ module.exports = {
   recomputeStatus,
   cancelSubscription,
   reactivateSubscription,
+  changePlan,
+  hasFeature,
+  getActiveFeatures,
 };

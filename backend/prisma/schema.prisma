@@ -1315,24 +1315,37 @@ enum SubscriptionStatus {
 }
 
 enum PlanCode {
-  TRIAL_90D // Trial gratuito (45 días desde 2026-06; nombre legacy)
-  MENSUAL // Independiente: $20.000/mes
-  ANUAL // Independiente: $200.000/año
-  EMPRESA // Persona jurídica: $20.000/mes por sede (sin descuento anual)
+  TRIAL_90D // Trial gratuito (120 días reales; nombre legacy)
+  MENSUAL // Legacy: Independiente $20.000/mes
+  ANUAL // Plan 1: Directorio + Marketing — $200.000/año
+  EMPRESA // Legacy: Persona jurídica $20.000/mes por sede
+  PLAN_2_ANUAL // Plan 2: Directorio + Marketing + Agendamiento — $500.000/año
+  PLAN_3_MENSUAL // Plan 3: + Agente IA — $120.000/mes, 12 meses mín, 300 conv/mes
 }
 
 model Plan {
   id           String   @id @default(uuid())
   code         PlanCode @unique
   nombre       String
-  /// Precio SIN IVA (COP centavos = COP * 1, sin decimales en COP)
+  /// Precio SIN IVA (COP, sin decimales). Es precio del periodo (mensual/anual según duracionDias).
   precioCOP    Int      @default(0)
-  /// Duración en días (90 trial, 30 mensual, 365 anual)
+  /// Duración en días (120 trial, 30 mensual, 365 anual)
   duracionDias Int
   beneficios   String[] @default([])
   activo       Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  /// Capacidades habilitadas. Ej: { "marketing": true, "agenda": true, "ia": false }
+  features Json @default("{}")
+  /// Días de prueba al contratar este plan por primera vez. 0 = sin trial.
+  trialDays Int @default(0)
+  /// Meses mínimos de permanencia. Null = sin compromiso. Plan 3 = 12.
+  minCommitmentMonths Int?
+  /// Tope mensual de conversaciones del agente IA. Null = no aplica.
+  monthlyConversationLimit Int?
+  /// Orden de presentación en pricing público (asc).
+  displayOrder Int @default(0)
 
   subscriptions Subscription[]
 
@@ -1371,6 +1384,13 @@ model Subscription {
 
   /// Metadata libre (ej: motivo cancelación, notas internas)
   metadata Json?
+
+  /// Plan 3: fin del periodo de permanencia mínima (12 meses). Cancelar antes implica penalidad.
+  commitmentEnd DateTime?
+  /// Plan 3: conversaciones IA usadas en el periodo de cuota actual.
+  iaConversationsUsed Int @default(0)
+  /// Plan 3: inicio del periodo de cuota IA (rotación mensual independiente del periodo de facturación).
+  iaConversationsPeriodAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2094,6 +2114,9 @@ model SalesActivity {
   user   User              @relation("SalesActivityUser", fields: [userId], references: [id])
 
   type        SalesActivityType
+  /// Para WhatsApp / Email: 'out' (enviado por el ejecutivo) o 'in' (respuesta del prospecto).
+  /// Para CALL: 'out' siempre.
+  direction   String?           @default("out")
   outcome     String?           // 'no-respondio' | 'agendado' | 'interesado' | etc.
   subject     String?
   body        String?           @db.Text
