@@ -109,17 +109,24 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
 
   return (
     <>
-      {/* FAB */}
+      {/* FAB — púrpura para distinguir claramente del WhatsApp verde.
+          Posicionado ~90px arriba del WhatsApp (que está a bottom: ~20px). */}
       {!open && (
-        <Tooltip title="Chatear con el asistente virtual">
-          <Fab onClick={() => setOpen(true)} aria-label="Asistente IA"
+        <Tooltip title="Asistente IA · pregúntame para agendar">
+          <Fab onClick={() => setOpen(true)} aria-label="Asistente IA" variant="extended"
             sx={{
-              position: 'fixed', bottom: { xs: 20, md: 28 }, right: { xs: 20, md: 28 },
-              background: `linear-gradient(135deg, ${ACCENT}, #166534)`, color: '#fff',
-              '&:hover': { background: `linear-gradient(135deg, #166534, ${ACCENT})` },
-              zIndex: 1300, boxShadow: '0 8px 24px rgba(21,128,61,0.35)',
+              position: 'fixed',
+              bottom: { xs: 'calc(env(safe-area-inset-bottom, 0px) + 90px)', md: 100 },
+              right: { xs: 16, md: 24 },
+              background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)', color: '#fff',
+              '&:hover': { background: 'linear-gradient(135deg, #5b21b6, #7c3aed)' },
+              zIndex: 1250,
+              boxShadow: '0 10px 28px rgba(109,40,217,0.45)',
+              pl: 1.75, pr: 2, gap: 1, fontWeight: 700, textTransform: 'none',
+              borderRadius: '999px',
             }}>
-            <AutoAwesomeOutlined />
+            <AutoAwesomeOutlined sx={{ fontSize: 22 }} />
+            Asistente IA
           </Fab>
         </Tooltip>
       )}
@@ -127,23 +134,24 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
       {/* Panel chat */}
       {open && (
         <Box sx={{
-          position: 'fixed', bottom: { xs: 0, md: 28 }, right: { xs: 0, md: 28 },
+          position: 'fixed',
+          bottom: { xs: 0, md: 90 }, right: { xs: 0, md: 24 },
           width: { xs: '100vw', md: 400 },
           height: { xs: '85vh', md: 560 },
-          maxHeight: { xs: '85vh', md: '70vh' },
+          maxHeight: { xs: '85vh', md: '75vh' },
           bgcolor: '#fff', borderRadius: { xs: '20px 20px 0 0', md: '18px' },
           boxShadow: '0 24px 60px rgba(15,42,74,0.30)',
           border: '1px solid #e5e7eb',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          zIndex: 1300,
+          zIndex: 1400,
         }}>
           {/* Header */}
           <Box sx={{
             px: 2, py: 1.5,
-            background: `linear-gradient(135deg, ${NAVY}, #1f3a6b)`,
+            background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)',
             color: '#fff', display: 'flex', alignItems: 'center', gap: 1.5,
           }}>
-            <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: ACCENT,
+            <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.18)',
                        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <SmartToyOutlined sx={{ color: '#fff', fontSize: 22 }} />
             </Box>
