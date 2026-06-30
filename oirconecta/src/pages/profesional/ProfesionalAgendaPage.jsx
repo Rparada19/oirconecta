@@ -55,6 +55,7 @@ export default function ProfesionalAgendaPage() {
   const [types, setTypes] = useState([]);
   const [availability, setAvailability] = useState([]);
   const [blocks, setBlocks] = useState([]);
+  const [appointments, setAppointments] = useState({ items: [], upcoming: 0 });
 
   const showSnack = (message, severity = 'success') => setSnack({ message, severity });
 
@@ -68,14 +69,16 @@ export default function ProfesionalAgendaPage() {
       return;
     }
     setConfig(cfg.data.data);
-    const [t, a, b] = await Promise.all([
+    const [t, a, b, ap] = await Promise.all([
       directoryApi.get('/api/professional-agenda/me/types?includeInactive=1'),
       directoryApi.get('/api/professional-agenda/me/availability'),
       directoryApi.get('/api/professional-agenda/me/blocks'),
+      directoryApi.get('/api/professional-agenda/me/appointments'),
     ]);
     if (t.data?.data) setTypes(t.data.data);
     if (a.data?.data) setAvailability(a.data.data);
     if (b.data?.data) setBlocks(b.data.data);
+    if (ap.data?.data) setAppointments(ap.data.data);
     setLoading(false);
   }, []);
 
@@ -132,20 +135,23 @@ export default function ProfesionalAgendaPage() {
 
       <Card sx={{ mt: 2, borderRadius: '14px', border: '1px solid #e5e7eb' }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)}
+          variant="scrollable" scrollButtons="auto"
           sx={{ borderBottom: '1px solid #e5e7eb', px: 2,
                 '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 },
                 '& .Mui-selected': { color: ACCENT },
                 '& .MuiTabs-indicator': { backgroundColor: ACCENT } }}>
+          <Tab label={`Próximas citas (${appointments.upcoming || 0})`} />
           <Tab label="Configuración" />
           <Tab label={`Tipos de consulta (${types.length})`} />
           <Tab label="Horario semanal" />
           <Tab label={`Bloqueos (${blocks.length})`} />
         </Tabs>
         <Box sx={{ p: { xs: 2, md: 3 } }}>
-          {tab === 0 && <ConfigTab config={config} setConfig={setConfig} showSnack={showSnack} />}
-          {tab === 1 && <TypesTab types={types} setTypes={setTypes} showSnack={showSnack} />}
-          {tab === 2 && <AvailabilityTab availability={availability} setAvailability={setAvailability} showSnack={showSnack} />}
-          {tab === 3 && <BlocksTab blocks={blocks} setBlocks={setBlocks} showSnack={showSnack} />}
+          {tab === 0 && <AppointmentsTab appointments={appointments} setAppointments={setAppointments} showSnack={showSnack} />}
+          {tab === 1 && <ConfigTab config={config} setConfig={setConfig} showSnack={showSnack} />}
+          {tab === 2 && <TypesTab types={types} setTypes={setTypes} showSnack={showSnack} />}
+          {tab === 3 && <AvailabilityTab availability={availability} setAvailability={setAvailability} showSnack={showSnack} />}
+          {tab === 4 && <BlocksTab blocks={blocks} setBlocks={setBlocks} showSnack={showSnack} />}
         </Box>
       </Card>
 
@@ -620,6 +626,116 @@ function BlocksTab({ blocks, setBlocks, showSnack }) {
             sx={{ background: ACCENT, textTransform: 'none', fontWeight: 700 }}>Guardar</Button>
         </DialogActions>
       </Dialog>
+    </Box>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tab 0: Próximas citas (lectura, con cancelar)
+// ─────────────────────────────────────────────────────────────
+
+function AppointmentsTab({ appointments, setAppointments, showSnack }) {
+  const [filter, setFilter] = useState('UPCOMING'); // UPCOMING | ALL | TODAY
+  const items = appointments?.items || [];
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const filtered = items.filter((a) => {
+    const d = new Date(a.fecha).toISOString().slice(0, 10);
+    if (filter === 'TODAY') return d === todayStr && a.estado !== 'CANCELLED';
+    if (filter === 'UPCOMING') return d >= todayStr && a.estado !== 'CANCELLED';
+    return true;
+  });
+
+  const reload = async () => {
+    const r = await directoryApi.get('/api/professional-agenda/me/appointments');
+    if (r.data?.data) setAppointments(r.data.data);
+  };
+
+  return (
+    <Box>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
+        <Typography sx={{ color: '#475569', fontSize: '0.875rem' }}>
+          Citas reservadas por pacientes desde tu perfil público. Aparecen automáticamente al confirmar.
+        </Typography>
+        <Stack direction="row" spacing={0.5}>
+          {[
+            { v: 'UPCOMING', l: 'Próximas' },
+            { v: 'TODAY',    l: 'Hoy' },
+            { v: 'ALL',      l: 'Todas' },
+          ].map((opt) => (
+            <Chip key={opt.v} label={opt.l} size="small" onClick={() => setFilter(opt.v)}
+              sx={{ fontWeight: 700, cursor: 'pointer',
+                bgcolor: filter === opt.v ? ACCENT : '#f1f5f9',
+                color: filter === opt.v ? '#fff' : NAVY,
+                '&:hover': { bgcolor: filter === opt.v ? ACCENT : '#e2e8f0' } }} />
+          ))}
+        </Stack>
+      </Stack>
+
+      {filtered.length === 0 ? (
+        <EmptyState text={filter === 'UPCOMING'
+          ? 'No tienes citas próximas. Aparecerán acá cuando un paciente reserve desde tu perfil.'
+          : filter === 'TODAY'
+          ? 'No tienes citas para hoy.'
+          : 'No se encontraron citas en el rango actual (próximos 30 días).'} />
+      ) : (
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {['Fecha', 'Hora', 'Paciente', 'Contacto', 'Tipo', 'Estado', 'Acciones'].map((h) => (
+                <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase' }}>{h}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filtered.map((a) => {
+              const fechaStr = new Date(a.fecha).toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' });
+              const isCancel = a.estado === 'CANCELLED';
+              const isPast = new Date(a.fecha) < new Date(todayStr);
+              return (
+                <TableRow key={a.id} hover sx={{ opacity: isCancel ? 0.55 : 1 }}>
+                  <TableCell sx={{ fontWeight: 600, color: NAVY }}>{fechaStr}</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: NAVY }}>{a.hora} <Typography component="span" sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>· {a.durationMinutes || 30}min</Typography></TableCell>
+                  <TableCell>
+                    <Typography sx={{ fontWeight: 600 }}>{a.patient?.nombre || a.patientName || '—'}</Typography>
+                    {a.patient?.numeroDocumento && <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{a.patient.tipoDocumento} {a.patient.numeroDocumento}</Typography>}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>
+                    {a.patient?.telefono || a.patientPhone || '—'}
+                    {(a.patient?.email || a.patientEmail) && <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{a.patient?.email || a.patientEmail}</Typography>}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>{a.tipoConsulta || '—'}</TableCell>
+                  <TableCell>
+                    <Chip size="small" label={
+                      isCancel ? 'Cancelada' :
+                      a.estado === 'COMPLETED' ? 'Completada' :
+                      a.estado === 'NO_SHOW' ? 'No asistió' :
+                      isPast ? 'Pasada' : 'Confirmada'}
+                      sx={{ fontWeight: 700, fontSize: '0.7rem',
+                        bgcolor: isCancel ? '#fee2e2' : a.estado === 'COMPLETED' ? '#dcfce7' : isPast ? '#f1f5f9' : '#e0f2fe',
+                        color: isCancel ? '#b91c1c' : a.estado === 'COMPLETED' ? '#15803d' : isPast ? '#64748b' : '#0369a1' }} />
+                  </TableCell>
+                  <TableCell>
+                    {!isCancel && !isPast && (
+                      <Tooltip title="Cancelar cita">
+                        <IconButton size="small" onClick={async () => {
+                          if (!window.confirm(`¿Cancelar la cita con ${a.patient?.nombre || a.patientName} del ${fechaStr} ${a.hora}?`)) return;
+                          const r = await directoryApi.patch(`/api/professional-agenda/me/appointments/${a.id}`, { estado: 'CANCELLED' });
+                          if (r.error) return showSnack(r.error, 'error');
+                          showSnack('Cita cancelada');
+                          reload();
+                        }}>
+                          <DeleteOutlineOutlined fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
     </Box>
   );
 }

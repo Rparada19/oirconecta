@@ -78,6 +78,14 @@ router.patch('/me/availability/:id',    (req, res) => send(res, () => agenda.upd
 router.delete('/me/availability/:id',   (req, res) => send(res, () => agenda.deleteAvailability(req.profileId, req.params.id)));
 router.put('/me/availability/weekly',   (req, res) => send(res, () => agenda.replaceWeeklyAvailability(req.profileId, req.body?.rows || [])));
 
+// ── Próximas citas (lectura + cambio de estado) ──
+router.get('/me/appointments',    (req, res) => send(res, () => agenda.listAppointments(req.profileId, {
+  from: req.query.from, to: req.query.to, status: req.query.status, limit: req.query.limit,
+})));
+router.patch('/me/appointments/:id', (req, res) => send(res, () => agenda.updateAppointmentStatus(req.profileId, req.params.id, {
+  estado: req.body?.estado, notas: req.body?.notas,
+})));
+
 // ── Bloqueos ──
 router.get('/me/blocks',          (req, res) => send(res, () => agenda.listBlocks(req.profileId, { from: req.query.from, to: req.query.to })));
 router.post('/me/blocks',         (req, res) => send(res, () => agenda.createBlock(req.profileId, req.body || {})));

@@ -281,10 +281,71 @@ async function deleteBlock(profileId, id) {
   return { deleted: true };
 }
 
+// ─────────────────────────────────────────────────────────────
+// Citas del profesional (lectura para "Próximas citas")
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Devuelve las citas del profesional dentro del rango (default: hoy +30 días).
+ * Filtros opcionales: from/to (YYYY-MM-DD), status (CONFIRMED|CANCELLED|...).
+ */
+async function listAppointments(profileId, { from, to, status, limit = 200 } = {}) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const defaultEnd = new Date(today); defaultEnd.setDate(defaultEnd.getDate() + 30);
+  const fechaGte = from ? new Date(from) : today;
+  const fechaLte = to ? new Date(to) : defaultEnd;
+  fechaGte.setHours(0, 0, 0, 0);
+  fechaLte.setHours(23, 59, 59, 999);
+
+  const where = {
+    directoryProfileId: profileId,
+    fecha: { gte: fechaGte, lte: fechaLte },
+  };
+  if (status) where.estado = status;
+
+  const items = await prisma.appointment.findMany({
+    where,
+    orderBy: [{ fecha: 'asc' }, { hora: 'asc' }],
+    take: parseInt(limit),
+    select: {
+      id: true, fecha: true, hora: true, durationMinutes: true, estado: true,
+      tipoConsulta: true, motivo: true, notas: true, procedencia: true,
+      patientName: true, patientEmail: true, patientPhone: true,
+      rescheduleToken: true, createdAt: true,
+      patient: { select: { id: true, nombre: true, email: true, telefono: true, tipoDocumento: true, numeroDocumento: true } },
+    },
+  });
+
+  // Stats rápidos para badge en UI
+  const upcoming = items.filter((a) => a.estado === 'CONFIRMED' && new Date(a.fecha) >= today).length;
+  return { items, upcoming, total: items.length };
+}
+
+/**
+ * Cambia el estado de una cita (CONFIRMED → CANCELLED|COMPLETED|NO_SHOW).
+ * Multi-tenant safe: verifica que la cita pertenezca al directoryProfileId.
+ */
+async function updateAppointmentStatus(profileId, appointmentId, { estado, notas }) {
+  const VALID = ['CONFIRMED', 'COMPLETED', 'NO_SHOW', 'CANCELLED'];
+  if (!VALID.includes(estado)) throw new AgendaError(`estado debe ser uno de: ${VALID.join(', ')}`);
+  const appt = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    select: { id: true, directoryProfileId: true, notas: true, estado: true },
+  });
+  if (!appt || appt.directoryProfileId !== profileId) {
+    throw new AgendaError('Cita no encontrada', { status: 404 });
+  }
+  const data = { estado };
+  if (notas) data.notas = `${appt.notas || ''}\n${notas}`.trim();
+  return prisma.appointment.update({ where: { id: appointmentId }, data });
+}
+
 module.exports = {
   AgendaError,
   TIPOS_BLOQUEO,
   assertAgendaFeature,
+  listAppointments,
+  updateAppointmentStatus,
 
   getConfig,
   updateConfig,
