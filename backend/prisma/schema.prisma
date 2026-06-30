@@ -190,6 +190,8 @@ model DirectoryProfile {
   appointmentTypes   AppointmentType[]
   professionalBlocks ProfessionalBlock[]
   patientRelations   PatientProfessionalRelation[]
+  // ── F5 Agente IA (Plan 3) ──
+  iaConversations    IaConversation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -425,6 +427,8 @@ model Patient {
   tasks                 Task[]
   // F2: expediente independiente por profesional del directorio
   professionalRelations PatientProfessionalRelation[]
+  // F5: conversaciones IA donde quedó identificado el paciente
+  iaConversations       IaConversation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2260,6 +2264,58 @@ model ProfessionalBlock {
 
   @@index([profileId, startAt, endAt])
   @@map("professional_blocks")
+}
+
+/// F5 — Conversación del agente IA del Plan 3 con un paciente público.
+/// Multi-tenant: scopeada por profileId. Cada conversación cuenta 1 contra la cuota
+/// mensual del Plan 3 (300). Mensajes individuales no consumen cuota adicional.
+model IaConversation {
+  id                      String           @id @default(uuid())
+  profileId               String
+  profile                 DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// Paciente identificado si se logró matchear durante el chat (find-or-create al agendar).
+  patientId               String?
+  patient                 Patient?         @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  /// 'web' | 'whatsapp' | 'embed'
+  channel                 String           @default("web")
+  /// Activa | Cerrada (por el paciente, por timeout, o porque ya agendó)
+  status                  String           @default("ACTIVE")
+  startedAt               DateTime         @default(now())
+  lastMessageAt           DateTime         @default(now())
+  /// Suma de tokens consumidos (input + output) — útil para costos
+  totalTokens             Int              @default(0)
+  /// Si la conversación derivó en cita creada, referencia para auditoría
+  resultedInAppointmentId String?
+  /// Metadata libre (IP cliente, user-agent reducido, etc.)
+  metadata                Json?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  messages IaMessage[]
+
+  @@index([profileId, startedAt])
+  @@index([profileId, status])
+  @@map("ia_conversations")
+}
+
+/// Mensaje individual dentro de una IaConversation.
+/// `role` = 'user' | 'assistant' | 'tool'. Para 'tool' guardamos también el toolName
+/// y el input/output como JSON en `content` para reconstruir el contexto.
+model IaMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  conversation   IaConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  /// Texto puro para user/assistant; JSON serializado para tool.
+  content        String         @db.Text
+  /// Solo para role='tool': nombre de la herramienta ejecutada.
+  toolName       String?
+  /// Tokens consumidos por este mensaje (cuando aplica).
+  tokens         Int            @default(0)
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("ia_messages")
 }
 
 /// Relación N-N Paciente ↔ Profesional. Cada par tiene su propio expediente.

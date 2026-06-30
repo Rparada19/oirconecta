@@ -327,6 +327,49 @@ async function seedPlanDefaults(prisma) {
 }
 
 /**
+ * F5 — Schema IA (conversaciones + mensajes). Idempotente.
+ */
+async function ensureIaSchema(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "ia_conversations" (
+        "id" TEXT PRIMARY KEY,
+        "profileId" TEXT NOT NULL REFERENCES "directory_profiles"("id") ON DELETE CASCADE,
+        "patientId" TEXT REFERENCES "patients"("id") ON DELETE SET NULL,
+        "channel" TEXT NOT NULL DEFAULT 'web',
+        "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+        "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "lastMessageAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "totalTokens" INTEGER NOT NULL DEFAULT 0,
+        "resultedInAppointmentId" TEXT,
+        "metadata" JSONB,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ia_conversations_profileId_startedAt_idx" ON "ia_conversations"("profileId","startedAt");`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ia_conversations_profileId_status_idx" ON "ia_conversations"("profileId","status");`);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "ia_messages" (
+        "id" TEXT PRIMARY KEY,
+        "conversationId" TEXT NOT NULL REFERENCES "ia_conversations"("id") ON DELETE CASCADE,
+        "role" TEXT NOT NULL,
+        "content" TEXT NOT NULL,
+        "toolName" TEXT,
+        "tokens" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ia_messages_conversationId_createdAt_idx" ON "ia_messages"("conversationId","createdAt");`);
+
+    console.log('[boot-migrate] ia schema OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureIaSchema falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * Punto único: corre todas las migraciones idempotentes.
  */
 async function runBootMigrations(prisma) {
@@ -338,6 +381,7 @@ async function runBootMigrations(prisma) {
   await ensureBlogPostStructure(prisma);
   await ensurePlanFeatureColumns(prisma);
   await ensureMultiTenantAgendaSchema(prisma);
+  await ensureIaSchema(prisma);
   await seedPlanDefaults(prisma);
 }
 
