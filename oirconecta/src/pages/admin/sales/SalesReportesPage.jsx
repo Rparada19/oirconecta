@@ -103,15 +103,39 @@ export default function SalesReportesPage() {
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-              <RevenueKpi label="Facturado en el rango" value={fmtCOP(revenue?.payments?.totalCOP || 0)} bigValue />
-              <RevenueKpi label="Pagos exitosos" value={revenue?.payments?.count ?? 0} />
-              <RevenueKpi label="Cuentas creadas (total)" value={revenue?.totalAccounts ?? 0} />
+              <RevenueKpi label="MRR comprometido" value={fmtCOP(revenue?.mrrCommittedCOP || 0)} bigValue />
+              <RevenueKpi label="ARR proyectado" value={fmtCOP(revenue?.arrCommittedCOP || 0)} />
               <RevenueKpi label="Cuentas pagas activas" value={revenue?.paidAccounts ?? 0} />
+              <RevenueKpi label="Cuentas totales creadas" value={revenue?.totalAccounts ?? 0} />
+            </Box>
+            <Box sx={{ mt: 1.5, display: 'flex', gap: 3, flexWrap: 'wrap', pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+              <RevenueKpi label={`Cobrado · ${stats?.rangeLabel}`} value={fmtCOP(revenue?.payments?.totalCOP || 0)} />
+              <RevenueKpi label="Pagos exitosos" value={revenue?.payments?.count ?? 0} />
             </Box>
             <Typography sx={{ fontSize: 11.5, color: 'rgba(255,255,255,0.65)', mt: 1.5 }}>
-              Solo pagos en estado APROBADO de profesionales que tú creaste como cuenta del directorio.
+              MRR/ARR = valor mensualizado de tus cuentas ACTIVE/EXPIRING_SOON (sin IVA). Cobrado = pagos APROBADOS en el rango. Atribución: DirectoryAccount.createdByUserId.
             </Typography>
           </Box>
+
+          {/* Desglose por plan de las cuentas captadas */}
+          {revenue?.byPlan?.length > 0 && (
+            <Box sx={{ ...softCard, p: 2.5, mb: 3 }}>
+              <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5b6b7a', mb: 1.5 }}>
+                MRR por plan · {stats?.rangeLabel}
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                {revenue.byPlan.map((p) => (
+                  <Box key={p.code} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.75, borderBottom: '1px solid #f1f5f9' }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography sx={{ fontWeight: 700, color: '#272F50', fontSize: 13.5 }}>{p.nombre}</Typography>
+                      <Typography sx={{ fontSize: 11.5, color: '#94a3b8' }}>{p.count} cuenta(s)</Typography>
+                    </Box>
+                    <Typography sx={{ fontWeight: 800, color: '#085946', fontSize: 14 }}>{fmtCOP(p.mrrCOP)}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          )}
 
           {/* KPIs operativos */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1.5, mb: 3 }}>

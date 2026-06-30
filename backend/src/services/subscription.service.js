@@ -360,38 +360,44 @@ async function listForAdmin({ ciudad, profesionSlug, status, plan, limit = 50, o
 }
 
 /**
- * Resumen ejecutivo (dashboard admin).
+ * Convierte el precio de un plan a MRR (mensualizado).
+ *  - duracionDias >= 300 → precio / 12  (plan anual)
+ *  - duracionDias <= 31  → precio       (plan mensual)
+ *  - otros               → prorrateo 30/d * 30
+ * Empresa adicionalmente multiplica por número de sedes activas.
+ */
+function planToMRR(plan, sedeCount = 1) {
+  const precio = plan?.precioCOP || 0;
+  const dias = plan?.duracionDias || 30;
+  let monthly;
+  if (dias >= 300) monthly = Math.round(precio / 12);
+  else if (dias <= 31) monthly = precio;
+  else monthly = Math.round((precio / dias) * 30);
+  if (plan?.code === 'EMPRESA') monthly *= Math.max(1, sedeCount);
+  return monthly;
+}
+
+/**
+ * Resumen ejecutivo (dashboard admin). Data-driven: suma MRR/ARR contra
+ * TODOS los planes activos, no sólo los legacy.
  */
 async function getAdminStats() {
   const ACTIVE_STATUSES = ['ACTIVE', 'EXPIRING_SOON'];
-  const [byStatus, monthlyActive, annualActive, empresasActivas] = await Promise.all([
+
+  const [byStatus, breakdown] = await Promise.all([
     prisma.subscription.groupBy({ by: ['status'], _count: { _all: true } }),
-    prisma.subscription.count({ where: { status: { in: ACTIVE_STATUSES }, plan: { is: { code: 'MENSUAL' } } } }),
-    prisma.subscription.count({ where: { status: { in: ACTIVE_STATUSES }, plan: { is: { code: 'ANUAL' } } } }),
-    prisma.subscription.findMany({
-      where: { status: { in: ACTIVE_STATUSES }, plan: { is: { code: 'EMPRESA' } } },
-      select: { profile: { select: { workplaces: { select: { id: true } } } } },
-    }),
+    getRevenueBreakdown(),
   ]);
 
   const counts = Object.fromEntries(byStatus.map((b) => [b.status, b._count._all]));
   const total = byStatus.reduce((a, b) => a + b._count._all, 0);
 
-  const [planMensual, planAnual, planEmpresa] = await Promise.all([
-    prisma.plan.findUnique({ where: { code: 'MENSUAL' } }),
-    prisma.plan.findUnique({ where: { code: 'ANUAL' } }),
-    prisma.plan.findUnique({ where: { code: 'EMPRESA' } }),
-  ]);
-
-  // Empresa: $20.000 × total sedes activas
-  const totalSedesEmpresa = empresasActivas.reduce((acc, s) => acc + Math.max(1, s.profile?.workplaces?.length || 0), 0);
-  const mrrEmpresa = totalSedesEmpresa * (planEmpresa?.precioCOP || 0);
-
-  // MRR: mensuales activas + (anuales / 12) + empresa por sede. Sin IVA.
-  const mrr = (monthlyActive * (planMensual?.precioCOP || 0))
-            + Math.round((annualActive * (planAnual?.precioCOP || 0)) / 12)
-            + mrrEmpresa;
+  const mrr = breakdown.reduce((acc, p) => acc + p.mrrCOP, 0);
   const arr = mrr * 12;
+
+  // Compatibilidad con UI existente que lee estos campos sueltos:
+  const findCount = (code) => breakdown.find((p) => p.code === code)?.activeCount || 0;
+  const empresaRow = breakdown.find((p) => p.code === 'EMPRESA');
 
   return {
     totalProfesionales: total,
@@ -401,13 +407,68 @@ async function getAdminStats() {
     enMora: counts.PAST_DUE || 0,
     suspendidos: counts.SUSPENDED || 0,
     cancelados: counts.CANCELED || 0,
+    pendientes: counts.PENDING || 0,
     mrrCOP: mrr,
     arrCOP: arr,
-    suscripcionesMensualActivas: monthlyActive,
-    suscripcionesAnualActivas: annualActive,
-    suscripcionesEmpresaActivas: empresasActivas.length,
-    totalSedesEmpresa,
+    // Desglose por plan (Plan 1/2/3 + legacy)
+    breakdown,
+    // Backward-compat
+    suscripcionesMensualActivas: findCount('MENSUAL'),
+    suscripcionesAnualActivas: findCount('ANUAL'),
+    suscripcionesEmpresaActivas: findCount('EMPRESA'),
+    totalSedesEmpresa: empresaRow?.totalSedes || 0,
   };
+}
+
+/**
+ * Para cada Plan: cuántas suscripciones activas, MRR mensualizado, ARR proyectado.
+ * Devuelve array ordenado por displayOrder.
+ */
+async function getRevenueBreakdown() {
+  const ACTIVE_STATUSES = ['ACTIVE', 'EXPIRING_SOON'];
+  const plans = await prisma.plan.findMany({ orderBy: { displayOrder: 'asc' } });
+
+  const out = [];
+  for (const plan of plans) {
+    // EMPRESA cobra por sede; resto cuenta sub directamente
+    if (plan.code === 'EMPRESA') {
+      const subs = await prisma.subscription.findMany({
+        where: { planId: plan.id, status: { in: ACTIVE_STATUSES } },
+        select: { profile: { select: { workplaces: { select: { id: true } } } } },
+      });
+      const totalSedes = subs.reduce((acc, s) => acc + Math.max(1, s.profile?.workplaces?.length || 0), 0);
+      const mrr = planToMRR(plan, totalSedes) / Math.max(1, subs.length || 1) * Math.max(1, subs.length); // mantener semántica
+      // Cálculo directo más claro:
+      const mrrDirect = (plan.precioCOP || 0) * totalSedes;
+      out.push({
+        code: plan.code, nombre: plan.nombre, planId: plan.id,
+        precioCOP: plan.precioCOP, duracionDias: plan.duracionDias,
+        activo: plan.activo,
+        activeCount: subs.length,
+        totalSedes,
+        mrrCOP: mrrDirect,
+        arrCOP: mrrDirect * 12,
+        features: plan.features || {},
+      });
+      continue;
+    }
+
+    const activeCount = await prisma.subscription.count({
+      where: { planId: plan.id, status: { in: ACTIVE_STATUSES } },
+    });
+    const monthlyEach = planToMRR(plan, 1);
+    const mrr = monthlyEach * activeCount;
+    out.push({
+      code: plan.code, nombre: plan.nombre, planId: plan.id,
+      precioCOP: plan.precioCOP, duracionDias: plan.duracionDias,
+      activo: plan.activo,
+      activeCount,
+      mrrCOP: mrr,
+      arrCOP: mrr * 12,
+      features: plan.features || {},
+    });
+  }
+  return out;
 }
 
 /**
@@ -625,6 +686,8 @@ module.exports = {
   getMySubscription,
   listForAdmin,
   getAdminStats,
+  getRevenueBreakdown,
+  planToMRR,
   backfillTrialsAll,
   recomputeStatus,
   cancelSubscription,

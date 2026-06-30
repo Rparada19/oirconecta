@@ -268,6 +268,79 @@ export default function AdminSuscripcionesPage() {
         </Table>
       </Card>
 
+      {/* Facturación por plan — data-driven desde getAdminStats.breakdown */}
+      {stats?.breakdown?.length > 0 && (
+        <Card sx={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', mb: 3, overflow: 'hidden' }}>
+          <Box sx={{ px: 2.5, py: 1.75, bgcolor: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
+            <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem' }}>
+              Facturación por plan
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+              MRR comprometido (sin IVA) calculado contra suscripciones ACTIVE / EXPIRING_SOON · ARR = MRR × 12
+            </Typography>
+          </Box>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {['Plan', 'Suscripciones activas', 'Precio nominal', 'MRR plan', 'ARR plan', 'Features'].map((h) => (
+                  <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {stats.breakdown.map((p) => {
+                const isInactive = p.activo === false;
+                const feats = [
+                  p.features?.marketing && 'mkt',
+                  p.features?.agenda && 'agenda',
+                  p.features?.ia && 'IA',
+                ].filter(Boolean);
+                return (
+                  <TableRow key={p.code} hover sx={{ opacity: isInactive ? 0.6 : 1 }}>
+                    <TableCell>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: NAVY }}>{p.nombre}</Typography>
+                        {isInactive && <Chip label="legacy" size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: '#f1f5f9', color: '#64748b' }} />}
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ fontWeight: 700, color: NAVY }}>{p.activeCount}</Typography>
+                      {p.code === 'EMPRESA' && p.totalSedes > 0 && (
+                        <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{p.totalSedes} sede(s)</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: '0.8125rem' }}>
+                      {p.precioCOP === 0 ? '—' : fmtCOP(p.precioCOP)}
+                      <Typography component="span" sx={{ fontSize: '0.7rem', color: '#94a3b8', ml: 0.5 }}>
+                        / {p.duracionDias >= 300 ? 'año' : 'mes'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ fontSize: '0.875rem', fontWeight: 700, color: NAVY }}>{fmtCOP(p.mrrCOP)}</TableCell>
+                    <TableCell sx={{ fontSize: '0.875rem', fontWeight: 800, color: ACCENT }}>{fmtCOP(p.arrCOP)}</TableCell>
+                    <TableCell>
+                      <Stack direction="row" spacing={0.5}>
+                        {feats.map((f) => (
+                          <Chip key={f} label={f} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: '#e0f2fe', color: '#0369a1' }} />
+                        ))}
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {/* Totales */}
+              <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                <TableCell sx={{ fontWeight: 800, color: NAVY }}>Total</TableCell>
+                <TableCell sx={{ fontWeight: 800, color: NAVY }}>{stats.breakdown.reduce((s, p) => s + p.activeCount, 0)}</TableCell>
+                <TableCell />
+                <TableCell sx={{ fontWeight: 800, color: NAVY }}>{fmtCOP(stats.mrrCOP)}</TableCell>
+                <TableCell sx={{ fontWeight: 800, color: ACCENT }}>{fmtCOP(stats.arrCOP)}</TableCell>
+                <TableCell />
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+
       {/* Filtros */}
       <Card sx={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', p: 2, mb: 2 }}>
         <Grid container spacing={1.5} alignItems="center">

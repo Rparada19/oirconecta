@@ -483,12 +483,14 @@ async function revenue({ ownerId, range = 'all' } = {}) {
   // Buscar las subscriptions de esos accounts (vía profile.id en Subscription.profileId)
   const profiles = await prisma.directoryProfile.findMany({
     where: { accountId: { in: accountIds } },
-    select: { id: true, accountId: true, status: true },
+    select: { id: true, accountId: true, status: true,
+              workplaces: { select: { id: true } } },
   });
   const profileIds = profiles.map((p) => p.id);
+  const profilesById = Object.fromEntries(profiles.map((p) => [p.id, p]));
   const subs = profileIds.length === 0 ? [] : await prisma.subscription.findMany({
     where: { profileId: { in: profileIds } },
-    select: { id: true, profileId: true, status: true },
+    select: { id: true, profileId: true, status: true, plan: true },
   });
   const subIds = subs.map((s) => s.id);
 
@@ -500,6 +502,25 @@ async function revenue({ ownerId, range = 'all' } = {}) {
   const payments = subIds.length === 0
     ? { _count: { _all: 0 }, _sum: { totalCOP: 0 } }
     : await prisma.payment.aggregate({ where: paymentsWhere, _count: { _all: true }, _sum: { totalCOP: true } });
+
+  // MRR comprometido por las cuentas del ejecutivo (refleja valor incluso sin
+  // pagos APPROVED — útil mientras la pasarela sigue en stub).
+  const { planToMRR } = require('./subscription.service');
+  const activeStatuses = new Set(['ACTIVE', 'EXPIRING_SOON']);
+  let mrrCommittedCOP = 0;
+  // Conteo por código de plan para tabla "MRR por plan"
+  const planBuckets = {}; // { code: { code, nombre, count, mrrCOP } }
+  for (const s of subs) {
+    if (!activeStatuses.has(s.status)) continue;
+    const profile = profilesById[s.profileId];
+    const sedeCount = Math.max(1, profile?.workplaces?.length || 0);
+    const m = planToMRR(s.plan, sedeCount);
+    mrrCommittedCOP += m;
+    const code = s.plan?.code || '?';
+    planBuckets[code] = planBuckets[code] || { code, nombre: s.plan?.nombre || code, count: 0, mrrCOP: 0 };
+    planBuckets[code].count += 1;
+    planBuckets[code].mrrCOP += m;
+  }
 
   // Breakdown por ejecutivo (solo útil cuando ADMIN no filtra ownerId)
   const breakdown = [];
@@ -516,11 +537,14 @@ async function revenue({ ownerId, range = 'all' } = {}) {
   return {
     range, rangeLabel: RANGE_LABELS[range] || range,
     totalAccounts: accounts.length,
-    paidAccounts: subs.filter((s) => ['ACTIVE','EXPIRING_SOON'].includes(s.status)).length,
+    paidAccounts: subs.filter((s) => activeStatuses.has(s.status)).length,
     payments: {
       count: payments._count?._all || 0,
       totalCOP: payments._sum?.totalCOP || 0,
     },
+    mrrCommittedCOP,
+    arrCommittedCOP: mrrCommittedCOP * 12,
+    byPlan: Object.values(planBuckets).sort((a, b) => b.mrrCOP - a.mrrCOP),
     breakdown,
   };
 }
