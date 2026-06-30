@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import ContactoProfesionalDialog from '../components/directorio/ContactoProfesionalDialog';
 import AgendarConProfesionalDialog from '../components/directorio/AgendarConProfesionalDialog';
+import AgenteIAFloatingChat from '../components/directorio/AgenteIAFloatingChat';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
 import {
   Box,
@@ -2262,6 +2263,11 @@ export default function DirectorioProfesionalPage() {
       <AgendarConProfesionalDialog
         open={bookingDialogOpen}
         onClose={() => setBookingDialogOpen(false)}
+        profileId={profileId}
+        profesionalNombre={name}
+      />
+
+      <AgenteIAFloatingChat
         profileId={profileId}
         profesionalNombre={name}
       />
