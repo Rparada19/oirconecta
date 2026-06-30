@@ -224,9 +224,16 @@ export default function ProfesionalDashboardPage() {
           hint={`${stats?.agendar?.total ?? 0} en total`}
           tone="info"
         />
+        <KpiCard
+          label="Citas agendadas"
+          value={stats?.citas?.mes ?? 0}
+          hint={`${stats?.citas?.proximas ?? 0} próximas · ${stats?.citas?.total ?? 0} totales`}
+          tone="success"
+        />
       </Box>
       <Typography sx={{ fontSize: 11.5, color: '#5b6b7a', mb: 3, fontStyle: 'italic' }}>
         Solo cuentas los contactos: no almacenamos ni leemos los mensajes que te envían los pacientes desde la ficha pública.
+        Las citas se cuentan al confirmarse desde tu perfil público (no incluye canceladas).
       </Typography>
 
       {/* Últimas consultas */}

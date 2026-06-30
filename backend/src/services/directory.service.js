@@ -979,7 +979,11 @@ async function getStatsForAccount(accountId) {
   }
   const since = startOfMonth();
   const pid = profile.id;
-  const [viewsMonth, inquiriesTotal, inquiriesMonth, waMonth, callMonth, emailMonth, emailTotal, agendarMonth, agendarTotal] = await Promise.all([
+  const [
+    viewsMonth, inquiriesTotal, inquiriesMonth, waMonth, callMonth,
+    emailMonth, emailTotal, agendarMonth, agendarTotal,
+    appointmentsMonth, appointmentsTotal, appointmentsUpcoming,
+  ] = await Promise.all([
     prisma.profileView.count({ where: { profileId: pid, viewedAt: { gte: since } } }),
     prisma.directoryInquiry.count({ where: { profileId: pid } }),
     prisma.directoryInquiry.count({ where: { profileId: pid, createdAt: { gte: since } } }),
@@ -989,14 +993,25 @@ async function getStatsForAccount(accountId) {
     prisma.directoryEvent.count({ where: { profileId: pid, type: 'EMAIL' } }),
     prisma.directoryEvent.count({ where: { profileId: pid, type: 'AGENDAR',  createdAt: { gte: since } } }),
     prisma.directoryEvent.count({ where: { profileId: pid, type: 'AGENDAR' } }),
+    // Citas reales (F2): reservadas vía /api/booking/public/:profileId/appointments
+    prisma.appointment.count({
+      where: { directoryProfileId: pid, createdAt: { gte: since }, estado: { notIn: ['CANCELLED'] } },
+    }),
+    prisma.appointment.count({
+      where: { directoryProfileId: pid, estado: { notIn: ['CANCELLED'] } },
+    }),
+    prisma.appointment.count({
+      where: { directoryProfileId: pid, estado: 'CONFIRMED', fecha: { gte: new Date(new Date().setHours(0,0,0,0)) } },
+    }),
   ]);
   return {
-    visitas:    { mes: viewsMonth,    total: profile.perfilVisitas },
-    consultas:  { mes: inquiriesMonth, total: inquiriesTotal },
-    whatsapp:   { mes: waMonth,       total: profile.whatsappClickCount },
-    llamadas:   { mes: callMonth,     total: profile.callClickCount },
-    email:      { mes: emailMonth,    total: emailTotal },
-    agendar:    { mes: agendarMonth,  total: agendarTotal },
+    visitas:      { mes: viewsMonth,         total: profile.perfilVisitas },
+    consultas:    { mes: inquiriesMonth,     total: inquiriesTotal },
+    whatsapp:     { mes: waMonth,            total: profile.whatsappClickCount },
+    llamadas:     { mes: callMonth,          total: profile.callClickCount },
+    email:        { mes: emailMonth,         total: emailTotal },
+    agendar:      { mes: agendarMonth,       total: agendarTotal },
+    citas:        { mes: appointmentsMonth,  total: appointmentsTotal, proximas: appointmentsUpcoming },
   };
 }
 
