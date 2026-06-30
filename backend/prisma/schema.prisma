@@ -192,6 +192,7 @@ model DirectoryProfile {
   patientRelations   PatientProfessionalRelation[]
   // ── F5 Agente IA (Plan 3) ──
   iaConversations    IaConversation[]
+  whatsappChannel    ProfessionalWhatsAppChannel?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2302,20 +2303,51 @@ model IaConversation {
 /// `role` = 'user' | 'assistant' | 'tool'. Para 'tool' guardamos también el toolName
 /// y el input/output como JSON en `content` para reconstruir el contexto.
 model IaMessage {
-  id             String         @id @default(uuid())
-  conversationId String
-  conversation   IaConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  role           String
+  id                String         @id @default(uuid())
+  conversationId    String
+  conversation      IaConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role              String
   /// Texto puro para user/assistant; JSON serializado para tool.
-  content        String         @db.Text
+  content           String         @db.Text
   /// Solo para role='tool': nombre de la herramienta ejecutada.
-  toolName       String?
+  toolName          String?
   /// Tokens consumidos por este mensaje (cuando aplica).
-  tokens         Int            @default(0)
-  createdAt      DateTime       @default(now())
+  tokens            Int            @default(0)
+  /// ID externo del canal para idempotencia (ej. WhatsApp wamid). UNIQUE nullable.
+  externalMessageId String?        @unique
+  createdAt         DateTime       @default(now())
 
   @@index([conversationId, createdAt])
   @@map("ia_messages")
+}
+
+/// F5.3 — Configuración del canal WhatsApp del profesional (Plan 3 con multi-tenant).
+/// Cada profesional tiene un único número Meta asociado. Webhook entrante usa
+/// phoneNumberId para resolver el profileId. Sin canal registrado el profesional
+/// no recibe mensajes WhatsApp aunque la cuenta Meta global esté activa.
+model ProfessionalWhatsAppChannel {
+  id              String           @id @default(uuid())
+  profileId       String           @unique
+  profile         DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// Meta phone_number_id (ID interno de Meta, distinto del número visible).
+  phoneNumberId   String           @unique
+  /// Número visible al paciente en formato E.164 sin '+', ej "573157939569".
+  phoneNumberE164 String
+  /// WhatsApp Business Account ID al que pertenece el número.
+  wabaId          String?
+  /// Display name aprobado por Meta (visible al paciente).
+  displayName     String?
+  /// Si false → webhook ignora mensajes a este número (útil para pausar sin borrar config).
+  active          Boolean          @default(false)
+  /// Marcada cuando admin valida que webhook responde correctamente.
+  verifiedAt      DateTime?
+  /// Metadata libre: templates aprobadas, errores recientes, timestamps de verificación.
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([phoneNumberId])
+  @@map("professional_whatsapp_channels")
 }
 
 /// Relación N-N Paciente ↔ Profesional. Cada par tiene su propio expediente.

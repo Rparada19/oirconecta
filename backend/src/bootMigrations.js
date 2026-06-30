@@ -327,6 +327,38 @@ async function seedPlanDefaults(prisma) {
 }
 
 /**
+ * F5.3 — Canal WhatsApp por profesional + columna externalMessageId en ia_messages
+ * para idempotencia de webhook. Idempotente.
+ */
+async function ensureWhatsAppChannelSchema(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_messages" ADD COLUMN IF NOT EXISTS "externalMessageId" TEXT;`);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "ia_messages_externalMessageId_key" ON "ia_messages"("externalMessageId");`);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "professional_whatsapp_channels" (
+        "id" TEXT PRIMARY KEY,
+        "profileId" TEXT NOT NULL UNIQUE REFERENCES "directory_profiles"("id") ON DELETE CASCADE,
+        "phoneNumberId" TEXT NOT NULL UNIQUE,
+        "phoneNumberE164" TEXT NOT NULL,
+        "wabaId" TEXT,
+        "displayName" TEXT,
+        "active" BOOLEAN NOT NULL DEFAULT false,
+        "verifiedAt" TIMESTAMP(3),
+        "metadata" JSONB,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "professional_whatsapp_channels_phoneNumberId_idx" ON "professional_whatsapp_channels"("phoneNumberId");`);
+
+    console.log('[boot-migrate] whatsapp channel schema OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureWhatsAppChannelSchema falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * F5 — Schema IA (conversaciones + mensajes). Idempotente.
  */
 async function ensureIaSchema(prisma) {
@@ -382,6 +414,7 @@ async function runBootMigrations(prisma) {
   await ensurePlanFeatureColumns(prisma);
   await ensureMultiTenantAgendaSchema(prisma);
   await ensureIaSchema(prisma);
+  await ensureWhatsAppChannelSchema(prisma);
   await seedPlanDefaults(prisma);
 }
 

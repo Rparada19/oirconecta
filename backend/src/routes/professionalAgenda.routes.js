@@ -28,6 +28,7 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateDirectoryAccount } = require('../middleware/directoryAuth');
 const agenda = require('../services/professionalSchedule.service');
+const wa = require('../services/whatsappAgent.service');
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -91,5 +92,10 @@ router.get('/me/blocks',          (req, res) => send(res, () => agenda.listBlock
 router.post('/me/blocks',         (req, res) => send(res, () => agenda.createBlock(req.profileId, req.body || {})));
 router.patch('/me/blocks/:id',    (req, res) => send(res, () => agenda.updateBlock(req.profileId, req.params.id, req.body || {})));
 router.delete('/me/blocks/:id',   (req, res) => send(res, () => agenda.deleteBlock(req.profileId, req.params.id)));
+
+// ── Canal WhatsApp del profesional (Plan 3) ──
+router.get('/me/whatsapp',    (req, res) => send(res, () => wa.getMyChannel(req.profileId)));
+router.put('/me/whatsapp',    (req, res) => send(res, () => wa.upsertMyChannel(req.profileId, req.body || {})));
+router.delete('/me/whatsapp', (req, res) => send(res, () => wa.deleteMyChannel(req.profileId)));
 
 module.exports = router;

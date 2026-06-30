@@ -187,4 +187,15 @@ router.post('/admin/recompute', authenticate, authorize('ADMIN'), async (req, re
   }
 });
 
+// F5.3 — Admin verifica/activa el canal WhatsApp de un profesional
+router.post('/admin/:profileId/whatsapp/verify', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const wa = require('../services/whatsappAgent.service');
+    const updated = await wa.adminVerifyChannel(req.params.profileId);
+    res.json({ success: true, data: updated });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
 module.exports = router;
