@@ -471,7 +471,95 @@ async function runBootMigrations(prisma) {
   await ensureIaAgentConfigSchema(prisma);
   await ensureAppointmentCancellationColumns(prisma);
   await ensureGoogleCalendarSchema(prisma);
+  await ensureAnalyticsSchema(prisma);
   await seedPlanDefaults(prisma);
+}
+
+async function ensureAnalyticsSchema(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "analytics_events" (
+        "id" TEXT PRIMARY KEY,
+        "eventType" TEXT NOT NULL,
+        "eventName" TEXT,
+        "sessionId" TEXT NOT NULL,
+        "visitorId" TEXT NOT NULL,
+        "userId" TEXT,
+        "timestamp" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "path" TEXT,
+        "pageType" TEXT,
+        "referrer" TEXT,
+        "utmSource" TEXT,
+        "utmMedium" TEXT,
+        "utmCampaign" TEXT,
+        "utmContent" TEXT,
+        "utmTerm" TEXT,
+        "campaignId" TEXT,
+        "entityType" TEXT,
+        "entityId" TEXT,
+        "ipMasked" TEXT,
+        "city" TEXT,
+        "region" TEXT,
+        "country" TEXT,
+        "device" TEXT,
+        "os" TEXT,
+        "browser" TEXT,
+        "screenWidth" INTEGER,
+        "screenHeight" INTEGER,
+        "language" TEXT,
+        "properties" JSONB,
+        "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+      )
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_events_eventType_timestamp_idx" ON "analytics_events" ("eventType", "timestamp")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_events_sessionId_idx" ON "analytics_events" ("sessionId")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_events_visitorId_idx" ON "analytics_events" ("visitorId")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_events_campaignId_timestamp_idx" ON "analytics_events" ("campaignId", "timestamp")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_events_entityType_entityId_idx" ON "analytics_events" ("entityType", "entityId")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_events_city_timestamp_idx" ON "analytics_events" ("city", "timestamp")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_events_device_timestamp_idx" ON "analytics_events" ("device", "timestamp")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_events_timestamp_idx" ON "analytics_events" ("timestamp")`);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "analytics_sessions" (
+        "id" TEXT PRIMARY KEY,
+        "visitorId" TEXT NOT NULL,
+        "userId" TEXT,
+        "startedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "endedAt" TIMESTAMP(3),
+        "durationSec" INTEGER,
+        "pageCount" INTEGER DEFAULT 0 NOT NULL,
+        "eventCount" INTEGER DEFAULT 0 NOT NULL,
+        "entryPath" TEXT,
+        "exitPath" TEXT,
+        "utmSource" TEXT,
+        "utmMedium" TEXT,
+        "utmCampaign" TEXT,
+        "ipMasked" TEXT,
+        "city" TEXT,
+        "region" TEXT,
+        "country" TEXT,
+        "device" TEXT,
+        "os" TEXT,
+        "browser" TEXT,
+        "isNewVisitor" BOOLEAN DEFAULT TRUE NOT NULL,
+        "isBounce" BOOLEAN DEFAULT FALSE NOT NULL,
+        "hadLead" BOOLEAN DEFAULT FALSE NOT NULL,
+        "hadBooking" BOOLEAN DEFAULT FALSE NOT NULL,
+        "hadPurchase" BOOLEAN DEFAULT FALSE NOT NULL,
+        "hadSubscription" BOOLEAN DEFAULT FALSE NOT NULL,
+        "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+      )
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_sessions_visitorId_idx" ON "analytics_sessions" ("visitorId")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_sessions_city_startedAt_idx" ON "analytics_sessions" ("city", "startedAt")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_sessions_device_startedAt_idx" ON "analytics_sessions" ("device", "startedAt")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "analytics_sessions_startedAt_idx" ON "analytics_sessions" ("startedAt")`);
+    console.log('[boot-migrate] analytics schema OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureAnalyticsSchema falló (no bloqueante):', e.message);
+  }
 }
 
 async function ensureGoogleCalendarSchema(prisma) {

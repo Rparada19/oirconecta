@@ -2437,6 +2437,119 @@ model PatientProfessionalRelation {
   @@map("patient_professional_relations")
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// D1 — Analytics first-party (Ley 1581 CO habeas data compliant).
+// Todos los eventos del sitio se registran aquí para segmentar por
+// ciudad, dispositivo, fuente, etc. IP se guarda enmascarada.
+// ═══════════════════════════════════════════════════════════════════
+model AnalyticsEvent {
+  id         String   @id @default(uuid())
+  eventType  String // page_view, ad_impression, ad_click, booking_created, ia_message_sent, etc.
+  eventName  String? // subtipo opcional
+
+  // Identidad (anónima)
+  sessionId String
+  visitorId String // cookie persistente 1 año
+  userId    String? // si está logueado (CRM user / directory account)
+
+  timestamp DateTime @default(now())
+
+  // Contexto de página
+  path     String?
+  pageType String? // home, blog_post, profile, agendar, etc.
+  referrer String?
+
+  // Fuente externa (UTMs)
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+
+  // Campaña interna (si es impresión/click de ad OírConecta)
+  campaignId String?
+
+  // Entidad tocada (blog, perfil, producto, etc.)
+  entityType String?
+  entityId   String?
+
+  // Geo (IP enmascarada por privacidad)
+  ipMasked String? // ej "186.155.10.X"
+  city     String?
+  region   String?
+  country  String? // 'CO', 'US', etc.
+
+  // Device
+  device       String? // 'mobile' | 'desktop' | 'tablet'
+  os           String?
+  browser      String?
+  screenWidth  Int?
+  screenHeight Int?
+  language     String?
+
+  // Payload libre por tipo de evento
+  properties Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([eventType, timestamp])
+  @@index([sessionId])
+  @@index([visitorId])
+  @@index([campaignId, timestamp])
+  @@index([entityType, entityId])
+  @@index([city, timestamp])
+  @@index([device, timestamp])
+  @@index([timestamp])
+  @@map("analytics_events")
+}
+
+model AnalyticsSession {
+  id        String  @id // sessionId
+  visitorId String
+  userId    String?
+
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  durationSec Int?
+
+  pageCount  Int @default(0)
+  eventCount Int @default(0)
+
+  entryPath String?
+  exitPath  String?
+
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+
+  ipMasked String?
+  city     String?
+  region   String?
+  country  String?
+
+  device  String?
+  os      String?
+  browser String?
+
+  isNewVisitor Boolean @default(true)
+  isBounce     Boolean @default(false)
+
+  // Conversiones logradas en esta sesión (para funnel)
+  hadLead         Boolean @default(false)
+  hadBooking      Boolean @default(false)
+  hadPurchase     Boolean @default(false)
+  hadSubscription Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visitorId])
+  @@index([city, startedAt])
+  @@index([device, startedAt])
+  @@index([startedAt])
+  @@map("analytics_sessions")
+}
+
 // C9 — Vínculo OAuth con Google Calendar del profesional.
 // Guardamos refresh_token (fuente de verdad). El access_token se puede
 // re-obtener llamando a POST oauth2.googleapis.com/token cuando expira.

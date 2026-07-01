@@ -1,4 +1,6 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { initAnalytics, trackPageView } from './utils/analytics';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
@@ -155,6 +157,15 @@ function PageLoader() {
   );
 }
 
+// D1 — Envía page_view cada vez que cambia la ruta. Se monta DENTRO del Router
+// para tener acceso a useLocation().
+function AnalyticsRouteTracker() {
+  const location = useLocation();
+  useEffect(() => { initAnalytics(); }, []);
+  useEffect(() => { trackPageView(location.pathname + location.search); }, [location.pathname, location.search]);
+  return null;
+}
+
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -162,6 +173,7 @@ export default function App() {
       <Router basename={routerBasename()}>
         <AuthProvider>
         <Suspense fallback={<PageLoader />}>
+        <AnalyticsRouteTracker />
         <PreviewModeIndicator />
         <PopupBienvenida />
         <Routes>

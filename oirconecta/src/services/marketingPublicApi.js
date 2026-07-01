@@ -3,6 +3,8 @@
  * No usa axios para no acoplar; fetch directo.
  */
 
+import { trackCampaign } from '../utils/analytics';
+
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
 /** sessionId persistente en sessionStorage (se borra al cerrar la pestaña). */
@@ -43,11 +45,14 @@ export async function fetchActiveCampaignList(actionType, { limit = 12, path = n
 
 export function trackImpression(campaignId) {
   if (!campaignId) return;
+  // Legacy: incrementa contador agregado MarketingMetric.impressions
   fetch(`${API}/api/marketing/tracking/impression`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ campaignId, sessionId: getSessionId() }),
   }).catch(() => {});
+  // Nuevo: evento crudo enriquecido (ciudad, device, referrer, utm, etc.)
+  try { trackCampaign('ad_impression', campaignId); } catch {}
 }
 
 export function trackClick(campaignId) {
@@ -57,6 +62,7 @@ export function trackClick(campaignId) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ campaignId, sessionId: getSessionId() }),
   }).catch(() => {});
+  try { trackCampaign('ad_click', campaignId); } catch {}
 }
 
 /** Agrega UTMs al URL de destino y guarda la última campaña activa en sesión. */
