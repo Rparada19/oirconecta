@@ -22,6 +22,7 @@ import { directoryApi } from '../../services/directoryAccountApi';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import AgendaCalendarView from '../../components/profesional/AgendaCalendarView';
 import CancellationFollowUpAlert from '../../components/profesional/CancellationFollowUpAlert';
+import GoogleCalendarCard from '../../components/profesional/GoogleCalendarCard';
 
 const ACCENT = '#15803d';
 const NAVY = '#0F2A4A';
@@ -179,6 +180,8 @@ function ConfigTab({ config, setConfig, showSnack }) {
   const [saving, setSaving] = useState(false);
   useEffect(() => { setForm(config); }, [config]);
 
+  // La card de Google Calendar se muestra arriba de la configuración general.
+
   const upd = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const save = async () => {
     setSaving(true);
@@ -191,6 +194,7 @@ function ConfigTab({ config, setConfig, showSnack }) {
 
   return (
     <Box>
+      <GoogleCalendarCard />
       <Card sx={{ p: 2.5, mb: 3, border: '1px solid #e5e7eb', borderRadius: '10px',
                   bgcolor: form?.agendaActiva ? '#f0fdf4' : '#fefce8' }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>

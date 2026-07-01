@@ -565,6 +565,9 @@ model Appointment {
   followUpDoneAt       DateTime? // cuándo el profesional marcó "ya contacté"
   followUpNotes        String? // qué pasó en la llamada de seguimiento
 
+  // Sincronización con Google Calendar del profesional (C9)
+  googleEventId String? // id del evento espejo en Google Calendar
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2432,4 +2435,23 @@ model PatientProfessionalRelation {
   @@unique([patientId, profileId])
   @@index([profileId, archivedAt])
   @@map("patient_professional_relations")
+}
+
+// C9 — Vínculo OAuth con Google Calendar del profesional.
+// Guardamos refresh_token (fuente de verdad). El access_token se puede
+// re-obtener llamando a POST oauth2.googleapis.com/token cuando expira.
+model GoogleCalendarChannel {
+  id           String   @id @default(uuid())
+  profileId    String   @unique
+  refreshToken String   @db.Text
+  accessToken  String?  @db.Text
+  expiresAt    DateTime?
+  calendarId   String   @default("primary")
+  scopes       String? // scopes concedidos, separados por espacio
+  email        String? // email de la cuenta Google conectada (para mostrar en UI)
+  lastSyncAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("google_calendar_channels")
 }

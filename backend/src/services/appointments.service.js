@@ -290,6 +290,15 @@ const create = async (data, createdById) => {
     }
   }
 
+  // C9: sincronizar con Google Calendar del profesional dueño (best-effort).
+  if (appointment.directoryProfileId) {
+    try {
+      const gcal = require('./googleCalendar.service');
+      gcal.createEventForAppointment(appointment.directoryProfileId, appointment)
+        .catch((e) => console.error('[gcal] create hook:', e?.message));
+    } catch (e) { /* no bloqueante */ }
+  }
+
   return appointment;
 };
 
@@ -504,6 +513,17 @@ const rescheduleByToken = async (token, newFecha, newHora) => {
     }).catch((e) => console.error('[email] reagendamiento notif:', e?.message));
   }
 
+  // C9: sincronizar reagendamiento con Google Calendar (mueve el evento)
+  if (apt.directoryProfileId) {
+    try {
+      const gcal = require('./googleCalendar.service');
+      // Merge cita original + campos actualizados; googleEventId lo trae apt
+      const merged = { ...apt, ...updated, googleEventId: apt.googleEventId };
+      gcal.updateEventForAppointment(apt.directoryProfileId, merged)
+        .catch((e) => console.error('[gcal] update hook:', e?.message));
+    } catch (e) { /* no bloqueante */ }
+  }
+
   return updated;
 };
 
@@ -576,6 +596,15 @@ const cancelByToken = async (token, reason) => {
       tipoConsulta: apt.tipoConsulta,
       reason: updated.cancelReason,
     }).catch(() => {});
+  }
+
+  // C9: borrar evento espejo de Google Calendar
+  if (apt.directoryProfileId && apt.googleEventId) {
+    try {
+      const gcal = require('./googleCalendar.service');
+      gcal.deleteEventForAppointment(apt.directoryProfileId, apt)
+        .catch((e) => console.error('[gcal] delete hook:', e?.message));
+    } catch (e) { /* no bloqueante */ }
   }
 
   return updated;

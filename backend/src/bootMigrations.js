@@ -470,7 +470,32 @@ async function runBootMigrations(prisma) {
   await ensureIaPacksSchema(prisma);
   await ensureIaAgentConfigSchema(prisma);
   await ensureAppointmentCancellationColumns(prisma);
+  await ensureGoogleCalendarSchema(prisma);
   await seedPlanDefaults(prisma);
+}
+
+async function ensureGoogleCalendarSchema(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "google_calendar_channels" (
+        "id" TEXT PRIMARY KEY,
+        "profileId" TEXT UNIQUE NOT NULL,
+        "refreshToken" TEXT NOT NULL,
+        "accessToken" TEXT,
+        "expiresAt" TIMESTAMP(3),
+        "calendarId" TEXT DEFAULT 'primary' NOT NULL,
+        "scopes" TEXT,
+        "email" TEXT,
+        "lastSyncAt" TIMESTAMP(3),
+        "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+      )
+    `);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "googleEventId" TEXT`);
+    console.log('[boot-migrate] google calendar schema OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureGoogleCalendarSchema falló (no bloqueante):', e.message);
+  }
 }
 
 /**
