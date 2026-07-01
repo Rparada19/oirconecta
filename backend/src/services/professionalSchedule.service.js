@@ -316,8 +316,8 @@ async function listAppointments(profileId, { from, to, status, limit = 200 } = {
     },
   });
 
-  // Stats rápidos para badge en UI
-  const upcoming = items.filter((a) => a.estado === 'CONFIRMED' && new Date(a.fecha) >= today).length;
+  // Stats rápidos para badge en UI (CONFIRMED + RESCHEDULED cuentan como próximas)
+  const upcoming = items.filter((a) => ['CONFIRMED', 'RESCHEDULED'].includes(a.estado) && new Date(a.fecha) >= today).length;
   return { items, upcoming, total: items.length };
 }
 
