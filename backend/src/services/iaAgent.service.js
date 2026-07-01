@@ -248,6 +248,94 @@ async function incrementQuota(subId) {
   });
 }
 
+/**
+ * Marca como EXPIRED los packs cuyo expiresAt ya pasó. No lanza si falla.
+ * Se llama on-read para evitar necesidad de cron.
+ */
+async function expirePastPacks(subscriptionId) {
+  const now = new Date();
+  await prisma.iaConversationPack.updateMany({
+    where: { subscriptionId, status: 'ACTIVE', expiresAt: { lt: now } },
+    data: { status: 'EXPIRED' },
+  }).catch(() => {});
+}
+
+/**
+ * Devuelve el saldo total disponible: base restante + suma de packs ACTIVE
+ * (restantes no expirados). También el detalle de cada pack.
+ */
+async function getBalance(sub) {
+  const quota = await ensureQuotaWindow(sub);
+  await expirePastPacks(sub.id);
+  const packs = await prisma.iaConversationPack.findMany({
+    where: { subscriptionId: sub.id, status: 'ACTIVE' },
+    orderBy: { expiresAt: 'asc' },
+  });
+  const baseRemaining = Math.max(0, quota.limit - quota.used);
+  const packsRemaining = packs.reduce((acc, p) => acc + Math.max(0, p.totalConversations - p.usedConversations), 0);
+  return {
+    base: { limit: quota.limit, used: quota.used, remaining: baseRemaining, periodAt: quota.periodAt },
+    packs: packs.map((p) => ({
+      id: p.id, totalConversations: p.totalConversations, usedConversations: p.usedConversations,
+      remaining: Math.max(0, p.totalConversations - p.usedConversations),
+      priceCOP: p.priceCOP, expiresAt: p.expiresAt, purchasedAt: p.purchasedAt, status: p.status,
+    })),
+    totalRemaining: baseRemaining + packsRemaining,
+  };
+}
+
+/**
+ * Consume 1 conversación. Prioridad:
+ *  1) Base si aún queda.
+ *  2) Pack ACTIVE con menor expiresAt y remaining > 0 (marca DEPLETED si llega a total).
+ *  3) Si nada disponible → throw QUOTA_EXCEEDED.
+ * Retorna { source: 'base'|'pack', packId? }.
+ */
+async function consumeConversation(sub) {
+  const quota = await ensureQuotaWindow(sub);
+  if (quota.used < quota.limit) {
+    await incrementQuota(sub.id);
+    return { source: 'base' };
+  }
+  await expirePastPacks(sub.id);
+  // Toma pack ACTIVE con remaining>0 y menor expiresAt
+  const pack = await prisma.iaConversationPack.findFirst({
+    where: {
+      subscriptionId: sub.id,
+      status: 'ACTIVE',
+      usedConversations: { lt: prisma.iaConversationPack.fields?.totalConversations || undefined },
+    },
+    orderBy: { expiresAt: 'asc' },
+  });
+  // Prisma no permite comparar dos columnas fácilmente en where — filtro en JS:
+  if (!pack || pack.usedConversations >= pack.totalConversations) {
+    // Fallback: busca a mano el primer pack con capacidad
+    const packs = await prisma.iaConversationPack.findMany({
+      where: { subscriptionId: sub.id, status: 'ACTIVE' },
+      orderBy: { expiresAt: 'asc' },
+    });
+    const usable = packs.find((p) => p.usedConversations < p.totalConversations);
+    if (!usable) {
+      throw new IaError(
+        'Cuota mensual agotada y sin paquetes disponibles. Compra un paquete adicional para continuar.',
+        { status: 429, code: 'QUOTA_EXCEEDED' },
+      );
+    }
+    return consumePack(usable);
+  }
+  return consumePack(pack);
+}
+
+async function consumePack(pack) {
+  const newUsed = pack.usedConversations + 1;
+  const nextStatus = newUsed >= pack.totalConversations ? 'DEPLETED' : 'ACTIVE';
+  await prisma.iaConversationPack.update({
+    where: { id: pack.id },
+    data: { usedConversations: newUsed, status: nextStatus },
+  });
+  return { source: 'pack', packId: pack.id, packDepleted: nextStatus === 'DEPLETED' };
+}
+
 // ─────────────────────────────────────────────────────────────
 // Conversation helpers
 // ─────────────────────────────────────────────────────────────
@@ -326,12 +414,17 @@ async function saveToolResult(conversationId, toolUseId, toolName, output, isErr
 async function getIaInfo(profileId) {
   try {
     const sub = await loadSubscriptionWithIa(profileId);
-    const quota = await ensureQuotaWindow(sub);
+    const balance = await getBalance(sub);
     return {
       available: true,
-      conversationsUsed: quota.used,
-      conversationsLimit: quota.limit,
-      remaining: Math.max(0, quota.limit - quota.used),
+      // Compatibilidad hacia atrás: campos que ya usaba el widget
+      conversationsUsed: balance.base.used,
+      conversationsLimit: balance.base.limit,
+      remaining: balance.totalRemaining, // incluye packs
+      // Detalle nuevo
+      base: balance.base,
+      packs: balance.packs,
+      totalRemaining: balance.totalRemaining,
     };
   } catch (e) {
     return { available: false, reason: e.code || 'UNKNOWN', message: e.message };
@@ -352,10 +445,10 @@ async function chat(profileId, { conversationId, message, metadata }) {
   }
 
   const sub = await loadSubscriptionWithIa(profileId);
-  const quota = await ensureQuotaWindow(sub);
 
   let conversation;
   let isNew = false;
+  let consumption = null; // { source, packId? }
   if (conversationId) {
     conversation = await prisma.iaConversation.findUnique({ where: { id: conversationId } });
     if (!conversation || conversation.profileId !== profileId) {
@@ -365,15 +458,14 @@ async function chat(profileId, { conversationId, message, metadata }) {
       throw new IaError('La conversación está cerrada. Inicia una nueva.', { status: 409, code: 'CONV_CLOSED' });
     }
   } else {
-    if (quota.used >= quota.limit) {
-      throw new IaError('El profesional alcanzó el límite mensual de conversaciones IA. Intenta mañana o contáctalo por otro medio.', {
-        status: 429, code: 'QUOTA_EXCEEDED',
-      });
-    }
+    // Consume 1 conversación (base primero, después packs). Puede lanzar QUOTA_EXCEEDED.
+    consumption = await consumeConversation(sub);
     conversation = await prisma.iaConversation.create({
-      data: { profileId, channel: 'web', metadata: metadata || null },
+      data: {
+        profileId, channel: 'web',
+        metadata: { ...(metadata || {}), consumedFrom: consumption.source, packId: consumption.packId || null },
+      },
     });
-    await incrementQuota(sub.id);
     isNew = true;
   }
 
@@ -437,21 +529,25 @@ async function chat(profileId, { conversationId, message, metadata }) {
     // continúa el loop hasta tener texto sin tool_use
   }
 
-  const updatedQuota = await prisma.subscription.findUnique({
-    where: { id: sub.id }, select: { iaConversationsUsed: true },
+  const refreshedSub = await prisma.subscription.findUnique({
+    where: { id: sub.id }, include: { plan: true },
   });
+  const balance = await getBalance(refreshedSub);
 
   return {
     conversationId: conversation.id,
     isNew,
     reply: finalText || '(Respuesta vacía. Intenta reformular tu pregunta.)',
     finishReason,
+    consumption, // { source: 'base'|'pack', packId? } — null si es continuación
+    // Compatibilidad hacia atrás
     quota: {
-      used: updatedQuota?.iaConversationsUsed || 0,
-      limit: quota.limit,
-      remaining: Math.max(0, quota.limit - (updatedQuota?.iaConversationsUsed || 0)),
+      used: balance.base.used,
+      limit: balance.base.limit,
+      remaining: balance.totalRemaining, // incluye packs
     },
+    balance,
   };
 }
 
-module.exports = { IaError, getIaInfo, chat, TOOLS };
+module.exports = { IaError, getIaInfo, chat, getBalance, consumeConversation, TOOLS };

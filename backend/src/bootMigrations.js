@@ -327,6 +327,34 @@ async function seedPlanDefaults(prisma) {
 }
 
 /**
+ * F5.4 — Paquetes de conversaciones IA (compra adicional al Plan 3). Idempotente.
+ */
+async function ensureIaPacksSchema(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "ia_conversation_packs" (
+        "id" TEXT PRIMARY KEY,
+        "subscriptionId" TEXT NOT NULL REFERENCES "subscriptions"("id") ON DELETE CASCADE,
+        "totalConversations" INTEGER NOT NULL,
+        "usedConversations" INTEGER NOT NULL DEFAULT 0,
+        "priceCOP" INTEGER NOT NULL,
+        "expiresAt" TIMESTAMP(3) NOT NULL,
+        "purchasedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+        "paymentId" TEXT,
+        "metadata" JSONB,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ia_conversation_packs_sub_status_exp_idx" ON "ia_conversation_packs"("subscriptionId","status","expiresAt");`);
+    console.log('[boot-migrate] ia packs schema OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureIaPacksSchema falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * F5.3 — Canal WhatsApp por profesional + columna externalMessageId en ia_messages
  * para idempotencia de webhook. Idempotente.
  */
@@ -415,6 +443,7 @@ async function runBootMigrations(prisma) {
   await ensureMultiTenantAgendaSchema(prisma);
   await ensureIaSchema(prisma);
   await ensureWhatsAppChannelSchema(prisma);
+  await ensureIaPacksSchema(prisma);
   await seedPlanDefaults(prisma);
 }
 

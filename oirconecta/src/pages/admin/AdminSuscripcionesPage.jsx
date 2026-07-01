@@ -16,6 +16,7 @@ import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded';
 import PauseCircleOutlinedIcon from '@mui/icons-material/PauseCircleOutlined';
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import { adminFetch } from './adminAuth';
 
 const ACCENT = '#085946';
@@ -79,6 +80,8 @@ export default function AdminSuscripcionesPage() {
   const [planNuevo, setPlanNuevo] = useState('PLAN_3_MENSUAL');
   const [suspendTarget, setSuspendTarget] = useState(null);
   const [suspendMotivo, setSuspendMotivo] = useState('');
+  const [packTarget, setPackTarget] = useState(null);
+  const [packCode, setPackCode] = useState('PACK_100');
   const [working, setWorking] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -140,6 +143,23 @@ export default function AdminSuscripcionesPage() {
       fetchAll();
     } else {
       setToast({ severity: 'error', msg: r?.error || 'No se pudo cambiar el plan' });
+    }
+  };
+
+  const handleSellPack = async () => {
+    if (!packTarget) return;
+    setWorking(true);
+    const r = await adminFetch(`/api/ia/admin/subscriptions/${packTarget.id}/packs`, {
+      method: 'POST',
+      body: JSON.stringify({ packCode }),
+    });
+    setWorking(false);
+    if (r?.data?.success) {
+      setToast({ severity: 'success', msg: `Paquete ${packCode} activado para ${packTarget.nombre || packTarget.email}.` });
+      setPackTarget(null);
+      fetchAll();
+    } else {
+      setToast({ severity: 'error', msg: r?.error || 'No se pudo vender el paquete' });
     }
   };
 
@@ -446,6 +466,15 @@ export default function AdminSuscripcionesPage() {
                       <TableCell sx={{ fontSize: '0.8125rem' }}>{fmtDate(s.lastPaymentAt)}</TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
+                          {s.planCode === 'PLAN_3_MENSUAL' && (
+                            <Tooltip title="Vender paquete IA">
+                              <IconButton size="small" disabled={working}
+                                onClick={() => setPackTarget(s)}
+                                sx={{ color: '#6d28d9', '&:hover': { bgcolor: '#faf5ff' } }}>
+                                <ShoppingCartOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                           <Tooltip title="Cambiar plan">
                             <IconButton size="small" disabled={working}
                               onClick={() => { setPlanTarget(s); setPlanNuevo(s.planCode || 'PLAN_3_MENSUAL'); }}
@@ -550,6 +579,34 @@ export default function AdminSuscripcionesPage() {
             startIcon={working ? <CircularProgress size={16} color="inherit" /> : <SwapHorizRoundedIcon />}
             sx={{ background: '#0369a1', '&:hover': { background: '#075985' } }}>
             Cambiar plan
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog vender paquete IA */}
+      <Dialog open={!!packTarget} onClose={() => !working && setPackTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: NAVY }}>Vender paquete de conversaciones IA</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Activar paquete para <strong>{packTarget?.nombre || packTarget?.email}</strong>.
+          </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            El paquete se activa inmediatamente (ACTIVE). Se registra un SubscriptionEvent
+            "IA_PACK_SOLD" para trazabilidad. Cuando conectemos la pasarela, este flujo se hará
+            automático desde el portal del profesional.
+          </Alert>
+          <TextField select fullWidth size="small" label="Paquete" value={packCode}
+            onChange={(e) => setPackCode(e.target.value)}>
+            <MenuItem value="PACK_100">Paquete 100 conversaciones · $80.000 COP · vence en 40 días</MenuItem>
+            <MenuItem value="PACK_300">Paquete 300 conversaciones · $200.000 COP · vence en 60 días</MenuItem>
+          </TextField>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setPackTarget(null)} disabled={working}>Cancelar</Button>
+          <Button onClick={handleSellPack} disabled={working} variant="contained"
+            startIcon={working ? <CircularProgress size={16} color="inherit" /> : <ShoppingCartOutlinedIcon />}
+            sx={{ background: '#6d28d9', '&:hover': { background: '#5b21b6' } }}>
+            Activar paquete
           </Button>
         </DialogActions>
       </Dialog>

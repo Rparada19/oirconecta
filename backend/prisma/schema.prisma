@@ -1420,6 +1420,7 @@ model Subscription {
   payments Payment[]
   invoices Invoice[]
   events   SubscriptionEvent[]
+  iaPacks  IaConversationPack[]
 
   @@index([status])
   @@index([currentPeriodEnd])
@@ -2319,6 +2320,37 @@ model IaMessage {
 
   @@index([conversationId, createdAt])
   @@map("ia_messages")
+}
+
+/// F5.4 — Paquete de conversaciones IA comprado adicional al Plan 3 base.
+/// Regla comercial: Plan 3 incluye 150/mes. Cliente puede comprar:
+///  - Paquete 100 conversaciones · $80.000 COP · vence en 40 días
+///  - Paquete 300 conversaciones · $200.000 COP · vence en 60 días
+///
+/// Consumo: primero se agota la cuota base del mes; después se consumen los
+/// packs ACTIVE en orden ascendente de expiresAt (el que expira antes primero).
+model IaConversationPack {
+  id                 String       @id @default(uuid())
+  subscriptionId     String
+  subscription       Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  /// 100 o 300 (o cualquier size futuro)
+  totalConversations Int
+  usedConversations  Int          @default(0)
+  /// Precio pagado COP (sin IVA) al momento de compra
+  priceCOP           Int
+  /// Fecha calculada al comprar: purchasedAt + duracionDias
+  expiresAt          DateTime
+  purchasedAt        DateTime     @default(now())
+  /// ACTIVE | EXPIRED | DEPLETED | REFUNDED
+  status             String       @default("ACTIVE")
+  /// Payment vinculado (cuando aplique)
+  paymentId          String?
+  metadata           Json?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([subscriptionId, status, expiresAt])
+  @@map("ia_conversation_packs")
 }
 
 /// F5.3 — Configuración del canal WhatsApp del profesional (Plan 3 con multi-tenant).

@@ -47,9 +47,9 @@ const PLAN_DEFAULTS = [
 
   // ── Plan 3: + Agente IA ──
   { code: 'PLAN_3_MENSUAL', nombre: 'Plan 3 · Marketing + Agendamiento + Agente IA', precioCOP: 120000, duracionDias: 30,
-    beneficios: ['Todo lo de Plan 2', 'Agente IA que agenda, reagenda y resuelve FAQ', 'Hasta 300 conversaciones/mes', 'Permanencia 12 meses'],
+    beneficios: ['Todo lo de Plan 2', 'Agente IA que agenda, reagenda y resuelve FAQ', '150 conversaciones/mes incluidas', 'Paquetes adicionales disponibles', 'Permanencia 12 meses'],
     features: { marketing: true, agenda: true, ia: true }, trialDays: 0,
-    minCommitmentMonths: 12, monthlyConversationLimit: 300, displayOrder: 3 },
+    minCommitmentMonths: 12, monthlyConversationLimit: 150, displayOrder: 3 },
 
   // ── Legacy (mantenidos solo para suscripciones existentes; no se ofrecen a nuevos) ──
   { code: 'MENSUAL', nombre: 'Profesional independiente · mensual (legacy)', precioCOP: 20000, duracionDias: 30,
