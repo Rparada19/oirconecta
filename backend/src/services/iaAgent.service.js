@@ -386,7 +386,12 @@ async function saveUserMessage(conversationId, text) {
 }
 
 async function saveAssistantBlocks(conversationId, blocks, usage) {
-  const tokens = (usage?.input_tokens || 0) + (usage?.output_tokens || 0);
+  // Suma completa incluye cache creation + cache read + input normal + output
+  const input = usage?.input_tokens || 0;
+  const cacheRead = usage?.cache_read_input_tokens || 0;
+  const cacheCreate = usage?.cache_creation_input_tokens || 0;
+  const output = usage?.output_tokens || 0;
+  const tokens = input + cacheRead + cacheCreate + output;
   await prisma.iaMessage.create({
     data: { conversationId, role: 'assistant', content: JSON.stringify(blocks), tokens },
   });
@@ -487,11 +492,21 @@ async function chat(profileId, { conversationId, message, metadata }) {
 
   // Bucle hasta que la IA responda solo con texto (sin tool_use). Tope 5 iteraciones.
   for (let iter = 0; iter < 5; iter++) {
+    // Prompt caching: marca system + tools con cache_control ephemeral.
+    // Cache hit reduce el input de ~1,400 tokens estables a $0.10/MTok (10× más barato).
+    // TTL ~5 min; se re-usa entre turnos de la misma conversación y entre
+    // conversaciones distintas de cualquier profesional (siempre que system sea
+    // idéntico dentro de esa ventana).
+    const systemBlocks = [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }];
+    const cachedTools = TOOLS.map((t, i) =>
+      i === TOOLS.length - 1 ? { ...t, cache_control: { type: 'ephemeral' } } : t,
+    );
+
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
-      system,
-      tools: TOOLS,
+      system: systemBlocks,
+      tools: cachedTools,
       messages: history,
     });
 
