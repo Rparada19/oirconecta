@@ -6,8 +6,26 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const DEFAULTS = { agentName: 'Asistente', agentColor: '#6d28d9', welcomeMessage: null };
+const DEFAULTS = { agentName: 'Asistente', agentColor: '#6d28d9', agentIcon: 'smart_toy', welcomeMessage: null };
 const HEX_RE = /^#([0-9A-Fa-f]{6})$/;
+
+// Whitelist de íconos disponibles. El frontend mapea el key a un componente MUI.
+// Cambios aquí requieren ampliar el mapa en el widget/portal profesional.
+const AGENT_ICONS = [
+  { key: 'smart_toy',      label: 'Robot' },
+  { key: 'auto_awesome',   label: 'Destellos' },
+  { key: 'chat_bubble',    label: 'Burbuja' },
+  { key: 'support_agent',  label: 'Agente' },
+  { key: 'headset_mic',    label: 'Audífono' },
+  { key: 'psychology',     label: 'Mente' },
+  { key: 'handshake',      label: 'Saludo' },
+  { key: 'favorite',       label: 'Corazón' },
+  { key: 'waving_hand',    label: 'Hola' },
+  { key: 'star',           label: 'Estrella' },
+  { key: 'spa',            label: 'Bienestar' },
+  { key: 'bolt',           label: 'Rápido' },
+];
+const ICON_KEYS = AGENT_ICONS.map((i) => i.key);
 
 class ConfigError extends Error {
   constructor(message, { status = 400 } = {}) {
@@ -36,6 +54,11 @@ async function upsertConfig(profileId, patch) {
     if (!HEX_RE.test(c)) throw new ConfigError('agentColor debe ser hex #RRGGBB');
     data.agentColor = c;
   }
+  if (patch.agentIcon !== undefined) {
+    const k = String(patch.agentIcon || '').trim();
+    if (!ICON_KEYS.includes(k)) throw new ConfigError(`agentIcon debe ser uno de: ${ICON_KEYS.join(', ')}`);
+    data.agentIcon = k;
+  }
   if (patch.welcomeMessage !== undefined) {
     const w = patch.welcomeMessage;
     if (w !== null && (typeof w !== 'string' || w.length > 500)) {
@@ -52,6 +75,8 @@ async function upsertConfig(profileId, patch) {
 
 module.exports = {
   DEFAULTS,
+  AGENT_ICONS,
+  ICON_KEYS,
   ConfigError,
   getConfigOrDefaults,
   upsertConfig,

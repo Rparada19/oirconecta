@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
+import { AGENT_ICON_MAP, AGENT_ICON_LABELS, getAgentIcon } from '../../utils/iaAgentIcons';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
@@ -32,7 +33,7 @@ export default function ProfesionalIAPage() {
   const [convs, setConvs] = useState({ items: [], total: 0 });
   const [catalog, setCatalog] = useState([]);
   const [config, setConfig] = useState(null);
-  const [configDraft, setConfigDraft] = useState({ agentName: '', agentColor: '#6d28d9', welcomeMessage: '' });
+  const [configDraft, setConfigDraft] = useState({ agentName: '', agentColor: '#6d28d9', agentIcon: 'smart_toy', welcomeMessage: '' });
   const [savingConfig, setSavingConfig] = useState(false);
   const [loading, setLoading] = useState(true);
   const [accessError, setAccessError] = useState(null);
@@ -61,6 +62,7 @@ export default function ProfesionalIAPage() {
       setConfigDraft({
         agentName: cfg.data.data.agentName || 'Asistente',
         agentColor: cfg.data.data.agentColor || '#6d28d9',
+        agentIcon: cfg.data.data.agentIcon || 'smart_toy',
         welcomeMessage: cfg.data.data.welcomeMessage || '',
       });
     }
@@ -72,6 +74,7 @@ export default function ProfesionalIAPage() {
     const r = await directoryApi.put('/api/ia/me/agent-config', {
       agentName: configDraft.agentName.trim(),
       agentColor: configDraft.agentColor,
+      agentIcon: configDraft.agentIcon,
       welcomeMessage: configDraft.welcomeMessage.trim() || null,
     });
     setSavingConfig(false);
@@ -237,6 +240,34 @@ export default function ProfesionalIAPage() {
                   <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8' }}>Formato hex #RRGGBB</Typography>
                 </Stack>
               </Box>
+
+              {/* Galería de íconos */}
+              <Box>
+                <Typography sx={{ fontSize: '0.75rem', color: '#475569', mb: 0.75, fontWeight: 600 }}>
+                  Ícono del bot
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 1 }}>
+                  {Object.keys(AGENT_ICON_MAP).map((key) => {
+                    const Ico = AGENT_ICON_MAP[key];
+                    const selected = configDraft.agentIcon === key;
+                    return (
+                      <Box key={key} onClick={() => setConfigDraft({ ...configDraft, agentIcon: key })}
+                        sx={{
+                          cursor: 'pointer', textAlign: 'center', p: 1, borderRadius: '10px',
+                          border: selected ? `2px solid ${configDraft.agentColor}` : '2px solid transparent',
+                          bgcolor: selected ? `${configDraft.agentColor}12` : '#f8fafc',
+                          transition: 'all 0.15s',
+                          '&:hover': { bgcolor: selected ? `${configDraft.agentColor}20` : '#f1f5f9' },
+                        }}>
+                        <Ico sx={{ fontSize: 28, color: selected ? configDraft.agentColor : '#475569' }} />
+                        <Typography sx={{ fontSize: '0.65rem', color: '#64748b', mt: 0.25, lineHeight: 1.1 }}>
+                          {AGENT_ICON_LABELS[key]}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
               <TextField label="Mensaje de bienvenida (opcional)" size="small" fullWidth multiline minRows={2}
                 value={configDraft.welcomeMessage}
                 onChange={(e) => setConfigDraft({ ...configDraft, welcomeMessage: e.target.value })}
@@ -254,14 +285,19 @@ export default function ProfesionalIAPage() {
               <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, mb: 1.5 }}>
                 Vista previa del botón
               </Typography>
-              <Box sx={{
-                display: 'inline-flex', alignItems: 'center', gap: 1, px: 2.25, py: 1.25, borderRadius: '999px',
-                background: `linear-gradient(135deg, ${configDraft.agentColor}, ${configDraft.agentColor}dd)`,
-                color: '#fff', fontWeight: 700, boxShadow: `0 10px 28px ${configDraft.agentColor}55`,
-              }}>
-                <SmartToyOutlinedIcon sx={{ fontSize: 20 }} />
-                {configDraft.agentName || 'Asistente'}
-              </Box>
+              {(() => {
+                const PreviewIcon = getAgentIcon(configDraft.agentIcon);
+                return (
+                  <Box sx={{
+                    display: 'inline-flex', alignItems: 'center', gap: 1, px: 2.25, py: 1.25, borderRadius: '999px',
+                    background: `linear-gradient(135deg, ${configDraft.agentColor}, ${configDraft.agentColor}dd)`,
+                    color: '#fff', fontWeight: 700, boxShadow: `0 10px 28px ${configDraft.agentColor}55`,
+                  }}>
+                    <PreviewIcon sx={{ fontSize: 20 }} />
+                    {configDraft.agentName || 'Asistente'}
+                  </Box>
+                );
+              })()}
               <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', mt: 2, textAlign: 'center' }}>
                 Así lo verán los pacientes en la esquina inferior de tu ficha pública.
               </Typography>

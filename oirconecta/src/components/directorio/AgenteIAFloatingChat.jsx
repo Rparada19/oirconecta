@@ -14,10 +14,9 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Box, IconButton, Fab, Typography, TextField, Chip, CircularProgress, Alert, Tooltip, Stack,
 } from '@mui/material';
-import {
-  SmartToyOutlined, CloseOutlined, SendOutlined, AutoAwesomeOutlined,
-} from '@mui/icons-material';
+import { CloseOutlined, SendOutlined } from '@mui/icons-material';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
+import { getAgentIcon } from '../../utils/iaAgentIcons';
 
 const BASE_URL = getApiBaseUrl().replace(/\/$/, '');
 const ACCENT = '#15803d';
@@ -44,11 +43,12 @@ async function post(path, body) {
 
 const DEFAULT_COLOR = '#6d28d9';
 const DEFAULT_NAME = 'Asistente';
+const DEFAULT_ICON = 'smart_toy';
 
 export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
   const [available, setAvailable] = useState(null);
   const [quota, setQuota] = useState(null);
-  const [agent, setAgent] = useState({ name: DEFAULT_NAME, color: DEFAULT_COLOR, welcomeMessage: null });
+  const [agent, setAgent] = useState({ name: DEFAULT_NAME, color: DEFAULT_COLOR, icon: DEFAULT_ICON, welcomeMessage: null });
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [convId, setConvId] = useState(null);
@@ -71,6 +71,7 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
           setAgent({
             name: d.agent.name || DEFAULT_NAME,
             color: d.agent.color || DEFAULT_COLOR,
+            icon: d.agent.icon || DEFAULT_ICON,
             welcomeMessage: d.agent.welcomeMessage || null,
           });
         }
@@ -118,9 +119,11 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
 
   if (available !== true) return null; // mientras carga o si no aplica
 
+  const IconComp = getAgentIcon(agent.icon);
+
   return (
     <>
-      {/* FAB — color y nombre personalizables por profesional.
+      {/* FAB — color, nombre e ícono personalizables por profesional.
           Posicionado ~90px arriba del WhatsApp (que está a bottom: ~20px). */}
       {!open && (
         <Tooltip title={`${agent.name} · pregúntame para agendar`}>
@@ -137,7 +140,7 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
               pl: 1.75, pr: 2, gap: 1, fontWeight: 700, textTransform: 'none',
               borderRadius: '999px',
             }}>
-            <AutoAwesomeOutlined sx={{ fontSize: 22 }} />
+            <IconComp sx={{ fontSize: 22 }} />
             {agent.name}
           </Fab>
         </Tooltip>
@@ -165,7 +168,7 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
           }}>
             <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.18)',
                        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <SmartToyOutlined sx={{ color: '#fff', fontSize: 22 }} />
+              <IconComp sx={{ color: '#fff', fontSize: 22 }} />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', lineHeight: 1.2 }}>

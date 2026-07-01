@@ -2334,6 +2334,9 @@ model IaAgentConfig {
   agentName      String           @default("Asistente")
   /// Color hex de la burbuja / FAB. Formato "#RRGGBB".
   agentColor     String           @default("#6d28d9")
+  /// Ícono del bot. Whitelist de keys (ej. "smart_toy", "auto_awesome", "spa").
+  /// El frontend mapea el key a un componente MUI concreto.
+  agentIcon      String           @default("smart_toy")
   /// Mensaje de bienvenida opcional (si null, el widget genera uno automático).
   welcomeMessage String?
   createdAt      DateTime         @default(now())

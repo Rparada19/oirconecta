@@ -342,6 +342,8 @@ async function ensureIaAgentConfigSchema(prisma) {
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    // Columna agentIcon agregada en F5.5b (galería). ADD COLUMN idempotente.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "agentIcon" TEXT NOT NULL DEFAULT 'smart_toy';`);
     console.log('[boot-migrate] ia agent config schema OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureIaAgentConfigSchema falló (no bloqueante):', e.message);

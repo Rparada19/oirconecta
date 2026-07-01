@@ -27,13 +27,21 @@ function send(res, fn) {
 router.get('/public/:profileId/info', (req, res) =>
   send(res, async () => {
     const info = await ia.getIaInfo(req.params.profileId);
-    // Añadimos personalización visible al widget público (nombre, color, welcome).
     if (info.available) {
       const cfg = await iaConfig.getConfigOrDefaults(req.params.profileId);
-      info.agent = { name: cfg.agentName, color: cfg.agentColor, welcomeMessage: cfg.welcomeMessage };
+      info.agent = {
+        name: cfg.agentName,
+        color: cfg.agentColor,
+        icon: cfg.agentIcon,
+        welcomeMessage: cfg.welcomeMessage,
+      };
     }
     return info;
   }));
+
+// Catálogo público de íconos disponibles (para el picker del profesional)
+router.get('/agent-config/icons', (req, res) =>
+  send(res, () => iaConfig.AGENT_ICONS));
 
 router.post('/public/:profileId/chat', (req, res) => {
   // Captura mínima de metadata sin PII: IP truncada + user-agent corto
