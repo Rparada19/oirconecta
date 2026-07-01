@@ -59,6 +59,7 @@ import {
   ManageAccounts,
   ChevronLeft,
   ChevronRight,
+  Settings,
 } from '@mui/icons-material';
 import { getConfig, saveConfig, addAppointmentReason, removeAppointmentReason, DEFAULT_APPOINTMENT_REASONS } from '../../services/configService';
 import { etiquetaProductoCatalogo } from '../../utils/marketplaceProduct';
