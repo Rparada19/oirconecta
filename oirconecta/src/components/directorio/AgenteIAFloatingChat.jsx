@@ -42,9 +42,13 @@ async function post(path, body) {
   } catch { return { ok: false, error: 'Sin conexión', status: 0 }; }
 }
 
+const DEFAULT_COLOR = '#6d28d9';
+const DEFAULT_NAME = 'Asistente';
+
 export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
   const [available, setAvailable] = useState(null);
   const [quota, setQuota] = useState(null);
+  const [agent, setAgent] = useState({ name: DEFAULT_NAME, color: DEFAULT_COLOR, welcomeMessage: null });
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [convId, setConvId] = useState(null);
@@ -63,20 +67,27 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
       setAvailable(!!d?.available);
       if (d?.available) {
         setQuota({ used: d.conversationsUsed, limit: d.conversationsLimit, remaining: d.remaining });
+        if (d.agent) {
+          setAgent({
+            name: d.agent.name || DEFAULT_NAME,
+            color: d.agent.color || DEFAULT_COLOR,
+            welcomeMessage: d.agent.welcomeMessage || null,
+          });
+        }
       }
     });
     return () => { cancel = true; };
   }, [profileId]);
 
-  // Saludo inicial cuando se abre por primera vez
+  // Saludo inicial cuando se abre por primera vez.
+  // Prioridad: welcomeMessage custom > mensaje autogenerado con nombre custom.
   useEffect(() => {
     if (open && messages.length === 0) {
-      setMessages([{
-        role: 'assistant',
-        text: `¡Hola! Soy el asistente virtual de ${profesionalNombre || 'tu profesional'}. Puedo ayudarte a agendar, reagendar o cancelar una cita, o responder dudas sobre el servicio. ¿En qué te ayudo?`,
-      }]);
+      const text = agent.welcomeMessage
+        || `¡Hola! Soy ${agent.name}, el asistente virtual de ${profesionalNombre || 'tu profesional'}. Puedo ayudarte a agendar, reagendar o cancelar una cita. ¿En qué te ayudo?`;
+      setMessages([{ role: 'assistant', text }]);
     }
-  }, [open, messages.length, profesionalNombre]);
+  }, [open, messages.length, profesionalNombre, agent]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -109,24 +120,25 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
 
   return (
     <>
-      {/* FAB — púrpura para distinguir claramente del WhatsApp verde.
+      {/* FAB — color y nombre personalizables por profesional.
           Posicionado ~90px arriba del WhatsApp (que está a bottom: ~20px). */}
       {!open && (
-        <Tooltip title="Asistente IA · pregúntame para agendar">
-          <Fab onClick={() => setOpen(true)} aria-label="Asistente IA" variant="extended"
+        <Tooltip title={`${agent.name} · pregúntame para agendar`}>
+          <Fab onClick={() => setOpen(true)} aria-label={agent.name} variant="extended"
             sx={{
               position: 'fixed',
               bottom: { xs: 'calc(env(safe-area-inset-bottom, 0px) + 90px)', md: 100 },
               right: { xs: 16, md: 24 },
-              background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)', color: '#fff',
-              '&:hover': { background: 'linear-gradient(135deg, #5b21b6, #7c3aed)' },
+              background: `linear-gradient(135deg, ${agent.color}, ${agent.color}dd)`,
+              color: '#fff',
+              '&:hover': { background: `linear-gradient(135deg, ${agent.color}, ${agent.color})`, filter: 'brightness(0.95)' },
               zIndex: 1250,
-              boxShadow: '0 10px 28px rgba(109,40,217,0.45)',
+              boxShadow: `0 10px 28px ${agent.color}55`,
               pl: 1.75, pr: 2, gap: 1, fontWeight: 700, textTransform: 'none',
               borderRadius: '999px',
             }}>
             <AutoAwesomeOutlined sx={{ fontSize: 22 }} />
-            Asistente IA
+            {agent.name}
           </Fab>
         </Tooltip>
       )}
@@ -145,10 +157,10 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           zIndex: 1400,
         }}>
-          {/* Header */}
+          {/* Header — color custom del profesional */}
           <Box sx={{
             px: 2, py: 1.5,
-            background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)',
+            background: `linear-gradient(135deg, ${agent.color}, ${agent.color}dd)`,
             color: '#fff', display: 'flex', alignItems: 'center', gap: 1.5,
           }}>
             <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.18)',
@@ -157,7 +169,7 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', lineHeight: 1.2 }}>
-                Asistente de {profesionalNombre || 'consulta'}
+                {agent.name} · {profesionalNombre || 'consulta'}
               </Typography>
               <Typography sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)' }}>
                 Disponible 24/7 · Respuestas IA · No reemplaza diagnóstico
@@ -177,7 +189,7 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
               <Box key={i} sx={{
                 alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
                 maxWidth: '85%',
-                bgcolor: m.role === 'user' ? ACCENT : '#fff',
+                bgcolor: m.role === 'user' ? agent.color : '#fff',
                 color: m.role === 'user' ? '#fff' : NAVY,
                 px: 1.5, py: 1,
                 borderRadius: m.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
@@ -191,7 +203,7 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
             {sending && (
               <Box sx={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 1, p: 1.5,
                          bgcolor: '#fff', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-                <CircularProgress size={14} sx={{ color: ACCENT }} />
+                <CircularProgress size={14} sx={{ color: agent.color }} />
                 <Typography sx={{ fontSize: '0.8125rem', color: '#64748b' }}>Pensando…</Typography>
               </Box>
             )}
@@ -222,7 +234,7 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
               InputProps={{ sx: { borderRadius: '20px', fontSize: '0.875rem' } }}
             />
             <IconButton onClick={send} disabled={!input.trim() || sending || exhausted}
-              sx={{ bgcolor: ACCENT, color: '#fff', '&:hover': { bgcolor: '#166534' },
+              sx={{ bgcolor: agent.color, color: '#fff', '&:hover': { bgcolor: agent.color, filter: 'brightness(0.9)' },
                     '&.Mui-disabled': { bgcolor: '#cbd5e1', color: '#fff' } }}>
               <SendOutlined fontSize="small" />
             </IconButton>

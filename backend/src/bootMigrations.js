@@ -327,6 +327,28 @@ async function seedPlanDefaults(prisma) {
 }
 
 /**
+ * F5.5 — Personalización agente IA (nombre + color por profesional). Idempotente.
+ */
+async function ensureIaAgentConfigSchema(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "ia_agent_config" (
+        "id" TEXT PRIMARY KEY,
+        "profileId" TEXT NOT NULL UNIQUE REFERENCES "directory_profiles"("id") ON DELETE CASCADE,
+        "agentName" TEXT NOT NULL DEFAULT 'Asistente',
+        "agentColor" TEXT NOT NULL DEFAULT '#6d28d9',
+        "welcomeMessage" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('[boot-migrate] ia agent config schema OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureIaAgentConfigSchema falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * F5.4 — Paquetes de conversaciones IA (compra adicional al Plan 3). Idempotente.
  */
 async function ensureIaPacksSchema(prisma) {
@@ -444,6 +466,7 @@ async function runBootMigrations(prisma) {
   await ensureIaSchema(prisma);
   await ensureWhatsAppChannelSchema(prisma);
   await ensureIaPacksSchema(prisma);
+  await ensureIaAgentConfigSchema(prisma);
   await seedPlanDefaults(prisma);
 }
 

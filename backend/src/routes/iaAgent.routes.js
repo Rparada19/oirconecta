@@ -9,6 +9,7 @@ const express = require('express');
 const ia = require('../services/iaAgent.service');
 const iaAdmin = require('../services/iaAdmin.service');
 const iaPacks = require('../services/iaPacks.service');
+const iaConfig = require('../services/iaAgentConfig.service');
 const { authenticate, authorize } = require('../middleware/auth');
 const { authenticateDirectoryAccount } = require('../middleware/directoryAuth');
 const { PrismaClient } = require('@prisma/client');
@@ -24,7 +25,15 @@ function send(res, fn) {
 }
 
 router.get('/public/:profileId/info', (req, res) =>
-  send(res, () => ia.getIaInfo(req.params.profileId)));
+  send(res, async () => {
+    const info = await ia.getIaInfo(req.params.profileId);
+    // Añadimos personalización visible al widget público (nombre, color, welcome).
+    if (info.available) {
+      const cfg = await iaConfig.getConfigOrDefaults(req.params.profileId);
+      info.agent = { name: cfg.agentName, color: cfg.agentColor, welcomeMessage: cfg.welcomeMessage };
+    }
+    return info;
+  }));
 
 router.post('/public/:profileId/chat', (req, res) => {
   // Captura mínima de metadata sin PII: IP truncada + user-agent corto
@@ -61,6 +70,13 @@ async function withProfile(req, res, next) {
 
 router.get('/me/balance', authenticateDirectoryAccount, withProfile, (req, res) =>
   send(res, () => iaPacks.getBalanceForProfile(req.profileId)));
+
+// Configuración del agente (nombre, color, welcome)
+router.get('/me/agent-config', authenticateDirectoryAccount, withProfile, (req, res) =>
+  send(res, () => iaConfig.getConfigOrDefaults(req.profileId)));
+
+router.put('/me/agent-config', authenticateDirectoryAccount, withProfile, (req, res) =>
+  send(res, () => iaConfig.upsertConfig(req.profileId, req.body || {})));
 
 router.get('/me/packs', authenticateDirectoryAccount, withProfile, (req, res) => {
   if (!req.subscriptionId) return res.json({ success: true, data: [] });

@@ -31,6 +31,9 @@ export default function ProfesionalIAPage() {
   const [balance, setBalance] = useState(null);
   const [convs, setConvs] = useState({ items: [], total: 0 });
   const [catalog, setCatalog] = useState([]);
+  const [config, setConfig] = useState(null);
+  const [configDraft, setConfigDraft] = useState({ agentName: '', agentColor: '#6d28d9', welcomeMessage: '' });
+  const [savingConfig, setSavingConfig] = useState(false);
   const [loading, setLoading] = useState(true);
   const [accessError, setAccessError] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -39,10 +42,11 @@ export default function ProfesionalIAPage() {
 
   const loadAll = async () => {
     setLoading(true);
-    const [b, c, cat] = await Promise.all([
+    const [b, c, cat, cfg] = await Promise.all([
       directoryApi.get('/api/ia/me/balance'),
       directoryApi.get('/api/ia/me/conversations?limit=200'),
       directoryApi.get('/api/ia/packs/catalog'),
+      directoryApi.get('/api/ia/me/agent-config'),
     ]);
     if (b.error) {
       setAccessError({ code: b.data?.code, message: b.error });
@@ -52,7 +56,28 @@ export default function ProfesionalIAPage() {
     setBalance(b.data.data);
     if (c.data?.data) setConvs(c.data.data);
     if (cat.data?.data) setCatalog(cat.data.data);
+    if (cfg.data?.data) {
+      setConfig(cfg.data.data);
+      setConfigDraft({
+        agentName: cfg.data.data.agentName || 'Asistente',
+        agentColor: cfg.data.data.agentColor || '#6d28d9',
+        welcomeMessage: cfg.data.data.welcomeMessage || '',
+      });
+    }
     setLoading(false);
+  };
+
+  const saveConfig = async () => {
+    setSavingConfig(true);
+    const r = await directoryApi.put('/api/ia/me/agent-config', {
+      agentName: configDraft.agentName.trim(),
+      agentColor: configDraft.agentColor,
+      welcomeMessage: configDraft.welcomeMessage.trim() || null,
+    });
+    setSavingConfig(false);
+    if (r.error) return setToast({ severity: 'error', msg: r.error });
+    setConfig(r.data.data);
+    setToast({ severity: 'success', msg: 'Personalización guardada. Se aplica al widget en unos segundos.' });
   };
 
   useEffect(() => { loadAll(); }, []);
@@ -174,6 +199,74 @@ export default function ProfesionalIAPage() {
               </Stack>
             </Box>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Personalización del asistente */}
+      <Card sx={{ mt: 3, borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+        <Box sx={{ px: 2.5, py: 1.75, bgcolor: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
+          <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem' }}>
+            Personalización del asistente
+          </Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+            Elige cómo te representa el chat en tu perfil público.
+          </Typography>
+        </Box>
+        <CardContent sx={{ p: 3 }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
+            {/* Form */}
+            <Stack spacing={2} sx={{ flex: 1 }}>
+              <TextField label="Nombre del asistente" size="small" fullWidth
+                value={configDraft.agentName}
+                onChange={(e) => setConfigDraft({ ...configDraft, agentName: e.target.value })}
+                inputProps={{ minLength: 2, maxLength: 30 }}
+                helperText="2 a 30 caracteres. Ej: Sofía, Camilo, Aura." />
+              <Box>
+                <Typography sx={{ fontSize: '0.75rem', color: '#475569', mb: 0.5, fontWeight: 600 }}>
+                  Color del botón
+                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <input type="color"
+                    value={configDraft.agentColor}
+                    onChange={(e) => setConfigDraft({ ...configDraft, agentColor: e.target.value })}
+                    style={{ width: 48, height: 40, border: '1px solid #cbd5e1', borderRadius: 8, cursor: 'pointer' }} />
+                  <TextField size="small" value={configDraft.agentColor}
+                    onChange={(e) => setConfigDraft({ ...configDraft, agentColor: e.target.value })}
+                    inputProps={{ pattern: '^#[0-9A-Fa-f]{6}$' }}
+                    sx={{ width: 130 }} />
+                  <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8' }}>Formato hex #RRGGBB</Typography>
+                </Stack>
+              </Box>
+              <TextField label="Mensaje de bienvenida (opcional)" size="small" fullWidth multiline minRows={2}
+                value={configDraft.welcomeMessage}
+                onChange={(e) => setConfigDraft({ ...configDraft, welcomeMessage: e.target.value })}
+                inputProps={{ maxLength: 500 }}
+                helperText="Si lo dejas vacío, se genera automáticamente." />
+              <Button variant="contained" onClick={saveConfig} disabled={savingConfig}
+                sx={{ background: configDraft.agentColor, textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start',
+                      '&:hover': { background: configDraft.agentColor, filter: 'brightness(0.9)' } }}>
+                {savingConfig ? 'Guardando…' : 'Guardar personalización'}
+              </Button>
+            </Stack>
+
+            {/* Preview del botón */}
+            <Box sx={{ width: { xs: '100%', md: 260 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+              <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, mb: 1.5 }}>
+                Vista previa del botón
+              </Typography>
+              <Box sx={{
+                display: 'inline-flex', alignItems: 'center', gap: 1, px: 2.25, py: 1.25, borderRadius: '999px',
+                background: `linear-gradient(135deg, ${configDraft.agentColor}, ${configDraft.agentColor}dd)`,
+                color: '#fff', fontWeight: 700, boxShadow: `0 10px 28px ${configDraft.agentColor}55`,
+              }}>
+                <SmartToyOutlinedIcon sx={{ fontSize: 20 }} />
+                {configDraft.agentName || 'Asistente'}
+              </Box>
+              <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', mt: 2, textAlign: 'center' }}>
+                Así lo verán los pacientes en la esquina inferior de tu ficha pública.
+              </Typography>
+            </Box>
+          </Stack>
         </CardContent>
       </Card>
 

@@ -182,8 +182,11 @@ const toolImpls = {
 // System prompt
 // ─────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(profileInfo, hoyLocal) {
-  return `Eres el asistente virtual de ${profileInfo.nombre}${profileInfo.profesion ? ` (${profileInfo.profesion})` : ''}${profileInfo.ciudad ? ` en ${profileInfo.ciudad}` : ''}. Tu rol es ayudar a sus pacientes a agendar, reagendar o cancelar citas, y responder preguntas frecuentes.
+function buildSystemPrompt(profileInfo, hoyLocal, agentName = 'Asistente') {
+  const nameLine = agentName && agentName !== 'Asistente'
+    ? `Tu nombre es ${agentName}. `
+    : '';
+  return `${nameLine}Eres el asistente virtual de ${profileInfo.nombre}${profileInfo.profesion ? ` (${profileInfo.profesion})` : ''}${profileInfo.ciudad ? ` en ${profileInfo.ciudad}` : ''}. Tu rol es ayudar a sus pacientes a agendar, reagendar o cancelar citas, y responder preguntas frecuentes.
 
 Hoy es ${hoyLocal}.
 
@@ -480,7 +483,9 @@ async function chat(profileId, { conversationId, message, metadata }) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     timeZone: 'America/Bogota',
   });
-  const system = buildSystemPrompt(profileInfo, tzNow);
+  // Nombre custom del agente (si el profesional configuró uno)
+  const agentCfg = await require('./iaAgentConfig.service').getConfigOrDefaults(profileId);
+  const system = buildSystemPrompt(profileInfo, tzNow, agentCfg.agentName);
 
   await saveUserMessage(conversation.id, message);
   const history = await loadConversationMessages(conversation.id);

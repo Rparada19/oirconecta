@@ -193,6 +193,7 @@ model DirectoryProfile {
   // ── F5 Agente IA (Plan 3) ──
   iaConversations    IaConversation[]
   whatsappChannel    ProfessionalWhatsAppChannel?
+  iaAgentConfig      IaAgentConfig?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2320,6 +2321,25 @@ model IaMessage {
 
   @@index([conversationId, createdAt])
   @@map("ia_messages")
+}
+
+/// F5.5 — Personalización del agente IA por profesional.
+/// Nombre visible (ej. "Sofía", "Camilo") y color hex de la burbuja/FAB.
+/// Si no existe registro, el widget usa defaults (nombre "Asistente" + púrpura #6d28d9).
+model IaAgentConfig {
+  id             String           @id @default(uuid())
+  profileId      String           @unique
+  profile        DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// Nombre visible del asistente (2-30 chars). Se usa en el system prompt y en el widget.
+  agentName      String           @default("Asistente")
+  /// Color hex de la burbuja / FAB. Formato "#RRGGBB".
+  agentColor     String           @default("#6d28d9")
+  /// Mensaje de bienvenida opcional (si null, el widget genera uno automático).
+  welcomeMessage String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@map("ia_agent_config")
 }
 
 /// F5.4 — Paquete de conversaciones IA comprado adicional al Plan 3 base.
