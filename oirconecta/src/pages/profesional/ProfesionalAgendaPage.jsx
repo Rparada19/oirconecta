@@ -15,11 +15,12 @@ import {
 } from '@mui/material';
 import {
   EventOutlined, AddOutlined, DeleteOutlineOutlined, SaveOutlined,
-  WorkspacePremiumOutlined, EditOutlined, BlockOutlined,
+  WorkspacePremiumOutlined, EditOutlined, BlockOutlined, CalendarMonthOutlined,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { directoryApi } from '../../services/directoryAccountApi';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
+import AgendaCalendarView from '../../components/profesional/AgendaCalendarView';
 
 const ACCENT = '#15803d';
 const NAVY = '#0F2A4A';
@@ -141,6 +142,7 @@ export default function ProfesionalAgendaPage() {
                 '& .Mui-selected': { color: ACCENT },
                 '& .MuiTabs-indicator': { backgroundColor: ACCENT } }}>
           <Tab label={`Próximas citas (${appointments.upcoming || 0})`} />
+          <Tab icon={<CalendarMonthOutlined sx={{ fontSize: 18 }} />} iconPosition="start" label="Calendario" />
           <Tab label="Configuración" />
           <Tab label={`Tipos de consulta (${types.length})`} />
           <Tab label="Horario semanal" />
@@ -148,10 +150,11 @@ export default function ProfesionalAgendaPage() {
         </Tabs>
         <Box sx={{ p: { xs: 2, md: 3 } }}>
           {tab === 0 && <AppointmentsTab appointments={appointments} setAppointments={setAppointments} showSnack={showSnack} />}
-          {tab === 1 && <ConfigTab config={config} setConfig={setConfig} showSnack={showSnack} />}
-          {tab === 2 && <TypesTab types={types} setTypes={setTypes} showSnack={showSnack} />}
-          {tab === 3 && <AvailabilityTab availability={availability} setAvailability={setAvailability} showSnack={showSnack} />}
-          {tab === 4 && <BlocksTab blocks={blocks} setBlocks={setBlocks} showSnack={showSnack} />}
+          {tab === 1 && <AgendaCalendarView appointments={appointments.items || []} blocks={blocks} availability={availability} />}
+          {tab === 2 && <ConfigTab config={config} setConfig={setConfig} showSnack={showSnack} />}
+          {tab === 3 && <TypesTab types={types} setTypes={setTypes} showSnack={showSnack} />}
+          {tab === 4 && <AvailabilityTab availability={availability} setAvailability={setAvailability} showSnack={showSnack} />}
+          {tab === 5 && <BlocksTab blocks={blocks} setBlocks={setBlocks} showSnack={showSnack} />}
         </Box>
       </Card>
 
