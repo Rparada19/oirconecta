@@ -289,8 +289,10 @@ async function sendBookingConfirmation(appointment, meta = {}) {
           ['Hora',        hora],
           ['Motivo',      motivo],
         ]),
-        p('Para reprogramar o cancelar tu cita llámanos al <a href="tel:+573157939569"><strong>+57 315 793 9569</strong></a> o escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.'),
-        btn(`${SITE_URL}/blog`, 'Leer artículos de salud auditiva'),
+        appointment.directoryProfileId && appointment.rescheduleToken
+          ? btn(`${SITE_URL}/agendar/reagendar?token=${appointment.rescheduleToken}`, 'Reagendar mi cita')
+          : p('Para reprogramar o cancelar tu cita llámanos al <a href="tel:+573157939569"><strong>+57 315 793 9569</strong></a> o escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.'),
+        appointment.directoryProfileId ? '' : btn(`${SITE_URL}/blog`, 'Leer artículos de salud auditiva'),
         divider(),
         p(`<span style="font-size:13px;color:#6b7280;">¿Preguntas? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a></span>`),
       ].join(''),

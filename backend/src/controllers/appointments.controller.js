@@ -157,7 +157,21 @@ const rescheduleByToken = async (req, res, next) => {
     const { fecha, hora } = req.body;
     const updated = await appointmentsService.rescheduleByToken(req.params.token, fecha, hora);
     res.json({ success: true, data: updated });
-  } catch (e) { next(e); }
+  } catch (e) {
+    // Cuando el slot ya no está disponible, respondemos 409 con mensaje claro
+    if (e.statusCode) return res.status(e.statusCode).json({ success: false, error: e.message });
+    next(e);
+  }
+};
+
+const getRescheduleSlots = async (req, res, next) => {
+  try {
+    const result = await appointmentsService.getRescheduleSlots(req.params.token, req.query.date);
+    res.json({ success: true, data: result });
+  } catch (e) {
+    if (e.statusCode) return res.status(e.statusCode).json({ success: false, error: e.message });
+    next(e);
+  }
 };
 
 const processReminders = async (req, res, next) => {
@@ -182,6 +196,7 @@ module.exports = {
   updateStatus,
   cancel,
   getRescheduleInfo,
+  getRescheduleSlots,
   confirmByToken,
   rescheduleByToken,
   processReminders,

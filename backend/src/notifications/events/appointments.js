@@ -38,8 +38,8 @@ function buildVars(appointment) {
     fechaCita: formatFechaLarga(start),
     horaCita: appointment.hora || '',
     tipoConsulta: appointment.tipoConsulta || 'consulta',
-    linkConfirm: `${PUBLIC_BASE}/cita/confirmar/${appointment.rescheduleToken}`,
-    linkReagendar: `${PUBLIC_BASE}/cita/reagendar/${appointment.rescheduleToken}`,
+    linkConfirm: `${PUBLIC_BASE}/agendar/confirmar?token=${appointment.rescheduleToken}`,
+    linkReagendar: `${PUBLIC_BASE}/agendar/reagendar?token=${appointment.rescheduleToken}`,
     sede: 'OÍR Conecta',
   };
 }

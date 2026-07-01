@@ -365,15 +365,71 @@ const cancel = async (id) => {
   return appointment;
 };
 
-/** Obtener cita por rescheduleToken (público) */
+/** Obtener cita por rescheduleToken (público). Incluye info multi-tenant si aplica. */
 const getByRescheduleToken = async (token) => {
-  return prisma.appointment.findUnique({
+  const apt = await prisma.appointment.findUnique({
     where: { rescheduleToken: token },
     select: {
-      id: true, fecha: true, hora: true, motivo: true,
+      id: true, fecha: true, hora: true, motivo: true, durationMinutes: true,
       patientName: true, estado: true, rescheduleToken: true,
+      directoryProfileId: true, tipoConsulta: true,
+      directoryProfile: {
+        select: {
+          id: true,
+          account: { select: { nombre: true } },
+        },
+      },
     },
   });
+  if (!apt) return null;
+  // Aplanamos el nombre profesional para la UI
+  const professionalName = apt.directoryProfile?.account?.nombre || null;
+  return {
+    id: apt.id,
+    fecha: apt.fecha,
+    hora: apt.hora,
+    motivo: apt.motivo,
+    durationMinutes: apt.durationMinutes,
+    patientName: apt.patientName,
+    estado: apt.estado,
+    rescheduleToken: apt.rescheduleToken,
+    directoryProfileId: apt.directoryProfileId,
+    tipoConsulta: apt.tipoConsulta,
+    professionalName,
+  };
+};
+
+/**
+ * Slots disponibles para reagendar una cita según su token.
+ * - Si es cita multi-tenant (directoryProfileId): delega en professionalBooking.
+ * - Si es retail: usa DEFAULT_SLOTS + citas de ese día.
+ */
+const getRescheduleSlots = async (token, dateStr) => {
+  const apt = await prisma.appointment.findUnique({
+    where: { rescheduleToken: token },
+    select: { directoryProfileId: true, durationMinutes: true },
+  });
+  if (!apt) throw Object.assign(new Error('Token inválido'), { statusCode: 404 });
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    throw Object.assign(new Error('date requerido en formato YYYY-MM-DD'), { statusCode: 400 });
+  }
+
+  if (apt.directoryProfileId) {
+    // Multi-tenant: reutiliza cálculo de slots del profesional (respeta availability, blocks, buffer, TZ)
+    const booking = require('./professionalBooking.service');
+    const result = await booking.computeSlotsForDay(apt.directoryProfileId, dateStr);
+    // Normaliza al formato retail (array de "HH:MM") para que el frontend sea uniforme
+    return {
+      availableSlots: (result.slots || []).map((s) => s.time),
+      durationMinutes: result.durationMinutes || apt.durationMinutes || 30,
+      nonWorking: false,
+      multiTenant: true,
+      reason: result.reason || null,
+    };
+  }
+
+  // Retail: usa getAvailableSlots existente
+  return getAvailableSlots(dateStr, null);
 };
 
 /** Confirmar cita desde email (sin enviar correo) */
@@ -387,14 +443,24 @@ const confirmByToken = async (token) => {
   });
 };
 
-/** Reagendar cita desde email */
+/** Reagendar cita desde email. Multi-tenant si la cita tiene directoryProfileId. */
 const rescheduleByToken = async (token, newFecha, newHora) => {
   const apt = await prisma.appointment.findUnique({ where: { rescheduleToken: token } });
   if (!apt) throw Object.assign(new Error('Cita no encontrada'), { statusCode: 404 });
   if (apt.estado === 'CANCELLED') throw Object.assign(new Error('La cita fue cancelada'), { statusCode: 400 });
 
   const dateStr = String(newFecha).split('T')[0];
-  if (isNonWorkingDay(dateStr)) throw Object.assign(new Error('Fecha no hábil'), { statusCode: 400 });
+
+  // Multi-tenant: valida slot con el servicio del profesional (respeta availability, blocks, buffer).
+  // Retail: usa validación de día hábil clásica (fines de semana + feriados CO).
+  if (apt.directoryProfileId) {
+    const booking = require('./professionalBooking.service');
+    const { slots } = await booking.computeSlotsForDay(apt.directoryProfileId, dateStr);
+    const hit = (slots || []).find((s) => s.time === newHora);
+    if (!hit) throw Object.assign(new Error('El horario ya no está disponible. Elige otro slot.'), { statusCode: 409 });
+  } else {
+    if (isNonWorkingDay(dateStr)) throw Object.assign(new Error('Fecha no hábil'), { statusCode: 400 });
+  }
 
   const [y, m, d] = dateStr.split('-').map(Number);
   const fecha = new Date(y, m - 1, d, 0, 0, 0, 0);
@@ -413,11 +479,20 @@ const rescheduleByToken = async (token, newFecha, newHora) => {
     },
   });
 
-  // Notificar a audiologa y admin
+  // Notificar profesional dueño (multi-tenant → cuenta directorio; retail → email fijo config) + admin
   const emailService = require('./email.service');
   const config = require('../config');
-  const recipients = [config.retail.professionalEmail, config.admin.email].filter(Boolean);
-  for (const to of new Set(recipients)) {
+  const recipients = new Set([config.admin.email].filter(Boolean));
+  if (apt.directoryProfileId) {
+    const profile = await prisma.directoryProfile.findUnique({
+      where: { id: apt.directoryProfileId },
+      select: { account: { select: { email: true } } },
+    });
+    if (profile?.account?.email) recipients.add(profile.account.email);
+  } else if (config.retail?.professionalEmail) {
+    recipients.add(config.retail.professionalEmail);
+  }
+  for (const to of recipients) {
     emailService.sendRescheduledNotification({
       to,
       patientName: apt.patientName,
@@ -492,6 +567,7 @@ module.exports = {
   getAvailableSlots,
   getById,
   getByRescheduleToken,
+  getRescheduleSlots,
   create,
   update,
   updateStatus,

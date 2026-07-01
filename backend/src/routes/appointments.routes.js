@@ -38,6 +38,7 @@ router.post(
 
 // ── Rutas públicas de token (confirm / reschedule) ──
 router.get('/reschedule/:token', appointmentsController.getRescheduleInfo);
+router.get('/reschedule/:token/slots', appointmentsController.getRescheduleSlots);
 router.post('/confirm/:token',   appointmentsController.confirmByToken);
 router.post('/reschedule/:token',
   [

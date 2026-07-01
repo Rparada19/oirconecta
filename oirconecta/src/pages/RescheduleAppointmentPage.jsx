@@ -21,18 +21,20 @@ function fmt(y, m, d) {
   return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
 
-function formatSlot(t) {
+function formatSlot(t, durationMin = 50) {
   const [h, min] = t.split(':').map(Number);
-  const endH = h + 0, endMin = min + 50;
   const to12 = (hh, mm) => {
     const ap = hh >= 12 ? 'PM' : 'AM';
     const h12 = hh % 12 || 12;
     return `${h12}:${String(mm).padStart(2,'0')} ${ap}`;
   };
-  return `${to12(h, min)} – ${to12(h, min + 50)}`;
+  const endTotal = h * 60 + min + durationMin;
+  const endH = Math.floor(endTotal / 60);
+  const endMin = endTotal % 60;
+  return `${to12(h, min)} – ${to12(endH, endMin)}`;
 }
 
-function MiniCalendar({ selected, onSelect }) {
+function MiniCalendar({ selected, onSelect, allowNonWorking = false }) {
   const today = new Date();
   const [view, setView] = useState(() => ({ y: today.getFullYear(), m: today.getMonth() }));
   const { y, m } = view;
@@ -70,7 +72,8 @@ function MiniCalendar({ selected, onSelect }) {
           const isHoliday = holidays.has(dateStr);
           const isPast = dateStr <= todayStr;
           const isSelected = dateStr === selected;
-          const disabled = nonWorking || isPast;
+          // En multi-tenant el profesional decide qué días trabaja: solo bloqueamos días pasados.
+          const disabled = isPast || (!allowNonWorking && nonWorking);
           return (
             <Box key={i} onClick={() => !disabled && onSelect(dateStr)}
               sx={{
@@ -103,16 +106,22 @@ export default function RescheduleAppointmentPage() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
   const [availableSlots, setAvailableSlots] = useState(SLOTS);
+  const [slotDuration, setSlotDuration] = useState(50); // 50 retail, dinámico multi-tenant
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const isMultiTenant = !!appt?.directoryProfileId;
 
   useEffect(() => {
     if (!token) { setPageStatus('error'); setErrMsg('Token no válido.'); return; }
     fetch(`${API}/api/appointments/reschedule/${token}`)
       .then(r => r.json())
       .then(d => {
-        if (d.success) { setAppt(d.data); setPageStatus('ready'); }
-        else { setPageStatus('error'); setErrMsg(d.error || 'Enlace inválido o expirado.'); }
+        if (d.success) {
+          setAppt(d.data);
+          if (d.data?.durationMinutes) setSlotDuration(d.data.durationMinutes);
+          setPageStatus('ready');
+        } else { setPageStatus('error'); setErrMsg(d.error || 'Enlace inválido o expirado.'); }
       })
       .catch(() => { setPageStatus('error'); setErrMsg('Error de red.'); });
   }, [token]);
@@ -120,16 +129,20 @@ export default function RescheduleAppointmentPage() {
   const fetchSlots = useCallback((date) => {
     setLoadingSlots(true);
     setSelectedSlot('');
-    fetch(`${API}/api/appointments/available-slots?fecha=${date}`)
+    // Endpoint auto-detectante: si la cita es multi-tenant, retorna slots del profesional.
+    fetch(`${API}/api/appointments/reschedule/${token}/slots?date=${date}`)
       .then(r => r.json())
       .then(d => {
-        if (d.success && d.data?.availableSlots) setAvailableSlots(d.data.availableSlots);
-        else if (d.data?.nonWorking) setAvailableSlots([]);
-        else setAvailableSlots([]);
+        if (d.success && d.data?.availableSlots) {
+          setAvailableSlots(d.data.availableSlots);
+          if (d.data.durationMinutes) setSlotDuration(d.data.durationMinutes);
+        } else {
+          setAvailableSlots([]);
+        }
       })
       .catch(() => setAvailableSlots([]))
       .finally(() => setLoadingSlots(false));
-  }, []);
+  }, [token]);
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
@@ -187,7 +200,7 @@ export default function RescheduleAppointmentPage() {
               <CheckCircleOutlineIcon sx={{ fontSize: 72, color: '#6ee7c8', mb: 2 }} />
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>¡Cita reagendada!</Typography>
               <Typography color="text.secondary" sx={{ mb: 1 }}>
-                Tu cita fue reagendada para el <strong>{selectedDate}</strong> a las <strong>{formatSlot(selectedSlot)}</strong>.
+                Tu cita fue reagendada para el <strong>{selectedDate}</strong> a las <strong>{formatSlot(selectedSlot, slotDuration)}</strong>{appt?.professionalName ? <> con <strong>{appt.professionalName}</strong></> : null}.
               </Typography>
               <Typography color="text.secondary" sx={{ mb: 3, fontSize: 14 }}>
                 Recibirás un correo con los detalles actualizados.
@@ -204,12 +217,14 @@ export default function RescheduleAppointmentPage() {
               <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>Reagendar cita</Typography>
               {appt && (
                 <Typography color="text.secondary" sx={{ mb: 4, fontSize: 14 }}>
-                  Cita actual: <strong>{appt.fecha}</strong> a las <strong>{appt.hora}</strong>
+                  Cita actual: <strong>{String(appt.fecha).slice(0, 10)}</strong> a las <strong>{appt.hora}</strong>
+                  {appt.professionalName && <> con <strong>{appt.professionalName}</strong></>}
+                  {appt.tipoConsulta && <> · {appt.tipoConsulta}</>}
                 </Typography>
               )}
 
               <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Selecciona una nueva fecha</Typography>
-              <MiniCalendar selected={selectedDate} onSelect={handleDateSelect} />
+              <MiniCalendar selected={selectedDate} onSelect={handleDateSelect} allowNonWorking={isMultiTenant} />
 
               {selectedDate && (
                 <Box sx={{ mt: 3 }}>
@@ -232,7 +247,7 @@ export default function RescheduleAppointmentPage() {
                             transition: 'all 0.15s',
                             '&:hover': { background: 'rgba(110,231,200,0.08)', borderColor: 'rgba(110,231,200,0.4)' },
                           }}>
-                          {formatSlot(slot)}
+                          {formatSlot(slot, slotDuration)}
                         </Box>
                       ))}
                     </Box>
