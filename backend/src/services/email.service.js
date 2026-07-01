@@ -290,7 +290,12 @@ async function sendBookingConfirmation(appointment, meta = {}) {
           ['Motivo',      motivo],
         ]),
         appointment.directoryProfileId && appointment.rescheduleToken
-          ? btn(`${SITE_URL}/agendar/reagendar?token=${appointment.rescheduleToken}`, 'Reagendar mi cita')
+          ? [
+              `<div style="text-align:center;margin:24px 0;">`,
+              `<a href="${SITE_URL}/agendar/reagendar?token=${appointment.rescheduleToken}" style="display:inline-block;margin:4px;padding:13px 22px;background:#15803d;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;">Reagendar mi cita</a>`,
+              `<a href="${SITE_URL}/agendar/cancelar?token=${appointment.rescheduleToken}" style="display:inline-block;margin:4px;padding:13px 22px;background:#f9fafb;color:#dc2626;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;border:1.5px solid #dc2626;">Cancelar mi cita</a>`,
+              `</div>`,
+            ].join('')
           : p('Para reprogramar o cancelar tu cita llámanos al <a href="tel:+573157939569"><strong>+57 315 793 9569</strong></a> o escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.'),
         appointment.directoryProfileId ? '' : btn(`${SITE_URL}/blog`, 'Leer artículos de salud auditiva'),
         divider(),
@@ -640,6 +645,46 @@ async function sendRescheduledNotification({ to, patientName, patientEmail, oldF
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// 10b. CANCELACIÓN — el paciente canceló por link; alerta al profesional
+// ════════════════════════════════════════════════════════════════════════════
+async function sendCancellationAlert({ to, professionalName, patientName, patientEmail, patientPhone, fecha, hora, tipoConsulta, reason }) {
+  const proName = professionalName || 'Profesional';
+  const patient = patientName || 'Paciente';
+  const phoneClean = String(patientPhone || '').replace(/\D+/g, '');
+  const telHref = phoneClean ? `tel:+${phoneClean.startsWith('57') ? phoneClean : `57${phoneClean}`}` : null;
+  const waHref = phoneClean ? `https://wa.me/${phoneClean.startsWith('57') ? phoneClean : `57${phoneClean}`}` : null;
+  const [fy, fm, fd] = String(fecha).split('-').map(Number);
+  const fechaLarga = new Date(fy, fm - 1, fd).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  const contactBtnRow = [
+    telHref ? `<a href="${telHref}" style="display:inline-block;margin:4px;padding:12px 22px;background:#dc2626;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;">📞 Llamar al paciente</a>` : '',
+    waHref  ? `<a href="${waHref}" style="display:inline-block;margin:4px;padding:12px 22px;background:#16a34a;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;">💬 WhatsApp</a>` : '',
+  ].join('');
+
+  const html = baseTemplate({
+    preheader: `${patient} canceló su cita del ${fecha} ${hora}. Contáctalo para saber qué pasó.`,
+    title: 'Cita cancelada — OírConecta',
+    bodyHtml: [
+      h1('⚠️ Cita cancelada por el paciente'),
+      p(`Hola ${proName}, <strong>${patient}</strong> canceló su cita usando el link del correo. Te recomendamos contactarlo para saber qué pasó y ofrecerle reagendar.`),
+      highlight([
+        ['Paciente',       patient],
+        ['Teléfono',       patientPhone || '—'],
+        ['Email',          patientEmail || '—'],
+        ['Fecha original', fechaLarga],
+        ['Hora original',  hora],
+        ['Tipo consulta',  tipoConsulta || '—'],
+        ['Motivo',         reason || '(no lo indicó)'],
+      ]),
+      `<div style="text-align:center;margin:24px 0;">${contactBtnRow}</div>`,
+      p(`Cuando lo contactes, márcalo como <strong>contactado</strong> en tu portal para que la alerta desaparezca.`),
+      btn(`${SITE_URL}/portal-profesional/agenda`, 'Ir a mi agenda'),
+    ].join(''),
+  });
+  await deliver({ to, toName: proName, subject: `⚠️ ${patient} canceló su cita — OírConecta`, html });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // 11. COMPARADOR — confirmación al paciente + aviso del lead al equipo
 // ════════════════════════════════════════════════════════════════════════════
 async function sendComparadorLeadEmails({ nombre, telefono, email, ciudad, marcaSugerida }) {
@@ -933,6 +978,7 @@ module.exports = {
 
   sendAppointmentReminder,
   sendRescheduledNotification,
+  sendCancellationAlert,
 
   // Alias para compatibilidad con código anterior
   sendBookingConfirmations: sendBookingConfirmation,

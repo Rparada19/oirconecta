@@ -36,10 +36,11 @@ router.post(
   appointmentsController.createPublic
 );
 
-// ── Rutas públicas de token (confirm / reschedule) ──
+// ── Rutas públicas de token (confirm / reschedule / cancel) ──
 router.get('/reschedule/:token', appointmentsController.getRescheduleInfo);
 router.get('/reschedule/:token/slots', appointmentsController.getRescheduleSlots);
 router.post('/confirm/:token',   appointmentsController.confirmByToken);
+router.post('/cancel/:token',    appointmentsController.cancelByToken);
 router.post('/reschedule/:token',
   [
     body('fecha').notEmpty(),

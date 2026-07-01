@@ -340,12 +340,60 @@ async function updateAppointmentStatus(profileId, appointmentId, { estado, notas
   return prisma.appointment.update({ where: { id: appointmentId }, data });
 }
 
+/**
+ * Cancelaciones por paciente pendientes de que el profesional haga llamada de seguimiento.
+ * Solo cuenta las que canceló el paciente por link (cancelledByPatientAt != null) y
+ * que aún no tienen followUpDoneAt.
+ */
+async function listCancellationsPending(profileId) {
+  const items = await prisma.appointment.findMany({
+    where: {
+      directoryProfileId: profileId,
+      estado: 'CANCELLED',
+      cancelledByPatientAt: { not: null },
+      followUpDoneAt: null,
+    },
+    orderBy: { cancelledByPatientAt: 'desc' },
+    take: 100,
+    select: {
+      id: true, fecha: true, hora: true, tipoConsulta: true,
+      patientName: true, patientEmail: true, patientPhone: true,
+      cancelledByPatientAt: true, cancelReason: true,
+    },
+  });
+  return { items, count: items.length };
+}
+
+/**
+ * Marca la llamada de seguimiento como hecha para una cancelación puntual.
+ * Multi-tenant safe.
+ */
+async function markFollowUpDone(profileId, appointmentId, { notes } = {}) {
+  const appt = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    select: { id: true, directoryProfileId: true, followUpNotes: true },
+  });
+  if (!appt || appt.directoryProfileId !== profileId) {
+    throw new AgendaError('Cita no encontrada', { status: 404 });
+  }
+  return prisma.appointment.update({
+    where: { id: appointmentId },
+    data: {
+      followUpDoneAt: new Date(),
+      followUpNotes: notes ? String(notes).trim().slice(0, 1000) : null,
+    },
+    select: { id: true, followUpDoneAt: true, followUpNotes: true },
+  });
+}
+
 module.exports = {
   AgendaError,
   TIPOS_BLOQUEO,
   assertAgendaFeature,
   listAppointments,
   updateAppointmentStatus,
+  listCancellationsPending,
+  markFollowUpDone,
 
   getConfig,
   updateConfig,

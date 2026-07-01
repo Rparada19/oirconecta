@@ -469,7 +469,24 @@ async function runBootMigrations(prisma) {
   await ensureWhatsAppChannelSchema(prisma);
   await ensureIaPacksSchema(prisma);
   await ensureIaAgentConfigSchema(prisma);
+  await ensureAppointmentCancellationColumns(prisma);
   await seedPlanDefaults(prisma);
+}
+
+/**
+ * C8.1 — Cancelación por paciente + seguimiento profesional.
+ * Idempotente: usa ADD COLUMN IF NOT EXISTS.
+ */
+async function ensureAppointmentCancellationColumns(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "cancelledByPatientAt" TIMESTAMP(3)`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "cancelReason" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "followUpDoneAt" TIMESTAMP(3)`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "followUpNotes" TEXT`);
+    console.log('[boot-migrate] appointment cancellation columns OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);
+  }
 }
 
 module.exports = { runBootMigrations };

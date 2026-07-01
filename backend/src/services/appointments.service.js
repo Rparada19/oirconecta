@@ -507,6 +507,80 @@ const rescheduleByToken = async (token, newFecha, newHora) => {
   return updated;
 };
 
+/**
+ * Cancelar cita desde link público (paciente).
+ * - Marca CANCELLED + cancelledByPatientAt + cancelReason.
+ * - Cancela recordatorios pendientes (BullMQ).
+ * - Notifica al profesional dueño (email con teléfono + botón "Marcar contactado").
+ */
+const cancelByToken = async (token, reason) => {
+  const apt = await prisma.appointment.findUnique({ where: { rescheduleToken: token } });
+  if (!apt) throw Object.assign(new Error('Cita no encontrada'), { statusCode: 404 });
+  if (apt.estado === 'CANCELLED') throw Object.assign(new Error('La cita ya estaba cancelada'), { statusCode: 400 });
+
+  const now = new Date();
+  const updated = await prisma.appointment.update({
+    where: { rescheduleToken: token },
+    data: {
+      estado: 'CANCELLED',
+      cancelledByPatientAt: now,
+      cancelReason: (reason || '').toString().trim().slice(0, 500) || null,
+    },
+  });
+
+  // Cancelar recordatorios pendientes de BullMQ (best-effort)
+  try {
+    const { onAppointmentCancelled } = require('../notifications/events/appointments');
+    onAppointmentCancelled(apt, prisma).catch((e) => console.error('[cancel] notif cancel:', e?.message));
+  } catch (e) {
+    console.warn('[cancel] no se pudo enganchar notifications:', e.message);
+  }
+
+  // Email al profesional dueño con alerta de seguimiento
+  const emailService = require('./email.service');
+  const config = require('../config');
+  let profEmail = null;
+  let profName = null;
+  if (apt.directoryProfileId) {
+    const profile = await prisma.directoryProfile.findUnique({
+      where: { id: apt.directoryProfileId },
+      select: { account: { select: { email: true, nombre: true } } },
+    });
+    profEmail = profile?.account?.email || null;
+    profName = profile?.account?.nombre || null;
+  } else {
+    profEmail = config.retail?.professionalEmail || null;
+  }
+  if (profEmail) {
+    emailService.sendCancellationAlert({
+      to: profEmail,
+      professionalName: profName,
+      patientName: apt.patientName,
+      patientEmail: apt.patientEmail,
+      patientPhone: apt.patientPhone,
+      fecha: apt.fecha.toISOString().slice(0, 10),
+      hora: apt.hora,
+      tipoConsulta: apt.tipoConsulta,
+      reason: updated.cancelReason,
+    }).catch((e) => console.error('[cancel] email profesional:', e?.message));
+  }
+  if (config.admin?.email && config.admin.email !== profEmail) {
+    emailService.sendCancellationAlert({
+      to: config.admin.email,
+      professionalName: 'Admin',
+      patientName: apt.patientName,
+      patientEmail: apt.patientEmail,
+      patientPhone: apt.patientPhone,
+      fecha: apt.fecha.toISOString().slice(0, 10),
+      hora: apt.hora,
+      tipoConsulta: apt.tipoConsulta,
+      reason: updated.cancelReason,
+    }).catch(() => {});
+  }
+
+  return updated;
+};
+
 /** Procesar recordatorios pendientes (llamado por cron externo) */
 const processReminders = async () => {
   const now = new Date();
@@ -568,6 +642,7 @@ module.exports = {
   getById,
   getByRescheduleToken,
   getRescheduleSlots,
+  cancelByToken,
   create,
   update,
   updateStatus,

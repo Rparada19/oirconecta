@@ -174,6 +174,17 @@ const getRescheduleSlots = async (req, res, next) => {
   }
 };
 
+const cancelByToken = async (req, res, next) => {
+  try {
+    const { reason } = req.body || {};
+    const updated = await appointmentsService.cancelByToken(req.params.token, reason);
+    res.json({ success: true, data: updated });
+  } catch (e) {
+    if (e.statusCode) return res.status(e.statusCode).json({ success: false, error: e.message });
+    next(e);
+  }
+};
+
 const processReminders = async (req, res, next) => {
   try {
     const secret = process.env.CRON_SECRET;
@@ -199,5 +210,6 @@ module.exports = {
   getRescheduleSlots,
   confirmByToken,
   rescheduleByToken,
+  cancelByToken,
   processReminders,
 };

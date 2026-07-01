@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { directoryApi } from '../../services/directoryAccountApi';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import AgendaCalendarView from '../../components/profesional/AgendaCalendarView';
+import CancellationFollowUpAlert from '../../components/profesional/CancellationFollowUpAlert';
 
 const ACCENT = '#15803d';
 const NAVY = '#0F2A4A';
@@ -133,6 +134,9 @@ export default function ProfesionalAgendaPage() {
           Tu agenda en línea está <strong>pausada</strong>. Mientras siga así, los pacientes no podrán reservar desde tu perfil público. Actívala en la pestaña Configuración.
         </Alert>
       )}
+
+      {/* Alerta de cancelaciones pendientes de seguimiento */}
+      <CancellationFollowUpAlert />
 
       <Card sx={{ mt: 2, borderRadius: '14px', border: '1px solid #e5e7eb' }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)}

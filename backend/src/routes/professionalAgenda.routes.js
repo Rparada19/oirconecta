@@ -87,6 +87,12 @@ router.patch('/me/appointments/:id', (req, res) => send(res, () => agenda.update
   estado: req.body?.estado, notas: req.body?.notas,
 })));
 
+// ── Cancelaciones por paciente pendientes de seguimiento (alerta) ──
+router.get('/me/cancellations-pending',
+  (req, res) => send(res, () => agenda.listCancellationsPending(req.profileId)));
+router.post('/me/appointments/:id/follow-up',
+  (req, res) => send(res, () => agenda.markFollowUpDone(req.profileId, req.params.id, req.body || {})));
+
 // ── Bloqueos ──
 router.get('/me/blocks',          (req, res) => send(res, () => agenda.listBlocks(req.profileId, { from: req.query.from, to: req.query.to })));
 router.post('/me/blocks',         (req, res) => send(res, () => agenda.createBlock(req.profileId, req.body || {})));

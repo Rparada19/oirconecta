@@ -559,6 +559,12 @@ model Appointment {
   reminder5hSentAt   DateTime? // recordatorio 5 horas antes
   patientConfirmedAt DateTime? // confirmación del paciente por email
 
+  // Cancelación por paciente (link email) + seguimiento del profesional
+  cancelledByPatientAt DateTime? // cuándo el paciente canceló por link
+  cancelReason         String? // motivo opcional que dio el paciente
+  followUpDoneAt       DateTime? // cuándo el profesional marcó "ya contacté"
+  followUpNotes        String? // qué pasó en la llamada de seguimiento
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
