@@ -28,6 +28,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { getAdminToken, clearAdminToken, getAdminUser } from './adminAuth';
 import { canAccessAllAdminPages, canUseSalesCrm, ROLES } from '../../utils/rolePermissions';
 
@@ -96,6 +97,7 @@ const ADMIN_FULL_NAV = [
   { label: 'Marketing & Ventas', icon: <CampaignOutlinedIcon />, path: '/portal-admin/marketing' },
   { label: 'Buzón de contacto', icon: <InboxOutlinedIcon />, path: '/portal-admin/contactos' },
   { label: 'Suscripciones', icon: <WorkspacePremiumOutlinedIcon />, path: '/portal-admin/suscripciones' },
+  { label: 'Agente IA', icon: <SmartToyOutlinedIcon />, path: '/portal-admin/ia' },
 ];
 
 // Items del CRM Sales (captación outbound) — ADMIN + EJECUTIVO_COMERCIAL.

@@ -187,6 +187,17 @@ router.post('/admin/recompute', authenticate, authorize('ADMIN'), async (req, re
   }
 });
 
+// F4 — Admin suspende suscripción (perfil oculto, sin cargos; reactivable)
+router.post('/admin/:id/suspend', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const iaAdmin = require('../services/iaAdmin.service');
+    const updated = await iaAdmin.suspendSubscription(req.params.id, { motivo: req.body?.motivo });
+    res.json({ success: true, data: updated });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
 // F5.3 — Admin verifica/activa el canal WhatsApp de un profesional
 router.post('/admin/:profileId/whatsapp/verify', authenticate, authorize('ADMIN'), async (req, res) => {
   try {

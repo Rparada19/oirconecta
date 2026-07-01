@@ -15,6 +15,7 @@ import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded';
+import PauseCircleOutlinedIcon from '@mui/icons-material/PauseCircleOutlined';
 import { adminFetch } from './adminAuth';
 
 const ACCENT = '#085946';
@@ -76,6 +77,8 @@ export default function AdminSuscripcionesPage() {
   const [cancelMotivo, setCancelMotivo] = useState('');
   const [planTarget, setPlanTarget] = useState(null); // sub a cambiar de plan
   const [planNuevo, setPlanNuevo] = useState('PLAN_3_MENSUAL');
+  const [suspendTarget, setSuspendTarget] = useState(null);
+  const [suspendMotivo, setSuspendMotivo] = useState('');
   const [working, setWorking] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -137,6 +140,23 @@ export default function AdminSuscripcionesPage() {
       fetchAll();
     } else {
       setToast({ severity: 'error', msg: r?.error || 'No se pudo cambiar el plan' });
+    }
+  };
+
+  const handleSuspend = async () => {
+    if (!suspendTarget) return;
+    setWorking(true);
+    const r = await adminFetch(`/api/subscriptions/admin/${suspendTarget.id}/suspend`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo: suspendMotivo }),
+    });
+    setWorking(false);
+    if (r?.data?.success) {
+      setToast({ severity: 'success', msg: `Suscripción de ${suspendTarget.nombre || suspendTarget.email} suspendida.` });
+      setSuspendTarget(null); setSuspendMotivo('');
+      fetchAll();
+    } else {
+      setToast({ severity: 'error', msg: r?.error || 'No se pudo suspender' });
     }
   };
 
@@ -441,12 +461,20 @@ export default function AdminSuscripcionesPage() {
                               </IconButton>
                             </Tooltip>
                           ) : (
-                            <Tooltip title="Dar de baja">
-                              <IconButton size="small" disabled={working} onClick={() => setCancelTarget(s)}
-                                sx={{ color: '#b91c1c', '&:hover': { bgcolor: '#fee2e2' } }}>
-                                <PersonOffOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                            <>
+                              <Tooltip title="Suspender (perfil oculto, reactivable sin cargos)">
+                                <IconButton size="small" disabled={working} onClick={() => setSuspendTarget(s)}
+                                  sx={{ color: '#a16207', '&:hover': { bgcolor: '#fef3c7' } }}>
+                                  <PauseCircleOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Dar de baja (cancela definitivo)">
+                                <IconButton size="small" disabled={working} onClick={() => setCancelTarget(s)}
+                                  sx={{ color: '#b91c1c', '&:hover': { bgcolor: '#fee2e2' } }}>
+                                  <PersonOffOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </>
                           )}
                         </Stack>
                       </TableCell>
@@ -522,6 +550,31 @@ export default function AdminSuscripcionesPage() {
             startIcon={working ? <CircularProgress size={16} color="inherit" /> : <SwapHorizRoundedIcon />}
             sx={{ background: '#0369a1', '&:hover': { background: '#075985' } }}>
             Cambiar plan
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog suspensión */}
+      <Dialog open={!!suspendTarget} onClose={() => !working && setSuspendTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: NAVY }}>Suspender suscripción</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Vas a suspender la suscripción de <strong>{suspendTarget?.nombre || suspendTarget?.email}</strong>.
+          </Typography>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            El perfil se ocultará del directorio inmediatamente pero <strong>NO se cobra nada nuevo</strong>.
+            Puedes reactivar cuando quieras sin trámite adicional.
+          </Alert>
+          <TextField fullWidth multiline rows={3} label="Motivo (opcional, queda registrado)"
+            value={suspendMotivo} onChange={(e) => setSuspendMotivo(e.target.value)}
+            placeholder="Ej: falta de pago, uso indebido, solicitud interna..." />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setSuspendTarget(null)} disabled={working}>Cancelar</Button>
+          <Button onClick={handleSuspend} disabled={working} variant="contained"
+            startIcon={working ? <CircularProgress size={16} color="inherit" /> : <PauseCircleOutlinedIcon />}
+            sx={{ background: '#a16207', '&:hover': { background: '#854d0e' } }}>
+            Suspender
           </Button>
         </DialogActions>
       </Dialog>

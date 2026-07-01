@@ -7,6 +7,8 @@
 
 const express = require('express');
 const ia = require('../services/iaAgent.service');
+const iaAdmin = require('../services/iaAdmin.service');
+const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -31,5 +33,20 @@ router.post('/public/:profileId/chat', (req, res) => {
     metadata: { ipMasked, ua },
   }));
 });
+
+// ─── Admin (F4) ───
+router.get('/admin/stats', authenticate, authorize('ADMIN'), (req, res) =>
+  send(res, () => iaAdmin.getGlobalStats()));
+
+router.get('/admin/conversations', authenticate, authorize('ADMIN'), (req, res) =>
+  send(res, () => iaAdmin.listConversations({
+    profileId: req.query.profileId,
+    status: req.query.status,
+    from: req.query.from, to: req.query.to,
+    limit: req.query.limit, offset: req.query.offset,
+  })));
+
+router.get('/admin/conversations/:id', authenticate, authorize('ADMIN'), (req, res) =>
+  send(res, () => iaAdmin.getConversationDetail(req.params.id)));
 
 module.exports = router;
