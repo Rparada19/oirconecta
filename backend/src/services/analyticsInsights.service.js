@@ -270,7 +270,45 @@ async function getTopEvents(range) {
   return rows;
 }
 
+// ─── Debug: últimos eventos crudos + salud del pipeline ───
+async function getDebug() {
+  const total = await prisma.analyticsEvent.count();
+  const last24h = await prisma.analyticsEvent.count({
+    where: { timestamp: { gte: new Date(Date.now() - 24 * 3600 * 1000) } },
+  });
+  const distinctSessions = await prisma.$queryRawUnsafe(`
+    SELECT COUNT(DISTINCT "sessionId")::int AS c FROM "analytics_events"
+    WHERE "timestamp" >= NOW() - INTERVAL '24 hours'
+  `);
+  const nullDevice = await prisma.analyticsEvent.count({
+    where: { device: null, timestamp: { gte: new Date(Date.now() - 24 * 3600 * 1000) } },
+  });
+  const nullCity = await prisma.analyticsEvent.count({
+    where: { city: null, timestamp: { gte: new Date(Date.now() - 24 * 3600 * 1000) } },
+  });
+  const latest = await prisma.analyticsEvent.findMany({
+    orderBy: { timestamp: 'desc' },
+    take: 20,
+    select: {
+      id: true, eventType: true, timestamp: true, sessionId: true, visitorId: true,
+      path: true, device: true, os: true, browser: true,
+      ipMasked: true, city: true, country: true, referrer: true, utmSource: true,
+    },
+  });
+  return {
+    counts: {
+      total,
+      last24h,
+      distinctSessions24h: distinctSessions[0]?.c || 0,
+      nullDevice24h: nullDevice,
+      nullCity24h: nullCity,
+    },
+    latest,
+  };
+}
+
 module.exports = {
   getOverview, getTimeseries, getByCity, getByDevice,
   getTrafficSources, getTopPages, getFunnel, getTopEvents,
+  getDebug,
 };
