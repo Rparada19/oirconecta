@@ -14,6 +14,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { trackEvent } from '../utils/analytics';
 import DirectoryCardV2 from '../components/directorio/v2/DirectoryCardV2';
 import DirectoryCardSkeleton from '../components/directorio/v2/DirectoryCardSkeleton';
 import DirectoryFiltersDrawer from '../components/directorio/v2/DirectoryFiltersDrawer';
@@ -108,6 +109,11 @@ export default function DirectorioAirbnbPage() {
           const d = res.data.data || {};
           setItems(d.items || []);
           setTotal(d.total || 0);
+          // D2 — trackea la búsqueda con filtros y count de resultados
+          trackEvent('directory_search', null, {
+            filters,
+            resultCount: d.total || 0,
+          });
         } else {
           setError('No pudimos cargar el directorio. Intenta de nuevo.');
         }

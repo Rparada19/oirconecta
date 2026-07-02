@@ -19,6 +19,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { trackEvent } from '../utils/analytics';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -62,7 +63,13 @@ export default function CancelAppointmentPage() {
     })
       .then(r => r.json())
       .then(d => {
-        if (d.success) setPageStatus('success');
+        if (d.success) {
+          setPageStatus('success');
+          trackEvent('booking_cancelled', null, {
+            profileId: appt?.directoryProfileId || null,
+            gaveReason: !!reason.trim(),
+          });
+        }
         else { setErrMsg(d.error || 'No se pudo cancelar.'); setSubmitting(false); }
       })
       .catch(() => { setErrMsg('Error de red.'); setSubmitting(false); });

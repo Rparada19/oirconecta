@@ -17,6 +17,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import NewsletterCTA from '../components/NewsletterCTA';
 import PreviewSlot from '../components/marketing/PreviewSlot';
+import { trackEntityEvent, trackEvent } from '../utils/analytics';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
@@ -278,15 +279,50 @@ export default function BlogPostPage() {
         return r.json();
       })
       .then((data) => {
-        setPost(data.data || data.post || data);
+        const p = data.data || data.post || data;
+        setPost(p);
         setLoading(false);
+        // D2 — evento blog_view
+        trackEntityEvent('blog_view', {
+          entityType: 'BlogPost',
+          entityId: p?.id || slug,
+          properties: { slug, categoria: p?.categoria || null },
+        });
       })
       .catch(() => {
         const demo = DEMO_POSTS[slug];
-        if (demo) { setPost(demo); setLoading(false); }
-        else { setNotFound(true); setLoading(false); }
+        if (demo) {
+          setPost(demo); setLoading(false);
+          trackEntityEvent('blog_view', {
+            entityType: 'BlogPost', entityId: slug,
+            properties: { slug, demo: true },
+          });
+        } else { setNotFound(true); setLoading(false); }
       });
   }, [slug]);
+
+  // D2 — scroll depth 50% y 100% (una vez cada uno por artículo)
+  useEffect(() => {
+    if (!post) return;
+    let reached50 = false;
+    let reached100 = false;
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const scrollTop = window.scrollY;
+      const total = doc.scrollHeight - window.innerHeight;
+      const pct = total > 0 ? (scrollTop / total) : 0;
+      if (!reached50 && pct >= 0.5) {
+        reached50 = true;
+        trackEvent('blog_read_50', null, { slug: post.slug || slug });
+      }
+      if (!reached100 && pct >= 0.95) {
+        reached100 = true;
+        trackEvent('blog_read_100', null, { slug: post.slug || slug });
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [post, slug]);
 
   const catColor = CAT_COLOR[post?.categoria] || '#6b7280';
   const catLabel = CATEGORIAS[post?.categoria] || post?.categoria || '';

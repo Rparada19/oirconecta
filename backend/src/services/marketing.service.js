@@ -517,7 +517,10 @@ async function _computeCampaignAnalytics() {
   const withMetrics = enriched.filter((c) => c.monthImpressions > 0);
   const withoutMetrics = enriched.filter((c) => c.monthImpressions === 0);
 
-  const topByCTR = [...withMetrics].sort((a, b) => b.monthCTR - a.monthCTR).slice(0, 5);
+  // Top CTR: exige al menos 10 impresiones para que el % sea significativo
+  const topByCTR = [...withMetrics]
+    .filter((c) => c.monthImpressions >= 10)
+    .sort((a, b) => b.monthCTR - a.monthCTR).slice(0, 5);
   const bottomByCTR = [...withMetrics]
     .filter((c) => c.monthImpressions >= 50) // mínimo significativo
     .sort((a, b) => a.monthCTR - b.monthCTR).slice(0, 5);
@@ -569,6 +572,10 @@ async function _computeCampaignAnalytics() {
       cplPromedio,
       conversion,
       inversionTotalCOP: totalInversion,
+      // Totales del mes exponen "hubo tráfico" al frontend (distinguir 0 vs "sin data")
+      totalImpresionesMes: totalImp,
+      totalClicsMes: totalClk,
+      totalLeadsMes: totalLed,
     },
     rankings: { topByCTR, bottomByCTR, topByImpressions, topByLeads },
     distribucion,

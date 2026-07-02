@@ -12,6 +12,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { isNonWorkingDay, getHolidaysForYear } from '../utils/colombiaHolidays';
+import { trackEvent } from '../utils/analytics';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -159,7 +160,14 @@ export default function RescheduleAppointmentPage() {
     })
       .then(r => r.json())
       .then(d => {
-        if (d.success) setPageStatus('success');
+        if (d.success) {
+          setPageStatus('success');
+          trackEvent('booking_rescheduled', null, {
+            profileId: appt?.directoryProfileId || null,
+            newDate: selectedDate,
+            newSlot: selectedSlot,
+          });
+        }
         else { setErrMsg(d.error || 'No se pudo reagendar.'); setSubmitting(false); }
       })
       .catch(() => { setErrMsg('Error de red.'); setSubmitting(false); });

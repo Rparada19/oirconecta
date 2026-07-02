@@ -25,6 +25,7 @@ import {
   CheckCircleOutlineOutlined, ArrowBackOutlined,
 } from '@mui/icons-material';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
+import { trackEvent, trackEntityEvent } from '../../utils/analytics';
 
 const BASE_URL = getApiBaseUrl();
 const ACCENT = '#15803d';
@@ -109,6 +110,16 @@ export default function AgendarConProfesionalDialog({ open, onClose, profileId, 
     setNotas(''); setResult(null);
   }, []);
 
+  // D2 — trackea inicio del wizard cuando se abre
+  useEffect(() => {
+    if (open && profileId) {
+      trackEntityEvent('booking_wizard_start', {
+        entityType: 'DirectoryProfile',
+        entityId: profileId,
+      });
+    }
+  }, [open, profileId]);
+
   // Carga tipos al abrir
   useEffect(() => {
     if (!open || !profileId) return;
@@ -175,6 +186,17 @@ export default function AgendarConProfesionalDialog({ open, onClose, profileId, 
     }
     setResult(r.data);
     setStep(4);
+    // D2 — cita creada exitosamente (marca conversión de la sesión)
+    trackEvent('booking_created', selectedType?.nombre || null, {
+      profileId,
+      appointmentId: r.data?.id,
+      tipoConsulta: selectedType?.nombre || null,
+      durationMinutes: selectedType?.durationMinutes || null,
+      priceCOP: selectedType?.priceCOP || null,
+    }, {
+      entityType: 'DirectoryProfile',
+      entityId: profileId,
+    });
   };
 
   const close = () => { if (!loading) onClose(); };

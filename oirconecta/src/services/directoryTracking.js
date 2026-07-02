@@ -11,6 +11,7 @@
 
 import { DIRECTORY_API } from '../config/directoryApi';
 import { directoryRequest } from './directoryAccountApi';
+import { trackEntityEvent } from '../utils/analytics';
 
 const DEDICATED_ENDPOINTS = {
   whatsapp: DIRECTORY_API.profileWhatsappStat,
@@ -32,15 +33,19 @@ export function trackContactEvent(profileId, kind) {
       directoryRequest(DEDICATED_ENDPOINTS[kind](profileId), {
         method: 'POST', skipAuth: true,
       }).catch(() => {});
-      return;
-    }
-    if (GENERIC_EVENTS.has(kind)) {
+    } else if (GENERIC_EVENTS.has(kind)) {
       directoryRequest(`/api/directory/profiles/${encodeURIComponent(profileId)}/stats/event`, {
         method: 'POST', skipAuth: true,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: kind.toUpperCase() }),
       }).catch(() => {});
     }
+    // D2 — evento analytics enriquecido (ciudad, device, fuente)
+    trackEntityEvent('profile_cta_click', {
+      entityType: 'DirectoryProfile',
+      entityId: profileId,
+      properties: { cta: kind },
+    });
   } catch {
     /* no-op */
   }

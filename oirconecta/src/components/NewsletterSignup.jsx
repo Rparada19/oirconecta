@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Box, Button, Stack, TextField, Typography, Alert } from '@mui/material';
 import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded';
 import { subscribeNewsletter } from '../services/newsletterService';
+import { trackEvent } from '../utils/analytics';
 
 /**
  * Formulario de suscripción al boletín. Reutilizable (footer, blog, home).
@@ -27,6 +28,11 @@ export default function NewsletterSignup({ source = 'web', compact = false, inli
       const res = await subscribeNewsletter({ ...form, nombre, source });
       if (res?.data?.success) {
         setState('done');
+        trackEvent('newsletter_signup', source, {
+          hasNombre: !!form.nombre.trim(),
+          hasTelefono: !!form.telefono.trim(),
+          ciudad: form.ciudad?.trim() || null,
+        });
       } else {
         setError(res?.error || 'No pudimos completar la suscripción.');
         setState('error');

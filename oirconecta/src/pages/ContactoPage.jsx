@@ -11,6 +11,7 @@ import {
 } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { trackEvent } from '../utils/analytics';
 import {
   PageHero, SectionEyebrow, SectionTitle, C,
 } from '../components/editorial/EditorialKit';
@@ -72,6 +73,10 @@ const ContactoPage = () => {
           ? `Solicitud enviada. El equipo de ${marca} te contactará pronto.`
           : 'Mensaje enviado. Te responderemos en menos de 24 horas.',
         severity: 'success',
+      });
+      trackEvent('contact_form_submitted', marca ? 'comparador_marca' : 'general', {
+        asunto: formData.asunto || null,
+        marca: marca || null,
       });
       setFormData({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
     } catch (err) {

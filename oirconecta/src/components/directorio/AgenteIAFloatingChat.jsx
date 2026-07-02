@@ -17,6 +17,7 @@ import {
 import { CloseOutlined, SendOutlined } from '@mui/icons-material';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import { getAgentIcon } from '../../utils/iaAgentIcons';
+import { trackEntityEvent } from '../../utils/analytics';
 
 const BASE_URL = getApiBaseUrl().replace(/\/$/, '');
 const ACCENT = '#15803d';
@@ -101,6 +102,10 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
     setInput('');
     setMessages((m) => [...m, { role: 'user', text }]);
     setSending(true);
+    trackEntityEvent('ia_message_sent', {
+      entityType: 'DirectoryProfile', entityId: profileId,
+      properties: { turn: messages.filter((x) => x.role === 'user').length + 1 },
+    });
     const r = await post(`/api/ia/public/${profileId}/chat`, { conversationId: convId, message: text });
     setSending(false);
     if (!r.ok) {
@@ -127,7 +132,13 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
           Posicionado ~90px arriba del WhatsApp (que está a bottom: ~20px). */}
       {!open && (
         <Tooltip title={`${agent.name} · pregúntame para agendar`}>
-          <Fab onClick={() => setOpen(true)} aria-label={agent.name} variant="extended"
+          <Fab onClick={() => {
+              setOpen(true);
+              trackEntityEvent('ia_widget_open', {
+                entityType: 'DirectoryProfile', entityId: profileId,
+                properties: { agentName: agent.name },
+              });
+            }} aria-label={agent.name} variant="extended"
             sx={{
               position: 'fixed',
               bottom: { xs: 'calc(env(safe-area-inset-bottom, 0px) + 90px)', md: 100 },

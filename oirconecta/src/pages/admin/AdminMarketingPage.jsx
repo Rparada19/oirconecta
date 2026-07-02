@@ -181,7 +181,7 @@ export default function AdminMarketingPage() {
                 <Grid item xs={6} md={3}><StatCard icon={AttachMoneyRoundedIcon} label="Ingresos del mes" value={fmtCOP(stats?.ingresosMesCOP)} color={ACCENT} /></Grid>
                 <Grid item xs={6} md={3}><StatCard icon={VisibilityOutlinedIcon} label="Impresiones (mes)" value={stats?.impresionesMes ?? '—'} color="#6d28d9" /></Grid>
                 <Grid item xs={6} md={3}><StatCard icon={MouseOutlinedIcon} label="Clics (mes)" value={stats?.clicsMes ?? '—'} color="#6d28d9" /></Grid>
-                <Grid item xs={6} md={3}><StatCard icon={CampaignOutlinedIcon} label="CTR promedio" value={stats?.ctrPromedio ? `${stats.ctrPromedio}%` : '—'} color="#6d28d9" /></Grid>
+                <Grid item xs={6} md={3}><StatCard icon={CampaignOutlinedIcon} label="CTR promedio" value={(stats?.impresionesMes || 0) > 0 ? `${(stats.ctrPromedio ?? 0).toFixed(2)}%` : '—'} color="#6d28d9" /></Grid>
                 <Grid item xs={6} md={3}><StatCard icon={CampaignOutlinedIcon} label="Leads (mes)" value={stats?.leadsMes ?? '—'} color="#6d28d9" /></Grid>
               </Grid>
               <CampaignAnalytics />
@@ -298,7 +298,7 @@ export default function AdminMarketingPage() {
                             <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{c.monthImpressions || 0}</TableCell>
                             <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{c.monthClicks || 0}</TableCell>
                             <TableCell sx={{ fontSize: '0.8125rem', color: c.monthCTR > 0 ? ACCENT : '#94a3b8', fontWeight: 600 }}>
-                              {c.monthCTR > 0 ? `${c.monthCTR}%` : '—'}
+                              {(c.monthImpressions || 0) > 0 ? `${(c.monthCTR ?? 0).toFixed(2)}%` : '—'}
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.75rem' }}>
                               {fmtDate(c.startDate)}<br />
@@ -475,10 +475,10 @@ function CampaignAnalytics() {
           <StatCard icon={VisibilityOutlinedIcon} label="Impr. promedio / campaña" value={resumen.promedioImpresionesPorCampana.toLocaleString('es-CO')} color="#0369a1" />
         </Grid>
         <Grid item xs={6} md={3}>
-          <StatCard icon={MouseOutlinedIcon} label="CTR promedio" value={resumen.ctrPromedio ? `${resumen.ctrPromedio}%` : '—'} color="#0369a1" />
+          <StatCard icon={MouseOutlinedIcon} label="CTR promedio" value={(resumen.totalImpresionesMes ?? 0) > 0 ? `${(resumen.ctrPromedio ?? 0).toFixed(2)}%` : '—'} color="#0369a1" />
         </Grid>
         <Grid item xs={6} md={3}>
-          <StatCard icon={CampaignOutlinedIcon} label="Conversión clic → lead" value={resumen.conversion ? `${resumen.conversion}%` : '—'} color="#15803d" />
+          <StatCard icon={CampaignOutlinedIcon} label="Conversión clic → lead" value={(resumen.totalClicsMes ?? 0) > 0 ? `${(resumen.conversion ?? 0).toFixed(2)}%` : '—'} color="#15803d" />
         </Grid>
         <Grid item xs={6} md={3}>
           <StatCard icon={AttachMoneyRoundedIcon} label="Costo por lead promedio" value={resumen.cplPromedio ? fmtCOP(resumen.cplPromedio) : '—'} color={ACCENT} />

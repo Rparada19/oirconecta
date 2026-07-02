@@ -44,6 +44,7 @@ import {
   trackDirectoryCallClick,
 } from '../services/directorySearchService';
 import { trackContactEvent } from '../services/directoryTracking';
+import { trackEntityEvent } from '../utils/analytics';
 import PatientActionBar from '../components/directorio/PatientActionBar';
 import { getWhatsAppHrefWithText } from '../config/publicSite';
 import { DEMO_PROFILE_MAP } from '../data/directoryDemoData';
@@ -291,6 +292,15 @@ export default function DirectorioProfesionalPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // D2 — evento profile_view (una vez por profileId cargado)
+  useEffect(() => {
+    if (!profileId) return;
+    trackEntityEvent('profile_view', {
+      entityType: 'DirectoryProfile',
+      entityId: profileId,
+    });
+  }, [profileId]);
 
   useEffect(() => {
     setLeadNombre('');
