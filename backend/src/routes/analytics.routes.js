@@ -10,8 +10,18 @@
 
 const express = require('express');
 const analytics = require('../services/analytics.service');
+const insights = require('../services/analyticsInsights.service');
+const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
+
+function send(res, fn) {
+  return Promise.resolve(fn()).then(
+    (data) => res.json({ success: true, data }),
+    (e) => res.status(e.status || 500).json({ success: false, error: e.message }),
+  );
+}
+function range(req) { return { from: req.query.from, to: req.query.to }; }
 
 // ─── Rate limit en memoria ───
 const RATE_WINDOW_MS = 60 * 1000;
@@ -68,5 +78,15 @@ router.post('/track-batch', async (req, res) => {
   }
   res.json({ success: true, processed });
 });
+
+// ─── Admin insights ───
+router.get('/admin/overview',         authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getOverview(range(req))));
+router.get('/admin/timeseries',       authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getTimeseries(range(req))));
+router.get('/admin/by-city',          authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getByCity(range(req))));
+router.get('/admin/by-device',        authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getByDevice(range(req))));
+router.get('/admin/traffic-sources',  authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getTrafficSources(range(req))));
+router.get('/admin/top-pages',        authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getTopPages(range(req))));
+router.get('/admin/funnel',           authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getFunnel(range(req))));
+router.get('/admin/top-events',       authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getTopEvents(range(req))));
 
 module.exports = router;

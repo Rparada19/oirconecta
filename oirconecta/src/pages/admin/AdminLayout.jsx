@@ -95,6 +95,7 @@ const ADMIN_FULL_NAV = [
   { label: 'Comparador', icon: <CompareArrowsOutlinedIcon />, path: '/portal-admin/comparador' },
   { label: 'Newsletter', icon: <MailOutlineRoundedIcon />, path: '/portal-admin/newsletter' },
   { label: 'Marketing & Ventas', icon: <CampaignOutlinedIcon />, path: '/portal-admin/marketing' },
+  { label: 'Insights del sitio',  icon: <InsightsOutlinedIcon />, path: '/portal-admin/marketing/insights' },
   { label: 'Buzón de contacto', icon: <InboxOutlinedIcon />, path: '/portal-admin/contactos' },
   { label: 'Suscripciones', icon: <WorkspacePremiumOutlinedIcon />, path: '/portal-admin/suscripciones' },
   { label: 'Agente IA', icon: <SmartToyOutlinedIcon />, path: '/portal-admin/ia' },
