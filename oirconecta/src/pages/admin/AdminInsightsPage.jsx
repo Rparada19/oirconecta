@@ -69,6 +69,19 @@ export default function AdminInsightsPage() {
   const [refreshTick, setRefreshTick] = useState(0);
   const [downloading, setDownloading] = useState(false);
 
+  const range = useMemo(() => {
+    if (preset === 'custom' && customFrom && customTo) {
+      return {
+        from: new Date(customFrom).toISOString(),
+        to: new Date(customTo + 'T23:59:59').toISOString(),
+      };
+    }
+    const days = PRESETS.find((p) => p.key === preset)?.days || 30;
+    const to = new Date();
+    const from = new Date(to.getTime() - days * 24 * 3600 * 1000);
+    return { from: from.toISOString(), to: to.toISOString() };
+  }, [preset, customFrom, customTo]);
+
   const handleDownloadPdf = useCallback(async () => {
     setDownloading(true);
     try {
@@ -91,19 +104,6 @@ export default function AdminInsightsPage() {
       setDownloading(false);
     }
   }, [range]);
-
-  const range = useMemo(() => {
-    if (preset === 'custom' && customFrom && customTo) {
-      return {
-        from: new Date(customFrom).toISOString(),
-        to: new Date(customTo + 'T23:59:59').toISOString(),
-      };
-    }
-    const days = PRESETS.find((p) => p.key === preset)?.days || 30;
-    const to = new Date();
-    const from = new Date(to.getTime() - days * 24 * 3600 * 1000);
-    return { from: from.toISOString(), to: to.toISOString() };
-  }, [preset, customFrom, customTo]);
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
