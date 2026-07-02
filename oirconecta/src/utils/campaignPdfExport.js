@@ -311,23 +311,38 @@ export async function downloadCampaignPdf(data) {
   const html = buildHtml(data);
   const el = document.createElement('div');
   el.innerHTML = html;
-  // El contenedor debe estar dentro del viewport para que html2canvas lo
-  // renderice correctamente. Lo hacemos invisible con opacity y sin
-  // interacciones, y lo empujamos detrás del contenido con z-index negativo.
-  el.style.cssText = 'width:210mm;position:fixed;left:0;top:0;opacity:0.001;pointer-events:none;z-index:-9999;background:#fff';
+  // Renderizar en un iframe adentro del viewport pero visualmente oculto.
+  // html2canvas necesita que el elemento tenga dimensiones REALES y esté en
+  // el flujo del documento para calcular offsets. left:-99999px se rompe
+  // en varios navegadores. Usamos width:210mm y ocultamos con visibility.
+  el.style.cssText = 'width:794px;background:#ffffff;color:#0F2A4A;position:absolute;left:0;top:0;z-index:-1;visibility:hidden';
   document.body.appendChild(el);
 
   const filename = `campania_${(data.campaign.slug || data.campaign.id).slice(0, 40)}_${stamp()}.pdf`;
+
+  // Dar 200ms al navegador para pintar antes de capturar
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  // Hacer visible durante la captura (algunos navegadores skip elementos hidden)
+  el.style.visibility = 'visible';
+  el.style.opacity = '0.001';
 
   try {
     await html2pdf().set({
       margin: 0,
       filename,
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-      pagebreak: { mode: ['css', 'legacy'] },
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: 794,
+      },
+      jsPDF: { unit: 'px', hotfixes: ['px_scaling'], format: [794, 1123], orientation: 'portrait', compress: true },
+      pagebreak: { mode: ['css'], before: '.page-break' },
     }).from(el).save();
   } finally {
-    document.body.removeChild(el);
+    if (el.parentNode) document.body.removeChild(el);
   }
 }

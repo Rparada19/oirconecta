@@ -490,18 +490,30 @@ export async function downloadInsightsPdf(data) {
 
   const el = document.createElement('div');
   el.innerHTML = html;
-  el.style.cssText = 'width:210mm;position:fixed;left:0;top:0;opacity:0.001;pointer-events:none;z-index:-9999;background:#fff';
+  el.style.cssText = 'width:794px;background:#ffffff;color:#0F2A4A;position:absolute;left:0;top:0;z-index:-1;visibility:hidden';
   document.body.appendChild(el);
+
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  el.style.visibility = 'visible';
+  el.style.opacity = '0.001';
 
   try {
     await html2pdf().set({
       margin: 0,
       filename: `informe-sitio-oirconecta_${stamp()}.pdf`,
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-      pagebreak: { mode: ['css', 'legacy'] },
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: 794,
+      },
+      jsPDF: { unit: 'px', hotfixes: ['px_scaling'], format: [794, 1123], orientation: 'portrait', compress: true },
+      pagebreak: { mode: ['css'] },
     }).from(el).save();
   } finally {
-    document.body.removeChild(el);
+    if (el.parentNode) document.body.removeChild(el);
   }
 }
