@@ -306,16 +306,20 @@ function buildReportHtml({ range, overview, series, byCity, byDevice, sources, t
       <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">Resumen ejecutivo</div>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
-      ${kpiCard('Visitantes únicos', fmtNum(overview?.uniqueVisitors), '#0369a1')}
-      ${kpiCard('Sesiones', fmtNum(overview?.sessions), '#6d28d9')}
-      ${kpiCard('Pageviews', fmtNum(overview?.pageViews), '#15803d')}
-      ${kpiCard('Duración media', fmtSec(overview?.avgSessionDurationSec), '#f59e0b')}
-      ${kpiCard('Pág. por sesión', (overview?.avgPagesPerSession ?? 0).toFixed(2), '#0369a1')}
-      ${kpiCard('Bounce rate', fmtPct(overview?.bounceRate), '#dc2626')}
-      ${kpiCard('Sesiones que convirtieron', fmtNum(overview?.convertedSessions), '#15803d')}
-      ${kpiCard('Tasa conversión', fmtPct(overview?.conversionRate), '#15803d')}
-    </div>
+    <table style="width:100%;border-collapse:separate;border-spacing:10px;margin:0 -10px 24px -10px">
+      <tr>
+        ${kpiCard('Visitantes únicos', fmtNum(overview?.uniqueVisitors), '#0369a1')}
+        ${kpiCard('Sesiones', fmtNum(overview?.sessions), '#6d28d9')}
+        ${kpiCard('Pageviews', fmtNum(overview?.pageViews), '#15803d')}
+        ${kpiCard('Duración media', fmtSec(overview?.avgSessionDurationSec), '#f59e0b')}
+      </tr>
+      <tr>
+        ${kpiCard('Pág. por sesión', (overview?.avgPagesPerSession ?? 0).toFixed(2), '#0369a1')}
+        ${kpiCard('Bounce rate', fmtPct(overview?.bounceRate), '#dc2626')}
+        ${kpiCard('Sesiones que convirtieron', fmtNum(overview?.convertedSessions), '#15803d')}
+        ${kpiCard('Tasa conversión', fmtPct(overview?.conversionRate), '#15803d')}
+      </tr>
+    </table>
 
     <div style="font-size:14px;font-weight:800;color:#0F2A4A;margin:24px 0 12px">Tendencia últimos días</div>
     <table style="width:100%;border-collapse:collapse;font-family:Arial">
@@ -375,22 +379,22 @@ function buildReportHtml({ range, overview, series, byCity, byDevice, sources, t
       <tbody>${devRows || `<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8;font-size:11px">Sin datos</td></tr>`}</tbody>
     </table>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-      <div>
+    <table style="width:100%;border-collapse:separate;border-spacing:24px 0"><tr>
+      <td style="width:50%;vertical-align:top">
         <div style="font-size:14px;font-weight:800;color:#0F2A4A;margin-bottom:12px">Top sistema operativo</div>
         <table style="width:100%;border-collapse:collapse">
           <thead><tr style="background:#f8fafc"><th style="padding:6px;font-size:9px;text-align:left;color:#475569">OS</th><th style="padding:6px;font-size:9px;text-align:right;color:#475569">Sesiones</th></tr></thead>
           <tbody>${osRows || `<tr><td colspan="2" style="padding:12px;text-align:center;color:#94a3b8;font-size:10px">Sin datos</td></tr>`}</tbody>
         </table>
-      </div>
-      <div>
+      </td>
+      <td style="width:50%;vertical-align:top">
         <div style="font-size:14px;font-weight:800;color:#0F2A4A;margin-bottom:12px">Top navegador</div>
         <table style="width:100%;border-collapse:collapse">
           <thead><tr style="background:#f8fafc"><th style="padding:6px;font-size:9px;text-align:left;color:#475569">Browser</th><th style="padding:6px;font-size:9px;text-align:right;color:#475569">Sesiones</th></tr></thead>
           <tbody>${browserRows || `<tr><td colspan="2" style="padding:12px;text-align:center;color:#94a3b8;font-size:10px">Sin datos</td></tr>`}</tbody>
         </table>
-      </div>
-    </div>
+      </td>
+    </tr></table>
   </div>
 
   <!-- ═══════════════ FUENTES ═══════════════ -->
@@ -470,10 +474,10 @@ function buildReportHtml({ range, overview, series, byCity, byDevice, sources, t
 
 function kpiCard(label, value, color) {
   return `
-    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:14px">
+    <td style="border:1px solid #e5e7eb;border-radius:8px;padding:14px;width:25%;vertical-align:top">
       <div style="font-size:9px;letter-spacing:0.15em;color:#64748b;text-transform:uppercase;font-weight:700">${label}</div>
       <div style="font-size:22px;font-weight:900;color:${color};margin-top:6px">${value}</div>
-    </div>`;
+    </td>`;
 }
 
 /**
@@ -486,7 +490,7 @@ export async function downloadInsightsPdf(data) {
 
   const el = document.createElement('div');
   el.innerHTML = html;
-  el.style.cssText = 'width:210mm;position:absolute;left:-99999px;top:0';
+  el.style.cssText = 'width:210mm;position:fixed;left:0;top:0;opacity:0.001;pointer-events:none;z-index:-9999;background:#fff';
   document.body.appendChild(el);
 
   try {

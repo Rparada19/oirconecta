@@ -23,11 +23,14 @@ const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-CO', { day: '2-dig
 
 function kpiCard(label, value, color, hint) {
   return `
-    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px">
+    <td style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;width:25%;vertical-align:top">
       <div style="font-size:9px;letter-spacing:0.12em;color:#64748b;text-transform:uppercase;font-weight:700">${label}</div>
       <div style="font-size:20px;font-weight:900;color:${color};margin-top:4px;line-height:1.1">${value}</div>
       ${hint ? `<div style="font-size:9px;color:#94a3b8;margin-top:3px">${hint}</div>` : ''}
-    </div>`;
+    </td>`;
+}
+function kpiRow(cards) {
+  return `<tr>${cards}</tr>`;
 }
 
 function buildInsights(d) {
@@ -198,20 +201,20 @@ function buildHtml(data) {
       <div style="font-size:28px;font-weight:900;letter-spacing:-0.02em">Resumen ejecutivo</div>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
-      ${kpiCard('Impresiones', fmtNum(resumen.impressions), '#0369a1')}
-      ${kpiCard('Clics', fmtNum(resumen.clicks), '#6d28d9')}
-      ${kpiCard('CTR', fmtPct(resumen.ctr), resumen.ctr >= 2 ? '#15803d' : '#f59e0b')}
-      ${kpiCard('Leads', fmtNum(resumen.leads), '#15803d')}
-      ${kpiCard('Alcance único', fmtNum(resumen.reach), '#0369a1', 'usuarios distintos')}
-      ${kpiCard('Frecuencia', resumen.frequency ? resumen.frequency.toFixed(2) : '—', '#64748b', 'imp/usuario')}
-      ${kpiCard('CPM', resumen.cpm ? fmtCOP(resumen.cpm) : '—', '#f59e0b', 'por 1000 impresiones')}
-      ${kpiCard('CPC', resumen.cpc ? fmtCOP(resumen.cpc) : '—', '#f59e0b', 'por click')}
-      ${kpiCard('CPL', resumen.cpl ? fmtCOP(resumen.cpl) : '—', '#f59e0b', 'por lead')}
-      ${kpiCard('Inversión total', fmtCOP(resumen.inversionTotalCOP), '#0F2A4A')}
-      ${kpiCard('Ritmo diario', fmtNum(tiempo.dailyPace), '#0369a1', 'impresiones/día')}
-      ${kpiCard('Proyección total', fmtNum(tiempo.projectedImpressions), '#6d28d9', 'al final del periodo')}
-    </div>
+    <table style="width:100%;border-collapse:separate;border-spacing:8px;margin-bottom:16px;margin-left:-8px">
+      ${kpiRow(kpiCard('Impresiones', fmtNum(resumen.impressions), '#0369a1') +
+        kpiCard('Clics', fmtNum(resumen.clicks), '#6d28d9') +
+        kpiCard('CTR', fmtPct(resumen.ctr), resumen.ctr >= 2 ? '#15803d' : '#f59e0b') +
+        kpiCard('Leads', fmtNum(resumen.leads), '#15803d'))}
+      ${kpiRow(kpiCard('Alcance único', fmtNum(resumen.reach), '#0369a1', 'usuarios distintos') +
+        kpiCard('Frecuencia', resumen.frequency ? resumen.frequency.toFixed(2) : '—', '#64748b', 'imp/usuario') +
+        kpiCard('CPM', resumen.cpm ? fmtCOP(resumen.cpm) : '—', '#f59e0b', 'por 1000 impresiones') +
+        kpiCard('CPC', resumen.cpc ? fmtCOP(resumen.cpc) : '—', '#f59e0b', 'por click'))}
+      ${kpiRow(kpiCard('CPL', resumen.cpl ? fmtCOP(resumen.cpl) : '—', '#f59e0b', 'por lead') +
+        kpiCard('Inversión total', fmtCOP(resumen.inversionTotalCOP), '#0F2A4A') +
+        kpiCard('Ritmo diario', fmtNum(tiempo.dailyPace), '#0369a1', 'impresiones/día') +
+        kpiCard('Proyección total', fmtNum(tiempo.projectedImpressions), '#6d28d9', 'al final del periodo'))}
+    </table>
 
     <div style="font-size:14px;font-weight:800;color:#0F2A4A;margin:32px 0 12px">Tendencia diaria (últimos 14 días)</div>
     <table style="width:100%;border-collapse:collapse">
@@ -308,7 +311,10 @@ export async function downloadCampaignPdf(data) {
   const html = buildHtml(data);
   const el = document.createElement('div');
   el.innerHTML = html;
-  el.style.cssText = 'width:210mm;position:absolute;left:-99999px;top:0';
+  // El contenedor debe estar dentro del viewport para que html2canvas lo
+  // renderice correctamente. Lo hacemos invisible con opacity y sin
+  // interacciones, y lo empujamos detrás del contenido con z-index negativo.
+  el.style.cssText = 'width:210mm;position:fixed;left:0;top:0;opacity:0.001;pointer-events:none;z-index:-9999;background:#fff';
   document.body.appendChild(el);
 
   const filename = `campania_${(data.campaign.slug || data.campaign.id).slice(0, 40)}_${stamp()}.pdf`;
