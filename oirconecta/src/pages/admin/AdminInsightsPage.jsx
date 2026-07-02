@@ -11,14 +11,15 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box, Card, Typography, Tabs, Tab, Grid, Stack, Chip, LinearProgress,
   Table, TableHead, TableRow, TableCell, TableBody, CircularProgress,
-  ToggleButton, ToggleButtonGroup, TextField, Tooltip, IconButton,
+  ToggleButton, ToggleButtonGroup, TextField, Tooltip, IconButton, Button,
 } from '@mui/material';
 import {
   InsightsOutlined, LocationOnOutlined, PhoneAndroidOutlined,
   PublicOutlined, ArticleOutlined, AccountTreeOutlined, TrendingUpOutlined,
-  RefreshOutlined,
+  RefreshOutlined, PictureAsPdfOutlined,
 } from '@mui/icons-material';
 import { adminFetch } from './adminAuth';
+import { downloadInsightsPdf } from '../../utils/insightsPdfExport';
 
 const ACCENT = '#15803d';
 const NAVY = '#0F2A4A';
@@ -66,6 +67,30 @@ export default function AdminInsightsPage() {
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [refreshTick, setRefreshTick] = useState(0);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPdf = useCallback(async () => {
+    setDownloading(true);
+    try {
+      const [overview, series, byCity, byDevice, sources, topPages, funnel] = await Promise.all([
+        get('/api/analytics/admin/overview', range),
+        get('/api/analytics/admin/timeseries', range),
+        get('/api/analytics/admin/by-city', range),
+        get('/api/analytics/admin/by-device', range),
+        get('/api/analytics/admin/traffic-sources', range),
+        get('/api/analytics/admin/top-pages', range),
+        get('/api/analytics/admin/funnel', range),
+      ]);
+      await downloadInsightsPdf({
+        range: { from: range.from, to: range.to },
+        overview, series, byCity, byDevice, sources, topPages, funnel,
+      });
+    } catch (e) {
+      alert(`No se pudo generar el PDF: ${e.message}`);
+    } finally {
+      setDownloading(false);
+    }
+  }, [range]);
 
   const range = useMemo(() => {
     if (preset === 'custom' && customFrom && customTo) {
@@ -107,6 +132,13 @@ export default function AdminInsightsPage() {
           <Tooltip title="Recargar">
             <IconButton onClick={() => setRefreshTick((t) => t + 1)} size="small"><RefreshOutlined /></IconButton>
           </Tooltip>
+          <Button
+            variant="contained" size="small" startIcon={<PictureAsPdfOutlined />}
+            onClick={handleDownloadPdf} disabled={downloading}
+            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '8px',
+              background: ACCENT, '&:hover': { background: ACCENT, filter: 'brightness(0.95)' } }}>
+            {downloading ? 'Generando…' : 'Descargar PDF'}
+          </Button>
         </Stack>
       </Stack>
 
