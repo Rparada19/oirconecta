@@ -641,7 +641,7 @@ async function getCampaignFullMetrics(campaignId, { from, to } = {}) {
       FROM "analytics_events"
       WHERE "campaignId" = $1 AND "timestamp" BETWEEN $2 AND $3
       GROUP BY 1
-      ORDER BY impressions DESC
+      ORDER BY 2 DESC
       LIMIT 20
     `, campaignId, rangeFrom, rangeTo),
     prisma.$queryRawUnsafe(`
@@ -652,7 +652,7 @@ async function getCampaignFullMetrics(campaignId, { from, to } = {}) {
       FROM "analytics_events"
       WHERE "campaignId" = $1 AND "timestamp" BETWEEN $2 AND $3
       GROUP BY 1
-      ORDER BY impressions DESC
+      ORDER BY 2 DESC
     `, campaignId, rangeFrom, rangeTo),
     prisma.$queryRawUnsafe(`
       SELECT
@@ -672,7 +672,7 @@ async function getCampaignFullMetrics(campaignId, { from, to } = {}) {
       FROM "analytics_events"
       WHERE "campaignId" = $1 AND "timestamp" BETWEEN $2 AND $3
       GROUP BY 1
-      ORDER BY impressions DESC
+      ORDER BY 2 DESC
     `, campaignId, rangeFrom, rangeTo),
     prisma.$queryRawUnsafe(`
       SELECT COUNT(DISTINCT "visitorId")::int AS c
