@@ -31,9 +31,11 @@ const NAVY = '#0F2A4A';
 async function get(path, params) {
   const qs = new URLSearchParams(params || {});
   const url = `${path}${qs.toString() ? `?${qs}` : ''}`;
+  // adminFetch ya retorna { ok, status, data } donde data es el JSON parseado
+  // Nuestro backend envuelve como { success, data: <payload> } — extraemos el payload
   const r = await adminFetch(url);
-  const j = await r.json();
-  return j?.data;
+  if (!r.ok || !r.data?.success) throw new Error(r.data?.error || `HTTP ${r.status}`);
+  return r.data.data;
 }
 
 function fmtNum(n) {

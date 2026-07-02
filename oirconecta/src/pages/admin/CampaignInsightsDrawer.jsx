@@ -46,11 +46,10 @@ export default function CampaignInsightsDrawer({ campaignId, open, onClose }) {
     setData(null);
     try {
       const r = await adminFetch(`/api/marketing/admin/campaigns/${campaignId}/full-metrics`);
-      const j = await r.json();
-      if (!r.ok || !j?.success) {
-        throw new Error(j?.error || `HTTP ${r.status}`);
+      if (!r.ok || !r.data?.success) {
+        throw new Error(r.data?.error || `HTTP ${r.status}`);
       }
-      setData(j.data);
+      setData(r.data.data);
     } catch (e) {
       console.error('[CampaignInsightsDrawer] load falló:', e);
       setError(e.message);
