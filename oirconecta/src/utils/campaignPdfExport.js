@@ -13,7 +13,9 @@
  *   6. Insights automáticos + recomendaciones
  */
 
-import html2pdf from 'html2pdf.js';
+// Ya no usamos html2pdf.js — el enfoque de captura con html2canvas produce
+// PDFs vacíos en Safari + iOS. Ahora abrimos ventana con print CSS y el
+// usuario elige "Guardar como PDF" desde el diálogo nativo.
 
 const stamp = () => new Date().toISOString().slice(0, 10);
 const fmtNum = (n) => n == null ? '—' : Number(n).toLocaleString('es-CO');
@@ -307,42 +309,66 @@ function buildHtml(data) {
 </div>`;
 }
 
+/**
+ * Abre el informe en una ventana nueva con estilos print-optimized y
+ * dispara window.print() automáticamente. El usuario elige "Guardar como
+ * PDF" en el diálogo nativo (macOS/Windows/Linux).
+ *
+ * Mucho más confiable que html2canvas: usa el motor de rendering real del
+ * navegador, sin límites de RAM ni bugs de captura offscreen. Calidad
+ * final superior (vectorial, textos seleccionables).
+ */
 export async function downloadCampaignPdf(data) {
   const html = buildHtml(data);
-  const el = document.createElement('div');
-  el.innerHTML = html;
-  // Renderizar en un iframe adentro del viewport pero visualmente oculto.
-  // html2canvas necesita que el elemento tenga dimensiones REALES y esté en
-  // el flujo del documento para calcular offsets. left:-99999px se rompe
-  // en varios navegadores. Usamos width:210mm y ocultamos con visibility.
-  el.style.cssText = 'width:794px;background:#ffffff;color:#0F2A4A;position:absolute;left:0;top:0;z-index:-1;visibility:hidden';
-  document.body.appendChild(el);
+  const filename = `campania_${(data.campaign.slug || data.campaign.id).slice(0, 40)}_${stamp()}`;
 
-  const filename = `campania_${(data.campaign.slug || data.campaign.id).slice(0, 40)}_${stamp()}.pdf`;
-
-  // Dar 200ms al navegador para pintar antes de capturar
-  await new Promise((resolve) => setTimeout(resolve, 200));
-  // Hacer visible durante la captura (algunos navegadores skip elementos hidden)
-  el.style.visibility = 'visible';
-  el.style.opacity = '0.001';
-
-  try {
-    await html2pdf().set({
-      margin: 0,
-      filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        windowWidth: 794,
-      },
-      jsPDF: { unit: 'px', hotfixes: ['px_scaling'], format: [794, 1123], orientation: 'portrait', compress: true },
-      pagebreak: { mode: ['css'], before: '.page-break' },
-    }).from(el).save();
-  } finally {
-    if (el.parentNode) document.body.removeChild(el);
+  const printHtml = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>${filename}</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; background: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; color: #0F2A4A; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none !important; }
   }
+  .no-print {
+    position: fixed; top: 12px; right: 12px; z-index: 9999;
+    background: #15803d; color: #fff; padding: 10px 18px;
+    border-radius: 8px; font-weight: 700; border: none; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<button class="no-print" onclick="window.print()">🖨 Imprimir / Guardar como PDF</button>
+${html}
+<script>
+  // Autodispara el diálogo de impresión al cargar. El usuario elige
+  // "Guardar como PDF" desde el destino del diálogo nativo.
+  window.addEventListener('load', function () {
+    setTimeout(function () { window.print(); }, 400);
+  });
+</script>
+</body>
+</html>`;
+
+  // Abrimos ventana nueva. Si el popup está bloqueado, usamos data URL como fallback.
+  const win = window.open('', '_blank', 'width=1000,height=800');
+  if (!win) {
+    // Fallback: descarga HTML como archivo si el navegador bloquea popups
+    const blob = new Blob([printHtml], { type: 'text/html;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${filename}.html`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    alert('El navegador bloqueó la ventana emergente. Se descargó el informe como HTML — ábrelo y usa "Imprimir → Guardar como PDF".');
+    return;
+  }
+  win.document.write(printHtml);
+  win.document.close();
 }
