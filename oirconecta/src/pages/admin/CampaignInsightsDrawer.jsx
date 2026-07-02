@@ -35,16 +35,28 @@ const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-CO', { day: '2-dig
 export default function CampaignInsightsDrawer({ campaignId, open, onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [tab, setTab] = useState(0);
   const [downloading, setDownloading] = useState(false);
 
   const load = useCallback(async () => {
     if (!campaignId) return;
     setLoading(true);
-    const r = await adminFetch(`/api/marketing/admin/campaigns/${campaignId}/full-metrics`);
-    const j = await r.json();
-    setData(j?.data || null);
-    setLoading(false);
+    setError(null);
+    setData(null);
+    try {
+      const r = await adminFetch(`/api/marketing/admin/campaigns/${campaignId}/full-metrics`);
+      const j = await r.json();
+      if (!r.ok || !j?.success) {
+        throw new Error(j?.error || `HTTP ${r.status}`);
+      }
+      setData(j.data);
+    } catch (e) {
+      console.error('[CampaignInsightsDrawer] load falló:', e);
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
   }, [campaignId]);
 
   useEffect(() => { if (open) load(); }, [open, load]);
@@ -84,8 +96,21 @@ export default function CampaignInsightsDrawer({ campaignId, open, onClose }) {
           <IconButton onClick={onClose}><CloseOutlined /></IconButton>
         </Stack>
 
-        {loading || !data ? (
-          <Box sx={{ p: 6, textAlign: 'center' }}><CircularProgress /></Box>
+        {loading ? (
+          <Box sx={{ p: 6, textAlign: 'center' }}>
+            <CircularProgress />
+            <Typography sx={{ mt: 2, color: '#64748b', fontSize: '0.875rem' }}>Cargando métricas de la campaña…</Typography>
+          </Box>
+        ) : error ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography sx={{ color: '#b91c1c', fontWeight: 700, mb: 1 }}>No se pudo cargar el informe</Typography>
+            <Typography sx={{ color: '#64748b', fontSize: '0.875rem', mb: 3 }}>{error}</Typography>
+            <Button variant="outlined" onClick={load} sx={{ textTransform: 'none' }}>Reintentar</Button>
+          </Box>
+        ) : !data ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography sx={{ color: '#64748b' }}>Sin datos</Typography>
+          </Box>
         ) : (
           <>
             {/* Estado + periodo */}
