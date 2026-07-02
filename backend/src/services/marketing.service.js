@@ -583,6 +583,142 @@ async function _computeCampaignAnalytics() {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// D5 — Métricas full por campaña individual (cruce MarketingMetric +
+// analytics_events con campaignId → desglose por ciudad, device, fuente,
+// tendencia diaria + derivados CPM/CPC/CPL/ritmo/proyección).
+// ═══════════════════════════════════════════════════════════════════
+async function getCampaignFullMetrics(campaignId, { from, to } = {}) {
+  const camp = await prisma.marketingCampaign.findUnique({
+    where: { id: campaignId },
+    include: {
+      advertiser: { select: { id: true, nombre: true, marcaPrincipal: true } },
+      metrics: { orderBy: { date: 'asc' } },
+    },
+  });
+  if (!camp) throw Object.assign(new Error('Campaña no encontrada'), { status: 404 });
+
+  const now = new Date();
+  const rangeFrom = from ? new Date(from) : new Date(camp.startDate);
+  const rangeTo = to ? new Date(to) : now;
+
+  // Agregados MarketingMetric del rango
+  const metricsInRange = (camp.metrics || []).filter((m) => m.date >= rangeFrom && m.date <= rangeTo);
+  const totalImp = metricsInRange.reduce((a, m) => a + (m.impressions || 0), 0);
+  const totalClk = metricsInRange.reduce((a, m) => a + (m.clicks || 0), 0);
+  const totalLed = metricsInRange.reduce((a, m) => a + (m.leads || 0), 0);
+
+  // Duración de campaña
+  const daysTotal = Math.max(1, Math.round((camp.endDate - camp.startDate) / 86400000));
+  const daysElapsed = Math.max(0, Math.round((Math.min(now, camp.endDate) - camp.startDate) / 86400000));
+  const daysRemaining = Math.max(0, Math.round((camp.endDate - now) / 86400000));
+  const progressPct = Math.round((daysElapsed / daysTotal) * 100);
+
+  // KPIs derivados
+  const ctr = totalImp > 0 ? (totalClk / totalImp) * 100 : 0;
+  const conversion = totalClk > 0 ? (totalLed / totalClk) * 100 : 0;
+  const cpm = totalImp > 0 ? (camp.priceCOP / totalImp) * 1000 : null;
+  const cpc = totalClk > 0 ? camp.priceCOP / totalClk : null;
+  const cpl = totalLed > 0 ? camp.priceCOP / totalLed : null;
+  const dailyPace = daysElapsed > 0 ? Math.round(totalImp / daysElapsed) : 0;
+  const projectedImp = daysElapsed > 0 ? Math.round(dailyPace * daysTotal) : 0;
+
+  // Tendencia diaria completa (MarketingMetric)
+  const dailyTrend = metricsInRange.map((m) => ({
+    date: m.date.toISOString().slice(0, 10),
+    impressions: m.impressions || 0,
+    clicks: m.clicks || 0,
+    leads: m.leads || 0,
+  }));
+
+  // Segmentación por ciudad/device/fuente desde analytics_events
+  const [byCity, byDevice, bySource, uniqueVisitors] = await Promise.all([
+    prisma.$queryRawUnsafe(`
+      SELECT
+        COALESCE("city", '(Desconocida)') AS city,
+        COUNT(*) FILTER (WHERE "eventType" = 'ad_impression')::int AS impressions,
+        COUNT(*) FILTER (WHERE "eventType" = 'ad_click')::int      AS clicks
+      FROM "analytics_events"
+      WHERE "campaignId" = $1 AND "timestamp" BETWEEN $2 AND $3
+      GROUP BY 1
+      ORDER BY impressions DESC
+      LIMIT 20
+    `, campaignId, rangeFrom, rangeTo),
+    prisma.$queryRawUnsafe(`
+      SELECT
+        COALESCE("device", '(otros)') AS device,
+        COUNT(*) FILTER (WHERE "eventType" = 'ad_impression')::int AS impressions,
+        COUNT(*) FILTER (WHERE "eventType" = 'ad_click')::int      AS clicks
+      FROM "analytics_events"
+      WHERE "campaignId" = $1 AND "timestamp" BETWEEN $2 AND $3
+      GROUP BY 1
+      ORDER BY impressions DESC
+    `, campaignId, rangeFrom, rangeTo),
+    prisma.$queryRawUnsafe(`
+      SELECT
+        CASE
+          WHEN LOWER(COALESCE("utmSource", '')) IN ('meta','facebook','ig','instagram') THEN 'Meta Ads'
+          WHEN LOWER(COALESCE("utmSource", '')) IN ('google','gads','adwords')          THEN 'Google Ads'
+          WHEN COALESCE("utmSource", '') = 'oirconecta'                                  THEN 'Interna'
+          WHEN LOWER(COALESCE("referrer", '')) LIKE '%google.%'                          THEN 'Orgánico Google'
+          WHEN LOWER(COALESCE("referrer", '')) LIKE '%facebook.com%'                     THEN 'Facebook'
+          WHEN LOWER(COALESCE("referrer", '')) LIKE '%instagram.com%'                    THEN 'Instagram'
+          WHEN LOWER(COALESCE("referrer", '')) LIKE '%whatsapp.com%'                     THEN 'WhatsApp'
+          WHEN COALESCE("referrer", '') = ''                                             THEN 'Directo'
+          ELSE 'Referido'
+        END AS source,
+        COUNT(*) FILTER (WHERE "eventType" = 'ad_impression')::int AS impressions,
+        COUNT(*) FILTER (WHERE "eventType" = 'ad_click')::int      AS clicks
+      FROM "analytics_events"
+      WHERE "campaignId" = $1 AND "timestamp" BETWEEN $2 AND $3
+      GROUP BY 1
+      ORDER BY impressions DESC
+    `, campaignId, rangeFrom, rangeTo),
+    prisma.$queryRawUnsafe(`
+      SELECT COUNT(DISTINCT "visitorId")::int AS c
+      FROM "analytics_events"
+      WHERE "campaignId" = $1 AND "eventType" = 'ad_impression'
+        AND "timestamp" BETWEEN $2 AND $3
+    `, campaignId, rangeFrom, rangeTo),
+  ]);
+
+  // Alcance y frecuencia
+  const reach = uniqueVisitors[0]?.c || 0;
+  const frequency = reach > 0 ? Math.round((totalImp / reach) * 100) / 100 : 0;
+
+  return {
+    campaign: {
+      id: camp.id, nombre: camp.nombre, slug: camp.slug, actionType: camp.actionType,
+      status: camp.status, isActive: camp.isActive, priceCOP: camp.priceCOP,
+      startDate: camp.startDate, endDate: camp.endDate,
+      destinationUrl: camp.destinationUrl,
+      creativeUrl: camp.creativeUrl,
+      advertiser: camp.advertiser,
+    },
+    range: { from: rangeFrom, to: rangeTo },
+    resumen: {
+      impressions: totalImp,
+      clicks: totalClk,
+      leads: totalLed,
+      ctr: Math.round(ctr * 100) / 100,
+      conversion: Math.round(conversion * 100) / 100,
+      cpm: cpm != null ? Math.round(cpm) : null,
+      cpc: cpc != null ? Math.round(cpc) : null,
+      cpl: cpl != null ? Math.round(cpl) : null,
+      inversionTotalCOP: camp.priceCOP,
+      reach,
+      frequency,
+    },
+    tiempo: {
+      daysTotal, daysElapsed, daysRemaining, progressPct,
+      dailyPace, projectedImpressions: projectedImp,
+      finished: now > camp.endDate,
+    },
+    dailyTrend,
+    byCity, byDevice, bySource,
+  };
+}
+
 module.exports = {
   slugify,
   computeUtms,
@@ -604,6 +740,7 @@ module.exports = {
   deleteCampaign,
   getDashboardStats,
   getCampaignAnalytics,
+  getCampaignFullMetrics,
   getActiveCampaignByActionType,
   getActiveCampaignsByType,
   recordEvent,

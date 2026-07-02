@@ -273,4 +273,16 @@ router.delete('/admin/campaigns/:id', authenticate, authorize('ADMIN'), async (r
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// D5 — métricas full por campaña individual (para drawer detalle + PDF)
+router.get('/admin/campaigns/:id/full-metrics', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.getCampaignFullMetrics(req.params.id, {
+      from: req.query.from, to: req.query.to,
+    });
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(e.status || 500).json({ success: false, error: e.message });
+  }
+});
+
 module.exports = router;

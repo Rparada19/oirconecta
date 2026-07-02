@@ -22,6 +22,8 @@ import MarketingPreviewDialog from './MarketingPreviewDialog';
 import CampaignPagesSelector from './CampaignPagesSelector';
 import CampaignLivePreview from './CampaignLivePreview';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
+import CampaignInsightsDrawer from './CampaignInsightsDrawer';
 
 const PIPELINE_COLOR = {
   PROSPECT:    { bg: '#f1f5f9', fg: '#64748b', label: 'Prospecto' },
@@ -86,6 +88,7 @@ export default function AdminMarketingPage() {
   // dialogs
   const [advDialog, setAdvDialog] = useState(null); // null | {new}|{edit, data}
   const [campDialog, setCampDialog] = useState(null); // null | { actionType?: string, data?: object }
+  const [insightsCampaignId, setInsightsCampaignId] = useState(null); // id de campaña con drawer abierto
   const [advDetailId, setAdvDetailId] = useState(null); // anunciante abierto en drawer
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewFocusSlot, setPreviewFocusSlot] = useState(null);
@@ -313,6 +316,12 @@ export default function AdminMarketingPage() {
                                     <VisibilityRoundedIcon fontSize="small" />
                                   </IconButton>
                                 </Tooltip>
+                                <Tooltip title="Ver informe · KPIs, ciudad, device, fuentes, PDF">
+                                  <IconButton size="small" onClick={() => setInsightsCampaignId(c.id)}
+                                    sx={{ color: '#0369a1' }}>
+                                    <InsightsOutlinedIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
                                 <Tooltip title="Editar">
                                   <IconButton size="small" onClick={() => setCampDialog({ data: c })}>
                                     <EditOutlinedIcon fontSize="small" />
@@ -425,6 +434,9 @@ export default function AdminMarketingPage() {
         data={campDialog?.data} advertisers={advertisers} catalog={catalog.items}
         onClose={() => setCampDialog(null)}
         onSaved={() => { setCampDialog(null); reload(); setToast({ severity: 'success', msg: 'Campaña guardada' }); }} />
+
+      <CampaignInsightsDrawer campaignId={insightsCampaignId} open={!!insightsCampaignId}
+        onClose={() => setInsightsCampaignId(null)} />
 
       <Snackbar open={!!toast} autoHideDuration={4000} onClose={() => setToast(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
