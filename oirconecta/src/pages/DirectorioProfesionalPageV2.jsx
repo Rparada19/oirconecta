@@ -1,35 +1,22 @@
 /**
  * F5.7b — Rediseño ficha profesional pública (versión landing Airbnb-style).
  *
- * Estructura:
- *  1. Banner cover 420px (bannerUrl o gradient fallback) con título Playfair sobrepuesto
- *  2. Sticky sub-nav con anchor links (Sobre mí · Servicios · Reseñas · Ubicación)
- *  3. Fila de fotos secundarias (galería) si photoUrls > 0
- *  4. Grid 2 columnas:
- *     · Izquierda: About storytelling · Credenciales · Servicios · Reseñas · Ubicación · FAQ
- *     · Derecha: sticky booking card con precio, horarios rápidos, botón principal + WhatsApp/Llamar
- *  5. CTA final grande
- *
- * Fallbacks para perfiles incompletos (completeness < 60%):
- *  · Sin bannerUrl → gradient púrpura/navy con textura
- *  · Sin foto → iniciales grandes en avatar circular
- *  · Sin servicios → oculto (o "consulta general")
- *  · Sin reseñas → destacar credenciales + "Sé el primero en agendar"
- *  · Sin precio → botón "Consultar por WhatsApp"
+ * Modo demo: `?demo=1` rellena los campos vacíos con datos plausibles (IA)
+ * para pre-visualizar cómo se verá la ficha 100% completa.
  */
 
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
-import { useParams, Link as RouterLink } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Box, Typography, Stack, Button, Chip, CircularProgress, Alert, IconButton,
-  Container,
+  Container, Accordion, AccordionSummary, AccordionDetails, LinearProgress,
 } from '@mui/material';
 import {
   Verified, LocationOn, WhatsApp, Phone, CalendarMonth,
-  Share as ShareIcon, FavoriteBorder, Star, ChevronRight,
+  Share as ShareIcon, FavoriteBorder, Star, ExpandMore,
   MedicalServicesOutlined, WorkspacePremiumOutlined, HeadphonesOutlined,
-  FormatQuote, EmojiEventsOutlined,
+  FormatQuote, EmojiEventsOutlined, AccessTime, CheckCircleOutline,
 } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -43,13 +30,9 @@ import {
   directoryPrimaryCity,
   directoryPrimaryPhonePublic,
   directoryPublicDisplayName,
-  directoryPublicEmail,
   directoryProfileBio,
-  directoryProfilePhoto,
-  directoryServicesByProfession,
   waMeHrefFromPhone,
 } from '../utils/directoryPresentation';
-import { getWhatsAppHrefWithText } from '../config/publicSite';
 import { DEMO_PROFILE_MAP } from '../data/directoryDemoData';
 
 // ─── Design tokens ────────────────────────────────────────────
@@ -59,7 +42,6 @@ const ACCENT = '#6d28d9';
 const MUTED = '#64748b';
 const BORDER = '#eef0f3';
 
-// Paleta de gradients para las mini fotos (cuando el profesional no tiene fotos reales)
 const PLACEHOLDER_GRADIENTS = [
   ['#dbeafe', '#eff6ff', '#1e40af'],
   ['#dcfce7', '#ecfdf5', '#14532d'],
@@ -67,6 +49,75 @@ const PLACEHOLDER_GRADIENTS = [
   ['#f3e8ff', '#faf5ff', '#6b21a8'],
   ['#fee2e2', '#fef2f2', '#991b1b'],
 ];
+
+// Marcas comunes de audífonos en Colombia
+const BRAND_COLORS = {
+  Widex:    { bg: '#fef3c7', ink: '#78350f' },
+  Phonak:   { bg: '#e0e7ff', ink: '#3730a3' },
+  Signia:   { bg: '#fee2e2', ink: '#991b1b' },
+  Oticon:   { bg: '#dcfce7', ink: '#14532d' },
+  Resound:  { bg: '#dbeafe', ink: '#1e40af' },
+  Starkey:  { bg: '#fce7f3', ink: '#9d174d' },
+  Bernafon: { bg: '#f3e8ff', ink: '#6b21a8' },
+  Unitron:  { bg: '#e0f2fe', ink: '#075985' },
+};
+
+// ─── DEMO DATA — se aplica cuando ?demo=1 ─────────────────────
+const DEMO_DATA = {
+  bio: 'Otorrinolaringóloga con más de 12 años acompañando personas de todas las edades a recuperar y cuidar su audición. Formada en la Universidad Nacional con fellowship en audiología pediátrica en el Hospital de la Misericordia, ha adaptado más de 400 procesos de audífonos con seguimiento personalizado en Bogotá. Su consultorio en Chapinero es un espacio pensado para que llegues con confianza y salgas con respuestas claras.',
+  quote: 'Cada persona escucha distinto. Mi trabajo es encontrar la respuesta que le corresponde a la suya.',
+  anosExperiencia: 12,
+  direccionPublica: 'Cra. 13 # 85-32, Consultorio 402, Chapinero',
+  telefonoPublico: '3125678901',
+  whatsappPublico: '573125678901',
+  studies: [
+    { institucion: 'Universidad Nacional de Colombia', titulo: 'Especialista en Otorrinolaringología', ano: 2013 },
+    { institucion: 'Hospital de la Misericordia', titulo: 'Fellowship en Audiología Pediátrica', ano: 2015 },
+    { institucion: 'Widex Academy Berlín', titulo: 'Certificación en adaptación protésica', ano: 2019 },
+    { institucion: 'Colegio Médico Colombiano', titulo: 'RETHUS RM-118547 (vigente)', ano: 2013 },
+  ],
+  servicios: [
+    { nombre: 'Valoración auditiva completa', descripcion: 'Audiometría tonal, logoaudiometría e impedanciometría con diagnóstico en la misma sesión.', precio: 180000, duracion: '45 min' },
+    { nombre: 'Adaptación de audífonos', descripcion: 'Prueba, ajuste y seguimiento por 90 días con múltiples marcas sin sesgo comercial.', precio: 350000, duracion: '3 sesiones' },
+    { nombre: 'Screening auditivo infantil', descripcion: 'Emisiones otoacústicas y PEATC en ambiente amigable para bebés y niños.', precio: 220000, duracion: '30 min' },
+    { nombre: 'Manejo de tinnitus', descripcion: 'Terapia sonora y rehabilitación auditiva progresiva.', precio: 160000, duracion: '45 min' },
+    { nombre: 'Limpieza y cerumen', descripcion: 'Extracción segura de cerumen con microscopio.', precio: 120000, duracion: '20 min' },
+    { nombre: 'Segunda opinión', descripcion: 'Revisión objetiva de diagnósticos o recomendaciones previas.', precio: 150000, duracion: '30 min' },
+  ],
+  marcas: ['Widex', 'Phonak', 'Signia', 'Oticon', 'Resound', 'Starkey'],
+  ratingAvg: 4.9,
+  reviewsCount: 47,
+  ratingBreakdown: {
+    puntualidad: 4.9,
+    trato: 5.0,
+    diagnostico: 4.8,
+    seguimiento: 4.9,
+  },
+  reviews: [
+    { nombre: 'María Camila R.', iniciales: 'MC', bg: '#f3e8ff', ink: '#6b21a8', fecha: 'Marzo 2026', motivo: 'Adaptación audífonos', rating: 5, texto: 'Fue muy amable con mi mamá que tiene 78. Le explicó todo con calma, no la apuró y le probó tres opciones. Nos vino a hacer el ajuste en la casa la segunda vez.' },
+    { nombre: 'Juan Pablo M.', iniciales: 'JP', bg: '#dbeafe', ink: '#1e40af', fecha: 'Febrero 2026', motivo: 'Valoración inicial', rating: 5, texto: 'Llevaba años con zumbido y pensé que era normal. Ella me hizo entender qué me estaba pasando y ahora sigo su terapia. Cada control noto mejora.' },
+    { nombre: 'Sofía L.', iniciales: 'SL', bg: '#dcfce7', ink: '#14532d', fecha: 'Enero 2026', motivo: 'Screening infantil', rating: 5, texto: 'Excelente trato con mi hija de 4 años. Convirtió el examen en un juego y logró resultados muy precisos. Muy recomendada para niños.' },
+    { nombre: 'Carlos E.', iniciales: 'CE', bg: '#fef3c7', ink: '#78350f', fecha: 'Diciembre 2025', motivo: 'Segunda opinión', rating: 5, texto: 'Otro especialista me había dicho que necesitaba cirugía. Angélica me revisó, hizo estudios adicionales y me dio un tratamiento alternativo que funcionó.' },
+  ],
+  faqs: [
+    { q: '¿Cuánto tiempo dura la primera valoración?', a: 'La valoración inicial dura 45 minutos e incluye audiometría, logoaudiometría e impedanciometría. Recibirás el diagnóstico y las recomendaciones en esa misma cita.' },
+    { q: '¿Atienden pacientes de EPS?', a: 'Atendemos particular y algunas medicinas prepagadas. Consulta al agendar si tu plan aplica.' },
+    { q: '¿Puedo llevar audífonos que compré en otra ciudad?', a: 'Sí, revisamos y ajustamos audífonos de las principales marcas (Widex, Phonak, Signia, Oticon, entre otras). Traer garantía y comprobante.' },
+    { q: '¿Hay parqueadero cerca?', a: 'El edificio tiene parqueadero para visitantes desde $6.000/hora. Estamos a 2 cuadras de la estación TransMilenio Calle 85.' },
+    { q: '¿Los audífonos tienen garantía?', a: 'Sí, garantía del fabricante entre 2 y 3 años dependiendo del modelo, más 90 días de ajustes sin costo con nosotros.' },
+  ],
+  horariosSemana: [
+    { dia: 'Lun-Vie', horas: '8:00 am - 6:00 pm' },
+    { dia: 'Sábados', horas: '8:00 am - 1:00 pm' },
+    { dia: 'Domingos', horas: 'Cerrado' },
+  ],
+  proximosSlots: [
+    { fecha: 'Mié 8', hora: '10:30 am' },
+    { fecha: 'Vie 10', hora: '2:00 pm' },
+    { fecha: 'Sáb 11', hora: '9:00 am' },
+    { fecha: 'Lun 13', hora: '11:00 am' },
+  ],
+};
 
 // ─── Helpers ──────────────────────────────────────────────────
 function scrollTo(id) {
@@ -94,8 +145,7 @@ function editorialTitle(text, size = '1.75rem') {
   );
 }
 
-// ─── Componentes internos ────────────────────────────────────
-
+// ─── StickySubNav ─────────────────────────────────────────────
 function StickySubNav({ sections, name, rating, onBook }) {
   return (
     <Box sx={{
@@ -107,7 +157,7 @@ function StickySubNav({ sections, name, rating, onBook }) {
       display: 'flex', alignItems: 'center', gap: 3,
     }}>
       <Typography sx={{ ...SERIF, fontSize: '1.05rem', color: NAVY, flexShrink: 0, display: { xs: 'none', sm: 'block' } }}>
-        {name}
+        {name?.split(' ').slice(0, 2).join(' ')}
       </Typography>
       <Stack direction="row" spacing={2.5} sx={{ flex: 1, overflow: 'auto', '&::-webkit-scrollbar': { display: 'none' } }}>
         {sections.map((s) => (
@@ -138,7 +188,8 @@ function StickySubNav({ sections, name, rating, onBook }) {
   );
 }
 
-function BannerCover({ profile, name, city, professional, initials, rating, reviewsCount, yearsExp }) {
+// ─── BannerCover ──────────────────────────────────────────────
+function BannerCover({ profile, name, city, professional, rating, reviewsCount, yearsExp }) {
   const bannerUrl = profile?.bannerUrl?.trim();
   const bgStyle = bannerUrl
     ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -151,7 +202,6 @@ function BannerCover({ profile, name, city, professional, initials, rating, revi
       overflow: 'hidden',
       ...bgStyle,
     }}>
-      {/* Textura decorativa si no hay banner */}
       {!bannerUrl && (
         <Box sx={{
           position: 'absolute', inset: 0,
@@ -160,13 +210,11 @@ function BannerCover({ profile, name, city, professional, initials, rating, revi
             radial-gradient(ellipse at 75% 60%, rgba(168,85,247,0.35), transparent 60%)`,
         }} />
       )}
-      {/* Overlay para legibilidad */}
       <Box sx={{
         position: 'absolute', inset: 0,
         background: 'linear-gradient(180deg, rgba(15,42,74,0.28) 0%, transparent 30%, rgba(15,42,74,0.65) 100%)',
       }} />
 
-      {/* Ghost buttons esquina */}
       <Stack direction="row" spacing={1} sx={{
         position: 'absolute', top: 20, right: { xs: 16, md: 32 },
       }}>
@@ -186,7 +234,6 @@ function BannerCover({ profile, name, city, professional, initials, rating, revi
         </IconButton>
       </Stack>
 
-      {/* Contenido sobre el cover */}
       <Container maxWidth="lg" sx={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
         pb: { xs: 3, md: 5 }, color: '#fff',
@@ -232,10 +279,10 @@ function BannerCover({ profile, name, city, professional, initials, rating, revi
   );
 }
 
+// ─── SecondaryPhotos ──────────────────────────────────────────
 function SecondaryPhotos({ photoUrls }) {
   const hasPhotos = Array.isArray(photoUrls) && photoUrls.length > 0;
   const slots = hasPhotos ? photoUrls.slice(0, 4) : [];
-  // Si el profesional no tiene fotos, mostramos placeholders sutiles para que la ficha no se vea desnuda
   const placeholders = Array.from({ length: 4 - slots.length });
 
   return (
@@ -274,6 +321,7 @@ function SecondaryPhotos({ photoUrls }) {
   );
 }
 
+// ─── AboutSection ─────────────────────────────────────────────
 function AboutSection({ name, initials, bio, quote }) {
   return (
     <Box id="sobre" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
@@ -286,49 +334,53 @@ function AboutSection({ name, initials, bio, quote }) {
         }}>{initials}</Box>
         <Box>
           {overline('Sobre la profesional')}
-          {editorialTitle(quote?.title || 'Cuidado personalizado, resultados reales', '1.4rem')}
+          {editorialTitle('Cuidado personalizado, resultados reales', '1.4rem')}
         </Box>
       </Stack>
       <Typography sx={{ fontSize: '1rem', color: '#334155', lineHeight: 1.7, mb: 2 }}>
         {bio || `${name} es un profesional verificado en OírConecta. Solicita una consulta para conocer su enfoque, servicios y disponibilidad.`}
       </Typography>
-      {quote?.text && (
+      {quote && (
         <Box sx={{
           borderLeft: `3px solid ${NAVY}`, pl: 2.5, py: 0.5, mt: 2.5,
           ...SERIF, fontStyle: 'italic', fontSize: '1.15rem',
           color: NAVY, lineHeight: 1.5,
         }}>
           <FormatQuote sx={{ color: `${NAVY}44`, fontSize: 24, mr: 0.5, verticalAlign: '-4px' }} />
-          {quote.text}
+          {quote}
+          <Typography sx={{
+            display: 'block', mt: 1.25,
+            fontFamily: 'Inter, sans-serif', fontStyle: 'normal',
+            fontSize: '0.72rem', letterSpacing: '0.14em', textTransform: 'uppercase',
+            color: MUTED, fontWeight: 700,
+          }}>— {name?.split(' ').slice(0, 2).join(' ')}</Typography>
         </Box>
       )}
     </Box>
   );
 }
 
+// ─── CredentialsSection ───────────────────────────────────────
 function CredentialsSection({ studies, professional, yearsExp }) {
   const items = [];
-  if (Array.isArray(studies) && studies.length > 0) {
+  if (Array.isArray(studies)) {
     for (const s of studies.slice(0, 4)) {
+      const [c1, c2, ink] = PLACEHOLDER_GRADIENTS[items.length % PLACEHOLDER_GRADIENTS.length];
       items.push({
         icon: WorkspacePremiumOutlined,
-        tint: '#eff6ff', ink: '#1e40af',
+        tint: c1, ink,
         title: s.institucion || s.institution || s.titulo || 'Estudio',
         sub: [s.titulo, s.ano].filter(Boolean).join(' · '),
       });
     }
   }
-  if (professional) {
-    items.push({
-      icon: EmojiEventsOutlined,
-      tint: '#ecfdf5', ink: '#14532d',
-      title: `Registro RETHUS`, sub: 'Profesional verificado por OírConecta',
+  if (items.length === 0 && (professional || yearsExp)) {
+    if (professional) items.push({
+      icon: EmojiEventsOutlined, tint: '#ecfdf5', ink: '#14532d',
+      title: 'Registro RETHUS', sub: 'Profesional verificado por OírConecta',
     });
-  }
-  if (yearsExp) {
-    items.push({
-      icon: HeadphonesOutlined,
-      tint: '#fef3c7', ink: '#78350f',
+    if (yearsExp) items.push({
+      icon: HeadphonesOutlined, tint: '#fef3c7', ink: '#78350f',
       title: `${yearsExp} años de experiencia`, sub: 'En consulta profesional',
     });
   }
@@ -367,6 +419,7 @@ function CredentialsSection({ studies, professional, yearsExp }) {
   );
 }
 
+// ─── ServiciosSection ─────────────────────────────────────────
 function ServiciosSection({ servicios }) {
   const list = Array.isArray(servicios) ? servicios : [];
   if (list.length === 0) return null;
@@ -400,7 +453,9 @@ function ServiciosSection({ servicios }) {
                 <Typography sx={{ fontWeight: 600, color: NAVY, fontSize: '1rem', mb: 0.5 }}>{nombre}</Typography>
                 {desc && <Typography sx={{ fontSize: '0.85rem', color: MUTED, lineHeight: 1.5, mb: 1.25 }}>{desc}</Typography>}
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography sx={{ fontSize: '0.75rem', color: MUTED }}>{duracion || ''}</Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: MUTED }}>
+                    {duracion && <><AccessTime sx={{ fontSize: 12, verticalAlign: '-2px', mr: 0.5 }} />{duracion}</>}
+                  </Typography>
                   <Typography sx={{ fontSize: '0.9rem', fontWeight: 600, color: NAVY }}>
                     {precio ? `desde $${Number(precio).toLocaleString('es-CO')}` : 'Consulta precio'}
                   </Typography>
@@ -414,33 +469,242 @@ function ServiciosSection({ servicios }) {
   );
 }
 
-function ContactCTA({ phone, wa, direccion, onBook, name, city }) {
+// ─── MarcasSection ────────────────────────────────────────────
+function MarcasSection({ marcas }) {
+  const list = Array.isArray(marcas) ? marcas.filter(Boolean) : [];
+  if (list.length === 0) return null;
+
   return (
-    <Box id="ubicacion" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
-      {overline('Cómo contactarme')}
+    <Box id="marcas" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
+      {overline('Marcas que atiendo')}
       <Box sx={{ mt: 1, mb: 2.5 }}>
-        {editorialTitle('Estoy aquí para ayudarte', '1.5rem')}
+        {editorialTitle('Trabajo con las mejores marcas del mundo', '1.7rem')}
       </Box>
-      <Stack spacing={1.5}>
-        {direccion && (
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', color: NAVY }}>
-            <LocationOn sx={{ color: ACCENT }} />
-            <Typography sx={{ fontSize: '0.95rem' }}>{direccion}, {city}</Typography>
-          </Stack>
-        )}
-        {phone && (
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', color: NAVY }}>
-            <Phone sx={{ color: ACCENT }} />
-            <Typography sx={{ fontSize: '0.95rem' }}>{phone}</Typography>
-          </Stack>
-        )}
-      </Stack>
+      <Typography sx={{ fontSize: '0.95rem', color: MUTED, mb: 3, maxWidth: 620 }}>
+        Sin sesgo comercial: comparo y recomiendo la opción que mejor se adapta a tu pérdida auditiva, presupuesto y estilo de vida.
+      </Typography>
+      <Box sx={{
+        display: 'grid', gap: 1.25,
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' },
+      }}>
+        {list.slice(0, 8).map((marca, i) => {
+          const brand = BRAND_COLORS[marca] || { bg: '#f1f5f9', ink: '#475569' };
+          return (
+            <Box key={marca + i} sx={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+              p: 2, border: `1px solid ${BORDER}`, borderRadius: '12px',
+              bgcolor: '#fff', minHeight: 90,
+              transition: 'all 0.15s',
+              '&:hover': { borderColor: brand.ink, transform: 'translateY(-2px)' },
+            }}>
+              <Box sx={{
+                width: 44, height: 44, borderRadius: '10px',
+                bgcolor: brand.bg, color: brand.ink,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: '"Playfair Display", serif', fontSize: '1.1rem', fontWeight: 600,
+              }}>
+                {marca[0]}
+              </Box>
+              <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: NAVY }}>{marca}</Typography>
+            </Box>
+          );
+        })}
+      </Box>
     </Box>
   );
 }
 
-function StickyBookingCard({ profile, name, phone, wa, onBook, onContact, reviewsCount, rating, servicios }) {
+// ─── ReseñasSection ───────────────────────────────────────────
+function ResenasSection({ rating, reviewsCount, breakdown, reviews }) {
+  const list = Array.isArray(reviews) ? reviews : [];
+  if (reviewsCount === 0 || list.length === 0) return null;
+
+  const rubros = [
+    { key: 'puntualidad', label: 'Puntualidad' },
+    { key: 'trato', label: 'Trato humano' },
+    { key: 'diagnostico', label: 'Diagnóstico' },
+    { key: 'seguimiento', label: 'Seguimiento' },
+  ];
+
+  return (
+    <Box id="resenas" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 2.5 }}>
+        <Box>
+          {overline('Reseñas de pacientes')}
+          <Box sx={{ mt: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Star sx={{ color: '#f59e0b', fontSize: 26 }} />
+              <Typography sx={{ ...SERIF, fontWeight: 600, fontSize: '1.6rem', color: NAVY }}>
+                {rating.toFixed(1)}
+              </Typography>
+              <Typography sx={{ fontSize: '0.95rem', color: MUTED }}>· {reviewsCount} reseñas verificadas</Typography>
+            </Stack>
+          </Box>
+        </Box>
+      </Stack>
+
+      {breakdown && (
+        <Box sx={{
+          display: 'grid', gap: 2.5,
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
+          py: 2.5, borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, mb: 3,
+        }}>
+          {rubros.map((r) => {
+            const v = breakdown[r.key];
+            return (
+              <Box key={r.key}>
+                <Typography sx={{ fontSize: '0.85rem', color: MUTED, mb: 0.5 }}>{r.label}</Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <LinearProgress variant="determinate" value={(v / 5) * 100}
+                    sx={{
+                      flex: 1, height: 4, borderRadius: 2, bgcolor: '#f1f5f9',
+                      '& .MuiLinearProgress-bar': { bgcolor: NAVY },
+                    }} />
+                  <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: NAVY }}>{v.toFixed(1)}</Typography>
+                </Stack>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
+
+      <Box sx={{
+        display: 'grid', gap: 2.5,
+        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+      }}>
+        {list.slice(0, 4).map((r, i) => (
+          <Box key={i}>
+            <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1 }}>
+              <Box sx={{
+                width: 40, height: 40, borderRadius: '50%',
+                bgcolor: r.bg, color: r.ink,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 600, fontSize: '0.85rem',
+              }}>{r.iniciales}</Box>
+              <Box>
+                <Typography sx={{ fontWeight: 600, color: NAVY, fontSize: '0.9rem' }}>{r.nombre}</Typography>
+                <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>{r.fecha} · {r.motivo}</Typography>
+              </Box>
+            </Stack>
+            <Box sx={{ color: '#f59e0b', fontSize: '0.85rem', mb: 0.75 }}>
+              {'★'.repeat(r.rating)}
+            </Box>
+            <Typography sx={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.55 }}>
+              {r.texto}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+// ─── FAQ Section ──────────────────────────────────────────────
+function FAQSection({ faqs }) {
+  const list = Array.isArray(faqs) ? faqs : [];
+  if (list.length === 0) return null;
+
+  return (
+    <Box id="faq" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
+      {overline('Preguntas frecuentes')}
+      <Box sx={{ mt: 1, mb: 2.5 }}>
+        {editorialTitle('Antes de agendar, tal vez te preguntas', '1.5rem')}
+      </Box>
+      <Box>
+        {list.slice(0, 8).map((f, i) => (
+          <Accordion key={i} elevation={0} disableGutters
+            sx={{
+              border: 'none', borderBottom: `1px solid ${BORDER}`,
+              '&:before': { display: 'none' },
+              '&:last-child': { borderBottom: 'none' },
+            }}>
+            <AccordionSummary expandIcon={<ExpandMore />}
+              sx={{
+                px: 0, py: 1,
+                '& .MuiAccordionSummary-content': { my: 0 },
+              }}>
+              <Typography sx={{ fontWeight: 600, color: NAVY, fontSize: '0.95rem' }}>
+                {f.q}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ px: 0, pb: 2 }}>
+              <Typography sx={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.6 }}>
+                {f.a}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+// ─── Ubicación / Contacto ─────────────────────────────────────
+function UbicacionSection({ phone, direccion, city, horariosSemana, mapsEmbed }) {
+  if (!phone && !direccion && !city && (!horariosSemana || horariosSemana.length === 0)) return null;
+  return (
+    <Box id="ubicacion" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
+      {overline('Ubicación y horarios')}
+      <Box sx={{ mt: 1, mb: 2.5 }}>
+        {editorialTitle('Cómo llegar a mi consultorio', '1.5rem')}
+      </Box>
+      <Box sx={{
+        display: 'grid', gap: 2.5,
+        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+      }}>
+        <Box>
+          <Stack spacing={1.25}>
+            {direccion && (
+              <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                <LocationOn sx={{ color: ACCENT, mt: 0.25 }} />
+                <Box>
+                  <Typography sx={{ fontWeight: 600, color: NAVY, fontSize: '0.95rem' }}>{direccion}</Typography>
+                  {city && <Typography sx={{ fontSize: '0.85rem', color: MUTED }}>{city}, Colombia</Typography>}
+                </Box>
+              </Stack>
+            )}
+            {phone && (
+              <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                <Phone sx={{ color: ACCENT, mt: 0.25 }} />
+                <Typography sx={{ color: NAVY, fontSize: '0.95rem' }}>{phone}</Typography>
+              </Stack>
+            )}
+            {Array.isArray(horariosSemana) && horariosSemana.length > 0 && (
+              <Box sx={{ pt: 1 }}>
+                <Typography sx={{ fontSize: '0.72rem', color: MUTED, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, mb: 1 }}>
+                  Horarios
+                </Typography>
+                <Stack spacing={0.5}>
+                  {horariosSemana.map((h, i) => (
+                    <Stack key={i} direction="row" justifyContent="space-between" sx={{ fontSize: '0.9rem' }}>
+                      <Typography sx={{ color: NAVY, fontWeight: 500 }}>{h.dia}</Typography>
+                      <Typography sx={{ color: MUTED }}>{h.horas}</Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Box>
+            )}
+          </Stack>
+        </Box>
+        <Box sx={{
+          height: 220, borderRadius: '12px',
+          background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
+          border: `1px solid ${BORDER}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#1e40af', fontSize: '0.85rem', fontWeight: 500,
+        }}>
+          {mapsEmbed ? 'Mapa embebido' : 'Vista de mapa'}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+// ─── StickyBookingCard ────────────────────────────────────────
+function StickyBookingCard({ profile, name, phone, wa, onBook, reviewsCount, rating, servicios, proximosSlots }) {
   const priceFrom = servicios?.[0]?.precio || servicios?.[0]?.price;
+  const hasSlots = Array.isArray(proximosSlots) && proximosSlots.length > 0;
+
   return (
     <Box sx={{
       position: { md: 'sticky' }, top: { md: 100 },
@@ -456,13 +720,38 @@ function StickyBookingCard({ profile, name, phone, wa, onBook, onContact, review
           {priceFrom ? 'desde / consulta' : 'por WhatsApp'}
         </Typography>
       </Stack>
-      {rating > 0 && (
+      {rating > 0 ? (
         <Typography sx={{ fontSize: '0.75rem', color: MUTED, mb: 2 }}>
           <Star sx={{ color: '#f59e0b', fontSize: 12, verticalAlign: '-2px', mr: 0.25 }} />
           {rating.toFixed(1)} · {reviewsCount} reseñas
         </Typography>
+      ) : (
+        <Box sx={{ mb: 2 }} />
       )}
-      {!rating && <Box sx={{ mb: 2 }} />}
+
+      {hasSlots && (
+        <Box sx={{ mb: 2, p: 1.5, border: `1px solid ${BORDER}`, borderRadius: '12px' }}>
+          <Typography sx={{ fontSize: '0.65rem', color: MUTED, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, mb: 1 }}>
+            Próximos horarios
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.75 }}>
+            {proximosSlots.slice(0, 4).map((s, i) => (
+              <Box key={i} onClick={onBook}
+                sx={{
+                  textAlign: 'center', p: 1, borderRadius: '8px',
+                  border: i === 0 ? `2px solid ${NAVY}` : `1px solid ${BORDER}`,
+                  bgcolor: i === 0 ? NAVY : '#fff',
+                  color: i === 0 ? '#fff' : '#475569',
+                  fontSize: '0.78rem', fontWeight: i === 0 ? 600 : 500,
+                  cursor: 'pointer',
+                  '&:hover': { borderColor: NAVY },
+                }}>
+                {s.fecha} · {s.hora}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
 
       <Button fullWidth variant="contained" onClick={onBook}
         startIcon={<CalendarMonth />}
@@ -481,9 +770,7 @@ function StickyBookingCard({ profile, name, phone, wa, onBook, onContact, review
       <Stack direction="row" spacing={1}>
         {wa && (
           <Button
-            fullWidth
-            component="a"
-            href={wa}
+            fullWidth component="a" href={wa}
             target="_blank" rel="noopener noreferrer"
             onClick={() => trackDirectoryWhatsAppClick(profile?.id)}
             startIcon={<WhatsApp />}
@@ -498,9 +785,7 @@ function StickyBookingCard({ profile, name, phone, wa, onBook, onContact, review
         )}
         {phone && (
           <Button
-            fullWidth
-            component="a"
-            href={`tel:${phone}`}
+            fullWidth component="a" href={`tel:${phone}`}
             onClick={() => trackDirectoryCallClick(profile?.id)}
             startIcon={<Phone />}
             sx={{
@@ -514,7 +799,6 @@ function StickyBookingCard({ profile, name, phone, wa, onBook, onContact, review
         )}
       </Stack>
 
-      {/* Trust indicator */}
       <Box sx={{
         mt: 2.5, pt: 2.5, borderTop: `1px solid ${BORDER}`,
         display: 'flex', gap: 1.25, alignItems: 'center',
@@ -527,7 +811,7 @@ function StickyBookingCard({ profile, name, phone, wa, onBook, onContact, review
           <Verified sx={{ fontSize: 18 }} />
         </Box>
         <Box>
-          <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: NAVY }}>Profesional verificado</Typography>
+          <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: NAVY }}>Profesional verificada</Typography>
           <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>OírConecta valida credenciales</Typography>
         </Box>
       </Box>
@@ -535,9 +819,11 @@ function StickyBookingCard({ profile, name, phone, wa, onBook, onContact, review
   );
 }
 
-// ─── Página principal ──────────────────────────────────────
+// ─── Página principal ─────────────────────────────────────────
 export default function DirectorioProfesionalPageV2() {
   const { profileId } = useParams();
+  const [searchParams] = useSearchParams();
+  const isDemo = searchParams.get('demo') === '1';
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -565,37 +851,66 @@ export default function DirectorioProfesionalPageV2() {
     trackEntityEvent('profile_view_v2', { entityType: 'DirectoryProfile', entityId: profileId });
   }, [profileId]);
 
-  const name = profile ? directoryPublicDisplayName(profile) : '';
-  const initials = profile ? (directoryInitials(profile) || 'P').toUpperCase() : '';
-  const city = directoryPrimaryCity(profile?.workplaces) || '';
-  const phone = directoryPrimaryPhonePublic(profile);
+  // ── Merge demo con real ──
+  // Solo rellena campos vacíos, nunca sobreescribe datos reales.
+  const p = useMemo(() => {
+    if (!profile) return null;
+    if (!isDemo) return profile;
+    const merged = { ...profile };
+    if (!merged.anosExperiencia)     merged.anosExperiencia = DEMO_DATA.anosExperiencia;
+    if (!merged.direccionPublica)    merged.direccionPublica = DEMO_DATA.direccionPublica;
+    if (!merged.telefonoPublico)     merged.telefonoPublico = DEMO_DATA.telefonoPublico;
+    if (!merged.whatsappPublico)     merged.whatsappPublico = DEMO_DATA.whatsappPublico;
+    if (!merged.descripcion)         merged.descripcion = DEMO_DATA.bio;
+    if (!merged.ratingAvg)           merged.ratingAvg = DEMO_DATA.ratingAvg;
+    if (!merged.reviewsCount)        merged.reviewsCount = DEMO_DATA.reviewsCount;
+    if (!Array.isArray(merged.studies) || merged.studies.length === 0)   merged.studies = DEMO_DATA.studies;
+    if (!Array.isArray(merged.servicios) || merged.servicios.length === 0) merged.servicios = DEMO_DATA.servicios;
+    return merged;
+  }, [profile, isDemo]);
+
+  const name = p ? directoryPublicDisplayName(p) : '';
+  const initials = p ? (directoryInitials(p) || 'P').toUpperCase() : '';
+  const city = directoryPrimaryCity(p?.workplaces) || (isDemo ? 'Bogotá' : '');
+  const phone = directoryPrimaryPhonePublic(p) || (isDemo ? DEMO_DATA.telefonoPublico : null);
   const wa = waMeHrefFromPhone(phone);
-  const bio = profile ? directoryProfileBio(profile) : '';
-  const professional = profile?.profesion || '';
-  const yearsExp = profile?.anosExperiencia;
-  const rating = Number(profile?.ratingAvg || 0);
-  const reviewsCount = Number(profile?.reviewsCount || 0);
-  const photoUrls = Array.isArray(profile?.photoUrls) ? profile.photoUrls.filter(Boolean) : [];
-  const servicios = Array.isArray(profile?.servicios) ? profile.servicios : [];
-  const studies = Array.isArray(profile?.studies) ? profile.studies : [];
-  const direccion = profile?.direccionPublica?.trim();
+  const bio = p ? directoryProfileBio(p) : '';
+  const professional = p?.profesion || '';
+  const yearsExp = p?.anosExperiencia;
+  const rating = Number(p?.ratingAvg || 0);
+  const reviewsCount = Number(p?.reviewsCount || 0);
+  const photoUrls = Array.isArray(p?.photoUrls) ? p.photoUrls.filter(Boolean) : [];
+  const servicios = Array.isArray(p?.servicios) ? p.servicios : [];
+  const studies = Array.isArray(p?.studies) ? p.studies : [];
+  const direccion = p?.direccionPublica?.trim();
+
+  // ── Demo-only extras ──
+  const demoQuote = isDemo ? DEMO_DATA.quote : null;
+  const marcas = useMemo(() => {
+    if (Array.isArray(p?.marcasAudifonos) && p.marcasAudifonos.length > 0) return p.marcasAudifonos;
+    if (isDemo) return DEMO_DATA.marcas;
+    return [];
+  }, [p, isDemo]);
+  const breakdown = isDemo ? DEMO_DATA.ratingBreakdown : null;
+  const reviews = isDemo ? DEMO_DATA.reviews : [];
+  const faqs = useMemo(() => {
+    if (Array.isArray(p?.qaList) && p.qaList.length > 0) return p.qaList;
+    if (isDemo) return DEMO_DATA.faqs;
+    return [];
+  }, [p, isDemo]);
+  const horariosSemana = isDemo ? DEMO_DATA.horariosSemana : [];
+  const proximosSlots = isDemo ? DEMO_DATA.proximosSlots : [];
 
   const sections = useMemo(() => {
     const s = [{ id: 'sobre', label: 'Sobre mí' }];
     if (studies.length || professional || yearsExp) s.push({ id: 'credenciales', label: 'Credenciales' });
     if (servicios.length > 0) s.push({ id: 'servicios', label: 'Servicios' });
+    if (marcas.length > 0) s.push({ id: 'marcas', label: 'Marcas' });
     if (reviewsCount > 0) s.push({ id: 'resenas', label: `Reseñas · ${reviewsCount}` });
-    if (direccion || phone) s.push({ id: 'ubicacion', label: 'Contacto' });
+    if (faqs.length > 0) s.push({ id: 'faq', label: 'Preguntas' });
+    if (direccion || phone || horariosSemana.length > 0) s.push({ id: 'ubicacion', label: 'Ubicación' });
     return s;
-  }, [studies.length, professional, yearsExp, servicios.length, reviewsCount, direccion, phone]);
-
-  const quote = useMemo(() => {
-    // Si el profesional no tiene bio larga, usamos una quote editorial genérica pero cálida
-    if (bio && bio.length > 120) {
-      return { title: 'Cada consulta es única', text: bio.slice(0, 140).trim() + (bio.length > 140 ? '…' : '') };
-    }
-    return { title: 'Cuidado personalizado, resultados reales', text: null };
-  }, [bio]);
+  }, [studies.length, professional, yearsExp, servicios.length, marcas.length, reviewsCount, faqs.length, direccion, phone, horariosSemana.length]);
 
   if (loading) {
     return (
@@ -609,7 +924,7 @@ export default function DirectorioProfesionalPageV2() {
     );
   }
 
-  if (error && !profile) {
+  if (error && !p) {
     return (
       <>
         <Header />
@@ -633,9 +948,17 @@ export default function DirectorioProfesionalPageV2() {
 
       <Header />
 
+      {isDemo && (
+        <Box sx={{ bgcolor: '#fef3c7', borderBottom: '1px solid #fde68a', px: 3, py: 1.25, textAlign: 'center' }}>
+          <Typography sx={{ fontSize: '0.85rem', color: '#78350f' }}>
+            <strong>Modo demo:</strong> los campos vacíos están rellenos con datos ficticios para preview. Estos datos NO se guardan.
+          </Typography>
+        </Box>
+      )}
+
       <BannerCover
-        profile={profile} name={name} city={city}
-        professional={professional} initials={initials}
+        profile={p} name={name} city={city}
+        professional={professional}
         rating={rating} reviewsCount={reviewsCount} yearsExp={yearsExp}
       />
 
@@ -650,32 +973,34 @@ export default function DirectorioProfesionalPageV2() {
           alignItems: 'start',
         }}>
           <Box>
-            <AboutSection name={name} initials={initials} bio={bio} quote={quote} />
+            <AboutSection name={name} initials={initials} bio={bio} quote={demoQuote} />
             <CredentialsSection studies={studies} professional={professional} yearsExp={yearsExp} />
             <ServiciosSection servicios={servicios} />
-            <ContactCTA phone={phone} wa={wa} direccion={direccion} onBook={handleBook} name={name} city={city} />
+            <MarcasSection marcas={marcas} />
+            <ResenasSection rating={rating} reviewsCount={reviewsCount} breakdown={breakdown} reviews={reviews} />
+            <FAQSection faqs={faqs} />
+            <UbicacionSection phone={phone} direccion={direccion} city={city} horariosSemana={horariosSemana} />
           </Box>
           <Box>
             <StickyBookingCard
-              profile={profile} name={name} phone={phone} wa={wa}
-              onBook={handleBook} onContact={handleContact}
-              reviewsCount={reviewsCount} rating={rating} servicios={servicios}
+              profile={p} name={name} phone={phone} wa={wa}
+              onBook={handleBook}
+              reviewsCount={reviewsCount} rating={rating}
+              servicios={servicios} proximosSlots={proximosSlots}
             />
           </Box>
         </Box>
       </Container>
 
-      {/* CTA final full-width */}
+      {/* CTA final */}
       <Box sx={{
         borderTop: `1px solid ${BORDER}`,
-        py: { xs: 5, md: 8 },
-        textAlign: 'center',
-        bgcolor: '#fafbfc',
+        py: { xs: 5, md: 8 }, textAlign: 'center', bgcolor: '#fafbfc',
       }}>
         <Container maxWidth="md">
           {editorialTitle('¿Listo para dar el siguiente paso?', '2rem')}
           <Typography sx={{ fontSize: '1rem', color: MUTED, mt: 1.5, mb: 3 }}>
-            Agenda hoy con {name} · Confirmación rápida
+            Agenda hoy con {name?.split(' ').slice(0, 2).join(' ')} · Confirmación rápida
           </Typography>
           <Button variant="contained" onClick={handleBook}
             startIcon={<CalendarMonth />}
