@@ -32,31 +32,55 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { getAdminToken, clearAdminToken, getAdminUser } from './adminAuth';
 import { canAccessAllAdminPages, canUseSalesCrm, ROLES } from '../../utils/rolePermissions';
 
-const SIDEBAR_WIDTH = 240;
+const SIDEBAR_WIDTH = 250;
 
-function NavSection({ title, items, isActive, accent, activeBg, hoverBg }) {
+// Look editorial: cream, hairlines, tipografía Playfair para logo/titulares.
+const SIDEBAR_BG = '#fefdfb';
+const SIDEBAR_BORDER = '#eef0f3';
+const NAVY = '#0F2A4A';
+const ACCENT = '#6d28d9';
+const MUTED = '#64748b';
+const NAV_ACTIVE_BG = '#faf5ff';
+const NAV_HOVER_BG = '#f8fafc';
+const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+
+function NavSection({ title, items, isActive }) {
   return (
-    <Box sx={{ mb: 1.5 }}>
-      <Typography sx={{ px: 3, py: 0.5, fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', color: 'rgba(110,231,200,0.55)', textTransform: 'uppercase' }}>
+    <Box sx={{ mb: 2 }}>
+      <Typography sx={{
+        px: 3, py: 0.75,
+        fontSize: 10.5, fontWeight: 700, letterSpacing: '0.14em',
+        color: MUTED, textTransform: 'uppercase',
+      }}>
         {title}
       </Typography>
       <List disablePadding>
         {items.map((item) => {
           const active = isActive(item.path);
           return (
-            <ListItem key={item.path} disablePadding sx={{ px: 1.5, mb: 0.5 }}>
+            <ListItem key={item.path} disablePadding sx={{ px: 1.5, mb: 0.25 }}>
               <ListItemButton
                 component={RouterLink}
                 to={item.path}
                 sx={{
-                  borderRadius: '12px', py: 1, px: 1.5,
-                  background: active ? activeBg : 'transparent',
-                  border: active ? `1px solid rgba(110,231,200,0.22)` : '1px solid transparent',
-                  '&:hover': { background: hoverBg },
-                  transition: 'all 0.2s',
+                  borderRadius: '10px',
+                  py: 0.9, px: 1.5,
+                  background: active ? NAV_ACTIVE_BG : 'transparent',
+                  position: 'relative',
+                  '&:hover': { background: active ? NAV_ACTIVE_BG : NAV_HOVER_BG },
+                  transition: 'background 0.15s ease',
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 36, color: active ? accent : 'rgba(255,255,255,0.55)' }}>
+                {active && (
+                  <Box sx={{
+                    position: 'absolute', left: -6, top: '20%', bottom: '20%',
+                    width: 3, borderRadius: '2px', bgcolor: ACCENT,
+                  }} />
+                )}
+                <ListItemIcon sx={{
+                  minWidth: 34,
+                  color: active ? ACCENT : MUTED,
+                }}>
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText
@@ -64,13 +88,9 @@ function NavSection({ title, items, isActive, accent, activeBg, hoverBg }) {
                   primaryTypographyProps={{
                     fontSize: '0.875rem',
                     fontWeight: active ? 700 : 500,
-                    color: active ? '#fff' : 'rgba(255,255,255,0.65)',
-                    letterSpacing: '-0.01em',
+                    color: active ? NAVY : '#334155',
                   }}
                 />
-                {active && (
-                  <Box sx={{ width: 4, height: 20, borderRadius: '2px', background: `linear-gradient(180deg, ${accent}, #085946)` }} />
-                )}
               </ListItemButton>
             </ListItem>
           );
@@ -79,11 +99,6 @@ function NavSection({ title, items, isActive, accent, activeBg, hoverBg }) {
     </Box>
   );
 }
-
-const SIDEBAR_BG = 'linear-gradient(180deg, #041a12 0%, #063c2c 60%, #0d1f3c 100%)';
-const ACCENT = '#6ee7c8';
-const NAV_ACTIVE_BG = 'rgba(110,231,200,0.13)';
-const NAV_HOVER_BG = 'rgba(110,231,200,0.07)';
 
 // Items full admin (todo) — solo ADMIN.
 const ADMIN_FULL_NAV = [
@@ -134,7 +149,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f0f4f8' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fafbfc' }}>
       {/* Sidebar */}
       <Drawer
         variant="permanent"
@@ -145,89 +160,71 @@ export default function AdminLayout() {
             width: SIDEBAR_WIDTH,
             boxSizing: 'border-box',
             background: SIDEBAR_BG,
-            border: 'none',
-            boxShadow: '4px 0 24px rgba(4,26,18,0.3)',
+            borderRight: `1px solid ${SIDEBAR_BORDER}`,
+            boxShadow: 'none',
           },
         }}
       >
         {/* Logo */}
-        <Box
-          sx={{
-            px: 2.5,
-            py: 2.5,
-            borderBottom: '1px solid rgba(110,231,200,0.12)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-          }}
-        >
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #085946, #6ee7c8)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: '1rem' }}>O</Typography>
+        <Box sx={{
+          px: 3, py: 2.75,
+          borderBottom: `1px solid ${SIDEBAR_BORDER}`,
+          display: 'flex', alignItems: 'center', gap: 1.5,
+        }}>
+          <Box sx={{
+            width: 36, height: 36, borderRadius: '10px',
+            background: NAVY, color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+            ...SERIF, fontSize: '1.15rem', fontWeight: 600,
+          }}>
+            O
           </Box>
           <Box>
-            <Typography
-              sx={{
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: '1rem',
-                lineHeight: 1.1,
-                letterSpacing: '-0.02em',
-              }}
-            >
+            <Typography sx={{
+              ...SERIF, color: NAVY, fontWeight: 600,
+              fontSize: '1.05rem', lineHeight: 1.05,
+            }}>
               OírConecta
             </Typography>
-            <Typography sx={{ color: ACCENT, fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.08em' }}>
-              PORTAL ADMIN
+            <Typography sx={{
+              color: MUTED, fontSize: '0.65rem',
+              fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', mt: 0.25,
+            }}>
+              Portal admin
             </Typography>
           </Box>
         </Box>
 
         {/* Nav items */}
-        <Box sx={{ flex: 1, py: 2 }}>
+        <Box sx={{ flex: 1, py: 2.25, overflowY: 'auto' }}>
           {showFullAdmin && (
-            <NavSection title="Administración" items={ADMIN_FULL_NAV} isActive={isActive} accent={ACCENT} activeBg={NAV_ACTIVE_BG} hoverBg={NAV_HOVER_BG} />
+            <NavSection title="Administración" items={ADMIN_FULL_NAV} isActive={isActive} />
           )}
           {showSales && (
-            <NavSection title="Captación comercial" items={SALES_NAV} isActive={isActive} accent={ACCENT} activeBg={NAV_ACTIVE_BG} hoverBg={NAV_HOVER_BG} />
+            <NavSection title="Captación comercial" items={SALES_NAV} isActive={isActive} />
           )}
 
-          <Divider sx={{ borderColor: 'rgba(110,231,200,0.12)', mx: 2, my: 2 }} />
+          <Divider sx={{ borderColor: SIDEBAR_BORDER, mx: 2, my: 1.5 }} />
 
-          {/* External link */}
           <List disablePadding>
-            <ListItem disablePadding sx={{ px: 1.5, mb: 0.5 }}>
+            <ListItem disablePadding sx={{ px: 1.5, mb: 0.25 }}>
               <ListItemButton
                 component="a"
                 href="https://oirconecta.com"
-                target="_blank"
-                rel="noopener noreferrer"
+                target="_blank" rel="noopener noreferrer"
                 sx={{
-                  borderRadius: '12px',
-                  py: 1,
-                  px: 1.5,
+                  borderRadius: '10px', py: 0.9, px: 1.5,
                   '&:hover': { background: NAV_HOVER_BG },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 36, color: 'rgba(255,255,255,0.45)' }}>
+                <ListItemIcon sx={{ minWidth: 34, color: MUTED }}>
                   <OpenInNewIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
-                  primary="Ir al sitio"
+                  primary="Ver sitio público"
                   primaryTypographyProps={{
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    color: 'rgba(255,255,255,0.5)',
+                    fontSize: '0.85rem', fontWeight: 500, color: MUTED,
                   }}
                 />
               </ListItemButton>
@@ -236,39 +233,25 @@ export default function AdminLayout() {
         </Box>
 
         {/* User footer */}
-        <Box
-          sx={{
-            px: 2,
-            py: 2,
-            borderTop: '1px solid rgba(110,231,200,0.12)',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-            <Avatar
-              sx={{
-                width: 34,
-                height: 34,
-                background: 'linear-gradient(135deg, #085946, #6ee7c8)',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-              }}
-            >
+        <Box sx={{
+          px: 2, py: 2,
+          borderTop: `1px solid ${SIDEBAR_BORDER}`,
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.25 }}>
+            <Avatar sx={{
+              width: 34, height: 34, bgcolor: NAV_ACTIVE_BG,
+              color: ACCENT, fontSize: '0.85rem', fontWeight: 700,
+            }}>
               {userInitial}
             </Avatar>
             <Box sx={{ overflow: 'hidden' }}>
-              <Typography
-                sx={{
-                  color: '#fff',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <Typography sx={{
+                color: NAVY, fontSize: '0.82rem', fontWeight: 600,
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
                 {userName}
               </Typography>
-              <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.68rem' }}>
+              <Typography sx={{ color: MUTED, fontSize: '0.68rem' }}>
                 Administrador
               </Typography>
             </Box>
@@ -277,21 +260,17 @@ export default function AdminLayout() {
             <ListItemButton
               onClick={handleLogout}
               sx={{
-                borderRadius: '10px',
-                py: 0.75,
-                px: 1.5,
-                '&:hover': { background: 'rgba(239,68,68,0.12)' },
+                borderRadius: '10px', py: 0.75, px: 1.5,
+                '&:hover': { background: '#fef2f2' },
               }}
             >
-              <ListItemIcon sx={{ minWidth: 32, color: 'rgba(239,68,68,0.7)' }}>
+              <ListItemIcon sx={{ minWidth: 32, color: '#b91c1c' }}>
                 <LogoutIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText
                 primary="Cerrar sesión"
                 primaryTypographyProps={{
-                  fontSize: '0.8rem',
-                  fontWeight: 500,
-                  color: 'rgba(239,68,68,0.7)',
+                  fontSize: '0.8rem', fontWeight: 600, color: '#b91c1c',
                 }}
               />
             </ListItemButton>
@@ -303,9 +282,8 @@ export default function AdminLayout() {
       <Box
         component="main"
         sx={{
-          flex: 1,
-          minHeight: '100vh',
-          bgcolor: '#f0f4f8',
+          flex: 1, minHeight: '100vh',
+          bgcolor: '#fafbfc',
           overflow: 'auto',
         }}
       >
