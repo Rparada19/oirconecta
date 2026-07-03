@@ -46,6 +46,18 @@ const DEFAULT_COLOR = '#6d28d9';
 const DEFAULT_NAME = 'Asistente';
 const DEFAULT_ICON = 'smart_toy';
 
+const AUTO_OPEN_DELAY_MS = 10_000;
+const AUTO_OPEN_KEY_PREFIX = 'ia_widget_auto_v1:';
+const PEEK_DURATION_MS = 6_000;
+
+function hasAutoOpenedThisSession(profileId) {
+  try { return sessionStorage.getItem(AUTO_OPEN_KEY_PREFIX + profileId) === '1'; }
+  catch { return true; } // si no hay storage, no abrimos para no molestar
+}
+function markAutoOpened(profileId) {
+  try { sessionStorage.setItem(AUTO_OPEN_KEY_PREFIX + profileId, '1'); } catch { /* noop */ }
+}
+
 export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
   const [available, setAvailable] = useState(null);
   const [quota, setQuota] = useState(null);
@@ -57,6 +69,8 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [exhausted, setExhausted] = useState(false);
+  const [peekVisible, setPeekVisible] = useState(false);
+  const userInteractedRef = useRef(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -95,6 +109,30 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, sending]);
 
+  // Auto-abrir a los 10s (una sola vez por sesión y por profesional).
+  // Desktop → abre chat completo. Móvil → muestra un "peek" (burbuja pequeña sobre el FAB)
+  // para no cubrir la pantalla sin consentimiento.
+  useEffect(() => {
+    if (available !== true) return;
+    if (hasAutoOpenedThisSession(profileId)) return;
+    const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches;
+    const t = setTimeout(() => {
+      if (userInteractedRef.current) return; // el usuario ya tocó el widget
+      markAutoOpened(profileId);
+      if (isMobile) {
+        setPeekVisible(true);
+        setTimeout(() => setPeekVisible(false), PEEK_DURATION_MS);
+      } else {
+        setOpen(true);
+      }
+      trackEntityEvent('ia_widget_auto_open', {
+        entityType: 'DirectoryProfile', entityId: profileId,
+        properties: { agentName: agent.name, mode: isMobile ? 'peek' : 'full' },
+      });
+    }, AUTO_OPEN_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [available, profileId, agent.name]);
+
   const send = useCallback(async () => {
     const text = input.trim();
     if (!text || sending || exhausted) return;
@@ -130,9 +168,49 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
     <>
       {/* FAB — color, nombre e ícono personalizables por profesional.
           Posicionado ~90px arriba del WhatsApp (que está a bottom: ~20px). */}
+      {/* Peek burbuja (móvil) — visible ~6s después del auto-open trigger */}
+      {!open && peekVisible && (
+        <Box
+          onClick={() => {
+            userInteractedRef.current = true;
+            setPeekVisible(false);
+            setOpen(true);
+            trackEntityEvent('ia_widget_open', {
+              entityType: 'DirectoryProfile', entityId: profileId,
+              properties: { agentName: agent.name, from: 'peek' },
+            });
+          }}
+          sx={{
+            position: 'fixed',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 158px)',
+            right: 16,
+            maxWidth: 260,
+            bgcolor: '#fff',
+            color: NAVY,
+            px: 1.75, py: 1.25,
+            borderRadius: '14px 14px 4px 14px',
+            boxShadow: `0 10px 28px ${agent.color}55`,
+            border: `1px solid ${agent.color}33`,
+            zIndex: 1249,
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            lineHeight: 1.35,
+            animation: 'iaPeekIn 300ms ease-out',
+            '@keyframes iaPeekIn': {
+              from: { opacity: 0, transform: 'translateY(8px)' },
+              to: { opacity: 1, transform: 'translateY(0)' },
+            },
+          }}
+        >
+          <strong style={{ color: agent.color }}>{agent.name}</strong> — ¿te ayudo a agendar con {profesionalNombre?.split(' ')[0] || 'el profesional'}?
+        </Box>
+      )}
+
       {!open && (
         <Tooltip title={`${agent.name} · pregúntame para agendar`}>
           <Fab onClick={() => {
+              userInteractedRef.current = true;
+              setPeekVisible(false);
               setOpen(true);
               trackEntityEvent('ia_widget_open', {
                 entityType: 'DirectoryProfile', entityId: profileId,
@@ -189,7 +267,7 @@ export default function AgenteIAFloatingChat({ profileId, profesionalNombre }) {
                 Disponible 24/7 · Respuestas IA · No reemplaza diagnóstico
               </Typography>
             </Box>
-            <IconButton onClick={() => setOpen(false)} sx={{ color: '#fff' }}>
+            <IconButton onClick={() => { userInteractedRef.current = true; setOpen(false); }} sx={{ color: '#fff' }}>
               <CloseOutlined />
             </IconButton>
           </Box>

@@ -22,8 +22,15 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
+import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
+import DrawOutlinedIcon from '@mui/icons-material/DrawOutlined';
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
+import InputAdornment from '@mui/material/InputAdornment';
+
+const EDU_SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.01em' };
 import { directoryApi, getDirectoryToken } from '../../services/directoryAccountApi';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
@@ -379,77 +386,103 @@ export default function ProfesionalIAPage() {
 
       {/* Educación del asistente (F5.6) */}
       <Card sx={{ mt: 3, borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-        <Box sx={{ px: 2.5, py: 1.75, bgcolor: '#f8fafc', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <SchoolOutlinedIcon sx={{ color: ACCENT }} />
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem' }}>
-              Educación del asistente
-            </Typography>
-            <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
-              Enséñale a tu bot cómo hablar, qué mencionar y qué NUNCA responder. Todo se aplica al instante en la próxima conversación.
-            </Typography>
-          </Box>
+        <Box sx={{ px: 3, py: 2.5, bgcolor: '#fff', borderBottom: '1px solid #eef0f3' }}>
+          <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.16em', color: ACCENT, textTransform: 'uppercase', mb: 0.5 }}>
+            Educación del asistente
+          </Typography>
+          <Typography sx={{ ...EDU_SERIF, fontWeight: 600, color: NAVY, fontSize: { xs: '1.5rem', md: '1.75rem' }, lineHeight: 1.15, mb: 0.75 }}>
+            Enséñale a tu bot cómo debe atender a tus pacientes
+          </Typography>
+          <Typography sx={{ fontSize: '0.9rem', color: '#475569', maxWidth: 720, lineHeight: 1.55 }}>
+            Cuatro instrucciones y tus preguntas frecuentes. Todo se aplica al instante en la próxima conversación — no necesitas reiniciar nada.
+          </Typography>
         </Box>
-        <CardContent sx={{ p: 3 }}>
-          <Alert severity="info" sx={{ mb: 2.5, borderRadius: '10px' }}>
-            <strong>Cómo funciona:</strong> lo que escribas aquí se inyecta en las instrucciones del asistente cada vez que un paciente le habla.
-            No lo repitas literalmente en las conversaciones — describe cómo <em>debe comportarse</em>. Ejemplo: <em>"Habla en tono cercano, evita palabras técnicas, siempre invita a agendar valoración."</em>
-          </Alert>
-
-          <Stack spacing={2.25}>
+        <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+          <Stack spacing={2.5}>
             <TextField
-              label="🎭 Personalidad y tono"
+              label="Personalidad y tono"
               size="small" fullWidth multiline minRows={2}
               value={eduDraft.personality}
               onChange={(e) => setEduDraft({ ...eduDraft, personality: e.target.value })}
               inputProps={{ maxLength: limits.text.personality }}
-              helperText={`${eduDraft.personality.length}/${limits.text.personality}. Ej: "Cercana, empática, usa términos cotidianos en vez de jerga médica. Trata al paciente con calidez."`}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
+                    <RecordVoiceOverOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              helperText={`${eduDraft.personality.length}/${limits.text.personality} · Ej: "Cercana, empática, usa términos cotidianos en vez de jerga médica. Trata al paciente con calidez."`}
             />
             <TextField
-              label="🎯 Áreas de expertise (para mencionar cuando aporten valor)"
+              label="Áreas de expertise"
               size="small" fullWidth multiline minRows={2}
               value={eduDraft.expertise}
               onChange={(e) => setEduDraft({ ...eduDraft, expertise: e.target.value })}
               inputProps={{ maxLength: limits.text.expertise }}
-              helperText={`${eduDraft.expertise.length}/${limits.text.expertise}. Ej: "Adaptación de audífonos pediátricos, terapia auditiva verbal, manejo de tinnitus, evaluación laboral."`}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
+                    <WorkspacePremiumOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              helperText={`${eduDraft.expertise.length}/${limits.text.expertise} · Ej: "Adaptación de audífonos pediátricos, terapia auditiva verbal, manejo de tinnitus."`}
             />
             <TextField
-              label="✍️ Frase de firma (opcional)"
+              label="Frase de firma (opcional)"
               size="small" fullWidth
               value={eduDraft.signature}
               onChange={(e) => setEduDraft({ ...eduDraft, signature: e.target.value })}
               inputProps={{ maxLength: limits.text.signature }}
-              helperText={`${eduDraft.signature.length}/${limits.text.signature}. Ej: "Cuídate mucho — Piedad." El bot la usa al despedirse.`}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ mr: 1 }}>
+                    <DrawOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              helperText={`${eduDraft.signature.length}/${limits.text.signature} · Ej: "Cuídate mucho — Piedad." El bot la usa al despedirse.`}
             />
             <TextField
-              label="🚫 Temas que el bot NUNCA debe tocar"
+              label="Temas que el bot NO debe tocar"
               size="small" fullWidth multiline minRows={2}
               value={eduDraft.avoidTopics}
               onChange={(e) => setEduDraft({ ...eduDraft, avoidTopics: e.target.value })}
               inputProps={{ maxLength: limits.text.avoidTopics }}
-              helperText={`${eduDraft.avoidTopics.length}/${limits.text.avoidTopics}. Ej: "Precios exactos de audífonos, diagnósticos, promesas de resultados clínicos, financiación."`}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
+                    <BlockOutlinedIcon sx={{ color: '#b91c1c', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              helperText={`${eduDraft.avoidTopics.length}/${limits.text.avoidTopics} · Ej: "Precios exactos de audífonos, diagnósticos, promesas de resultados clínicos."`}
             />
             <Button
               variant="contained"
               onClick={saveEducation}
               disabled={savingEdu}
-              startIcon={<AutoAwesomeOutlinedIcon />}
-              sx={{ background: ACCENT, textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start',
-                    '&:hover': { background: ACCENT, filter: 'brightness(0.9)' } }}
+              sx={{ background: ACCENT, textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start', px: 3, py: 1,
+                    borderRadius: '10px',
+                    '&:hover': { background: ACCENT, filter: 'brightness(0.92)' } }}
             >
               {savingEdu ? 'Guardando…' : 'Guardar educación'}
             </Button>
           </Stack>
 
           {/* FAQs */}
-          <Box sx={{ mt: 4, pt: 3, borderTop: '1px dashed #e5e7eb' }}>
-            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+          <Box sx={{ mt: 4.5, pt: 3.5, borderTop: '1px solid #eef0f3' }}>
+            <Stack direction="row" alignItems="flex-end" spacing={1.5} sx={{ mb: 2 }}>
               <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.9rem' }}>
-                  Preguntas frecuentes verificadas ({faqs.length}/{limits.faqs.max})
+                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.16em', color: ACCENT, textTransform: 'uppercase', mb: 0.5 }}>
+                  Preguntas frecuentes verificadas · {faqs.length}/{limits.faqs.max}
                 </Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
-                  Pregunta ↔ respuesta que <strong>tú apruebas</strong>. El bot las usa como fuente confiable antes de improvisar.
+                <Typography sx={{ ...EDU_SERIF, fontWeight: 600, color: NAVY, fontSize: { xs: '1.15rem', md: '1.3rem' }, lineHeight: 1.2, mb: 0.5 }}>
+                  Tu conocimiento aprobado
+                </Typography>
+                <Typography sx={{ fontSize: '0.85rem', color: '#475569', maxWidth: 620 }}>
+                  Preguntas y respuestas que <strong>tú apruebas</strong>. El bot las usa como fuente confiable antes de improvisar.
                 </Typography>
               </Box>
               <Button
