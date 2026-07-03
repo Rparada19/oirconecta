@@ -141,24 +141,27 @@ export default function AdminInsightsPage() {
               background: ACCENT, '&:hover': { background: ACCENT, filter: 'brightness(0.95)' } }}>
             {downloading ? 'Generando…' : 'Descargar PDF'}
           </Button>
-          <Button size="small" variant="outlined"
-            onClick={async () => {
-              const d = await get('/api/analytics/admin/debug');
-              const counts = d?.counts || {};
-              const latest = d?.latest || [];
-              const rows = latest.map((e, i) => `${i+1}. ${e.eventType.padEnd(22)} device=${e.device || 'NULL'} os=${e.os || 'NULL'} browser=${e.browser || 'NULL'} city=${e.city || 'NULL'} sess=${e.sessionId?.slice(0,8)}`).join('\n');
-              alert(
-                `Total eventos: ${counts.total}\n` +
-                `Últimas 24h: ${counts.last24h}\n` +
-                `Sesiones únicas 24h: ${counts.distinctSessions24h}\n` +
-                `Con device=NULL 24h: ${counts.nullDevice24h}\n` +
-                `Con city=NULL 24h: ${counts.nullCity24h}\n\n` +
-                `--- Últimos 20 ---\n${rows || '(sin eventos)'}`
-              );
-            }}
-            sx={{ textTransform: 'none', borderRadius: '8px' }}>
-            Debug
-          </Button>
+          {/* Debug oculto: solo aparece si la URL tiene ?debug=1 */}
+          {new URLSearchParams(window.location.search).get('debug') === '1' && (
+            <Button size="small" variant="outlined"
+              onClick={async () => {
+                const d = await get('/api/analytics/admin/debug');
+                const counts = d?.counts || {};
+                const latest = d?.latest || [];
+                const rows = latest.map((e, i) => `${i+1}. ${e.eventType.padEnd(22)} device=${e.device || 'NULL'} os=${e.os || 'NULL'} browser=${e.browser || 'NULL'} city=${e.city || 'NULL'} sess=${e.sessionId?.slice(0,8)}`).join('\n');
+                alert(
+                  `Total eventos: ${counts.total}\n` +
+                  `Últimas 24h: ${counts.last24h}\n` +
+                  `Sesiones únicas 24h: ${counts.distinctSessions24h}\n` +
+                  `Con device=NULL 24h: ${counts.nullDevice24h}\n` +
+                  `Con city=NULL 24h: ${counts.nullCity24h}\n\n` +
+                  `--- Últimos 20 ---\n${rows || '(sin eventos)'}`
+                );
+              }}
+              sx={{ textTransform: 'none', borderRadius: '8px' }}>
+              Debug
+            </Button>
+          )}
         </Stack>
       </Stack>
 

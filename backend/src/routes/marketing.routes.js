@@ -285,4 +285,14 @@ router.get('/admin/campaigns/:id/full-metrics', authenticate, authorize('ADMIN')
   }
 });
 
+// D6 — informe consolidado por anunciante (todas sus campañas + agregado global)
+router.get('/admin/advertisers/:id/full-report', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const data = await svc.getAdvertiserFullReport(req.params.id);
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(e.status || 500).json({ success: false, error: e.message });
+  }
+});
+
 module.exports = router;

@@ -719,6 +719,71 @@ async function getCampaignFullMetrics(campaignId, { from, to } = {}) {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// D6 — Informe consolidado por anunciante: todas sus campañas +
+// KPIs agregados + insights globales (para PDF descargable por admin).
+// ═══════════════════════════════════════════════════════════════════
+async function getAdvertiserFullReport(advertiserId) {
+  const adv = await prisma.marketingAdvertiser.findUnique({
+    where: { id: advertiserId },
+    include: {
+      contacts: { orderBy: [{ esPrincipal: 'desc' }] },
+    },
+  });
+  if (!adv) throw Object.assign(new Error('Anunciante no encontrado'), { status: 404 });
+
+  // Todas sus campañas
+  const campaigns = await prisma.marketingCampaign.findMany({
+    where: { advertiserId },
+    orderBy: { startDate: 'desc' },
+    include: { metrics: true },
+  });
+
+  // Full metrics por campaña (usa la función ya existente)
+  const perCampaign = [];
+  for (const c of campaigns) {
+    try {
+      const fm = await getCampaignFullMetrics(c.id, {});
+      perCampaign.push(fm);
+    } catch (e) {
+      console.warn(`[advertiserFullReport] Falló getCampaignFullMetrics para ${c.id}:`, e.message);
+    }
+  }
+
+  // Agregados globales
+  const totalImp = perCampaign.reduce((a, c) => a + (c.resumen?.impressions || 0), 0);
+  const totalClk = perCampaign.reduce((a, c) => a + (c.resumen?.clicks || 0), 0);
+  const totalLed = perCampaign.reduce((a, c) => a + (c.resumen?.leads || 0), 0);
+  const totalInv = perCampaign.reduce((a, c) => a + (c.resumen?.inversionTotalCOP || 0), 0);
+  const totalReach = perCampaign.reduce((a, c) => a + (c.resumen?.reach || 0), 0);
+
+  const globalCTR = totalImp > 0 ? Math.round((totalClk / totalImp) * 10000) / 100 : 0;
+  const globalCPM = totalImp > 0 ? Math.round((totalInv / totalImp) * 1000) : null;
+  const globalCPC = totalClk > 0 ? Math.round(totalInv / totalClk) : null;
+  const globalCPL = totalLed > 0 ? Math.round(totalInv / totalLed) : null;
+
+  return {
+    advertiser: {
+      id: adv.id, nombre: adv.nombre, marcaPrincipal: adv.marcaPrincipal,
+      sitioWeb: adv.sitioWeb, linkedinUrl: adv.linkedinUrl,
+      contactoPrincipal: adv.contacts?.[0] || null,
+    },
+    resumenGlobal: {
+      totalCampanas: campaigns.length,
+      activas: campaigns.filter((c) => c.isActive).length,
+      finalizadas: campaigns.filter((c) => c.status === 'ENDED').length,
+      totalImpresiones: totalImp,
+      totalClicks: totalClk,
+      totalLeads: totalLed,
+      totalAlcance: totalReach,
+      inversionTotalCOP: totalInv,
+      globalCTR, globalCPM, globalCPC, globalCPL,
+    },
+    campaigns: perCampaign,
+    generatedAt: new Date(),
+  };
+}
+
 module.exports = {
   slugify,
   computeUtms,
@@ -741,6 +806,7 @@ module.exports = {
   getDashboardStats,
   getCampaignAnalytics,
   getCampaignFullMetrics,
+  getAdvertiserFullReport,
   getActiveCampaignByActionType,
   getActiveCampaignsByType,
   recordEvent,

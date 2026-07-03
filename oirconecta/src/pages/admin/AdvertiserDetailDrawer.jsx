@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
@@ -20,6 +21,7 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { adminFetch } from './adminAuth';
+import { downloadAdvertiserPdf } from '../../utils/advertiserPdfExport';
 
 const ACCENT = '#085946';
 const NAVY = '#272F50';
@@ -125,7 +127,24 @@ export default function AdvertiserDetailDrawer({ open, advertiserId, onClose, on
                   </Stack>
                 </Box>
               </Stack>
-              <IconButton onClick={onClose}><CloseRoundedIcon /></IconButton>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Button
+                  size="small" variant="contained" startIcon={<PictureAsPdfOutlinedIcon />}
+                  onClick={async () => {
+                    try {
+                      const r = await adminFetch(`/api/marketing/admin/advertisers/${advertiserId}/full-report`);
+                      if (!r.ok || !r.data?.success) throw new Error(r.data?.error || `HTTP ${r.status}`);
+                      await downloadAdvertiserPdf(r.data.data);
+                    } catch (e) {
+                      alert(`No se pudo generar el informe: ${e.message}`);
+                    }
+                  }}
+                  sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '8px',
+                    background: ACCENT, '&:hover': { background: ACCENT, filter: 'brightness(0.95)' } }}>
+                  Informe PDF
+                </Button>
+                <IconButton onClick={onClose}><CloseRoundedIcon /></IconButton>
+              </Stack>
             </Stack>
 
             {/* Resumen rápido */}
