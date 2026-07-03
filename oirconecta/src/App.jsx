@@ -63,6 +63,7 @@ const DirectorioListadoPage = lazy(() => import('./pages/DirectorioListadoPage')
 const FavoritosPage = lazy(() => import('./pages/FavoritosPage'));
 const DirectorioProfesionSlugPage = lazy(() => import('./pages/DirectorioProfesionSlugPage'));
 const DirectorioProfesionalPage = lazy(() => import('./pages/DirectorioProfesionalPage'));
+const DirectorioProfesionalPageV2 = lazy(() => import('./pages/DirectorioProfesionalPageV2'));
 // F1: directorio Airbnb-grade
 const DirectorioAirbnbPage = lazy(() => import('./pages/DirectorioAirbnbPage'));
 const DirectorioCiudadPage = lazy(() => import('./pages/DirectorioCiudadPage'));
@@ -210,6 +211,7 @@ export default function App() {
           <Route path="/profesionales/otologos" element={<OtologosPage />} />
           <Route path="/profesionales/audiologos" element={<AudiologasPage />} />
           <Route path="/directorio/profesional/:profileId" element={<DirectorioProfesionalPage />} />
+          <Route path="/directorio/profesional/:profileId/v2" element={<DirectorioProfesionalPageV2 />} />
           <Route path="/directorio/listado" element={<DirectorioListadoPage />} />
           <Route path="/favoritos" element={<FavoritosPage />} />
           {/* F1: rutas nuevas tipo Airbnb. La legacy queda accesible en /directorio-clasico. */}
