@@ -1045,14 +1045,34 @@ function CreativeUploader({ value, onChange, actionType, catalog }) {
 function AdvertiserDialog({ open, data, onClose, onSaved }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (open) {
-      setForm(data || { tipo: 'CASA_COMERCIAL' });
+      setForm(data || { tipo: 'CASA_COMERCIAL', pipelineStage: 'PROSPECT' });
       setError(null);
     }
   }, [open, data]);
+
+  const handleLogoUpload = async (file) => {
+    if (!file) return;
+    setUploading(true); setError(null);
+    const fd = new FormData();
+    fd.append('file', file);
+    const token = localStorage.getItem('oirconecta_admin_token');
+    try {
+      const r = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/marketing/admin/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || 'Error al subir');
+      setForm((f) => ({ ...f, logoUrl: j.data.url }));
+    } catch (e) { setError(e.message); }
+    finally { setUploading(false); }
+  };
 
   const save = async () => {
     setSaving(true); setError(null);
@@ -1092,9 +1112,56 @@ function AdvertiserDialog({ open, data, onClose, onSaved }) {
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="Nombre *" fullWidth value={form.nombre || ''} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
+
+          {/* Logo del anunciante */}
+          <Box>
+            <Typography sx={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Logo del anunciante
+            </Typography>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Box sx={{
+                width: 80, height: 80, borderRadius: '10px', border: '1px dashed #cbd5e1',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                bgcolor: '#f8fafc', overflow: 'hidden', flexShrink: 0,
+              }}>
+                {form.logoUrl
+                  ? <img src={form.logoUrl} alt="logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                  : <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>Sin logo</Typography>}
+              </Box>
+              <Stack spacing={0.5} sx={{ flex: 1 }}>
+                <Button component="label" size="small" variant="outlined" disabled={uploading}
+                  sx={{ textTransform: 'none', borderRadius: '8px', alignSelf: 'flex-start' }}>
+                  {uploading ? 'Subiendo…' : (form.logoUrl ? 'Cambiar logo' : 'Subir logo')}
+                  <input hidden type="file" accept="image/*" onChange={(e) => handleLogoUpload(e.target.files?.[0])} />
+                </Button>
+                {form.logoUrl && (
+                  <Button size="small" onClick={() => setForm((f) => ({ ...f, logoUrl: null }))}
+                    sx={{ textTransform: 'none', color: '#b91c1c', alignSelf: 'flex-start' }}>
+                    Quitar logo
+                  </Button>
+                )}
+                <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                  Aparece en la portada del informe PDF y en el drawer.
+                </Typography>
+              </Stack>
+            </Stack>
+          </Box>
+
           <TextField select label="Tipo" fullWidth value={form.tipo || 'CASA_COMERCIAL'} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>
             {['CASA_COMERCIAL','PROFESIONAL','CLINICA','MARCA','OTRO'].map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
           </TextField>
+          <TextField select label="Etapa del pipeline" fullWidth value={form.pipelineStage || 'PROSPECT'}
+            onChange={(e) => setForm({ ...form, pipelineStage: e.target.value })}
+            helperText="Estado comercial del anunciante">
+            <MenuItem value="PROSPECT">Prospecto</MenuItem>
+            <MenuItem value="NEGOCIATING">Negociando</MenuItem>
+            <MenuItem value="ACTIVE">Activo</MenuItem>
+            <MenuItem value="PAUSED">Pausado</MenuItem>
+            <MenuItem value="LOST">Perdido</MenuItem>
+          </TextField>
+          <TextField label="Marca principal" fullWidth value={form.marcaPrincipal || ''}
+            onChange={(e) => setForm({ ...form, marcaPrincipal: e.target.value })}
+            helperText="Ej: Widex, Oticon (opcional)" />
           <TextField label="Contacto nombre" fullWidth value={form.contactoNombre || ''} onChange={(e) => setForm({ ...form, contactoNombre: e.target.value })} />
           <TextField label="Contacto email" fullWidth value={form.contactoEmail || ''} onChange={(e) => setForm({ ...form, contactoEmail: e.target.value })} />
           <TextField label="Contacto teléfono" fullWidth value={form.contactoTelefono || ''} onChange={(e) => setForm({ ...form, contactoTelefono: e.target.value })} />
