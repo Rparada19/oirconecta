@@ -29,6 +29,7 @@ import { DIRECTORY_API } from '../../config/directoryApi';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import ProfesionalInsights from '../../components/profesional/ProfesionalInsights';
 import WelcomeHero from '../../components/profesional/WelcomeHero';
+import ProfilePreviewBanner from '../../components/profesional/ProfilePreviewBanner';
 import KpiCard from '../../components/crm/ui/KpiCard';
 
 const glassCard = {
@@ -137,6 +138,9 @@ export default function ProfesionalDashboardPage() {
 
   return (
     <Box>
+      {/* Banner insistente: ficha pública incompleta (< 60%) */}
+      <ProfilePreviewBanner profile={p} />
+
       {/* Hero con gradiente navy→verde, saludo, trial y CTA */}
       <WelcomeHero
         profile={p}
