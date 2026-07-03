@@ -344,6 +344,24 @@ async function ensureIaAgentConfigSchema(prisma) {
     `);
     // Columna agentIcon agregada en F5.5b (galería). ADD COLUMN idempotente.
     await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "agentIcon" TEXT NOT NULL DEFAULT 'smart_toy';`);
+    // F5.6 — Educación del asistente (persona + FAQs). ADD COLUMN idempotente.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "personality" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "expertise" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "signature" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "avoidTopics" TEXT`);
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "ia_agent_faqs" (
+        "id" TEXT PRIMARY KEY,
+        "configId" TEXT NOT NULL REFERENCES "ia_agent_config"("id") ON DELETE CASCADE,
+        "question" TEXT NOT NULL,
+        "answer" TEXT NOT NULL,
+        "order" INTEGER NOT NULL DEFAULT 0,
+        "isActive" BOOLEAN NOT NULL DEFAULT TRUE,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ia_agent_faqs_configId_isActive_order_idx" ON "ia_agent_faqs" ("configId", "isActive", "order")`);
     console.log('[boot-migrate] ia agent config schema OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureIaAgentConfigSchema falló (no bloqueante):', e.message);

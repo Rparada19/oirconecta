@@ -2348,10 +2348,40 @@ model IaAgentConfig {
   agentIcon      String           @default("smart_toy")
   /// Mensaje de bienvenida opcional (si null, el widget genera uno automático).
   welcomeMessage String?
+  /// F5.6 — Educación del asistente. Se inyectan en el system prompt.
+  /// Tono y personalidad ("cercana, empática, evita jerga clínica"). Max 600 chars.
+  personality    String?
+  /// Áreas de expertise específicas del profesional para que el bot pueda mencionarlas.
+  /// Ej: "adaptación audífonos pediátricos, tinnitus, terapia auditiva". Max 600 chars.
+  expertise      String?
+  /// Frase de firma / cierre habitual. Ej: "Cuídate mucho — Piedad". Max 200 chars.
+  signature      String?
+  /// Temas que el bot NO debe tocar. Ej: "precios exactos, promociones, diagnósticos". Max 600 chars.
+  avoidTopics    String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
+  faqs           IaAgentFaq[]
+
   @@map("ia_agent_config")
+}
+
+/// F5.6 — Preguntas frecuentes propias del profesional que el bot debe responder.
+/// El servicio inyecta las FAQs activas (hasta 20) en el system prompt como
+/// "conocimiento verificado" para que el bot las use antes de improvisar.
+model IaAgentFaq {
+  id         String        @id @default(uuid())
+  configId   String
+  config     IaAgentConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  question   String
+  answer     String
+  order      Int           @default(0)
+  isActive   Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([configId, isActive, order])
+  @@map("ia_agent_faqs")
 }
 
 /// F5.4 — Paquete de conversaciones IA comprado adicional al Plan 3 base.

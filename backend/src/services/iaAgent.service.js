@@ -182,10 +182,37 @@ const toolImpls = {
 // System prompt
 // ─────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(profileInfo, hoyLocal, agentName = 'Asistente') {
+function buildSystemPrompt(profileInfo, hoyLocal, education = {}) {
+  const agentName = education.agentName || 'Asistente';
   const nameLine = agentName && agentName !== 'Asistente'
     ? `Tu nombre es ${agentName}. `
     : '';
+
+  // Bloques de educación personalizados por el profesional (opcionales)
+  const custom = [];
+  if (education.personality) {
+    custom.push(`── Tono y personalidad definidos por ${profileInfo.nombre}:\n${education.personality}`);
+  }
+  if (education.expertise) {
+    custom.push(`── Áreas de expertise específicas del profesional (menciónalas cuando aporten valor, sin inventar):\n${education.expertise}`);
+  }
+  if (education.avoidTopics) {
+    custom.push(`── Temas que NUNCA debes tocar (si el paciente insiste, redirige a consulta directa con el profesional):\n${education.avoidTopics}`);
+  }
+  if (Array.isArray(education.faqs) && education.faqs.length > 0) {
+    const faqBlock = education.faqs
+      .map((f, i) => `${i + 1}. P: ${f.q}\n   R: ${f.a}`)
+      .join('\n');
+    custom.push(`── Preguntas frecuentes VERIFICADAS por ${profileInfo.nombre}. Úsalas como fuente confiable antes de improvisar. Si la pregunta del paciente coincide con alguna, responde con base en la respuesta verificada:\n${faqBlock}`);
+  }
+  if (education.signature) {
+    custom.push(`── Frase de firma/cierre habitual. Úsala solo cuando cierres la conversación o al despedirte:\n"${education.signature}"`);
+  }
+
+  const customSection = custom.length > 0
+    ? `\n\n═══ EDUCACIÓN ESPECÍFICA DE ESTE CONSULTORIO ═══\n${custom.join('\n\n')}\n═══════════════════════════════════════════════`
+    : '';
+
   return `${nameLine}Eres el asistente virtual de ${profileInfo.nombre}${profileInfo.profesion ? ` (${profileInfo.profesion})` : ''}${profileInfo.ciudad ? ` en ${profileInfo.ciudad}` : ''}. Tu rol es ayudar a sus pacientes a agendar, reagendar o cancelar citas, y responder preguntas frecuentes.
 
 Hoy es ${hoyLocal}.
@@ -205,7 +232,7 @@ Reglas estrictas:
 4. NO ofrezcas tratamientos médicos, diagnósticos, ni recomendaciones clínicas. Si el paciente lo pide, redirige: "Esto lo evalúa ${profileInfo.nombre} directamente en consulta."
 5. Si el paciente quiere cancelar y te da un código (rescheduleToken), usa cancel_appointment. Sin código, dile que revise el email de confirmación de la cita.
 6. Sé breve. Máximo 3-4 líneas por respuesta. Sin emojis salvo que el paciente los use.
-7. Si el paciente pide algo que no puedes hacer (cobrar, cambiar precios, atender urgencias) di claramente que un humano del consultorio debe ayudarle, y comparte el teléfono del profesional si está disponible.`;
+7. Si el paciente pide algo que no puedes hacer (cobrar, cambiar precios, atender urgencias) di claramente que un humano del consultorio debe ayudarle, y comparte el teléfono del profesional si está disponible.${customSection}`;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -483,9 +510,9 @@ async function chat(profileId, { conversationId, message, metadata }) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     timeZone: 'America/Bogota',
   });
-  // Nombre custom del agente (si el profesional configuró uno)
-  const agentCfg = await require('./iaAgentConfig.service').getConfigOrDefaults(profileId);
-  const system = buildSystemPrompt(profileInfo, tzNow, agentCfg.agentName);
+  // Nombre + educación custom del profesional (persona, FAQs, temas a evitar).
+  const education = await require('./iaAgentConfig.service').getEducationForPrompt(profileId);
+  const system = buildSystemPrompt(profileInfo, tzNow, education);
 
   await saveUserMessage(conversation.id, message);
   const history = await loadConversationMessages(conversation.id);

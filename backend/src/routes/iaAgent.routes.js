@@ -86,6 +86,29 @@ router.get('/me/agent-config', authenticateDirectoryAccount, withProfile, (req, 
 router.put('/me/agent-config', authenticateDirectoryAccount, withProfile, (req, res) =>
   send(res, () => iaConfig.upsertConfig(req.profileId, req.body || {})));
 
+// Límites y catálogos (para el UI)
+router.get('/agent-config/limits', (req, res) =>
+  send(res, () => ({
+    text: iaConfig.TEXT_LIMITS,
+    faqs: { max: iaConfig.MAX_FAQS, questionMax: iaConfig.FAQ_Q_MAX, answerMax: iaConfig.FAQ_A_MAX },
+  })));
+
+// FAQs — CRUD por profesional
+router.get('/me/agent-faqs', authenticateDirectoryAccount, withProfile, (req, res) =>
+  send(res, () => iaConfig.listFaqs(req.profileId)));
+
+router.post('/me/agent-faqs', authenticateDirectoryAccount, withProfile, (req, res) =>
+  send(res, () => iaConfig.createFaq(req.profileId, req.body || {})));
+
+router.patch('/me/agent-faqs/:faqId', authenticateDirectoryAccount, withProfile, (req, res) =>
+  send(res, () => iaConfig.updateFaq(req.profileId, req.params.faqId, req.body || {})));
+
+router.delete('/me/agent-faqs/:faqId', authenticateDirectoryAccount, withProfile, (req, res) =>
+  send(res, async () => {
+    await iaConfig.deleteFaq(req.profileId, req.params.faqId);
+    return { ok: true };
+  }));
+
 router.get('/me/packs', authenticateDirectoryAccount, withProfile, (req, res) => {
   if (!req.subscriptionId) return res.json({ success: true, data: [] });
   return send(res, () => iaPacks.listPacks(req.subscriptionId));

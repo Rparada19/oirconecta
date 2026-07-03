@@ -17,6 +17,13 @@ import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import Switch from '@mui/material/Switch';
+import Tooltip from '@mui/material/Tooltip';
 import { directoryApi, getDirectoryToken } from '../../services/directoryAccountApi';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
@@ -40,14 +47,23 @@ export default function ProfesionalIAPage() {
   const [selected, setSelected] = useState(null);
   const [buyOpen, setBuyOpen] = useState(false);
   const [toast, setToast] = useState(null);
+  // Educación del asistente (F5.6)
+  const [eduDraft, setEduDraft] = useState({ personality: '', expertise: '', signature: '', avoidTopics: '' });
+  const [savingEdu, setSavingEdu] = useState(false);
+  const [faqs, setFaqs] = useState([]);
+  const [faqDialog, setFaqDialog] = useState(null); // null | { id?, question, answer, isActive }
+  const [savingFaq, setSavingFaq] = useState(false);
+  const [limits, setLimits] = useState({ text: { personality: 600, expertise: 600, signature: 200, avoidTopics: 600 }, faqs: { max: 30, questionMax: 200, answerMax: 1000 } });
 
   const loadAll = async () => {
     setLoading(true);
-    const [b, c, cat, cfg] = await Promise.all([
+    const [b, c, cat, cfg, fq, lim] = await Promise.all([
       directoryApi.get('/api/ia/me/balance'),
       directoryApi.get('/api/ia/me/conversations?limit=200'),
       directoryApi.get('/api/ia/packs/catalog'),
       directoryApi.get('/api/ia/me/agent-config'),
+      directoryApi.get('/api/ia/me/agent-faqs'),
+      directoryApi.get('/api/ia/agent-config/limits'),
     ]);
     if (b.error) {
       setAccessError({ code: b.data?.code, message: b.error });
@@ -65,8 +81,63 @@ export default function ProfesionalIAPage() {
         agentIcon: cfg.data.data.agentIcon || 'smart_toy',
         welcomeMessage: cfg.data.data.welcomeMessage || '',
       });
+      setEduDraft({
+        personality: cfg.data.data.personality || '',
+        expertise: cfg.data.data.expertise || '',
+        signature: cfg.data.data.signature || '',
+        avoidTopics: cfg.data.data.avoidTopics || '',
+      });
     }
+    if (Array.isArray(fq.data?.data)) setFaqs(fq.data.data);
+    if (lim.data?.data) setLimits(lim.data.data);
     setLoading(false);
+  };
+
+  const saveEducation = async () => {
+    setSavingEdu(true);
+    const r = await directoryApi.put('/api/ia/me/agent-config', {
+      personality: eduDraft.personality.trim() || null,
+      expertise: eduDraft.expertise.trim() || null,
+      signature: eduDraft.signature.trim() || null,
+      avoidTopics: eduDraft.avoidTopics.trim() || null,
+    });
+    setSavingEdu(false);
+    if (r.error) return setToast({ severity: 'error', msg: r.error });
+    setConfig(r.data.data);
+    setToast({ severity: 'success', msg: 'Educación guardada. Se aplica al bot en la próxima conversación.' });
+  };
+
+  const openFaqNew = () => setFaqDialog({ question: '', answer: '', isActive: true });
+  const openFaqEdit = (f) => setFaqDialog({ id: f.id, question: f.question, answer: f.answer, isActive: f.isActive });
+
+  const saveFaq = async () => {
+    if (!faqDialog) return;
+    setSavingFaq(true);
+    const body = { question: faqDialog.question, answer: faqDialog.answer, isActive: faqDialog.isActive };
+    const r = faqDialog.id
+      ? await directoryApi.patch(`/api/ia/me/agent-faqs/${faqDialog.id}`, body)
+      : await directoryApi.post('/api/ia/me/agent-faqs', body);
+    setSavingFaq(false);
+    if (r.error) return setToast({ severity: 'error', msg: r.error });
+    // refresca lista
+    const fq = await directoryApi.get('/api/ia/me/agent-faqs');
+    if (Array.isArray(fq.data?.data)) setFaqs(fq.data.data);
+    setFaqDialog(null);
+    setToast({ severity: 'success', msg: faqDialog.id ? 'FAQ actualizada' : 'FAQ agregada' });
+  };
+
+  const toggleFaqActive = async (f) => {
+    const r = await directoryApi.patch(`/api/ia/me/agent-faqs/${f.id}`, { isActive: !f.isActive });
+    if (r.error) return setToast({ severity: 'error', msg: r.error });
+    setFaqs((prev) => prev.map((x) => x.id === f.id ? { ...x, isActive: !f.isActive } : x));
+  };
+
+  const deleteFaq = async (f) => {
+    if (!confirm(`¿Eliminar la FAQ "${f.question.slice(0, 40)}…"?`)) return;
+    const r = await directoryApi.delete(`/api/ia/me/agent-faqs/${f.id}`);
+    if (r.error) return setToast({ severity: 'error', msg: r.error });
+    setFaqs((prev) => prev.filter((x) => x.id !== f.id));
+    setToast({ severity: 'success', msg: 'FAQ eliminada' });
   };
 
   const saveConfig = async () => {
@@ -305,6 +376,184 @@ export default function ProfesionalIAPage() {
           </Stack>
         </CardContent>
       </Card>
+
+      {/* Educación del asistente (F5.6) */}
+      <Card sx={{ mt: 3, borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+        <Box sx={{ px: 2.5, py: 1.75, bgcolor: '#f8fafc', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <SchoolOutlinedIcon sx={{ color: ACCENT }} />
+          <Box sx={{ flex: 1 }}>
+            <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem' }}>
+              Educación del asistente
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+              Enséñale a tu bot cómo hablar, qué mencionar y qué NUNCA responder. Todo se aplica al instante en la próxima conversación.
+            </Typography>
+          </Box>
+        </Box>
+        <CardContent sx={{ p: 3 }}>
+          <Alert severity="info" sx={{ mb: 2.5, borderRadius: '10px' }}>
+            <strong>Cómo funciona:</strong> lo que escribas aquí se inyecta en las instrucciones del asistente cada vez que un paciente le habla.
+            No lo repitas literalmente en las conversaciones — describe cómo <em>debe comportarse</em>. Ejemplo: <em>"Habla en tono cercano, evita palabras técnicas, siempre invita a agendar valoración."</em>
+          </Alert>
+
+          <Stack spacing={2.25}>
+            <TextField
+              label="🎭 Personalidad y tono"
+              size="small" fullWidth multiline minRows={2}
+              value={eduDraft.personality}
+              onChange={(e) => setEduDraft({ ...eduDraft, personality: e.target.value })}
+              inputProps={{ maxLength: limits.text.personality }}
+              helperText={`${eduDraft.personality.length}/${limits.text.personality}. Ej: "Cercana, empática, usa términos cotidianos en vez de jerga médica. Trata al paciente con calidez."`}
+            />
+            <TextField
+              label="🎯 Áreas de expertise (para mencionar cuando aporten valor)"
+              size="small" fullWidth multiline minRows={2}
+              value={eduDraft.expertise}
+              onChange={(e) => setEduDraft({ ...eduDraft, expertise: e.target.value })}
+              inputProps={{ maxLength: limits.text.expertise }}
+              helperText={`${eduDraft.expertise.length}/${limits.text.expertise}. Ej: "Adaptación de audífonos pediátricos, terapia auditiva verbal, manejo de tinnitus, evaluación laboral."`}
+            />
+            <TextField
+              label="✍️ Frase de firma (opcional)"
+              size="small" fullWidth
+              value={eduDraft.signature}
+              onChange={(e) => setEduDraft({ ...eduDraft, signature: e.target.value })}
+              inputProps={{ maxLength: limits.text.signature }}
+              helperText={`${eduDraft.signature.length}/${limits.text.signature}. Ej: "Cuídate mucho — Piedad." El bot la usa al despedirse.`}
+            />
+            <TextField
+              label="🚫 Temas que el bot NUNCA debe tocar"
+              size="small" fullWidth multiline minRows={2}
+              value={eduDraft.avoidTopics}
+              onChange={(e) => setEduDraft({ ...eduDraft, avoidTopics: e.target.value })}
+              inputProps={{ maxLength: limits.text.avoidTopics }}
+              helperText={`${eduDraft.avoidTopics.length}/${limits.text.avoidTopics}. Ej: "Precios exactos de audífonos, diagnósticos, promesas de resultados clínicos, financiación."`}
+            />
+            <Button
+              variant="contained"
+              onClick={saveEducation}
+              disabled={savingEdu}
+              startIcon={<AutoAwesomeOutlinedIcon />}
+              sx={{ background: ACCENT, textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start',
+                    '&:hover': { background: ACCENT, filter: 'brightness(0.9)' } }}
+            >
+              {savingEdu ? 'Guardando…' : 'Guardar educación'}
+            </Button>
+          </Stack>
+
+          {/* FAQs */}
+          <Box sx={{ mt: 4, pt: 3, borderTop: '1px dashed #e5e7eb' }}>
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.9rem' }}>
+                  Preguntas frecuentes verificadas ({faqs.length}/{limits.faqs.max})
+                </Typography>
+                <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+                  Pregunta ↔ respuesta que <strong>tú apruebas</strong>. El bot las usa como fuente confiable antes de improvisar.
+                </Typography>
+              </Box>
+              <Button
+                startIcon={<AddRoundedIcon />}
+                variant="outlined"
+                size="small"
+                disabled={faqs.length >= limits.faqs.max}
+                onClick={openFaqNew}
+                sx={{ borderColor: ACCENT, color: ACCENT, textTransform: 'none', fontWeight: 700 }}
+              >
+                Agregar FAQ
+              </Button>
+            </Stack>
+
+            {faqs.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center', bgcolor: '#f8fafc', borderRadius: '10px', border: '1px dashed #cbd5e1' }}>
+                <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>
+                  Aún no tienes FAQs. Agrega las preguntas que tus pacientes hacen todo el tiempo (horarios, dirección, qué esperar en la primera consulta, medios de pago, etc.).
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={1.25}>
+                {faqs.map((f) => (
+                  <Box key={f.id} sx={{
+                    p: 1.75, border: '1px solid #e5e7eb', borderRadius: '10px',
+                    bgcolor: f.isActive ? '#fff' : '#f8fafc',
+                    opacity: f.isActive ? 1 : 0.65,
+                  }}>
+                    <Stack direction="row" alignItems="flex-start" spacing={1}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: NAVY, mb: 0.25 }}>
+                          P: {f.question}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.8125rem', color: '#475569', whiteSpace: 'pre-wrap' }}>
+                          R: {f.answer}
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" alignItems="center" spacing={0.25}>
+                        <Tooltip title={f.isActive ? 'Activa — el bot la usa' : 'Pausada — el bot no la ve'}>
+                          <Switch size="small" checked={f.isActive} onChange={() => toggleFaqActive(f)} />
+                        </Tooltip>
+                        <IconButton size="small" onClick={() => openFaqEdit(f)}>
+                          <EditRoundedIcon sx={{ fontSize: 18, color: '#64748b' }} />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => deleteFaq(f)}>
+                          <DeleteOutlineRoundedIcon sx={{ fontSize: 18, color: '#b91c1c' }} />
+                        </IconButton>
+                      </Stack>
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Dialog FAQ (crear/editar) */}
+      <Dialog open={!!faqDialog} onClose={() => setFaqDialog(null)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 800, color: NAVY }}>
+          {faqDialog?.id ? 'Editar pregunta frecuente' : 'Nueva pregunta frecuente'}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Pregunta del paciente"
+              size="small" fullWidth
+              value={faqDialog?.question || ''}
+              onChange={(e) => setFaqDialog({ ...faqDialog, question: e.target.value })}
+              inputProps={{ maxLength: limits.faqs.questionMax }}
+              helperText={`${(faqDialog?.question || '').length}/${limits.faqs.questionMax}. Ej: "¿Cuánto dura la primera valoración?"`}
+              autoFocus
+            />
+            <TextField
+              label="Respuesta que el bot debe dar"
+              size="small" fullWidth multiline minRows={3}
+              value={faqDialog?.answer || ''}
+              onChange={(e) => setFaqDialog({ ...faqDialog, answer: e.target.value })}
+              inputProps={{ maxLength: limits.faqs.answerMax }}
+              helperText={`${(faqDialog?.answer || '').length}/${limits.faqs.answerMax}. Escribe la respuesta ideal — el bot la adapta al contexto de cada conversación.`}
+            />
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Switch
+                checked={faqDialog?.isActive ?? true}
+                onChange={(e) => setFaqDialog({ ...faqDialog, isActive: e.target.checked })}
+              />
+              <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                Activa — el bot puede usarla en conversaciones
+              </Typography>
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setFaqDialog(null)} sx={{ textTransform: 'none' }}>Cancelar</Button>
+          <Button
+            onClick={saveFaq}
+            disabled={savingFaq || !faqDialog?.question?.trim() || !faqDialog?.answer?.trim()}
+            variant="contained"
+            sx={{ background: ACCENT, textTransform: 'none', fontWeight: 700 }}
+          >
+            {savingFaq ? 'Guardando…' : (faqDialog?.id ? 'Actualizar' : 'Crear FAQ')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Conversaciones */}
       <Card sx={{ mt: 3, borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
