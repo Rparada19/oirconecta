@@ -210,7 +210,8 @@ export default function App() {
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/profesionales/otologos" element={<OtologosPage />} />
           <Route path="/profesionales/audiologos" element={<AudiologasPage />} />
-          <Route path="/directorio/profesional/:profileId" element={<DirectorioProfesionalPage />} />
+          <Route path="/directorio/profesional/:profileId" element={<DirectorioProfesionalPageV2 />} />
+          <Route path="/directorio/profesional/:profileId/legacy" element={<DirectorioProfesionalPage />} />
           <Route path="/directorio/profesional/:profileId/v2" element={<DirectorioProfesionalPageV2 />} />
           <Route path="/directorio/listado" element={<DirectorioListadoPage />} />
           <Route path="/favoritos" element={<FavoritosPage />} />
