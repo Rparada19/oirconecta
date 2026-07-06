@@ -85,6 +85,16 @@ const startServer = async () => {
       }
     }
 
+    // T4 — Cron in-process para recordatorios de cita y Reminder rows.
+    // Por defecto ENCENDIDO. Se apaga con INTERNAL_CRON_ENABLED='false'.
+    if (process.env.INTERNAL_CRON_ENABLED !== 'false') {
+      try {
+        require('./crons').start();
+      } catch (e) {
+        console.error('[cron] no arrancó:', e.message);
+      }
+    }
+
     const shutdown = async () => {
       console.log('\n🛑 Cerrando servidor...');
       if (httpServer) {
