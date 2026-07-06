@@ -21,6 +21,9 @@ import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import RestartAltOutlinedIcon from '@mui/icons-material/RestartAltOutlined';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { adminFetch } from './adminAuth';
 
 const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
@@ -76,6 +79,11 @@ export default function AdminComunicacionesPage() {
   const [error, setError] = useState('');
   const [testDialog, setTestDialog] = useState(false);
   const [testEmail, setTestEmail] = useState('');
+  // T6 — Asistente de diseño IA
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiInstruction, setAiInstruction] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState(null); // { subject, body, changes }
 
   const loadList = async () => {
     setLoading(true);
@@ -158,6 +166,38 @@ export default function AdminComunicacionesPage() {
   const insertVariable = (variable) => {
     const tag = `{{${variable}}}`;
     setDraft((d) => ({ ...d, body: d.body + ' ' + tag }));
+  };
+
+  // T6 — Asistente de diseño IA
+  const runAssistant = async () => {
+    if (!selectedCode || !aiInstruction.trim()) return;
+    setAiLoading(true);
+    setAiResult(null);
+    const r = await adminFetch(`/api/email-templates/${selectedCode}/ai-edit`, {
+      method: 'POST',
+      body: JSON.stringify({
+        instruction: aiInstruction.trim(),
+        subject: draft.subject,
+        body: draft.body,
+      }),
+    });
+    setAiLoading(false);
+    if (!r.ok) return setSnack({ severity: 'error', msg: r.data?.error || 'El asistente no respondió' });
+    setAiResult(r.data?.data);
+  };
+
+  const applyAiResult = () => {
+    if (!aiResult) return;
+    setDraft((d) => ({ ...d, subject: aiResult.subject, body: aiResult.body }));
+    setAiResult(null);
+    setAiInstruction('');
+    setAiOpen(false);
+    setSnack({ severity: 'success', msg: 'Cambios aplicados. Recuerda guardar.' });
+  };
+
+  const discardAiResult = () => {
+    setAiResult(null);
+    setAiInstruction('');
   };
 
   if (loading) {
@@ -264,7 +304,20 @@ export default function AdminComunicacionesPage() {
                     </Typography>
                   )}
                 </Box>
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Button
+                    onClick={() => setAiOpen(true)}
+                    startIcon={<AutoAwesomeRoundedIcon />}
+                    variant="contained"
+                    sx={{
+                      background: `linear-gradient(135deg, ${ACCENT}, #a855f7)`,
+                      color: '#fff', textTransform: 'none', fontWeight: 700,
+                      fontSize: '0.85rem', px: 2, py: 0.75, borderRadius: '10px',
+                      '&:hover': { background: `linear-gradient(135deg, ${ACCENT}, #a855f7)`, filter: 'brightness(0.95)' },
+                    }}
+                  >
+                    Asistente IA
+                  </Button>
                   <Tooltip title="Enviar de prueba a mi email">
                     <IconButton onClick={() => setTestDialog(true)} sx={{ color: NAVY }}>
                       <SendOutlinedIcon fontSize="small" />
@@ -432,6 +485,169 @@ export default function AdminComunicacionesPage() {
             sx={{ background: NAVY, textTransform: 'none', fontWeight: 700 }}>
             Enviar
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* T6 — Dialog Asistente de diseño IA */}
+      <Dialog open={aiOpen} onClose={() => { setAiOpen(false); discardAiResult(); }} fullWidth maxWidth="md">
+        <DialogTitle sx={{ pb: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Box sx={{
+              width: 36, height: 36, borderRadius: '10px',
+              background: `linear-gradient(135deg, ${ACCENT}, #a855f7)`,
+              color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <AutoAwesomeRoundedIcon />
+            </Box>
+            <Box>
+              <Typography sx={{ ...SERIF, fontWeight: 600, color: NAVY, fontSize: '1.35rem', lineHeight: 1 }}>
+                Asistente de diseño
+              </Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: MUTED, mt: 0.25 }}>
+                Describe qué quieres cambiar en lenguaje natural
+              </Typography>
+            </Box>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          {!aiResult && (
+            <>
+              <TextField
+                fullWidth multiline minRows={3} autoFocus
+                value={aiInstruction}
+                onChange={(e) => setAiInstruction(e.target.value)}
+                placeholder='Ej: "haz el email más corto y cálido", "cambia el botón a morado", "agrega una lista con 3 beneficios de agendar", "usa un tono más profesional"'
+                inputProps={{ maxLength: 800 }}
+                sx={{ mb: 2 }}
+              />
+              <Typography sx={{
+                fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em',
+                color: MUTED, textTransform: 'uppercase', mb: 1,
+              }}>
+                Ejemplos de instrucciones
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {[
+                  'Hazlo más corto',
+                  'Tono más cálido y cercano',
+                  'Agrega un botón CTA morado',
+                  'Convierte los párrafos en una lista',
+                  'Añade un testimonial breve',
+                  'Traduce a un tono más profesional',
+                ].map((s) => (
+                  <Chip
+                    key={s}
+                    label={s}
+                    onClick={() => setAiInstruction(s)}
+                    sx={{
+                      bgcolor: '#faf5ff', color: ACCENT,
+                      fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500,
+                      '&:hover': { bgcolor: '#f3e8ff' },
+                    }}
+                  />
+                ))}
+              </Stack>
+            </>
+          )}
+
+          {aiLoading && (
+            <Box sx={{ py: 5, textAlign: 'center' }}>
+              <CircularProgress sx={{ color: ACCENT, mb: 2 }} />
+              <Typography sx={{ fontSize: '0.9rem', color: MUTED }}>
+                Diseñando tu template…
+              </Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: MUTED, mt: 0.5 }}>
+                Suele tardar 3-5 segundos
+              </Typography>
+            </Box>
+          )}
+
+          {aiResult && !aiLoading && (
+            <>
+              <Alert severity="success" icon={<AutoAwesomeRoundedIcon />}
+                sx={{ mb: 2, borderRadius: '10px', bgcolor: '#faf5ff', color: NAVY, '& .MuiAlert-icon': { color: ACCENT } }}>
+                <strong>Cambios propuestos:</strong> {aiResult.changes}
+              </Alert>
+
+              <Typography sx={{
+                fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em',
+                color: MUTED, textTransform: 'uppercase', mb: 1,
+              }}>
+                Nuevo subject
+              </Typography>
+              <Box sx={{
+                p: 1.5, mb: 2, border: `1px solid ${BORDER}`, borderRadius: '8px',
+                bgcolor: '#fafbfc', fontSize: '0.9rem', fontWeight: 600, color: NAVY,
+              }}>
+                {aiResult.subject}
+              </Box>
+
+              <Typography sx={{
+                fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em',
+                color: MUTED, textTransform: 'uppercase', mb: 1,
+              }}>
+                Nuevo body — vista previa
+              </Typography>
+              <Box sx={{
+                p: 2.5, border: `1px solid ${BORDER}`, borderRadius: '12px',
+                bgcolor: '#fff', maxHeight: 320, overflowY: 'auto',
+                '& p': { margin: '0 0 12px' },
+                '& a': { color: ACCENT, textDecoration: 'underline' },
+                '& blockquote': { borderLeft: `3px solid ${ACCENT}`, pl: 2, py: 0.5, margin: '16px 0', fontStyle: 'italic' },
+                '& ul': { pl: 2.5, margin: '0 0 12px' },
+                '& strong': { fontWeight: 700, color: NAVY },
+              }}
+                dangerouslySetInnerHTML={{ __html: aiResult.body }}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          {!aiResult ? (
+            <>
+              <Button onClick={() => setAiOpen(false)} sx={{ textTransform: 'none', color: MUTED }}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={runAssistant}
+                disabled={aiLoading || !aiInstruction.trim()}
+                variant="contained"
+                startIcon={<AutoAwesomeRoundedIcon />}
+                sx={{
+                  background: `linear-gradient(135deg, ${ACCENT}, #a855f7)`,
+                  color: '#fff', textTransform: 'none', fontWeight: 700, px: 3, py: 1,
+                  borderRadius: '10px',
+                  '&:hover': { background: `linear-gradient(135deg, ${ACCENT}, #a855f7)`, filter: 'brightness(0.95)' },
+                }}
+              >
+                Aplicar con IA
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={discardAiResult} startIcon={<CloseRoundedIcon />}
+                sx={{ textTransform: 'none', color: MUTED }}>
+                Descartar
+              </Button>
+              <Button
+                onClick={() => { discardAiResult(); }}
+                sx={{ textTransform: 'none', color: NAVY }}>
+                Otra instrucción
+              </Button>
+              <Button
+                onClick={applyAiResult}
+                variant="contained"
+                startIcon={<CheckRoundedIcon />}
+                sx={{
+                  background: NAVY, color: '#fff', textTransform: 'none',
+                  fontWeight: 700, px: 3, py: 1, borderRadius: '10px',
+                  '&:hover': { background: NAVY, filter: 'brightness(0.92)' },
+                }}
+              >
+                Aplicar cambios
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
 

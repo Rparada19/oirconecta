@@ -51,6 +51,26 @@ router.post('/:code/preview', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// T6 — Asistente de diseño con IA
+router.post('/:code/ai-edit', async (req, res, next) => {
+  try {
+    const assistant = require('../services/emailTemplateAssistant.service');
+    const tpl = await templates.getByCode(req.params.code);
+    const currentSubject = req.body?.subject ?? tpl?.subject ?? '';
+    const currentBody = req.body?.body ?? tpl?.body ?? '';
+    const variables = tpl?.variables || [];
+    const instruction = req.body?.instruction || '';
+
+    const result = await assistant.editTemplate({
+      code: req.params.code,
+      currentSubject, currentBody, variables, instruction,
+    });
+    res.json({ success: true, data: result });
+  } catch (e) {
+    res.status(e.status || 500).json({ success: false, error: e.message });
+  }
+});
+
 router.post('/:code/send-test', async (req, res, next) => {
   try {
     const to = req.body?.to || req.user?.email;
