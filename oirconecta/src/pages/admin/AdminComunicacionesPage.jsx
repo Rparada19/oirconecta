@@ -46,25 +46,29 @@ const DEMO_PAYLOAD = {
   REFERRAL_USED: { referrerName: 'Ana', newPatientName: 'María Camila' },
 };
 
-const CATEGORY_LABELS = {
-  TRANSACTIONAL: 'Transaccional',
-  MARKETING: 'Marketing',
-  AUTHENTICATION: 'Autenticación',
-};
-
 const CATEGORY_COLORS = {
   TRANSACTIONAL: { bg: '#eff6ff', ink: '#1e40af' },
   MARKETING: { bg: '#faf5ff', ink: '#6b21a8' },
   AUTHENTICATION: { bg: '#fef3c7', ink: '#78350f' },
 };
 
-const CODE_LABELS = {
-  LEAD_NURTURE_1: 'Nurture · 24h · Educativo',
-  LEAD_NURTURE_2: 'Nurture · 3 días · Testimonial',
-  LEAD_NURTURE_3: 'Nurture · 7 días · CTA final',
-  BIRTHDAY: 'Cumpleaños del paciente',
-  REVIEW_REQUEST: 'Solicitud de reseña post-cita',
-  REFERRAL_USED: 'Referido usó tu enlace',
+// Labels de los grupos de flujo (matchean con backend GROUPS)
+const GROUP_LABELS = {
+  CRM_CONTROLES:        'CRM — Controles de adaptación',
+  CITAS_TRANSACCIONALES:'Citas — Confirmaciones y recordatorios',
+  DIRECTORIO_POST_CITA: 'Directorio — Post-cita',
+  DIRECTORIO_NURTURE:   'Directorio — Nurture de leads',
+  DIRECTORIO_RETENCION: 'Directorio — Retención',
+  OTROS:                'Otros',
+};
+
+const GROUP_DESCRIPTIONS = {
+  CRM_CONTROLES:        'Funnel post-venta de audífono (centros propios).',
+  CITAS_TRANSACCIONALES:'Comunicaciones alrededor de una cita.',
+  DIRECTORIO_POST_CITA: 'Acompañamiento tras la consulta con un profesional.',
+  DIRECTORIO_NURTURE:   'Secuencia a leads sin cita.',
+  DIRECTORIO_RETENCION: 'Cumpleaños y referidos.',
+  OTROS:                'Sin agrupar.',
 };
 
 export default function AdminComunicacionesPage() {
@@ -122,12 +126,14 @@ export default function AdminComunicacionesPage() {
 
   const selected = list.find((x) => x.code === selectedCode);
   const grouped = useMemo(() => {
-    const groups = {};
+    // Preserva el orden de list (viene ya ordenado por group + orderInGroup del backend)
+    const seen = new Map();
     for (const t of list) {
-      const cat = t.category || 'TRANSACTIONAL';
-      (groups[cat] = groups[cat] || []).push(t);
+      const g = t.group || 'OTROS';
+      if (!seen.has(g)) seen.set(g, []);
+      seen.get(g).push(t);
     }
-    return groups;
+    return Array.from(seen.entries());
   }, [list]);
 
   const save = async () => {
@@ -242,15 +248,20 @@ export default function AdminComunicacionesPage() {
           bgcolor: '#fff', border: `1px solid ${BORDER}`, borderRadius: '14px',
           overflow: 'hidden', height: 'fit-content',
         }}>
-          {Object.entries(grouped).map(([cat, items]) => (
-            <Box key={cat}>
-              <Box sx={{ px: 2.5, py: 1.25, bgcolor: '#f8fafc', borderBottom: `1px solid ${BORDER}` }}>
+          {grouped.map(([grp, items]) => (
+            <Box key={grp}>
+              <Box sx={{ px: 2.5, py: 1.5, bgcolor: '#f8fafc', borderBottom: `1px solid ${BORDER}` }}>
                 <Typography sx={{
-                  fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.14em',
-                  color: MUTED, textTransform: 'uppercase',
+                  fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.14em',
+                  color: NAVY, textTransform: 'uppercase',
                 }}>
-                  {CATEGORY_LABELS[cat] || cat} · {items.length}
+                  {GROUP_LABELS[grp] || grp} · {items.length}
                 </Typography>
+                {GROUP_DESCRIPTIONS[grp] && (
+                  <Typography sx={{ fontSize: '0.7rem', color: MUTED, mt: 0.25 }}>
+                    {GROUP_DESCRIPTIONS[grp]}
+                  </Typography>
+                )}
               </Box>
               {items.map((tpl) => {
                 const active = tpl.code === selectedCode;
@@ -267,16 +278,16 @@ export default function AdminComunicacionesPage() {
                     }}>
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
                       <MailOutlineRoundedIcon sx={{ fontSize: 14, color: cc.ink }} />
-                      <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: cc.ink }}>
-                        {tpl.code}
+                      <Typography sx={{ fontSize: '0.85rem', fontWeight: active ? 700 : 600, color: NAVY }}>
+                        {tpl.label || tpl.code}
                       </Typography>
                       {tpl.isDefault && (
                         <Chip label="Por defecto" size="small"
                           sx={{ bgcolor: '#f1f5f9', color: MUTED, fontSize: '0.62rem', height: 16 }} />
                       )}
                     </Stack>
-                    <Typography sx={{ fontSize: '0.85rem', fontWeight: active ? 700 : 500, color: NAVY }}>
-                      {CODE_LABELS[tpl.code] || tpl.code}
+                    <Typography sx={{ fontSize: '0.68rem', color: MUTED, fontFamily: 'monospace' }}>
+                      {tpl.code}
                     </Typography>
                   </Box>
                 );
@@ -296,7 +307,10 @@ export default function AdminComunicacionesPage() {
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                 <Box>
                   <Typography sx={{ ...SERIF, fontWeight: 600, color: NAVY, fontSize: '1.35rem' }}>
-                    {CODE_LABELS[selectedCode] || selectedCode}
+                    {selected?.label || selectedCode}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.7rem', color: MUTED, fontFamily: 'monospace', mt: 0.25 }}>
+                    {selectedCode}
                   </Typography>
                   {selected.description && (
                     <Typography sx={{ fontSize: '0.85rem', color: MUTED, mt: 0.5, maxWidth: 640 }}>

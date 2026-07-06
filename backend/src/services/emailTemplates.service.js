@@ -24,8 +24,19 @@ function render(str, payload = {}) {
   });
 }
 
+// ─── Grupos de flujo de negocio (para agrupar en la UI del buzón) ────
+// El orden aquí determina el orden de las secciones en el admin.
+const GROUPS = {
+  CRM_CONTROLES:        { label: 'CRM — Controles de adaptación',   order: 1, description: 'Funnel post-venta de audífono en centros propios.' },
+  CITAS_TRANSACCIONALES: { label: 'Citas — Confirmaciones y recordatorios', order: 2, description: 'Comunicaciones alrededor de una cita agendada.' },
+  DIRECTORIO_POST_CITA: { label: 'Directorio — Post-cita',           order: 3, description: 'Acompañamiento tras la consulta con un profesional del directorio.' },
+  DIRECTORIO_NURTURE:   { label: 'Directorio — Nurture de leads',    order: 4, description: 'Secuencia de emails a leads sin cita.' },
+  DIRECTORIO_RETENCION: { label: 'Directorio — Retención',           order: 5, description: 'Cumpleaños y referidos.' },
+  OTROS:                { label: 'Otros',                            order: 99, description: 'Sin agrupar.' },
+};
+
 // ─── Catálogo de defaults hardcoded ─────────────────────────
-// Cada código tiene subject + body (HTML) + variables esperadas.
+// Cada código tiene subject + body (HTML) + variables + group + label legible + orden.
 // Si el admin no ha editado nada, se usa esto. Al editar, se sobrescribe
 // en DB pero este dict siempre queda como "restaurar por defecto".
 const HARDCODED = {
@@ -39,6 +50,9 @@ const HARDCODED = {
 <p><a href="https://oirconecta.com/directorio">Explorar profesionales cercanos →</a></p>`,
     variables: ['nombre', 'interes'],
     category: 'MARKETING',
+    label: 'Nurture #1 · 24 horas',
+    group: 'DIRECTORIO_NURTURE',
+    orderInGroup: 1,
     description: 'Nurture email #1 — 24h después de crear el lead. Educativo, sin venta.',
   },
   LEAD_NURTURE_2: {
@@ -51,6 +65,9 @@ const HARDCODED = {
 <p><a href="https://oirconecta.com/directorio">Agendar mi valoración →</a></p>`,
     variables: ['nombre'],
     category: 'MARKETING',
+    label: 'Nurture #2 · 3 días',
+    group: 'DIRECTORIO_NURTURE',
+    orderInGroup: 2,
     description: 'Nurture email #2 — 3 días después. Testimonial de un paciente real.',
   },
   LEAD_NURTURE_3: {
@@ -68,6 +85,9 @@ const HARDCODED = {
 <p><a href="https://oirconecta.com/directorio">Ver profesionales disponibles →</a></p>`,
     variables: ['nombre', 'interes'],
     category: 'MARKETING',
+    label: 'Nurture #3 · 7 días',
+    group: 'DIRECTORIO_NURTURE',
+    orderInGroup: 3,
     description: 'Nurture email #3 — 7 días después. CTA final con beneficios.',
   },
   BIRTHDAY: {
@@ -79,6 +99,9 @@ const HARDCODED = {
 <p>Con cariño,<br/>El equipo OírConecta</p>`,
     variables: ['nombre', 'referralCode'],
     category: 'TRANSACTIONAL',
+    label: 'Cumpleaños',
+    group: 'DIRECTORIO_RETENCION',
+    orderInGroup: 1,
     description: 'Email de cumpleaños. Enviado automáticamente cada año.',
   },
   REVIEW_REQUEST: {
@@ -91,6 +114,9 @@ const HARDCODED = {
 <p>Toma menos de 1 minuto. Tu reseña será revisada antes de publicarse.</p>`,
     variables: ['nombre', 'professionalName', 'tipoConsulta', 'fecha', 'reviewUrl'],
     category: 'TRANSACTIONAL',
+    label: 'Solicitud de reseña',
+    group: 'DIRECTORIO_POST_CITA',
+    orderInGroup: 2,
     description: 'Solicitud de reseña al paciente, se envía cuando el profesional marca la cita como COMPLETED.',
   },
   CONTROL_15D: {
@@ -104,6 +130,9 @@ const HARDCODED = {
 <p>Con cariño,<br/>El equipo OírConecta</p>`,
     variables: ['nombre', 'professionalName', 'tipoConsulta'],
     category: 'TRANSACTIONAL',
+    label: 'Check-in 15 días post-cita',
+    group: 'DIRECTORIO_POST_CITA',
+    orderInGroup: 1,
     description: 'Check-in 15 días después de completar cita. Acompañamiento post-consulta.',
   },
   CONTROL_T7: {
@@ -119,6 +148,9 @@ const HARDCODED = {
 <p>Con cariño,<br/>El equipo OírConecta</p>`,
     variables: ['nombre', 'controlLabel', 'diasDesdeAdaptacion', 'bookingUrl', 'telefonoCentro'],
     category: 'TRANSACTIONAL',
+    label: 'Control · 7 días antes',
+    group: 'CRM_CONTROLES',
+    orderInGroup: 1,
     description: 'F8 T-7d — recordatorio anticipado del control de adaptación (CRM centros propios).',
   },
   CONTROL_T1: {
@@ -132,6 +164,9 @@ const HARDCODED = {
 <p>Te esperamos.<br/>El equipo OírConecta</p>`,
     variables: ['nombre', 'controlLabel', 'bookingUrl'],
     category: 'TRANSACTIONAL',
+    label: 'Control · el día antes',
+    group: 'CRM_CONTROLES',
+    orderInGroup: 2,
     description: 'F8 T-1d — último recordatorio del control (CRM centros propios).',
   },
   CONTROL_OVERDUE: {
@@ -147,6 +182,9 @@ const HARDCODED = {
 <p>Con cariño,<br/>El equipo OírConecta</p>`,
     variables: ['nombre', 'controlLabel', 'bookingUrl'],
     category: 'TRANSACTIONAL',
+    label: 'Control · vencido (reagendar)',
+    group: 'CRM_CONTROLES',
+    orderInGroup: 3,
     description: 'F8 T+3d vencido — invitación a reagendar el control (CRM centros propios).',
   },
   REFERRAL_USED: {
@@ -158,8 +196,20 @@ const HARDCODED = {
 <p>Con aprecio,<br/>El equipo OírConecta</p>`,
     variables: ['referrerName', 'newPatientName'],
     category: 'TRANSACTIONAL',
+    label: 'Alguien usó tu invitación',
+    group: 'DIRECTORIO_RETENCION',
+    orderInGroup: 2,
     description: 'Se envía al referidor cuando el paciente que él invitó completa su primera cita.',
   },
+};
+
+// ─── Metadata de templates legacy que están en DB pero no en HARDCODED ────
+// Solo agrega label + group para que la UI los muestre agrupados y con nombre
+// legible. NO tienen defaults hardcoded (no se pueden "restaurar").
+const LEGACY_META = {
+  cita_agendada:   { label: 'Cita agendada · confirmación',   group: 'CITAS_TRANSACCIONALES', orderInGroup: 1 },
+  recordatorio_24h:{ label: 'Recordatorio 24h antes',         group: 'CITAS_TRANSACCIONALES', orderInGroup: 2 },
+  cancelacion:     { label: 'Cita cancelada',                 group: 'CITAS_TRANSACCIONALES', orderInGroup: 3 },
 };
 
 const HARDCODED_CODES = Object.keys(HARDCODED);
@@ -219,6 +269,14 @@ async function renderEmail(code, payload = {}) {
  * Lista todos los templates disponibles (DB + hardcoded no seedeados).
  * Uso: admin panel.
  */
+function metaFor(code) {
+  const hc = HARDCODED[code];
+  if (hc) return { label: hc.label || code, group: hc.group || 'OTROS', orderInGroup: hc.orderInGroup ?? 99, description: hc.description || null };
+  const lg = LEGACY_META[code];
+  if (lg) return { label: lg.label, group: lg.group, orderInGroup: lg.orderInGroup, description: null };
+  return { label: code, group: 'OTROS', orderInGroup: 99, description: null };
+}
+
 async function listAll() {
   const dbRows = await prisma.notificationTemplate.findMany({
     where: { channel: 'EMAIL', locale: 'es-CO' },
@@ -227,28 +285,45 @@ async function listAll() {
   const dbCodes = new Set(dbRows.map((r) => r.code));
 
   // Añade hardcoded que aún no están en DB (aparecen como "por defecto")
-  const missing = HARDCODED_CODES.filter((c) => !dbCodes.has(c)).map((c) => ({
-    id: null,
-    code: c,
-    channel: 'EMAIL',
-    locale: 'es-CO',
-    subject: HARDCODED[c].subject,
-    body: HARDCODED[c].body,
-    variables: HARDCODED[c].variables || [],
-    category: HARDCODED[c].category || 'TRANSACTIONAL',
-    activo: true,
-    isDefault: true, // no está guardado, muestra hardcoded
-    description: HARDCODED[c].description,
-  }));
+  const missing = HARDCODED_CODES.filter((c) => !dbCodes.has(c)).map((c) => {
+    const meta = metaFor(c);
+    return {
+      id: null,
+      code: c,
+      channel: 'EMAIL',
+      locale: 'es-CO',
+      subject: HARDCODED[c].subject,
+      body: HARDCODED[c].body,
+      variables: HARDCODED[c].variables || [],
+      category: HARDCODED[c].category || 'TRANSACTIONAL',
+      activo: true,
+      isDefault: true,
+      label: meta.label,
+      group: meta.group,
+      orderInGroup: meta.orderInGroup,
+      description: meta.description,
+    };
+  });
 
-  return [
-    ...dbRows.map((r) => ({
-      ...r,
-      isDefault: false,
-      description: HARDCODED[r.code]?.description || null,
-    })),
+  const enriched = [
+    ...dbRows.map((r) => ({ ...r, isDefault: false, ...metaFor(r.code) })),
     ...missing,
-  ].sort((a, b) => a.code.localeCompare(b.code));
+  ];
+
+  // Orden: grupo (según GROUPS.order), luego orderInGroup, luego label
+  enriched.sort((a, b) => {
+    const ga = GROUPS[a.group]?.order ?? 99;
+    const gb = GROUPS[b.group]?.order ?? 99;
+    if (ga !== gb) return ga - gb;
+    if (a.orderInGroup !== b.orderInGroup) return (a.orderInGroup || 99) - (b.orderInGroup || 99);
+    return String(a.label || a.code).localeCompare(String(b.label || b.code));
+  });
+
+  return enriched;
+}
+
+function listGroups() {
+  return Object.entries(GROUPS).map(([key, v]) => ({ key, ...v }));
 }
 
 /**
@@ -318,9 +393,11 @@ module.exports = {
   render,
   renderEmail,
   listAll,
+  listGroups,
   getByCode,
   updateByCode,
   restoreDefault,
   HARDCODED,
   HARDCODED_CODES,
+  GROUPS,
 };
