@@ -179,7 +179,6 @@ async function processFollowUpReminders() {
   const followUps = require('../services/followUps.service');
 
   const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://oirconecta.com';
-  const BOOKING_URL = `${SITE_URL}/agendar`;
 
   // ─── T-7 días ───
   const t7Start = new Date(now.getTime() + 6 * 24 * 3600 * 1000);
@@ -237,14 +236,16 @@ async function processFollowUpReminders() {
     if (claim.count === 0) return { skipped: 'already-claimed' };
 
     try {
-      const days = Math.round((new Date() - new Date(fu.dueDate)) / (24 * 3600 * 1000) + fu.offsetDays);
+      // Asegura token para el link mágico (backfill idempotente)
+      const token = await followUps.ensureToken(fu.id);
+      const bookingUrl = token ? `${SITE_URL}/agendar-control/${token}` : `${SITE_URL}/agendar`;
       await emailService.sendControlReminder({
         stage,
         to: fu.patient.email,
         patientName: fu.patient.nombre,
         controlLabel: followUps.stepLabel(fu.step),
         diasDesdeAdaptacion: fu.offsetDays,
-        bookingUrl: BOOKING_URL,
+        bookingUrl,
       });
       // Interaction en HC
       await prisma.interaction.create({

@@ -679,6 +679,8 @@ async function ensureAppointmentCancellationColumns(prisma) {
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patient_follow_ups_status_dueDate_idx" ON "patient_follow_ups" ("status", "dueDate")`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patient_follow_ups_patientId_idx" ON "patient_follow_ups" ("patientId")`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patient_follow_ups_saleId_idx" ON "patient_follow_ups" ("saleId")`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patient_follow_ups" ADD COLUMN IF NOT EXISTS "scheduleToken" TEXT`);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "patient_follow_ups_scheduleToken_key" ON "patient_follow_ups" ("scheduleToken") WHERE "scheduleToken" IS NOT NULL`);
     console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates + follow_ups OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);

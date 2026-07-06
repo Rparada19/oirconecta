@@ -487,6 +487,9 @@ model PatientFollowUp {
   /// PENDING | REMINDED | SCHEDULED | COMPLETED | OVERDUE | SKIPPED.
   status String @default("PENDING")
 
+  /// Token único para link mágico en emails/WhatsApp — agendar sin login.
+  scheduleToken String? @unique
+
   /// Cita agendada por el paciente para este control (si aplica).
   scheduledAppointmentId String?
   scheduledAppointment   Appointment? @relation(fields: [scheduledAppointmentId], references: [id], onDelete: SetNull)

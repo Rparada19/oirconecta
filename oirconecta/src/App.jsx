@@ -28,6 +28,7 @@ const PonteEnSusOidosPage = lazy(() => import('./pages/PonteEnSusOidosPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const AgendamientoPage = lazy(() => import('./pages/AgendamientoPage'));
+const AgendarControlPage = lazy(() => import('./pages/AgendarControlPage'));
 const OtologosPage = lazy(() => import('./pages/OtologosPage'));
 const AudiologasPage = lazy(() => import('./pages/AudiologasPage'));
 const RegistroProfesionalPage = lazy(() => import('./pages/RegistroProfesionalPage'));
@@ -236,6 +237,7 @@ export default function App() {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/agendar" element={<AgendamientoPage />} />
+          <Route path="/agendar-control/:token" element={<AgendarControlPage />} />
           <Route path="/agendar/confirmar" element={<ConfirmAppointmentPage />} />
           <Route path="/agendar/reagendar" element={<RescheduleAppointmentPage />} />
           <Route path="/agendar/cancelar" element={<CancelAppointmentPage />} />

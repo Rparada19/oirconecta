@@ -12,7 +12,12 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
+const crypto = require('crypto');
 const prisma = new PrismaClient();
+
+function generateToken() {
+  return crypto.randomBytes(16).toString('hex');
+}
 
 const STEPS = [
   { step: 'D10',  offsetDays: 10,   label: 'Control 10 días' },
@@ -71,6 +76,7 @@ async function ensureFunnel({ patientId, adaptationDate, saleId = null }) {
           offsetDays: s.offsetDays,
           dueDate,
           status: 'PENDING',
+          scheduleToken: generateToken(),
         },
       });
       created++;
@@ -111,6 +117,35 @@ async function ensureFunnel({ patientId, adaptationDate, saleId = null }) {
   }
 
   return { created, updated, skipped };
+}
+
+/** Asegura scheduleToken en un follow-up (backfill idempotente). */
+async function ensureToken(followUpId) {
+  const fu = await prisma.patientFollowUp.findUnique({
+    where: { id: followUpId },
+    select: { id: true, scheduleToken: true },
+  });
+  if (!fu) return null;
+  if (fu.scheduleToken) return fu.scheduleToken;
+  const token = generateToken();
+  await prisma.patientFollowUp.update({
+    where: { id: fu.id },
+    data: { scheduleToken: token },
+  });
+  return token;
+}
+
+/** Busca un follow-up por su token público. */
+async function findByToken(token) {
+  if (!token) return null;
+  return prisma.patientFollowUp.findUnique({
+    where: { scheduleToken: token },
+    include: {
+      patient: {
+        select: { id: true, nombre: true, email: true, telefono: true },
+      },
+    },
+  });
 }
 
 /** Marca un control como completado (por profesional o CRM). */
@@ -280,6 +315,8 @@ module.exports = {
   STEPS,
   stepLabel,
   ensureFunnel,
+  ensureToken,
+  findByToken,
   markCompleted,
   markSkipped,
   attachAppointment,
