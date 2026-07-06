@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box, TextField, Button, Typography,
   InputAdornment, IconButton, Alert, CircularProgress,
@@ -12,16 +12,20 @@ import { useAuth } from '../context/AuthContext';
 
 const LoginCRMPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, isAuthenticated, user } = useAuth();
+  const returnTo = searchParams.get('returnTo');
+  const reason = searchParams.get('reason');
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
-    navigate('/portal-crm', { replace: true });
-  }, [isAuthenticated, user, navigate]);
+    navigate(returnTo || '/portal-crm', { replace: true });
+  }, [isAuthenticated, user, navigate, returnTo]);
 
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState(reason === 'expired' ? 'Tu sesión expiró. Ingresa de nuevo para continuar.' : '');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (field) => (e) => {
@@ -40,7 +44,7 @@ const LoginCRMPage = () => {
     }
     const result = await login(formData.email.trim(), formData.password);
     setIsLoading(false);
-    if (result.success) navigate('/portal-crm');
+    if (result.success) navigate(returnTo || '/portal-crm');
     else setError(result.error || 'Error al iniciar sesión');
   };
 
@@ -147,6 +151,11 @@ const LoginCRMPage = () => {
 
           {/* Form */}
           <Box component="form" onSubmit={handleSubmit}>
+            {notice && !error && (
+              <Alert severity="warning" sx={{ mb: 3, borderRadius: '12px' }} onClose={() => setNotice('')}>
+                {notice}
+              </Alert>
+            )}
             {error && (
               <Alert severity="error" sx={{ mb: 3, borderRadius: '12px' }} onClose={() => setError('')}>
                 {error}

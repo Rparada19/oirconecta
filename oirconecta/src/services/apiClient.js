@@ -17,6 +17,25 @@ function resolveBase() {
   return '';
 }
 const TOKEN_KEY = 'oirconecta_crm_token';
+const LOGIN_ROUTE = '/login-crm';
+
+// Evita disparar el redirect múltiples veces cuando varias peticiones
+// devuelven 401 casi al mismo tiempo.
+let redirecting = false;
+function handleUnauthorized() {
+  try { localStorage.removeItem(TOKEN_KEY); } catch {}
+  if (redirecting) return;
+  if (typeof window === 'undefined') return;
+  const path = window.location.pathname || '';
+  // No redirigir si ya estás en la propia pantalla de login.
+  if (path.startsWith(LOGIN_ROUTE)) return;
+  // Solo aplicamos el auto-redirect a rutas del CRM (evita afectar al
+  // portal profesional o al admin que usan otros tokens/rutas de login).
+  if (!path.startsWith('/portal-crm')) return;
+  redirecting = true;
+  const returnTo = encodeURIComponent(path + window.location.search);
+  window.location.href = `${LOGIN_ROUTE}?returnTo=${returnTo}&reason=expired`;
+}
 
 export const getToken = () => {
   try {
@@ -73,6 +92,9 @@ export async function request(path, options = {}) {
 
     if (!res.ok) {
       const msg = data?.error || data?.message || res.statusText || `Error ${res.status}`;
+      // Auto-logout + redirect a /login-crm si el token expiró o es inválido
+      // durante una llamada autenticada.
+      if (!skipAuth && res.status === 401) handleUnauthorized();
       return { data: null, error: msg, status: res.status };
     }
     return { data, error: null, status: res.status };
