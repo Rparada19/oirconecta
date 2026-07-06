@@ -630,7 +630,7 @@ const DashboardPage = () => {
         </Box>
 
         {/* F8 — Controles de adaptación (post-venta audífono) */}
-        {(followUpsSummary.overdue > 0 || followUpsSummary.upcoming7d > 0) && (
+        {(
           <Box sx={{ mb: 3, p: 3, borderRadius: '16px', bgcolor: '#fff', border: '1px solid #eef0f3' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
               <Box>
@@ -656,6 +656,17 @@ const DashboardPage = () => {
                 </Box>
               </Box>
             </Box>
+
+            {overdueFollowUps.length === 0 && followUpsSummary.totalPending === 0 && (
+              <Box sx={{ py: 4, textAlign: 'center', bgcolor: '#fafbfc', border: '1px dashed #e2e8f0', borderRadius: '10px' }}>
+                <Typography sx={{ fontSize: '0.9rem', color: '#64748b', mb: 0.5 }}>
+                  Aún no hay pacientes con seguimiento activo.
+                </Typography>
+                <Typography sx={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  Se activa automáticamente cuando registras una venta de audífono con <strong>fecha de adaptación</strong>.
+                </Typography>
+              </Box>
+            )}
 
             {overdueFollowUps.length > 0 && (
               <Box>

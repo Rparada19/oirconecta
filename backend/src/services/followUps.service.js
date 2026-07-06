@@ -266,7 +266,9 @@ async function findClosestForAppointment({ patientId, apptDate }) {
 async function listOverdue({ limit = 100 } = {}) {
   return prisma.patientFollowUp.findMany({
     where: { status: 'OVERDUE' },
-    include: {
+    select: {
+      id: true, step: true, offsetDays: true, dueDate: true, status: true,
+      scheduleToken: true, scheduledAppointmentId: true,
       patient: {
         select: { id: true, nombre: true, telefono: true, email: true, ciudad: true },
       },
@@ -284,7 +286,9 @@ async function listUpcoming({ withinDays = 7, limit = 100 } = {}) {
       status: { in: ['PENDING', 'REMINDED'] },
       dueDate: { gte: now, lte: horizon },
     },
-    include: {
+    select: {
+      id: true, step: true, offsetDays: true, dueDate: true, status: true,
+      scheduleToken: true, scheduledAppointmentId: true,
       patient: {
         select: { id: true, nombre: true, telefono: true, email: true, ciudad: true },
       },

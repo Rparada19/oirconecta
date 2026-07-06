@@ -84,6 +84,7 @@ const DashboardPage = lazy(() => import('./pages/crm/DashboardPage'));
 const CitasPage = lazy(() => import('./pages/crm/CitasPage'));
 const LeadsPage = lazy(() => import('./pages/crm/LeadsPage'));
 const PacientesPage = lazy(() => import('./pages/crm/PacientesPage'));
+const ControlesPage = lazy(() => import('./pages/crm/ControlesPage'));
 const CampanasPage = lazy(() => import('./pages/crm/CampanasPage'));
 const ReportesPage = lazy(() => import('./pages/crm/ReportesPage'));
 const ConfiguracionPage = lazy(() => import('./pages/crm/ConfiguracionPage'));
@@ -267,6 +268,7 @@ export default function App() {
             <Route path="citas" element={<CitasPage />} />
             <Route path="leads" element={<LeadsPage />} />
             <Route path="pacientes" element={<PacientesPage />} />
+            <Route path="controles" element={<ControlesPage />} />
             <Route path="campanas" element={<CampanasPage />} />
             <Route path="reportes" element={<ReportesPage />} />
             <Route path="configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />

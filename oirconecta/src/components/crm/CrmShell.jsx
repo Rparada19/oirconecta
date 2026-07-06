@@ -19,6 +19,7 @@ import {
   Dashboard, CalendarToday, People, Campaign,
   Assessment, Settings, ShoppingBag, NotificationsActive,
   Logout, ArrowBack, FlashOn, Person as PersonIcon,
+  EventRepeat as EventRepeatIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { getMenuForRole, MENU_KEYS } from '../../utils/rolePermissions';
@@ -48,6 +49,8 @@ const NAV_ITEMS = [
     path: '/portal-crm/leads', section: 'operativo' },
   { key: MENU_KEYS.PACIENTES, label: 'Pacientes', icon: People,
     path: '/portal-crm/pacientes', section: 'operativo' },
+  { key: MENU_KEYS.CONTROLES, label: 'Controles', icon: EventRepeatIcon,
+    path: '/portal-crm/controles', section: 'operativo' },
   { key: MENU_KEYS.CAMPANAS, label: 'Campañas', icon: Campaign,
     path: '/portal-crm/campanas', section: 'marketing' },
   { key: MENU_KEYS.PRODUCTOS, label: 'Productos', icon: ShoppingBag,
