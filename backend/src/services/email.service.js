@@ -959,6 +959,74 @@ async function sendSubscriptionReactivated({ email, nombre }) {
 }
 
 /**
+ * T2-Gap1 — Nurture de lead sin cita. 3 emails a 24h/3d/7d.
+ * Todos incluyen link de opt-out para respetar Ley 1581 (habeas data).
+ */
+async function sendLeadNurture({ to, nombre, step, interes, unsubscribeUrl }) {
+  const primerNombre = (nombre || '').split(' ')[0] || 'hola';
+  const bookUrl = `${SITE_URL}/directorio`;
+  const blogUrl = `${SITE_URL}/blog`;
+  const optOutFooter = unsubscribeUrl
+    ? `<div style="text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid #e5e7eb;">
+         <a href="${unsubscribeUrl}" style="font-size:12px;color:#94a3b8;">No quiero recibir más correos</a>
+       </div>`
+    : '';
+
+  let subject, bodyHtml;
+
+  if (step === 1) {
+    // Email 1 · 24h · Educativo, sin venta
+    subject = `${primerNombre}, ¿sabías esto sobre tu audición?`;
+    bodyHtml = [
+      h1(`Hola ${primerNombre},`),
+      p(`Gracias por consultarnos sobre ${interes ? `"${interes.toLowerCase()}"` : 'salud auditiva'}. Queremos que sepas que dar el primer paso es lo más difícil — y ya lo diste.`),
+      p(`<strong>Un dato que muchos no conocen:</strong> el 90% de los problemas de audición son tratables si se detectan temprano. La mayoría de personas espera 7 años antes de consultar. Tú acabas de adelantarte.`),
+      p('En OírConecta encontrarás profesionales verificados en toda Colombia, con precios y horarios reales. Puedes explorar sin compromiso.'),
+      btn(bookUrl, 'Explorar profesionales cercanos'),
+      p(`<span style="font-size:13px;color:#6b7280;">También puedes leer nuestros artículos: <a href="${blogUrl}">Blog OírConecta</a></span>`),
+      optOutFooter,
+    ].join('');
+  } else if (step === 3) {
+    // Email 2 · 3d · Testimonial
+    subject = `${primerNombre}, así fue la historia de María`;
+    bodyHtml = [
+      h1(`${primerNombre}, un testimonio que quiero compartir contigo`),
+      p(`María Camila (52 años, Bogotá) llevaba <strong>4 años</strong> pidiendo a su familia que "hablaran más duro". Pensaba que era normal a su edad.`),
+      `<blockquote style="border-left:3px solid #6d28d9;padding:8px 20px;margin:20px 0;font-style:italic;color:#334155;background:#faf5ff;border-radius:0 10px 10px 0;">
+         "Cuando entré por primera vez a la valoración, tenía miedo. Al final me sentí escuchada por primera vez en años. Salí con un plan claro y ganas de intentarlo."
+       </blockquote>`,
+      p('Ese primer paso — la valoración — dura 45 minutos y te da respuestas concretas. No compromiso, no venta forzada. Solo información honesta sobre tu audición.'),
+      btn(bookUrl, 'Agendar mi valoración'),
+      p(`<span style="font-size:13px;color:#6b7280;">Si tienes preguntas antes, escríbenos: <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a></span>`),
+      optOutFooter,
+    ].join('');
+  } else {
+    // Email 3 · 7d · CTA suave con oferta
+    subject = `${primerNombre}, tu valoración auditiva te está esperando`;
+    bodyHtml = [
+      h1(`${primerNombre}, un último recordatorio`),
+      p(`Hace una semana consultaste sobre ${interes ? `"${interes.toLowerCase()}"` : 'salud auditiva'}. Sabemos que la vida se atraviesa y a veces los proyectos importantes quedan en pausa.`),
+      p(`<strong>Solo queremos recordarte:</strong> agendar tu valoración con un profesional verificado toma menos de 2 minutos. Los precios son claros. Puedes agendar hoy y evaluar sin compromiso.`),
+      `<div style="background:#faf5ff;border-radius:12px;padding:20px 24px;margin:24px 0;">
+         <div style="font-weight:700;color:#6b21a8;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">Beneficios de agendar por OírConecta</div>
+         <ul style="margin:0;padding-left:20px;color:#475569;font-size:14px;line-height:1.7;">
+           <li>Profesionales <strong>verificados</strong> (RETHUS + tarjeta profesional)</li>
+           <li>Precios <strong>reales antes de agendar</strong> — sin sorpresas</li>
+           <li>Recordatorios automáticos por email y WhatsApp</li>
+           <li>Cancelar o reagendar en 1 clic</li>
+         </ul>
+       </div>`,
+      btn(bookUrl, 'Ver profesionales disponibles'),
+      p(`<span style="font-size:13px;color:#6b7280;">Este es el último correo de esta serie. Si te unes en el futuro, estaremos aquí.</span>`),
+      optOutFooter,
+    ].join('');
+  }
+
+  const html = baseTemplate({ preheader: subject, title: subject, bodyHtml });
+  await deliver({ to, toName: nombre, subject, html });
+}
+
+/**
  * F6 — Solicitud de reseña post-cita.
  * Se envía ~24h después de que el profesional marque la cita como COMPLETED.
  * Incluye link único con reviewToken para dejar reseña sin login.
@@ -1011,6 +1079,7 @@ module.exports = {
   sendRescheduledNotification,
   sendCancellationAlert,
   sendReviewRequest,
+  sendLeadNurture,
 
   // Alias para compatibilidad con código anterior
   sendBookingConfirmations: sendBookingConfirmation,

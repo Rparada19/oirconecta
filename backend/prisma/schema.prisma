@@ -350,6 +350,12 @@ model Lead {
   // Soft delete
   archivedAt DateTime?
 
+  // T2-Gap1 — Nurture 7d (secuencia de emails a 24h/3d/7d si no agenda)
+  nurture1SentAt DateTime? // "¿Sabías qué?" educativo
+  nurture3SentAt DateTime? // Testimonial paciente real
+  nurture7SentAt DateTime? // CTA suave + oferta
+  nurtureOptOut  Boolean   @default(false) // paciente pidió no recibir más
+
   // Relaciones
   createdById   String?
   createdBy     User?        @relation("LeadCreatedBy", fields: [createdById], references: [id])
@@ -362,6 +368,7 @@ model Lead {
 
   @@index([sedeId])
   @@index([archivedAt])
+  @@index([estado, appointmentId, nurture1SentAt])
   @@map("leads")
 }
 

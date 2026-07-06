@@ -17,9 +17,79 @@ const prisma = new PrismaClient();
 
 const TICK_MS = 60 * 1000;
 const BATCH_SIZE = 50; // reminders por tick para no ahogar SMTP en un burst
+const NURTURE_BATCH = 20; // leads nurture por tick
 
 let running = false;
 let tickHandle = null;
+
+// T2-Gap1 — Ventanas del nurture 7d.
+// El barrido corre cada minuto; usamos ventanas amplias para que no importe
+// si el tick se pierde por cold-start o reinicio.
+const NURTURE_STEPS = [
+  { step: 1, field: 'nurture1SentAt', minH: 22, maxH: 30 },   // ~24h (22-30h)
+  { step: 3, field: 'nurture3SentAt', minH: 68, maxH: 78 },   // ~3d (68-78h)
+  { step: 7, field: 'nurture7SentAt', minH: 164, maxH: 176 }, // ~7d (164-176h)
+];
+
+async function processLeadNurture() {
+  const emailService = require('../services/email.service');
+  const now = new Date();
+  let total = { scanned: 0, sent: 0, failed: 0 };
+
+  for (const cfg of NURTURE_STEPS) {
+    const minAgo = new Date(now.getTime() - cfg.maxH * 3600 * 1000);
+    const maxAgo = new Date(now.getTime() - cfg.minH * 3600 * 1000);
+
+    const due = await prisma.lead.findMany({
+      where: {
+        estado: 'NUEVO',
+        appointmentId: null,
+        archivedAt: null,
+        nurtureOptOut: false,
+        email: { not: '' },
+        [cfg.field]: null,
+        createdAt: { gte: minAgo, lte: maxAgo },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: NURTURE_BATCH,
+    });
+
+    for (const lead of due) {
+      total.scanned++;
+      try {
+        // Claim optimista: marca sentAt antes del envío para evitar doble envío
+        // si dos ticks corren en paralelo.
+        const claim = await prisma.lead.updateMany({
+          where: { id: lead.id, [cfg.field]: null },
+          data: { [cfg.field]: now },
+        });
+        if (claim.count === 0) continue;
+
+        const unsubscribeUrl = `https://oirconecta.com/api/leads/nurture/opt-out?token=${lead.id}`;
+        await emailService.sendLeadNurture({
+          to: lead.email,
+          nombre: lead.nombre,
+          step: cfg.step,
+          interes: lead.interes,
+          unsubscribeUrl,
+        });
+        total.sent++;
+      } catch (e) {
+        console.error('[cron/nurture] lead', lead.id, 'step', cfg.step, 'falló:', e.message);
+        // Revertimos el claim para reintentar en el próximo tick dentro de la ventana
+        try {
+          await prisma.lead.updateMany({
+            where: { id: lead.id, [cfg.field]: { not: null } },
+            data: { [cfg.field]: null },
+          });
+        } catch {}
+        total.failed++;
+      }
+    }
+  }
+
+  return total;
+}
 
 async function processPendingReminders() {
   const { sendNow } = require('../notifications');
@@ -109,9 +179,23 @@ async function tick() {
       console.error('[cron] processPendingReminders falló:', e.message);
     }
 
-    if ((apptResult?.sent || 0) > 0 || (remindersResult?.sent || 0) > 0 || (remindersResult?.failed || 0) > 0) {
+    // 3) T2-Gap1 — Nurture 7d de leads sin cita
+    let nurtureResult = null;
+    try {
+      nurtureResult = await processLeadNurture();
+    } catch (e) {
+      console.error('[cron] processLeadNurture falló:', e.message);
+    }
+
+    const hasActivity =
+      (apptResult?.sent || 0) > 0 ||
+      (remindersResult?.sent || 0) > 0 ||
+      (remindersResult?.failed || 0) > 0 ||
+      (nurtureResult?.sent || 0) > 0 ||
+      (nurtureResult?.failed || 0) > 0;
+    if (hasActivity) {
       const ms = Date.now() - started;
-      console.log(`[cron] tick ${ms}ms · citas: ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders: ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · fail: ${remindersResult?.failed || 0}`);
+      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0}`);
     }
   } catch (e) {
     console.error('[cron] tick falló:', e.message);
@@ -133,4 +217,4 @@ function stop() {
   tickHandle = null;
 }
 
-module.exports = { start, stop, tick, processPendingReminders };
+module.exports = { start, stop, tick, processPendingReminders, processLeadNurture };
