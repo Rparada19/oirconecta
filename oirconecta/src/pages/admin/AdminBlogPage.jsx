@@ -81,7 +81,7 @@ function CoverUploader({ value, onChange }) {
         <Box component="label" sx={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.5,
           py: 2, borderRadius: '8px', border: '2px dashed #cbd5e1', cursor: busy ? 'wait' : 'pointer',
-          color: '#64748b', '&:hover': { borderColor: '#085946', color: '#085946', bgcolor: 'rgba(8,89,70,0.04)' },
+          color: '#64748b', '&:hover': { borderColor: '#6d28d9', color: '#6d28d9', bgcolor: 'rgba(8,89,70,0.04)' },
         }}>
           {busy ? <CircularProgress size={20} /> : <CloudUploadOutlinedIcon sx={{ fontSize: 24 }} />}
           <Typography sx={{ fontSize: '0.75rem', fontWeight: 700 }}>
@@ -97,11 +97,11 @@ function CoverUploader({ value, onChange }) {
 }
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.6)',
-  boxShadow: '0 4px 24px rgba(8,89,70,0.08)',
+  background: '#fff',
+  
+  borderRadius: '14px',
+  border: '1px solid #eef0f3',
+  boxShadow: '0 4px 24px rgba(109,40,217,0.08)',
 };
 
 const HEADER_GRADIENT = {
@@ -320,7 +320,7 @@ export default function AdminBlogPage() {
         <CardContent sx={{ p: 0 }}>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-              <CircularProgress sx={{ color: '#085946' }} />
+              <CircularProgress sx={{ color: '#6d28d9' }} />
             </Box>
           ) : posts.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -378,7 +378,7 @@ export default function AdminBlogPage() {
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
                           <Tooltip title="Editar">
-                            <IconButton size="small" onClick={() => handleOpenEdit(post)} sx={{ color: '#085946' }}>
+                            <IconButton size="small" onClick={() => handleOpenEdit(post)} sx={{ color: '#6d28d9' }}>
                               <EditOutlinedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -406,9 +406,9 @@ export default function AdminBlogPage() {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: '22px',
+            borderRadius: '14px',
             background: 'rgba(255,255,255,0.97)',
-            backdropFilter: 'blur(20px)',
+            
           },
         }}
       >
@@ -573,8 +573,8 @@ export default function AdminBlogPage() {
                     checked={form.destacado}
                     onChange={(e) => setForm((prev) => ({ ...prev, destacado: e.target.checked }))}
                     sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': { color: '#085946' },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#085946' },
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: '#6d28d9' },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#6d28d9' },
                     }}
                   />
                 }

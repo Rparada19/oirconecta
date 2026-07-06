@@ -34,11 +34,11 @@ import { adminFetch, getAdminToken } from './adminAuth';
 import { exportRowsToExcel, exportRowsToPdf } from '../../utils/adminExport';
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.6)',
-  boxShadow: '0 4px 24px rgba(8,89,70,0.08)',
+  background: '#fff',
+  
+  borderRadius: '14px',
+  border: '1px solid #eef0f3',
+  boxShadow: '0 4px 24px rgba(109,40,217,0.08)',
 };
 
 const HEADER_GRADIENT = {
@@ -192,14 +192,14 @@ export default function AdminProfesionalesPage() {
 
       <Card sx={GLASS_CARD}>
         <CardContent sx={{ p: 0 }}>
-          <Box sx={{ px: 3, pt: 2, borderBottom: '1px solid rgba(8,89,70,0.08)' }}>
+          <Box sx={{ px: 3, pt: 2, borderBottom: '1px solid rgba(109,40,217,0.08)' }}>
             <Tabs
               value={tab}
               onChange={(_, v) => setTab(v)}
               sx={{
                 '& .MuiTab-root': { fontWeight: 600, fontSize: '0.85rem', textTransform: 'none' },
-                '& .Mui-selected': { color: '#085946' },
-                '& .MuiTabs-indicator': { backgroundColor: '#085946' },
+                '& .Mui-selected': { color: '#6d28d9' },
+                '& .MuiTabs-indicator': { backgroundColor: '#6d28d9' },
               }}
             >
               {TABS.map((t, i) => {
@@ -211,7 +211,7 @@ export default function AdminProfesionalesPage() {
 
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-              <CircularProgress sx={{ color: '#085946' }} />
+              <CircularProgress sx={{ color: '#6d28d9' }} />
             </Box>
           ) : filtered.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -249,7 +249,7 @@ export default function AdminProfesionalesPage() {
                       >
                         <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar sx={{ width: 30, height: 30, fontSize: '0.75rem', bgcolor: '#085946' }}>
+                            <Avatar sx={{ width: 30, height: 30, fontSize: '0.75rem', bgcolor: '#6d28d9' }}>
                               {getName(p).charAt(0).toUpperCase()}
                             </Avatar>
                             {getName(p)}
@@ -294,7 +294,7 @@ export default function AdminProfesionalesPage() {
           sx: {
             width: { xs: '100%', sm: 420 },
             background: 'rgba(255,255,255,0.97)',
-            backdropFilter: 'blur(20px)',
+            
           },
         }}
       >
@@ -312,7 +312,7 @@ export default function AdminProfesionalesPage() {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Avatar sx={{ width: 40, height: 40, bgcolor: '#6ee7c8', color: '#041a12', fontWeight: 800 }}>
+                <Avatar sx={{ width: 40, height: 40, bgcolor: '#6ee7c8', color: '#0F2A4A', fontWeight: 800 }}>
                   {getName(selected).charAt(0).toUpperCase()}
                 </Avatar>
                 <Box>
@@ -334,7 +334,7 @@ export default function AdminProfesionalesPage() {
 
             {/* Drawer body */}
             <Box sx={{ flex: 1, overflow: 'auto', px: 3, py: 3 }}>
-              <Typography sx={{ fontWeight: 700, color: '#085946', mb: 2, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <Typography sx={{ fontWeight: 700, color: '#6d28d9', mb: 2, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Datos personales
               </Typography>
               <InfoRow label="Nombre completo" value={getName(selected)} />
@@ -346,7 +346,7 @@ export default function AdminProfesionalesPage() {
               {selected.workplaces?.length > 0 && (
                 <>
                   <Divider sx={{ my: 2.5, borderColor: 'rgba(8,89,70,0.1)' }} />
-                  <Typography sx={{ fontWeight: 700, color: '#085946', mb: 2, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  <Typography sx={{ fontWeight: 700, color: '#6d28d9', mb: 2, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                     Centros / Sedes
                   </Typography>
                   {selected.workplaces.map((wp, i) => (
@@ -357,7 +357,7 @@ export default function AdminProfesionalesPage() {
                         p: 1.5,
                         borderRadius: '12px',
                         background: 'rgba(8,89,70,0.04)',
-                        border: '1px solid rgba(8,89,70,0.08)',
+                        border: '1px solid rgba(109,40,217,0.08)',
                       }}
                     >
                       <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 0.5 }}>
@@ -384,7 +384,7 @@ export default function AdminProfesionalesPage() {
               {selected.status === 'PENDING' || selected.status === 'pending' ? (
                 <>
                   <Divider sx={{ my: 2.5, borderColor: 'rgba(8,89,70,0.1)' }} />
-                  <Typography sx={{ fontWeight: 700, color: '#085946', mb: 1.5, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  <Typography sx={{ fontWeight: 700, color: '#6d28d9', mb: 1.5, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                     Acción de revisión
                   </Typography>
                   <TextField

@@ -20,7 +20,7 @@ const TABS = [
 ];
 
 const ESTADO_COLOR = {
-  NUEVO: { bg: 'rgba(8,89,70,0.10)', color: '#085946' },
+  NUEVO: { bg: 'rgba(109,40,217,0.10)', color: '#6d28d9' },
   RESPONDIDO: { bg: 'rgba(64,84,178,0.12)', color: '#272F50' },
   ARCHIVADO: { bg: 'rgba(107,114,128,0.12)', color: '#6b7280' },
 };
@@ -92,7 +92,7 @@ export default function AdminContactosPage() {
         <Box>
           <Typography variant="h4" sx={{
             fontFamily: '"Playfair Display", Georgia, serif',
-            fontWeight: 600, color: '#085946', letterSpacing: '-0.01em',
+            fontWeight: 600, color: '#6d28d9', letterSpacing: '-0.01em',
           }}>
             Buzón de contacto
           </Typography>
@@ -119,7 +119,7 @@ export default function AdminContactosPage() {
         {TABS.map((t, i) => (
           <Box key={t.estado} sx={{
             flex: 1, p: 2.5, borderRadius: '12px', bgcolor: '#fff',
-            border: '1px solid rgba(8,89,70,0.10)', display: 'flex', alignItems: 'center', gap: 2,
+            border: '1px solid rgba(109,40,217,0.10)', display: 'flex', alignItems: 'center', gap: 2,
           }}>
             <Box sx={{
               width: 44, height: 44, borderRadius: '50%',
@@ -152,9 +152,9 @@ export default function AdminContactosPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Box sx={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(8,89,70,0.08)', bgcolor: '#fff' }}>
+      <Box sx={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(109,40,217,0.08)', bgcolor: '#fff' }}>
         {loading ? (
-          <Stack alignItems="center" py={6}><CircularProgress size={28} sx={{ color: '#085946' }} /></Stack>
+          <Stack alignItems="center" py={6}><CircularProgress size={28} sx={{ color: '#6d28d9' }} /></Stack>
         ) : filtered.length === 0 ? (
           <Stack alignItems="center" py={6} spacing={1}>
             <InboxOutlinedIcon sx={{ fontSize: 36, color: 'rgba(8,89,70,0.30)' }} />
@@ -215,7 +215,7 @@ export default function AdminContactosPage() {
           <Box>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
               <Typography sx={{
-                fontFamily: '"Playfair Display", serif', fontWeight: 600, fontSize: 22, color: '#085946',
+                fontFamily: '"Playfair Display", serif', fontWeight: 600, fontSize: 22, color: '#6d28d9',
               }}>
                 Mensaje recibido
               </Typography>
@@ -226,19 +226,19 @@ export default function AdminContactosPage() {
               <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0f1923', mb: 0.5 }}>
                 {selected.nombre}
               </Typography>
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ color: '#085946', mb: 0.5 }}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ color: '#6d28d9', mb: 0.5 }}>
                 <MailOutlineIcon sx={{ fontSize: 16 }} />
                 <Typography sx={{ fontSize: 14 }}>
-                  <a href={`mailto:${selected.email}`} style={{ color: '#085946', textDecoration: 'underline' }}>
+                  <a href={`mailto:${selected.email}`} style={{ color: '#6d28d9', textDecoration: 'underline' }}>
                     {selected.email}
                   </a>
                 </Typography>
               </Stack>
               {selected.telefono && (
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ color: '#085946', mb: 0.5 }}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ color: '#6d28d9', mb: 0.5 }}>
                   <PhoneOutlinedIcon sx={{ fontSize: 16 }} />
                   <Typography sx={{ fontSize: 14 }}>
-                    <a href={`tel:${selected.telefono}`} style={{ color: '#085946', textDecoration: 'underline' }}>
+                    <a href={`tel:${selected.telefono}`} style={{ color: '#6d28d9', textDecoration: 'underline' }}>
                       {selected.telefono}
                     </a>
                   </Typography>

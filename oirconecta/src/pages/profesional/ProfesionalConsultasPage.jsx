@@ -32,12 +32,17 @@ import { DIRECTORY_API } from '../../config/directoryApi';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import ShareProfileCard from '../../components/profesional/ShareProfileCard';
 
+// Look editorial
+const NAVY = '#0F2A4A';
+const ACCENT = '#6d28d9';
+const BORDER = '#eef0f3';
+const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+
 const glassCard = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.70)',
-  boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
+  background: '#fff',
+  borderRadius: '14px',
+  border: `1px solid ${BORDER}`,
+  boxShadow: 'none',
 };
 
 const STATUS_CONFIG = {
@@ -109,7 +114,7 @@ export default function ProfesionalConsultasPage() {
   const FILTER_OPTS = [
     { key: 'ALL',      label: 'Todas',      color: '#272F50', bg: '#eef0fb' },
     { key: 'NEW',      label: 'Nuevas',     color: '#4054B2', bg: '#eef0fb' },
-    { key: 'READ',     label: 'Leídas',     color: '#085946', bg: '#ecfdf5' },
+    { key: 'READ',     label: 'Leídas',     color: ACCENT, bg: '#ecfdf5' },
     { key: 'ARCHIVED', label: 'Archivadas', color: '#6b7280', bg: '#f3f4f6' },
   ];
 
@@ -118,7 +123,7 @@ export default function ProfesionalConsultasPage() {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress sx={{ color: '#085946' }} />
+        <CircularProgress sx={{ color: ACCENT }} />
       </Box>
     );
   }
@@ -189,7 +194,7 @@ export default function ProfesionalConsultasPage() {
                       {s.num}
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: '#041a12', mb: 0.25 }}>
+                      <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: NAVY, mb: 0.25 }}>
                         {s.title}
                       </Typography>
                       <Typography sx={{ fontSize: 12.5, color: '#5b6b7a', lineHeight: 1.5 }}>
@@ -214,7 +219,7 @@ export default function ProfesionalConsultasPage() {
             }}>
               <MailOutlined sx={{ fontSize: 28 }} />
             </Box>
-            <Typography sx={{ fontWeight: 700, fontSize: 15, color: '#041a12', mb: 0.5 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 15, color: NAVY, mb: 0.5 }}>
               No hay consultas en esta categoría
             </Typography>
             <Typography sx={{ color: '#5b6b7a', fontSize: 13 }}>
@@ -245,12 +250,12 @@ export default function ProfesionalConsultasPage() {
               >
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                    <Avatar sx={{ bgcolor: 'rgba(8,89,70,0.10)', color: '#085946', width: 40, height: 40, flexShrink: 0 }}>
+                    <Avatar sx={{ bgcolor: '#faf5ff', color: ACCENT, width: 40, height: 40, flexShrink: 0 }}>
                       <PersonOutlined />
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
-                        <Typography variant="body1" sx={{ fontWeight: 700, color: '#041a12' }}>
+                        <Typography variant="body1" sx={{ fontWeight: 700, color: NAVY }}>
                           {inq.nombre || inq.name || 'Sin nombre'}
                         </Typography>
                         <StatusChip status={inq.status} />
@@ -298,7 +303,7 @@ export default function ProfesionalConsultasPage() {
         {selected && (
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#041a12' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: NAVY }}>
                 Detalle de consulta
               </Typography>
               <IconButton onClick={() => setDrawerOpen(false)}>
@@ -309,7 +314,7 @@ export default function ProfesionalConsultasPage() {
             <Card elevation={0} sx={{ ...glassCard, mb: 2 }}>
               <CardContent sx={{ p: 2.5 }}>
                 <Box sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 700, color: '#041a12', flex: 1 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 700, color: NAVY, flex: 1 }}>
                     {selected.nombre || selected.name || 'Sin nombre'}
                   </Typography>
                   <StatusChip status={selected.status} />
@@ -332,7 +337,7 @@ export default function ProfesionalConsultasPage() {
 
             <Card elevation={0} sx={{ ...glassCard, mb: 2 }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: '#085946', mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: ACCENT, mb: 1 }}>
                   Mensaje
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
@@ -359,7 +364,7 @@ export default function ProfesionalConsultasPage() {
                   disabled={updating}
                   startIcon={updating ? <CircularProgress size={16} color="inherit" /> : <DoneAllOutlined />}
                   onClick={() => updateStatus(selected.id, 'READ')}
-                  sx={{ bgcolor: '#085946', borderRadius: '12px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#064a38' } }}
+                  sx={{ bgcolor: ACCENT, borderRadius: '12px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#5b21b6' } }}
                 >
                   Marcar como leída
                 </Button>

@@ -32,12 +32,18 @@ import WelcomeHero from '../../components/profesional/WelcomeHero';
 import ProfilePreviewBanner from '../../components/profesional/ProfilePreviewBanner';
 import KpiCard from '../../components/crm/ui/KpiCard';
 
-const glassCard = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.70)',
-  boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
+// Look editorial
+const NAVY = '#0F2A4A';
+const ACCENT = '#6d28d9';
+const MUTED = '#64748b';
+const BORDER = '#eef0f3';
+const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+
+const editorialCard = {
+  background: '#fff',
+  borderRadius: '14px',
+  border: `1px solid ${BORDER}`,
+  boxShadow: 'none',
 };
 
 function statusChipConfig(status) {
@@ -51,7 +57,7 @@ function statusChipConfig(status) {
 
 function StatCard({ icon, label, value, sub, iconBg, loading }) {
   return (
-    <Card elevation={0} sx={glassCard}>
+    <Card elevation={0} sx={editorialCard}>
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
           <Avatar sx={{ bgcolor: iconBg, width: 44, height: 44 }}>{icon}</Avatar>
@@ -60,10 +66,10 @@ function StatCard({ icon, label, value, sub, iconBg, loading }) {
           </Typography>
         </Box>
         {loading ? (
-          <CircularProgress size={22} sx={{ color: '#085946' }} />
+          <CircularProgress size={22} sx={{ color: ACCENT }} />
         ) : (
           <>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#041a12', lineHeight: 1 }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: NAVY, lineHeight: 1 }}>
               {value ?? '—'}
             </Typography>
             {sub != null && (
@@ -131,7 +137,7 @@ export default function ProfesionalDashboardPage() {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress sx={{ color: '#085946' }} />
+        <CircularProgress sx={{ color: ACCENT }} />
       </Box>
     );
   }
@@ -186,7 +192,7 @@ export default function ProfesionalDashboardPage() {
 
       {/* Stats del mes */}
       <Typography sx={{
-        fontSize: 11, fontWeight: 700, color: '#085946', mb: 1.25,
+        fontSize: 11, fontWeight: 700, color: ACCENT, mb: 1.25,
         letterSpacing: '0.08em', textTransform: 'uppercase',
       }}>
         Este mes
@@ -241,10 +247,10 @@ export default function ProfesionalDashboardPage() {
       </Typography>
 
       {/* Últimas consultas */}
-      <Card elevation={0} sx={glassCard}>
+      <Card elevation={0} sx={editorialCard}>
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#041a12' }}>
+            <Typography sx={{ ...SERIF, fontWeight: 600, color: NAVY, fontSize: '1.35rem' }}>
               Últimas consultas recibidas
             </Typography>
             <Button
@@ -252,7 +258,7 @@ export default function ProfesionalDashboardPage() {
               to="/portal-profesional/consultas"
               endIcon={<ArrowForward />}
               size="small"
-              sx={{ color: '#085946', fontWeight: 700, textTransform: 'none' }}
+              sx={{ color: ACCENT, fontWeight: 700, textTransform: 'none' }}
             >
               Ver todas
             </Button>
@@ -267,7 +273,7 @@ export default function ProfesionalDashboardPage() {
               <Box key={inq.id || idx}>
                 <Box sx={{ py: 1.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#041a12', flex: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: NAVY, flex: 1 }}>
                       {inq.nombre || inq.name || 'Sin nombre'}
                     </Typography>
                     {inquiryStatusChip(inq.status)}

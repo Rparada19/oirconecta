@@ -39,11 +39,11 @@ import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageH
 const BASE_URL = getApiBaseUrl();
 
 const glassCard = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.70)',
-  boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
+  background: '#fff',
+  
+  borderRadius: '14px',
+  border: '1px solid #eef0f3',
+  boxShadow: 'none',
 };
 
 const CATEGORIAS = [
@@ -205,7 +205,7 @@ export default function ProfesionalServiciosPage() {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress sx={{ color: '#085946' }} />
+        <CircularProgress sx={{ color: '#6d28d9' }} />
       </Box>
     );
   }
@@ -221,7 +221,7 @@ export default function ProfesionalServiciosPage() {
             variant="contained"
             startIcon={<AddOutlined />}
             onClick={openNew}
-            sx={{ bgcolor: '#085946', borderRadius: '12px', fontWeight: 700, textTransform: 'none', px: 3, '&:hover': { bgcolor: '#064a38' } }}
+            sx={{ bgcolor: '#6d28d9', borderRadius: '12px', fontWeight: 700, textTransform: 'none', px: 3, '&:hover': { bgcolor: '#5b21b6' } }}
           >
             Nuevo servicio
           </Button>
@@ -300,7 +300,7 @@ export default function ProfesionalServiciosPage() {
                 }}>
                   {t.cat}
                 </Box>
-                <Typography sx={{ fontSize: 14.5, fontWeight: 700, color: '#041a12', mb: 0.5 }}>
+                <Typography sx={{ fontSize: 14.5, fontWeight: 700, color: '#0F2A4A', mb: 0.5 }}>
                   {t.title}
                 </Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -321,7 +321,7 @@ export default function ProfesionalServiciosPage() {
               <Card elevation={0} sx={{ ...glassCard, height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ p: 2.5, flex: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#041a12', flex: 1, pr: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#0F2A4A', flex: 1, pr: 1 }}>
                       {serv.titulo || serv.title}
                     </Typography>
                     {servicioStatusChip(serv.status)}
@@ -331,7 +331,7 @@ export default function ProfesionalServiciosPage() {
                     <Chip
                       label={CATEGORIAS.find((c) => c.value === (serv.categoria || serv.category))?.label || (serv.categoria || serv.category)}
                       size="small"
-                      sx={{ mb: 1, bgcolor: 'rgba(8,89,70,0.08)', color: '#085946', fontWeight: 600, fontSize: '0.72rem', borderRadius: '8px' }}
+                      sx={{ mb: 1, bgcolor: 'rgba(109,40,217,0.08)', color: '#6d28d9', fontWeight: 600, fontSize: '0.72rem', borderRadius: '8px' }}
                     />
                   )}
 
@@ -348,7 +348,7 @@ export default function ProfesionalServiciosPage() {
                     </Typography>
                   )}
 
-                  <Typography variant="body1" sx={{ fontWeight: 800, color: '#085946' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 800, color: '#6d28d9' }}>
                     {formatPrecio(serv)}
                   </Typography>
                 </CardContent>
@@ -387,10 +387,10 @@ export default function ProfesionalServiciosPage() {
         onClose={() => setDialogOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '22px', p: 0 } }}
+        PaperProps={{ sx: { borderRadius: '14px', p: 0 } }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#041a12' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F2A4A' }}>
             {editingId ? 'Editar servicio' : 'Nuevo servicio'}
           </Typography>
           <IconButton size="small" onClick={() => setDialogOpen(false)}>
@@ -434,7 +434,7 @@ export default function ProfesionalServiciosPage() {
                 </FormControl>
               </Grid>
             </Grid>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#041a12', mt: -1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F2A4A', mt: -1 }}>
               Precio
             </Typography>
             <Grid container spacing={2} sx={{ mt: -1.5 }}>
@@ -460,7 +460,7 @@ export default function ProfesionalServiciosPage() {
             onClick={handleSave}
             disabled={saving}
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
-            sx={{ bgcolor: '#085946', borderRadius: '12px', textTransform: 'none', fontWeight: 700, px: 3, '&:hover': { bgcolor: '#064a38' } }}
+            sx={{ bgcolor: '#6d28d9', borderRadius: '12px', textTransform: 'none', fontWeight: 700, px: 3, '&:hover': { bgcolor: '#5b21b6' } }}
           >
             {saving ? 'Guardando…' : editingId ? 'Actualizar' : 'Crear servicio'}
           </Button>

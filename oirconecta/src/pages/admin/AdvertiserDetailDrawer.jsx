@@ -23,7 +23,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { adminFetch } from './adminAuth';
 import { downloadAdvertiserPdf } from '../../utils/advertiserPdfExport';
 
-const ACCENT = '#085946';
+const ACCENT = '#6d28d9';
 const NAVY = '#272F50';
 const GOLD = '#C9A86A';
 

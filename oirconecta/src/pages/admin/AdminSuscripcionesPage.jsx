@@ -19,7 +19,7 @@ import PauseCircleOutlinedIcon from '@mui/icons-material/PauseCircleOutlined';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import { adminFetch } from './adminAuth';
 
-const ACCENT = '#085946';
+const ACCENT = '#6d28d9';
 const NAVY = '#272F50';
 
 const STATUS_COLOR = {

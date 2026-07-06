@@ -8,11 +8,11 @@ import {
 import { adminFetch, getAdminToken } from './adminAuth';
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.6)',
-  boxShadow: '0 4px 24px rgba(8,89,70,0.08)',
+  background: '#fff',
+  
+  borderRadius: '14px',
+  border: '1px solid #eef0f3',
+  boxShadow: '0 4px 24px rgba(109,40,217,0.08)',
 };
 const HEADER_GRADIENT = {
   background: 'linear-gradient(135deg, #085946 0%, #6ee7c8 100%)',
@@ -39,7 +39,7 @@ function StatCard({ label, value, hint }) {
     <Card sx={{ ...GLASS_CARD, height: '100%' }}>
       <CardContent sx={{ py: 2 }}>
         <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</Typography>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: '#085946', mt: 0.5 }}>{value}</Typography>
+        <Typography variant="h5" sx={{ fontWeight: 800, color: '#6d28d9', mt: 0.5 }}>{value}</Typography>
         {hint && <Typography variant="caption" sx={{ color: 'text.secondary' }}>{hint}</Typography>}
       </CardContent>
     </Card>
@@ -104,7 +104,7 @@ export default function AdminPedidosPage() {
                     <Box key={p.nombre} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.4, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                       <Typography variant="body2" noWrap sx={{ flex: 1, mr: 2 }}>{p.nombre}</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600, mr: 2 }}>{p.cantidad} u.</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#085946', minWidth: 100, textAlign: 'right' }}>{formatPrice(p.ventas)}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#6d28d9', minWidth: 100, textAlign: 'right' }}>{formatPrice(p.ventas)}</Typography>
                     </Box>
                   ))}
                 </CardContent>
@@ -115,7 +115,7 @@ export default function AdminPedidosPage() {
       )}
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)}
-        sx={{ mb: 3, '& .MuiTab-root': { fontWeight: 700, textTransform: 'none' }, '& .Mui-selected': { color: '#085946' }, '& .MuiTabs-indicator': { backgroundColor: '#085946' } }}>
+        sx={{ mb: 3, '& .MuiTab-root': { fontWeight: 700, textTransform: 'none' }, '& .Mui-selected': { color: '#6d28d9' }, '& .MuiTabs-indicator': { backgroundColor: '#6d28d9' } }}>
         <Tab label={`Pedidos (${orders.length})`} />
         <Tab label={`Clientes (${customers.length})`} />
       </Tabs>
@@ -125,7 +125,7 @@ export default function AdminPedidosPage() {
       <Card sx={GLASS_CARD}>
         <CardContent sx={{ p: 0 }}>
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#085946' }} /></Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#6d28d9' }} /></Box>
           ) : tab === 0 ? (
             orders.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 6 }}><Typography variant="body2" color="text.secondary">Aún no hay pedidos.</Typography></Box>
@@ -158,7 +158,7 @@ export default function AdminPedidosPage() {
                             </Select>
                           </TableCell>
                           <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{formatDate(o.createdAt)}</TableCell>
-                          <TableCell><Button size="small" onClick={() => setDetail(o)} sx={{ color: '#085946' }}>Ver</Button></TableCell>
+                          <TableCell><Button size="small" onClick={() => setDetail(o)} sx={{ color: '#6d28d9' }}>Ver</Button></TableCell>
                         </TableRow>
                       );
                     })}
@@ -221,7 +221,7 @@ export default function AdminPedidosPage() {
               ))}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1.5, mt: 1, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                 <Typography sx={{ fontWeight: 700 }}>Total</Typography>
-                <Typography sx={{ fontWeight: 800, color: '#085946' }}>{formatPrice(detail.total)}</Typography>
+                <Typography sx={{ fontWeight: 800, color: '#6d28d9' }}>{formatPrice(detail.total)}</Typography>
               </Box>
             </Box>
           )}

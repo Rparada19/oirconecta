@@ -12,7 +12,7 @@ import DesktopWindowsRoundedIcon from '@mui/icons-material/DesktopWindowsRounded
 import PhoneIphoneRoundedIcon from '@mui/icons-material/PhoneIphoneRounded';
 
 const NAVY = '#272F50';
-const ACCENT = '#085946';
+const ACCENT = '#6d28d9';
 const GOLD = '#C9A86A';
 
 /**

@@ -35,11 +35,11 @@ import { adminFetch, getAdminToken } from './adminAuth';
 import AdminShopProductsPanel from './AdminShopProductsPanel';
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.6)',
-  boxShadow: '0 4px 24px rgba(8,89,70,0.08)',
+  background: '#fff',
+  
+  borderRadius: '14px',
+  border: '1px solid #eef0f3',
+  boxShadow: '0 4px 24px rgba(109,40,217,0.08)',
 };
 
 const HEADER_GRADIENT = {
@@ -179,8 +179,8 @@ export default function AdminMarketplacePage() {
         sx={{
           mb: 3,
           '& .MuiTab-root': { fontWeight: 700, fontSize: '0.9rem', textTransform: 'none' },
-          '& .Mui-selected': { color: '#085946' },
-          '& .MuiTabs-indicator': { backgroundColor: '#085946' },
+          '& .Mui-selected': { color: '#6d28d9' },
+          '& .MuiTabs-indicator': { backgroundColor: '#6d28d9' },
         }}
       >
         <Tab label="Servicios de profesionales" />
@@ -199,14 +199,14 @@ export default function AdminMarketplacePage() {
 
       <Card sx={GLASS_CARD}>
         <CardContent sx={{ p: 0 }}>
-          <Box sx={{ px: 3, pt: 2, borderBottom: '1px solid rgba(8,89,70,0.08)' }}>
+          <Box sx={{ px: 3, pt: 2, borderBottom: '1px solid rgba(109,40,217,0.08)' }}>
             <Tabs
               value={tab}
               onChange={(_, v) => setTab(v)}
               sx={{
                 '& .MuiTab-root': { fontWeight: 600, fontSize: '0.85rem', textTransform: 'none' },
-                '& .Mui-selected': { color: '#085946' },
-                '& .MuiTabs-indicator': { backgroundColor: '#085946' },
+                '& .Mui-selected': { color: '#6d28d9' },
+                '& .MuiTabs-indicator': { backgroundColor: '#6d28d9' },
               }}
             >
               {TABS.map((t, i) => {
@@ -220,7 +220,7 @@ export default function AdminMarketplacePage() {
 
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-              <CircularProgress sx={{ color: '#085946' }} />
+              <CircularProgress sx={{ color: '#6d28d9' }} />
             </Box>
           ) : filtered.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -304,7 +304,7 @@ export default function AdminMarketplacePage() {
                                 size="small"
                                 onClick={() => handleToggleStatus(item)}
                                 disabled={isLoadingThis}
-                                sx={{ color: isActive ? '#f59e0b' : '#085946' }}
+                                sx={{ color: isActive ? '#f59e0b' : '#6d28d9' }}
                               >
                                 {isLoadingThis ? (
                                   <CircularProgress size={16} />

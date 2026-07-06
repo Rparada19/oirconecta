@@ -32,8 +32,8 @@ const rowToFicha = (row) => {
 };
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(20px)', borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 4px 24px rgba(8,89,70,0.08)',
+  background: '#fff',  borderRadius: '14px',
+  border: '1px solid #eef0f3', boxShadow: '0 4px 24px rgba(109,40,217,0.08)',
 };
 const HEADER_GRADIENT = {
   background: 'linear-gradient(135deg, #085946 0%, #6ee7c8 100%)',
@@ -190,14 +190,14 @@ export default function AdminComparadorPage() {
         </Box>
         {tab === 0 && (
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Button variant="text" size="small" startIcon={<DownloadOutlinedIcon />} onClick={downloadTemplate} sx={{ color: '#085946' }}>Plantilla</Button>
+            <Button variant="text" size="small" startIcon={<DownloadOutlinedIcon />} onClick={downloadTemplate} sx={{ color: '#6d28d9' }}>Plantilla</Button>
             <Button variant="outlined" startIcon={<UploadFileOutlinedIcon />} disabled={importing} onClick={() => fileRef.current?.click()}
-              sx={{ borderRadius: '10px', fontWeight: 700, borderColor: '#085946', color: '#085946' }}>
+              sx={{ borderRadius: '10px', fontWeight: 700, borderColor: '#6d28d9', color: '#6d28d9' }}>
               {importing ? 'Importando…' : 'Importar Excel'}
             </Button>
             <input ref={fileRef} type="file" accept=".xlsx,.xls" hidden onChange={handleImportFile} />
             <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}
-              sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+              sx={{ borderRadius: '10px', fontWeight: 700, background: '#6d28d9', '&:hover': { background: '#064a3a' } }}>
               Nueva ficha
             </Button>
           </Box>
@@ -217,7 +217,7 @@ export default function AdminComparadorPage() {
       </Box>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)}
-        sx={{ mb: 3, '& .MuiTab-root': { fontWeight: 700, textTransform: 'none' }, '& .Mui-selected': { color: '#085946' }, '& .MuiTabs-indicator': { backgroundColor: '#085946' } }}>
+        sx={{ mb: 3, '& .MuiTab-root': { fontWeight: 700, textTransform: 'none' }, '& .Mui-selected': { color: '#6d28d9' }, '& .MuiTabs-indicator': { backgroundColor: '#6d28d9' } }}>
         <Tab label={`Fichas (${items.length})`} />
         <Tab label={`Solicitudes (${leads.length})`} />
       </Tabs>
@@ -254,7 +254,7 @@ export default function AdminComparadorPage() {
                         </TableCell>
                         <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{l.createdAt ? new Date(l.createdAt).toLocaleDateString('es-CO') : '—'}</TableCell>
                         <TableCell>
-                          <Button size="small" onClick={() => { setLeadView(l); setNuevoSeg(''); }} sx={{ color: '#085946', minWidth: 0 }}>
+                          <Button size="small" onClick={() => { setLeadView(l); setNuevoSeg(''); }} sx={{ color: '#6d28d9', minWidth: 0 }}>
                             {(Array.isArray(l.seguimientos) ? l.seguimientos.length : 0) > 0 ? `Ver (${l.seguimientos.length})` : 'Registrar'}
                           </Button>
                         </TableCell>
@@ -270,7 +270,7 @@ export default function AdminComparadorPage() {
       <Card sx={GLASS_CARD}>
         <CardContent sx={{ p: 0 }}>
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#085946' }} /></Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#6d28d9' }} /></Box>
           ) : items.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 6 }}><Typography variant="body2" color="text.secondary">Aún no hay fichas. Crea la primera.</Typography></Box>
           ) : (
@@ -293,7 +293,7 @@ export default function AdminComparadorPage() {
                       <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{formatPrice(it.precio)}</TableCell>
                       <TableCell><Chip label={it.activo ? 'Activa' : 'Oculta'} color={it.activo ? 'success' : 'default'} size="small" sx={{ fontWeight: 700, fontSize: '0.7rem' }} /></TableCell>
                       <TableCell>
-                        <Tooltip title="Editar"><IconButton size="small" onClick={() => openEdit(it)} sx={{ color: '#085946' }}><EditOutlinedIcon fontSize="small" /></IconButton></Tooltip>
+                        <Tooltip title="Editar"><IconButton size="small" onClick={() => openEdit(it)} sx={{ color: '#6d28d9' }}><EditOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                         <Tooltip title="Eliminar"><IconButton size="small" onClick={() => setDeleteTarget(it)} sx={{ color: '#ef4444' }}><DeleteOutlineIcon fontSize="small" /></IconButton></Tooltip>
                       </TableCell>
                     </TableRow>
@@ -325,7 +325,7 @@ export default function AdminComparadorPage() {
         </DialogContent>
         <DialogActions sx={{ px: 2.5, pb: 2, gap: 1 }}>
           <Button onClick={() => setDialogOpen(false)} sx={{ borderRadius: '10px' }}>Cancelar</Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+          <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ borderRadius: '10px', fontWeight: 700, background: '#6d28d9', '&:hover': { background: '#064a3a' } }}>
             {saving ? 'Guardando…' : 'Guardar'}
           </Button>
         </DialogActions>
@@ -373,7 +373,7 @@ export default function AdminComparadorPage() {
         <DialogActions sx={{ px: 2.5, pb: 2, gap: 1 }}>
           <Button onClick={() => setLeadView(null)} sx={{ borderRadius: '10px' }}>Cerrar</Button>
           <Button variant="contained" onClick={agregarSeguimiento} disabled={segSaving || !nuevoSeg.trim()}
-            sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+            sx={{ borderRadius: '10px', fontWeight: 700, background: '#6d28d9', '&:hover': { background: '#064a3a' } }}>
             {segSaving ? 'Guardando…' : 'Agregar seguimiento'}
           </Button>
         </DialogActions>

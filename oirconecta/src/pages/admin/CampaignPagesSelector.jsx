@@ -26,7 +26,7 @@ import {
 import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
 import { adminFetch } from './adminAuth';
 
-const ACCENT = '#085946';
+const ACCENT = '#6d28d9';
 const NAVY = '#272F50';
 
 const DEFAULT_VALUE = { mode: 'all', types: [], specificPaths: [], excludePaths: [] };

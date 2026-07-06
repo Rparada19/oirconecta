@@ -15,14 +15,14 @@ import BrandLogo from '../../components/profesional/BrandLogo';
 import { PersonOutlined } from '@mui/icons-material';
 
 const glassCard = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.70)',
-  boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
+  background: '#fff',
+  
+  borderRadius: '14px',
+  border: '1px solid #eef0f3',
+  boxShadow: 'none',
 };
 const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: '12px' } };
-const GREEN = '#085946';
+const GREEN = '#6d28d9';
 
 const POLIZAS = ['Sura','Sanitas','Compensar','Nueva EPS','Coomeva','Colsanitas','Famisanar','Aliansalud','SOS','Particular','Otra'];
 const DIAS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
@@ -54,10 +54,10 @@ function ChipToggle({ options, selected, onChange }) {
         return (
           <Chip key={opt} label={opt} clickable onClick={() => toggle(opt)}
             sx={{ fontWeight: 600, borderRadius: '10px',
-              bgcolor: on ? GREEN : 'rgba(8,89,70,0.08)',
+              bgcolor: on ? GREEN : 'rgba(109,40,217,0.08)',
               color: on ? '#fff' : GREEN,
               border: on ? `1px solid ${GREEN}` : '1px solid rgba(8,89,70,0.25)',
-              '&:hover': { bgcolor: on ? '#064a38' : 'rgba(8,89,70,0.14)' },
+              '&:hover': { bgcolor: on ? '#5b21b6' : 'rgba(8,89,70,0.14)' },
             }} />
         );
       })}
@@ -68,7 +68,7 @@ function ChipToggle({ options, selected, onChange }) {
 function StringListField({ label, placeholder, values, onChange }) {
   return (
     <Box>
-      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#041a12' }}>{label}</Typography>
+      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#0F2A4A' }}>{label}</Typography>
       {values.map((v, i) => (
         <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1 }}>
           <TextField fullWidth size="small" value={v} placeholder={placeholder || 'https://...'}
@@ -131,7 +131,7 @@ function ServiciosEditor({ servicios, onChange, profesion, profesionesAdicionale
                       color: isAdded ? 'rgba(8,89,70,0.7)' : GREEN,
                       border: '1px solid rgba(8,89,70,0.25)',
                       fontWeight: 600,
-                      '&:hover': { bgcolor: isAdded ? 'rgba(8,89,70,0.12)' : 'rgba(8,89,70,0.08)' },
+                      '&:hover': { bgcolor: isAdded ? 'rgba(8,89,70,0.12)' : 'rgba(109,40,217,0.08)' },
                     }}
                   />
                 );
@@ -142,12 +142,12 @@ function ServiciosEditor({ servicios, onChange, profesion, profesionesAdicionale
       })}
 
       {servicios.map((s, i) => (
-        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
+        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(109,40,217,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Servicio {i + 1}</Typography>
               {esEmpresa && s.profesion && (
-                <Chip size="small" label={s.profesion} sx={{ bgcolor: 'rgba(8,89,70,0.10)', color: GREEN, fontWeight: 600, height: 20, fontSize: '0.65rem' }} />
+                <Chip size="small" label={s.profesion} sx={{ bgcolor: 'rgba(109,40,217,0.10)', color: GREEN, fontWeight: 600, height: 20, fontSize: '0.65rem' }} />
               )}
             </Box>
             <IconButton size="small" onClick={() => remove(i)} sx={{ color: '#EF4444' }}><Close fontSize="small" /></IconButton>
@@ -186,7 +186,7 @@ function QAEditor({ qaList, onChange }) {
   return (
     <Box>
       {qaList.map((q, i) => (
-        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
+        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(109,40,217,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
             <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Pregunta {i + 1}</Typography>
             <IconButton size="small" onClick={() => remove(i)} sx={{ color: '#EF4444' }}><Close fontSize="small" /></IconButton>
@@ -212,7 +212,7 @@ function WorkplaceList({ workplaces, onChange }) {
   return (
     <Box>
       {workplaces.map((w, i) => (
-        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
+        <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(109,40,217,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
             <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Sede {i + 1}</Typography>
             <IconButton size="small" onClick={() => remove(i)} sx={{ color: '#EF4444' }}><Close fontSize="small" /></IconButton>
@@ -438,7 +438,7 @@ export default function ProfesionalPerfilPage() {
                               color: checked ? '#fff' : GREEN,
                               border: `1px solid ${GREEN}`,
                               fontWeight: 600,
-                              '&:hover': { bgcolor: checked ? '#064a3a' : 'rgba(8,89,70,0.08)' },
+                              '&:hover': { bgcolor: checked ? '#064a3a' : 'rgba(109,40,217,0.08)' },
                             }} />
                         );
                       })}
@@ -622,7 +622,7 @@ export default function ProfesionalPerfilPage() {
           <TabPanel value={tab} index={6}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Agrega tus títulos, especializaciones, certificaciones y reconocimientos.</Typography>
             {(Array.isArray(form.studies) ? form.studies : []).map((s, i) => (
-              <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(8,89,70,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
+              <Card key={i} elevation={0} sx={{ mb: 2, p: 2, borderRadius: '14px', border: '1px solid rgba(109,40,217,0.15)', bgcolor: 'rgba(8,89,70,0.02)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, color: GREEN }}>Estudio {i + 1}</Typography>
                   <IconButton size="small" onClick={() => set('studies', form.studies.filter((_, idx) => idx !== i))} sx={{ color: '#EF4444' }}><Close fontSize="small" /></IconButton>
@@ -737,7 +737,7 @@ export default function ProfesionalPerfilPage() {
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
         <Button variant="contained" size="large" onClick={handleSave} disabled={saving}
           startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveOutlined />}
-          sx={{ bgcolor: GREEN, borderRadius: '12px', fontWeight: 800, textTransform: 'none', px: 4, '&:hover': { bgcolor: '#064a38' } }}>
+          sx={{ bgcolor: GREEN, borderRadius: '12px', fontWeight: 800, textTransform: 'none', px: 4, '&:hover': { bgcolor: '#5b21b6' } }}>
           {saving ? 'Guardando…' : 'Guardar cambios'}
         </Button>
       </Box>

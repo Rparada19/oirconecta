@@ -64,7 +64,7 @@ export default function CambiarClavePage() {
             }}>
               <LockResetOutlined sx={{ fontSize: 28 }} />
             </Box>
-            <Typography sx={{ fontSize: 21, fontWeight: 800, color: '#041a12', mb: 0.5 }}>
+            <Typography sx={{ fontSize: 21, fontWeight: 800, color: '#0F2A4A', mb: 0.5 }}>
               Cambia tu clave
             </Typography>
             <Typography sx={{ fontSize: 13.5, color: '#5b6b7a' }}>

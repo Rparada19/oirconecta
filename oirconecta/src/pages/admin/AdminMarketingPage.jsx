@@ -33,7 +33,7 @@ const PIPELINE_COLOR = {
   LOST:        { bg: '#fee2e2', fg: '#b91c1c', label: 'Perdido' },
 };
 
-const ACCENT = '#085946';
+const ACCENT = '#6d28d9';
 const NAVY = '#272F50';
 const GOLD = '#C9A86A';
 

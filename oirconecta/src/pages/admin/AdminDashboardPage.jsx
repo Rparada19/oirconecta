@@ -30,19 +30,23 @@ import PhoneInTalkOutlinedIcon from '@mui/icons-material/PhoneInTalkOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import { adminFetch, getAdminToken } from './adminAuth';
 
+// Look editorial
+const NAVY = '#0F2A4A';
+const ACCENT = '#6d28d9';
+const MUTED = '#64748b';
+const BORDER = '#eef0f3';
+const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.6)',
-  boxShadow: '0 4px 24px rgba(8,89,70,0.08)',
+  background: '#fff',
+  borderRadius: '14px',
+  border: `1px solid ${BORDER}`,
+  boxShadow: 'none',
 };
 
 const HEADER_GRADIENT = {
-  background: 'linear-gradient(135deg, #085946 0%, #6ee7c8 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
+  ...SERIF,
+  color: NAVY,
 };
 
 const statusColors = {
@@ -79,7 +83,7 @@ function StatCard({ icon, label, value, color, loading, sub }) {
               <CircularProgress size={24} sx={{ color }} />
             ) : (
               <>
-                <Typography variant="h3" sx={{ fontWeight: 800, color: '#1a2035', lineHeight: 1 }}>
+                <Typography variant="h3" sx={{ fontWeight: 800, color: NAVY, lineHeight: 1 }}>
                   {value ?? '—'}
                 </Typography>
                 {sub != null && (
@@ -166,7 +170,7 @@ export default function AdminDashboardPage() {
       label: 'Profesionales registrados',
       value: allProf.length,
       icon: <PeopleOutlinedIcon />,
-      color: '#085946',
+      color: ACCENT,
     },
     {
       label: 'Pendientes de aprobación',
@@ -207,7 +211,7 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Métricas del directorio — este mes */}
-      <Typography variant="body2" sx={{ fontWeight: 700, color: '#085946', mb: 1.5, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+      <Typography variant="body2" sx={{ fontWeight: 700, color: ACCENT, mb: 1.5, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
         Actividad del directorio · este mes
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -277,7 +281,7 @@ export default function AdminDashboardPage() {
       {metrics?.topProfiles?.length > 0 && (
         <Card sx={{ ...GLASS_CARD, mb: 4 }}>
           <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a2035', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: NAVY, mb: 2 }}>
               Profesionales más vistos
             </Typography>
             <TableContainer>
@@ -294,7 +298,7 @@ export default function AdminDashboardPage() {
                 <TableBody>
                   {metrics.topProfiles.map((tp, i) => (
                     <TableRow key={tp.id} sx={{ '&:hover': { background: 'rgba(8,89,70,0.04)' } }}>
-                      <TableCell sx={{ fontWeight: 800, color: '#085946', border: 0 }}>{i + 1}</TableCell>
+                      <TableCell sx={{ fontWeight: 800, color: ACCENT, border: 0 }}>{i + 1}</TableCell>
                       <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem', border: 0 }}>{tp.nombre}</TableCell>
                       <TableCell sx={{ fontSize: '0.82rem', color: 'text.secondary', border: 0 }}>{tp.ciudad || '—'}</TableCell>
                       <TableCell sx={{ fontSize: '0.85rem', fontWeight: 700, border: 0 }}>{tp.visitas}</TableCell>
@@ -314,7 +318,7 @@ export default function AdminDashboardPage() {
           <Card sx={GLASS_CARD}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a2035' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: NAVY }}>
                   Solicitudes pendientes
                 </Typography>
                 <Button
@@ -325,7 +329,7 @@ export default function AdminDashboardPage() {
                     borderRadius: '10px',
                     fontWeight: 600,
                     fontSize: '0.75rem',
-                    color: '#085946',
+                    color: ACCENT,
                     '&:hover': { background: 'rgba(8,89,70,0.06)' },
                   }}
                 >
@@ -334,7 +338,7 @@ export default function AdminDashboardPage() {
               </Box>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CircularProgress size={32} sx={{ color: '#085946' }} />
+                  <CircularProgress size={32} sx={{ color: ACCENT }} />
                 </Box>
               ) : recentPending.length === 0 ? (
                 <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 3 }}>
@@ -393,7 +397,7 @@ export default function AdminDashboardPage() {
           <Card sx={GLASS_CARD}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a2035' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: NAVY }}>
                   Últimos posts
                 </Typography>
                 <Button
@@ -404,7 +408,7 @@ export default function AdminDashboardPage() {
                     borderRadius: '10px',
                     fontWeight: 600,
                     fontSize: '0.75rem',
-                    color: '#085946',
+                    color: ACCENT,
                     '&:hover': { background: 'rgba(8,89,70,0.06)' },
                   }}
                 >
@@ -413,7 +417,7 @@ export default function AdminDashboardPage() {
               </Box>
               {loadingBlog ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CircularProgress size={32} sx={{ color: '#085946' }} />
+                  <CircularProgress size={32} sx={{ color: ACCENT }} />
                 </Box>
               ) : recentPosts.length === 0 ? (
                 <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 3 }}>
@@ -443,7 +447,7 @@ export default function AdminDashboardPage() {
                           sx={{
                             fontWeight: 600,
                             fontSize: '0.8rem',
-                            color: '#1a2035',
+                            color: NAVY,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',

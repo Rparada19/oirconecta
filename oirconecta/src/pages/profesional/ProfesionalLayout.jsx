@@ -25,11 +25,20 @@ import {
 } from '@mui/icons-material';
 import { directoryApi, clearDirectoryToken, getDirectoryToken, getDirectoryMustChangePassword } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
-import { OC_COLORS } from '../../theme';
 import TrialBadge from '../../components/profesional/TrialBadge';
 
 const SIDEBAR_W = 244;
 const TOPBAR_H = 64;
+
+// Look editorial: cream, hairlines, tipografía Playfair para logo/titulares.
+const SIDEBAR_BG = '#fefdfb';
+const SIDEBAR_BORDER = '#eef0f3';
+const NAVY = '#0F2A4A';
+const ACCENT = '#6d28d9';
+const MUTED = '#64748b';
+const NAV_ACTIVE_BG = '#faf5ff';
+const NAV_HOVER_BG = '#f8fafc';
+const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
 
 const NAV_SECTIONS = [
   {
@@ -70,27 +79,26 @@ function SidebarContent({ profile, newInquiries, currentPath, onNavigate, onLogo
   return (
     <Box sx={{
       width: SIDEBAR_W, height: '100%', display: 'flex', flexDirection: 'column',
-      bgcolor: '#fff', borderRight: '1px solid #e5e7eb',
+      bgcolor: SIDEBAR_BG, borderRight: `1px solid ${SIDEBAR_BORDER}`,
     }}>
       {/* Brand */}
       <Box sx={{
         display: 'flex', alignItems: 'center', gap: 1.5, px: 2.5, py: 2,
-        borderBottom: '1px solid #f0f2f4', minHeight: TOPBAR_H,
+        borderBottom: `1px solid ${SIDEBAR_BORDER}`, minHeight: TOPBAR_H,
       }}>
         <Box sx={{
-          width: 32, height: 32, borderRadius: 1.5,
-          background: 'linear-gradient(135deg, #4054B2 0%, #085946 100%)',
-          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 700, fontSize: 14,
-          boxShadow: '0 2px 6px rgba(64,84,178,0.25)',
+          width: 32, height: 32, borderRadius: '8px',
+          background: NAVY, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          ...SERIF, fontSize: '1.05rem', fontWeight: 600,
         }}>
           OC
         </Box>
         <Box>
-          <Typography sx={{ fontSize: 13, fontWeight: 700, color: OC_COLORS.navyPrincipal, lineHeight: 1.1 }}>
+          <Typography sx={{ ...SERIF, fontSize: '1rem', fontWeight: 600, color: NAVY, lineHeight: 1.1 }}>
             OÍR Conecta
           </Typography>
-          <Typography sx={{ fontSize: 11, color: OC_COLORS.grisMedio }}>
+          <Typography sx={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.14em', color: MUTED, textTransform: 'uppercase', mt: 0.25 }}>
             Portal Profesional
           </Typography>
         </Box>
@@ -106,8 +114,8 @@ function SidebarContent({ profile, newInquiries, currentPath, onNavigate, onLogo
         {NAV_SECTIONS.map((section) => (
           <Box key={section.key} sx={{ mb: 1.5 }}>
             <Typography sx={{
-              px: 2.5, py: 0.5, fontSize: 10.5, fontWeight: 700,
-              letterSpacing: '0.06em', color: OC_COLORS.grisClaro, textTransform: 'uppercase',
+              px: 2.5, py: 0.5, fontSize: '0.66rem', fontWeight: 700,
+              letterSpacing: '0.14em', color: MUTED, textTransform: 'uppercase',
             }}>
               {section.label}
             </Typography>
@@ -124,29 +132,29 @@ function SidebarContent({ profile, newInquiries, currentPath, onNavigate, onLogo
                   onClick={() => handleClick(item.path)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(item.path); }}
                   sx={{
-                    mx: 1, my: 0.25, px: 1.5, py: 1, borderRadius: 1.5,
+                    mx: 1, my: 0.25, px: 1.5, py: 1, borderRadius: '10px',
                     display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer',
-                    color: active ? OC_COLORS.verdeBienestar : OC_COLORS.grisOscuro,
-                    bgcolor: active ? 'rgba(8,89,70,0.08)' : 'transparent',
-                    fontWeight: active ? 600 : 500,
+                    color: active ? NAVY : '#334155',
+                    bgcolor: active ? NAV_ACTIVE_BG : 'transparent',
+                    fontWeight: active ? 700 : 500,
                     position: 'relative',
-                    transition: 'background-color 120ms ease',
-                    '&:hover': { bgcolor: active ? 'rgba(8,89,70,0.10)' : '#f3f4f6' },
+                    transition: 'background 0.15s ease',
+                    '&:hover': { bgcolor: active ? NAV_ACTIVE_BG : NAV_HOVER_BG },
                     '&:before': active ? {
-                      content: '""', position: 'absolute', left: -8, top: 8, bottom: 8, width: 3,
-                      bgcolor: OC_COLORS.verdeBienestar, borderRadius: 1.5,
+                      content: '""', position: 'absolute', left: -6, top: '20%', bottom: '20%',
+                      width: 3, borderRadius: '2px', bgcolor: ACCENT,
                     } : {},
                   }}
                 >
                   {item.inquiriesBadge && newInquiries > 0 ? (
                     <Badge badgeContent={newInquiries} color="error"
                       sx={{ '& .MuiBadge-badge': { fontSize: 9, height: 16, minWidth: 16 } }}>
-                      <Icon sx={{ fontSize: 19 }} />
+                      <Icon sx={{ fontSize: 19, color: active ? ACCENT : MUTED }} />
                     </Badge>
                   ) : (
-                    <Icon sx={{ fontSize: 19 }} />
+                    <Icon sx={{ fontSize: 19, color: active ? ACCENT : MUTED }} />
                   )}
-                  <Typography sx={{ fontSize: 13.5, fontWeight: 'inherit' }}>{item.label}</Typography>
+                  <Typography sx={{ fontSize: '0.875rem', fontWeight: 'inherit' }}>{item.label}</Typography>
                 </Box>
               );
             })}
@@ -157,8 +165,8 @@ function SidebarContent({ profile, newInquiries, currentPath, onNavigate, onLogo
         {profileId && (
           <Box sx={{ mt: 0.5 }}>
             <Typography sx={{
-              px: 2.5, py: 0.5, fontSize: 10.5, fontWeight: 700,
-              letterSpacing: '0.06em', color: OC_COLORS.grisClaro, textTransform: 'uppercase',
+              px: 2.5, py: 0.5, fontSize: '0.66rem', fontWeight: 700,
+              letterSpacing: '0.14em', color: MUTED, textTransform: 'uppercase',
             }}>
               Vista pública
             </Typography>
@@ -167,33 +175,33 @@ function SidebarContent({ profile, newInquiries, currentPath, onNavigate, onLogo
               tabIndex={0}
               onClick={() => window.open(`/directorio/profesional/${profileId}`, '_blank')}
               sx={{
-                mx: 1, my: 0.25, px: 1.5, py: 1, borderRadius: 1.5,
+                mx: 1, my: 0.25, px: 1.5, py: 1, borderRadius: '10px',
                 display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer',
-                color: OC_COLORS.grisOscuro, fontWeight: 500,
-                '&:hover': { bgcolor: '#f3f4f6' },
+                color: '#334155', fontWeight: 500,
+                '&:hover': { bgcolor: NAV_HOVER_BG },
               }}
             >
-              <OpenInNew sx={{ fontSize: 19 }} />
-              <Typography sx={{ fontSize: 13.5 }}>Ver mi ficha</Typography>
+              <OpenInNew sx={{ fontSize: 19, color: MUTED }} />
+              <Typography sx={{ fontSize: '0.875rem' }}>Ver mi ficha</Typography>
             </Box>
           </Box>
         )}
       </Box>
 
       {/* Footer: sitio público + logout */}
-      <Box sx={{ borderTop: '1px solid #f0f2f4', p: 1.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+      <Box sx={{ borderTop: `1px solid ${SIDEBAR_BORDER}`, p: 1.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         <Box
           role="button"
           tabIndex={0}
           onClick={() => handleClick('/')}
           sx={{
             display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 1,
-            borderRadius: 1.5, cursor: 'pointer', color: OC_COLORS.grisMedio,
-            '&:hover': { bgcolor: '#f3f4f6' },
+            borderRadius: '10px', cursor: 'pointer', color: MUTED,
+            '&:hover': { bgcolor: NAV_HOVER_BG },
           }}
         >
           <ArrowBack sx={{ fontSize: 17 }} />
-          <Typography sx={{ fontSize: 12.5 }}>Sitio público</Typography>
+          <Typography sx={{ fontSize: '0.82rem' }}>Sitio público</Typography>
         </Box>
         <Box
           role="button"
@@ -201,12 +209,12 @@ function SidebarContent({ profile, newInquiries, currentPath, onNavigate, onLogo
           onClick={onLogout}
           sx={{
             display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 1,
-            borderRadius: 1.5, cursor: 'pointer', color: '#b91c1c',
-            '&:hover': { bgcolor: 'rgba(239,68,68,0.08)' },
+            borderRadius: '10px', cursor: 'pointer', color: '#b91c1c',
+            '&:hover': { bgcolor: '#fef2f2' },
           }}
         >
           <Logout sx={{ fontSize: 17 }} />
-          <Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>Cerrar sesión</Typography>
+          <Typography sx={{ fontSize: '0.82rem', fontWeight: 700 }}>Cerrar sesión</Typography>
         </Box>
       </Box>
     </Box>
@@ -280,7 +288,7 @@ export default function ProfesionalLayout() {
     .split(/\s+/).map((s) => s[0]).slice(0, 2).join('').toUpperCase();
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f8fafc' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fafbfc' }}>
       {/* Sidebar */}
       {isMobile ? (
         <Drawer
@@ -317,8 +325,8 @@ export default function ProfesionalLayout() {
         <AppBar
           position="sticky" elevation={0}
           sx={{
-            bgcolor: '#fff', color: OC_COLORS.navyPrincipal,
-            borderBottom: '1px solid #e5e7eb',
+            bgcolor: '#fff', color: NAVY,
+            borderBottom: `1px solid ${SIDEBAR_BORDER}`,
             height: TOPBAR_H, justifyContent: 'center',
           }}
         >
@@ -339,7 +347,7 @@ export default function ProfesionalLayout() {
               <IconButton onClick={(e) => setUserMenu(e.currentTarget)} size="small">
                 <Avatar sx={{
                   width: 32, height: 32, fontSize: 12,
-                  bgcolor: OC_COLORS.verdeBienestar, color: '#fff', fontWeight: 600,
+                  bgcolor: ACCENT, color: '#fff', fontWeight: 700,
                 }}>
                   {userInitials}
                 </Avatar>
@@ -356,7 +364,7 @@ export default function ProfesionalLayout() {
                 <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
                   {nombreMostrado}
                 </Typography>
-                <Typography sx={{ fontSize: 11.5, color: OC_COLORS.grisMedio }}>
+                <Typography sx={{ fontSize: 11.5, color: MUTED }}>
                   {profile?.email}
                 </Typography>
               </Box>

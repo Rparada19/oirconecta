@@ -55,11 +55,11 @@ const rowToProduct = (row) => {
 };
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '22px',
-  border: '1px solid rgba(255,255,255,0.6)',
-  boxShadow: '0 4px 24px rgba(8,89,70,0.08)',
+  background: '#fff',
+  
+  borderRadius: '14px',
+  border: '1px solid #eef0f3',
+  boxShadow: '0 4px 24px rgba(109,40,217,0.08)',
 };
 
 // Solo accesorios. NUNCA audífonos (prohibido vender por web en Colombia).
@@ -243,16 +243,16 @@ export default function AdminShopProductsPanel() {
           Productos de la tienda OírConecta (accesorios). No se venden audífonos por web.
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Button variant="text" size="small" startIcon={<DownloadOutlinedIcon />} onClick={downloadTemplate} sx={{ color: '#085946' }}>
+          <Button variant="text" size="small" startIcon={<DownloadOutlinedIcon />} onClick={downloadTemplate} sx={{ color: '#6d28d9' }}>
             Plantilla
           </Button>
           <Button variant="outlined" startIcon={<UploadFileOutlinedIcon />} disabled={importing} onClick={() => fileRef.current?.click()}
-            sx={{ borderRadius: '10px', fontWeight: 700, borderColor: '#085946', color: '#085946' }}>
+            sx={{ borderRadius: '10px', fontWeight: 700, borderColor: '#6d28d9', color: '#6d28d9' }}>
             {importing ? 'Importando…' : 'Importar Excel'}
           </Button>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" hidden onChange={handleImportFile} />
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}
-            sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+            sx={{ borderRadius: '10px', fontWeight: 700, background: '#6d28d9', '&:hover': { background: '#064a3a' } }}>
             Nuevo producto
           </Button>
         </Box>
@@ -264,7 +264,7 @@ export default function AdminShopProductsPanel() {
         <CardContent sx={{ p: 0 }}>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-              <CircularProgress sx={{ color: '#085946' }} />
+              <CircularProgress sx={{ color: '#6d28d9' }} />
             </Box>
           ) : products.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -313,7 +313,7 @@ export default function AdminShopProductsPanel() {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Editar">
-                              <IconButton size="small" onClick={() => openEdit(p)} sx={{ color: '#085946' }}><EditOutlinedIcon fontSize="small" /></IconButton>
+                              <IconButton size="small" onClick={() => openEdit(p)} sx={{ color: '#6d28d9' }}><EditOutlinedIcon fontSize="small" /></IconButton>
                             </Tooltip>
                             <Tooltip title="Eliminar">
                               <IconButton size="small" onClick={() => setDeleteTarget(p)} sx={{ color: '#ef4444' }}><DeleteOutlineIcon fontSize="small" /></IconButton>
@@ -371,7 +371,7 @@ export default function AdminShopProductsPanel() {
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                   Variantes (opcional) — ej. tallas/formas de olivas
                 </Typography>
-                <Button size="small" startIcon={<AddIcon />} onClick={addVariante} sx={{ color: '#085946' }}>Agregar</Button>
+                <Button size="small" startIcon={<AddIcon />} onClick={addVariante} sx={{ color: '#6d28d9' }}>Agregar</Button>
               </Box>
               <Typography variant="caption" color="text.secondary">
                 Si agregas variantes, el cliente deberá elegir una. Precio y stock por variante son opcionales (si los dejas vacíos, usa los del producto).
@@ -397,7 +397,7 @@ export default function AdminShopProductsPanel() {
         <DialogActions sx={{ px: 2.5, pb: 2, gap: 1 }}>
           <Button onClick={() => setDialogOpen(false)} sx={{ borderRadius: '10px' }}>Cancelar</Button>
           <Button variant="contained" onClick={handleSave} disabled={saving}
-            sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+            sx={{ borderRadius: '10px', fontWeight: 700, background: '#6d28d9', '&:hover': { background: '#064a3a' } }}>
             {saving ? 'Guardando…' : 'Guardar'}
           </Button>
         </DialogActions>
