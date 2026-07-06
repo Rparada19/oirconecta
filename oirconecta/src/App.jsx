@@ -92,6 +92,7 @@ const MiDirectorioPage = lazy(() => import('./pages/directorio/MiDirectorioPage'
 const ProfesionalLayout = lazy(() => import('./pages/profesional/ProfesionalLayout'));
 const ProfesionalDashboardPage = lazy(() => import('./pages/profesional/ProfesionalDashboardPage'));
 const ProfesionalPerfilPage = lazy(() => import('./pages/profesional/ProfesionalPerfilPage'));
+const ProfesionalWizardPage = lazy(() => import('./pages/profesional/ProfesionalWizardPage'));
 const ProfesionalConsultasPage = lazy(() => import('./pages/profesional/ProfesionalConsultasPage'));
 const ProfesionalServiciosPage = lazy(() => import('./pages/profesional/ProfesionalServiciosPage'));
 const ProfesionalSuscripcionPage = lazy(() => import('./pages/profesional/ProfesionalSuscripcionPage'));
@@ -269,6 +270,9 @@ export default function App() {
 
           {/* Cambio de clave forzado (fuera del shell) */}
           <Route path="/portal-profesional/cambiar-clave" element={<CambiarClavePage />} />
+
+          {/* Wizard onboarding — full-screen, sin layout */}
+          <Route path="/portal-profesional/wizard" element={<ProfesionalWizardPage />} />
 
           {/* Portal del Profesional (directorio) */}
           <Route path="/portal-profesional" element={<ProfesionalLayout />}>

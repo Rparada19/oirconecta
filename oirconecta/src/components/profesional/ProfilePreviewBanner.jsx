@@ -99,7 +99,7 @@ export default function ProfilePreviewBanner({ profile }) {
           <Button
             variant="contained"
             endIcon={<ArrowForwardRoundedIcon />}
-            onClick={() => navigate('/portal-profesional/perfil')}
+            onClick={() => navigate('/portal-profesional/wizard')}
             sx={{
               background: NAVY, color: '#fff',
               textTransform: 'none', fontWeight: 700, fontSize: '0.95rem',

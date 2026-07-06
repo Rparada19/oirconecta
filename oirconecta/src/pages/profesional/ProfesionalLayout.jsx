@@ -250,7 +250,18 @@ export default function ProfesionalLayout() {
       return;
     }
     directoryApi.get(DIRECTORY_API.me).then(({ data }) => {
-      if (data?.data) setProfile(data.data);
+      if (data?.data) {
+        setProfile(data.data);
+        // Auto-lanzar wizard si completitud < 30% y no lo ha rechazado en esta sesión.
+        try {
+          const dismissed = sessionStorage.getItem('oirconecta_wizard_dismissed_v1') === '1';
+          const compl = Number(data.data.completeness || 0);
+          const alreadyIn = window.location.pathname.startsWith('/portal-profesional/wizard');
+          if (!dismissed && !alreadyIn && compl > 0 && compl < 30) {
+            navigate('/portal-profesional/wizard', { replace: true });
+          }
+        } catch { /* ignore */ }
+      }
     });
     directoryApi.get(DIRECTORY_API.meInquiries).then(({ data }) => {
       const raw = data?.data;
