@@ -614,7 +614,12 @@ async function ensureAppointmentCancellationColumns(prisma) {
     await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "cancelReason" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "followUpDoneAt" TIMESTAMP(3)`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "followUpNotes" TEXT`);
-    console.log('[boot-migrate] appointment cancellation columns OK');
+    // F6 — solicitud de reseña post-cita
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "reviewToken" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "reviewRequestedAt" TIMESTAMP(3)`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "reviewSubmittedAt" TIMESTAMP(3)`);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "appointments_reviewToken_key" ON "appointments" ("reviewToken") WHERE "reviewToken" IS NOT NULL`);
+    console.log('[boot-migrate] appointment cancellation + review columns OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);
   }

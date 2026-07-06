@@ -829,6 +829,7 @@ export default function DirectorioProfesionalPageV2() {
   const [error, setError] = useState('');
   const [bookingOpen, setBookingOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [realReviews, setRealReviews] = useState([]);
 
   const load = useCallback(async () => {
     if (!profileId) return;
@@ -850,6 +851,16 @@ export default function DirectorioProfesionalPageV2() {
     if (!profileId) return;
     trackEntityEvent('profile_view_v2', { entityType: 'DirectoryProfile', entityId: profileId });
   }, [profileId]);
+
+  // F6 — cargar reseñas reales del perfil (APPROVED)
+  useEffect(() => {
+    if (!profile?.id || !(profile.reviewsCount > 0)) return;
+    const url = `${(typeof window !== 'undefined' && window.location.hostname.endsWith('oirconecta.com'))
+      ? 'https://oirconecta-api.onrender.com' : ''}/api/directory/profiles/${profile.id}/reviews?limit=6`;
+    fetch(url).then((r) => r.json()).then((j) => {
+      if (j?.success && Array.isArray(j.data)) setRealReviews(j.data);
+    }).catch(() => {});
+  }, [profile?.id, profile?.reviewsCount]);
 
   // ── Merge demo con real ──
   // Solo rellena campos vacíos, nunca sobreescribe datos reales.
@@ -892,7 +903,34 @@ export default function DirectorioProfesionalPageV2() {
     return [];
   }, [p, isDemo]);
   const breakdown = isDemo ? DEMO_DATA.ratingBreakdown : null;
-  const reviews = isDemo ? DEMO_DATA.reviews : [];
+  // Reales primero. Si no hay y estamos en demo, mostramos las plausibles.
+  const reviews = useMemo(() => {
+    if (realReviews.length > 0) {
+      const PALETTES = [
+        { bg: '#f3e8ff', ink: '#6b21a8' },
+        { bg: '#dbeafe', ink: '#1e40af' },
+        { bg: '#dcfce7', ink: '#14532d' },
+        { bg: '#fef3c7', ink: '#78350f' },
+        { bg: '#fce7f3', ink: '#9d174d' },
+        { bg: '#e0f2fe', ink: '#075985' },
+      ];
+      return realReviews.map((r, i) => {
+        const nombre = r.authorName || 'Paciente';
+        const iniciales = nombre.split(/\s+/).map((s) => s[0]).slice(0, 2).join('').toUpperCase();
+        const palette = PALETTES[i % PALETTES.length];
+        return {
+          nombre,
+          iniciales,
+          bg: palette.bg, ink: palette.ink,
+          fecha: r.createdAt ? new Date(r.createdAt).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' }) : '',
+          motivo: '',
+          rating: r.rating,
+          texto: r.comment || '',
+        };
+      });
+    }
+    return isDemo ? DEMO_DATA.reviews : [];
+  }, [realReviews, isDemo]);
   const faqs = useMemo(() => {
     if (Array.isArray(p?.qaList) && p.qaList.length > 0) return p.qaList;
     if (isDemo) return DEMO_DATA.faqs;

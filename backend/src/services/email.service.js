@@ -958,6 +958,37 @@ async function sendSubscriptionReactivated({ email, nombre }) {
   });
 }
 
+/**
+ * F6 — Solicitud de reseña post-cita.
+ * Se envía ~24h después de que el profesional marque la cita como COMPLETED.
+ * Incluye link único con reviewToken para dejar reseña sin login.
+ */
+async function sendReviewRequest({ to, patientName, professionalName, reviewToken, fecha, tipoConsulta }) {
+  const reviewUrl = `${SITE_URL}/dejar-resena/${reviewToken}`;
+  const stars = '<span style="letter-spacing:6px;font-size:22px;">☆ ☆ ☆ ☆ ☆</span>';
+  const primerNombre = (patientName || '').split(' ')[0] || '';
+  const html = baseTemplate({
+    title: `¿Cómo fue tu consulta con ${professionalName}?`,
+    preheader: 'Tu opinión ayuda a otros pacientes a decidir',
+    bodyHtml: [
+      h1(`Hola ${primerNombre},`),
+      p(`Gracias por confiar en <strong>${professionalName}</strong>${fecha ? ` para tu ${tipoConsulta || 'consulta'} del ${fecha}` : ''}. Nos encantaría saber cómo te fue.`),
+      p('Tu reseña ayuda a otros pacientes a encontrar el profesional adecuado y le da a los profesionales el reconocimiento que merecen.'),
+      `<div style="text-align:center;margin:32px 0 24px;">${stars}</div>`,
+      `<div style="text-align:center;margin:0 0 32px;">`,
+      `<a href="${reviewUrl}" style="display:inline-block;padding:14px 32px;background:#6d28d9;color:#ffffff !important;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;">Dejar mi reseña</a>`,
+      `</div>`,
+      p(`<span style="font-size:13px;color:#6b7280;">Toma menos de 1 minuto. Tu reseña será revisada antes de publicarse.</span>`),
+    ].join(''),
+  });
+  await deliver({
+    to,
+    toName: patientName,
+    subject: `¿Cómo fue tu consulta con ${professionalName}?`,
+    html,
+  });
+}
+
 module.exports = {
   sendSalesOutreach,
   sendDirectoryWelcomeWithCredentials,
@@ -979,6 +1010,7 @@ module.exports = {
   sendAppointmentReminder,
   sendRescheduledNotification,
   sendCancellationAlert,
+  sendReviewRequest,
 
   // Alias para compatibilidad con código anterior
   sendBookingConfirmations: sendBookingConfirmation,

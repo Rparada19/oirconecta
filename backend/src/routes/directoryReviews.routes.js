@@ -347,4 +347,92 @@ router.patch(
   }
 );
 
+// ── F6 — Rutas públicas por reviewToken (post-cita) ──
+
+// GET contexto para renderizar la página /dejar-resena/:token
+router.get(
+  '/reviews/by-token/:token',
+  [param('token').isString().isLength({ min: 20, max: 100 })],
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const appt = await prisma.appointment.findUnique({
+        where: { reviewToken: req.params.token },
+        select: {
+          id: true, patientName: true, patientEmail: true,
+          fecha: true, tipoConsulta: true, estado: true,
+          reviewSubmittedAt: true, directoryProfileId: true,
+        },
+      });
+      if (!appt) return res.status(404).json({ success: false, error: 'Link inválido o expirado' });
+      const profile = appt.directoryProfileId
+        ? await prisma.directoryProfile.findUnique({
+            where: { id: appt.directoryProfileId },
+            select: { id: true, nombreConsultorio: true, profesion: true, fotoPerfilUrl: true, account: { select: { nombre: true } } },
+          })
+        : null;
+      const professionalName = profile?.nombreConsultorio || profile?.account?.nombre || null;
+      res.json({
+        success: true,
+        data: {
+          alreadySubmitted: !!appt.reviewSubmittedAt,
+          patientName: appt.patientName,
+          patientEmail: appt.patientEmail,
+          fecha: appt.fecha,
+          tipoConsulta: appt.tipoConsulta,
+          profileId: appt.directoryProfileId,
+          professionalName,
+          profesion: profile?.profesion || null,
+          fotoPerfilUrl: profile?.fotoPerfilUrl || null,
+        },
+      });
+    } catch (e) { next(e); }
+  }
+);
+
+// POST enviar reseña usando el token único (autovalida a APPROVED)
+router.post(
+  '/reviews/by-token/:token',
+  [
+    param('token').isString().isLength({ min: 20, max: 100 }),
+    body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating 1-5'),
+    body('comment').optional().isString().isLength({ max: 2000 }),
+  ],
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const appt = await prisma.appointment.findUnique({
+        where: { reviewToken: req.params.token },
+        select: {
+          id: true, patientName: true, patientEmail: true, patientPhone: true,
+          reviewSubmittedAt: true, directoryProfileId: true,
+        },
+      });
+      if (!appt) return res.status(404).json({ success: false, error: 'Link inválido o expirado' });
+      if (appt.reviewSubmittedAt) return res.status(409).json({ success: false, error: 'Ya enviaste una reseña con este link' });
+
+      const { rating, comment } = req.body;
+      const review = await prisma.review.create({
+        data: {
+          profileId: appt.directoryProfileId,
+          authorName: appt.patientName || 'Paciente',
+          authorEmail: appt.patientEmail || 'anonimo@oirconecta.com',
+          authorPhone: appt.patientPhone,
+          rating,
+          comment: comment || null,
+          // Autovalidada porque viene de una cita real verificada por el flow
+          status: 'APPROVED',
+        },
+        select: { id: true, status: true, createdAt: true },
+      });
+      await prisma.appointment.update({
+        where: { id: appt.id },
+        data: { reviewSubmittedAt: new Date() },
+      });
+      await recalcProfileRating(appt.directoryProfileId);
+      res.status(201).json({ success: true, data: review });
+    } catch (e) { next(e); }
+  }
+);
+
 module.exports = router;

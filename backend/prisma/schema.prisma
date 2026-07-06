@@ -568,11 +568,17 @@ model Appointment {
   // Sincronización con Google Calendar del profesional (C9)
   googleEventId String? // id del evento espejo en Google Calendar
 
+  // F6 — Solicitud de reseña post-cita
+  reviewToken       String?   @unique // token único enviado al paciente por email
+  reviewRequestedAt DateTime? // cuándo se envió la solicitud de reseña
+  reviewSubmittedAt DateTime? // cuándo el paciente envió la reseña
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([directoryProfileId])
   @@index([rescheduleToken])
+  @@index([reviewToken])
   @@index([sedeId])
   @@index([needsAssignment])
   @@map("appointments")

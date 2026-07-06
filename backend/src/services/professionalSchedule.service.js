@@ -330,14 +330,59 @@ async function updateAppointmentStatus(profileId, appointmentId, { estado, notas
   if (!VALID.includes(estado)) throw new AgendaError(`estado debe ser uno de: ${VALID.join(', ')}`);
   const appt = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    select: { id: true, directoryProfileId: true, notas: true, estado: true },
+    select: {
+      id: true, directoryProfileId: true, notas: true, estado: true,
+      patientName: true, patientEmail: true, fecha: true, tipoConsulta: true,
+      reviewToken: true, reviewRequestedAt: true,
+    },
   });
   if (!appt || appt.directoryProfileId !== profileId) {
     throw new AgendaError('Cita no encontrada', { status: 404 });
   }
   const data = { estado };
   if (notas) data.notas = `${appt.notas || ''}\n${notas}`.trim();
-  return prisma.appointment.update({ where: { id: appointmentId }, data });
+
+  // F6 — Al marcar COMPLETED, generar reviewToken y solicitar reseña por email.
+  // Solo si aún no se pidió (idempotente contra clicks múltiples) y hay email.
+  const transitioningToCompleted =
+    estado === 'COMPLETED' && appt.estado !== 'COMPLETED' && !appt.reviewRequestedAt && !!appt.patientEmail;
+  if (transitioningToCompleted) {
+    const crypto = require('crypto');
+    data.reviewToken = crypto.randomBytes(16).toString('hex');
+    data.reviewRequestedAt = new Date();
+  }
+
+  const updated = await prisma.appointment.update({ where: { id: appointmentId }, data });
+
+  // Envío no bloqueante — no queremos que un error de SMTP haga fallar la
+  // acción del profesional. Fire-and-forget con catch.
+  if (transitioningToCompleted) {
+    (async () => {
+      try {
+        const profile = await prisma.directoryProfile.findUnique({
+          where: { id: profileId },
+          select: { nombreConsultorio: true, account: { select: { nombre: true } } },
+        });
+        const email = require('./email.service');
+        const professionalName = profile?.nombreConsultorio || profile?.account?.nombre || 'tu profesional';
+        const fechaFmt = appt.fecha
+          ? new Date(appt.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
+          : null;
+        await email.sendReviewRequest({
+          to: appt.patientEmail,
+          patientName: appt.patientName,
+          professionalName,
+          reviewToken: data.reviewToken,
+          fecha: fechaFmt,
+          tipoConsulta: appt.tipoConsulta,
+        });
+      } catch (e) {
+        console.error('[review-request] no se pudo enviar email:', e.message);
+      }
+    })();
+  }
+
+  return updated;
 }
 
 /**

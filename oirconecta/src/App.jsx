@@ -64,6 +64,7 @@ const FavoritosPage = lazy(() => import('./pages/FavoritosPage'));
 const DirectorioProfesionSlugPage = lazy(() => import('./pages/DirectorioProfesionSlugPage'));
 const DirectorioProfesionalPage = lazy(() => import('./pages/DirectorioProfesionalPage'));
 const DirectorioProfesionalPageV2 = lazy(() => import('./pages/DirectorioProfesionalPageV2'));
+const DejarResenaPage = lazy(() => import('./pages/DejarResenaPage'));
 // F1: directorio Airbnb-grade
 const DirectorioAirbnbPage = lazy(() => import('./pages/DirectorioAirbnbPage'));
 const DirectorioCiudadPage = lazy(() => import('./pages/DirectorioCiudadPage'));
@@ -273,6 +274,9 @@ export default function App() {
 
           {/* Wizard onboarding — full-screen, sin layout */}
           <Route path="/portal-profesional/wizard" element={<ProfesionalWizardPage />} />
+
+          {/* Dejar reseña post-cita — pública con token */}
+          <Route path="/dejar-resena/:token" element={<DejarResenaPage />} />
 
           {/* Portal del Profesional (directorio) */}
           <Route path="/portal-profesional" element={<ProfesionalLayout />}>
