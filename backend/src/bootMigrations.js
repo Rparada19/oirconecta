@@ -631,7 +631,27 @@ async function ensureAppointmentCancellationColumns(prisma) {
     await prisma.$executeRawUnsafe(`ALTER TABLE "patients" ADD COLUMN IF NOT EXISTS "referredByCode" TEXT`);
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "patients_referralCode_key" ON "patients" ("referralCode") WHERE "referralCode" IS NOT NULL`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patients_referredByCode_idx" ON "patients" ("referredByCode") WHERE "referredByCode" IS NOT NULL`);
-    console.log('[boot-migrate] appointment + review + nurture + birthday + referrals columns OK');
+    // T5 — Tabla de templates de notificaciones (buzón admin)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "notification_templates" (
+        "id" TEXT PRIMARY KEY,
+        "code" TEXT NOT NULL,
+        "channel" TEXT NOT NULL,
+        "locale" TEXT NOT NULL DEFAULT 'es-CO',
+        "subject" TEXT,
+        "body" TEXT NOT NULL,
+        "metaTemplateName" TEXT,
+        "variables" TEXT[] DEFAULT ARRAY[]::TEXT[],
+        "category" TEXT NOT NULL DEFAULT 'TRANSACTIONAL',
+        "optOutAllowed" BOOLEAN NOT NULL DEFAULT FALSE,
+        "activo" BOOLEAN NOT NULL DEFAULT TRUE,
+        "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "notification_templates_code_channel_locale_key" ON "notification_templates" ("code", "channel", "locale")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "notification_templates_channel_activo_idx" ON "notification_templates" ("channel", "activo")`);
+    console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);
   }
