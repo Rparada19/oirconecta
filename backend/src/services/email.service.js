@@ -959,6 +959,58 @@ async function sendSubscriptionReactivated({ email, nombre }) {
 }
 
 /**
+ * T2-Gap4 — Cumpleaños del paciente. Un envío al año, cerca del cumpleaños.
+ */
+async function sendBirthday({ to, nombre, referralCode = null }) {
+  const primerNombre = (nombre || '').split(' ')[0] || 'querido/a';
+  const referralUrl = referralCode ? `${SITE_URL}/invita/${referralCode}` : null;
+
+  const html = baseTemplate({
+    title: `¡Feliz cumpleaños, ${primerNombre}!`,
+    preheader: 'Te deseamos un año lleno de sonidos hermosos',
+    bodyHtml: [
+      `<div style="text-align:center;margin:0 0 24px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-size:52px;line-height:1;color:#6d28d9;font-weight:500;">♪</div>
+      </div>`,
+      h1(`Feliz cumpleaños, ${primerNombre}`),
+      p(`Hoy es tu día. Desde OírConecta y todo el equipo que te acompaña queremos desearte un año lleno de las conversaciones, la música y los sonidos que amas.`),
+      p('Cuidar tu audición es cuidar tus recuerdos, tus vínculos y las risas que están por venir. Gracias por confiar en nosotros para acompañarte en ese camino.'),
+      referralUrl
+        ? [
+            `<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:20px 24px;margin:28px 0;text-align:center;">
+              <div style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:#6b21a8;margin-bottom:8px;">Un regalo para compartir</div>
+              <p style="font-size:14px;color:#475569;line-height:1.6;margin:0 0 16px;">Si conoces a alguien que necesita cuidar su audición, envíale este enlace único de tu parte. Le damos preferencia en agendamiento y te avisamos cuando agende.</p>
+              <a href="${referralUrl}" style="display:inline-block;padding:12px 24px;background:#6d28d9;color:#fff !important;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;">Invitar a un amigo</a>
+            </div>`,
+          ].join('')
+        : btn(`${SITE_URL}/directorio`, 'Explorar profesionales'),
+      p(`<span style="font-size:13px;color:#6b7280;">Con cariño,<br/>El equipo OírConecta</span>`),
+    ].join(''),
+  });
+  await deliver({ to, toName: nombre, subject: `¡Feliz cumpleaños, ${primerNombre}!`, html });
+}
+
+/**
+ * T2-Gap4 — Notificación al referidor cuando su código es usado.
+ */
+async function sendReferralUsed({ to, referrerName, newPatientName }) {
+  const primerNombre = (referrerName || '').split(' ')[0] || '';
+  const newFirstName = (newPatientName || 'alguien').split(' ')[0];
+  const html = baseTemplate({
+    title: `${primerNombre}, ${newFirstName} agendó con tu enlace`,
+    preheader: 'Gracias por compartir el cuidado auditivo',
+    bodyHtml: [
+      h1(`${primerNombre}, gracias por compartir`),
+      p(`${newFirstName} usó tu enlace único y acaba de agendar una cita con un profesional del directorio. Gracias por ayudar a que más personas cuiden su audición.`),
+      p(`Cuando ${newFirstName} complete su valoración, activaremos un beneficio en tu próxima consulta como agradecimiento por la recomendación.`),
+      btn(`${SITE_URL}/portal-crm`, 'Ver detalle en mi cuenta'),
+      p(`<span style="font-size:13px;color:#6b7280;">Con aprecio,<br/>El equipo OírConecta</span>`),
+    ].join(''),
+  });
+  await deliver({ to, toName: referrerName, subject: `Gracias, ${primerNombre}. Alguien usó tu invitación.`, html });
+}
+
+/**
  * T2-Gap1 — Nurture de lead sin cita. 3 emails a 24h/3d/7d.
  * Todos incluyen link de opt-out para respetar Ley 1581 (habeas data).
  */
@@ -1080,6 +1132,8 @@ module.exports = {
   sendCancellationAlert,
   sendReviewRequest,
   sendLeadNurture,
+  sendBirthday,
+  sendReferralUsed,
 
   // Alias para compatibilidad con código anterior
   sendBookingConfirmations: sendBookingConfirmation,

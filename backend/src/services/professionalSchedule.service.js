@@ -379,6 +379,20 @@ async function updateAppointmentStatus(profileId, appointmentId, { estado, notas
       } catch (e) {
         console.error('[review-request] no se pudo enviar email:', e.message);
       }
+
+      // T2-Gap4 — Notificar al referidor si es la 1ra cita del paciente
+      try {
+        const apptWithPatient = await prisma.appointment.findUnique({
+          where: { id: appointmentId },
+          select: { patientId: true },
+        });
+        if (apptWithPatient?.patientId) {
+          const referrals = require('./referrals.service');
+          await referrals.notifyReferrerIfFirstCompleted(apptWithPatient.patientId);
+        }
+      } catch (e) {
+        console.error('[referrals] notify falló:', e.message);
+      }
     })();
   }
 

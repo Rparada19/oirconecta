@@ -31,6 +31,70 @@ const NURTURE_STEPS = [
   { step: 7, field: 'nurture7SentAt', minH: 164, maxH: 176 }, // ~7d (164-176h)
 ];
 
+/**
+ * T2-Gap4 — Cumpleaños. Se ejecuta solo entre 8am-9am hora Colombia (UTC-5).
+ * Un envío por paciente por año (guard birthdayLastSentAt).
+ * Genera referralCode si el paciente aún no tiene uno.
+ */
+async function processBirthdays() {
+  // Hora Colombia (UTC-5) sin depender de tz local del server.
+  const now = new Date();
+  const coHour = (now.getUTCHours() - 5 + 24) % 24;
+  // Solo actúa en la ventana 8-9 AM Colombia. Fuera de esa ventana, no-op.
+  if (coHour < 8 || coHour >= 9) return { scanned: 0, sent: 0, skipped: 0 };
+
+  const emailService = require('../services/email.service');
+  const nowMonth = now.getUTCMonth() + 1;
+  const nowDay = now.getUTCDate();
+  const oneYearAgo = new Date(now.getTime() - 340 * 24 * 3600 * 1000); // ~11 meses guard
+
+  // Filtramos por mes/día vía SQL crudo (fechaNacimiento puede ser cualquier año)
+  const due = await prisma.$queryRaw`
+    SELECT id, nombre, email, "referralCode"
+    FROM patients
+    WHERE "archivedAt" IS NULL
+      AND email IS NOT NULL AND email != ''
+      AND "fechaNacimiento" IS NOT NULL
+      AND EXTRACT(MONTH FROM "fechaNacimiento") = ${nowMonth}
+      AND EXTRACT(DAY FROM "fechaNacimiento") = ${nowDay}
+      AND ("birthdayLastSentAt" IS NULL OR "birthdayLastSentAt" < ${oneYearAgo})
+    LIMIT 100
+  `;
+
+  let sent = 0;
+  for (const p of due) {
+    try {
+      const claim = await prisma.patient.updateMany({
+        where: {
+          id: p.id,
+          OR: [{ birthdayLastSentAt: null }, { birthdayLastSentAt: { lt: oneYearAgo } }],
+        },
+        data: { birthdayLastSentAt: now },
+      });
+      if (claim.count === 0) continue;
+
+      // Asigna referralCode si el paciente no tiene uno (aprovechamos el email
+      // de cumpleaños para invitarlo a compartir).
+      let code = p.referralCode;
+      if (!code) {
+        code = require('crypto').randomBytes(4).toString('hex').toUpperCase();
+        await prisma.patient.update({ where: { id: p.id }, data: { referralCode: code } });
+      }
+
+      await emailService.sendBirthday({
+        to: p.email,
+        nombre: p.nombre,
+        referralCode: code,
+      });
+      sent++;
+    } catch (e) {
+      console.error('[cron/birthday] paciente', p.id, 'falló:', e.message);
+    }
+  }
+
+  return { scanned: due.length, sent, skipped: due.length - sent };
+}
+
 async function processLeadNurture() {
   const emailService = require('../services/email.service');
   const now = new Date();
@@ -187,15 +251,24 @@ async function tick() {
       console.error('[cron] processLeadNurture falló:', e.message);
     }
 
+    // 4) T2-Gap4 — Cumpleaños (solo actúa 8-9am CO, no-op el resto del día)
+    let birthdayResult = null;
+    try {
+      birthdayResult = await processBirthdays();
+    } catch (e) {
+      console.error('[cron] processBirthdays falló:', e.message);
+    }
+
     const hasActivity =
       (apptResult?.sent || 0) > 0 ||
       (remindersResult?.sent || 0) > 0 ||
       (remindersResult?.failed || 0) > 0 ||
       (nurtureResult?.sent || 0) > 0 ||
-      (nurtureResult?.failed || 0) > 0;
+      (nurtureResult?.failed || 0) > 0 ||
+      (birthdayResult?.sent || 0) > 0;
     if (hasActivity) {
       const ms = Date.now() - started;
-      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0}`);
+      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0} · birthdays ${birthdayResult?.sent || 0}/${birthdayResult?.scanned || 0}`);
     }
   } catch (e) {
     console.error('[cron] tick falló:', e.message);
@@ -217,4 +290,4 @@ function stop() {
   tickHandle = null;
 }
 
-module.exports = { start, stop, tick, processPendingReminders, processLeadNurture };
+module.exports = { start, stop, tick, processPendingReminders, processLeadNurture, processBirthdays };

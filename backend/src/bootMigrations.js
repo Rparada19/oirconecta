@@ -625,7 +625,13 @@ async function ensureAppointmentCancellationColumns(prisma) {
     await prisma.$executeRawUnsafe(`ALTER TABLE "leads" ADD COLUMN IF NOT EXISTS "nurture7SentAt" TIMESTAMP(3)`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "leads" ADD COLUMN IF NOT EXISTS "nurtureOptOut" BOOLEAN NOT NULL DEFAULT FALSE`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "leads_nurture_scan_idx" ON "leads" ("estado", "appointmentId", "nurture1SentAt")`);
-    console.log('[boot-migrate] appointment cancellation + review + lead nurture columns OK');
+    // T2-Gap4 — Cumpleaños + Referrals
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patients" ADD COLUMN IF NOT EXISTS "birthdayLastSentAt" TIMESTAMP(3)`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patients" ADD COLUMN IF NOT EXISTS "referralCode" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patients" ADD COLUMN IF NOT EXISTS "referredByCode" TEXT`);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "patients_referralCode_key" ON "patients" ("referralCode") WHERE "referralCode" IS NOT NULL`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patients_referredByCode_idx" ON "patients" ("referredByCode") WHERE "referredByCode" IS NOT NULL`);
+    console.log('[boot-migrate] appointment + review + nurture + birthday + referrals columns OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);
   }

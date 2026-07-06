@@ -65,6 +65,7 @@ const DirectorioProfesionSlugPage = lazy(() => import('./pages/DirectorioProfesi
 const DirectorioProfesionalPage = lazy(() => import('./pages/DirectorioProfesionalPage'));
 const DirectorioProfesionalPageV2 = lazy(() => import('./pages/DirectorioProfesionalPageV2'));
 const DejarResenaPage = lazy(() => import('./pages/DejarResenaPage'));
+const InvitaPage = lazy(() => import('./pages/InvitaPage'));
 // F1: directorio Airbnb-grade
 const DirectorioAirbnbPage = lazy(() => import('./pages/DirectorioAirbnbPage'));
 const DirectorioCiudadPage = lazy(() => import('./pages/DirectorioCiudadPage'));
@@ -277,6 +278,9 @@ export default function App() {
 
           {/* Dejar reseña post-cita — pública con token */}
           <Route path="/dejar-resena/:token" element={<DejarResenaPage />} />
+
+          {/* Landing referral pública */}
+          <Route path="/invita/:code" element={<InvitaPage />} />
 
           {/* Portal del Profesional (directorio) */}
           <Route path="/portal-profesional" element={<ProfesionalLayout />}>

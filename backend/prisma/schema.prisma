@@ -418,6 +418,11 @@ model Patient {
   // Soft delete (HC nunca se borra física; Res. 839/2017 — 15 años)
   archivedAt DateTime?
 
+  // T2-Gap4 — Automatizaciones de retención
+  birthdayLastSentAt DateTime? // último email de cumpleaños enviado (guard idempotencia anual)
+  referralCode       String?   @unique // código único para invitar amigos
+  referredByCode     String? // código del paciente que lo refirió (si aplica)
+
   // Relación con lead original
   leadId String? @unique
   lead   Lead?   @relation(fields: [leadId], references: [id])
