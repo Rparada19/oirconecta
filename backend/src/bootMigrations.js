@@ -619,6 +619,9 @@ async function ensureAppointmentCancellationColumns(prisma) {
     await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "reviewRequestedAt" TIMESTAMP(3)`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "reviewSubmittedAt" TIMESTAMP(3)`);
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "appointments_reviewToken_key" ON "appointments" ("reviewToken") WHERE "reviewToken" IS NOT NULL`);
+    // T2-Gap3 — Control 15d post-cita
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "control15SentAt" TIMESTAMP(3)`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "appointments_control15_scan_idx" ON "appointments" ("estado", "control15SentAt", "fecha")`);
     // T2-Gap1 — Nurture 7d de leads sin cita
     await prisma.$executeRawUnsafe(`ALTER TABLE "leads" ADD COLUMN IF NOT EXISTS "nurture1SentAt" TIMESTAMP(3)`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "leads" ADD COLUMN IF NOT EXISTS "nurture3SentAt" TIMESTAMP(3)`);

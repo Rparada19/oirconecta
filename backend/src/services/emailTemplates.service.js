@@ -93,6 +93,19 @@ const HARDCODED = {
     category: 'TRANSACTIONAL',
     description: 'Solicitud de reseña al paciente, se envía cuando el profesional marca la cita como COMPLETED.',
   },
+  CONTROL_15D: {
+    subject: '{{nombre}}, ¿cómo va tu adaptación?',
+    preheader: 'Un check-in a 15 días de tu consulta',
+    body: `<p>Hola <strong>{{nombre}}</strong>,</p>
+<p>Han pasado dos semanas desde tu {{tipoConsulta}} con <strong>{{professionalName}}</strong>. Queríamos saber cómo te has sentido.</p>
+<p>La adaptación auditiva es un proceso: los primeros días el cerebro está aprendiendo a interpretar sonidos que había olvidado. Algunas personas se sienten cómodas en una semana, otras necesitan uno o dos meses. Ambos son ritmos normales.</p>
+<p><strong>Si algo no se siente bien:</strong> no esperes. Contactar a {{professionalName}} y ajustar el plan es parte del proceso, no un signo de fracaso.</p>
+<p>Si prefieres compartir tu experiencia con nosotros, respondemos a este correo. También puedes dejar una reseña que ayude a otras personas a decidir.</p>
+<p>Con cariño,<br/>El equipo OírConecta</p>`,
+    variables: ['nombre', 'professionalName', 'tipoConsulta'],
+    category: 'TRANSACTIONAL',
+    description: 'Check-in 15 días después de completar cita. Acompañamiento post-consulta.',
+  },
   REFERRAL_USED: {
     subject: 'Gracias, {{referrerName}}. Alguien usó tu invitación.',
     preheader: 'Un amigo tuyo acaba de agendar una cita en OírConecta',

@@ -156,10 +156,15 @@ export default function AgendarConProfesionalDialog({ open, onClose, profileId, 
   const reservar = async () => {
     if (!canReserve) return;
     setLoading(true); setError(null);
+    // T2-Gap4 — Si el usuario llegó por un enlace /invita/:code, propagamos el
+    // código para vincular al paciente con quien lo refirió.
+    let referredByCode = null;
+    try { referredByCode = sessionStorage.getItem('oc_referred_by_code') || null; } catch {}
     const r = await publicPost(`/api/booking/public/${profileId}/appointments`, {
       appointmentTypeId: selectedType.id,
       scheduledAt: `${selectedDate}T${selectedSlot.time}`,
       notas: notas || null,
+      referredByCode,
       patient: {
         nombre: patient.nombre.trim(),
         telefono: patient.telefono.trim(),

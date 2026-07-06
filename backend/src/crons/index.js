@@ -95,6 +95,72 @@ async function processBirthdays() {
   return { scanned: due.length, sent, skipped: due.length - sent };
 }
 
+/**
+ * T2-Gap3 — Control 15d post-cita.
+ * Escanea citas COMPLETED entre 14 y 16 días atrás sin control15SentAt.
+ * Un email por cita. Optimistic claim para evitar dobles envíos.
+ */
+async function processControl15d() {
+  const emailService = require('../services/email.service');
+  const now = new Date();
+  const d14 = new Date(now.getTime() - 14 * 24 * 3600 * 1000);
+  const d16 = new Date(now.getTime() - 16 * 24 * 3600 * 1000);
+
+  const due = await prisma.appointment.findMany({
+    where: {
+      estado: 'COMPLETED',
+      control15SentAt: null,
+      patientEmail: { not: '' },
+      fecha: { gte: d16, lte: d14 },
+    },
+    select: {
+      id: true, patientEmail: true, patientName: true,
+      tipoConsulta: true, directoryProfileId: true,
+    },
+    take: 100,
+  });
+
+  let sent = 0, failed = 0;
+  for (const appt of due) {
+    if (!appt.patientEmail) continue;
+    try {
+      const claim = await prisma.appointment.updateMany({
+        where: { id: appt.id, control15SentAt: null },
+        data: { control15SentAt: now },
+      });
+      if (claim.count === 0) continue;
+
+      // Buscar nombre del profesional (best-effort)
+      let professionalName = null;
+      if (appt.directoryProfileId) {
+        const prof = await prisma.directoryProfile.findUnique({
+          where: { id: appt.directoryProfileId },
+          select: { account: { select: { nombre: true } } },
+        });
+        professionalName = prof?.account?.nombre || null;
+      }
+
+      await emailService.sendControl15d({
+        to: appt.patientEmail,
+        patientName: appt.patientName,
+        professionalName,
+        tipoConsulta: appt.tipoConsulta,
+      });
+      sent++;
+    } catch (e) {
+      console.error('[cron/control15d] cita', appt.id, 'falló:', e.message);
+      try {
+        await prisma.appointment.updateMany({
+          where: { id: appt.id, control15SentAt: { not: null } },
+          data: { control15SentAt: null },
+        });
+      } catch {}
+      failed++;
+    }
+  }
+  return { scanned: due.length, sent, failed };
+}
+
 async function processLeadNurture() {
   const emailService = require('../services/email.service');
   const now = new Date();
@@ -259,16 +325,25 @@ async function tick() {
       console.error('[cron] processBirthdays falló:', e.message);
     }
 
+    // 5) T2-Gap3 — Control 15d post-cita
+    let control15Result = null;
+    try {
+      control15Result = await processControl15d();
+    } catch (e) {
+      console.error('[cron] processControl15d falló:', e.message);
+    }
+
     const hasActivity =
       (apptResult?.sent || 0) > 0 ||
       (remindersResult?.sent || 0) > 0 ||
       (remindersResult?.failed || 0) > 0 ||
       (nurtureResult?.sent || 0) > 0 ||
       (nurtureResult?.failed || 0) > 0 ||
-      (birthdayResult?.sent || 0) > 0;
+      (birthdayResult?.sent || 0) > 0 ||
+      (control15Result?.sent || 0) > 0;
     if (hasActivity) {
       const ms = Date.now() - started;
-      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0} · birthdays ${birthdayResult?.sent || 0}/${birthdayResult?.scanned || 0}`);
+      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0} · birthdays ${birthdayResult?.sent || 0}/${birthdayResult?.scanned || 0} · control15 ${control15Result?.sent || 0}/${control15Result?.scanned || 0}`);
     }
   } catch (e) {
     console.error('[cron] tick falló:', e.message);
@@ -290,4 +365,4 @@ function stop() {
   tickHandle = null;
 }
 
-module.exports = { start, stop, tick, processPendingReminders, processLeadNurture, processBirthdays };
+module.exports = { start, stop, tick, processPendingReminders, processLeadNurture, processBirthdays, processControl15d };

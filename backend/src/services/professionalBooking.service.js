@@ -277,7 +277,7 @@ function normEmail(e) {
  * sino por email (si viene), sino crea uno nuevo. Idempotente para evitar
  * que el mismo paciente reservando 2 veces aparezca duplicado.
  */
-async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, numeroDocumento }) {
+async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, numeroDocumento, referredByCode = null }) {
   if (!nombre || !telefono) throw new BookingError('nombre y telefono requeridos');
   const emailNorm = normEmail(email);
   const tel = normPhone(telefono);
@@ -292,6 +292,23 @@ async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, num
     const byEmail = await prisma.patient.findFirst({ where: { email: emailNorm } });
     if (byEmail) return byEmail;
   }
+
+  // T2-Gap4 — solo aplica al Patient nuevo. Validamos que el código exista y
+  // no permitimos auto-referencia (mismo email que dueño del código).
+  let referredByNormalized = null;
+  if (referredByCode) {
+    const normalized = String(referredByCode).trim().toUpperCase();
+    if (normalized) {
+      const owner = await prisma.patient.findFirst({
+        where: { referralCode: normalized, archivedAt: null },
+        select: { id: true, email: true },
+      });
+      if (owner && (!emailNorm || owner.email !== emailNorm)) {
+        referredByNormalized = normalized;
+      }
+    }
+  }
+
   return prisma.patient.create({
     data: {
       nombre: String(nombre).trim(),
@@ -300,6 +317,7 @@ async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, num
       tipoDocumento: tipoDocumento || null,
       numeroDocumento: numeroDocumento || null,
       procedencia: 'directorio-publico',
+      referredByCode: referredByNormalized,
     },
   });
 }
@@ -330,7 +348,7 @@ async function ensureRelation(patientId, profileId) {
  */
 async function createPublicAppointment(profileId, payload) {
   const ctx = await loadContext(profileId);
-  const { appointmentTypeId, scheduledAt, notas, patient } = payload || {};
+  const { appointmentTypeId, scheduledAt, notas, patient, referredByCode } = payload || {};
   if (!appointmentTypeId) throw new BookingError('appointmentTypeId requerido');
   if (!scheduledAt) throw new BookingError('scheduledAt requerido (ISO local o "YYYY-MM-DD HH:MM")');
 
@@ -354,7 +372,7 @@ async function createPublicAppointment(profileId, payload) {
   }
 
   // Find-or-create patient + relación
-  const patientRow = await findOrCreatePatient(patient || {});
+  const patientRow = await findOrCreatePatient({ ...(patient || {}), referredByCode });
   await ensureRelation(patientRow.id, profileId);
 
   // Delegamos en appointments.service.create para reutilizar email/notifications/token.

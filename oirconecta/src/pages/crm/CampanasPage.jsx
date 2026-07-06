@@ -242,8 +242,8 @@ const CampanasPage = () => {
     }
   }, []);
 
-  const loadDashboard = useCallback(async () => {
-    setDashboardLoading(true);
+  const loadDashboard = useCallback(async ({ showSpinner = true } = {}) => {
+    if (showSpinner) setDashboardLoading(true);
     try {
       const d = await getCampaignDashboard();
       setDashboardData(d);
@@ -251,7 +251,7 @@ const CampanasPage = () => {
       console.error('[CampanasPage] Error al cargar panel:', e);
       setDashboardData(null);
     } finally {
-      setDashboardLoading(false);
+      if (showSpinner) setDashboardLoading(false);
     }
   }, []);
 
@@ -264,7 +264,7 @@ const CampanasPage = () => {
     loadDashboard();
     const interval = setInterval(() => {
       loadCampaigns();
-      loadDashboard();
+      loadDashboard({ showSpinner: false });
     }, 30000);
     return () => clearInterval(interval);
   }, [isAdmin, navigate, loadCampaigns, loadDashboard]);

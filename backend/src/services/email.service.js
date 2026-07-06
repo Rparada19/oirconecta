@@ -1182,6 +1182,43 @@ async function sendReviewRequest({ to, patientName, professionalName, reviewToke
   });
 }
 
+/**
+ * T2-Gap3 — Control 15 días post-cita.
+ * Se envía cuando el paciente lleva 15 días desde su cita COMPLETED.
+ * Puramente acompañamiento: sin CTA agresivo de venta.
+ */
+async function sendControl15d({ to, patientName, professionalName, tipoConsulta }) {
+  const primerNombre = (patientName || '').split(' ')[0] || '';
+  try {
+    const templates = require('./emailTemplates.service');
+    const { subject, body } = await templates.renderEmail('CONTROL_15D', {
+      nombre: primerNombre,
+      professionalName: professionalName || 'tu profesional',
+      tipoConsulta: tipoConsulta || 'consulta',
+    });
+    if (subject && body) {
+      const html = baseTemplate({ preheader: 'Un check-in a 15 días', title: subject, bodyHtml: body });
+      await deliver({ to, toName: patientName, subject, html });
+      return;
+    }
+  } catch (e) {
+    console.warn('[email/control15d] fallback:', e.message);
+  }
+  const subject = `${primerNombre}, ¿cómo va tu adaptación?`;
+  const html = baseTemplate({
+    title: subject,
+    preheader: 'Un check-in a 15 días de tu consulta',
+    bodyHtml: [
+      h1(`Hola ${primerNombre},`),
+      p(`Han pasado dos semanas desde tu ${tipoConsulta || 'consulta'} con <strong>${professionalName || 'tu profesional'}</strong>. Queríamos saber cómo te has sentido.`),
+      p('La adaptación auditiva es un proceso: los primeros días el cerebro está aprendiendo a interpretar sonidos que había olvidado. Algunas personas se sienten cómodas en una semana, otras necesitan uno o dos meses. Ambos son ritmos normales.'),
+      p(`Si algo no se siente bien, no esperes: contactar a ${professionalName || 'tu profesional'} y ajustar el plan es parte del proceso.`),
+      p('Con cariño,<br/>El equipo OírConecta'),
+    ].join(''),
+  });
+  await deliver({ to, toName: patientName, subject, html });
+}
+
 module.exports = {
   sendSalesOutreach,
   sendDirectoryWelcomeWithCredentials,
@@ -1207,6 +1244,7 @@ module.exports = {
   sendLeadNurture,
   sendBirthday,
   sendReferralUsed,
+  sendControl15d,
 
   // T5 — Envío de prueba desde el admin buzón
   sendTemplatePreview: async ({ to, subject, body }) => {

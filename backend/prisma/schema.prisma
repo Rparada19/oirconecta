@@ -585,6 +585,9 @@ model Appointment {
   reviewRequestedAt DateTime? // cuándo se envió la solicitud de reseña
   reviewSubmittedAt DateTime? // cuándo el paciente envió la reseña
 
+  // T2-Gap3 — Control 15d post-cita
+  control15SentAt DateTime? // cuándo se envió el email de control a los 15d
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2379,7 +2382,7 @@ model IaAgentConfig {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
-  faqs           IaAgentFaq[]
+  faqs IaAgentFaq[]
 
   @@map("ia_agent_config")
 }
@@ -2388,15 +2391,15 @@ model IaAgentConfig {
 /// El servicio inyecta las FAQs activas (hasta 20) en el system prompt como
 /// "conocimiento verificado" para que el bot las use antes de improvisar.
 model IaAgentFaq {
-  id         String        @id @default(uuid())
-  configId   String
-  config     IaAgentConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
-  question   String
-  answer     String
-  order      Int           @default(0)
-  isActive   Boolean       @default(true)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id        String        @id @default(uuid())
+  configId  String
+  config    IaAgentConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  question  String
+  answer    String
+  order     Int           @default(0)
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@index([configId, isActive, order])
   @@map("ia_agent_faqs")
@@ -2491,9 +2494,9 @@ model PatientProfessionalRelation {
 // ciudad, dispositivo, fuente, etc. IP se guarda enmascarada.
 // ═══════════════════════════════════════════════════════════════════
 model AnalyticsEvent {
-  id         String   @id @default(uuid())
-  eventType  String // page_view, ad_impression, ad_click, booking_created, ia_message_sent, etc.
-  eventName  String? // subtipo opcional
+  id        String  @id @default(uuid())
+  eventType String // page_view, ad_impression, ad_click, booking_created, ia_message_sent, etc.
+  eventName String? // subtipo opcional
 
   // Identidad (anónima)
   sessionId String
@@ -2602,17 +2605,17 @@ model AnalyticsSession {
 // Guardamos refresh_token (fuente de verdad). El access_token se puede
 // re-obtener llamando a POST oauth2.googleapis.com/token cuando expira.
 model GoogleCalendarChannel {
-  id           String   @id @default(uuid())
-  profileId    String   @unique
-  refreshToken String   @db.Text
-  accessToken  String?  @db.Text
+  id           String    @id @default(uuid())
+  profileId    String    @unique
+  refreshToken String    @db.Text
+  accessToken  String?   @db.Text
   expiresAt    DateTime?
-  calendarId   String   @default("primary")
+  calendarId   String    @default("primary")
   scopes       String? // scopes concedidos, separados por espacio
   email        String? // email de la cuenta Google conectada (para mostrar en UI)
   lastSyncAt   DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@map("google_calendar_channels")
 }

@@ -69,9 +69,9 @@ const DashboardPage = () => {
   const [loadError, setLoadError] = useState(null);
   const [actionMetrics, setActionMetrics] = useState({ activas: 0, vencidas: 0, cumplidas: 0, total: 0 });
 
-  const loadAllData = async () => {
+  const loadAllData = async ({ showSpinner = true } = {}) => {
     setLoadError(null);
-    setLoading(true);
+    if (showSpinner) setLoading(true);
     try {
       const { error: healthError } = await api.get('/api/appointments?limit=1');
       if (healthError) {
@@ -181,8 +181,8 @@ const DashboardPage = () => {
     };
     window.addEventListener('localStorageChange', handleLocalStorageChange);
 
-    // Intervalo para refrescar datos cada 30 segundos (evitar saturar API / rate limit)
-    const intervalId = setInterval(loadAllData, 30000);
+    // Intervalo para refrescar datos cada 30 segundos (silent, sin spinner)
+    const intervalId = setInterval(() => loadAllData({ showSpinner: false }), 30000);
 
     // Cleanup
     return () => {
