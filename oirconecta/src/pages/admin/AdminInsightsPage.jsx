@@ -21,7 +21,7 @@ import {
 import { adminFetch } from './adminAuth';
 import { downloadInsightsPdf } from '../../utils/insightsPdfExport';
 
-const ACCENT = '#15803d';
+const ACCENT = '#6d28d9';
 const NAVY = '#0F2A4A';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -656,7 +656,7 @@ function Donut({ data = [] }) {
   const r = 70;
   const cx = size / 2, cy = size / 2;
   const total = data.reduce((a, b) => a + b.value, 0) || 1;
-  const colors = ['#15803d', '#0369a1', '#6d28d9', '#f59e0b', '#dc2626', '#64748b'];
+  const colors = ['#6d28d9', '#0369a1', '#15803d', '#f59e0b', '#dc2626', '#64748b'];
   let angle = -Math.PI / 2;
   const arcs = data.map((d, i) => {
     const frac = d.value / total;
@@ -671,17 +671,17 @@ function Donut({ data = [] }) {
     return { path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`, color: colors[i % colors.length], label: d.label, value: d.value, pct: Math.round(frac * 100) };
   });
   return (
-    <Box sx={{ position: 'relative', width: size, height: size, mx: 'auto' }}>
+    <Box sx={{ width: size, mx: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {arcs.map((a, i) => <path key={i} d={a.path} fill={a.color} stroke="#fff" strokeWidth="1.5" />)}
         <circle cx={cx} cy={cy} r={r * 0.55} fill="#fff" />
         <text x={cx} y={cy - 4} textAnchor="middle" fontSize="12" fill="#64748b">Total</text>
         <text x={cx} y={cy + 14} textAnchor="middle" fontSize="18" fontWeight="800" fill={NAVY}>{fmtNum(total)}</text>
       </svg>
-      <Stack sx={{ mt: 1 }} spacing={0.25}>
+      <Stack sx={{ mt: 1.5 }} spacing={0.5}>
         {arcs.map((a, i) => (
           <Stack key={i} direction="row" alignItems="center" spacing={1}>
-            <Box sx={{ width: 10, height: 10, bgcolor: a.color, borderRadius: 2 }} />
+            <Box sx={{ width: 10, height: 10, bgcolor: a.color, borderRadius: '2px', flexShrink: 0 }} />
             <Typography sx={{ fontSize: '0.75rem', color: NAVY, fontWeight: 600, flex: 1 }}>{a.label}</Typography>
             <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>{a.pct}%</Typography>
           </Stack>
