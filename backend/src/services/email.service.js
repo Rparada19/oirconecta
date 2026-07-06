@@ -965,6 +965,22 @@ async function sendBirthday({ to, nombre, referralCode = null }) {
   const primerNombre = (nombre || '').split(' ')[0] || 'querido/a';
   const referralUrl = referralCode ? `${SITE_URL}/invita/${referralCode}` : null;
 
+  // T5 — Intenta obtener template editable desde DB.
+  try {
+    const templates = require('./emailTemplates.service');
+    const { subject, body } = await templates.renderEmail('BIRTHDAY', {
+      nombre: primerNombre, referralCode: referralCode || '',
+    });
+    if (subject && body) {
+      const html = baseTemplate({ title: subject, preheader: 'Te deseamos un año lleno de sonidos hermosos', bodyHtml: body });
+      await deliver({ to, toName: nombre, subject, html });
+      return;
+    }
+  } catch (e) {
+    console.warn('[email/birthday] fallback a hardcoded:', e.message);
+  }
+
+  // Fallback hardcoded si algo falla
   const html = baseTemplate({
     title: `¡Feliz cumpleaños, ${primerNombre}!`,
     preheader: 'Te deseamos un año lleno de sonidos hermosos',
@@ -996,6 +1012,22 @@ async function sendBirthday({ to, nombre, referralCode = null }) {
 async function sendReferralUsed({ to, referrerName, newPatientName }) {
   const primerNombre = (referrerName || '').split(' ')[0] || '';
   const newFirstName = (newPatientName || 'alguien').split(' ')[0];
+
+  // T5 — Template editable desde admin
+  try {
+    const templates = require('./emailTemplates.service');
+    const { subject, body } = await templates.renderEmail('REFERRAL_USED', {
+      referrerName: primerNombre, newPatientName: newFirstName,
+    });
+    if (subject && body) {
+      const html = baseTemplate({ title: subject, preheader: 'Gracias por compartir el cuidado auditivo', bodyHtml: body });
+      await deliver({ to, toName: referrerName, subject, html });
+      return;
+    }
+  } catch (e) {
+    console.warn('[email/referral] fallback:', e.message);
+  }
+
   const html = baseTemplate({
     title: `${primerNombre}, ${newFirstName} agendó con tu enlace`,
     preheader: 'Gracias por compartir el cuidado auditivo',
@@ -1018,6 +1050,30 @@ async function sendLeadNurture({ to, nombre, step, interes, unsubscribeUrl }) {
   const primerNombre = (nombre || '').split(' ')[0] || 'hola';
   const bookUrl = `${SITE_URL}/directorio`;
   const blogUrl = `${SITE_URL}/blog`;
+
+  // T5 — Template editable desde admin
+  const codeMap = { 1: 'LEAD_NURTURE_1', 3: 'LEAD_NURTURE_2', 7: 'LEAD_NURTURE_3' };
+  const code = codeMap[step];
+  if (code) {
+    try {
+      const templates = require('./emailTemplates.service');
+      const { subject, body } = await templates.renderEmail(code, {
+        nombre: primerNombre, interes: interes || 'salud auditiva',
+      });
+      if (subject && body) {
+        const optOutFooter = unsubscribeUrl
+          ? `<div style="text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid #e5e7eb;"><a href="${unsubscribeUrl}" style="font-size:12px;color:#94a3b8;">No quiero recibir más correos</a></div>`
+          : '';
+        const html = baseTemplate({ preheader: subject, title: subject, bodyHtml: body + optOutFooter });
+        await deliver({ to, toName: nombre, subject, html });
+        return;
+      }
+    } catch (e) {
+      console.warn(`[email/nurture-${step}] fallback:`, e.message);
+    }
+  }
+
+  // Fallback hardcoded
   const optOutFooter = unsubscribeUrl
     ? `<div style="text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid #e5e7eb;">
          <a href="${unsubscribeUrl}" style="font-size:12px;color:#94a3b8;">No quiero recibir más correos</a>
@@ -1087,6 +1143,23 @@ async function sendReviewRequest({ to, patientName, professionalName, reviewToke
   const reviewUrl = `${SITE_URL}/dejar-resena/${reviewToken}`;
   const stars = '<span style="letter-spacing:6px;font-size:22px;">☆ ☆ ☆ ☆ ☆</span>';
   const primerNombre = (patientName || '').split(' ')[0] || '';
+
+  // T5 — Template editable
+  try {
+    const templates = require('./emailTemplates.service');
+    const { subject, body } = await templates.renderEmail('REVIEW_REQUEST', {
+      nombre: primerNombre, professionalName,
+      tipoConsulta: tipoConsulta || 'consulta',
+      fecha: fecha || '', reviewUrl,
+    });
+    if (subject && body) {
+      const html = baseTemplate({ preheader: 'Tu opinión ayuda a otros pacientes', title: subject, bodyHtml: body });
+      await deliver({ to, toName: patientName, subject, html });
+      return;
+    }
+  } catch (e) {
+    console.warn('[email/review] fallback:', e.message);
+  }
   const html = baseTemplate({
     title: `¿Cómo fue tu consulta con ${professionalName}?`,
     preheader: 'Tu opinión ayuda a otros pacientes a decidir',
@@ -1134,6 +1207,16 @@ module.exports = {
   sendLeadNurture,
   sendBirthday,
   sendReferralUsed,
+
+  // T5 — Envío de prueba desde el admin buzón
+  sendTemplatePreview: async ({ to, subject, body }) => {
+    const html = baseTemplate({
+      preheader: '[PRUEBA] ' + subject,
+      title: subject,
+      bodyHtml: `<div style="background:#fef3c7;border:1px solid #fbbf24;color:#78350f;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:16px;">✓ Este es un envío de prueba desde el buzón de templates</div>${body}`,
+    });
+    return deliver({ to, toName: 'Admin', subject: '[PRUEBA] ' + subject, html });
+  },
 
   // Alias para compatibilidad con código anterior
   sendBookingConfirmations: sendBookingConfirmation,

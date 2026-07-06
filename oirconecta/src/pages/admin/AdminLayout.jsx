@@ -20,6 +20,7 @@ import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
+import DraftsOutlinedIcon from '@mui/icons-material/DraftsOutlined';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
@@ -109,6 +110,7 @@ const ADMIN_FULL_NAV = [
   { label: 'Pedidos', icon: <ReceiptLongOutlinedIcon />, path: '/portal-admin/pedidos' },
   { label: 'Comparador', icon: <CompareArrowsOutlinedIcon />, path: '/portal-admin/comparador' },
   { label: 'Newsletter', icon: <MailOutlineRoundedIcon />, path: '/portal-admin/newsletter' },
+  { label: 'Comunicaciones', icon: <DraftsOutlinedIcon />, path: '/portal-admin/comunicaciones' },
   { label: 'Marketing & Ventas', icon: <CampaignOutlinedIcon />, path: '/portal-admin/marketing' },
   { label: 'Insights del sitio',  icon: <InsightsOutlinedIcon />, path: '/portal-admin/marketing/insights' },
   { label: 'Buzón de contacto', icon: <InboxOutlinedIcon />, path: '/portal-admin/contactos' },
