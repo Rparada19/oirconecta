@@ -153,4 +153,22 @@ router.delete('/:id', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ── Admin: generar 1 post con IA bajo demanda (ignora guard de 6 días) ──
+router.post('/generate', authenticate, async (req, res) => {
+  try {
+    const { authorize } = require('../middleware/auth');
+    if (req.user?.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, error: 'Solo ADMIN' });
+    }
+    const gen = require('../services/blogGenerator.service');
+    const result = await gen.generateOne({ minDaysBetween: 0 });
+    if (!result.post) {
+      return res.status(409).json({ success: false, error: `No se generó: ${result.reason}` });
+    }
+    res.status(201).json({ success: true, data: result.post });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 module.exports = router;

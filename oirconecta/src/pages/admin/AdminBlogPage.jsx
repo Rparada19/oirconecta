@@ -35,6 +35,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import { adminFetch, getAdminToken, ADMIN_TOKEN_KEY } from './adminAuth';
 
 // Sube imagen al endpoint compartido de Cloudinary (mismo que marketing).
@@ -200,6 +201,26 @@ export default function AdminBlogPage() {
     setOpenDialog(true);
   };
 
+  const [generating, setGenerating] = useState(false);
+  const handleGenerateAI = async () => {
+    if (generating) return;
+    if (!window.confirm('¿Generar 1 artículo nuevo con IA a partir del siguiente tema de la cola? Estado por defecto: BORRADOR. Tarda ~30-60 segundos.')) return;
+    setGenerating(true);
+    try {
+      const res = await adminFetch('/api/blog/generate', { method: 'POST' });
+      if (!res.ok || !res.data?.success) {
+        alert(`No se pudo generar: ${res.data?.error || `HTTP ${res.status}`}`);
+      } else {
+        alert(`✓ Post creado: "${res.data.data.titulo}" (${res.data.data.estado})`);
+        loadPosts();
+      }
+    } catch (e) {
+      alert(`Error: ${e.message}`);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handleOpenEdit = (post) => {
     setEditingPost(post);
     setForm({
@@ -294,20 +315,35 @@ export default function AdminBlogPage() {
             Administra los artículos del sitio
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenCreate}
-          sx={{
-            borderRadius: '12px',
-            fontWeight: 700,
-            background: 'linear-gradient(135deg, #085946, #0d7a5f)',
-            boxShadow: '0 4px 16px rgba(8,89,70,0.3)',
-            '&:hover': { background: 'linear-gradient(135deg, #063c2c, #085946)' },
-          }}
-        >
-          Nuevo post
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            startIcon={<AutoAwesomeOutlinedIcon />}
+            onClick={handleGenerateAI}
+            disabled={generating}
+            sx={{
+              borderRadius: '12px', textTransform: 'none', fontWeight: 700,
+              borderColor: '#6d28d9', color: '#6d28d9',
+              '&:hover': { borderColor: '#5b21b6', bgcolor: '#faf5ff' },
+            }}
+          >
+            {generating ? 'Generando…' : 'Generar con IA'}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenCreate}
+            sx={{
+              borderRadius: '12px',
+              fontWeight: 700, textTransform: 'none',
+              background: '#0F2A4A',
+              boxShadow: 'none',
+              '&:hover': { background: '#0a1f3a' },
+            }}
+          >
+            Nuevo post
+          </Button>
+        </Box>
       </Box>
 
       {error && (

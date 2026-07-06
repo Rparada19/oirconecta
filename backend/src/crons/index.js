@@ -161,6 +161,38 @@ async function processControl15d() {
   return { scanned: due.length, sent, failed };
 }
 
+/**
+ * Blog IA semanal — genera un post con Claude a partir del siguiente tema
+ * de la cola. Solo actúa lunes 8-9am hora Colombia (UTC-5). Guard de 6 días
+ * evita dobles envíos si el tick se solapa. Requiere env BLOG_AUTO_ENABLED=true
+ * para activarse en producción.
+ */
+async function processBlogWeekly() {
+  if (process.env.BLOG_AUTO_ENABLED !== 'true') return { skipped: 'disabled' };
+
+  const now = new Date();
+  const coHour = (now.getUTCHours() - 5 + 24) % 24;
+  // (UTC-5) Colombia: día de la semana en hora local
+  const coDate = new Date(now.getTime() - 5 * 3600 * 1000);
+  const coDay = coDate.getUTCDay(); // 0=Dom, 1=Lun
+
+  // Solo lunes 8-9am CO
+  if (coDay !== 1 || coHour < 8 || coHour >= 9) return { skipped: 'out-of-window' };
+
+  try {
+    const gen = require('../services/blogGenerator.service');
+    const result = await gen.generateOne({ minDaysBetween: 6 });
+    if (result.post) {
+      console.log(`[cron/blog] ✓ generado "${result.post.titulo}" (${result.post.estado})`);
+      return { generated: 1, postId: result.post.id, titulo: result.post.titulo };
+    }
+    return { generated: 0, reason: result.reason };
+  } catch (e) {
+    console.error('[cron/blog] falló:', e.message);
+    return { error: e.message };
+  }
+}
+
 async function processLeadNurture() {
   const emailService = require('../services/email.service');
   const now = new Date();
@@ -333,6 +365,14 @@ async function tick() {
       console.error('[cron] processControl15d falló:', e.message);
     }
 
+    // 6) Blog IA semanal (solo lunes 8-9am CO si BLOG_AUTO_ENABLED=true)
+    let blogResult = null;
+    try {
+      blogResult = await processBlogWeekly();
+    } catch (e) {
+      console.error('[cron] processBlogWeekly falló:', e.message);
+    }
+
     const hasActivity =
       (apptResult?.sent || 0) > 0 ||
       (remindersResult?.sent || 0) > 0 ||
@@ -340,10 +380,11 @@ async function tick() {
       (nurtureResult?.sent || 0) > 0 ||
       (nurtureResult?.failed || 0) > 0 ||
       (birthdayResult?.sent || 0) > 0 ||
-      (control15Result?.sent || 0) > 0;
+      (control15Result?.sent || 0) > 0 ||
+      (blogResult?.generated || 0) > 0;
     if (hasActivity) {
       const ms = Date.now() - started;
-      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0} · birthdays ${birthdayResult?.sent || 0}/${birthdayResult?.scanned || 0} · control15 ${control15Result?.sent || 0}/${control15Result?.scanned || 0}`);
+      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0} · birthdays ${birthdayResult?.sent || 0}/${birthdayResult?.scanned || 0} · control15 ${control15Result?.sent || 0}/${control15Result?.scanned || 0} · blog ${blogResult?.generated || 0}`);
     }
   } catch (e) {
     console.error('[cron] tick falló:', e.message);
@@ -365,4 +406,4 @@ function stop() {
   tickHandle = null;
 }
 
-module.exports = { start, stop, tick, processPendingReminders, processLeadNurture, processBirthdays, processControl15d };
+module.exports = { start, stop, tick, processPendingReminders, processLeadNurture, processBirthdays, processControl15d, processBlogWeekly };
