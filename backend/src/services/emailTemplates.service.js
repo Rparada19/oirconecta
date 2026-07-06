@@ -106,6 +106,49 @@ const HARDCODED = {
     category: 'TRANSACTIONAL',
     description: 'Check-in 15 días después de completar cita. Acompañamiento post-consulta.',
   },
+  CONTROL_T7: {
+    subject: '{{nombre}}, tu {{controlLabel}} se acerca',
+    preheader: 'Faltan 7 días — reserva tu control ahora',
+    body: `<p>Hola <strong>{{nombre}}</strong>,</p>
+<p>Han pasado casi <strong>{{diasDesdeAdaptacion}}</strong> días desde que empezaste a usar tus audífonos. Se acerca tu <strong>{{controlLabel}}</strong>, un momento importante para ajustar cualquier detalle y asegurar que sigas escuchando lo mejor posible.</p>
+<p><strong>¿Por qué importa este control?</strong> A esta altura ya identificaste qué te funciona y qué no. Podemos ajustar programación, revisar el estado del equipo y responder tus dudas.</p>
+<p style="text-align:center;margin:24px 0">
+  <a href="{{bookingUrl}}" style="display:inline-block;padding:14px 32px;background:#0F2A4A;color:#fff;text-decoration:none;border-radius:10px;font-weight:700">Agendar mi control</a>
+</p>
+<p>Si prefieres coordinarlo por teléfono, llámanos al {{telefonoCentro}}.</p>
+<p>Con cariño,<br/>El equipo OírConecta</p>`,
+    variables: ['nombre', 'controlLabel', 'diasDesdeAdaptacion', 'bookingUrl', 'telefonoCentro'],
+    category: 'TRANSACTIONAL',
+    description: 'F8 T-7d — recordatorio anticipado del control de adaptación (CRM centros propios).',
+  },
+  CONTROL_T1: {
+    subject: 'Mañana es tu {{controlLabel}}',
+    preheader: 'Recordatorio final — te esperamos',
+    body: `<p>Hola <strong>{{nombre}}</strong>,</p>
+<p>Mañana es tu <strong>{{controlLabel}}</strong>. Si aún no has agendado, puedes hacerlo ahora mismo o contactarnos.</p>
+<p style="text-align:center;margin:24px 0">
+  <a href="{{bookingUrl}}" style="display:inline-block;padding:14px 32px;background:#0F2A4A;color:#fff;text-decoration:none;border-radius:10px;font-weight:700">Agendar ahora</a>
+</p>
+<p>Te esperamos.<br/>El equipo OírConecta</p>`,
+    variables: ['nombre', 'controlLabel', 'bookingUrl'],
+    category: 'TRANSACTIONAL',
+    description: 'F8 T-1d — último recordatorio del control (CRM centros propios).',
+  },
+  CONTROL_OVERDUE: {
+    subject: '{{nombre}}, tu control quedó pendiente',
+    preheader: 'Reagenda cuando puedas — es rápido',
+    body: `<p>Hola <strong>{{nombre}}</strong>,</p>
+<p>Tu <strong>{{controlLabel}}</strong> quedó sin agendar. Sabemos que la vida se atraviesa — pero estos controles son la mejor forma de aprovechar al máximo tus audífonos.</p>
+<p><strong>Toma menos de 2 minutos</strong> reagendarlo:</p>
+<p style="text-align:center;margin:24px 0">
+  <a href="{{bookingUrl}}" style="display:inline-block;padding:14px 32px;background:#6d28d9;color:#fff;text-decoration:none;border-radius:10px;font-weight:700">Reagendar mi control</a>
+</p>
+<p>Si prefieres que te llamemos para coordinarlo, respóndenos este email o escríbenos al WhatsApp.</p>
+<p>Con cariño,<br/>El equipo OírConecta</p>`,
+    variables: ['nombre', 'controlLabel', 'bookingUrl'],
+    category: 'TRANSACTIONAL',
+    description: 'F8 T+3d vencido — invitación a reagendar el control (CRM centros propios).',
+  },
   REFERRAL_USED: {
     subject: 'Gracias, {{referrerName}}. Alguien usó tu invitación.',
     preheader: 'Un amigo tuyo acaba de agendar una cita en OírConecta',

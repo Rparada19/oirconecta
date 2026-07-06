@@ -177,6 +177,20 @@ const convertQuoteToSale = async (quoteId, additionalData = {}, createdById) => 
     data: { estado: 'CONVERTED' },
   });
 
+  // F8 — Si la venta ya trae fechaAdaptacion, dispara el funnel de controles
+  if (sale.categoria === 'HEARING_AID' && sale.fechaAdaptacion) {
+    try {
+      const followUps = require('./followUps.service');
+      await followUps.ensureFunnel({
+        patientId: sale.patientId,
+        adaptationDate: sale.fechaAdaptacion,
+        saleId: sale.id,
+      });
+    } catch (e) {
+      console.warn('[products/convertQuote] followUps.ensureFunnel falló:', e.message);
+    }
+  }
+
   return sale;
 };
 
@@ -265,7 +279,7 @@ const getSaleById = async (id) => {
 };
 
 const createSale = async (data, createdById) => {
-  return prisma.sale.create({
+  const sale = await prisma.sale.create({
     data: {
       patientId: data.patientId,
       categoria: data.categoria,
@@ -298,6 +312,22 @@ const createSale = async (data, createdById) => {
       campaign: true,
     },
   });
+
+  // F8 — Dispara el funnel de controles si es venta de audífono con fechaAdaptacion
+  if (sale.categoria === 'HEARING_AID' && sale.fechaAdaptacion) {
+    try {
+      const followUps = require('./followUps.service');
+      await followUps.ensureFunnel({
+        patientId: sale.patientId,
+        adaptationDate: sale.fechaAdaptacion,
+        saleId: sale.id,
+      });
+    } catch (e) {
+      console.warn('[products/createSale] followUps.ensureFunnel falló:', e.message);
+    }
+  }
+
+  return sale;
 };
 
 const updateSale = async (id, data) => {
@@ -317,10 +347,26 @@ const updateSale = async (id, data) => {
     updateData.metadata = { ...existingMeta, ...data.metadata };
   }
 
-  return prisma.sale.update({
+  const updated = await prisma.sale.update({
     where: { id },
     data: updateData,
   });
+
+  // F8 — Si la edición trae fechaAdaptacion en una venta de audífono, dispara/ajusta el funnel
+  if (updated.categoria === 'HEARING_AID' && updated.fechaAdaptacion) {
+    try {
+      const followUps = require('./followUps.service');
+      await followUps.ensureFunnel({
+        patientId: updated.patientId,
+        adaptationDate: updated.fechaAdaptacion,
+        saleId: updated.id,
+      });
+    } catch (e) {
+      console.warn('[products/updateSale] followUps.ensureFunnel falló:', e.message);
+    }
+  }
+
+  return updated;
 };
 
 module.exports = {

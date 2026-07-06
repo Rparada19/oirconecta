@@ -162,6 +162,130 @@ async function processControl15d() {
 }
 
 /**
+ * F8 — Funnel de controles post-adaptación (CRM centros propios).
+ * Escanea PatientFollowUp:
+ *   - T-7: envía email "tu control se acerca" al paciente
+ *   - T-1: envía email "mañana es tu control"
+ *   - T+3 sin agendar: marca OVERDUE + envía email "quedó pendiente"
+ * Solo actúa 8-9am hora Colombia. Registra Interaction en la HC.
+ */
+async function processFollowUpReminders() {
+  const now = new Date();
+  const coHour = (now.getUTCHours() - 5 + 24) % 24;
+  // Solo actúa en la ventana 8-9 AM Colombia. Fuera de esa ventana, no-op.
+  if (coHour < 8 || coHour >= 9) return { scanned: 0, sent: 0 };
+
+  const emailService = require('../services/email.service');
+  const followUps = require('../services/followUps.service');
+
+  const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://oirconecta.com';
+  const BOOKING_URL = `${SITE_URL}/agendar`;
+
+  // ─── T-7 días ───
+  const t7Start = new Date(now.getTime() + 6 * 24 * 3600 * 1000);
+  const t7End = new Date(now.getTime() + 8 * 24 * 3600 * 1000);
+  const dueT7 = await prisma.patientFollowUp.findMany({
+    where: {
+      status: { in: ['PENDING'] },
+      reminder7dSentAt: null,
+      dueDate: { gte: t7Start, lte: t7End },
+    },
+    include: { patient: { select: { id: true, nombre: true, email: true } } },
+    take: 100,
+  });
+
+  // ─── T-1 día ───
+  const t1Start = new Date(now.getTime() + 0.5 * 24 * 3600 * 1000);
+  const t1End = new Date(now.getTime() + 1.5 * 24 * 3600 * 1000);
+  const dueT1 = await prisma.patientFollowUp.findMany({
+    where: {
+      status: { in: ['PENDING', 'REMINDED'] },
+      reminder1dSentAt: null,
+      dueDate: { gte: t1Start, lte: t1End },
+    },
+    include: { patient: { select: { id: true, nombre: true, email: true } } },
+    take: 100,
+  });
+
+  // ─── T+3 días sin agendar ───
+  const overdueBefore = new Date(now.getTime() - 3 * 24 * 3600 * 1000);
+  const dueOverdue = await prisma.patientFollowUp.findMany({
+    where: {
+      status: { in: ['PENDING', 'REMINDED'] },
+      overdueSentAt: null,
+      dueDate: { lt: overdueBefore },
+    },
+    include: { patient: { select: { id: true, nombre: true, email: true } } },
+    take: 100,
+  });
+
+  let sent = 0, failed = 0;
+
+  async function sendAndRecord(fu, stage, sentField) {
+    if (!fu.patient?.email) {
+      // Sin email → solo marcamos que "se intentó" para no reintentar cada minuto.
+      await prisma.patientFollowUp.update({
+        where: { id: fu.id },
+        data: { [sentField]: now, status: stage === 'OVERDUE' ? 'OVERDUE' : 'REMINDED' },
+      });
+      return { skipped: 'no-email' };
+    }
+    const claim = await prisma.patientFollowUp.updateMany({
+      where: { id: fu.id, [sentField]: null },
+      data: { [sentField]: now, status: stage === 'OVERDUE' ? 'OVERDUE' : 'REMINDED' },
+    });
+    if (claim.count === 0) return { skipped: 'already-claimed' };
+
+    try {
+      const days = Math.round((new Date() - new Date(fu.dueDate)) / (24 * 3600 * 1000) + fu.offsetDays);
+      await emailService.sendControlReminder({
+        stage,
+        to: fu.patient.email,
+        patientName: fu.patient.nombre,
+        controlLabel: followUps.stepLabel(fu.step),
+        diasDesdeAdaptacion: fu.offsetDays,
+        bookingUrl: BOOKING_URL,
+      });
+      // Interaction en HC
+      await prisma.interaction.create({
+        data: {
+          patientId: fu.patient.id,
+          type: 'follow_up_control',
+          channel: 'email',
+          direction: 'outbound',
+          title: `${followUps.stepLabel(fu.step)} — recordatorio ${stage}`,
+          description: `Email enviado a ${fu.patient.email}`,
+          status: 'sent',
+          metadata: { followUpId: fu.id, step: fu.step, stage },
+        },
+      });
+      return { sent: true };
+    } catch (e) {
+      // Revertir claim para reintento en próximo tick
+      try {
+        await prisma.patientFollowUp.updateMany({
+          where: { id: fu.id, [sentField]: { not: null } },
+          data: { [sentField]: null },
+        });
+      } catch {}
+      throw e;
+    }
+  }
+
+  for (const fu of dueT7) {
+    try { const r = await sendAndRecord(fu, 'T7', 'reminder7dSentAt'); if (r.sent) sent++; } catch (e) { console.error('[cron/followup T7]', fu.id, e.message); failed++; }
+  }
+  for (const fu of dueT1) {
+    try { const r = await sendAndRecord(fu, 'T1', 'reminder1dSentAt'); if (r.sent) sent++; } catch (e) { console.error('[cron/followup T1]', fu.id, e.message); failed++; }
+  }
+  for (const fu of dueOverdue) {
+    try { const r = await sendAndRecord(fu, 'OVERDUE', 'overdueSentAt'); if (r.sent) sent++; } catch (e) { console.error('[cron/followup OVERDUE]', fu.id, e.message); failed++; }
+  }
+
+  return { scanned: dueT7.length + dueT1.length + dueOverdue.length, sent, failed };
+}
+
+/**
  * Blog IA semanal — genera un post con Claude a partir del siguiente tema
  * de la cola. Solo actúa lunes 8-9am hora Colombia (UTC-5). Guard de 6 días
  * evita dobles envíos si el tick se solapa. Requiere env BLOG_AUTO_ENABLED=true
@@ -373,6 +497,14 @@ async function tick() {
       console.error('[cron] processBlogWeekly falló:', e.message);
     }
 
+    // 7) F8 — Funnel controles post-adaptación (T-7 / T-1 / OVERDUE) 8-9am CO
+    let followUpResult = null;
+    try {
+      followUpResult = await processFollowUpReminders();
+    } catch (e) {
+      console.error('[cron] processFollowUpReminders falló:', e.message);
+    }
+
     const hasActivity =
       (apptResult?.sent || 0) > 0 ||
       (remindersResult?.sent || 0) > 0 ||
@@ -381,10 +513,11 @@ async function tick() {
       (nurtureResult?.failed || 0) > 0 ||
       (birthdayResult?.sent || 0) > 0 ||
       (control15Result?.sent || 0) > 0 ||
-      (blogResult?.generated || 0) > 0;
+      (blogResult?.generated || 0) > 0 ||
+      (followUpResult?.sent || 0) > 0;
     if (hasActivity) {
       const ms = Date.now() - started;
-      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0} · birthdays ${birthdayResult?.sent || 0}/${birthdayResult?.scanned || 0} · control15 ${control15Result?.sent || 0}/${control15Result?.scanned || 0} · blog ${blogResult?.generated || 0}`);
+      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0} · birthdays ${birthdayResult?.sent || 0}/${birthdayResult?.scanned || 0} · control15 ${control15Result?.sent || 0}/${control15Result?.scanned || 0} · blog ${blogResult?.generated || 0} · followups ${followUpResult?.sent || 0}/${followUpResult?.scanned || 0}`);
     }
   } catch (e) {
     console.error('[cron] tick falló:', e.message);
@@ -406,4 +539,4 @@ function stop() {
   tickHandle = null;
 }
 
-module.exports = { start, stop, tick, processPendingReminders, processLeadNurture, processBirthdays, processControl15d, processBlogWeekly };
+module.exports = { start, stop, tick, processPendingReminders, processLeadNurture, processBirthdays, processControl15d, processBlogWeekly, processFollowUpReminders };

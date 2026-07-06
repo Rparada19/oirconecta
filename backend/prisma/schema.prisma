@@ -27,15 +27,17 @@ model User {
   updatedAt            DateTime @updatedAt
 
   // Relaciones
-  leadsCreados          Lead[]          @relation("LeadCreatedBy")
-  citasCreadas          Appointment[]   @relation("AppointmentCreatedBy")
-  ventasCreadas         Sale[]          @relation("SaleCreatedBy")
-  blockedSlotsRequested BlockedSlot[]   @relation("BlockedSlotRequestedBy")
-  blockedSlotsApproved  BlockedSlot[]   @relation("BlockedSlotApprovedBy")
+  leadsCreados          Lead[]            @relation("LeadCreatedBy")
+  citasCreadas          Appointment[]     @relation("AppointmentCreatedBy")
+  ventasCreadas         Sale[]            @relation("SaleCreatedBy")
+  blockedSlotsRequested BlockedSlot[]     @relation("BlockedSlotRequestedBy")
+  blockedSlotsApproved  BlockedSlot[]     @relation("BlockedSlotApprovedBy")
   // Sales CRM (outbound — ejecutivo comercial captando profesionales)
-  salesLeadsOwned       SalesLead[]     @relation("SalesLeadOwner")
-  salesActivitiesDone   SalesActivity[] @relation("SalesActivityUser")
-  salesTasksAssigned    SalesTask[]     @relation("SalesTaskAssignee")
+  salesLeadsOwned       SalesLead[]       @relation("SalesLeadOwner")
+  salesActivitiesDone   SalesActivity[]   @relation("SalesActivityUser")
+  salesTasksAssigned    SalesTask[]       @relation("SalesTaskAssignee")
+  // F8: controles cerrados por este usuario
+  followUpsCompleted    PatientFollowUp[] @relation("FollowUpCompletedBy")
 
   /// Metas comerciales del ejecutivo. Ejemplo:
   /// { "callsPerDay": 25, "emailsPerDay": 15, "demosPerWeek": 6, "conversionsPerMonth": 12 }
@@ -443,6 +445,8 @@ model Patient {
   professionalRelations PatientProfessionalRelation[]
   // F5: conversaciones IA donde quedó identificado el paciente
   iaConversations       IaConversation[]
+  // F8: funnel de controles post-adaptación
+  followUps             PatientFollowUp[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -453,6 +457,59 @@ model Patient {
   @@index([sedeId])
   @@index([archivedAt])
   @@map("patients")
+}
+
+// ===========================================
+// F8 — FUNNEL DE CONTROLES POST-ADAPTACIÓN (CRM centros propios)
+// Cada Sale de audífono con fechaAdaptacion dispara 9 controles:
+// D10, M1, M3, M6, Y1, Y1_5, Y2, Y2_5, Y3 (renovación).
+// ===========================================
+
+model PatientFollowUp {
+  id        String  @id @default(uuid())
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  /// Venta que originó el funnel (para vincular con producto y garantía).
+  saleId String?
+  sale   Sale?   @relation(fields: [saleId], references: [id], onDelete: SetNull)
+
+  /// Código del step. Fijo, permite queries por posición del funnel.
+  /// D10 | M1 | M3 | M6 | Y1 | Y1_5 | Y2 | Y2_5 | Y3
+  step String
+
+  /// Días desde fechaAdaptacion. 10, 30, 90, 180, 365, 545, 730, 910, 1095.
+  offsetDays Int
+
+  /// Fecha objetivo del control = fechaAdaptacion + offsetDays.
+  dueDate DateTime
+
+  /// PENDING | REMINDED | SCHEDULED | COMPLETED | OVERDUE | SKIPPED.
+  status String @default("PENDING")
+
+  /// Cita agendada por el paciente para este control (si aplica).
+  scheduledAppointmentId String?
+  scheduledAppointment   Appointment? @relation(fields: [scheduledAppointmentId], references: [id], onDelete: SetNull)
+
+  /// Timestamps de envíos idempotentes (nunca dobla emails).
+  reminder7dSentAt DateTime? // T-7 días
+  reminder1dSentAt DateTime? // T-1 día
+  overdueSentAt    DateTime? // T+3 días (marca OVERDUE)
+
+  /// Cierre del control.
+  completedAt   DateTime?
+  completedById String?
+  completedBy   User?     @relation("FollowUpCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  notes         String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([patientId, step]) // no duplica step por paciente
+  @@index([status, dueDate])
+  @@index([patientId])
+  @@index([saleId])
+  @@map("patient_follow_ups")
 }
 
 // ===========================================
@@ -587,6 +644,9 @@ model Appointment {
 
   // T2-Gap3 — Control 15d post-cita
   control15SentAt DateTime? // cuándo se envió el email de control a los 15d
+
+  // F8 — Cita agendada por un follow-up de control (relación inversa)
+  followUps PatientFollowUp[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -807,6 +867,9 @@ model Sale {
   // Creado por
   createdById String?
   createdBy   User?   @relation("SaleCreatedBy", fields: [createdById], references: [id])
+
+  // F8 — funnel de controles disparado por esta venta
+  followUps PatientFollowUp[]
 
   // Metadata adicional
   metadata Json?

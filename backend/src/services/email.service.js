@@ -1219,6 +1219,51 @@ async function sendControl15d({ to, patientName, professionalName, tipoConsulta 
   await deliver({ to, toName: patientName, subject, html });
 }
 
+/**
+ * F8 — Recordatorio de control de adaptación (T-7 / T-1 / OVERDUE).
+ * @param {object} p
+ * @param {'T7'|'T1'|'OVERDUE'} p.stage — cuál template usar
+ * @param {string} p.to
+ * @param {string} p.patientName
+ * @param {string} p.controlLabel — "Control 3 meses", etc.
+ * @param {number} [p.diasDesdeAdaptacion]
+ * @param {string} [p.bookingUrl]
+ */
+async function sendControlReminder({ stage, to, patientName, controlLabel, diasDesdeAdaptacion, bookingUrl }) {
+  const code = stage === 'T7' ? 'CONTROL_T7' : stage === 'T1' ? 'CONTROL_T1' : 'CONTROL_OVERDUE';
+  const primerNombre = (patientName || '').split(' ')[0] || '';
+  const payload = {
+    nombre: primerNombre,
+    controlLabel: controlLabel || 'control',
+    diasDesdeAdaptacion: diasDesdeAdaptacion != null ? String(diasDesdeAdaptacion) : '',
+    bookingUrl: bookingUrl || `${SITE_URL}/agendar`,
+    telefonoCentro: process.env.CENTRO_TELEFONO || '+57 300 000 0000',
+  };
+  try {
+    const templates = require('./emailTemplates.service');
+    const { subject, body } = await templates.renderEmail(code, payload);
+    if (subject && body) {
+      const html = baseTemplate({ preheader: 'Recordatorio de control OírConecta', title: subject, bodyHtml: body });
+      await deliver({ to, toName: patientName, subject, html });
+      return;
+    }
+  } catch (e) {
+    console.warn(`[email/${code}] fallback:`, e.message);
+  }
+  // Fallback minimalista
+  const subject = stage === 'OVERDUE'
+    ? `${primerNombre}, tu ${controlLabel || 'control'} quedó pendiente`
+    : `${primerNombre}, tu ${controlLabel || 'control'} se acerca`;
+  const html = baseTemplate({
+    title: subject, preheader: 'Recordatorio de control',
+    bodyHtml: [
+      h1(`Hola ${primerNombre},`),
+      p(`Se acerca tu <strong>${controlLabel || 'control'}</strong>. Agéndalo cuando quieras respondiendo este email o entrando a <a href="${payload.bookingUrl}">tu portal</a>.`),
+    ].join(''),
+  });
+  await deliver({ to, toName: patientName, subject, html });
+}
+
 module.exports = {
   sendSalesOutreach,
   sendDirectoryWelcomeWithCredentials,
@@ -1245,6 +1290,7 @@ module.exports = {
   sendBirthday,
   sendReferralUsed,
   sendControl15d,
+  sendControlReminder,
 
   // T5 — Envío de prueba desde el admin buzón
   sendTemplatePreview: async ({ to, subject, body }) => {

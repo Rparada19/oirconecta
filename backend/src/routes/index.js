@@ -38,6 +38,7 @@ const consentsRoutes = require('./consents.routes');
 const salesRoutes = require('./sales.routes');
 const referralsRoutes = require('./referrals.routes');
 const emailTemplatesRoutes = require('./emailTemplates.routes');
+const followUpsRoutes = require('./followUps.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
@@ -73,6 +74,7 @@ router.use('/consents', consentsRoutes);
 router.use('/sales', salesRoutes);
 router.use('/referrals', referralsRoutes);
 router.use('/email-templates', emailTemplatesRoutes);
+router.use('/follow-ups', followUpsRoutes);
 
 // Info de la API
 router.get('/', (req, res) => {

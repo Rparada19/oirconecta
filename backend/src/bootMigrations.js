@@ -654,7 +654,32 @@ async function ensureAppointmentCancellationColumns(prisma) {
     `);
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "notification_templates_code_channel_locale_key" ON "notification_templates" ("code", "channel", "locale")`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "notification_templates_channel_activo_idx" ON "notification_templates" ("channel", "activo")`);
-    console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates OK');
+    // F8 — Funnel controles post-adaptación
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "patient_follow_ups" (
+        "id" TEXT PRIMARY KEY,
+        "patientId" TEXT NOT NULL,
+        "saleId" TEXT,
+        "step" TEXT NOT NULL,
+        "offsetDays" INTEGER NOT NULL,
+        "dueDate" TIMESTAMP(3) NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'PENDING',
+        "scheduledAppointmentId" TEXT,
+        "reminder7dSentAt" TIMESTAMP(3),
+        "reminder1dSentAt" TIMESTAMP(3),
+        "overdueSentAt" TIMESTAMP(3),
+        "completedAt" TIMESTAMP(3),
+        "completedById" TEXT,
+        "notes" TEXT,
+        "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "patient_follow_ups_patientId_step_key" ON "patient_follow_ups" ("patientId", "step")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patient_follow_ups_status_dueDate_idx" ON "patient_follow_ups" ("status", "dueDate")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patient_follow_ups_patientId_idx" ON "patient_follow_ups" ("patientId")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patient_follow_ups_saleId_idx" ON "patient_follow_ups" ("saleId")`);
+    console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates + follow_ups OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);
   }

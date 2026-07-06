@@ -68,6 +68,8 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [actionMetrics, setActionMetrics] = useState({ activas: 0, vencidas: 0, cumplidas: 0, total: 0 });
+  const [followUpsSummary, setFollowUpsSummary] = useState({ overdue: 0, upcoming7d: 0, scheduled: 0, totalPending: 0 });
+  const [overdueFollowUps, setOverdueFollowUps] = useState([]);
 
   const loadAllData = async ({ showSpinner = true } = {}) => {
     setLoadError(null);
@@ -81,12 +83,21 @@ const DashboardPage = () => {
         return;
       }
 
-      const [aptRes, leadsRes, prodRes, metricsRes] = await Promise.allSettled([
+      const [aptRes, leadsRes, prodRes, metricsRes, followUpsSumRes, followUpsListRes] = await Promise.allSettled([
         getAllAppointments(),
         getAllLeadsCombined(),
         getAllPatientProducts(),
         getDailyActionsMetrics(7),
+        api.get('/api/follow-ups/summary'),
+        api.get('/api/follow-ups/overdue?limit=20'),
       ]);
+
+      if (followUpsSumRes.status === 'fulfilled' && followUpsSumRes.value?.data?.success) {
+        setFollowUpsSummary(followUpsSumRes.value.data.data);
+      }
+      if (followUpsListRes.status === 'fulfilled' && followUpsListRes.value?.data?.success) {
+        setOverdueFollowUps(followUpsListRes.value.data.data || []);
+      }
 
       if (metricsRes.status === 'fulfilled' && metricsRes.value) {
         setActionMetrics(metricsRes.value);
@@ -617,6 +628,81 @@ const DashboardPage = () => {
             </Grid>
           </Grid>
         </Box>
+
+        {/* F8 — Controles de adaptación (post-venta audífono) */}
+        {(followUpsSummary.overdue > 0 || followUpsSummary.upcoming7d > 0) && (
+          <Box sx={{ mb: 3, p: 3, borderRadius: '16px', bgcolor: '#fff', border: '1px solid #eef0f3' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+              <Box>
+                <Typography sx={{ fontFamily: '"Playfair Display",Georgia,serif', letterSpacing: '-0.02em', fontWeight: 600, color: '#0F2A4A', fontSize: '1.4rem' }}>
+                  Controles de adaptación
+                </Typography>
+                <Typography sx={{ fontSize: '0.85rem', color: '#64748b' }}>
+                  Pacientes que agendaron audífono y necesitan control clínico.
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1.5 }}>
+                <Box sx={{ px: 2, py: 1, bgcolor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', textAlign: 'center', minWidth: 90 }}>
+                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#b91c1c', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Vencidos</Typography>
+                  <Typography sx={{ fontWeight: 900, color: '#b91c1c', fontSize: '1.75rem', lineHeight: 1 }}>{followUpsSummary.overdue}</Typography>
+                </Box>
+                <Box sx={{ px: 2, py: 1, bgcolor: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: '10px', textAlign: 'center', minWidth: 90 }}>
+                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Próx. 7d</Typography>
+                  <Typography sx={{ fontWeight: 900, color: '#6d28d9', fontSize: '1.75rem', lineHeight: 1 }}>{followUpsSummary.upcoming7d}</Typography>
+                </Box>
+                <Box sx={{ px: 2, py: 1, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', textAlign: 'center', minWidth: 90 }}>
+                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Agendados</Typography>
+                  <Typography sx={{ fontWeight: 900, color: '#15803d', fontSize: '1.75rem', lineHeight: 1 }}>{followUpsSummary.scheduled}</Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {overdueFollowUps.length > 0 && (
+              <Box>
+                <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.14em', color: '#64748b', textTransform: 'uppercase', mb: 1 }}>
+                  Vencidos — llamar y agendar
+                </Typography>
+                <Box sx={{ border: '1px solid #eef0f3', borderRadius: '10px', overflow: 'hidden' }}>
+                  {overdueFollowUps.slice(0, 8).map((fu) => {
+                    const diasVencido = Math.floor((new Date() - new Date(fu.dueDate)) / (1000 * 60 * 60 * 24));
+                    const stepLabels = { D10: '10 días', M1: '1 mes', M3: '3 meses', M6: '6 meses', Y1: '1 año', Y1_5: '1.5 años', Y2: '2 años', Y2_5: '2.5 años', Y3: 'Renovación 3 años' };
+                    return (
+                      <Box key={fu.id}
+                        sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1.5, borderBottom: '1px solid #f1f5f9', '&:last-child': { borderBottom: 0 }, gap: 2, '&:hover': { bgcolor: '#fafafa' } }}>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ fontWeight: 700, color: '#0F2A4A', fontSize: '0.9rem' }}>
+                            {fu.patient?.nombre || 'Paciente'}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+                            {stepLabels[fu.step] || fu.step} · vencido hace {diasVencido} día{diasVencido !== 1 ? 's' : ''}
+                            {fu.patient?.ciudad ? ` · ${fu.patient.ciudad}` : ''}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 0.75, flexShrink: 0 }}>
+                          {fu.patient?.telefono && (
+                            <Button size="small" href={`tel:${fu.patient.telefono}`}
+                              sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, color: '#0F2A4A' }}>
+                              📞 {fu.patient.telefono}
+                            </Button>
+                          )}
+                          <Button size="small" variant="outlined" onClick={() => navigate(`/portal-crm/pacientes?patientId=${fu.patient?.id}`)}
+                            sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderColor: '#6d28d9', color: '#6d28d9', borderRadius: '8px' }}>
+                            Abrir ficha
+                          </Button>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
+                {overdueFollowUps.length > 8 && (
+                  <Typography sx={{ mt: 1, fontSize: '0.75rem', color: '#64748b', textAlign: 'center' }}>
+                    + {overdueFollowUps.length - 8} vencidos más
+                  </Typography>
+                )}
+              </Box>
+            )}
+          </Box>
+        )}
 
         {/* KPI Cards — limpios y comparables */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
