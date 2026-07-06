@@ -138,8 +138,10 @@ const LeadsPage = () => {
     getAvailableTimeSlots(appointmentData.date, '07:00', '18:00', appointmentData.professionalId || null).then(setConvertAvailableSlots);
   }, [convertDialogOpen, appointmentData.date, appointmentData.professionalId]);
 
-  const loadLeads = async () => {
-    setLeadsLoading(true);
+  // showSpinner=true solo en la carga inicial. El polling de fondo
+  // refresca los datos silenciosamente para no parpadear la pantalla.
+  const loadLeads = async ({ showSpinner = false } = {}) => {
+    if (showSpinner) setLeadsLoading(true);
     try {
       const allLeads = await getAllLeadsCombined();
       setLeads(Array.isArray(allLeads) ? allLeads : []);
@@ -147,13 +149,13 @@ const LeadsPage = () => {
       console.error('[LeadsPage] Error al cargar leads:', e);
       setSnackbar({ open: true, message: e?.message || 'Error al cargar leads', severity: 'error' });
     } finally {
-      setLeadsLoading(false);
+      if (showSpinner) setLeadsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadLeads();
-    const interval = setInterval(loadLeads, 30000);
+    loadLeads({ showSpinner: true });
+    const interval = setInterval(() => loadLeads({ showSpinner: false }), 30000);
     return () => clearInterval(interval);
   }, []);
 
