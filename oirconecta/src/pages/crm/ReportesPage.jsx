@@ -40,6 +40,7 @@ import {
 } from '@mui/material';
 import {
   ArrowBack,
+  Assessment,
   Download,
   PictureAsPdf,
   TableChart,
