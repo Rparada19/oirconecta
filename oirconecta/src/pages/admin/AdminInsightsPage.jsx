@@ -16,7 +16,7 @@ import {
 import {
   InsightsOutlined, LocationOnOutlined, PhoneAndroidOutlined,
   PublicOutlined, ArticleOutlined, AccountTreeOutlined, TrendingUpOutlined,
-  RefreshOutlined, PictureAsPdfOutlined,
+  RefreshOutlined, PictureAsPdfOutlined, TrackChangesOutlined,
 } from '@mui/icons-material';
 import { adminFetch } from './adminAuth';
 import { downloadInsightsPdf } from '../../utils/insightsPdfExport';
@@ -177,6 +177,7 @@ export default function AdminInsightsPage() {
           <Tab icon={<PublicOutlined fontSize="small" />} iconPosition="start" label="Fuentes" />
           <Tab icon={<ArticleOutlined fontSize="small" />} iconPosition="start" label="Páginas" />
           <Tab icon={<AccountTreeOutlined fontSize="small" />} iconPosition="start" label="Embudo" />
+          <Tab icon={<TrackChangesOutlined fontSize="small" />} iconPosition="start" label="Atribución" />
         </Tabs>
         <Box sx={{ p: { xs: 2, md: 3 } }}>
           {tab === 0 && <TabResumen range={range} tick={refreshTick} />}
@@ -185,6 +186,7 @@ export default function AdminInsightsPage() {
           {tab === 3 && <TabFuentes range={range} tick={refreshTick} />}
           {tab === 4 && <TabPaginas range={range} tick={refreshTick} />}
           {tab === 5 && <TabEmbudo range={range} tick={refreshTick} />}
+          {tab === 6 && <TabAtribucion range={range} tick={refreshTick} />}
         </Box>
       </Card>
     </Box>
@@ -422,6 +424,106 @@ function TabEmbudo({ range, tick }) {
           );
         })}
       </Stack>
+    </Box>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB 6 · Atribución (D7)
+// ═══════════════════════════════════════════════════════════════════
+function TabAtribucion({ range, tick }) {
+  const { data, loading } = useAnalytics('/api/analytics/admin/attribution', range, tick);
+  if (loading) return <Loading />;
+  if (!data) return <Typography sx={{ color: '#94a3b8', fontStyle: 'italic', p: 2 }}>Sin datos.</Typography>;
+
+  const utm = data.byUtmCampaign || [];
+  const internal = data.byInternalCampaign || [];
+  const channels = data.summary?.channels || [];
+  const totalCh = channels.reduce((a, c) => a + Number(c.sessions || 0), 0);
+
+  return (
+    <Box>
+      <Typography sx={{ color: '#64748b', fontSize: '0.875rem', mb: 2 }}>
+        Atribución <strong>last-touch</strong> por sesión. Cada sesión cuenta como
+        una conversión si logró un lead, cita, compra o suscripción.
+      </Typography>
+
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Kpi label="Sesiones totales" value={fmtNum(data.summary?.totalSessions)} color="#0369a1" />
+        <Kpi label="Citas atribuidas" value={fmtNum(data.summary?.totalBookings)} color={ACCENT} />
+        <Kpi label="Suscripciones" value={fmtNum(data.summary?.totalSubs)} color="#6d28d9" />
+        <Kpi label="Utms distintas" value={fmtNum(utm.length)} color="#f59e0b" />
+      </Grid>
+
+      <Typography sx={{ fontWeight: 800, mb: 1.5, color: NAVY }}>Canal de origen</Typography>
+      <Table size="small" sx={{ mb: 3 }}>
+        <TableHead><TableRow>
+          <TableCell sx={{ fontWeight: 700 }}>Canal</TableCell>
+          <TableCell align="right" sx={{ fontWeight: 700 }}>Sesiones</TableCell>
+          <TableCell align="right" sx={{ fontWeight: 700 }}>%</TableCell>
+          <TableCell align="right" sx={{ fontWeight: 700 }}>Citas</TableCell>
+          <TableCell align="right" sx={{ fontWeight: 700 }}>Suscripciones</TableCell>
+        </TableRow></TableHead>
+        <TableBody>
+          {channels.map((c) => (
+            <TableRow key={c.channel} hover>
+              <TableCell sx={{ textTransform: 'capitalize' }}>{c.channel}</TableCell>
+              <TableCell align="right">{fmtNum(c.sessions)}</TableCell>
+              <TableCell align="right">{totalCh > 0 ? `${Math.round((c.sessions / totalCh) * 100)}%` : '—'}</TableCell>
+              <TableCell align="right" sx={{ fontWeight: c.bookings > 0 ? 700 : 400, color: c.bookings > 0 ? ACCENT : 'inherit' }}>
+                {fmtNum(c.bookings)}
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: c.subscriptions > 0 ? 700 : 400, color: c.subscriptions > 0 ? '#6d28d9' : 'inherit' }}>
+                {fmtNum(c.subscriptions)}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <Typography sx={{ fontWeight: 800, mb: 1.5, color: NAVY }}>Por campaña externa (UTM)</Typography>
+      {utm.length === 0 ? (
+        <Typography sx={{ color: '#94a3b8', fontStyle: 'italic', mb: 3 }}>
+          Sin UTMs registradas en el rango. Las campañas externas deben marcar tráfico con
+          <code style={{ background: '#f1f5f9', padding: '2px 4px', borderRadius: 4, marginLeft: 4 }}>?utm_campaign=…&utm_source=…&utm_medium=…</code>
+        </Typography>
+      ) : (
+        <RankTable
+          rows={utm.slice(0, 25)}
+          cols={[
+            { key: 'utmCampaign',   label: 'Campaña' },
+            { key: 'utmSource',     label: 'Source' },
+            { key: 'utmMedium',     label: 'Medium' },
+            { key: 'sessions',      label: 'Sesiones', align: 'right', render: fmtNum },
+            { key: 'bookings',      label: 'Citas',    align: 'right', render: (v) => v > 0 ? <b style={{ color: ACCENT }}>{fmtNum(v)}</b> : '0' },
+            { key: 'subscriptions', label: 'Subs',     align: 'right', render: (v) => v > 0 ? <b style={{ color: '#6d28d9' }}>{fmtNum(v)}</b> : '0' },
+            { key: 'conversionRate', label: 'CVR',     align: 'right', render: fmtPct },
+          ]}
+          barKey="sessions"
+        />
+      )}
+
+      <Typography sx={{ fontWeight: 800, mt: 3, mb: 1.5, color: NAVY }}>Por campaña interna (ads OírConecta)</Typography>
+      {internal.length === 0 ? (
+        <Typography sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
+          No hay clicks atribuidos a campañas internas en el rango.
+        </Typography>
+      ) : (
+        <RankTable
+          rows={internal.slice(0, 25)}
+          cols={[
+            { key: 'name',          label: 'Campaña' },
+            { key: 'advertiser',    label: 'Marca' },
+            { key: 'impressions',   label: 'Impres.',  align: 'right', render: fmtNum },
+            { key: 'clicks',        label: 'Clicks',   align: 'right', render: fmtNum },
+            { key: 'ctr',           label: 'CTR',      align: 'right', render: fmtPct },
+            { key: 'sessions',      label: 'Sesiones', align: 'right', render: fmtNum },
+            { key: 'bookings',      label: 'Citas',    align: 'right', render: (v) => v > 0 ? <b style={{ color: ACCENT }}>{fmtNum(v)}</b> : '0' },
+            { key: 'subscriptions', label: 'Subs',     align: 'right', render: (v) => v > 0 ? <b style={{ color: '#6d28d9' }}>{fmtNum(v)}</b> : '0' },
+          ]}
+          barKey="sessions"
+        />
+      )}
     </Box>
   );
 }

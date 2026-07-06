@@ -88,6 +88,7 @@ router.get('/admin/traffic-sources',  authenticate, authorize('ADMIN'), (req, re
 router.get('/admin/top-pages',        authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getTopPages(range(req))));
 router.get('/admin/funnel',           authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getFunnel(range(req))));
 router.get('/admin/top-events',       authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getTopEvents(range(req))));
+router.get('/admin/attribution',      authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getAttribution(range(req))));
 router.get('/admin/debug',            authenticate, authorize('ADMIN'), (req, res) => send(res, () => insights.getDebug()));
 
 module.exports = router;

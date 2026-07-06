@@ -307,8 +307,151 @@ async function getDebug() {
   };
 }
 
+/**
+ * D7 — Atribución por campaña (UTM externas + campañas internas).
+ * Agrupa sesiones por utm_campaign/source/medium y contabiliza conversiones.
+ * Base de la tabla: AnalyticsSession con flags hadLead/hadBooking/hadSubscription.
+ *
+ * Retorna:
+ *  - byUtmCampaign: filas por (utmCampaign, utmSource, utmMedium)
+ *  - byInternalCampaign: filas por campaignId propio (ads OírConecta)
+ *  - summary: totales del rango y breakdown paid / organic / direct
+ */
+async function getAttribution(range) {
+  const { from, to } = defaultRange(range);
+
+  // Agregado UTM
+  const utmRows = await prisma.$queryRawUnsafe(`
+    SELECT
+      COALESCE("utmCampaign", '(none)') AS utm_campaign,
+      COALESCE("utmSource",   '(none)') AS utm_source,
+      COALESCE("utmMedium",   '(none)') AS utm_medium,
+      COUNT(*)::int                                                   AS sessions,
+      SUM(CASE WHEN "hadLead"         THEN 1 ELSE 0 END)::int          AS leads,
+      SUM(CASE WHEN "hadBooking"      THEN 1 ELSE 0 END)::int          AS bookings,
+      SUM(CASE WHEN "hadPurchase"     THEN 1 ELSE 0 END)::int          AS purchases,
+      SUM(CASE WHEN "hadSubscription" THEN 1 ELSE 0 END)::int          AS subscriptions,
+      COUNT(*) FILTER (WHERE "isNewVisitor")::int                       AS new_visitors
+    FROM "analytics_sessions"
+    WHERE "startedAt" BETWEEN $1 AND $2
+    GROUP BY 1, 2, 3
+    ORDER BY sessions DESC
+    LIMIT 200
+  `, from, to);
+
+  // Agregado por campañaId interno (ads OírConecta).
+  // Un click con campaignId enciende una sesión atribuida. Contamos sesiones
+  // distintas cuyo primer/mejor evento con campaignId cae en el rango.
+  const internalRows = await prisma.$queryRawUnsafe(`
+    WITH campaign_sessions AS (
+      SELECT DISTINCT e."campaignId", e."sessionId"
+      FROM "analytics_events" e
+      WHERE e."campaignId" IS NOT NULL
+        AND e."timestamp" BETWEEN $1 AND $2
+    ),
+    ad_clicks AS (
+      SELECT "campaignId", COUNT(*)::int AS clicks
+      FROM "analytics_events"
+      WHERE "campaignId" IS NOT NULL
+        AND "eventType" = 'ad_click'
+        AND "timestamp" BETWEEN $1 AND $2
+      GROUP BY "campaignId"
+    ),
+    ad_impressions AS (
+      SELECT "campaignId", COUNT(*)::int AS impressions
+      FROM "analytics_events"
+      WHERE "campaignId" IS NOT NULL
+        AND "eventType" = 'ad_impression'
+        AND "timestamp" BETWEEN $1 AND $2
+      GROUP BY "campaignId"
+    ),
+    session_conv AS (
+      SELECT
+        cs."campaignId",
+        COUNT(DISTINCT cs."sessionId")::int AS attributed_sessions,
+        SUM(CASE WHEN s."hadLead"         THEN 1 ELSE 0 END)::int AS leads,
+        SUM(CASE WHEN s."hadBooking"      THEN 1 ELSE 0 END)::int AS bookings,
+        SUM(CASE WHEN s."hadPurchase"     THEN 1 ELSE 0 END)::int AS purchases,
+        SUM(CASE WHEN s."hadSubscription" THEN 1 ELSE 0 END)::int AS subscriptions
+      FROM campaign_sessions cs
+      LEFT JOIN "analytics_sessions" s ON s.id = cs."sessionId"
+      GROUP BY cs."campaignId"
+    )
+    SELECT
+      c.id                            AS campaign_id,
+      c.nombre                        AS name,
+      c.fabricante                    AS advertiser,
+      COALESCE(ai.impressions, 0)     AS impressions,
+      COALESCE(ac.clicks, 0)          AS clicks,
+      COALESCE(sc.attributed_sessions, 0) AS sessions,
+      COALESCE(sc.leads, 0)           AS leads,
+      COALESCE(sc.bookings, 0)        AS bookings,
+      COALESCE(sc.purchases, 0)       AS purchases,
+      COALESCE(sc.subscriptions, 0)   AS subscriptions
+    FROM session_conv sc
+    LEFT JOIN "campaigns" c    ON c.id = sc."campaignId"
+    LEFT JOIN ad_clicks ac     ON ac."campaignId" = sc."campaignId"
+    LEFT JOIN ad_impressions ai ON ai."campaignId" = sc."campaignId"
+    ORDER BY sc.bookings DESC NULLS LAST, sc.attributed_sessions DESC
+    LIMIT 200
+  `, from, to);
+
+  // Breakdown alto nivel: paid / organic / direct / referral / social / email
+  const summaryRows = await prisma.$queryRawUnsafe(`
+    SELECT
+      CASE
+        WHEN "utmMedium" IN ('cpc','ppc','paid','paid_social','display','video') THEN 'paid'
+        WHEN "utmMedium" IN ('organic','seo') THEN 'organic'
+        WHEN "utmMedium" IN ('email','newsletter') THEN 'email'
+        WHEN "utmMedium" IN ('social','social_organic') THEN 'social'
+        WHEN "utmCampaign" IS NULL AND "utmSource" IS NULL THEN 'direct'
+        WHEN "utmMedium" = 'referral' THEN 'referral'
+        ELSE 'other'
+      END AS channel,
+      COUNT(*)::int AS sessions,
+      SUM(CASE WHEN "hadBooking"      THEN 1 ELSE 0 END)::int AS bookings,
+      SUM(CASE WHEN "hadSubscription" THEN 1 ELSE 0 END)::int AS subscriptions
+    FROM "analytics_sessions"
+    WHERE "startedAt" BETWEEN $1 AND $2
+    GROUP BY 1
+    ORDER BY sessions DESC
+  `, from, to);
+
+  const totalSessions = summaryRows.reduce((a, r) => a + Number(r.sessions || 0), 0);
+  const totalBookings = summaryRows.reduce((a, r) => a + Number(r.bookings || 0), 0);
+  const totalSubs = summaryRows.reduce((a, r) => a + Number(r.subscriptions || 0), 0);
+
+  return {
+    from, to,
+    byUtmCampaign: utmRows.map((r) => ({
+      utmCampaign: r.utm_campaign, utmSource: r.utm_source, utmMedium: r.utm_medium,
+      sessions: Number(r.sessions), leads: Number(r.leads), bookings: Number(r.bookings),
+      purchases: Number(r.purchases), subscriptions: Number(r.subscriptions),
+      newVisitors: Number(r.new_visitors),
+      conversionRate: r.sessions > 0 ? Math.round((Number(r.bookings) / Number(r.sessions)) * 10000) / 100 : 0,
+    })),
+    byInternalCampaign: internalRows.map((r) => ({
+      campaignId: r.campaign_id, name: r.name || 'Campaña sin nombre',
+      advertiser: r.advertiser || null,
+      impressions: Number(r.impressions), clicks: Number(r.clicks),
+      sessions: Number(r.sessions), leads: Number(r.leads),
+      bookings: Number(r.bookings), purchases: Number(r.purchases),
+      subscriptions: Number(r.subscriptions),
+      ctr: r.impressions > 0 ? Math.round((Number(r.clicks) / Number(r.impressions)) * 10000) / 100 : 0,
+      bookingRate: r.sessions > 0 ? Math.round((Number(r.bookings) / Number(r.sessions)) * 10000) / 100 : 0,
+    })),
+    summary: {
+      totalSessions, totalBookings, totalSubs,
+      channels: summaryRows.map((r) => ({
+        channel: r.channel, sessions: Number(r.sessions),
+        bookings: Number(r.bookings), subscriptions: Number(r.subscriptions),
+      })),
+    },
+  };
+}
+
 module.exports = {
   getOverview, getTimeseries, getByCity, getByDevice,
   getTrafficSources, getTopPages, getFunnel, getTopEvents,
-  getDebug,
+  getDebug, getAttribution,
 };
