@@ -24,6 +24,13 @@ const ADMIN_EMAIL      = process.env.ADMIN_EMAIL || null;
 const LOGO_URL         = 'https://oirconecta.com/logo-oirconecta.png';
 const SITE_URL         = 'https://oirconecta.com';
 
+// Único punto de verdad para el número corporativo — no hardcodear en el body.
+// Config por env: CENTRO_WHATSAPP=573171503944  CENTRO_TELEFONO='+57 317 150 3944'
+const WA_NUMBER  = (process.env.CENTRO_WHATSAPP || '573171503944').replace(/\D/g, '');
+const WA_DISPLAY = process.env.CENTRO_TELEFONO || '+57 317 150 3944';
+const WA_HREF    = `https://wa.me/${WA_NUMBER}`;
+const TEL_HREF   = `tel:+${WA_NUMBER}`;
+
 // ─── HTML base template ──────────────────────────────────────────────────────
 function baseTemplate({ preheader = '', title, bodyHtml }) {
   return `<!DOCTYPE html>
@@ -296,7 +303,7 @@ async function sendBookingConfirmation(appointment, meta = {}) {
               `<a href="${SITE_URL}/agendar/cancelar?token=${appointment.rescheduleToken}" style="display:inline-block;margin:4px;padding:13px 22px;background:#f9fafb;color:#dc2626;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;border:1.5px solid #dc2626;">Cancelar mi cita</a>`,
               `</div>`,
             ].join('')
-          : p('Para reprogramar o cancelar tu cita llámanos al <a href="tel:+573157939569"><strong>+57 315 793 9569</strong></a> o escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.'),
+          : p('Para reprogramar o cancelar tu cita llámanos al <a href="${TEL_HREF}"><strong>${WA_DISPLAY}</strong></a> o escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.'),
         appointment.directoryProfileId ? '' : btn(`${SITE_URL}/blog`, 'Leer artículos de salud auditiva'),
         divider(),
         p(`<span style="font-size:13px;color:#6b7280;">¿Preguntas? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a></span>`),
@@ -352,7 +359,7 @@ async function sendProfessionalWelcome({ email, nombre, nombreConsultorio }) {
       </table>`,
       btn(`${SITE_URL}/portal-profesional`, 'Acceder a mi portal'),
       divider(),
-      p(`<span style="font-size:13px;color:#6b7280;">¿Tienes preguntas? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o por WhatsApp al <a href="https://wa.me/573157939569">+57 315 793 9569</a>.</span>`),
+      p(`<span style="font-size:13px;color:#6b7280;">¿Tienes preguntas? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o por WhatsApp al <a href="${WA_HREF}">${WA_DISPLAY}</a>.</span>`),
     ].join(''),
   });
   await deliver({ to: email, toName: nombre, subject: '¡Bienvenido/a a OírConecta! Revisaremos tu perfil pronto', html });
@@ -551,7 +558,7 @@ async function sendContactFormNotification({ nombre, email, telefono, asunto, me
         h1('Recibimos tu mensaje ✓'),
         p(`Hola <strong>${nombre || ''}</strong>, gracias por contactarnos. Revisaremos tu mensaje y te responderemos en menos de 24 horas.`),
         divider(),
-        p(`<span style="font-size:13px;color:#6b7280;">¿Urgente? Escríbenos al WhatsApp <a href="https://wa.me/573157939569">+57 315 793 9569</a></span>`),
+        p(`<span style="font-size:13px;color:#6b7280;">¿Urgente? Escríbenos al WhatsApp <a href="${WA_HREF}">${WA_DISPLAY}</a></span>`),
       ].join(''),
     });
     await deliver({ to: email, toName: nombre, subject: 'Recibimos tu mensaje — OírConecta', html: confirmHtml });
@@ -592,7 +599,7 @@ async function sendAppointmentReminder({ email, nombre, fecha, hora, tipo, confi
         </tr>
       </table>`,
       divider(),
-      p(`<span style="font-size:13px;color:#6b7280;">Para cancelar o más información: <a href="https://wa.me/573157939569">WhatsApp +57 315 793 9569</a> o <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a></span>`),
+      p(`<span style="font-size:13px;color:#6b7280;">Para cancelar o más información: <a href="${WA_HREF}">WhatsApp ${WA_DISPLAY}</a> o <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a></span>`),
     ].join(''),
   });
   await deliver({ to: email, toName: nombre, subject: `Recordatorio: tu cita es ${label} — OírConecta`, html });
@@ -614,7 +621,7 @@ async function sendRescheduledNotification({ to, patientName, patientEmail, oldF
           ['Nueva fecha', newFecha],
           ['Nueva hora',  newHora],
         ]),
-        p('Para más información escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o al <a href="https://wa.me/573157939569">+57 315 793 9569</a>.'),
+        p('Para más información escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o al <a href="${WA_HREF}">${WA_DISPLAY}</a>.'),
       ].join(''),
     });
     await deliver({ to: patientEmail, toName: patientName, subject: `Tu cita fue reagendada — OírConecta`, html });
@@ -724,7 +731,7 @@ async function sendComparadorLeadEmails({ nombre, telefono, email, ciudad, marca
         p('Mientras tanto, puedes explorar nuestro contenido de salud auditiva.'),
         btn(`${SITE_URL}/blog`, 'Leer artículos'),
         divider(),
-        p(`<span style="font-size:13px;color:#6b7280;">¿Dudas? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o WhatsApp <a href="https://wa.me/573157939569">+57 315 793 9569</a>.</span>`),
+        p(`<span style="font-size:13px;color:#6b7280;">¿Dudas? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o WhatsApp <a href="${WA_HREF}">${WA_DISPLAY}</a>.</span>`),
       ].join(''),
     });
     await deliver({ to: email, toName: nombre, subject: 'Recibimos tu solicitud — OírConecta', html });
@@ -775,7 +782,7 @@ async function sendShopOrderEmails({ order, items = [], sugerencias = [] }) {
         p(`<span style="font-size:13px;color:#6b7280;">Envío a: ${order.envioDireccion}, ${order.envioCiudad}${order.envioDepartamento ? ', ' + order.envioDepartamento : ''}.</span>`),
         crossHtml,
         divider(),
-        p(`<span style="font-size:13px;color:#6b7280;">¿Dudas? <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> · WhatsApp <a href="https://wa.me/573157939569">+57 315 793 9569</a></span>`),
+        p(`<span style="font-size:13px;color:#6b7280;">¿Dudas? <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> · WhatsApp <a href="${WA_HREF}">${WA_DISPLAY}</a></span>`),
       ].join(''),
     });
     await deliver({ to: order.envioEmail, toName: order.envioNombre, subject: `Pedido #${order.numero} recibido — OírConecta`, html });
@@ -902,7 +909,7 @@ async function sendSubscriptionCanceled({ email, nombre, motivo, vigenteHasta, r
       reactivacionUrl ? btn(reactivacionUrl, 'Reactivar mi suscripción') : '',
       divider(),
       p('Antes de irte, nos encantaría saber qué podríamos mejorar. Una respuesta a este correo basta — la leemos toda.'),
-      p(`<span style="font-size:13px;color:#6b7280;">¿Cambiaste de opinión? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o por WhatsApp al <a href="https://wa.me/573157939569">+57 315 793 9569</a>.</span>`),
+      p(`<span style="font-size:13px;color:#6b7280;">¿Cambiaste de opinión? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o por WhatsApp al <a href="${WA_HREF}">${WA_DISPLAY}</a>.</span>`),
       p('<span style="font-size:13px;color:#6b7280;">Gracias por confiar en nosotros para conectar tu práctica con los pacientes que más te necesitan. Te deseamos lo mejor en el camino que sigues.</span>'),
       p('<span style="font-size:13px;color:#085946;font-weight:600;">— El equipo OírConecta</span>'),
     ].join(''),

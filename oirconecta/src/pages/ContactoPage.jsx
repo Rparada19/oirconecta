@@ -16,6 +16,7 @@ import {
   PageHero, SectionEyebrow, SectionTitle, C,
 } from '../components/editorial/EditorialKit';
 import { useReveal } from '../hooks/useReveal';
+import { getWhatsAppHref, getWhatsAppDisplay } from '../config/publicSite';
 
 const ContactoPage = () => {
   const [searchParams] = useSearchParams();
@@ -94,8 +95,8 @@ const ContactoPage = () => {
 
   const INFO = [
     { Icon: PhoneOutlined,    n: '01', title: 'Teléfono / WhatsApp',
-      value: '+57 315 793 9569', sub: 'Lun a Vie · 8:00 – 18:00',
-      href: 'https://wa.me/573157939569' },
+      value: getWhatsAppDisplay(), sub: 'Lun a Vie · 8:00 – 18:00',
+      href: getWhatsAppHref() },
     { Icon: EmailOutlined,    n: '02', title: 'Correo electrónico',
       value: 'conversemos@oirconecta.com', sub: 'Respuesta en menos de 24h',
       href: 'mailto:conversemos@oirconecta.com' },
@@ -128,7 +129,7 @@ const ContactoPage = () => {
         imageAlt="Audióloga conversando con paciente en consulta"
         imageTag="Atención humana"
         imageCaption="No bots, no formularios infinitos. Personas que escuchan."
-        cta={{ label: 'Escribir por WhatsApp', to: 'https://wa.me/573157939569' }}
+        cta={{ label: 'Escribir por WhatsApp', to: getWhatsAppHref() }}
         ctaSecondary={{ label: 'Buscar audiólogo cerca', to: '/directorio/listado' }}
       />
 
@@ -199,7 +200,7 @@ const ContactoPage = () => {
           </Typography>
           <Box
             component="a"
-            href="https://wa.me/573157939569"
+            href={getWhatsAppHref()}
             target="_blank"
             rel="noopener noreferrer"
             sx={{

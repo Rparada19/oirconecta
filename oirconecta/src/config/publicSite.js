@@ -1,17 +1,31 @@
 /**
  * Enlaces públicos configurables (Vite: VITE_*).
  * WhatsApp: número en formato internacional sin + (ej. 573001234567).
+ * Único punto de verdad — no hardcodear en otros archivos.
  */
-const DEFAULT_WA = '573157939569';
+const DEFAULT_WA = '573171503944';
+const DEFAULT_WA_DISPLAY = '+57 317 150 3944';
+
+/** Número corporativo tal como el usuario lo lee (para render de texto). */
+export function getWhatsAppDisplay() {
+  return import.meta.env.VITE_WHATSAPP_DISPLAY || DEFAULT_WA_DISPLAY;
+}
+
+/** Número en formato E.164 sin `+` para links tel:/wa.me. */
+export function getWhatsAppNumber() {
+  const n = import.meta.env.VITE_WHATSAPP_NUMBER;
+  if (n && String(n).replace(/\D/g, '')) return String(n).replace(/\D/g, '');
+  return DEFAULT_WA;
+}
+
+export function getPhoneHref() {
+  return `tel:+${getWhatsAppNumber()}`;
+}
 
 export function getWhatsAppHref() {
   const fromEnv = import.meta.env.VITE_WHATSAPP_URL;
   if (fromEnv && String(fromEnv).trim()) return String(fromEnv).trim();
-  const n = import.meta.env.VITE_WHATSAPP_NUMBER;
-  if (n && String(n).replace(/\D/g, '')) {
-    return `https://wa.me/${String(n).replace(/\D/g, '')}`;
-  }
-  return `https://wa.me/${DEFAULT_WA}`;
+  return `https://wa.me/${getWhatsAppNumber()}`;
 }
 
 /**

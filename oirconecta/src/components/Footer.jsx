@@ -3,6 +3,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Box, Container, Grid, Typography, Link, IconButton, Divider, Stack } from '@mui/material';
 import { Facebook, Instagram, LinkedIn, YouTube, Email, Phone, LocationOn } from '@mui/icons-material';
 import { directoryProfesionToSlug } from '../utils/directoryPresentation';
+import { getPhoneHref, getWhatsAppDisplay } from '../config/publicSite';
 import NewsletterSignup from './NewsletterSignup';
 import BannerFooter from './marketing/BannerFooter';
 
@@ -44,7 +45,7 @@ const SOCIALS = [
 ];
 
 const CONTACT = [
-  { icon: <Phone sx={{ fontSize: 16 }} />,       text: '+57 315 793 9569',                       href: 'tel:+573157939569' },
+  { icon: <Phone sx={{ fontSize: 16 }} />,       text: getWhatsAppDisplay(),                     href: getPhoneHref() },
   { icon: <Email sx={{ fontSize: 16 }} />,       text: 'conversemos@oirconecta.com',              href: 'mailto:conversemos@oirconecta.com' },
   { icon: <LocationOn sx={{ fontSize: 16 }} />,  text: 'Cr 10 #96-25 Cons. 320 – Bog.',         href: 'https://maps.google.com/?q=Carrera+10+%2396-25+Bogota' },
 ];

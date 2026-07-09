@@ -487,7 +487,7 @@ export default function ProfesionalPerfilPage() {
           <TabPanel value={tab} index={1}>
             <Grid container spacing={2.5}>
               <Grid item xs={12} sm={6}><TextField fullWidth label="Teléfono público" {...f('telefonoPublico')} placeholder="+57 300 000 0000" sx={fieldSx} /></Grid>
-              <Grid item xs={12} sm={6}><TextField fullWidth label="WhatsApp (con código de país)" {...f('whatsappPublico')} placeholder="573157939569" sx={fieldSx} helperText="Solo números, sin espacios ni + (ej: 573157939569)" /></Grid>
+              <Grid item xs={12} sm={6}><TextField fullWidth label="WhatsApp (con código de país)" {...f('whatsappPublico')} placeholder="573001234567" sx={fieldSx} helperText="Solo números, sin espacios ni + (ej: 573001234567)" /></Grid>
               <Grid item xs={12} sm={6}><TextField fullWidth label="Email público" type="email" {...f('emailPublico')} sx={fieldSx} /></Grid>
               <Grid item xs={12} sm={6}><TextField fullWidth label="Dirección principal" {...f('direccionPublica')} sx={fieldSx} /></Grid>
               <Grid item xs={12}><Divider sx={{ my: 1 }} /></Grid>

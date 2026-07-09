@@ -15,7 +15,7 @@
 
 /**
  * @param {object} p
- * @param {string} p.to                  número E.164 sin +, ej "573157939569"
+ * @param {string} p.to                  número E.164 sin +, ej "573171503944"
  * @param {string} p.metaTemplateName    nombre exacto registrado en Meta
  * @param {string} [p.locale='es_CO']    código BCP-47 → Meta usa "es_CO"
  * @param {string[]} [p.bodyParams=[]]   parámetros posicionales del cuerpo
