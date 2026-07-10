@@ -233,6 +233,29 @@ router.post('/conversations/:id/status', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── F9c — Enviar plantilla HSM a conversación existente ──
+router.post('/conversations/:id/send-template', async (req, res, next) => {
+  try {
+    const { templateKey, variables } = req.body || {};
+    if (!templateKey) return res.status(400).json({ success: false, error: 'templateKey requerido' });
+    const result = await corp.sendTemplateToExistingConversation({
+      conversationId: req.params.id,
+      templateKey,
+      variables: variables || {},
+      sentByUserId: req.user?.id || null,
+    });
+    res.status(201).json({ success: true, data: result });
+  } catch (e) {
+    if (['TEMPLATE_NOT_FOUND', 'MISSING_VARIABLE'].includes(e.code)) {
+      return res.status(400).json({ success: false, error: e.message, code: e.code });
+    }
+    if (e.code === 'SEND_FAILED') {
+      return res.status(502).json({ success: false, error: e.message, code: 'SEND_FAILED', messageId: e.messageId });
+    }
+    next(e);
+  }
+});
+
 // ─── F9d.1 — Convertir conversación a SalesLead ────────────
 router.post('/conversations/:id/convert-to-lead', async (req, res, next) => {
   try {

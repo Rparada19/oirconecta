@@ -364,6 +364,104 @@ async function startNewConversation({
 }
 
 /**
+ * F9c — Envía una plantilla HSM a una conversación ya existente (útil para
+ * reactivar cuando la ventana de 24h se cerró).
+ */
+async function sendTemplateToExistingConversation({
+  conversationId, templateKey, variables = {}, sentByUserId = null,
+}) {
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: { id: true, phone: true, contactName: true, salesLeadId: true },
+  });
+  if (!conv) throw new Error('Conversación no encontrada');
+
+  const template = catalog.getByKey(templateKey);
+  if (!template) {
+    const err = new Error(`Plantilla "${templateKey}" no existe en el catálogo`);
+    err.code = 'TEMPLATE_NOT_FOUND';
+    throw err;
+  }
+
+  const bodyParams = catalog.buildBodyParams(template, variables);
+  const preview = catalog.renderPreview(template, variables);
+
+  let providerId = null;
+  let deliveryStatus = 'sent';
+  let errorMessage = null;
+  try {
+    const result = await sendWhatsAppTemplate({
+      to: conv.phone,
+      metaTemplateName: template.metaName,
+      locale: template.locale || 'es_CO',
+      bodyParams,
+    });
+    providerId = result?.providerMessageId || null;
+  } catch (e) {
+    deliveryStatus = 'failed';
+    errorMessage = (e.message || 'Error desconocido').slice(0, 500);
+    console.error('[wa-corp] send template a existente falló:', e.message);
+  }
+
+  const msg = await prisma.whatsAppMessage.create({
+    data: {
+      conversationId: conv.id,
+      wamid: providerId,
+      direction: 'OUTBOUND',
+      type: 'template',
+      body: preview,
+      sentByBot: false,
+      sentByUserId,
+      deliveryStatus,
+      errorMessage,
+      timestamp: new Date(),
+    },
+  });
+
+  await prisma.whatsAppConversation.update({
+    where: { id: conv.id },
+    data: {
+      lastMessageAt: msg.timestamp,
+      lastMessagePreview: `Tú (HSM): ${preview.slice(0, 140)}`,
+    },
+  });
+
+  // Auto SalesActivity si está vinculada al pipeline
+  if (conv.salesLeadId && sentByUserId && deliveryStatus !== 'failed') {
+    try {
+      await prisma.salesActivity.create({
+        data: {
+          leadId: conv.salesLeadId,
+          userId: sentByUserId,
+          type: 'WHATSAPP',
+          direction: 'out',
+          subject: `Plantilla HSM: ${template.label}`,
+          body: preview,
+          ts: new Date(),
+          externalRef: providerId,
+          status: deliveryStatus,
+        },
+      });
+      await prisma.salesLead.update({
+        where: { id: conv.salesLeadId },
+        data: { lastActivityAt: new Date() },
+      });
+    } catch (e) {
+      console.warn('[wa-corp] no pude registrar SalesActivity (template):', e.message);
+    }
+  }
+
+  if (deliveryStatus === 'failed') {
+    const err = new Error(errorMessage);
+    err.code = 'SEND_FAILED';
+    err.messageId = msg.id;
+    throw err;
+  }
+
+  return { messageId: msg.id, providerId, templateKey };
+}
+
+/**
  * F9d.1 — Convierte la conversación en un SalesLead nuevo y los vincula.
  * Extrae info del historial reciente para pre-poblar campos del lead.
  */
@@ -491,6 +589,7 @@ module.exports = {
   persistIncomingMessage,
   sendTextToConversation,
   startNewConversation,
+  sendTemplateToExistingConversation,
   convertToSalesLead,
   linkToExistingSalesLead,
   suggestSalesLeads,

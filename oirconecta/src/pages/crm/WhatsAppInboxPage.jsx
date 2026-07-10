@@ -322,6 +322,52 @@ export default function WhatsAppInboxPage({
     } finally { setLeadLoading(false); }
   };
 
+  // F9c — Enviar plantilla HSM a conversación existente (ventana cerrada)
+  const [reactOpen, setReactOpen] = useState(false);
+  const [reactForm, setReactForm] = useState({ templateKey: '', variables: {} });
+  const [reactLoading, setReactLoading] = useState(false);
+  const [reactError, setReactError] = useState(null);
+  const reactSelectedTpl = templates.find((t) => t.key === reactForm.templateKey);
+  const reactTemplates = templates.filter(
+    (t) => !selected?.contactType || t.contactType === selected.contactType || t.contactType === 'INFO_GENERAL',
+  );
+
+  const openReactivate = async () => {
+    setReactError(null);
+    setReactForm({ templateKey: '', variables: {} });
+    setReactOpen(true);
+    if (templates.length === 0) {
+      try {
+        const r = await api.get('/api/wa/templates');
+        if (r?.data?.success) setTemplates(r.data.data);
+      } catch { setReactError('No se pudieron cargar plantillas'); }
+    }
+  };
+
+  const submitReactivate = async () => {
+    if (!selected?.id || !reactForm.templateKey) return;
+    setReactLoading(true); setReactError(null);
+    try {
+      const r = await api.post(`/api/wa/conversations/${selected.id}/send-template`, {
+        templateKey: reactForm.templateKey,
+        variables: reactForm.variables,
+      });
+      if (r?.data?.success) {
+        setReactOpen(false);
+        await loadDetail(selected.id);
+      } else {
+        setReactError(r?.data?.error || 'Error');
+      }
+    } catch (e) {
+      const errData = e.response?.data;
+      if (errData?.code === 'SEND_FAILED') {
+        setReactError(`Meta rechazó el envío: ${errData.error}`);
+      } else {
+        setReactError(errData?.error || e.message);
+      }
+    } finally { setReactLoading(false); }
+  };
+
   const linkExistingLead = async (salesLeadId) => {
     if (!selected) return;
     setLeadLoading(true); setLeadError(null);
@@ -580,9 +626,16 @@ export default function WhatsAppInboxPage({
             {/* Composer */}
             <Box sx={{ p: 2, borderTop: `1px solid ${BORDER}`, bgcolor: '#fff' }}>
               {!windowOpen ? (
-                <Alert severity="warning" sx={{ borderRadius: '10px' }}>
-                  La ventana de 24h se cerró. Solo se pueden enviar plantillas HSM aprobadas por Meta (disponibles próximamente).
-                </Alert>
+                <Stack spacing={1.5}>
+                  <Alert severity="warning" sx={{ borderRadius: '10px', fontSize: '0.82rem' }}>
+                    La ventana de 24h se cerró. Solo puedes reactivar con una plantilla HSM aprobada por Meta.
+                  </Alert>
+                  <Button variant="contained" onClick={openReactivate} startIcon={<SendRoundedIcon />}
+                    sx={{ bgcolor: ACCENT, textTransform: 'none', fontWeight: 700, borderRadius: '10px',
+                      '&:hover': { bgcolor: '#5b21b6' } }}>
+                    Enviar plantilla para reactivar
+                  </Button>
+                </Stack>
               ) : selected.status === 'CLOSED' ? (
                 <Alert severity="info" sx={{ borderRadius: '10px' }}>
                   Conversación cerrada. Reabre para responder.
@@ -824,6 +877,73 @@ export default function WhatsAppInboxPage({
               {leadLoading ? 'Creando…' : 'Crear lead'}
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* F9c — Modal Enviar plantilla HSM (reactivación) */}
+      <Dialog open={reactOpen} onClose={() => !reactLoading && setReactOpen(false)} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { borderRadius: '14px' } }}>
+        <DialogTitle sx={{ ...SERIF, color: NAVY, fontSize: '1.35rem', fontWeight: 600 }}>
+          Reactivar con plantilla HSM
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="info" sx={{ mb: 2, borderRadius: '10px', fontSize: '0.82rem' }}>
+            Meta solo permite reactivar con plantillas aprobadas. Al recibir respuesta del contacto, la ventana de 24h se abre y podrás enviar texto libre otra vez.
+          </Alert>
+          <Stack spacing={2}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Plantilla</InputLabel>
+              <Select value={reactForm.templateKey} label="Plantilla"
+                onChange={(e) => setReactForm({ templateKey: e.target.value, variables: {} })}>
+                {reactTemplates.length === 0 ? (
+                  <MenuItem disabled value="">Sin plantillas para este contactType</MenuItem>
+                ) : reactTemplates.map((t) => (
+                  <MenuItem key={t.key} value={t.key}>
+                    <Box>
+                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 600 }}>{t.label}</Typography>
+                      <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>{t.description}</Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {reactSelectedTpl && (
+              <>
+                {reactSelectedTpl.variables.map((v) => (
+                  <TextField key={v.key} label={v.label} placeholder={v.placeholder} fullWidth size="small"
+                    value={reactForm.variables[v.key] || ''}
+                    onChange={(e) => setReactForm({
+                      ...reactForm,
+                      variables: { ...reactForm.variables, [v.key]: e.target.value },
+                    })}
+                  />
+                ))}
+                <Box sx={{ p: 2, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px' }}>
+                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#15803d', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Vista previa
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.9rem', color: '#111827', whiteSpace: 'pre-wrap' }}>
+                    {reactSelectedTpl.variables.reduce((txt, v, i) => {
+                      const val = reactForm.variables[v.key] || `{{${i + 1}}}`;
+                      return txt.split(`{{${i + 1}}}`).join(val);
+                    }, reactSelectedTpl.preview)}
+                  </Typography>
+                </Box>
+              </>
+            )}
+
+            {reactError && <Alert severity="error" sx={{ borderRadius: '10px', fontSize: '0.82rem' }}>{reactError}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setReactOpen(false)} disabled={reactLoading}>Cancelar</Button>
+          <Button variant="contained" onClick={submitReactivate}
+            disabled={reactLoading || !reactForm.templateKey}
+            sx={{ bgcolor: WA_GREEN, textTransform: 'none', fontWeight: 700,
+              '&:hover': { bgcolor: '#1fb85a' } }}>
+            {reactLoading ? 'Enviando…' : 'Enviar plantilla'}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
