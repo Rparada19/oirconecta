@@ -209,7 +209,7 @@ async function persistDeliveryUpdate({ wamid, status, errorText }) {
  * @param {string} [p.sentByUserId]
  */
 async function startNewConversation({
-  phone, contactName, templateKey, variables = {}, businessLine = 'CRM', sentByUserId = null,
+  phone, contactName, templateKey, variables = {}, contactType = null, sentByUserId = null,
 }) {
   const phoneClean = String(phone || '').replace(/\D/g, '');
   if (!phoneClean || phoneClean.length < 10) {
@@ -225,10 +225,15 @@ async function startNewConversation({
     throw err;
   }
 
-  // Verifica que la plantilla aplica al businessLine solicitado
-  if (template.businessLine && template.businessLine !== businessLine) {
-    const err = new Error(`La plantilla "${template.label}" es para ${template.businessLine}, no ${businessLine}`);
-    err.code = 'TEMPLATE_BUSINESS_MISMATCH';
+  // Deriva contactType desde la plantilla si no lo pasaron explícito
+  const finalContactType = contactType || template.contactType || 'OTROS';
+  const typeMeta = catalog.getContactType(finalContactType);
+  const businessLine = typeMeta?.businessLine || 'CRM';
+
+  // Verifica coherencia plantilla ↔ contactType
+  if (template.contactType && template.contactType !== finalContactType) {
+    const err = new Error(`La plantilla "${template.label}" es para "${template.contactType}", no para "${finalContactType}"`);
+    err.code = 'TEMPLATE_TYPE_MISMATCH';
     throw err;
   }
 
@@ -255,16 +260,22 @@ async function startNewConversation({
         phone: phoneClean,
         contactName: contactName || null,
         businessLine,
+        contactType: finalContactType,
         intent: 'SIN_CLASIFICAR',
         status: 'HUMAN',
         patientId: patientLink,
       },
     });
-  } else if (contactName && !conversation.contactName) {
-    conversation = await prisma.whatsAppConversation.update({
-      where: { id: conversation.id },
-      data: { contactName },
-    });
+  } else {
+    // Actualiza tipificación y contactName si no estaban
+    const patch = {};
+    if (contactName && !conversation.contactName) patch.contactName = contactName;
+    if (!conversation.contactType && finalContactType) patch.contactType = finalContactType;
+    if (Object.keys(patch).length > 0) {
+      conversation = await prisma.whatsAppConversation.update({
+        where: { id: conversation.id }, data: patch,
+      });
+    }
   }
 
   // Envía a Meta

@@ -2552,6 +2552,10 @@ model WhatsAppConversation {
   /// En qué bandeja aparece: CRM (pacientes centro Bogotá) | DIRECTORIO (captación profesionales).
   businessLine String @default("CRM")
 
+  /// Tipificación granular. Determina la plantilla HSM a usar y el flujo de bot.
+  /// PACIENTE_BOGOTA | PACIENTE_EXISTENTE | PROFESIONAL_DIRECTORIO | INFO_GENERAL | ALIADO_PROVEEDOR | OTROS
+  contactType String?
+
   /// Intención detectada por el bot o marcada manualmente.
   /// LEAD_PROFESIONAL | CITA_PACIENTE | INFO_GENERAL | SIN_CLASIFICAR
   intent String @default("SIN_CLASIFICAR")

@@ -80,24 +80,29 @@ export default function WhatsAppInboxPage() {
   // Nueva conversación
   const [newOpen, setNewOpen] = useState(false);
   const [templates, setTemplates] = useState([]);
+  const [contactTypes, setContactTypes] = useState([]);
   const [newForm, setNewForm] = useState({
-    phone: '', contactName: '', templateKey: '', businessLine: 'CRM', variables: {},
+    phone: '', contactName: '', templateKey: '', contactType: 'PACIENTE_BOGOTA', variables: {},
   });
   const [newLoading, setNewLoading] = useState(false);
   const [newError, setNewError] = useState(null);
   const selectedTemplate = templates.find((t) => t.key === newForm.templateKey);
-  const templatesForLine = templates.filter((t) => !t.businessLine || t.businessLine === newForm.businessLine);
+  const templatesForType = templates.filter((t) => t.contactType === newForm.contactType);
 
   const openNewDialog = async () => {
     setNewError(null);
-    setNewForm({ phone: '', contactName: '', templateKey: '', businessLine: 'CRM', variables: {} });
+    setNewForm({ phone: '', contactName: '', templateKey: '', contactType: 'PACIENTE_BOGOTA', variables: {} });
     setNewOpen(true);
-    if (templates.length === 0) {
-      try {
+    try {
+      if (contactTypes.length === 0) {
+        const rt = await api.get('/api/wa/contact-types');
+        if (rt?.data?.success) setContactTypes(rt.data.data);
+      }
+      if (templates.length === 0) {
         const r = await api.get('/api/wa/templates');
         if (r?.data?.success) setTemplates(r.data.data);
-      } catch (e) { setNewError('No se pudieron cargar las plantillas'); }
-    }
+      }
+    } catch (e) { setNewError('No se pudieron cargar las plantillas'); }
   };
 
   const submitNew = async () => {
@@ -113,7 +118,7 @@ export default function WhatsAppInboxPage() {
         contactName: newForm.contactName || null,
         templateKey: newForm.templateKey,
         variables: newForm.variables,
-        businessLine: newForm.businessLine,
+        contactType: newForm.contactType,
       });
       if (r?.data?.success) {
         setNewOpen(false);
@@ -514,16 +519,23 @@ export default function WhatsAppInboxPage() {
           </Alert>
 
           <Stack spacing={2}>
-            <Box>
-              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1 }}>
-                Tipo de contacto
-              </Typography>
-              <RadioGroup row value={newForm.businessLine}
-                onChange={(e) => setNewForm({ ...newForm, businessLine: e.target.value, templateKey: '', variables: {} })}>
-                <FormControlLabel value="CRM" control={<Radio size="small" />} label="Paciente / centro Bogotá" />
-                <FormControlLabel value="DIRECTORIO" control={<Radio size="small" />} label="Profesional / directorio" />
-              </RadioGroup>
-            </Box>
+            <FormControl fullWidth size="small">
+              <InputLabel>Tipo de contacto</InputLabel>
+              <Select
+                value={newForm.contactType}
+                label="Tipo de contacto"
+                onChange={(e) => setNewForm({ ...newForm, contactType: e.target.value, templateKey: '', variables: {} })}
+              >
+                {contactTypes.map((c) => (
+                  <MenuItem key={c.key} value={c.key}>
+                    <Box>
+                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 600 }}>{c.label}</Typography>
+                      <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>{c.description}</Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <TextField label="Teléfono (con código país, ej. 573001234567)" fullWidth size="small"
               value={newForm.phone} onChange={(e) => setNewForm({ ...newForm, phone: e.target.value.replace(/\D/g, '') })}
@@ -535,11 +547,11 @@ export default function WhatsAppInboxPage() {
               <InputLabel>Plantilla</InputLabel>
               <Select value={newForm.templateKey} label="Plantilla"
                 onChange={(e) => setNewForm({ ...newForm, templateKey: e.target.value, variables: {} })}>
-                {templatesForLine.length === 0 ? (
+                {templatesForType.length === 0 ? (
                   <MenuItem disabled value="">
-                    Sin plantillas disponibles para {newForm.businessLine}
+                    Sin plantillas disponibles para este tipo
                   </MenuItem>
-                ) : templatesForLine.map((t) => (
+                ) : templatesForType.map((t) => (
                   <MenuItem key={t.key} value={t.key}>
                     <Box>
                       <Typography sx={{ fontSize: '0.9rem', fontWeight: 600 }}>{t.label}</Typography>

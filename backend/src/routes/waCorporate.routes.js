@@ -22,12 +22,18 @@ const prisma = new PrismaClient();
 
 router.use(authenticate);
 
+// ─── Tipificaciones de contacto ────────────────────────────
+router.get('/contact-types', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: catalog.listContactTypes() });
+  } catch (e) { next(e); }
+});
+
 // ─── Plantillas HSM disponibles ────────────────────────────
 router.get('/templates', async (req, res, next) => {
   try {
-    const { businessLine } = req.query;
-    const templates = catalog.listTemplates({ businessLine });
-    // Devolvemos sin exponer metaName exacto (por si acaso)
+    const { contactType, businessLine } = req.query;
+    const templates = catalog.listTemplates({ contactType, businessLine });
     res.json({
       success: true,
       data: templates.map((t) => ({
@@ -35,7 +41,7 @@ router.get('/templates', async (req, res, next) => {
         label: t.label,
         description: t.description,
         category: t.category,
-        businessLine: t.businessLine,
+        contactType: t.contactType,
         variables: t.variables,
         preview: t.preview,
       })),
@@ -46,7 +52,7 @@ router.get('/templates', async (req, res, next) => {
 // ─── Nueva conversación ────────────────────────────────────
 router.post('/conversations/new', async (req, res, next) => {
   try {
-    const { phone, contactName, templateKey, variables, businessLine } = req.body || {};
+    const { phone, contactName, templateKey, variables, contactType } = req.body || {};
     if (!phone) return res.status(400).json({ success: false, error: 'phone requerido' });
     if (!templateKey) return res.status(400).json({ success: false, error: 'templateKey requerido' });
 
@@ -55,12 +61,12 @@ router.post('/conversations/new', async (req, res, next) => {
       contactName: contactName || null,
       templateKey,
       variables: variables || {},
-      businessLine: (businessLine || 'CRM').toUpperCase(),
+      contactType: contactType ? String(contactType).toUpperCase() : null,
       sentByUserId: req.user?.id || null,
     });
     res.status(201).json({ success: true, data: result });
   } catch (e) {
-    if (['INVALID_PHONE', 'TEMPLATE_NOT_FOUND', 'MISSING_VARIABLE', 'TEMPLATE_BUSINESS_MISMATCH'].includes(e.code)) {
+    if (['INVALID_PHONE', 'TEMPLATE_NOT_FOUND', 'MISSING_VARIABLE', 'TEMPLATE_TYPE_MISMATCH'].includes(e.code)) {
       return res.status(400).json({ success: false, error: e.message, code: e.code });
     }
     if (e.code === 'SEND_FAILED') {

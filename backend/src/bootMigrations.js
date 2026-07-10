@@ -724,6 +724,9 @@ async function ensureAppointmentCancellationColumns(prisma) {
     `);
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "whatsapp_messages_wamid_key" ON "whatsapp_messages" ("wamid") WHERE "wamid" IS NOT NULL`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_messages_conversationId_timestamp_idx" ON "whatsapp_messages" ("conversationId", "timestamp")`);
+    // F9a.2 — Tipificación granular de contactos
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "contactType" TEXT`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_conversations_contactType_idx" ON "whatsapp_conversations" ("contactType") WHERE "contactType" IS NOT NULL`);
     console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates + follow_ups + whatsapp_conversations OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);
