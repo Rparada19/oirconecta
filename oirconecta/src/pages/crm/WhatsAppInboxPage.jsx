@@ -58,6 +58,16 @@ const INTENT_LABELS = {
   SIN_CLASIFICAR: 'Sin clasificar',
 };
 
+// Etiquetas cortas para el header — coinciden con las del catálogo backend
+const CONTACT_TYPE_LABELS = {
+  PACIENTE_BOGOTA: 'Paciente potencial',
+  PACIENTE_EXISTENTE: 'Paciente existente',
+  PROFESIONAL_DIRECTORIO: 'Profesional directorio',
+  INFO_GENERAL: 'Info general',
+  ALIADO_PROVEEDOR: 'Aliado / proveedor',
+  OTROS: 'Otros',
+};
+
 export default function WhatsAppInboxPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState([]);
@@ -371,7 +381,8 @@ export default function WhatsAppInboxPage() {
                   {shortName(selected)}
                 </Typography>
                 <Typography sx={{ fontSize: '0.75rem', color: MUTED }}>
-                  +{selected.phone} · {INTENT_LABELS[selected.intent]}
+                  +{selected.phone}
+                  {selected.contactType ? ` · ${CONTACT_TYPE_LABELS[selected.contactType] || selected.contactType}` : ` · ${INTENT_LABELS[selected.intent]}`}
                   {selected.assignedTo ? ` · asignado a ${selected.assignedTo.nombre}` : ' · sin asignar'}
                 </Typography>
               </Box>
