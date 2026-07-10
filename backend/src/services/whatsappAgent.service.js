@@ -219,6 +219,7 @@ async function processIncomingEvent(body) {
             // F9b — Dispatcher del bot corporativo (solo si WA_BOT_ENABLED=true)
             try {
               if (btnPayload) {
+                // Respuesta a botones interactivos del handshake → tipifica y escala
                 await bot.handleButtonReply({
                   conversationId: r.conversationId,
                   buttonId: btnPayload.id,
@@ -227,6 +228,13 @@ async function processIncomingEvent(body) {
               } else if (r.isNew) {
                 // Primer mensaje entrante en la conversación → handshake con botones
                 await bot.maybeSendHandshake(r.conversationId);
+              } else if (textBody) {
+                // Mensaje siguiente (después del handshake) → Claude Haiku responde
+                // según la rama (contactType). Solo actúa si status=BOT.
+                await bot.handleTextForBot({
+                  conversationId: r.conversationId,
+                  incomingText: textBody,
+                });
               }
             } catch (be) {
               console.error('[wa-bot] dispatcher falló:', be.message);
