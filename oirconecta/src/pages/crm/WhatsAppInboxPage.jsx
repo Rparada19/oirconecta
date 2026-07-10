@@ -70,7 +70,17 @@ const CONTACT_TYPE_LABELS = {
   OTROS: 'Otros',
 };
 
-export default function WhatsAppInboxPage() {
+/**
+ * Bandeja de WhatsApp corporativo. Reutilizable entre CRM y Admin.
+ * Props:
+ *   - businessLine: 'CRM' | 'DIRECTORIO' (default 'CRM')
+ *   - title, subtitle: encabezado personalizable
+ */
+export default function WhatsAppInboxPage({
+  businessLine = 'CRM',
+  title = 'WhatsApp',
+  subtitle = '+57 317 150 3944 · Corporativo',
+} = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -93,8 +103,9 @@ export default function WhatsAppInboxPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [contactTypes, setContactTypes] = useState([]);
+  const defaultContactType = businessLine === 'DIRECTORIO' ? 'PROFESIONAL_DIRECTORIO' : 'PACIENTE_BOGOTA';
   const [newForm, setNewForm] = useState({
-    phone: '', contactName: '', templateKey: '', contactType: 'PACIENTE_BOGOTA', variables: {},
+    phone: '', contactName: '', templateKey: '', contactType: defaultContactType, variables: {},
   });
   const [newLoading, setNewLoading] = useState(false);
   const [newError, setNewError] = useState(null);
@@ -103,7 +114,7 @@ export default function WhatsAppInboxPage() {
 
   const openNewDialog = async () => {
     setNewError(null);
-    setNewForm({ phone: '', contactName: '', templateKey: '', contactType: 'PACIENTE_BOGOTA', variables: {} });
+    setNewForm({ phone: '', contactName: '', templateKey: '', contactType: defaultContactType, variables: {} });
     setNewOpen(true);
     try {
       if (contactTypes.length === 0) {
@@ -154,7 +165,7 @@ export default function WhatsAppInboxPage() {
   const load = useCallback(async ({ showSpinner = true } = {}) => {
     if (showSpinner) setLoading(true);
     try {
-      const params = { businessLine: 'CRM', limit: 100 };
+      const params = { businessLine, limit: 100 };
       if (filter === 'mine') params.mine = 'true';
       else if (filter === 'unassigned') params.unassigned = 'true';
       else if (filter === 'closed') params.status = 'CLOSED';
@@ -171,7 +182,7 @@ export default function WhatsAppInboxPage() {
     } finally {
       if (showSpinner) setLoading(false);
     }
-  }, [filter, q]);
+  }, [filter, q, businessLine]);
 
   const loadDetail = useCallback(async (id) => {
     if (!id) return;
@@ -266,9 +277,9 @@ export default function WhatsAppInboxPage() {
             <Box>
               <Typography sx={{ ...SERIF, fontWeight: 600, color: NAVY, fontSize: '1.25rem' }}>
                 <WhatsAppIcon sx={{ fontSize: 20, color: WA_GREEN, mr: 1, verticalAlign: 'middle' }} />
-                WhatsApp
+                {title}
               </Typography>
-              <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>+57 317 150 3944 · Corporativo</Typography>
+              <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>{subtitle}</Typography>
             </Box>
             <Tooltip title="Nueva conversación">
               <IconButton onClick={openNewDialog}

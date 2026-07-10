@@ -22,6 +22,7 @@ import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import DraftsOutlinedIcon from '@mui/icons-material/DraftsOutlined';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -111,6 +112,7 @@ const ADMIN_FULL_NAV = [
   { label: 'Comparador', icon: <CompareArrowsOutlinedIcon />, path: '/portal-admin/comparador' },
   { label: 'Newsletter', icon: <MailOutlineRoundedIcon />, path: '/portal-admin/newsletter' },
   { label: 'Comunicaciones', icon: <DraftsOutlinedIcon />, path: '/portal-admin/comunicaciones' },
+  { label: 'WhatsApp captación', icon: <WhatsAppIcon />, path: '/portal-admin/whatsapp' },
   { label: 'Marketing & Ventas', icon: <CampaignOutlinedIcon />, path: '/portal-admin/marketing' },
   { label: 'Insights del sitio',  icon: <InsightsOutlinedIcon />, path: '/portal-admin/marketing/insights' },
   { label: 'Buzón de contacto', icon: <InboxOutlinedIcon />, path: '/portal-admin/contactos' },

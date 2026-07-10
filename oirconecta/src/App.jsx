@@ -118,6 +118,7 @@ const AdminSuscripcionesPage = lazy(() => import('./pages/admin/AdminSuscripcion
 const AdminIAPage = lazy(() => import('./pages/admin/AdminIAPage'));
 const AdminMarketingPage = lazy(() => import('./pages/admin/AdminMarketingPage'));
 const AdminComunicacionesPage = lazy(() => import('./pages/admin/AdminComunicacionesPage'));
+const AdminWhatsAppPage = lazy(() => import('./pages/admin/AdminWhatsAppPage'));
 const AdminInsightsPage = lazy(() => import('./pages/admin/AdminInsightsPage'));
 const SalesDiaPage = lazy(() => import('./pages/admin/sales/SalesDiaPage'));
 const SalesLeadsPage = lazy(() => import('./pages/admin/sales/SalesLeadsPage'));
@@ -316,6 +317,7 @@ export default function App() {
             <Route path="marketing" element={<AdminMarketingPage />} />
             <Route path="marketing/insights" element={<AdminInsightsPage />} />
             <Route path="comunicaciones" element={<AdminComunicacionesPage />} />
+            <Route path="whatsapp" element={<AdminWhatsAppPage />} />
             {/* CRM Sales — captación outbound de profesionales */}
             <Route path="sales" element={<SalesDiaPage />} />
             <Route path="sales/leads" element={<SalesLeadsPage />} />
