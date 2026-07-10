@@ -233,6 +233,48 @@ router.post('/conversations/:id/status', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── F9d.1 — Convertir conversación a SalesLead ────────────
+router.post('/conversations/:id/convert-to-lead', async (req, res, next) => {
+  try {
+    const result = await corp.convertToSalesLead({
+      conversationId: req.params.id,
+      ownerId: req.user?.id || null,
+      extras: req.body || {},
+    });
+    res.status(201).json({ success: true, data: result });
+  } catch (e) {
+    if (e.code === 'ALREADY_LINKED') {
+      return res.status(409).json({ success: false, error: e.message, code: e.code, salesLeadId: e.salesLeadId });
+    }
+    next(e);
+  }
+});
+
+// ─── F9d.1 — Vincular a SalesLead existente ────────────────
+router.post('/conversations/:id/link-lead', async (req, res, next) => {
+  try {
+    const { salesLeadId } = req.body || {};
+    if (!salesLeadId) return res.status(400).json({ success: false, error: 'salesLeadId requerido' });
+    const updated = await corp.linkToExistingSalesLead({
+      conversationId: req.params.id,
+      salesLeadId: String(salesLeadId),
+    });
+    res.json({ success: true, data: updated });
+  } catch (e) { next(e); }
+});
+
+// ─── F9d.1 — Sugerencias de leads existentes ───────────────
+router.get('/conversations/:id/lead-suggestions', async (req, res, next) => {
+  try {
+    const leads = await corp.suggestSalesLeads({
+      conversationId: req.params.id,
+      q: req.query.q || '',
+      limit: req.query.limit,
+    });
+    res.json({ success: true, data: leads });
+  } catch (e) { next(e); }
+});
+
 // ─── Vincular a Patient ────────────────────────────────────
 router.post('/conversations/:id/link-patient', async (req, res, next) => {
   try {

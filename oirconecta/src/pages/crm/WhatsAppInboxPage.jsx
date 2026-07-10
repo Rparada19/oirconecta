@@ -14,7 +14,8 @@ import {
   Box, Stack, Typography, TextField, Button, IconButton, Chip, Avatar,
   CircularProgress, Alert, Tooltip, Divider, InputAdornment, Badge,
   MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle,
-  DialogContent, DialogActions, RadioGroup, FormControlLabel, Radio,
+  DialogContent, DialogActions, RadioGroup, FormControlLabel, Radio, Tabs, Tab,
+  List, ListItem, ListItemButton, ListItemText,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
@@ -25,6 +26,8 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import AddIcon from '@mui/icons-material/Add';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
+import LaunchIcon from '@mui/icons-material/Launch';
+import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import { api } from '../../services/apiClient';
 
 const NAVY = '#0F2A4A';
@@ -263,6 +266,74 @@ export default function WhatsAppInboxPage({
     await loadDetail(selected.id);
   };
 
+  // F9d.1 — Conversión / vinculación a SalesLead (solo bandeja DIRECTORIO)
+  const [leadOpen, setLeadOpen] = useState(false);
+  const [leadTab, setLeadTab] = useState(0);
+  const [leadForm, setLeadForm] = useState({
+    nombre: '', email: '', profesion: '', ciudad: '', notes: '',
+  });
+  const [leadSuggestions, setLeadSuggestions] = useState([]);
+  const [leadSearchQ, setLeadSearchQ] = useState('');
+  const [leadLoading, setLeadLoading] = useState(false);
+  const [leadError, setLeadError] = useState(null);
+
+  const openLeadDialog = () => {
+    if (!selected) return;
+    setLeadError(null);
+    setLeadTab(0);
+    setLeadForm({
+      nombre: selected.contactName || '',
+      email: '', profesion: '', ciudad: '', notes: '',
+    });
+    setLeadSearchQ('');
+    setLeadOpen(true);
+    // Sugerir por teléfono automáticamente
+    api.get(`/api/wa/conversations/${selected.id}/lead-suggestions?limit=10`)
+      .then((r) => { if (r?.data?.success) setLeadSuggestions(r.data.data || []); })
+      .catch(() => {});
+  };
+
+  const searchLeads = async (q) => {
+    if (!selected) return;
+    setLeadSearchQ(q);
+    const url = `/api/wa/conversations/${selected.id}/lead-suggestions?q=${encodeURIComponent(q)}&limit=15`;
+    const r = await api.get(url);
+    if (r?.data?.success) setLeadSuggestions(r.data.data || []);
+  };
+
+  const submitConvertLead = async () => {
+    if (!selected) return;
+    setLeadLoading(true); setLeadError(null);
+    try {
+      const r = await api.post(`/api/wa/conversations/${selected.id}/convert-to-lead`, leadForm);
+      if (r?.data?.success) {
+        setLeadOpen(false);
+        await loadDetail(selected.id);
+      } else {
+        setLeadError(r?.data?.error || 'Error al convertir');
+      }
+    } catch (e) {
+      const errData = e.response?.data;
+      if (errData?.code === 'ALREADY_LINKED') {
+        setLeadError(`Ya está vinculada al lead ${errData.salesLeadId}`);
+      } else {
+        setLeadError(errData?.error || e.message);
+      }
+    } finally { setLeadLoading(false); }
+  };
+
+  const linkExistingLead = async (salesLeadId) => {
+    if (!selected) return;
+    setLeadLoading(true); setLeadError(null);
+    try {
+      await api.post(`/api/wa/conversations/${selected.id}/link-lead`, { salesLeadId });
+      setLeadOpen(false);
+      await loadDetail(selected.id);
+    } catch (e) {
+      setLeadError(e.response?.data?.error || e.message);
+    } finally { setLeadLoading(false); }
+  };
+
   const shortName = (c) => c.contactName || `+${c.phone}`;
 
   return (
@@ -415,6 +486,23 @@ export default function WhatsAppInboxPage({
                   fontWeight: 700, fontSize: '0.7rem',
                 }}
               />
+              {/* F9d.1 — Pipeline comercial (solo bandeja DIRECTORIO) */}
+              {businessLine === 'DIRECTORIO' && (
+                selected.salesLeadId ? (
+                  <Tooltip title="Ver lead en pipeline">
+                    <IconButton size="small"
+                      onClick={() => window.open(`/portal-admin/sales/leads/${selected.salesLeadId}`, '_blank')}>
+                      <BusinessCenterOutlinedIcon fontSize="small" sx={{ color: '#15803d' }} />
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  <Tooltip title="Convertir a lead comercial">
+                    <IconButton size="small" onClick={openLeadDialog}>
+                      <BusinessCenterOutlinedIcon fontSize="small" sx={{ color: ACCENT }} />
+                    </IconButton>
+                  </Tooltip>
+                )
+              )}
               {selected.status !== 'CLOSED' && (
                 <Tooltip title={selected.status === 'BOT' ? 'Tomar manualmente (pausar bot)' : 'Devolver al bot'}>
                   <IconButton size="small" onClick={handleToggleBot}>
@@ -634,6 +722,108 @@ export default function WhatsAppInboxPage({
               '&:hover': { bgcolor: '#1fb85a' } }}>
             {newLoading ? 'Enviando…' : 'Enviar'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* F9d.1 — Modal Convertir/Vincular a SalesLead */}
+      <Dialog open={leadOpen} onClose={() => !leadLoading && setLeadOpen(false)} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { borderRadius: '14px' } }}>
+        <DialogTitle sx={{ ...SERIF, color: NAVY, fontSize: '1.35rem', fontWeight: 600 }}>
+          Trasladar a captación comercial
+        </DialogTitle>
+        <DialogContent>
+          <Tabs value={leadTab} onChange={(_, v) => { setLeadTab(v); setLeadError(null); }}
+            sx={{ mb: 2, borderBottom: `1px solid ${BORDER}` }}>
+            <Tab label="Crear lead nuevo" />
+            <Tab label="Vincular a existente" />
+          </Tabs>
+
+          {leadTab === 0 && (
+            <Stack spacing={2}>
+              <Alert severity="info" sx={{ borderRadius: '10px', fontSize: '0.82rem' }}>
+                Se crea un lead en el pipeline con status <strong>CONTACTADO</strong>. El historial de la conversación queda como primera SalesActivity. Todos los mensajes futuros aparecerán en el timeline del lead.
+              </Alert>
+              <TextField label="Nombre" fullWidth size="small"
+                value={leadForm.nombre}
+                onChange={(e) => setLeadForm({ ...leadForm, nombre: e.target.value })} />
+              <TextField label="Email (opcional)" fullWidth size="small"
+                value={leadForm.email}
+                onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })} />
+              <Stack direction="row" spacing={1}>
+                <TextField label="Profesión" fullWidth size="small"
+                  placeholder="Audiólogo / Fonoaudióloga / ORL"
+                  value={leadForm.profesion}
+                  onChange={(e) => setLeadForm({ ...leadForm, profesion: e.target.value })} />
+                <TextField label="Ciudad" fullWidth size="small"
+                  value={leadForm.ciudad}
+                  onChange={(e) => setLeadForm({ ...leadForm, ciudad: e.target.value })} />
+              </Stack>
+              <TextField label="Notas para el pipeline" fullWidth multiline rows={3} size="small"
+                value={leadForm.notes}
+                onChange={(e) => setLeadForm({ ...leadForm, notes: e.target.value })} />
+            </Stack>
+          )}
+
+          {leadTab === 1 && (
+            <Stack spacing={2}>
+              <TextField
+                fullWidth size="small" autoFocus
+                placeholder="Buscar por nombre, teléfono o email"
+                value={leadSearchQ}
+                onChange={(e) => searchLeads(e.target.value)}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>,
+                }}
+              />
+              <Box sx={{ border: `1px solid ${BORDER}`, borderRadius: '10px', maxHeight: 320, overflowY: 'auto' }}>
+                {leadSuggestions.length === 0 ? (
+                  <Typography sx={{ p: 3, color: MUTED, fontSize: '0.85rem', textAlign: 'center' }}>
+                    {leadSearchQ ? 'Sin resultados' : 'Escribe para buscar leads existentes'}
+                  </Typography>
+                ) : (
+                  <List disablePadding>
+                    {leadSuggestions.map((l) => (
+                      <ListItem key={l.id} disablePadding divider>
+                        <ListItemButton onClick={() => linkExistingLead(l.id)} disabled={leadLoading}>
+                          <ListItemText
+                            primary={
+                              <Stack direction="row" alignItems="center" spacing={1}>
+                                <Typography sx={{ fontWeight: 700, color: NAVY, fontSize: '0.9rem' }}>
+                                  {l.nombre}
+                                </Typography>
+                                <Chip label={l.status} size="small"
+                                  sx={{ height: 18, fontSize: '0.62rem', bgcolor: '#f1f5f9' }} />
+                              </Stack>
+                            }
+                            secondary={
+                              <Typography sx={{ fontSize: '0.75rem', color: MUTED }}>
+                                {[l.profesion, l.ciudad, l.telefono, l.email].filter(Boolean).join(' · ')}
+                              </Typography>
+                            }
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+              </Box>
+            </Stack>
+          )}
+
+          {leadError && (
+            <Alert severity="error" sx={{ mt: 2, borderRadius: '10px', fontSize: '0.82rem' }}>{leadError}</Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setLeadOpen(false)} disabled={leadLoading}>Cancelar</Button>
+          {leadTab === 0 && (
+            <Button variant="contained" onClick={submitConvertLead}
+              disabled={leadLoading || !leadForm.nombre.trim()}
+              sx={{ bgcolor: ACCENT, textTransform: 'none', fontWeight: 700,
+                '&:hover': { bgcolor: '#5b21b6' } }}>
+              {leadLoading ? 'Creando…' : 'Crear lead'}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Box>

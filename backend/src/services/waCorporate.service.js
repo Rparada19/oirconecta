@@ -117,7 +117,7 @@ async function persistIncomingMessage({
 async function sendTextToConversation({ conversationId, text, sentByUserId = null, sentByBot = false }) {
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, phone: true, windowExpiresAt: true },
+    select: { id: true, phone: true, windowExpiresAt: true, salesLeadId: true },
   });
   if (!conv) throw new Error('Conversación no encontrada');
 
@@ -171,6 +171,31 @@ async function sendTextToConversation({ conversationId, text, sentByUserId = nul
       lastMessagePreview: `Tú: ${preview}`,
     },
   });
+
+  // F9d.1 — Auto-registrar SalesActivity si la conversación está vinculada a un lead
+  if (conv.salesLeadId && sentByUserId && deliveryStatus !== 'failed') {
+    try {
+      await prisma.salesActivity.create({
+        data: {
+          leadId: conv.salesLeadId,
+          userId: sentByUserId,
+          type: 'WHATSAPP',
+          direction: 'out',
+          subject: 'Mensaje WhatsApp',
+          body: text.slice(0, 4000),
+          ts: new Date(),
+          externalRef: providerId,
+          status: 'sent',
+        },
+      });
+      await prisma.salesLead.update({
+        where: { id: conv.salesLeadId },
+        data: { lastActivityAt: new Date() },
+      });
+    } catch (e) {
+      console.warn('[wa-corp] no pude registrar SalesActivity:', e.message);
+    }
+  }
 
   if (deliveryStatus === 'failed') {
     const err = new Error(errorMessage);
@@ -338,6 +363,119 @@ async function startNewConversation({
   return { conversationId: conversation.id, messageId: msg.id, providerId };
 }
 
+/**
+ * F9d.1 — Convierte la conversación en un SalesLead nuevo y los vincula.
+ * Extrae info del historial reciente para pre-poblar campos del lead.
+ */
+async function convertToSalesLead({ conversationId, ownerId = null, extras = {} }) {
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: {
+      id: true, phone: true, contactName: true, contactType: true,
+      businessLine: true, salesLeadId: true,
+    },
+  });
+  if (!conv) throw new Error('Conversación no encontrada');
+  if (conv.salesLeadId) {
+    const err = new Error('La conversación ya está vinculada a un lead');
+    err.code = 'ALREADY_LINKED';
+    err.salesLeadId = conv.salesLeadId;
+    throw err;
+  }
+
+  // Extrae últimos mensajes como resumen de la actividad
+  const history = await prisma.whatsAppMessage.findMany({
+    where: { conversationId, type: { in: ['text', 'interactive'] } },
+    orderBy: { timestamp: 'asc' },
+    take: 30,
+    select: { direction: true, body: true, timestamp: true },
+  });
+  const summary = history
+    .map((m) => `${m.direction === 'INBOUND' ? '←' : '→'} ${m.body || ''}`.trim())
+    .filter(Boolean)
+    .join('\n')
+    .slice(0, 4000);
+
+  const lead = await prisma.salesLead.create({
+    data: {
+      nombre: extras.nombre || conv.contactName || `WhatsApp +${conv.phone}`,
+      telefono: `+${conv.phone}`,
+      email: extras.email || null,
+      profesion: extras.profesion || null,
+      empresa: extras.empresa || null,
+      ciudad: extras.ciudad || null,
+      source: 'whatsapp-inbox',
+      status: 'CONTACTADO',
+      ownerId: ownerId || null,
+      notes: extras.notes || null,
+      lastActivityAt: new Date(),
+    },
+  });
+
+  await prisma.whatsAppConversation.update({
+    where: { id: conversationId },
+    data: { salesLeadId: lead.id },
+  });
+
+  // Registra actividad WhatsApp con el historial completo como resumen
+  if (ownerId) {
+    await prisma.salesActivity.create({
+      data: {
+        leadId: lead.id,
+        userId: ownerId,
+        type: 'WHATSAPP',
+        direction: 'in', // representa que la conversación empezó del lado del prospecto
+        subject: 'Conversación migrada desde bandeja WhatsApp',
+        body: summary,
+        ts: new Date(),
+      },
+    });
+  }
+
+  return { salesLeadId: lead.id, activityCreated: !!ownerId };
+}
+
+/** F9d.1 — Vincula la conversación a un SalesLead existente (sin crear uno nuevo). */
+async function linkToExistingSalesLead({ conversationId, salesLeadId }) {
+  const lead = await prisma.salesLead.findUnique({
+    where: { id: salesLeadId },
+    select: { id: true },
+  });
+  if (!lead) throw new Error('Lead no encontrado');
+  return prisma.whatsAppConversation.update({
+    where: { id: conversationId },
+    data: { salesLeadId: lead.id },
+  });
+}
+
+/** F9d.1 — Sugerencias de SalesLead por teléfono/nombre para el buscador. */
+async function suggestSalesLeads({ conversationId, q, limit = 10 }) {
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: { phone: true, contactName: true },
+  });
+  const last10 = conv?.phone?.slice(-10) || '';
+  const where = {};
+  if (q && String(q).trim()) {
+    where.OR = [
+      { nombre: { contains: String(q).trim(), mode: 'insensitive' } },
+      { telefono: { contains: String(q).replace(/\D/g, '') } },
+      { email: { contains: String(q).trim(), mode: 'insensitive' } },
+    ];
+  } else if (last10) {
+    where.telefono = { contains: last10 };
+  }
+  return prisma.salesLead.findMany({
+    where,
+    orderBy: { updatedAt: 'desc' },
+    take: Math.min(50, Number(limit) || 10),
+    select: {
+      id: true, nombre: true, telefono: true, email: true,
+      profesion: true, ciudad: true, status: true,
+    },
+  });
+}
+
 /** Marca todos los mensajes inbound de la conversación como leídos (unreadCount=0). */
 async function markConversationRead(conversationId) {
   await prisma.whatsAppConversation.update({
@@ -353,6 +491,9 @@ module.exports = {
   persistIncomingMessage,
   sendTextToConversation,
   startNewConversation,
+  convertToSalesLead,
+  linkToExistingSalesLead,
+  suggestSalesLeads,
   persistDeliveryUpdate,
   markConversationRead,
 };

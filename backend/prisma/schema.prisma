@@ -2221,8 +2221,10 @@ model SalesLead {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  activities SalesActivity[]
-  tasks      SalesTask[]
+  activities      SalesActivity[]
+  tasks           SalesTask[]
+  /// F9d.1 — Conversaciones de WhatsApp corporativo vinculadas
+  waConversations WhatsAppConversation[] @relation("WaConvSalesLead")
 
   @@index([status, ownerId])
   @@index([nextActionAt])
@@ -2570,6 +2572,12 @@ model WhatsAppConversation {
   /// Identificación de la persona (si se logra vincular a un Patient).
   patientId String?
   patient   Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  /// F9d.1 — Vinculación con el pipeline comercial (solo aplica cuando
+  /// businessLine = DIRECTORIO). Cuando se vincula, cada mensaje outbound
+  /// del ejecutivo registra automáticamente una SalesActivity tipo WHATSAPP.
+  salesLeadId String?
+  salesLead   SalesLead? @relation("WaConvSalesLead", fields: [salesLeadId], references: [id], onDelete: SetNull)
 
   /// Ventana de 24h desde el último mensaje INBOUND del cliente. Después → solo HSM.
   windowExpiresAt DateTime?
