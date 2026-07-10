@@ -506,6 +506,15 @@ async function tick() {
       console.error('[cron] processFollowUpReminders falló:', e.message);
     }
 
+    // 8) A1 — Nudge de agendamiento post-link /agendar (WhatsApp)
+    let waNudgeResult = null;
+    try {
+      const waNudge = require('../services/waNudge.service');
+      waNudgeResult = await waNudge.processWaAgendarNudges();
+    } catch (e) {
+      console.error('[cron] processWaAgendarNudges falló:', e.message);
+    }
+
     const hasActivity =
       (apptResult?.sent || 0) > 0 ||
       (remindersResult?.sent || 0) > 0 ||
@@ -515,10 +524,15 @@ async function tick() {
       (birthdayResult?.sent || 0) > 0 ||
       (control15Result?.sent || 0) > 0 ||
       (blogResult?.generated || 0) > 0 ||
-      (followUpResult?.sent || 0) > 0;
+      (followUpResult?.sent || 0) > 0 ||
+      (waNudgeResult?.total?.sent || 0) > 0 ||
+      (waNudgeResult?.total?.booked || 0) > 0;
     if (hasActivity) {
       const ms = Date.now() - started;
-      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0} · birthdays ${birthdayResult?.sent || 0}/${birthdayResult?.scanned || 0} · control15 ${control15Result?.sent || 0}/${control15Result?.scanned || 0} · blog ${blogResult?.generated || 0} · followups ${followUpResult?.sent || 0}/${followUpResult?.scanned || 0}`);
+      const waSent = waNudgeResult?.nudge?.sent || 0;
+      const waEsc = waNudgeResult?.escalate?.escalated || 0;
+      const waBook = waNudgeResult?.total?.booked || 0;
+      console.log(`[cron] tick ${ms}ms · citas ${apptResult?.sent || 0}/${apptResult?.processed || 0} · reminders ${remindersResult?.sent || 0}/${remindersResult?.processed || 0} · nurture ${nurtureResult?.sent || 0}/${nurtureResult?.scanned || 0} · birthdays ${birthdayResult?.sent || 0}/${birthdayResult?.scanned || 0} · control15 ${control15Result?.sent || 0}/${control15Result?.scanned || 0} · blog ${blogResult?.generated || 0} · followups ${followUpResult?.sent || 0}/${followUpResult?.scanned || 0} · wa-nudge ${waSent} + esc ${waEsc} + booked ${waBook}`);
     }
   } catch (e) {
     console.error('[cron] tick falló:', e.message);

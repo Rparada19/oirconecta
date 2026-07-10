@@ -2647,6 +2647,17 @@ model WhatsAppConversation {
   /// Ventana de 24h desde el último mensaje INBOUND del cliente. Después → solo HSM.
   windowExpiresAt DateTime?
 
+  /// A1 — Nudge de agendamiento. Cuando el bot envía el link /agendar,
+  /// se marca agendarLinkSentAt. El cron cada 60s revisa:
+  ///  - Entre 25-40 min sin cita → envía nudge y marca agendarNudgeSentAt.
+  ///  - Después de 2h sin cita → escala a humano y marca agendarEscalatedAt.
+  ///  - Si detecta Appointment con phone matching → marca agendarBookedAt
+  ///    y detiene el proceso.
+  agendarLinkSentAt   DateTime?
+  agendarNudgeSentAt  DateTime?
+  agendarEscalatedAt  DateTime?
+  agendarBookedAt     DateTime?
+
   /// Contadores para la bandeja.
   unreadCount        Int       @default(0)
   lastMessageAt      DateTime?
@@ -2659,6 +2670,7 @@ model WhatsAppConversation {
 
   @@index([businessLine, status, updatedAt])
   @@index([assignedToId, status])
+  @@index([agendarLinkSentAt, agendarBookedAt, agendarEscalatedAt])
   @@map("whatsapp_conversations")
 }
 

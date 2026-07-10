@@ -730,6 +730,12 @@ async function ensureAppointmentCancellationColumns(prisma) {
     // F9d.1 — Vinculación con pipeline comercial
     await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "salesLeadId" TEXT`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_conversations_salesLeadId_idx" ON "whatsapp_conversations" ("salesLeadId") WHERE "salesLeadId" IS NOT NULL`);
+    // A1 — Nudge de agendamiento (follow-up automático post-link /agendar)
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "agendarLinkSentAt" TIMESTAMP`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "agendarNudgeSentAt" TIMESTAMP`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "agendarEscalatedAt" TIMESTAMP`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "agendarBookedAt" TIMESTAMP`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_conversations_agendar_nudge_idx" ON "whatsapp_conversations" ("agendarLinkSentAt", "agendarBookedAt", "agendarEscalatedAt") WHERE "agendarLinkSentAt" IS NOT NULL`);
 
     // F10 — RAG documents del bot del directorio (pgvector)
     let vectorReady = false;

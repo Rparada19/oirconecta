@@ -194,11 +194,15 @@ Un miembro del equipo comercial te contacta hoy mismo.`,
         timestamp: new Date(),
       },
     });
+    // A1 — Si el bridge incluyó el link /agendar (rama PACIENTE_BOGOTA),
+    // arma el trigger de follow-up automático.
+    const bridgeHasAgendarLink = /oirconecta\.com\/agendar/i.test(bridge);
     await prisma.whatsAppConversation.update({
       where: { id: conversationId },
       data: {
         lastMessagePreview: `Bot: ${bridge.slice(0, 100)}`,
         lastMessageAt: new Date(),
+        ...(bridgeHasAgendarLink ? { agendarLinkSentAt: new Date() } : {}),
       },
     });
     return { sent: true, contactType, businessLine };
@@ -344,6 +348,13 @@ async function handleTextForBot({ conversationId, incomingText }) {
         timestamp: new Date(),
       },
     });
+    // A1 — Si la respuesta contiene el link /agendar y aún no hemos armado
+    // el trigger, marcamos la conversación para que el cron haga follow-up.
+    // Solo lo hacemos para rama PACIENTE_BOGOTA (INFO_GENERAL también puede
+    // mandar el link pero la tratamos igual: si vio el link, sigue el mismo flow).
+    const replyHasAgendarLink = /oirconecta\.com\/agendar/i.test(cleanReply);
+    const armAgendarTrigger = replyHasAgendarLink
+      && ['PACIENTE_BOGOTA', 'INFO_GENERAL'].includes(conv.contactType);
     await prisma.whatsAppConversation.update({
       where: { id: conversationId },
       data: {
@@ -351,6 +362,8 @@ async function handleTextForBot({ conversationId, incomingText }) {
         lastMessagePreview: `Bot: ${cleanReply.slice(0, 140)}`,
         status: shouldEscalate ? 'ESCALATED' : 'BOT',
         unreadCount: shouldEscalate ? { increment: 1 } : undefined,
+        // Solo marca si no está ya armado (primera vez que menciona el link).
+        ...(armAgendarTrigger ? { agendarLinkSentAt: new Date() } : {}),
       },
     });
     return { sent: true, escalated: shouldEscalate };
