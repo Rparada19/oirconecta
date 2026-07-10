@@ -39,6 +39,7 @@ const salesRoutes = require('./sales.routes');
 const referralsRoutes = require('./referrals.routes');
 const emailTemplatesRoutes = require('./emailTemplates.routes');
 const followUpsRoutes = require('./followUps.routes');
+const waCorporateRoutes = require('./waCorporate.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
@@ -75,6 +76,7 @@ router.use('/sales', salesRoutes);
 router.use('/referrals', referralsRoutes);
 router.use('/email-templates', emailTemplatesRoutes);
 router.use('/follow-ups', followUpsRoutes);
+router.use('/wa', waCorporateRoutes);
 
 // Info de la API
 router.get('/', (req, res) => {

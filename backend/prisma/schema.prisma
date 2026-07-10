@@ -27,17 +27,20 @@ model User {
   updatedAt            DateTime @updatedAt
 
   // Relaciones
-  leadsCreados          Lead[]            @relation("LeadCreatedBy")
-  citasCreadas          Appointment[]     @relation("AppointmentCreatedBy")
-  ventasCreadas         Sale[]            @relation("SaleCreatedBy")
-  blockedSlotsRequested BlockedSlot[]     @relation("BlockedSlotRequestedBy")
-  blockedSlotsApproved  BlockedSlot[]     @relation("BlockedSlotApprovedBy")
+  leadsCreados          Lead[]                 @relation("LeadCreatedBy")
+  citasCreadas          Appointment[]          @relation("AppointmentCreatedBy")
+  ventasCreadas         Sale[]                 @relation("SaleCreatedBy")
+  blockedSlotsRequested BlockedSlot[]          @relation("BlockedSlotRequestedBy")
+  blockedSlotsApproved  BlockedSlot[]          @relation("BlockedSlotApprovedBy")
   // Sales CRM (outbound — ejecutivo comercial captando profesionales)
-  salesLeadsOwned       SalesLead[]       @relation("SalesLeadOwner")
-  salesActivitiesDone   SalesActivity[]   @relation("SalesActivityUser")
-  salesTasksAssigned    SalesTask[]       @relation("SalesTaskAssignee")
+  salesLeadsOwned       SalesLead[]            @relation("SalesLeadOwner")
+  salesActivitiesDone   SalesActivity[]        @relation("SalesActivityUser")
+  salesTasksAssigned    SalesTask[]            @relation("SalesTaskAssignee")
   // F8: controles cerrados por este usuario
-  followUpsCompleted    PatientFollowUp[] @relation("FollowUpCompletedBy")
+  followUpsCompleted    PatientFollowUp[]      @relation("FollowUpCompletedBy")
+  // F9: WhatsApp corporativo
+  waConvsAssignedTo     WhatsAppConversation[] @relation("WaConvAssignedTo")
+  waMsgsSent            WhatsAppMessage[]      @relation("WaMsgSentBy")
 
   /// Metas comerciales del ejecutivo. Ejemplo:
   /// { "callsPerDay": 25, "emailsPerDay": 15, "demosPerWeek": 6, "conversionsPerMonth": 12 }
@@ -447,6 +450,8 @@ model Patient {
   iaConversations       IaConversation[]
   // F8: funnel de controles post-adaptación
   followUps             PatientFollowUp[]
+  // F9: conversaciones WhatsApp corporativas
+  waConversations       WhatsAppConversation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2529,6 +2534,92 @@ model ProfessionalWhatsAppChannel {
 
   @@index([phoneNumberId])
   @@map("professional_whatsapp_channels")
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// F9 — WhatsApp corporativo OírConecta (número único +57 317 150 3944).
+// Independiente del ProfessionalWhatsAppChannel (que es multi-tenant del directorio).
+// Este es el número que se promociona en pauta FB, en el sitio y para captación
+// de profesionales. Una sola conversación por número de cliente.
+// ═══════════════════════════════════════════════════════════════════
+
+model WhatsAppConversation {
+  id          String  @id @default(uuid())
+  /// Número del cliente en E.164 sin '+' (ej. 573001234567).
+  phone       String  @unique
+  contactName String?
+
+  /// En qué bandeja aparece: CRM (pacientes centro Bogotá) | DIRECTORIO (captación profesionales).
+  businessLine String @default("CRM")
+
+  /// Intención detectada por el bot o marcada manualmente.
+  /// LEAD_PROFESIONAL | CITA_PACIENTE | INFO_GENERAL | SIN_CLASIFICAR
+  intent String @default("SIN_CLASIFICAR")
+
+  /// Estado del handoff: BOT (auto-atiende) | HUMAN (humano tomó) | ESCALATED (pide humano) | CLOSED.
+  status String @default("HUMAN")
+
+  /// Asignación a un usuario del equipo.
+  assignedToId String?
+  assignedTo   User?   @relation("WaConvAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  /// Identificación de la persona (si se logra vincular a un Patient).
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  /// Ventana de 24h desde el último mensaje INBOUND del cliente. Después → solo HSM.
+  windowExpiresAt DateTime?
+
+  /// Contadores para la bandeja.
+  unreadCount        Int       @default(0)
+  lastMessageAt      DateTime?
+  lastMessagePreview String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages WhatsAppMessage[]
+
+  @@index([businessLine, status, updatedAt])
+  @@index([assignedToId, status])
+  @@map("whatsapp_conversations")
+}
+
+model WhatsAppMessage {
+  id             String               @id @default(uuid())
+  conversationId String
+  conversation   WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  /// Meta wamid (id único del mensaje en Meta) — para dedup y actualizaciones de estado.
+  wamid String? @unique
+
+  /// INBOUND | OUTBOUND
+  direction String
+
+  /// text | interactive | image | audio | template | sticker | document | location
+  type String @default("text")
+
+  /// Texto plano o JSON serializado según type.
+  body String? @db.Text
+
+  mediaUrl      String?
+  mediaMimeType String?
+
+  /// Quién envió el mensaje si es outbound.
+  sentByBot    Boolean @default(false)
+  sentByUserId String?
+  sentByUser   User?   @relation("WaMsgSentBy", fields: [sentByUserId], references: [id], onDelete: SetNull)
+
+  /// Estado de entrega para outbound: sent | delivered | read | failed.
+  deliveryStatus String?
+  errorMessage   String?
+
+  /// Timestamp del mensaje (usa el de Meta si viene, si no la hora local).
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, timestamp])
+  @@map("whatsapp_messages")
 }
 
 /// Relación N-N Paciente ↔ Profesional. Cada par tiene su propio expediente.

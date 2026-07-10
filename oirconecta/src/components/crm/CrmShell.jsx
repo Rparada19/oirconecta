@@ -20,6 +20,7 @@ import {
   Assessment, Settings, ShoppingBag, NotificationsActive,
   Logout, ArrowBack, FlashOn, Person as PersonIcon,
   EventRepeat as EventRepeatIcon,
+  WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { getMenuForRole, MENU_KEYS } from '../../utils/rolePermissions';
@@ -51,6 +52,8 @@ const NAV_ITEMS = [
     path: '/portal-crm/pacientes', section: 'operativo' },
   { key: MENU_KEYS.CONTROLES, label: 'Controles', icon: EventRepeatIcon,
     path: '/portal-crm/controles', section: 'operativo' },
+  { key: MENU_KEYS.WHATSAPP, label: 'WhatsApp', icon: WhatsAppIcon,
+    path: '/portal-crm/whatsapp', section: 'operativo' },
   { key: MENU_KEYS.CAMPANAS, label: 'Campañas', icon: Campaign,
     path: '/portal-crm/campanas', section: 'marketing' },
   { key: MENU_KEYS.PRODUCTOS, label: 'Productos', icon: ShoppingBag,

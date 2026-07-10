@@ -155,6 +155,7 @@ async function processIncomingMessage({
  */
 async function processIncomingEvent(body) {
   if (body?.object !== 'whatsapp_business_account') return { ok: true, ignored: 'OBJECT_MISMATCH' };
+  const corp = require('./waCorporate.service');
   const entries = body.entry || [];
   let processed = 0, skipped = 0;
   for (const entry of entries) {
@@ -162,11 +163,50 @@ async function processIncomingEvent(body) {
       if (change.field !== 'messages') continue;
       const value = change.value || {};
       const phoneNumberId = value.metadata?.phone_number_id;
+
+      // Statuses (delivered/read/failed) del outbound — actualizan estado del mensaje
+      for (const st of (value.statuses || [])) {
+        try {
+          if (corp.isCorporatePhoneNumberId(phoneNumberId)) {
+            await corp.persistDeliveryUpdate({
+              wamid: st.id,
+              status: st.status,
+              errorText: st.errors?.[0]?.message,
+            });
+          }
+        } catch (e) { console.error('[wa] delivery update falló:', e.message); }
+      }
+
       const contacts = value.contacts || [];
       const contactByWaId = Object.fromEntries(contacts.map((c) => [c.wa_id, c.profile?.name]));
+
+      // F9 — Si es el número corporativo, persiste en whatsapp_conversations y no
+      // pasa por el agente IA del directorio. La respuesta es manual desde la
+      // bandeja del CRM (Fase 9a) o vía bot corporativo (Fase 9b).
+      if (corp.isCorporatePhoneNumberId(phoneNumberId)) {
+        for (const msg of (value.messages || [])) {
+          try {
+            const r = await corp.persistIncomingMessage({
+              phoneNumberId,
+              fromWaId: msg.from,
+              wamid: msg.id,
+              type: msg.type || 'text',
+              textBody: msg.text?.body || msg.button?.text || msg.interactive?.body?.text || null,
+              contactName: contactByWaId[msg.from],
+              tsSeconds: msg.timestamp,
+            });
+            if (r.persisted) processed++; else skipped++;
+          } catch (e) {
+            console.error('[wa-corp] error persistiendo msg', msg.id, e.message);
+            skipped++;
+          }
+        }
+        continue;
+      }
+
+      // Multi-tenant directorio (comportamiento original)
       for (const msg of (value.messages || [])) {
         if (msg.type !== 'text') {
-          // Por ahora solo procesamos texto. Imágenes/audio se ignoran (futuro).
           skipped++;
           continue;
         }

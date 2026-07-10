@@ -681,7 +681,50 @@ async function ensureAppointmentCancellationColumns(prisma) {
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patient_follow_ups_saleId_idx" ON "patient_follow_ups" ("saleId")`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "patient_follow_ups" ADD COLUMN IF NOT EXISTS "scheduleToken" TEXT`);
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "patient_follow_ups_scheduleToken_key" ON "patient_follow_ups" ("scheduleToken") WHERE "scheduleToken" IS NOT NULL`);
-    console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates + follow_ups OK');
+    // F9 — WhatsApp corporativo (independiente del ProfessionalWhatsAppChannel del directorio)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "whatsapp_conversations" (
+        "id" TEXT PRIMARY KEY,
+        "phone" TEXT NOT NULL,
+        "contactName" TEXT,
+        "businessLine" TEXT NOT NULL DEFAULT 'CRM',
+        "intent" TEXT NOT NULL DEFAULT 'SIN_CLASIFICAR',
+        "status" TEXT NOT NULL DEFAULT 'HUMAN',
+        "assignedToId" TEXT,
+        "patientId" TEXT,
+        "windowExpiresAt" TIMESTAMP(3),
+        "unreadCount" INTEGER NOT NULL DEFAULT 0,
+        "lastMessageAt" TIMESTAMP(3),
+        "lastMessagePreview" TEXT,
+        "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "whatsapp_conversations_phone_key" ON "whatsapp_conversations" ("phone")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_conversations_businessLine_status_updatedAt_idx" ON "whatsapp_conversations" ("businessLine", "status", "updatedAt")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_conversations_assignedToId_status_idx" ON "whatsapp_conversations" ("assignedToId", "status")`);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "whatsapp_messages" (
+        "id" TEXT PRIMARY KEY,
+        "conversationId" TEXT NOT NULL,
+        "wamid" TEXT,
+        "direction" TEXT NOT NULL,
+        "type" TEXT NOT NULL DEFAULT 'text',
+        "body" TEXT,
+        "mediaUrl" TEXT,
+        "mediaMimeType" TEXT,
+        "sentByBot" BOOLEAN NOT NULL DEFAULT FALSE,
+        "sentByUserId" TEXT,
+        "deliveryStatus" TEXT,
+        "errorMessage" TEXT,
+        "timestamp" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "whatsapp_messages_wamid_key" ON "whatsapp_messages" ("wamid") WHERE "wamid" IS NOT NULL`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_messages_conversationId_timestamp_idx" ON "whatsapp_messages" ("conversationId", "timestamp")`);
+    console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates + follow_ups + whatsapp_conversations OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);
   }
