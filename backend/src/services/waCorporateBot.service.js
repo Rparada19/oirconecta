@@ -23,11 +23,106 @@
 const { PrismaClient } = require('@prisma/client');
 const Anthropic = require('@anthropic-ai/sdk');
 const { sendWhatsAppText, sendWhatsAppInteractiveButtons } = require('../notifications/channels/whatsapp');
+const booking = require('./professionalBooking.service');
+const config = require('../config');
 
 const prisma = new PrismaClient();
 
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
 const MAX_HISTORY_MESSAGES = 12; // últimos 12 turnos para contexto
+
+// ─── C1 — Tools para que el bot agende en WhatsApp sin salir del chat ───
+// Solo se usan en rama PACIENTE_BOGOTA y requieren RETAIL_PROFESSIONAL_ID
+// configurado (el DirectoryProfile.id del consultorio propio de OírConecta).
+
+const BOOKING_TOOLS = [
+  {
+    name: 'list_appointment_types',
+    description: 'Lista los tipos de consulta que ofrece el centro (nombre, duración, precio COP si aplica).',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_availability',
+    description: 'Devuelve los horarios disponibles del centro para una fecha específica. Devuelve un array "slots" con objetos {time: "HH:MM"}.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        date: { type: 'string', description: 'Fecha YYYY-MM-DD en zona horaria del centro (Bogotá).' },
+        appointmentTypeId: { type: 'string', description: 'ID del tipo de consulta.' },
+      },
+      required: ['date', 'appointmentTypeId'],
+    },
+  },
+  {
+    name: 'create_appointment',
+    description: 'Crea una cita CONFIRMADA. Antes de llamar SIEMPRE resume con el paciente: tipo + fecha + hora + su nombre y confirma que quiere agendar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        appointmentTypeId: { type: 'string' },
+        scheduledAt: { type: 'string', description: 'YYYY-MM-DDTHH:MM (hora local Bogotá).' },
+        patientName: { type: 'string' },
+        patientEmail: { type: 'string', description: 'Opcional pero recomendado — se le envía la confirmación.' },
+        notas: { type: 'string', description: 'Motivo o info adicional, opcional.' },
+      },
+      required: ['appointmentTypeId', 'scheduledAt', 'patientName'],
+    },
+  },
+];
+
+function retailProfileId() {
+  return config.retail?.professionalId || null;
+}
+
+const bookingToolImpls = {
+  async list_appointment_types() {
+    const profileId = retailProfileId();
+    if (!profileId) return { error: 'RETAIL_PROFESSIONAL_ID no configurado en el servidor.' };
+    const types = await booking.publicListTypes(profileId);
+    return { types };
+  },
+
+  async get_availability(_ctx, { date, appointmentTypeId }) {
+    const profileId = retailProfileId();
+    if (!profileId) return { error: 'RETAIL_PROFESSIONAL_ID no configurado en el servidor.' };
+    const out = await booking.computeSlotsForDay(profileId, date, { appointmentTypeId });
+    return out;
+  },
+
+  async create_appointment({ conversationId, waPhone, contactName }, input) {
+    const profileId = retailProfileId();
+    if (!profileId) return { error: 'RETAIL_PROFESSIONAL_ID no configurado en el servidor.' };
+
+    // El teléfono lo tomamos del WA E.164 (573xxx). Reusamos como telefono.
+    const res = await booking.createPublicAppointment(profileId, {
+      appointmentTypeId: input.appointmentTypeId,
+      scheduledAt: input.scheduledAt,
+      notas: input.notas || 'Agendado por WhatsApp (bot corporativo)',
+      patient: {
+        nombre: input.patientName || contactName || 'Paciente WhatsApp',
+        telefono: waPhone,
+        email: input.patientEmail || null,
+      },
+    });
+
+    // Cierra el loop del nudge A1: marca booked para que no envíe follow-up.
+    if (conversationId) {
+      await prisma.whatsAppConversation.update({
+        where: { id: conversationId },
+        data: { agendarBookedAt: new Date() },
+      }).catch(() => {});
+    }
+
+    return {
+      id: res.id,
+      fecha: res.fecha,
+      hora: res.hora,
+      durationMinutes: res.durationMinutes,
+      rescheduleToken: res.rescheduleToken,
+      mensaje: `Cita confirmada. Recibirás email con detalles y enlace para reagendar.`,
+    };
+  },
+};
 
 const BUTTON_IDS = {
   PACIENTE_BOGOTA: 'wa_intent_paciente',
@@ -222,15 +317,32 @@ Reglas de negocio:
 - No vendes audífonos; diseñan planes de audición a la medida de cada paciente.
 - Horario del centro: Lunes a Viernes 8:00 - 18:00.
 
-REGLA CRÍTICA — AGENDAMIENTO:
-- Los pacientes se agendan DIRECTAMENTE en https://oirconecta.com/agendar (elegir día y hora en 2 minutos, sin llamada previa).
-- Siempre que alguien mencione agendar, cita, valoración, o quiera venir al centro → responde con calidez y comparte el link https://oirconecta.com/agendar como acción principal.
-- NO digas "un asesor te contacta" para agendar. La persona puede hacerlo sola con el link.
-- Solo escalás a humano [ESCALAR_HUMANO] si: (a) el paciente pide hablar con una persona explícitamente, (b) hay una duda que no puedes responder, (c) urgencia médica (dolor fuerte, sangrado, pérdida súbita).
+═══ AGENDAMIENTO POR WHATSAPP (PRIORIDAD ALTA) ═══
+
+Tienes 3 tools para AGENDAR CITAS SIN QUE EL PACIENTE SALGA DE WHATSAPP:
+  1. list_appointment_types — para saber qué tipos de consulta hay.
+  2. get_availability — para conocer horarios disponibles de una fecha.
+  3. create_appointment — para crear la cita confirmada.
+
+CUANDO EL PACIENTE QUIERA AGENDAR (menciona "cita", "valoración", "agendar", "cuándo puedo ir", "quiero ir"), SIGUE ESTE FLUJO SIN DESVIARTE:
+
+  1. Si aún no conoces los tipos, llama list_appointment_types.
+  2. Si el paciente no dijo qué necesita, ofrece los tipos que existen y elige por él el más común (valoración auditiva) si dice cosas como "quiero una cita" sin más contexto.
+  3. Pregunta la fecha tentativa (día de la semana, "esta semana", "el próximo martes"). Interpreta hoy = ${'{HOY_PLACEHOLDER}'}.
+  4. Llama get_availability con esa fecha y el appointmentTypeId. NUNCA inventes horarios.
+  5. Ofrece 3 horarios REALES devueltos por get_availability (los más cercanos posibles). Formato: "Tengo estos horarios:\\n  1️⃣ HH:MM AM/PM\\n  2️⃣ HH:MM AM/PM\\n  3️⃣ HH:MM AM/PM\\nContéstame con el número o dime otro día."
+  6. Cuando el paciente elija, PIDE solo estos datos mínimos: nombre completo. El email es opcional (pídelo con "opcional para enviarte confirmación por correo").
+  7. RESUMEN antes de bookear: "Perfecto, agendo entonces: [tipo] el [día D de mes] a las [hora]. ¿Confirmas?"
+  8. Cuando el paciente confirme, llama create_appointment. Solo entonces envía el mensaje final de confirmación con la fecha, hora y que le llegará correo si dio email.
+
+REGLAS EXTRA:
+- El teléfono del paciente ya lo tienes (WhatsApp). NO se lo pidas.
+- Si el paciente prefiere agendar por la web, comparte https://oirconecta.com/agendar y no insistas.
+- Solo escalás a humano [ESCALAR_HUMANO] si: (a) pide explícitamente hablar con una persona, (b) urgencia médica (dolor fuerte, sangrado, pérdida súbita), (c) algo que no puedes resolver con las tools.
 
 Reglas de tono:
 - Cálido, colombiano neutro, tuteo. Nunca robótico.
-- Máximo 3 párrafos cortos por respuesta.
+- Máximo 3-4 líneas por respuesta.
 - Solo hablas de salud auditiva. No des consejos médicos específicos ni diagnósticos.
 - Nunca menciones que eres una IA a menos que te pregunten directamente.
 - Rangos de precios: puedes dar rangos amplios (ej. "los planes con audífonos van desde X hasta Y millones según tecnología"), pero recalca que la valoración es gratuita y personalizada.`,
@@ -294,6 +406,10 @@ async function loadHistory(conversationId) {
  * Genera respuesta con Claude para un mensaje entrante en una conversación
  * BOT que ya tiene contactType. Envía la respuesta por WhatsApp y persiste.
  * Si la respuesta contiene [ESCALAR_HUMANO], marca la conversación como ESCALATED.
+ *
+ * C1 — Para rama PACIENTE_BOGOTA y RETAIL_PROFESSIONAL_ID configurado, corre
+ * un tool loop de hasta 5 iteraciones para permitir que Claude agende directo
+ * en WhatsApp (list_types → get_availability → create_appointment).
  */
 async function handleTextForBot({ conversationId, incomingText }) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
@@ -307,22 +423,79 @@ async function handleTextForBot({ conversationId, incomingText }) {
   if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
   if (!conv.contactType) return { skipped: 'no-contact-type' };
 
-  const systemPrompt = SYSTEM_PROMPTS[conv.contactType];
+  let systemPrompt = SYSTEM_PROMPTS[conv.contactType];
   if (!systemPrompt) return { skipped: 'no-prompt-for-type' };
 
+  // Rellena la fecha de hoy en el prompt (solo aplica al de PACIENTE_BOGOTA).
+  const hoyLocal = new Date().toLocaleString('es-CO', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    timeZone: 'America/Bogota',
+  });
+  systemPrompt = systemPrompt.replace('{HOY_PLACEHOLDER}', hoyLocal);
+
+  // ¿Habilitar tools de booking? Solo si es PACIENTE_BOGOTA y retail configurado.
+  const useBookingTools = conv.contactType === 'PACIENTE_BOGOTA' && !!retailProfileId();
+
   const history = await loadHistory(conversationId);
+  const messages = history.length > 0 ? history : [{ role: 'user', content: incomingText }];
 
   let reply = '';
   try {
     const client = new Anthropic();
-    const resp = await client.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 800,
-      system: systemPrompt,
-      messages: history.length > 0 ? history : [{ role: 'user', content: incomingText }],
-    });
-    const block = (resp.content || []).find((b) => b.type === 'text');
-    reply = block?.text?.trim() || '';
+    const toolCtx = { conversationId: conv.id, waPhone: conv.phone, contactName: conv.contactName };
+
+    if (useBookingTools) {
+      // Tool loop: hasta 5 iteraciones.
+      let finalText = '';
+      const workingMessages = [...messages];
+      for (let iter = 0; iter < 5; iter++) {
+        const resp = await client.messages.create({
+          model: CLAUDE_MODEL,
+          max_tokens: 1024,
+          system: systemPrompt,
+          tools: BOOKING_TOOLS,
+          messages: workingMessages,
+        });
+        const toolUses = resp.content.filter((b) => b.type === 'tool_use');
+        const textBlocks = resp.content.filter((b) => b.type === 'text');
+        finalText = textBlocks.map((b) => b.text).join('\n').trim();
+
+        if (toolUses.length === 0) break;
+
+        workingMessages.push({ role: 'assistant', content: resp.content });
+        const toolResults = [];
+        for (const tu of toolUses) {
+          let output, isError = false;
+          try {
+            const impl = bookingToolImpls[tu.name];
+            if (!impl) throw new Error(`Tool desconocida: ${tu.name}`);
+            output = await impl(toolCtx, tu.input || {});
+          } catch (e) {
+            console.error('[wa-bot] tool', tu.name, 'falló:', e.message);
+            output = { error: e.message };
+            isError = true;
+          }
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: tu.id,
+            content: typeof output === 'string' ? output : JSON.stringify(output),
+            is_error: isError,
+          });
+        }
+        workingMessages.push({ role: 'user', content: toolResults });
+      }
+      reply = finalText;
+    } else {
+      // Path simple sin tools (INFO_GENERAL, PROFESIONAL_DIRECTORIO, etc.)
+      const resp = await client.messages.create({
+        model: CLAUDE_MODEL,
+        max_tokens: 800,
+        system: systemPrompt,
+        messages,
+      });
+      const block = (resp.content || []).find((b) => b.type === 'text');
+      reply = block?.text?.trim() || '';
+    }
   } catch (e) {
     console.error('[wa-bot] claude falló:', e.message);
     return { error: e.message };
