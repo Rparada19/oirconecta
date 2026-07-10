@@ -12,7 +12,8 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
-const { sendWhatsAppText } = require('../notifications/channels/whatsapp');
+const { sendWhatsAppText, sendWhatsAppTemplate } = require('../notifications/channels/whatsapp');
+const catalog = require('./waTemplates.catalog');
 
 const prisma = new PrismaClient();
 
@@ -194,6 +195,138 @@ async function persistDeliveryUpdate({ wamid, status, errorText }) {
   return { updated: updated.count };
 }
 
+/**
+ * Inicia una conversación nueva con un contacto (nombre + teléfono) enviando una
+ * plantilla HSM aprobada por Meta. Es la única forma de escribir "en frío" a
+ * alguien que nunca nos ha escrito.
+ *
+ * @param {object} p
+ * @param {string} p.phone            número E.164 sin '+' (ej. 573001234567)
+ * @param {string} p.contactName
+ * @param {string} p.templateKey      key del catálogo (ej. 'saludo_paciente_bogota')
+ * @param {object} p.variables        valores de las variables (ej. { nombre: 'María' })
+ * @param {string} [p.businessLine='CRM']
+ * @param {string} [p.sentByUserId]
+ */
+async function startNewConversation({
+  phone, contactName, templateKey, variables = {}, businessLine = 'CRM', sentByUserId = null,
+}) {
+  const phoneClean = String(phone || '').replace(/\D/g, '');
+  if (!phoneClean || phoneClean.length < 10) {
+    const err = new Error('Teléfono inválido — debe incluir código de país (ej. 573001234567)');
+    err.code = 'INVALID_PHONE';
+    throw err;
+  }
+
+  const template = catalog.getByKey(templateKey);
+  if (!template) {
+    const err = new Error(`Plantilla "${templateKey}" no existe en el catálogo`);
+    err.code = 'TEMPLATE_NOT_FOUND';
+    throw err;
+  }
+
+  // Verifica que la plantilla aplica al businessLine solicitado
+  if (template.businessLine && template.businessLine !== businessLine) {
+    const err = new Error(`La plantilla "${template.label}" es para ${template.businessLine}, no ${businessLine}`);
+    err.code = 'TEMPLATE_BUSINESS_MISMATCH';
+    throw err;
+  }
+
+  // Construye positional params (throw si falta alguna variable)
+  const bodyParams = catalog.buildBodyParams(template, variables);
+  const preview = catalog.renderPreview(template, variables);
+
+  // Find-or-create conversación
+  let conversation = await prisma.whatsAppConversation.findUnique({ where: { phone: phoneClean } });
+
+  const patientLink = await (async () => {
+    const last10 = phoneClean.slice(-10);
+    if (!last10) return null;
+    const patient = await prisma.patient.findFirst({
+      where: { telefono: { contains: last10 } },
+      select: { id: true },
+    });
+    return patient?.id || null;
+  })();
+
+  if (!conversation) {
+    conversation = await prisma.whatsAppConversation.create({
+      data: {
+        phone: phoneClean,
+        contactName: contactName || null,
+        businessLine,
+        intent: 'SIN_CLASIFICAR',
+        status: 'HUMAN',
+        patientId: patientLink,
+      },
+    });
+  } else if (contactName && !conversation.contactName) {
+    conversation = await prisma.whatsAppConversation.update({
+      where: { id: conversation.id },
+      data: { contactName },
+    });
+  }
+
+  // Envía a Meta
+  const phoneNumberId = process.env.META_CORPORATE_PHONE_NUMBER_ID
+    || process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  let providerId = null;
+  let deliveryStatus = 'sent';
+  let errorMessage = null;
+  try {
+    // sendWhatsAppTemplate usa WHATSAPP_PHONE_NUMBER_ID por env; para forzar el corporativo
+    // usamos ese mismo env. En este flujo asumimos que WHATSAPP_PHONE_NUMBER_ID = corporativo.
+    if (phoneNumberId && phoneNumberId !== process.env.WHATSAPP_PHONE_NUMBER_ID) {
+      console.warn('[wa-corp] atención: sendWhatsAppTemplate usa WHATSAPP_PHONE_NUMBER_ID, no META_CORPORATE_PHONE_NUMBER_ID');
+    }
+    const result = await sendWhatsAppTemplate({
+      to: phoneClean,
+      metaTemplateName: template.metaName,
+      locale: template.locale || 'es_CO',
+      bodyParams,
+    });
+    providerId = result?.providerMessageId || null;
+  } catch (e) {
+    deliveryStatus = 'failed';
+    errorMessage = (e.message || 'Error desconocido').slice(0, 500);
+    console.error('[wa-corp] sendTemplate falló:', e.message);
+  }
+
+  const msg = await prisma.whatsAppMessage.create({
+    data: {
+      conversationId: conversation.id,
+      wamid: providerId,
+      direction: 'OUTBOUND',
+      type: 'template',
+      body: preview,
+      sentByBot: false,
+      sentByUserId,
+      deliveryStatus,
+      errorMessage,
+      timestamp: new Date(),
+    },
+  });
+
+  await prisma.whatsAppConversation.update({
+    where: { id: conversation.id },
+    data: {
+      lastMessageAt: msg.timestamp,
+      lastMessagePreview: `Tú: ${preview.slice(0, 140)}`,
+    },
+  });
+
+  if (deliveryStatus === 'failed') {
+    const err = new Error(errorMessage);
+    err.code = 'SEND_FAILED';
+    err.conversationId = conversation.id;
+    err.messageId = msg.id;
+    throw err;
+  }
+
+  return { conversationId: conversation.id, messageId: msg.id, providerId };
+}
+
 /** Marca todos los mensajes inbound de la conversación como leídos (unreadCount=0). */
 async function markConversationRead(conversationId) {
   await prisma.whatsAppConversation.update({
@@ -208,6 +341,7 @@ module.exports = {
   findOrCreateConversation,
   persistIncomingMessage,
   sendTextToConversation,
+  startNewConversation,
   persistDeliveryUpdate,
   markConversationRead,
 };

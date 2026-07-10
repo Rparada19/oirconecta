@@ -15,11 +15,63 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticate } = require('../middleware/auth');
 const corp = require('../services/waCorporate.service');
+const catalog = require('../services/waTemplates.catalog');
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 router.use(authenticate);
+
+// ─── Plantillas HSM disponibles ────────────────────────────
+router.get('/templates', async (req, res, next) => {
+  try {
+    const { businessLine } = req.query;
+    const templates = catalog.listTemplates({ businessLine });
+    // Devolvemos sin exponer metaName exacto (por si acaso)
+    res.json({
+      success: true,
+      data: templates.map((t) => ({
+        key: t.key,
+        label: t.label,
+        description: t.description,
+        category: t.category,
+        businessLine: t.businessLine,
+        variables: t.variables,
+        preview: t.preview,
+      })),
+    });
+  } catch (e) { next(e); }
+});
+
+// ─── Nueva conversación ────────────────────────────────────
+router.post('/conversations/new', async (req, res, next) => {
+  try {
+    const { phone, contactName, templateKey, variables, businessLine } = req.body || {};
+    if (!phone) return res.status(400).json({ success: false, error: 'phone requerido' });
+    if (!templateKey) return res.status(400).json({ success: false, error: 'templateKey requerido' });
+
+    const result = await corp.startNewConversation({
+      phone,
+      contactName: contactName || null,
+      templateKey,
+      variables: variables || {},
+      businessLine: (businessLine || 'CRM').toUpperCase(),
+      sentByUserId: req.user?.id || null,
+    });
+    res.status(201).json({ success: true, data: result });
+  } catch (e) {
+    if (['INVALID_PHONE', 'TEMPLATE_NOT_FOUND', 'MISSING_VARIABLE', 'TEMPLATE_BUSINESS_MISMATCH'].includes(e.code)) {
+      return res.status(400).json({ success: false, error: e.message, code: e.code });
+    }
+    if (e.code === 'SEND_FAILED') {
+      return res.status(502).json({
+        success: false, error: e.message, code: 'SEND_FAILED',
+        conversationId: e.conversationId, messageId: e.messageId,
+      });
+    }
+    next(e);
+  }
+});
 
 // ─── Listar ────────────────────────────────────────────────
 router.get('/conversations', async (req, res, next) => {

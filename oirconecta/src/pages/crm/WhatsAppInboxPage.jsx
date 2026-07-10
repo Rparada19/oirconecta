@@ -13,7 +13,8 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Box, Stack, Typography, TextField, Button, IconButton, Chip, Avatar,
   CircularProgress, Alert, Tooltip, Divider, InputAdornment, Badge,
-  MenuItem, Select, FormControl, InputLabel,
+  MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle,
+  DialogContent, DialogActions, RadioGroup, FormControlLabel, Radio,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
@@ -21,6 +22,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import AddIcon from '@mui/icons-material/Add';
 import { api } from '../../services/apiClient';
 
 const NAVY = '#0F2A4A';
@@ -74,6 +76,63 @@ export default function WhatsAppInboxPage() {
 
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
+
+  // Nueva conversación
+  const [newOpen, setNewOpen] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [newForm, setNewForm] = useState({
+    phone: '', contactName: '', templateKey: '', businessLine: 'CRM', variables: {},
+  });
+  const [newLoading, setNewLoading] = useState(false);
+  const [newError, setNewError] = useState(null);
+  const selectedTemplate = templates.find((t) => t.key === newForm.templateKey);
+  const templatesForLine = templates.filter((t) => !t.businessLine || t.businessLine === newForm.businessLine);
+
+  const openNewDialog = async () => {
+    setNewError(null);
+    setNewForm({ phone: '', contactName: '', templateKey: '', businessLine: 'CRM', variables: {} });
+    setNewOpen(true);
+    if (templates.length === 0) {
+      try {
+        const r = await api.get('/api/wa/templates');
+        if (r?.data?.success) setTemplates(r.data.data);
+      } catch (e) { setNewError('No se pudieron cargar las plantillas'); }
+    }
+  };
+
+  const submitNew = async () => {
+    setNewError(null);
+    if (!newForm.phone || !newForm.templateKey) {
+      setNewError('Teléfono y plantilla son obligatorios');
+      return;
+    }
+    setNewLoading(true);
+    try {
+      const r = await api.post('/api/wa/conversations/new', {
+        phone: newForm.phone,
+        contactName: newForm.contactName || null,
+        templateKey: newForm.templateKey,
+        variables: newForm.variables,
+        businessLine: newForm.businessLine,
+      });
+      if (r?.data?.success) {
+        setNewOpen(false);
+        await load();
+        if (r.data.data?.conversationId) loadDetail(r.data.data.conversationId);
+      } else {
+        setNewError(r?.data?.error || 'Error al iniciar');
+      }
+    } catch (e) {
+      const errData = e.response?.data;
+      if (errData?.code === 'SEND_FAILED') {
+        setNewError(`Meta rechazó el envío: ${errData.error}. Verifica que la plantilla esté aprobada.`);
+      } else {
+        setNewError(errData?.error || e.message);
+      }
+    } finally {
+      setNewLoading(false);
+    }
+  };
 
   const load = useCallback(async ({ showSpinner = true } = {}) => {
     if (showSpinner) setLoading(true);
@@ -179,11 +238,21 @@ export default function WhatsAppInboxPage() {
         bgcolor: CREAM, display: 'flex', flexDirection: 'column',
       }}>
         <Box sx={{ p: 2, borderBottom: `1px solid ${BORDER}` }}>
-          <Typography sx={{ ...SERIF, fontWeight: 600, color: NAVY, fontSize: '1.25rem' }}>
-            <WhatsAppIcon sx={{ fontSize: 20, color: WA_GREEN, mr: 1, verticalAlign: 'middle' }} />
-            WhatsApp
-          </Typography>
-          <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>+57 317 150 3944 · Corporativo</Typography>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Box>
+              <Typography sx={{ ...SERIF, fontWeight: 600, color: NAVY, fontSize: '1.25rem' }}>
+                <WhatsAppIcon sx={{ fontSize: 20, color: WA_GREEN, mr: 1, verticalAlign: 'middle' }} />
+                WhatsApp
+              </Typography>
+              <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>+57 317 150 3944 · Corporativo</Typography>
+            </Box>
+            <Tooltip title="Nueva conversación">
+              <IconButton onClick={openNewDialog}
+                sx={{ bgcolor: ACCENT, color: '#fff', width: 36, height: 36, '&:hover': { bgcolor: '#5b21b6' } }}>
+                <AddIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Box>
 
         <Box sx={{ p: 1.5, borderBottom: `1px solid ${BORDER}` }}>
@@ -415,17 +484,106 @@ export default function WhatsAppInboxPage() {
             </Box>
           </>
         ) : (
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: MUTED }}>
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: MUTED, textAlign: 'center', px: 3 }}>
             <WhatsAppIcon sx={{ fontSize: 64, color: '#cbd5e1', mb: 2 }} />
             <Typography sx={{ ...SERIF, color: NAVY, fontSize: '1.5rem', fontWeight: 600, mb: 1 }}>
               Selecciona una conversación
             </Typography>
-            <Typography sx={{ fontSize: '0.9rem' }}>
+            <Typography sx={{ fontSize: '0.9rem', mb: 3 }}>
               Los mensajes de +57 317 150 3944 aparecerán a la izquierda cuando lleguen.
             </Typography>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={openNewDialog}
+              sx={{ bgcolor: ACCENT, textTransform: 'none', fontWeight: 700, borderRadius: '10px',
+                '&:hover': { bgcolor: '#5b21b6' } }}>
+              Iniciar nueva conversación
+            </Button>
           </Box>
         )}
       </Box>
+
+      {/* ─── Modal: Nueva conversación ─── */}
+      <Dialog open={newOpen} onClose={() => !newLoading && setNewOpen(false)} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { borderRadius: '14px' } }}>
+        <DialogTitle sx={{ ...SERIF, color: NAVY, fontSize: '1.35rem', fontWeight: 600 }}>
+          Nueva conversación
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="info" sx={{ mb: 2, borderRadius: '10px', fontSize: '0.82rem' }}>
+            Meta solo permite escribir en frío usando <strong>plantillas HSM aprobadas</strong>.
+            Cuando el contacto responda, se abre la ventana de 24h para texto libre.
+          </Alert>
+
+          <Stack spacing={2}>
+            <Box>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1 }}>
+                Tipo de contacto
+              </Typography>
+              <RadioGroup row value={newForm.businessLine}
+                onChange={(e) => setNewForm({ ...newForm, businessLine: e.target.value, templateKey: '', variables: {} })}>
+                <FormControlLabel value="CRM" control={<Radio size="small" />} label="Paciente / centro Bogotá" />
+                <FormControlLabel value="DIRECTORIO" control={<Radio size="small" />} label="Profesional / directorio" />
+              </RadioGroup>
+            </Box>
+
+            <TextField label="Teléfono (con código país, ej. 573001234567)" fullWidth size="small"
+              value={newForm.phone} onChange={(e) => setNewForm({ ...newForm, phone: e.target.value.replace(/\D/g, '') })}
+              helperText="Solo números, sin + ni espacios" />
+            <TextField label="Nombre (opcional)" fullWidth size="small"
+              value={newForm.contactName} onChange={(e) => setNewForm({ ...newForm, contactName: e.target.value })} />
+
+            <FormControl fullWidth size="small">
+              <InputLabel>Plantilla</InputLabel>
+              <Select value={newForm.templateKey} label="Plantilla"
+                onChange={(e) => setNewForm({ ...newForm, templateKey: e.target.value, variables: {} })}>
+                {templatesForLine.length === 0 ? (
+                  <MenuItem disabled value="">
+                    Sin plantillas disponibles para {newForm.businessLine}
+                  </MenuItem>
+                ) : templatesForLine.map((t) => (
+                  <MenuItem key={t.key} value={t.key}>
+                    <Box>
+                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 600 }}>{t.label}</Typography>
+                      <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>{t.description}</Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {selectedTemplate && (
+              <>
+                {selectedTemplate.variables.map((v) => (
+                  <TextField key={v.key} label={v.label} placeholder={v.placeholder} fullWidth size="small"
+                    value={newForm.variables[v.key] || ''}
+                    onChange={(e) => setNewForm({ ...newForm, variables: { ...newForm.variables, [v.key]: e.target.value } })}
+                  />
+                ))}
+                <Box sx={{ p: 2, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px' }}>
+                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#15803d', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Vista previa del mensaje
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.9rem', color: '#111827', whiteSpace: 'pre-wrap' }}>
+                    {selectedTemplate.variables.reduce((txt, v, i) => {
+                      const val = newForm.variables[v.key] || `{{${i + 1}}}`;
+                      return txt.split(`{{${i + 1}}}`).join(val);
+                    }, selectedTemplate.preview)}
+                  </Typography>
+                </Box>
+              </>
+            )}
+
+            {newError && <Alert severity="error" sx={{ borderRadius: '10px', fontSize: '0.82rem' }}>{newError}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setNewOpen(false)} disabled={newLoading}>Cancelar</Button>
+          <Button variant="contained" onClick={submitNew} disabled={newLoading || !newForm.phone || !newForm.templateKey}
+            sx={{ bgcolor: WA_GREEN, textTransform: 'none', fontWeight: 700,
+              '&:hover': { bgcolor: '#1fb85a' } }}>
+            {newLoading ? 'Enviando…' : 'Enviar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
