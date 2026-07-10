@@ -34,6 +34,7 @@ const EDU_SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpac
 import { directoryApi, getDirectoryToken } from '../../services/directoryAccountApi';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
+import IaDocumentsSection from '../../components/profesional/IaDocumentsSection';
 
 const ACCENT = '#6d28d9';
 const NAVY = '#0F2A4A';
@@ -587,6 +588,11 @@ export default function ProfesionalIAPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* F10 — Documentos del bot (RAG) */}
+      <Box sx={{ mt: 3 }}>
+        <IaDocumentsSection />
+      </Box>
 
       {/* Conversaciones */}
       <Card sx={{ mt: 3, borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>

@@ -517,6 +517,30 @@ async function chat(profileId, { conversationId, message, metadata }) {
   await saveUserMessage(conversation.id, message);
   const history = await loadConversationMessages(conversation.id);
 
+  // F10 — Retrieval: busca chunks de documentos del profesional relevantes a la pregunta.
+  // Se construye un bloque de contexto adicional que se pasa al system sin cache_control
+  // (varía por query, no vale la pena cachear).
+  let ragContextBlock = null;
+  try {
+    const configRow = await prisma.iaAgentConfig.findUnique({
+      where: { profileId }, select: { id: true },
+    });
+    if (configRow?.id) {
+      const ingestion = require('./documentIngestion.service');
+      const chunks = await ingestion.retrieveTopKChunks({
+        configId: configRow.id, query: message, k: 3,
+      });
+      if (chunks.length > 0) {
+        const context = chunks
+          .map((c, i) => `[Extracto ${i + 1} · similitud ${c.similarity.toFixed(2)}]\n${c.content}`)
+          .join('\n\n---\n\n');
+        ragContextBlock = `## Documentos del profesional (contexto adicional)\n\nEl profesional ha subido los siguientes extractos relacionados con la pregunta actual. Úsalos como referencia autorizada; si algo del extracto contradice el conocimiento general, respeta el extracto.\n\n${context}\n\nSi la información del extracto responde la pregunta, cítalo naturalmente en tu respuesta. No expongas los marcadores "[Extracto N]" al usuario.`;
+      }
+    }
+  } catch (e) {
+    console.warn('[iaAgent] retrieval falló:', e.message);
+  }
+
   const client = new Anthropic();
   let finalText = '';
   let finishReason = 'end_turn';
@@ -530,6 +554,10 @@ async function chat(profileId, { conversationId, message, metadata }) {
     // conversaciones distintas de cualquier profesional (siempre que system sea
     // idéntico dentro de esa ventana).
     const systemBlocks = [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }];
+    if (ragContextBlock) {
+      // Bloque de contexto RAG sin cache_control (cambia por query).
+      systemBlocks.push({ type: 'text', text: ragContextBlock });
+    }
     const cachedTools = TOOLS.map((t, i) =>
       i === TOOLS.length - 1 ? { ...t, cache_control: { type: 'ephemeral' } } : t,
     );

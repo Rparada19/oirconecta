@@ -2455,9 +2455,74 @@ model IaAgentConfig {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
-  faqs IaAgentFaq[]
+  faqs      IaAgentFaq[]
+  documents IaAgentDocument[]
 
   @@map("ia_agent_config")
+}
+
+/// F10 — Documento subido por el profesional para nutrir al bot (RAG).
+/// El texto se extrae, se parte en chunks y cada chunk lleva su embedding.
+/// En cada consulta al bot, se hace búsqueda semántica y se inyectan los
+/// top-K chunks más similares en el system prompt como contexto adicional.
+model IaAgentDocument {
+  id       String        @id @default(uuid())
+  configId String
+  config   IaAgentConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  /// Nombre visible (tal como el profesional lo subió).
+  filename     String
+  /// Tipo MIME (application/pdf, text/plain, etc.).
+  mimeType     String
+  /// Tamaño en bytes.
+  sizeBytes    Int
+  /// Estado del procesamiento: PENDING | PROCESSING | READY | FAILED.
+  status       String  @default("PENDING")
+  /// Motivo si falla (ej. "PDF encriptado", "sin texto extraíble").
+  errorMessage String? @db.Text
+  /// Cantidad de chunks generados (para mostrar en UI).
+  chunkCount   Int     @default(0)
+  /// Total de caracteres extraídos (para métricas de uso).
+  totalChars   Int     @default(0)
+
+  /// Toggle rápido para excluir el doc de retrieval sin borrar.
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chunks IaAgentDocumentChunk[]
+
+  @@index([configId, isActive])
+  @@map("ia_agent_documents")
+}
+
+/// F10 — Chunk vectorizado de un documento.
+/// El vector se guarda usando pgvector (extensión Postgres). El schema Prisma
+/// declara el campo como Unsupported porque Prisma aún no tiene tipo nativo;
+/// las operaciones sobre `embedding` se hacen con SQL crudo (queryRaw).
+model IaAgentDocumentChunk {
+  id         String          @id @default(uuid())
+  documentId String
+  document   IaAgentDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  configId   String
+
+  /// Posición del chunk en el documento (0-based).
+  chunkIndex Int
+  /// Texto del chunk (para inyectar en el prompt).
+  content    String @db.Text
+  /// Cantidad aproximada de tokens (para límites de costo).
+  tokenCount Int    @default(0)
+
+  /// Embedding: vector(1536) de OpenAI text-embedding-3-small.
+  /// Nota: Prisma no soporta pgvector nativo; se gestiona con SQL crudo.
+  embedding Unsupported("vector(1536)")?
+
+  createdAt DateTime @default(now())
+
+  @@index([documentId, chunkIndex])
+  @@index([configId])
+  @@map("ia_agent_document_chunks")
 }
 
 /// F5.6 — Preguntas frecuentes propias del profesional que el bot debe responder.

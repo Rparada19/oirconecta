@@ -202,4 +202,99 @@ router.post('/admin/subscriptions/:subscriptionId/packs', authenticate, authoriz
 router.get('/admin/subscriptions/:subscriptionId/packs', authenticate, authorize('ADMIN'), (req, res) =>
   send(res, () => iaPacks.listPacks(req.params.subscriptionId)));
 
+// ─── F10 — Documentos del bot (RAG) ─────────────────────────
+const multer = require('multer');
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB por archivo
+});
+const ingestion = require('../services/documentIngestion.service');
+
+/** Helper: obtiene o crea el config del profesional (para tener configId). */
+async function getConfigId(profileId) {
+  const cfg = await prisma.iaAgentConfig.upsert({
+    where: { profileId },
+    create: { profileId },
+    update: {},
+    select: { id: true },
+  });
+  return cfg.id;
+}
+
+// Lista documentos del profesional
+router.get('/me/agent-documents', authenticateDirectoryAccount, withProfile, async (req, res) => {
+  try {
+    const configId = await getConfigId(req.profileId);
+    const docs = await prisma.iaAgentDocument.findMany({
+      where: { configId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, filename: true, mimeType: true, sizeBytes: true,
+        status: true, errorMessage: true, chunkCount: true, totalChars: true,
+        isActive: true, createdAt: true,
+      },
+    });
+    res.json({ success: true, data: docs });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Sube un documento nuevo (procesa async)
+router.post('/me/agent-documents',
+  authenticateDirectoryAccount, withProfile, upload.single('file'),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ success: false, error: 'Archivo requerido' });
+      const configId = await getConfigId(req.profileId);
+      const doc = await prisma.iaAgentDocument.create({
+        data: {
+          configId,
+          filename: req.file.originalname,
+          mimeType: req.file.mimetype,
+          sizeBytes: req.file.size,
+          status: 'PENDING',
+        },
+      });
+      // Fire-and-forget: procesa en background
+      ingestion.processDocument({
+        documentId: doc.id,
+        buffer: req.file.buffer,
+        mimeType: req.file.mimetype,
+        filename: req.file.originalname,
+        configId,
+      }).catch((e) => console.error('[ingestion] doc', doc.id, 'falló:', e.message));
+      res.status(202).json({ success: true, data: { id: doc.id, status: 'PENDING' } });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+  });
+
+// Toggle activo/inactivo (excluye del retrieval sin borrar)
+router.patch('/me/agent-documents/:id', authenticateDirectoryAccount, withProfile, async (req, res) => {
+  try {
+    const configId = await getConfigId(req.profileId);
+    const existing = await prisma.iaAgentDocument.findFirst({
+      where: { id: req.params.id, configId },
+    });
+    if (!existing) return res.status(404).json({ success: false, error: 'No encontrado' });
+    const data = {};
+    if (typeof req.body?.isActive === 'boolean') data.isActive = req.body.isActive;
+    const updated = await prisma.iaAgentDocument.update({
+      where: { id: existing.id }, data,
+    });
+    res.json({ success: true, data: updated });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Elimina documento + sus chunks
+router.delete('/me/agent-documents/:id', authenticateDirectoryAccount, withProfile, async (req, res) => {
+  try {
+    const configId = await getConfigId(req.profileId);
+    const existing = await prisma.iaAgentDocument.findFirst({
+      where: { id: req.params.id, configId },
+      select: { id: true },
+    });
+    if (!existing) return res.status(404).json({ success: false, error: 'No encontrado' });
+    await ingestion.deleteDocument(existing.id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 module.exports = router;

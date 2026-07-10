@@ -730,7 +730,55 @@ async function ensureAppointmentCancellationColumns(prisma) {
     // F9d.1 — Vinculación con pipeline comercial
     await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "salesLeadId" TEXT`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_conversations_salesLeadId_idx" ON "whatsapp_conversations" ("salesLeadId") WHERE "salesLeadId" IS NOT NULL`);
-    console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates + follow_ups + whatsapp_conversations OK');
+
+    // F10 — RAG documents del bot del directorio (pgvector)
+    let vectorReady = false;
+    try {
+      await prisma.$executeRawUnsafe(`CREATE EXTENSION IF NOT EXISTS vector`);
+      vectorReady = true;
+    } catch (e) {
+      console.warn('[boot-migrate] pgvector extension no disponible:', e.message);
+    }
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "ia_agent_documents" (
+        "id" TEXT PRIMARY KEY,
+        "configId" TEXT NOT NULL,
+        "filename" TEXT NOT NULL,
+        "mimeType" TEXT NOT NULL,
+        "sizeBytes" INTEGER NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'PENDING',
+        "errorMessage" TEXT,
+        "chunkCount" INTEGER NOT NULL DEFAULT 0,
+        "totalChars" INTEGER NOT NULL DEFAULT 0,
+        "isActive" BOOLEAN NOT NULL DEFAULT TRUE,
+        "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ia_agent_documents_configId_isActive_idx" ON "ia_agent_documents" ("configId", "isActive")`);
+    if (vectorReady) {
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "ia_agent_document_chunks" (
+          "id" TEXT PRIMARY KEY,
+          "documentId" TEXT NOT NULL,
+          "configId" TEXT NOT NULL,
+          "chunkIndex" INTEGER NOT NULL,
+          "content" TEXT NOT NULL,
+          "tokenCount" INTEGER NOT NULL DEFAULT 0,
+          "embedding" vector(1536),
+          "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+        );
+      `);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ia_agent_document_chunks_documentId_chunkIndex_idx" ON "ia_agent_document_chunks" ("documentId", "chunkIndex")`);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ia_agent_document_chunks_configId_idx" ON "ia_agent_document_chunks" ("configId")`);
+      // HNSW index para búsqueda vectorial rápida (necesita pgvector >= 0.5)
+      try {
+        await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ia_agent_document_chunks_embedding_hnsw" ON "ia_agent_document_chunks" USING hnsw ("embedding" vector_cosine_ops)`);
+      } catch (e) {
+        console.warn('[boot-migrate] HNSW index no disponible (pgvector viejo). Usando búsqueda lineal por ahora.');
+      }
+    }
+    console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates + follow_ups + whatsapp_conversations + ia_agent_documents OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);
   }
