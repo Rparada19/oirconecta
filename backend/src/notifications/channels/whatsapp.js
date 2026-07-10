@@ -132,4 +132,67 @@ async function sendWhatsAppText({ to, text, phoneNumberId }) {
   return { providerMessageId: data?.messages?.[0]?.id || null, raw: data };
 }
 
-module.exports = { sendWhatsAppTemplate, sendWhatsAppText };
+/**
+ * Envía un mensaje interactivo con botones (máx 3, cada label 20 chars).
+ * Solo válido DENTRO de la ventana de servicio de 24h.
+ *
+ * @param {object} p
+ * @param {string} p.to
+ * @param {string} p.bodyText          texto principal (máx 1024 chars)
+ * @param {Array<{id:string, title:string}>} p.buttons  1-3 botones
+ * @param {string} [p.footerText]      texto pequeño opcional bajo el body
+ * @param {string} [p.phoneNumberId]
+ */
+async function sendWhatsAppInteractiveButtons({
+  to, bodyText, buttons, footerText, phoneNumberId,
+}) {
+  const phoneId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
+
+  if (!phoneId || !token) {
+    console.warn('[whatsapp] credenciales no configuradas, simulando botones a', to);
+    return { providerMessageId: null, raw: { simulated: true } };
+  }
+  if (!bodyText) throw new Error('sendWhatsAppInteractiveButtons: bodyText requerido');
+  if (!Array.isArray(buttons) || buttons.length === 0 || buttons.length > 3) {
+    throw new Error('sendWhatsAppInteractiveButtons: entre 1 y 3 botones');
+  }
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    to: String(to).replace(/^\+/, ''),
+    type: 'interactive',
+    interactive: {
+      type: 'button',
+      body: { text: String(bodyText).slice(0, 1024) },
+      action: {
+        buttons: buttons.map((b) => ({
+          type: 'reply',
+          reply: {
+            id: String(b.id).slice(0, 256),
+            title: String(b.title).slice(0, 20),
+          },
+        })),
+      },
+      ...(footerText ? { footer: { text: String(footerText).slice(0, 60) } } : {}),
+    },
+  };
+
+  const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(`whatsapp ${res.status}: ${data?.error?.message || JSON.stringify(data)}`);
+    err.code = data?.error?.code ? `META_${data.error.code}` : `HTTP_${res.status}`;
+    err.raw = data;
+    throw err;
+  }
+  return { providerMessageId: data?.messages?.[0]?.id || null, raw: data };
+}
+
+module.exports = { sendWhatsAppTemplate, sendWhatsAppText, sendWhatsAppInteractiveButtons };

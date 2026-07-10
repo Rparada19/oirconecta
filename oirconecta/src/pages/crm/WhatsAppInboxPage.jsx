@@ -23,6 +23,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import AddIcon from '@mui/icons-material/Add';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import { api } from '../../services/apiClient';
 
 const NAVY = '#0F2A4A';
@@ -243,6 +245,13 @@ export default function WhatsAppInboxPage() {
     await loadDetail(selected.id);
   };
 
+  const handleToggleBot = async () => {
+    if (!selected?.id) return;
+    const nextStatus = selected.status === 'BOT' ? 'HUMAN' : 'BOT';
+    await api.post(`/api/wa/conversations/${selected.id}/status`, { status: nextStatus });
+    await loadDetail(selected.id);
+  };
+
   const shortName = (c) => c.contactName || `+${c.phone}`;
 
   return (
@@ -395,6 +404,15 @@ export default function WhatsAppInboxPage() {
                   fontWeight: 700, fontSize: '0.7rem',
                 }}
               />
+              {selected.status !== 'CLOSED' && (
+                <Tooltip title={selected.status === 'BOT' ? 'Tomar manualmente (pausar bot)' : 'Devolver al bot'}>
+                  <IconButton size="small" onClick={handleToggleBot}>
+                    {selected.status === 'BOT'
+                      ? <PersonOutlinedIcon fontSize="small" sx={{ color: ACCENT }} />
+                      : <SmartToyOutlinedIcon fontSize="small" sx={{ color: '#0369a1' }} />}
+                  </IconButton>
+                </Tooltip>
+              )}
               <Tooltip title="Refrescar">
                 <IconButton size="small" onClick={() => loadDetail(selected.id)}>
                   <RefreshIcon fontSize="small" />

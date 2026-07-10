@@ -184,18 +184,53 @@ async function processIncomingEvent(body) {
       // pasa por el agente IA del directorio. La respuesta es manual desde la
       // bandeja del CRM (Fase 9a) o vía bot corporativo (Fase 9b).
       if (corp.isCorporatePhoneNumberId(phoneNumberId)) {
+        const bot = require('./waCorporateBot.service');
         for (const msg of (value.messages || [])) {
           try {
+            // Extrae texto según el tipo del mensaje
+            let textBody = null;
+            let btnPayload = null;
+            if (msg.type === 'text') {
+              textBody = msg.text?.body || null;
+            } else if (msg.type === 'interactive') {
+              // Botón interactivo (respuesta a los botones del bot)
+              btnPayload = msg.interactive?.button_reply
+                ? { id: msg.interactive.button_reply.id, title: msg.interactive.button_reply.title }
+                : msg.interactive?.list_reply
+                ? { id: msg.interactive.list_reply.id, title: msg.interactive.list_reply.title }
+                : null;
+              textBody = btnPayload?.title || msg.interactive?.body?.text || null;
+            } else if (msg.type === 'button') {
+              // Botón de plantilla (no interactivo)
+              textBody = msg.button?.text || null;
+            }
+
             const r = await corp.persistIncomingMessage({
               phoneNumberId,
               fromWaId: msg.from,
               wamid: msg.id,
               type: msg.type || 'text',
-              textBody: msg.text?.body || msg.button?.text || msg.interactive?.body?.text || null,
+              textBody,
               contactName: contactByWaId[msg.from],
               tsSeconds: msg.timestamp,
             });
-            if (r.persisted) processed++; else skipped++;
+            if (r.persisted) processed++; else { skipped++; continue; }
+
+            // F9b — Dispatcher del bot corporativo (solo si WA_BOT_ENABLED=true)
+            try {
+              if (btnPayload) {
+                await bot.handleButtonReply({
+                  conversationId: r.conversationId,
+                  buttonId: btnPayload.id,
+                  buttonTitle: btnPayload.title,
+                });
+              } else if (r.isNew) {
+                // Primer mensaje entrante en la conversación → handshake con botones
+                await bot.maybeSendHandshake(r.conversationId);
+              }
+            } catch (be) {
+              console.error('[wa-bot] dispatcher falló:', be.message);
+            }
           } catch (e) {
             console.error('[wa-corp] error persistiendo msg', msg.id, e.message);
             skipped++;
