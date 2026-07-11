@@ -238,14 +238,20 @@ async function handleButtonReply({ conversationId, buttonId, buttonTitle }) {
   });
   if (!conv) return { skipped: 'conv-not-found' };
 
-  // Actualiza tipificación
+  // Regla del negocio (2026-07-11):
+  // - PACIENTE_BOGOTA / INFO_GENERAL → status='BOT' para que el flow de agendar
+  //   por IA continúe sin necesidad de humano.
+  // - PROFESIONAL_DIRECTORIO → status='ESCALATED' porque va al funnel de
+  //   captación del directorio (humano comercial toma el lead).
+  const nextStatus = contactType === 'PROFESIONAL_DIRECTORIO' ? 'ESCALATED' : 'BOT';
+
   await prisma.whatsAppConversation.update({
     where: { id: conversationId },
     data: {
       contactType: conv.contactType || contactType,
       businessLine,
-      status: 'ESCALATED',
-      unreadCount: { increment: 1 }, // para que el humano vea que hay algo nuevo
+      status: nextStatus,
+      ...(nextStatus === 'ESCALATED' ? { unreadCount: { increment: 1 } } : {}),
     },
   });
 
@@ -345,7 +351,18 @@ Reglas de tono:
 - Máximo 3-4 líneas por respuesta.
 - Solo hablas de salud auditiva. No des consejos médicos específicos ni diagnósticos.
 - Nunca menciones que eres una IA a menos que te pregunten directamente.
-- Rangos de precios: puedes dar rangos amplios (ej. "los planes con audífonos van desde X hasta Y millones según tecnología"), pero recalca que la valoración es gratuita y personalizada.`,
+- Rangos de precios: puedes dar rangos amplios (ej. "los planes con audífonos van desde X hasta Y millones según tecnología"), pero recalca que la valoración es gratuita y personalizada.
+
+FORMATO WHATSAPP (obligatorio):
+- Para negrita usa UN asterisco: *negrita*. NUNCA uses ** (dos asteriscos): WhatsApp los muestra literalmente.
+- Para itálica usa _texto_. Para tachado ~texto~.
+- No uses Markdown de otras plataformas (nada de ##, [], sintaxis de headings).
+- Emojis con moderación (máx 1-2 por respuesta).
+
+ESCALACIÓN (rama PACIENTE_BOGOTA — muy restrictiva):
+- NUNCA agregues [ESCALAR_HUMANO] solo porque el paciente pida "hablar con alguien" o "conectar con el equipo". En ese caso responde: "Con gusto te ayudo directamente por acá — soy parte del equipo. Sigamos con tu agendamiento." y continúa el flow de agendar.
+- SOLO escalás con [ESCALAR_HUMANO] si hay urgencia médica clara (dolor fuerte, sangrado, pérdida súbita de audición) o si el paciente insiste 3+ veces en hablar con humano después de que le explicaste que puedes agendarle tú.
+- Si el tool de agendar falla técnicamente, dile "Tuve un problema técnico agendándote. ¿Podrías escribirme el día y la hora que prefieres y lo intento de nuevo?" — NO escales.`,
 
   PROFESIONAL_DIRECTORIO:
 `Eres asistente del equipo comercial de OírConecta. Estás recopilando información de audiólogos y otorrinos interesados en unirse al directorio nacional.
@@ -356,7 +373,8 @@ Reglas:
 - Cuando tengas los datos mínimos (nombre + especialidad + ciudad) → di "gracias, nuestro ejecutivo comercial te contacta en las próximas horas" y agrega [ESCALAR_HUMANO] al final.
 - Si el interlocutor no es profesional de salud auditiva (audiólogo, otorrinolaringólogo, fonoaudiólogo) → informa amablemente que el directorio es solo para esas especialidades y agrega [ESCALAR_HUMANO].
 - Tono: profesional, cálido, colombiano neutro, tuteo.
-- Máximo 2 párrafos cortos por respuesta.`,
+- Máximo 2 párrafos cortos por respuesta.
+- Formato WhatsApp: *negrita* con UN asterisco (nunca **), _itálica_, sin Markdown de otras plataformas.`,
 
   INFO_GENERAL:
 `Eres el asistente virtual de OírConecta, plataforma colombiana de salud auditiva que combina:
@@ -374,7 +392,8 @@ Reglas:
 - Solo escalás a humano [ESCALAR_HUMANO] si: (a) piden explícitamente hablar con una persona, (b) urgencia médica, (c) tema fuera de tu alcance.
 - Tono: cálido, empático, colombiano neutro, tuteo. Máximo 3 párrafos cortos.
 - No inventes precios exactos. No des diagnósticos.
-- Nunca menciones que eres una IA a menos que te pregunten directamente.`,
+- Nunca menciones que eres una IA a menos que te pregunten directamente.
+- Formato WhatsApp: *negrita* con UN asterisco (nunca **), _itálica_, sin Markdown de otras plataformas.`,
 };
 
 const ESCALATE_TAG = '[ESCALAR_HUMANO]';
