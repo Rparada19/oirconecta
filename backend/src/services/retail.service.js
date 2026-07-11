@@ -26,7 +26,7 @@ const config = require('../config');
 
 const prisma = new PrismaClient();
 
-const RETAIL_EMAIL_DEFAULT = 'centro.bogota@oirconecta.com';
+const RETAIL_EMAIL_DEFAULT = 'admin@oirconecta.com';
 
 let _cached = null;
 

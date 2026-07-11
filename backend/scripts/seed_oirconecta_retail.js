@@ -21,8 +21,9 @@ const subService = require('../src/services/subscription.service');
 
 const prisma = new PrismaClient();
 
-// Debe coincidir con el fallback de waCorporateBot.service.js
-const RETAIL_EMAIL = (process.env.RETAIL_PROFESSIONAL_EMAIL || 'centro.bogota@oirconecta.com').toLowerCase();
+// Debe coincidir con el fallback de retail.service.js
+const RETAIL_EMAIL = (process.env.RETAIL_PROFESSIONAL_EMAIL || 'admin@oirconecta.com').toLowerCase();
+const RETAIL_PASSWORD = process.env.RETAIL_ACCOUNT_PASSWORD || 'Admin123!';
 const RETAIL_NOMBRE = 'OírConecta · Centro Bogotá';
 
 async function main() {
@@ -34,11 +35,9 @@ async function main() {
   if (!planPremium) throw new Error('PLAN_3_MENSUAL no existe tras ensurePlans');
   console.log('[1] Plan premium:', planPremium.code, '→', planPremium.id);
 
-  // 2. DirectoryAccount (upsert por email)
-  const passwordHash = await bcrypt.hash(
-    process.env.RETAIL_ACCOUNT_PASSWORD || 'oirconecta-retail-' + Math.random().toString(36).slice(2, 10),
-    10,
-  );
+  // 2. DirectoryAccount (upsert por email). Reafirma password en cada deploy
+  // para garantizar acceso consistente al portal profesional del retail.
+  const passwordHash = await bcrypt.hash(RETAIL_PASSWORD, 10);
   const account = await prisma.directoryAccount.upsert({
     where: { email: RETAIL_EMAIL },
     create: {
@@ -48,9 +47,14 @@ async function main() {
       activo: true,
       mustChangePassword: false,
     },
-    update: { nombre: RETAIL_NOMBRE, activo: true },
+    update: {
+      nombre: RETAIL_NOMBRE,
+      activo: true,
+      password: passwordHash,
+      mustChangePassword: false,
+    },
   });
-  console.log('[2] DirectoryAccount:', account.id);
+  console.log('[2] DirectoryAccount:', account.id, '(email=' + RETAIL_EMAIL + ')');
 
   // 3. DirectoryProfile
   let profile = await prisma.directoryProfile.findUnique({ where: { accountId: account.id } });
