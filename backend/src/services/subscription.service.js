@@ -503,7 +503,10 @@ async function cancelSubscription(subscriptionId, { motivo, immediate = false, c
 
   // Plan 3 (u otros con compromiso): el profesional no puede cancelar auto-servicio
   // antes de commitmentEnd. Admin sí puede (con motivo en metadata).
-  if (!canceledByAdmin && sub.commitmentEnd && new Date(sub.commitmentEnd) > new Date()) {
+  // Excepción: durante TRIAL la permanencia no aplica — nadie firma compromiso
+  // en una prueba gratuita.
+  const enTrial = sub.status === 'TRIAL';
+  if (!canceledByAdmin && !enTrial && sub.commitmentEnd && new Date(sub.commitmentEnd) > new Date()) {
     const err = new Error(`No es posible cancelar antes de la permanencia mínima (hasta ${sub.commitmentEnd.toISOString().slice(0,10)}). Contacta soporte.`);
     err.code = 'COMMITMENT_ACTIVE';
     throw err;
