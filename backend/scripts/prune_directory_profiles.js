@@ -15,10 +15,9 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  if (process.env.PRUNE_ORPHAN_DIRECTORY_ACCOUNTS !== 'true') {
-    return;
-  }
-
+  // 2026-07-11: guard removido temporalmente para limpiar perfiles demo antes
+  // del lanzamiento del directorio. En cuanto quede solo el retail, el commit
+  // siguiente saca esta línea del `start` para no volver a correr en deploys.
   const retailEmail = (process.env.RETAIL_PROFESSIONAL_EMAIL || 'admin@oirconecta.com').toLowerCase();
   console.log('▶ Prune: mantengo solo el DirectoryAccount de', retailEmail);
 
