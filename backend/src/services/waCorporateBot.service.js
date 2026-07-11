@@ -24,6 +24,7 @@ const { PrismaClient } = require('@prisma/client');
 const Anthropic = require('@anthropic-ai/sdk');
 const { sendWhatsAppText, sendWhatsAppInteractiveButtons } = require('../notifications/channels/whatsapp');
 const booking = require('./professionalBooking.service');
+const retailService = require('./retail.service');
 const config = require('../config');
 
 const prisma = new PrismaClient();
@@ -70,32 +71,8 @@ const BOOKING_TOOLS = [
   },
 ];
 
-const RETAIL_EMAIL_DEFAULT = 'centro.bogota@oirconecta.com';
-
-let _cachedRetailProfileId = null;
-
-/**
- * Resuelve el DirectoryProfile del consultorio OírConecta Bogotá.
- * Prioridad: env RETAIL_PROFESSIONAL_ID > lookup por env RETAIL_PROFESSIONAL_EMAIL >
- * lookup por email fijo (centro.bogota@oirconecta.com, creado por el seed).
- * Cachea in-memory tras el primer hit exitoso.
- */
-async function retailProfileId() {
-  if (_cachedRetailProfileId) return _cachedRetailProfileId;
-  const envId = config.retail?.professionalId || null;
-  if (envId) {
-    _cachedRetailProfileId = envId;
-    return envId;
-  }
-  const email = (config.retail?.professionalEmail || RETAIL_EMAIL_DEFAULT).toLowerCase();
-  const account = await prisma.directoryAccount.findUnique({
-    where: { email },
-    select: { profile: { select: { id: true } } },
-  });
-  const id = account?.profile?.id || null;
-  if (id) _cachedRetailProfileId = id;
-  return id;
-}
+// Delegado a retail.service (misma resolución que /api/public/retail-config).
+const retailProfileId = retailService.getRetailProfileId;
 
 const bookingToolImpls = {
   async list_appointment_types() {

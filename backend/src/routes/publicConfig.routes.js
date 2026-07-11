@@ -8,6 +8,7 @@ const { body, validationResult } = require('express-validator');
 const { PrismaClient } = require('@prisma/client');
 const config = require('../config');
 const emailService = require('../services/email.service');
+const retailService = require('../services/retail.service');
 const { authenticate } = require('../middleware/auth');
 
 const prisma = new PrismaClient();
@@ -15,19 +16,26 @@ const router = express.Router();
 
 // GET /api/public/retail-config
 // Devuelve el professionalId del consultorio propio de OírConecta para que
-// /agendar consulte y agende contra la agenda real de ese profesional.
-router.get('/retail-config', (req, res) => {
-  // OWN_DIRECTORY_PROFILE_IDS: lista de DirectoryProfile.id (UUIDs) que pertenecen
-  // a consultorios propios de OírConecta. Solo esas fichas pueden enlazar
-  // a /agendar?desdeDirectorio=... — el resto debe abrir formulario de contacto.
+// /agendar consulte y agende contra la MISMA agenda que usa el bot WhatsApp
+// y cualquier otro consumer interno. Resuelve por email si el env no está
+// (ver retail.service.js). Cachea in-memory.
+router.get('/retail-config', async (req, res) => {
+  const professionalId = await retailService.getRetailProfileId();
+
+  // Lista opcional de consultorios propios (para vistas del directorio).
+  // Si está vacía, defaulteamos a solo el retail resuelto para que
+  // /agendar?desdeDirectorio=... funcione sin configuración adicional.
   const ownDirectoryProfileIds = (process.env.OWN_DIRECTORY_PROFILE_IDS || '')
     .split(',').map((s) => s.trim()).filter(Boolean);
+  const ownIds = ownDirectoryProfileIds.length > 0
+    ? ownDirectoryProfileIds
+    : (professionalId ? [professionalId] : []);
 
   res.json({
     success: true,
     data: {
-      professionalId: config.retail.professionalId,
-      ownDirectoryProfileIds,
+      professionalId,
+      ownDirectoryProfileIds: ownIds,
     },
   });
 });
