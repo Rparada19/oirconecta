@@ -70,28 +70,51 @@ const BOOKING_TOOLS = [
   },
 ];
 
-function retailProfileId() {
-  return config.retail?.professionalId || null;
+const RETAIL_EMAIL_DEFAULT = 'centro.bogota@oirconecta.com';
+
+let _cachedRetailProfileId = null;
+
+/**
+ * Resuelve el DirectoryProfile del consultorio OírConecta Bogotá.
+ * Prioridad: env RETAIL_PROFESSIONAL_ID > lookup por env RETAIL_PROFESSIONAL_EMAIL >
+ * lookup por email fijo (centro.bogota@oirconecta.com, creado por el seed).
+ * Cachea in-memory tras el primer hit exitoso.
+ */
+async function retailProfileId() {
+  if (_cachedRetailProfileId) return _cachedRetailProfileId;
+  const envId = config.retail?.professionalId || null;
+  if (envId) {
+    _cachedRetailProfileId = envId;
+    return envId;
+  }
+  const email = (config.retail?.professionalEmail || RETAIL_EMAIL_DEFAULT).toLowerCase();
+  const account = await prisma.directoryAccount.findUnique({
+    where: { email },
+    select: { profile: { select: { id: true } } },
+  });
+  const id = account?.profile?.id || null;
+  if (id) _cachedRetailProfileId = id;
+  return id;
 }
 
 const bookingToolImpls = {
   async list_appointment_types() {
-    const profileId = retailProfileId();
-    if (!profileId) return { error: 'RETAIL_PROFESSIONAL_ID no configurado en el servidor.' };
+    const profileId = await retailProfileId();
+    if (!profileId) return { error: 'Perfil retail interno no encontrado (falta seed o env).' };
     const types = await booking.publicListTypes(profileId);
     return { types };
   },
 
   async get_availability(_ctx, { date, appointmentTypeId }) {
-    const profileId = retailProfileId();
-    if (!profileId) return { error: 'RETAIL_PROFESSIONAL_ID no configurado en el servidor.' };
+    const profileId = await retailProfileId();
+    if (!profileId) return { error: 'Perfil retail interno no encontrado (falta seed o env).' };
     const out = await booking.computeSlotsForDay(profileId, date, { appointmentTypeId });
     return out;
   },
 
   async create_appointment({ conversationId, waPhone, contactName }, input) {
-    const profileId = retailProfileId();
-    if (!profileId) return { error: 'RETAIL_PROFESSIONAL_ID no configurado en el servidor.' };
+    const profileId = await retailProfileId();
+    if (!profileId) return { error: 'Perfil retail interno no encontrado (falta seed o env).' };
 
     // El teléfono lo tomamos del WA E.164 (573xxx). Reusamos como telefono.
     const res = await booking.createPublicAppointment(profileId, {
@@ -452,8 +475,8 @@ async function handleTextForBot({ conversationId, incomingText }) {
   });
   systemPrompt = systemPrompt.replace('{HOY_PLACEHOLDER}', hoyLocal);
 
-  // ¿Habilitar tools de booking? Solo si es PACIENTE_BOGOTA y retail configurado.
-  const useBookingTools = conv.contactType === 'PACIENTE_BOGOTA' && !!retailProfileId();
+  // ¿Habilitar tools de booking? Solo si es PACIENTE_BOGOTA y retail resuelto.
+  const useBookingTools = conv.contactType === 'PACIENTE_BOGOTA' && !!(await retailProfileId());
 
   const history = await loadHistory(conversationId);
   const messages = history.length > 0 ? history : [{ role: 'user', content: incomingText }];
