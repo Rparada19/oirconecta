@@ -154,7 +154,11 @@ async function processIncomingMessage({
  * Procesa el cuerpo completo del webhook Meta (puede traer múltiples entry/messages).
  */
 async function processIncomingEvent(body) {
-  if (body?.object !== 'whatsapp_business_account') return { ok: true, ignored: 'OBJECT_MISMATCH' };
+  console.log('[wa-debug] processIncomingEvent object=', body?.object, 'entries=', body?.entry?.length);
+  if (body?.object !== 'whatsapp_business_account') {
+    console.log('[wa-debug] IGNORED object mismatch');
+    return { ok: true, ignored: 'OBJECT_MISMATCH' };
+  }
   const corp = require('./waCorporate.service');
   const entries = body.entry || [];
   let processed = 0, skipped = 0;
@@ -183,6 +187,7 @@ async function processIncomingEvent(body) {
       // F9 — Si es el número corporativo, persiste en whatsapp_conversations y no
       // pasa por el agente IA del directorio. La respuesta es manual desde la
       // bandeja del CRM (Fase 9a) o vía bot corporativo (Fase 9b).
+      console.log('[wa-debug] phoneNumberId=', phoneNumberId, 'isCorporate=', corp.isCorporatePhoneNumberId(phoneNumberId), 'messages=', (value.messages || []).length);
       if (corp.isCorporatePhoneNumberId(phoneNumberId)) {
         const bot = require('./waCorporateBot.service');
         for (const msg of (value.messages || [])) {
