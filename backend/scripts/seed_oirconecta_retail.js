@@ -65,9 +65,22 @@ async function main() {
     emailPublico: 'contacto@oirconecta.com',
     nombreConsultorio: 'OírConecta Bogotá',
     profesion: 'Audiología',
+    profesionesAdicionales: ['Audiología', 'Fonoaudiología'],
     whatsappPublico: '573171503944',
     idiomas: ['es'],
     polizasAceptadas: [],
+    descripcion:
+      'Centro auditivo en Bogotá especializado en diseñar planes de audición personalizados: '
+      + 'evaluación auditiva inicial gratuita, adaptación de audífonos multimarca y '
+      + 'acompañamiento post-venta con controles periódicos. Atendemos con calidez y sin apuros.',
+    anosExperiencia: 10,
+    servicios: [
+      { nombre: 'Valoración auditiva',       descripcion: 'Audiometría, logoaudiometría y consejería inicial. Sin costo.', precio: 0,   duracion: '45 min' },
+      { nombre: 'Adaptación de audífonos',   descripcion: 'Selección y programación personalizada según tu perfil auditivo.', precio: null, duracion: '60 min' },
+      { nombre: 'Control post-adaptación',   descripcion: 'Seguimiento para asegurar comodidad y beneficio auditivo real.',   precio: null, duracion: '30 min' },
+      { nombre: 'Otoemisiones acústicas',    descripcion: 'Prueba objetiva para tamizaje auditivo (neonatal y pediátrico).',  precio: null, duracion: '20 min' },
+    ],
+    allies: ['Widex', 'Phonak', 'Signia', 'Oticon', 'ReSound', 'Starkey', 'Bernafon', 'Unitron'],
   };
   let profile = await prisma.directoryProfile.findUnique({ where: { accountId: account.id } });
   if (!profile) {
@@ -153,6 +166,30 @@ async function main() {
   }
   await prisma.professionalAvailability.createMany({ data: bloques });
   console.log('[7] Availability creada:', bloques.length, 'bloques (Lun-Vie 8-13 y 14-18)');
+
+  // 8. IaAgentConfig — bot IA del directorio (widget en ficha pública).
+  //    El CRM propio consume el mismo servicio, por eso lo dejamos configurado
+  //    con la persona OírConecta.
+  const iaConfig = await prisma.iaAgentConfig.upsert({
+    where: { profileId: profile.id },
+    create: {
+      profileId: profile.id,
+      agentName: 'Aura',
+      agentColor: '#085946',
+      agentIcon: 'spa',
+      welcomeMessage: '¡Hola! 👋 Soy Aura, asistente de OírConecta. Te puedo ayudar a agendar tu valoración auditiva o resolver dudas sobre audífonos. ¿En qué te ayudo hoy?',
+      personality: 'Cálida, empática, colombiana neutro, tuteo. Evita jerga clínica; explica en términos que un paciente promedio entienda.',
+      expertise: 'Valoración auditiva inicial, adaptación de audífonos multimarca (Widex, Phonak, Signia, Oticon, ReSound), programación y controles post-adaptación, orientación a familiares de pacientes con hipoacusia.',
+      signature: '— Aura de OírConecta 🎧',
+      avoidTopics: 'Diagnósticos médicos específicos, precios exactos de audífonos, promociones puntuales. Redirige siempre a la valoración auditiva gratuita.',
+    },
+    update: {
+      agentName: 'Aura',
+      agentColor: '#085946',
+      agentIcon: 'spa',
+    },
+  });
+  console.log('[8] IaAgentConfig:', iaConfig.id, '· agente=', iaConfig.agentName);
 
   console.log('\n✅ Perfil OírConecta Bogotá listo.');
   console.log('\n👉 PROFILE ID (usar en env RETAIL_PROFESSIONAL_ID):');
