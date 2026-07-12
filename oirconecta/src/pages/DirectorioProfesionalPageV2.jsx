@@ -775,7 +775,8 @@ function ContactoFormularioSection({ profileId, name }) {
 
 // ─── Ubicación / Contacto ─────────────────────────────────────
 function UbicacionSection({ phone, direccion, city, horariosSemana, mapsEmbed }) {
-  if (!phone && !direccion && !city && (!horariosSemana || horariosSemana.length === 0)) return null;
+  const safeEmbed = typeof mapsEmbed === 'string' ? sanitizeMapsEmbed(mapsEmbed) : '';
+  if (!phone && !direccion && !city && !safeEmbed && (!horariosSemana || horariosSemana.length === 0)) return null;
   return (
     <Box id="ubicacion" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
       {overline('Ubicación y horarios')}
@@ -820,21 +821,28 @@ function UbicacionSection({ phone, direccion, city, horariosSemana, mapsEmbed })
             )}
           </Stack>
         </Box>
-        <Box sx={{
-          height: 260, borderRadius: '12px', overflow: 'hidden',
-          border: `1px solid ${BORDER}`,
-          background: mapsEmbed ? '#fff' : 'linear-gradient(135deg, #dbeafe, #eff6ff)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#1e40af', fontSize: '0.85rem', fontWeight: 500,
-          '& iframe': { width: '100%', height: '100%', border: 0, display: 'block' },
-        }}
-        // El usuario pega el iframe completo desde Google Maps → Compartir → Insertar mapa.
-        {...(mapsEmbed
-          ? { dangerouslySetInnerHTML: { __html: sanitizeMapsEmbed(mapsEmbed) } }
-          : {})}
-        >
-          {!mapsEmbed && 'Vista de mapa'}
-        </Box>
+        {safeEmbed ? (
+          <Box
+            sx={{
+              height: 260, borderRadius: '12px', overflow: 'hidden',
+              border: `1px solid ${BORDER}`, bgcolor: '#fff',
+              '& iframe': { width: '100%', height: '100%', border: 0, display: 'block' },
+            }}
+            // dangerouslySetInnerHTML no puede coexistir con children, así que
+            // separamos en dos ramas para no gatillar el warning/error de React.
+            dangerouslySetInnerHTML={{ __html: safeEmbed }}
+          />
+        ) : (
+          <Box sx={{
+            height: 260, borderRadius: '12px',
+            background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
+            border: `1px solid ${BORDER}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#1e40af', fontSize: '0.85rem', fontWeight: 500,
+          }}>
+            Vista de mapa
+          </Box>
+        )}
       </Box>
     </Box>
   );
