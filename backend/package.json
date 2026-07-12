@@ -7,7 +7,7 @@
     "postinstall": "prisma generate && node scripts/ensure_pg_extensions.js",
     "predev": "prisma generate",
     "dev": "nodemon src/index.js",
-    "start": "node scripts/ensure_pg_extensions.js && prisma db push --accept-data-loss && (node scripts/seed_oirconecta_retail.js || echo 'seed retail falló, continuando') && (node scripts/seed_blog_articles.js || echo 'seed blog falló, continuando') && (node scripts/seed_blog_covers.js || echo 'seed covers falló, continuando') && node src/index.js",
+    "start": "node scripts/ensure_pg_extensions.js && prisma db push --accept-data-loss && node scripts/seed_oirconecta_retail.js && (node scripts/seed_blog_articles.js || echo 'seed blog falló, continuando') && (node scripts/seed_blog_covers.js || echo 'seed covers falló, continuando') && node src/index.js",
     "blog:seed": "node scripts/seed_blog_articles.js",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
