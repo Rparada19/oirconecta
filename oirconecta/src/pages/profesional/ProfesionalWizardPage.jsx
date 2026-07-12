@@ -126,59 +126,63 @@ function ImageDropzone({ label, value, onChange, height = 200, icon: Ico = Camer
   };
 
   return (
-    <Box sx={{
-      position: 'relative', height, borderRadius: '14px',
-      border: `2px dashed ${value ? 'transparent' : '#cbd5e1'}`,
-      bgcolor: value ? 'transparent' : '#fafbfc',
-      overflow: 'hidden',
-      cursor: 'pointer',
-      transition: 'border-color 150ms ease',
-      '&:hover': { borderColor: value ? 'transparent' : ACCENT },
-    }} onClick={() => fileRef.current?.click()}>
-      {value && (
-        <Box sx={{
-          position: 'absolute', inset: 0,
-          backgroundImage: `url(${value})`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-        }} />
-      )}
-      {!value && (
-        <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: '100%', color: MUTED }}>
-          <Ico sx={{ fontSize: 36 }} />
-          <Typography sx={{ fontSize: '0.9rem', fontWeight: 600 }}>{label}</Typography>
-          <Typography sx={{ fontSize: '0.75rem' }}>Haz clic para subir</Typography>
-        </Stack>
-      )}
-      {uploading && (
-        <Box sx={{
-          position: 'absolute', inset: 0,
-          bgcolor: 'rgba(15,42,74,0.6)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <CircularProgress sx={{ color: '#fff' }} />
-        </Box>
-      )}
-      {value && !uploading && (
-        <IconButton
-          size="small"
-          onClick={(e) => { e.stopPropagation(); onChange(''); }}
-          sx={{
-            position: 'absolute', top: 8, right: 8,
-            bgcolor: 'rgba(255,255,255,0.9)',
-            '&:hover': { bgcolor: '#fff' },
-          }}
-        >
-          <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: '#b91c1c' }} />
-        </IconButton>
-      )}
-      <input ref={fileRef} type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden
-        onChange={(e) => handleFile(e.target.files?.[0])} />
-      {err && (
-        <Alert severity="error" sx={{ position: 'absolute', bottom: 8, left: 8, right: 8 }}>
-          {err}
-        </Alert>
-      )}
+    <>
+      <Box sx={{
+        position: 'relative', height, borderRadius: '14px',
+        border: `2px dashed ${value ? 'transparent' : '#cbd5e1'}`,
+        bgcolor: value ? 'transparent' : '#fafbfc',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'border-color 150ms ease',
+        '&:hover': { borderColor: value ? 'transparent' : ACCENT },
+      }} onClick={() => fileRef.current?.click()}>
+        {value && (
+          <Box sx={{
+            position: 'absolute', inset: 0,
+            backgroundImage: `url(${value})`,
+            backgroundSize: 'cover', backgroundPosition: 'center',
+          }} />
+        )}
+        {!value && (
+          <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: '100%', color: MUTED }}>
+            <Ico sx={{ fontSize: 36 }} />
+            <Typography sx={{ fontSize: '0.9rem', fontWeight: 600 }}>{label}</Typography>
+            <Typography sx={{ fontSize: '0.75rem' }}>Haz clic para subir</Typography>
+          </Stack>
+        )}
+        {uploading && (
+          <Box sx={{
+            position: 'absolute', inset: 0,
+            bgcolor: 'rgba(15,42,74,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <CircularProgress sx={{ color: '#fff' }} />
+          </Box>
+        )}
+        {value && !uploading && (
+          <IconButton
+            size="small"
+            onClick={(e) => { e.stopPropagation(); onChange(''); }}
+            sx={{
+              position: 'absolute', top: 8, right: 8,
+              bgcolor: 'rgba(255,255,255,0.9)',
+              '&:hover': { bgcolor: '#fff' },
+            }}
+          >
+            <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: '#b91c1c' }} />
+          </IconButton>
+        )}
+        <input ref={fileRef} type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden
+          onChange={(e) => handleFile(e.target.files?.[0])} />
+        {err && (
+          <Alert severity="error" sx={{ position: 'absolute', bottom: 8, left: 8, right: 8 }}>
+            {err}
+          </Alert>
+        )}
+      </Box>
+      {/* Fuera del Box con onClick: React propaga los clicks del Portal
+          al ancestro virtual y disparaba el file picker otra vez. */}
       <PhotoCropperDialog
         open={!!cropFile}
         file={cropFile}
@@ -186,7 +190,7 @@ function ImageDropzone({ label, value, onChange, height = 200, icon: Ico = Camer
         onClose={() => setCropFile(null)}
         onCropped={handleCropped}
       />
-    </Box>
+    </>
   );
 }
 

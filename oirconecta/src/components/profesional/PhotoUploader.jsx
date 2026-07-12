@@ -77,6 +77,7 @@ export default function PhotoUploader({
   const clear = (e) => { e.stopPropagation(); onChange('', null); };
 
   return (
+    <>
     <Box>
       <Box
         onClick={() => !busy && fileRef.current?.click()}
@@ -138,13 +139,16 @@ export default function PhotoUploader({
       )}
       {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
 
-      <PhotoCropperDialog
-        open={!!cropperFile}
-        file={cropperFile}
-        aspect={parseAspect(aspectRatio)}
-        onClose={() => setCropperFile(null)}
-        onCropped={uploadBlob}
-      />
     </Box>
+    {/* Fuera del Box padre con onClick: los clicks del Portal MUI propagan
+        virtualmente al ancestro y volvían a abrir el file picker. */}
+    <PhotoCropperDialog
+      open={!!cropperFile}
+      file={cropperFile}
+      aspect={parseAspect(aspectRatio)}
+      onClose={() => setCropperFile(null)}
+      onCropped={uploadBlob}
+    />
+    </>
   );
 }
