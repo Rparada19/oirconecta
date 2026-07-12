@@ -130,7 +130,7 @@ export default function PhotoUploader({
           </Box>
         )}
         <input ref={fileRef} type="file" hidden
-          accept="image/jpeg,image/png,image/webp,image/gif"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
           onChange={(e) => handleFile(e.target.files?.[0])} />
       </Box>
       {hint && (

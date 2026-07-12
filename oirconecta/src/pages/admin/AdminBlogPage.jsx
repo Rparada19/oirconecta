@@ -72,7 +72,7 @@ function CoverUploader({ value, onChange }) {
           </Box>
           <Button size="small" component="label" sx={{ textTransform: 'none', fontSize: '0.7rem' }}>
             Cambiar
-            <input type="file" hidden accept="image/jpeg,image/png,image/webp" onChange={(e) => handle(e.target.files?.[0])} />
+            <input type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(e) => handle(e.target.files?.[0])} />
           </Button>
           <Button size="small" onClick={() => onChange('')} sx={{ color: '#b91c1c', textTransform: 'none', fontSize: '0.7rem' }}>
             Quitar
@@ -89,7 +89,7 @@ function CoverUploader({ value, onChange }) {
             {busy ? 'Subiendo…' : 'Subir imagen de portada'}
           </Typography>
           <Typography sx={{ fontSize: '0.65rem', color: '#94a3b8' }}>JPG/PNG/WEBP · recomendado 1600×900</Typography>
-          <input type="file" hidden accept="image/jpeg,image/png,image/webp" onChange={(e) => handle(e.target.files?.[0])} />
+          <input type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(e) => handle(e.target.files?.[0])} />
         </Box>
       )}
       {err && <Alert severity="error" sx={{ mt: 0.5, fontSize: '0.75rem' }}>{err}</Alert>}

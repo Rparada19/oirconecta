@@ -934,7 +934,7 @@ function CreativeDropzone({ slotLabel, target, value, busy, setBusy, error, setE
               {target.w}×{target.h}px {target.label}
             </Typography>
           )}
-          <input type="file" hidden accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"
+          <input type="file" hidden accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,video/mp4,video/quicktime"
             onChange={(e) => handleFile(e.target.files?.[0])} />
         </Box>
       )}

@@ -31,7 +31,9 @@ if (isConfigured) {
 /**
  * Multer middleware para uploads de creatividades.
  * Carpeta por defecto: marketing/<actionType-or-misc>/<timestamp>-<random>
- * Acepta: jpg, jpeg, png, gif, webp, mp4, mov
+ * Acepta: jpg, jpeg, png, gif, webp, heic, heif, mp4, mov.
+ * Los HEIC/HEIF los envía el iPhone por default; Cloudinary los transcodifica
+ * a JPG en la subida para que sean visibles en todos los navegadores.
  */
 function makeUploader({ folder = 'marketing/misc', maxSizeMB = 10 } = {}) {
   if (!isConfigured) return null;
@@ -39,12 +41,16 @@ function makeUploader({ folder = 'marketing/misc', maxSizeMB = 10 } = {}) {
   const storage = new CloudinaryStorage({
     cloudinary,
     params: async (req, file) => {
-      const ext = (file.mimetype || '').split('/')[1] || 'bin';
-      const isVideo = (file.mimetype || '').startsWith('video/');
+      const mime = (file.mimetype || '').toLowerCase();
+      const ext = mime.split('/')[1] || 'bin';
+      const isVideo = mime.startsWith('video/');
+      const isHeic = /heic|heif/.test(ext);
       return {
         folder: req.body?.folder || folder,
         resource_type: isVideo ? 'video' : 'image',
-        format: ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? undefined : ext,
+        // Fuerza conversión HEIC/HEIF → JPG (Chrome/Firefox no los renderizan).
+        // Para el resto, deja que Cloudinary use la extensión original.
+        format: isHeic ? 'jpg' : (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? undefined : ext),
         public_id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       };
     },
@@ -54,8 +60,8 @@ function makeUploader({ folder = 'marketing/misc', maxSizeMB = 10 } = {}) {
     storage,
     limits: { fileSize: maxSizeMB * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-      const ok = /^(image\/(jpe?g|png|gif|webp)|video\/(mp4|quicktime))$/.test(file.mimetype || '');
-      if (!ok) return cb(new Error('Formato no permitido. Usa JPG, PNG, GIF, WEBP o MP4.'));
+      const ok = /^(image\/(jpe?g|png|gif|webp|heic|heif|heic-sequence|heif-sequence)|video\/(mp4|quicktime))$/i.test(file.mimetype || '');
+      if (!ok) return cb(new Error('Formato no permitido. Usa JPG, PNG, HEIC, GIF, WEBP o MP4.'));
       cb(null, true);
     },
   });
