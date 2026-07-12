@@ -565,10 +565,33 @@ async function handleTextForBot({ conversationId, incomingText }) {
   }
 }
 
+/**
+ * Si la conversación estaba CLOSED (humano la cerró o timeout) y llega un
+ * mensaje nuevo del paciente, la reabrimos a status BOT para que la IA
+ * vuelva a atender sin fricción. No aplica a PROFESIONAL_DIRECTORIO —
+ * el humano comercial debe retomar manualmente ese lead.
+ */
+async function reopenIfClosed(conversationId) {
+  if (!botEnabled()) return { skipped: 'bot-disabled' };
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: { id: true, status: true, contactType: true },
+  });
+  if (!conv) return { skipped: 'conv-not-found' };
+  if (conv.status !== 'CLOSED') return { skipped: 'not-closed' };
+  if (conv.contactType === 'PROFESIONAL_DIRECTORIO') return { skipped: 'directorio-lead' };
+  await prisma.whatsAppConversation.update({
+    where: { id: conversationId },
+    data: { status: 'BOT' },
+  });
+  return { reopened: true };
+}
+
 module.exports = {
   botEnabled,
   BUTTON_IDS,
   maybeSendHandshake,
   handleButtonReply,
   handleTextForBot,
+  reopenIfClosed,
 };

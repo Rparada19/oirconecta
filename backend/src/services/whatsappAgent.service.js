@@ -234,6 +234,11 @@ async function processIncomingEvent(body) {
                 // Primer mensaje entrante en la conversación → handshake con botones
                 await bot.maybeSendHandshake(r.conversationId);
               } else if (textBody) {
+                // Si la conversación estaba CLOSED (humano cerró o timeout) y
+                // llega un mensaje nuevo del paciente, reabrimos a BOT para que
+                // la IA vuelva a atender. Excepción: PROFESIONAL_DIRECTORIO
+                // (funnel comercial) se deja CLOSED para que el equipo retome.
+                await bot.reopenIfClosed(r.conversationId);
                 // Mensaje siguiente (después del handshake) → Claude Haiku responde
                 // según la rama (contactType). Solo actúa si status=BOT.
                 await bot.handleTextForBot({

@@ -137,13 +137,28 @@ export default function WhatsAppInboxPage({
       setNewError('Teléfono y plantilla son obligatorios');
       return;
     }
+    // Autofill: si la plantilla tiene variables y el usuario dejó campos vacíos,
+    // usa el nombre de contacto para los que se parezcan a "nombre del paciente".
+    // Evita el 400 "Falta variable" cuando el UX es confuso (Nombre / Nombre del paciente).
+    const filledVars = { ...(newForm.variables || {}) };
+    if (selectedTemplate?.variables?.length && newForm.contactName) {
+      for (const v of selectedTemplate.variables) {
+        const val = filledVars[v.key];
+        if (val == null || String(val).trim() === '') {
+          const label = String(v.label || v.key).toLowerCase();
+          if (/nombre|paciente|contacto/.test(label)) {
+            filledVars[v.key] = newForm.contactName;
+          }
+        }
+      }
+    }
     setNewLoading(true);
     try {
       const r = await api.post('/api/wa/conversations/new', {
         phone: newForm.phone,
         contactName: newForm.contactName || null,
         templateKey: newForm.templateKey,
-        variables: newForm.variables,
+        variables: filledVars,
         contactType: newForm.contactType,
       });
       if (r?.data?.success) {
