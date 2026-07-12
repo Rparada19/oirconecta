@@ -56,8 +56,13 @@ async function main() {
   });
   console.log('[2] DirectoryAccount:', account.id, '(email=' + RETAIL_EMAIL + ')');
 
-  // 3. DirectoryProfile — reafirma todos los campos del retail en cada deploy.
-  const profileData = {
+  // 3. DirectoryProfile.
+  //    En CREATE (primer arranque) sembramos datos ricos para que el perfil
+  //    salga listo. En UPDATE solo forzamos lo crítico para operar: status
+  //    y personaTipo. NO tocamos bio, servicios, allies, direcciones ni
+  //    teléfonos: esos son editables desde el portal y el usuario ya los
+  //    personaliza — sobrescribirlos en cada deploy sería frustrante.
+  const profileCreateData = {
     status: 'APPROVED',
     personaTipo: 'JURIDICA',
     direccionPublica: 'Cr 10 #96-25 Cons. 320, Bogotá',
@@ -84,14 +89,14 @@ async function main() {
   };
   let profile = await prisma.directoryProfile.findUnique({ where: { accountId: account.id } });
   if (!profile) {
-    profile = await prisma.directoryProfile.create({ data: { accountId: account.id, ...profileData } });
+    profile = await prisma.directoryProfile.create({ data: { accountId: account.id, ...profileCreateData } });
     console.log('[3] DirectoryProfile CREADO:', profile.id);
   } else {
     profile = await prisma.directoryProfile.update({
       where: { id: profile.id },
-      data: profileData,
+      data: { status: 'APPROVED', personaTipo: 'JURIDICA' },
     });
-    console.log('[3] DirectoryProfile actualizado con datos del retail:', profile.id);
+    console.log('[3] DirectoryProfile ya existía; solo aseguré status=APPROVED y personaTipo=JURIDICA:', profile.id);
   }
 
   // 4. Subscription (upsert por profileId)
