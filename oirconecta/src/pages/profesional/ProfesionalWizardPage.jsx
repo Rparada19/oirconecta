@@ -441,6 +441,13 @@ function StepContacto({ data, onChange }) {
           onChange={(e) => onChange({ emailPublico: e.target.value })}
           placeholder="Ej: consultas@tudominio.com"
         />
+        <TextField
+          label="Enlace de Google Maps (opcional)" fullWidth
+          value={data.googleMapsLugarUrl || ''}
+          onChange={(e) => onChange({ googleMapsLugarUrl: e.target.value })}
+          placeholder="https://maps.app.goo.gl/..."
+          helperText={'En Google Maps busca tu consultorio → botón "Compartir" → pestaña "Enviar un enlace" → "Copiar enlace". Al pegarlo aquí, tu ficha muestra un botón "Cómo llegar" que abre la navegación en el móvil del paciente.'}
+        />
       </Stack>
     </>
   );
@@ -471,6 +478,7 @@ export default function ProfesionalWizardPage() {
         whatsappPublico: d.whatsappPublico || '',
         emailPublico: d.emailPublico || '',
         direccionPublica: d.direccionPublica || '',
+        googleMapsLugarUrl: d.googleMapsLugarUrl || '',
       });
       setLoading(false);
     });
