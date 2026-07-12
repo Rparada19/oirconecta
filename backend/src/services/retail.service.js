@@ -33,10 +33,15 @@ let _cached = null;
 async function getRetailProfileId() {
   if (_cached) return _cached;
 
+  // Prioridad: env id, PERO solo si ese id existe en la DB. Si el env apunta
+  // a un id fantasma (legacy "prof_1"), cae al lookup por email.
   const envId = config.retail?.professionalId || null;
   if (envId) {
-    _cached = envId;
-    return envId;
+    const exists = await prisma.directoryProfile.findUnique({
+      where: { id: envId }, select: { id: true },
+    });
+    if (exists) { _cached = envId; return envId; }
+    console.warn('[retail] RETAIL_PROFESSIONAL_ID', envId, 'no existe en DB; caigo a lookup por email.');
   }
 
   const email = (config.retail?.professionalEmail || RETAIL_EMAIL_DEFAULT).toLowerCase();

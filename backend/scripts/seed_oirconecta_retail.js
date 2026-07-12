@@ -56,31 +56,29 @@ async function main() {
   });
   console.log('[2] DirectoryAccount:', account.id, '(email=' + RETAIL_EMAIL + ')');
 
-  // 3. DirectoryProfile
+  // 3. DirectoryProfile — reafirma todos los campos del retail en cada deploy.
+  const profileData = {
+    status: 'APPROVED',
+    personaTipo: 'JURIDICA',
+    direccionPublica: 'Cr 10 #96-25 Cons. 320, Bogotá',
+    telefonoPublico: '+57 317 150 3944',
+    emailPublico: 'contacto@oirconecta.com',
+    nombreConsultorio: 'OírConecta Bogotá',
+    profesion: 'Audiología',
+    whatsappPublico: '573171503944',
+    idiomas: ['es'],
+    polizasAceptadas: [],
+  };
   let profile = await prisma.directoryProfile.findUnique({ where: { accountId: account.id } });
   if (!profile) {
-    profile = await prisma.directoryProfile.create({
-      data: {
-        accountId: account.id,
-        status: 'APPROVED',
-        personaTipo: 'JURIDICA',
-        direccionPublica: 'Cr 10 #96-25 Cons. 320, Bogotá',
-        telefonoPublico: '+57 317 150 3944',
-        emailPublico: 'contacto@oirconecta.com',
-        nombreConsultorio: 'OírConecta Bogotá',
-        profesion: 'Audiología',
-        whatsappPublico: '573171503944',
-        idiomas: ['es'],
-        polizasAceptadas: [],
-      },
-    });
+    profile = await prisma.directoryProfile.create({ data: { accountId: account.id, ...profileData } });
     console.log('[3] DirectoryProfile CREADO:', profile.id);
   } else {
     profile = await prisma.directoryProfile.update({
       where: { id: profile.id },
-      data: { status: 'APPROVED' },
+      data: profileData,
     });
-    console.log('[3] DirectoryProfile ya existía, aseguro status=APPROVED:', profile.id);
+    console.log('[3] DirectoryProfile actualizado con datos del retail:', profile.id);
   }
 
   // 4. Subscription (upsert por profileId)
