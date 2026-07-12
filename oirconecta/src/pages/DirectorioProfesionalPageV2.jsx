@@ -347,8 +347,13 @@ function SecondaryPhotos({ photoUrls }) {
 
 // ─── AboutSection ─────────────────────────────────────────────
 function AboutSection({ name, initials, bio, quote, fotoUrl, title }) {
-  const heading = (title && title.trim())
-    || (name && name.trim() ? `Conoce a ${name.trim().split(' ').slice(0, 2).join(' ')}` : 'Sobre este consultorio');
+  // title puede venir como string, undefined o (por titulosSecciones JSON)
+  // un objeto arbitrario. Forzamos string para no reventar Typography con
+  // React error #60 (Objects are not valid as a React child).
+  const safeTitle = typeof title === 'string' ? title.trim() : '';
+  const safeName = typeof name === 'string' ? name.trim() : '';
+  const heading = safeTitle
+    || (safeName ? `Conoce a ${safeName.split(' ').slice(0, 2).join(' ')}` : 'Sobre este consultorio');
   return (
     <Box id="sobre" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
       <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 2.5 }}>
