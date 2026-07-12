@@ -132,8 +132,20 @@ export default function DirectorioListadoPage() {
   );
 
   const { gridItems, gridTotal, pageCount, demoFallback } = useMemo(() => {
+    // Si el usuario no seleccionó ningún filtro (Todas / Todos), mostramos
+    // todos los perfiles publicados desde explorePool (paginado en cliente).
+    // Antes salía "Seleccione criterios" con la grid vacía, aunque el
+    // formulario dice "todos los campos son opcionales".
     if (!activeFilters) {
-      return { gridItems: [], gridTotal: 0, pageCount: 1, demoFallback: false };
+      const pool = mergedExplore;
+      const total = pool.length;
+      const slice = pool.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+      return {
+        gridItems: slice,
+        gridTotal: total,
+        pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+        demoFallback: false,
+      };
     }
     const apiItems = filteredPayload?.items || [];
     const apiTotal = filteredPayload?.total ?? 0;
@@ -265,33 +277,16 @@ export default function DirectorioListadoPage() {
           <SearchEngine directoryMode directoryCompact initialFilters={initialFilters} directoryNavigateBase={DIRECTORY_LISTADO_PATH} />
         </Paper>
 
-        {!activeFilters && (
-          <Stack spacing={2} alignItems="flex-start" sx={{ maxWidth: 640 }}>
-            <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              Seleccione criterios para ver resultados
-            </Typography>
-            <Typography color="text.secondary" sx={{ lineHeight: 1.65 }}>
-              Use el formulario de arriba: puede filtrar solo por profesión, combinar ciudad y póliza, o buscar por nombre. Cada
-              combinación tiene su propia página de resultados en esta misma dirección.
-            </Typography>
-            <Button component={RouterLink} to="/directorio" variant="outlined" sx={{ borderRadius: 2, textTransform: 'none' }}>
-              Volver al directorio principal
-            </Button>
-          </Stack>
-        )}
-
-        {activeFilters && loadingExplore && (
+        {loadingExplore ? (
           <Stack alignItems="center" py={4}>
             <CircularProgress size={36} />
           </Stack>
-        )}
-
-        {activeFilters && !loadingExplore && (
+        ) : (
           <DirectorySearchResultsPanel
             filters={filters}
             profesionLabelTodas={PROFESION_LABEL_TODAS}
             polizaLabelTodas={POLIZA_LABEL_TODAS}
-            resultsHeadline={resultsHeadline}
+            resultsHeadline={activeFilters ? resultsHeadline : 'Todos los profesionales'}
             navigateWithFilters={navigateWithFilters}
             gridItems={gridItems}
             gridTotal={gridTotal}

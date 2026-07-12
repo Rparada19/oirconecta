@@ -301,48 +301,43 @@ export default function SearchEngine({
             Encuentra a tu especialista
           </Typography>
         )}
-        {!isProfessionalPage && directoryMode && (
+        {/* Título del buscador. En /directorio/listado (directoryCompact) lo
+            omitimos porque duplica el H1 "Encuentra a tu especialista" que
+            ya vive arriba. */}
+        {!isProfessionalPage && directoryMode && !directoryCompact && (
           <Typography
             component="h2"
-            variant={directoryCompact || embeddedInHero ? 'subtitle1' : 'h5'}
+            variant={embeddedInHero ? 'subtitle1' : 'h5'}
             sx={{
-              mb: directoryCompact || embeddedInHero ? 0.5 : 1,
+              mb: embeddedInHero ? 0.5 : 1,
               color: 'text.primary',
               fontWeight: 800,
               textAlign: 'center',
               letterSpacing: '-0.02em',
-              fontSize: embeddedInHero ? { xs: '1.05rem', md: '1.3rem' } : directoryCompact ? { md: '1.2rem' } : undefined,
+              fontSize: embeddedInHero ? { xs: '1.05rem', md: '1.3rem' } : undefined,
             }}
           >
-            {embeddedInHero
-              ? 'Criterios opcionales de búsqueda'
-              : directoryCompact
-                ? 'Refinamiento de criterios'
-                : 'Búsqueda en el directorio'}
+            {embeddedInHero ? 'Criterios opcionales de búsqueda' : 'Búsqueda en el directorio'}
           </Typography>
         )}
-        {!isProfessionalPage && directoryMode && (
+        {!isProfessionalPage && directoryMode && !directoryCompact && (
           <Typography
             variant="body2"
             color="text.secondary"
             sx={{
               textAlign: 'center',
-              mb: directoryCompact || embeddedInHero ? 2.25 : 3,
+              mb: embeddedInHero ? 2.25 : 3,
               maxWidth: 560,
               mx: 'auto',
               lineHeight: 1.65,
               fontSize: embeddedInHero
                 ? { xs: '0.9375rem', md: '1.0625rem' }
-                : directoryCompact
-                  ? { xs: '0.875rem', md: '1rem' }
-                  : { md: '1.0625rem' },
+                : { md: '1.0625rem' },
             }}
           >
             {embeddedInHero
               ? 'Complete únicamente los campos de los que disponga; el resto puede permanecer sin selección.'
-              : directoryCompact
-                ? 'Palabras clave, ciudad o especialidad: todos los campos son opcionales.'
-                : 'Nombre, consultorio o ciudad; de ser aplicable, profesión y póliza. Listados integrados en la red Oír Conecta.'}
+              : 'Nombre, consultorio o ciudad; de ser aplicable, profesión y póliza. Listados integrados en la red Oír Conecta.'}
           </Typography>
         )}
         {!isProfessionalPage && !directoryMode && (

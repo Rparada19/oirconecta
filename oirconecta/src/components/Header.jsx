@@ -71,7 +71,7 @@ const BLOG_CATEGORIAS = [
 const NAV = [
   { key: 'audifonos',    label: 'Audífonos',         to: '/audifonos',         hasMega: true },
   { key: 'implantes',    label: 'Implantes',         to: '/implantes',         hasMega: true },
-  { key: 'directorio',   label: 'Directorio',        to: '/directorio/listado', hasMega: true },
+  { key: 'directorio',   label: 'Directorio',        to: '/directorio', hasMega: true },
   { key: 'simulador',    label: 'Ponte en sus oídos', to: '/ponte-en-sus-oidos', badge: 'Nuevo', italic: true },
   { key: 'blog',         label: 'Blog',              to: '/blog',              hasMega: true },
 ];
@@ -292,7 +292,7 @@ function MegaDirectorio({ navigate, onClose }) {
               {c.label}
             </Box>
           ))}
-          <Box component={RouterLink} to="/directorio/listado" onClick={onClose} sx={{
+          <Box component={RouterLink} to="/directorio" onClick={onClose} sx={{
             fontFamily: '"DM Sans", sans-serif', fontSize: '0.85rem', fontWeight: 700,
             color: C.verde, textDecoration: 'none', mt: 1,
             display: 'inline-flex', alignItems: 'center', gap: 0.75,
@@ -305,7 +305,7 @@ function MegaDirectorio({ navigate, onClose }) {
 
       <Box
         component={RouterLink}
-        to="/directorio/listado"
+        to="/directorio"
         onClick={onClose}
         sx={{
           display: 'block', textDecoration: 'none', color: 'inherit',
@@ -646,7 +646,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
       }}>
         <Box
           component={RouterLink}
-          to="/directorio/listado" onClick={onClose}
+          to="/directorio" onClick={onClose}
           sx={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.25,
             bgcolor: C.navy, color: '#fff', borderRadius: '8px',
@@ -960,7 +960,7 @@ export default function Header() {
               </IconButton>
               <Box
                 component={RouterLink}
-                to="/directorio/listado"
+                to="/directorio"
                 sx={{
                   display: { xs: 'none', md: 'inline-flex' },
                   alignItems: 'center', gap: 1,
