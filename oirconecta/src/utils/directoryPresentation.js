@@ -406,6 +406,9 @@ export function directoryShortTagline(profile) {
  */
 export function directoryProfileBio(profile) {
   if (!profile) return '';
+  // Prioridad: descripción explícita del titular (campo del wizard/Perfil).
+  const desc = typeof profile.descripcion === 'string' ? profile.descripcion.trim() : '';
+  if (desc) return desc;
   if (profile._demo?.tagline) return String(profile._demo.tagline).trim();
   const c = profile.consultation;
   if (c && typeof c === 'object') {

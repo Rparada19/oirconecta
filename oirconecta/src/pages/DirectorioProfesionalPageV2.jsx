@@ -11,6 +11,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Box, Typography, Stack, Button, Chip, CircularProgress, Alert, IconButton,
   Container, Accordion, AccordionSummary, AccordionDetails, LinearProgress,
+  TextField,
 } from '@mui/material';
 import {
   Verified, LocationOn, WhatsApp, Phone, CalendarMonth,
@@ -345,19 +346,27 @@ function SecondaryPhotos({ photoUrls }) {
 }
 
 // ─── AboutSection ─────────────────────────────────────────────
-function AboutSection({ name, initials, bio, quote }) {
+function AboutSection({ name, initials, bio, quote, fotoUrl, title }) {
+  const heading = (title && title.trim())
+    || (name && name.trim() ? `Conoce a ${name.trim().split(' ').slice(0, 2).join(' ')}` : 'Sobre este consultorio');
   return (
     <Box id="sobre" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
       <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 2.5 }}>
-        <Box sx={{
-          width: 56, height: 56, borderRadius: '50%',
-          background: `linear-gradient(135deg, ${ACCENT}, #a855f7)`,
-          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          ...SERIF, fontSize: '1.4rem', fontWeight: 500,
-        }}>{initials}</Box>
+        {fotoUrl ? (
+          <Box component="img" src={fotoUrl} alt={name || 'Foto de perfil'}
+            sx={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover',
+                  border: `1px solid ${BORDER}` }} />
+        ) : (
+          <Box sx={{
+            width: 56, height: 56, borderRadius: '50%',
+            background: `linear-gradient(135deg, ${ACCENT}, #a855f7)`,
+            color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            ...SERIF, fontSize: '1.4rem', fontWeight: 500,
+          }}>{initials}</Box>
+        )}
         <Box>
           {overline('Sobre la profesional')}
-          {editorialTitle('Cuidado personalizado, resultados reales', '1.4rem')}
+          {editorialTitle(heading, '1.4rem')}
         </Box>
       </Stack>
       <Typography sx={{ fontSize: '1rem', color: '#334155', lineHeight: 1.7, mb: 2 }}>
@@ -538,9 +547,39 @@ function MarcasSection({ marcas }) {
 }
 
 // ─── ReseñasSection ───────────────────────────────────────────
-function ResenasSection({ rating, reviewsCount, breakdown, reviews }) {
+function ResenasSection({ rating, reviewsCount, breakdown, reviews, profileId }) {
   const list = Array.isArray(reviews) ? reviews : [];
-  if (reviewsCount === 0 || list.length === 0) return null;
+  // Cuando aún no hay reseñas, mostramos un CTA en vez de ocultar la sección
+  // completa. Así el paciente sabe que puede dejar una y el profesional ve
+  // el placeholder en su vista pública.
+  if (reviewsCount === 0 || list.length === 0) {
+    return (
+      <Box id="resenas" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
+        {overline('Reseñas de pacientes')}
+        <Box sx={{ mt: 1.5, mb: 2 }}>
+          {editorialTitle('Aún no hay reseñas verificadas', '1.4rem')}
+        </Box>
+        <Typography sx={{ fontSize: '0.95rem', color: MUTED, mb: 2 }}>
+          ¿Ya tuviste una consulta? Comparte tu experiencia para ayudar a otros pacientes.
+        </Typography>
+        {profileId && (
+          <Button
+            component="a"
+            href={`/directorio/profesional/${profileId}/reseña`}
+            variant="outlined"
+            sx={{
+              border: `1px solid ${NAVY}`, color: NAVY,
+              textTransform: 'none', fontWeight: 600, fontSize: '0.85rem',
+              px: 2, py: 0.75, borderRadius: '10px',
+              '&:hover': { bgcolor: '#eef2f7' },
+            }}
+          >
+            Escribir una reseña
+          </Button>
+        )}
+      </Box>
+    );
+  }
 
   const rubros = [
     { key: 'puntualidad', label: 'Puntualidad' },
@@ -657,6 +696,68 @@ function FAQSection({ faqs }) {
             </AccordionDetails>
           </Accordion>
         ))}
+      </Box>
+    </Box>
+  );
+}
+
+// ─── Formulario de consulta ───────────────────────────────────
+// POST /api/directory/profiles/:profileId/inquiry — llega a la bandeja
+// "Consultas recibidas" del profesional.
+function ContactoFormularioSection({ profileId, name }) {
+  const [form, setForm] = React.useState({ nombre: '', telefono: '', email: '', mensaje: '' });
+  const [busy, setBusy] = React.useState(false);
+  const [ok, setOk] = React.useState(false);
+  const [err, setErr] = React.useState('');
+
+  if (!profileId) return null;
+
+  const set = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true); setErr(''); setOk(false);
+    try {
+      const base = (typeof window !== 'undefined' && window.location.hostname.endsWith('oirconecta.com'))
+        ? 'https://oirconecta-api.onrender.com' : '';
+      const r = await fetch(`${base}/api/directory/profiles/${profileId}/inquiry`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const j = await r.json().catch(() => null);
+      if (!r.ok || !j?.success) throw new Error(j?.error || 'No se pudo enviar');
+      setOk(true);
+      setForm({ nombre: '', telefono: '', email: '', mensaje: '' });
+    } catch (e2) {
+      setErr(e2.message || 'Error');
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Box id="contacto" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
+      {overline('Escríbele directamente')}
+      <Box sx={{ mt: 1, mb: 2 }}>
+        {editorialTitle(name ? `Envía un mensaje a ${name.split(' ').slice(0, 2).join(' ')}` : 'Envía un mensaje', '1.4rem')}
+      </Box>
+      <Typography sx={{ fontSize: '0.9rem', color: MUTED, mb: 2 }}>
+        Cuéntale brevemente qué necesitas. Verás la respuesta en el correo que dejes.
+      </Typography>
+      <Box component="form" onSubmit={submit} sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}>
+        <TextField required label="Tu nombre" value={form.nombre} onChange={set('nombre')} size="small" />
+        <TextField required type="email" label="Correo" value={form.email} onChange={set('email')} size="small" />
+        <TextField label="Teléfono / WhatsApp (opcional)" value={form.telefono} onChange={set('telefono')} size="small" sx={{ gridColumn: { sm: '1 / -1' } }} />
+        <TextField required label="Mensaje" value={form.mensaje} onChange={set('mensaje')} multiline rows={4} sx={{ gridColumn: { sm: '1 / -1' } }} />
+        <Box sx={{ gridColumn: { sm: '1 / -1' }, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Button type="submit" disabled={busy || !form.nombre || !form.email || !form.mensaje}
+            variant="contained"
+            sx={{ background: NAVY, textTransform: 'none', fontWeight: 600, borderRadius: '10px', px: 2.5, py: 0.85,
+                  '&:hover': { background: NAVY, filter: 'brightness(0.92)' } }}>
+            {busy ? 'Enviando…' : 'Enviar mensaje'}
+          </Button>
+          {ok && <Alert severity="success" sx={{ py: 0 }}>Tu mensaje se envió. Te contactamos pronto.</Alert>}
+          {err && <Alert severity="error" sx={{ py: 0 }}>{err}</Alert>}
+        </Box>
       </Box>
     </Box>
   );
@@ -1040,13 +1141,18 @@ export default function DirectorioProfesionalPageV2() {
           alignItems: 'start',
         }}>
           <Box>
-            <AboutSection name={name} initials={initials} bio={bio} quote={demoQuote} />
+            <AboutSection name={name} initials={initials} bio={bio} quote={demoQuote}
+              fotoUrl={p?.fotoPerfilUrl}
+              title={p?.titulosSecciones?.sobre || p?.nombreConsultorio} />
             <CredentialsSection studies={studies} professional={professional} yearsExp={yearsExp} />
             <ServiciosSection servicios={servicios} />
             <MarcasSection marcas={marcas} />
-            <ResenasSection rating={rating} reviewsCount={reviewsCount} breakdown={breakdown} reviews={reviews} />
+            <ResenasSection rating={rating} reviewsCount={reviewsCount} breakdown={breakdown} reviews={reviews}
+              profileId={p?.id} />
             <FAQSection faqs={faqs} />
-            <UbicacionSection phone={phone} direccion={direccion} city={city} horariosSemana={horariosSemana} />
+            <UbicacionSection phone={phone} direccion={direccion} city={city} horariosSemana={horariosSemana}
+              mapsEmbed={p?.googleMapsEmbedUrl} />
+            <ContactoFormularioSection profileId={p?.id} name={name} />
           </Box>
           <Box>
             <StickyBookingCard
