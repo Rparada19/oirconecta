@@ -6,14 +6,57 @@ import React from 'react';
 import { Box, Typography, LinearProgress } from '@mui/material';
 import { CheckCircleOutline, RadioButtonUnchecked } from '@mui/icons-material';
 
+// Los checks miran el shape real que devuelve GET /api/directory/me.
+// El backend usa snake-ish domain: nombreConsultorio, telefonoPublico,
+// emailPublico, fotoPerfilUrl, allies (Json), redesSociales (Json),
+// availability (Json). No cambiar sin sincronizar con directory.service.
 const CHECKS = [
-  { key: 'datos',    label: 'Datos básicos', tab: 0,  test: (p) => !!(p?.nombre && (p?.profesion || p?.profesionPrincipal) && p?.descripcion) },
-  { key: 'contacto', label: 'Contacto',      tab: 1,  test: (p) => !!(p?.telefono && p?.email) },
-  { key: 'foto',     label: 'Foto',          tab: 0,  test: (p) => !!p?.foto },
-  { key: 'servicios',label: 'Servicios',     tab: 3,  test: (p) => Array.isArray(p?.servicios) && p.servicios.length > 0 },
-  { key: 'marcas',   label: 'Marcas',        tab: 4,  test: (p) => (p?.marcasAudifonos?.length || 0) + (p?.marcasImplantes?.length || 0) > 0 },
-  { key: 'horarios', label: 'Horarios',      tab: 7,  test: (p) => !!p?.horarios && Object.keys(p.horarios).length > 0 },
-  { key: 'redes',    label: 'Redes / web',   tab: 2,  test: (p) => !!(p?.redes?.length || p?.web || p?.instagram || p?.facebook) },
+  {
+    key: 'datos', label: 'Datos básicos', tab: 0,
+    test: (p) => !!(
+      (p?.nombreConsultorio || p?.nombre)
+      && (p?.profesion || p?.professionId || p?.profesionPrincipal)
+      && (p?.descripcion && String(p.descripcion).trim().length >= 20)
+    ),
+  },
+  {
+    key: 'contacto', label: 'Contacto', tab: 1,
+    test: (p) => !!(
+      (p?.telefonoPublico || p?.whatsappPublico || p?.telefono)
+      && (p?.emailPublico || p?.email)
+      && p?.direccionPublica
+    ),
+  },
+  {
+    key: 'foto', label: 'Foto', tab: 0,
+    test: (p) => !!(p?.fotoPerfilUrl || p?.foto),
+  },
+  {
+    key: 'servicios', label: 'Servicios', tab: 3,
+    test: (p) => Array.isArray(p?.servicios) && p.servicios.length > 0,
+  },
+  {
+    key: 'marcas', label: 'Marcas', tab: 4,
+    test: (p) => {
+      if (Array.isArray(p?.allies) && p.allies.length > 0) return true;
+      return (p?.marcasAudifonos?.length || 0) + (p?.marcasImplantes?.length || 0) > 0;
+    },
+  },
+  {
+    key: 'horarios', label: 'Horarios', tab: 7,
+    test: (p) => {
+      if (p?.availability && (Array.isArray(p.availability) ? p.availability.length : Object.keys(p.availability).length) > 0) return true;
+      return !!p?.horarios && Object.keys(p.horarios).length > 0;
+    },
+  },
+  {
+    key: 'redes', label: 'Redes / web', tab: 2,
+    test: (p) => {
+      const r = p?.redesSociales;
+      if (r && typeof r === 'object' && Object.values(r).some((v) => !!v && String(v).trim() !== '')) return true;
+      return !!(p?.redes?.length || p?.web || p?.instagram || p?.facebook);
+    },
+  },
 ];
 
 function tone(pct) {

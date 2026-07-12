@@ -120,6 +120,24 @@ const DEMO_DATA = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────
+
+/**
+ * Extrae el src del iframe pegado por el usuario y devuelve un <iframe>
+ * canónico solo con los atributos seguros. Si el input es una URL sin
+ * envoltorio <iframe>, la usa directamente como src. Evita ejecución de
+ * scripts embebidos en la copia del usuario.
+ */
+function sanitizeMapsEmbed(input) {
+  if (!input) return '';
+  const s = String(input).trim();
+  const match = s.match(/<iframe[^>]*\ssrc="([^"]+)"/i) || s.match(/<iframe[^>]*\ssrc='([^']+)'/i);
+  const src = match
+    ? match[1]
+    : /^https?:\/\//i.test(s) ? s : '';
+  if (!src.includes('google.com/maps')) return '';
+  return `<iframe src="${src}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>`;
+}
+
 function scrollTo(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -687,13 +705,19 @@ function UbicacionSection({ phone, direccion, city, horariosSemana, mapsEmbed })
           </Stack>
         </Box>
         <Box sx={{
-          height: 220, borderRadius: '12px',
-          background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
+          height: 260, borderRadius: '12px', overflow: 'hidden',
           border: `1px solid ${BORDER}`,
+          background: mapsEmbed ? '#fff' : 'linear-gradient(135deg, #dbeafe, #eff6ff)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#1e40af', fontSize: '0.85rem', fontWeight: 500,
-        }}>
-          {mapsEmbed ? 'Mapa embebido' : 'Vista de mapa'}
+          '& iframe': { width: '100%', height: '100%', border: 0, display: 'block' },
+        }}
+        // El usuario pega el iframe completo desde Google Maps → Compartir → Insertar mapa.
+        {...(mapsEmbed
+          ? { dangerouslySetInnerHTML: { __html: sanitizeMapsEmbed(mapsEmbed) } }
+          : {})}
+        >
+          {!mapsEmbed && 'Vista de mapa'}
         </Box>
       </Box>
     </Box>

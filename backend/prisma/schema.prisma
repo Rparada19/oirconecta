@@ -99,6 +99,8 @@ model DirectoryProfile {
   callClickCount      Int                  @default(0)
   /// Contadores legacy (JSON); las métricas principales son automáticas (`directoryStats` en API).
   estadisticasCitas   Json?
+  /// Descripción pública de la ficha (bio en primera persona / posicionamiento).
+  descripcion         String?              @db.Text
   /// Contenido de blog (producto de pago); tramo público opcional vía página de ficha.
   blogMarkdown        String?              @db.Text
   liveChatUrl         String?

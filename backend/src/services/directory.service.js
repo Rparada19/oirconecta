@@ -415,6 +415,10 @@ async function updateMyDirectoryProfile(accountId, body) {
   if (body.poblacionAtiende !== undefined) patch.poblacionAtiende = Array.isArray(body.poblacionAtiende) ? body.poblacionAtiende.map(String) : [];
   if (body.metodoPago !== undefined) patch.metodoPago = Array.isArray(body.metodoPago) ? body.metodoPago.map(String) : [];
   if (body.qaList !== undefined) patch.qaList = body.qaList;
+  if (body.descripcion !== undefined) {
+    const d = body.descripcion;
+    patch.descripcion = d == null || d === '' ? null : String(d).trim().slice(0, 5000);
+  }
 
   if (body.personaTipo !== undefined) {
     patch.personaTipo = body.personaTipo === 'JURIDICA' ? 'JURIDICA' : 'NATURAL';
