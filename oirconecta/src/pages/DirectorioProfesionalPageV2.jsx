@@ -1046,7 +1046,15 @@ export default function DirectorioProfesionalPageV2() {
   // ── Demo-only extras ──
   const demoQuote = isDemo ? DEMO_DATA.quote : null;
   const marcas = useMemo(() => {
+    // Legacy: campo antiguo del demo.
     if (Array.isArray(p?.marcasAudifonos) && p.marcasAudifonos.length > 0) return p.marcasAudifonos;
+    // Real: el schema usa `allies` (Json). Puede venir como array de strings
+    // o array de objetos { nombre }. Normalizamos a strings.
+    if (Array.isArray(p?.allies) && p.allies.length > 0) {
+      return p.allies
+        .map((a) => (typeof a === 'string' ? a : (a && typeof a.nombre === 'string' ? a.nombre : '')))
+        .filter(Boolean);
+    }
     if (isDemo) return DEMO_DATA.marcas;
     return [];
   }, [p, isDemo]);
