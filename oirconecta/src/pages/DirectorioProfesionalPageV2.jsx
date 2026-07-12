@@ -347,18 +347,23 @@ function SecondaryPhotos({ photoUrls }) {
 
 // ─── AboutSection ─────────────────────────────────────────────
 function AboutSection({ name, initials, bio, quote, fotoUrl, title }) {
-  // title puede venir como string, undefined o (por titulosSecciones JSON)
-  // un objeto arbitrario. Forzamos string para no reventar Typography con
-  // React error #60 (Objects are not valid as a React child).
-  const safeTitle = typeof title === 'string' ? title.trim() : '';
-  const safeName = typeof name === 'string' ? name.trim() : '';
+  // React #60 ("Objects are not valid as a React child") es fácil de
+  // introducir con campos JSON arbitrarios (titulosSecciones,
+  // consultation, redesSociales, etc.). Forzamos string en todo lo que
+  // pinta la sección.
+  const safeStr = (v) => (typeof v === 'string' ? v : '');
+  const safeTitle = safeStr(title).trim();
+  const safeName = safeStr(name).trim();
+  const safeBio = safeStr(bio).trim();
+  const safeInitials = safeStr(initials).trim() || 'P';
+  const safeQuote = safeStr(quote).trim();
   const heading = safeTitle
     || (safeName ? `Conoce a ${safeName.split(' ').slice(0, 2).join(' ')}` : 'Sobre este consultorio');
   return (
     <Box id="sobre" sx={{ borderBottom: `1px solid ${BORDER}`, pb: 4, mb: 4 }}>
       <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 2.5 }}>
-        {fotoUrl ? (
-          <Box component="img" src={fotoUrl} alt={name || 'Foto de perfil'}
+        {typeof fotoUrl === 'string' && fotoUrl ? (
+          <Box component="img" src={fotoUrl} alt={safeName || 'Foto de perfil'}
             sx={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover',
                   border: `1px solid ${BORDER}` }} />
         ) : (
@@ -367,7 +372,7 @@ function AboutSection({ name, initials, bio, quote, fotoUrl, title }) {
             background: `linear-gradient(135deg, ${ACCENT}, #a855f7)`,
             color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
             ...SERIF, fontSize: '1.4rem', fontWeight: 500,
-          }}>{initials}</Box>
+          }}>{safeInitials}</Box>
         )}
         <Box>
           {overline('Sobre la profesional')}
@@ -375,22 +380,22 @@ function AboutSection({ name, initials, bio, quote, fotoUrl, title }) {
         </Box>
       </Stack>
       <Typography sx={{ fontSize: '1rem', color: '#334155', lineHeight: 1.7, mb: 2 }}>
-        {bio || `${name} es un profesional verificado en OírConecta. Solicita una consulta para conocer su enfoque, servicios y disponibilidad.`}
+        {safeBio || `${safeName || 'Este profesional'} es un profesional verificado en OírConecta. Solicita una consulta para conocer su enfoque, servicios y disponibilidad.`}
       </Typography>
-      {quote && (
+      {safeQuote && (
         <Box sx={{
           borderLeft: `3px solid ${NAVY}`, pl: 2.5, py: 0.5, mt: 2.5,
           ...SERIF, fontStyle: 'italic', fontSize: '1.15rem',
           color: NAVY, lineHeight: 1.5,
         }}>
           <FormatQuote sx={{ color: `${NAVY}44`, fontSize: 24, mr: 0.5, verticalAlign: '-4px' }} />
-          {quote}
+          {safeQuote}
           <Typography sx={{
             display: 'block', mt: 1.25,
             fontFamily: 'Inter, sans-serif', fontStyle: 'normal',
             fontSize: '0.72rem', letterSpacing: '0.14em', textTransform: 'uppercase',
             color: MUTED, fontWeight: 700,
-          }}>— {name?.split(' ').slice(0, 2).join(' ')}</Typography>
+          }}>— {safeName.split(' ').slice(0, 2).join(' ')}</Typography>
         </Box>
       )}
     </Box>
@@ -710,10 +715,10 @@ function FAQSection({ faqs }) {
 // POST /api/directory/profiles/:profileId/inquiry — llega a la bandeja
 // "Consultas recibidas" del profesional.
 function ContactoFormularioSection({ profileId, name }) {
-  const [form, setForm] = React.useState({ nombre: '', telefono: '', email: '', mensaje: '' });
-  const [busy, setBusy] = React.useState(false);
-  const [ok, setOk] = React.useState(false);
-  const [err, setErr] = React.useState('');
+  const [form, setForm] = useState({ nombre: '', telefono: '', email: '', mensaje: '' });
+  const [busy, setBusy] = useState(false);
+  const [ok, setOk] = useState(false);
+  const [err, setErr] = useState('');
 
   if (!profileId) return null;
 
