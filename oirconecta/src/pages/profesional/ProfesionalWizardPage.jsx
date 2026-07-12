@@ -28,6 +28,7 @@ import LandscapeOutlinedIcon from '@mui/icons-material/LandscapeOutlined';
 import { directoryApi, getDirectoryToken } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
+import PhotoCropperDialog from '../../components/profesional/PhotoCropperDialog';
 
 const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
 const NAVY = '#0F2A4A';
@@ -49,10 +50,10 @@ const STEPS = [
 ];
 
 // ─── Uploader helper ──────────────────────────────────────────
-async function uploadImage(file) {
+async function uploadImage(fileOrBlob, filename) {
   const token = getDirectoryToken();
   const fd = new FormData();
-  fd.append('file', file);
+  fd.append('file', fileOrBlob, filename || fileOrBlob.name || 'upload.jpg');
   const url = `${getApiBaseUrl().replace(/\/$/, '')}/api/directory/me/upload`;
   const res = await fetch(url, {
     method: 'POST',
@@ -99,16 +100,23 @@ function StepHeader({ step, total, title, subtitle }) {
   );
 }
 
-function ImageDropzone({ label, value, onChange, height = 200, icon: Ico = CameraAltOutlinedIcon }) {
+function ImageDropzone({ label, value, onChange, height = 200, icon: Ico = CameraAltOutlinedIcon, aspect = 1 }) {
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState(null);
+  const [cropFile, setCropFile] = useState(null);
   const fileRef = React.useRef(null);
 
-  const handleFile = async (file) => {
+  const handleFile = (file) => {
     if (!file) return;
+    setErr(null);
+    setCropFile(file); // abre el cropper para encuadrar antes de subir
+  };
+
+  const handleCropped = async (blob) => {
+    setCropFile(null);
     setUploading(true); setErr(null);
     try {
-      const url = await uploadImage(file);
+      const url = await uploadImage(blob, `foto-${Date.now()}.jpg`);
       onChange(url);
     } catch (e) {
       setErr(e.message || 'Error');
@@ -163,13 +171,21 @@ function ImageDropzone({ label, value, onChange, height = 200, icon: Ico = Camer
           <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: '#b91c1c' }} />
         </IconButton>
       )}
-      <input ref={fileRef} type="file" accept="image/*" hidden
+      <input ref={fileRef} type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden
         onChange={(e) => handleFile(e.target.files?.[0])} />
       {err && (
         <Alert severity="error" sx={{ position: 'absolute', bottom: 8, left: 8, right: 8 }}>
           {err}
         </Alert>
       )}
+      <PhotoCropperDialog
+        open={!!cropFile}
+        file={cropFile}
+        aspect={aspect}
+        onClose={() => setCropFile(null)}
+        onCropped={handleCropped}
+      />
     </Box>
   );
 }
@@ -189,6 +205,7 @@ function StepFoto({ data, onChange }) {
           </Typography>
           <ImageDropzone
             label="Banner de portada" icon={LandscapeOutlinedIcon} height={200}
+            aspect={16 / 6}
             value={data.bannerUrl}
             onChange={(url) => onChange({ bannerUrl: url })}
           />
@@ -203,6 +220,7 @@ function StepFoto({ data, onChange }) {
           <Box sx={{ maxWidth: 220 }}>
             <ImageDropzone
               label="Foto de perfil" height={220}
+              aspect={1}
               value={data.fotoPerfilUrl}
               onChange={(url) => onChange({ fotoPerfilUrl: url })}
             />
