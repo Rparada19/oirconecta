@@ -177,6 +177,7 @@ router.patch(
     body('direccionPublica').optional().isString().isLength({ max: 500 }),
     body('telefonoPublico').optional().isString().isLength({ max: 40 }),
     body('emailPublico').optional().isString().isLength({ max: 120 }),
+    body('nombre').optional().isString().isLength({ min: 1, max: 120 }),
     body('descripcion').optional().isString().isLength({ max: 5000 }),
     body('bannerUrl').optional().isString().isLength({ max: 2000 }),
     body('fotoPerfilUrl').optional().isString().isLength({ max: 2000 }),

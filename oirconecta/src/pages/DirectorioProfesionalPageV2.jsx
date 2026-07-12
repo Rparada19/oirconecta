@@ -216,7 +216,12 @@ function BannerCover({ profile, name, city, professional, rating, reviewsCount, 
   return (
     <Box sx={{
       position: 'relative',
-      height: { xs: 340, md: 460 },
+      // En móvil, respetar el aspect 16:6 recomendado (~2.67:1) para que la
+      // foto del consultorio no salga recortada verticalmente. En desktop
+      // priorizamos altura fija para la composición editorial.
+      aspectRatio: { xs: bannerUrl ? '16 / 7' : undefined, md: 'unset' },
+      height: { xs: bannerUrl ? 'auto' : 240, md: 460 },
+      minHeight: { xs: 220, md: 460 },
       overflow: 'hidden',
       ...bgStyle,
     }}>

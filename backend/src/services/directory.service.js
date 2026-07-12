@@ -396,6 +396,19 @@ async function updateMyDirectoryProfile(accountId, body) {
     throw err;
   }
 
+  // Nombre de la cuenta (persona/marca del titular). Se muestra como
+  // firma en la ficha ("<nombre> — <nombreConsultorio>."). Va en la
+  // tabla DirectoryAccount, no en el profile.
+  if (body.nombre !== undefined) {
+    const n = body.nombre == null ? '' : String(body.nombre).trim().slice(0, 120);
+    if (n) {
+      await prisma.directoryAccount.update({
+        where: { id: accountId },
+        data: { nombre: n },
+      });
+    }
+  }
+
   const patch = {};
   if (body.allies !== undefined) patch.allies = body.allies;
   if (body.studies !== undefined) patch.studies = body.studies;
