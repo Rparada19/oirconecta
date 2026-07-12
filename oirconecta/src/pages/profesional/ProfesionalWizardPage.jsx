@@ -360,6 +360,8 @@ function StepMarcas({ data, onChange }) {
   const allies = Array.isArray(data.allies) ? data.allies : [];
   const isSelected = (m) => allies.some((a) => (typeof a === 'string' ? a : a?.nombre) === m);
   const toggle = (m) => {
+    // eslint-disable-next-line no-console
+    console.log('[marcas] click', m, 'currentAllies=', JSON.stringify(allies), 'rawData.allies=', JSON.stringify(data.allies));
     const next = isSelected(m)
       ? allies.filter((a) => (typeof a === 'string' ? a : a?.nombre) !== m)
       : [...allies, m];
