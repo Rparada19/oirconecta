@@ -168,6 +168,7 @@ export default function AdminMarketingPage() {
         <Tab label="Catálogo" />
         <Tab label="Campañas" />
         <Tab label="Anunciantes" />
+        <Tab label="Profesionales" />
       </Tabs>
 
       {loading ? (
@@ -353,6 +354,80 @@ export default function AdminMarketingPage() {
                   </Table>
                 </Box>
               </Card>
+            </Box>
+          )}
+
+          {/* ─── TAB 4: PROFESIONALES (anunciantes tipo=PROFESIONAL) ─── */}
+          {tab === 4 && (
+            <Box>
+              {(() => {
+                const profesionales = advertisers.filter((a) => a.tipo === 'PROFESIONAL');
+                return (
+                  <>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 700, color: NAVY, fontSize: 18 }}>
+                          {profesionales.length} profesionales anunciantes
+                        </Typography>
+                        <Typography sx={{ color: '#64748b', fontSize: 13 }}>
+                          Registros generados desde el portal profesional (sección "Anúnciate").
+                          Cuando un profesional solicita un formato, aparece aquí con la actividad SOLICITUD.
+                        </Typography>
+                      </Box>
+                    </Stack>
+                    <Card sx={{ borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                      <Table size="small">
+                        <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                          <TableRow>
+                            {['Profesional', 'Ciudad', 'Contacto', 'Pipeline', 'Campañas', 'Perfil', 'Acciones'].map((h) => (
+                              <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase' }}>{h}</TableCell>
+                            ))}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {profesionales.map((a) => {
+                            const p = PIPELINE_COLOR[a.pipelineStage] || PIPELINE_COLOR.PROSPECT;
+                            return (
+                              <TableRow key={a.id} hover sx={{ cursor: 'pointer' }} onClick={() => setAdvDetailId(a.id)}>
+                                <TableCell>
+                                  <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>{a.nombre}</Typography>
+                                  {a.contactoEmail && (
+                                    <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{a.contactoEmail}</Typography>
+                                  )}
+                                </TableCell>
+                                <TableCell sx={{ fontSize: '0.8125rem' }}>{a.ciudad || '—'}</TableCell>
+                                <TableCell sx={{ fontSize: '0.8125rem' }}>{a.contactoTelefono || '—'}</TableCell>
+                                <TableCell>
+                                  <Chip size="small" label={p.label} sx={{ bgcolor: p.bg, color: p.fg, fontWeight: 700, fontSize: '0.7rem', height: 22 }} />
+                                </TableCell>
+                                <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 700 }}>{a._count?.campaigns || 0}</TableCell>
+                                <TableCell>
+                                  {a.profileId ? (
+                                    <Chip size="small" label="Vinculado" sx={{ bgcolor: '#dcfce7', color: '#15803d', fontWeight: 700, fontSize: '0.7rem', height: 22 }} />
+                                  ) : (
+                                    <Chip size="small" label="Sin perfil" sx={{ bgcolor: '#fee2e2', color: '#b91c1c', fontWeight: 700, fontSize: '0.7rem', height: 22 }} />
+                                  )}
+                                </TableCell>
+                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                  <Button size="small" variant="outlined" onClick={() => setCampDialog({ data: { advertiserId: a.id } })}
+                                    sx={{ textTransform: 'none', borderColor: ACCENT, color: ACCENT }}>
+                                    Crear campaña
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          {profesionales.length === 0 && (
+                            <TableRow><TableCell colSpan={7} sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>
+                              Ningún profesional ha solicitado anuncios todavía.
+                            </TableCell></TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </Card>
+                  </>
+                );
+              })()}
             </Box>
           )}
 

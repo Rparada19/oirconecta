@@ -202,6 +202,9 @@ model DirectoryProfile {
   whatsappChannel    ProfessionalWhatsAppChannel?
   iaAgentConfig      IaAgentConfig?
 
+  // ── Marketplace publicitario (profesional como anunciante) ──
+  advertiserAccount MarketingAdvertiser?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1590,10 +1593,16 @@ model Payment {
 // ─────────────────────────────────────────────────────────────
 
 model MarketingAdvertiser {
-  id               String  @id @default(uuid())
-  nombre           String
+  id     String @id @default(uuid())
+  nombre String
   /// CASA_COMERCIAL | PROFESIONAL | CLINICA | MARCA | OTRO
-  tipo             String  @default("OTRO")
+  tipo   String @default("OTRO")
+
+  /// Si el anunciante es un profesional del directorio, FK a su perfil.
+  /// Único: 1 cuenta de anunciante por perfil profesional.
+  profileId String?           @unique
+  profile   DirectoryProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+
   contactoNombre   String?
   contactoEmail    String?
   contactoTelefono String?
@@ -2655,10 +2664,10 @@ model WhatsAppConversation {
   ///  - Después de 2h sin cita → escala a humano y marca agendarEscalatedAt.
   ///  - Si detecta Appointment con phone matching → marca agendarBookedAt
   ///    y detiene el proceso.
-  agendarLinkSentAt   DateTime?
-  agendarNudgeSentAt  DateTime?
-  agendarEscalatedAt  DateTime?
-  agendarBookedAt     DateTime?
+  agendarLinkSentAt  DateTime?
+  agendarNudgeSentAt DateTime?
+  agendarEscalatedAt DateTime?
+  agendarBookedAt    DateTime?
 
   /// Contadores para la bandeja.
   unreadCount        Int       @default(0)
