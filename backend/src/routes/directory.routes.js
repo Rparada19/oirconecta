@@ -224,4 +224,13 @@ router.patch(
   directoryController.adminSetStatus
 );
 
+router.patch(
+  '/admin/profiles/:accountId/featured',
+  authenticate,
+  authorize('ADMIN'),
+  [param('accountId').isUUID(), body('isFeatured').isBoolean()],
+  validateRequest,
+  directoryController.adminToggleFeatured
+);
+
 module.exports = router;

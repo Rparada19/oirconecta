@@ -23,6 +23,8 @@ import {
   Divider,
   TextField,
   Avatar,
+  Switch,
+  Tooltip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -224,7 +226,7 @@ export default function AdminProfesionalesPage() {
               <Table>
                 <TableHead>
                   <TableRow sx={{ background: 'rgba(8,89,70,0.03)' }}>
-                    {['Nombre', 'Email', 'Profesión', 'Ciudad', 'Fecha registro', 'Estado'].map((h) => (
+                    {['Nombre', 'Email', 'Profesión', 'Ciudad', 'Fecha registro', 'Estado', 'Destacado'].map((h) => (
                       <TableCell
                         key={h}
                         sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.72rem', letterSpacing: '0.04em', textTransform: 'uppercase', py: 1.8 }}
@@ -274,6 +276,28 @@ export default function AdminProfesionalesPage() {
                             size="small"
                             sx={{ fontWeight: 700, fontSize: '0.7rem' }}
                           />
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Tooltip title={p.isFeatured ? 'Quitar de destacados' : 'Marcar como destacado'}>
+                            <Switch
+                              size="small"
+                              checked={!!p.isFeatured}
+                              onChange={async (e) => {
+                                const isFeatured = e.target.checked;
+                                const accountId = p.accountId || p._id || p.id;
+                                const r = await adminFetch(`/api/directory/admin/profiles/${accountId}/featured`, {
+                                  method: 'PATCH',
+                                  body: JSON.stringify({ isFeatured }),
+                                });
+                                if (r.error) {
+                                  setSnack({ open: true, msg: `Error: ${r.error}`, severity: 'error' });
+                                } else {
+                                  setSnack({ open: true, msg: isFeatured ? 'Marcado como destacado.' : 'Quitado de destacados.', severity: 'success' });
+                                  fetchProfiles();
+                                }
+                              }}
+                            />
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     );

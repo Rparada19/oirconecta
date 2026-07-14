@@ -66,6 +66,26 @@ const adminSetStatus = async (req, res, next) => {
   }
 };
 
+const adminToggleFeatured = async (req, res, next) => {
+  try {
+    const { accountId } = req.params;
+    const { isFeatured } = req.body || {};
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const account = await prisma.directoryAccount.findUnique({
+      where: { id: accountId },
+      select: { profile: { select: { id: true } } },
+    });
+    if (!account?.profile) return res.status(404).json({ success: false, error: 'Perfil no encontrado' });
+    const updated = await prisma.directoryProfile.update({
+      where: { id: account.profile.id },
+      data: { isFeatured: !!isFeatured },
+      select: { id: true, isFeatured: true },
+    });
+    res.json({ success: true, data: updated });
+  } catch (e) { next(e); }
+};
+
 const publicSearch = async (req, res, next) => {
   try {
     const { q, profesion, poliza, ciudad, limit, offset } = req.query;
@@ -232,6 +252,7 @@ module.exports = {
   patchMyInquiry,
   adminList,
   adminSetStatus,
+  adminToggleFeatured,
   publicSearch,
   publicProfileById,
   recordPublicWhatsappClick,
