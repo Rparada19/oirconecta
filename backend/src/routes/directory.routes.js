@@ -233,4 +233,13 @@ router.patch(
   directoryController.adminToggleFeatured
 );
 
+router.delete(
+  '/admin/profiles/:accountId',
+  authenticate,
+  authorize('ADMIN'),
+  [param('accountId').isUUID()],
+  validateRequest,
+  directoryController.adminDeleteProfile
+);
+
 module.exports = router;

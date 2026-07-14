@@ -66,6 +66,20 @@ const adminSetStatus = async (req, res, next) => {
   }
 };
 
+const adminDeleteProfile = async (req, res, next) => {
+  try {
+    const { accountId } = req.params;
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    // Borrar la DirectoryAccount cascadea a DirectoryProfile y todas sus tablas hijas
+    // (workplaces, reviews, subscriptions, availability, appointments del directorio, etc.)
+    const acc = await prisma.directoryAccount.findUnique({ where: { id: accountId }, select: { id: true, email: true } });
+    if (!acc) return res.status(404).json({ success: false, error: 'Cuenta no encontrada' });
+    await prisma.directoryAccount.delete({ where: { id: accountId } });
+    res.json({ success: true, data: { deleted: true, email: acc.email } });
+  } catch (e) { next(e); }
+};
+
 const adminToggleFeatured = async (req, res, next) => {
   try {
     const { accountId } = req.params;
@@ -253,6 +267,7 @@ module.exports = {
   adminList,
   adminSetStatus,
   adminToggleFeatured,
+  adminDeleteProfile,
   publicSearch,
   publicProfileById,
   recordPublicWhatsappClick,

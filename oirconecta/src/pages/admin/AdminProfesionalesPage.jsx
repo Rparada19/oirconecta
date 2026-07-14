@@ -27,6 +27,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
@@ -226,7 +227,7 @@ export default function AdminProfesionalesPage() {
               <Table>
                 <TableHead>
                   <TableRow sx={{ background: 'rgba(8,89,70,0.03)' }}>
-                    {['Nombre', 'Email', 'Profesión', 'Ciudad', 'Fecha registro', 'Estado', 'Destacado'].map((h) => (
+                    {['Nombre', 'Email', 'Profesión', 'Ciudad', 'Fecha registro', 'Estado', 'Destacado', ''].map((h) => (
                       <TableCell
                         key={h}
                         sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.72rem', letterSpacing: '0.04em', textTransform: 'uppercase', py: 1.8 }}
@@ -297,6 +298,28 @@ export default function AdminProfesionalesPage() {
                                 }
                               }}
                             />
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Tooltip title="Eliminar profesional (borra cuenta, perfil, agenda, reseñas)">
+                            <IconButton
+                              size="small"
+                              sx={{ color: '#b91c1c' }}
+                              onClick={async () => {
+                                const accountId = p.accountId || p._id || p.id;
+                                const ok = window.confirm(`¿Eliminar "${getName(p)}" y todos sus datos? Esta acción no se puede deshacer.`);
+                                if (!ok) return;
+                                const r = await adminFetch(`/api/directory/admin/profiles/${accountId}`, { method: 'DELETE' });
+                                if (r.error) {
+                                  setSnack({ open: true, msg: `Error: ${r.error}`, severity: 'error' });
+                                } else {
+                                  setSnack({ open: true, msg: 'Profesional eliminado.', severity: 'success' });
+                                  fetchProfiles();
+                                }
+                              }}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
                           </Tooltip>
                         </TableCell>
                       </TableRow>
