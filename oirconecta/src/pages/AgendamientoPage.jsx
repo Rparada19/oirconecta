@@ -191,39 +191,51 @@ export default function AgendamientoPage() {
   const [slots, setSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [retailId, setRetailId] = useState(null);
+  const [appointmentTypeId, setAppointmentTypeId] = useState(null);
   const [form, setForm] = useState({ name:'', email:'', phone:'', motivo:'' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [appointment, setAppointment] = useState(null);
 
-  // Obtener ID del profesional retail + warmup del servidor
+  // Resolver retailId + tipo de consulta público (motor unificado /api/booking/public).
+  // Ambos superficies (widget del directorio y /agendar) consumen la misma agenda
+  // que el profesional configura en /portal-profesional/agenda.
   useEffect(() => {
-    // Ping al health check para despertar el servidor antes de que el usuario seleccione fecha
     fetch(`${API}/api/public/retail-config`)
       .then(r => r.json()).then(d => {
-        if (d?.data?.professionalId) setRetailId(d.data.professionalId);
+        const pid = d?.data?.professionalId;
         setOwnIds(d?.data?.ownDirectoryProfileIds || []);
+        if (pid) {
+          setRetailId(pid);
+          // Cargar tipos y usar el primero como default (típicamente Valoración auditiva).
+          fetch(`${API}/api/booking/public/${pid}/types`)
+            .then(r => r.json())
+            .then(t => {
+              const first = t?.data?.[0]?.id || null;
+              setAppointmentTypeId(first);
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => {});
-    // Precarga slots del día siguiente para que el servidor ya esté caliente
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-    const pre = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
-    fetch(`${API}/api/appointments/available-slots?fecha=${pre}`).catch(() => {});
   }, []);
 
-  // Cargar slots al seleccionar fecha
+  // Cargar slots al seleccionar fecha via motor unificado del directorio.
   useEffect(() => {
-    if (!selectedDate) return;
+    if (!selectedDate || !retailId || !appointmentTypeId) return;
     setLoadingSlots(true);
     setSelectedTime(null);
-    const params = new URLSearchParams({ fecha: selectedDate });
-    if (retailId) params.set('professionalId', retailId);
-    fetch(`${API}/api/appointments/available-slots?${params}`)
+    const params = new URLSearchParams({ date: selectedDate, appointmentTypeId });
+    fetch(`${API}/api/booking/public/${retailId}/slots?${params}`)
       .then(r => r.json())
-      .then(d => setSlots(d.data?.availableSlots || []))
+      .then(d => {
+        const items = d?.data?.slots || [];
+        // Normaliza a los strings "HH:MM" que espera el selector visual.
+        setSlots(items.filter(s => s.available !== false).map(s => s.time));
+      })
       .catch(() => setSlots([...SLOTS]))
       .finally(() => setLoadingSlots(false));
-  }, [selectedDate, retailId]);
+  }, [selectedDate, retailId, appointmentTypeId]);
 
   const handleDateSelect = (d) => {
     setSelectedDate(d);
@@ -242,22 +254,28 @@ export default function AgendamientoPage() {
       setError('Por favor completa todos los campos obligatorios.');
       return;
     }
+    if (!retailId || !appointmentTypeId) {
+      setError('El servicio de agenda no está disponible. Intenta más tarde.');
+      return;
+    }
     setSubmitting(true); setError(null);
     try {
-      const res = await fetch(`${API}/api/appointments`, {
+      const res = await fetch(`${API}/api/booking/public/${retailId}/appointments`, {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({
-          fecha: selectedDate, hora: selectedTime,
-          patientName: form.name, patientEmail: form.email,
-          patientPhone: form.phone, motivo: form.motivo || 'Valoración auditiva',
-          durationMinutes: 50, professionalId: retailId || undefined,
-          directoryProfileId: directoryProfileId || undefined,
-          procedencia: 'web-agendamiento',
+          appointmentTypeId,
+          scheduledAt: `${selectedDate}T${selectedTime}`,
+          notas: form.motivo || 'Valoración auditiva',
+          patient: {
+            nombre: form.name,
+            email: form.email,
+            telefono: form.phone,
+          },
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al agendar');
+      if (!res.ok || !data.success) throw new Error(data.error || 'Error al agendar');
       setAppointment(data.data || data.appointment || data);
       setStep(3);
     } catch(e) {
