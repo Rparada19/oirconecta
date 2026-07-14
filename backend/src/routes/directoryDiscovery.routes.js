@@ -132,7 +132,10 @@ router.get(
   }
 );
 
-// ── Destacados generales (mezcla isFeatured + top rankingScore) ──
+// ── Destacados generales ──
+// Devuelve SOLO perfiles con isFeatured=true. Antes se rellenaba con los de
+// mejor rankingScore cuando faltaban, lo que hacía que perfiles no-destacados
+// aparecieran con la insignia "Destacado" en el home. Ahora es estricto.
 router.get(
   '/featured',
   [query('limit').optional().isInt({ min: 1, max: 50 })],
@@ -146,22 +149,7 @@ router.get(
         take: limit,
         select: PUBLIC_PROFILE_SELECT,
       });
-      // Si hay menos featureds que `limit`, rellenamos con los de mejor rankingScore.
-      let extras = [];
-      if (items.length < limit) {
-        const featuredIds = items.map((p) => p.id);
-        extras = await prisma.directoryProfile.findMany({
-          where: {
-            status: 'APPROVED',
-            isFeatured: false,
-            id: featuredIds.length ? { notIn: featuredIds } : undefined,
-          },
-          orderBy: [{ rankingScore: 'desc' }],
-          take: limit - items.length,
-          select: PUBLIC_PROFILE_SELECT,
-        });
-      }
-      res.json({ success: true, data: [...items, ...extras] });
+      res.json({ success: true, data: items });
     } catch (e) {
       next(e);
     }
