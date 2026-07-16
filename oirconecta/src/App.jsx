@@ -173,7 +173,12 @@ function PageLoader() {
 function AnalyticsRouteTracker() {
   const location = useLocation();
   useEffect(() => { initAnalytics(); }, []);
-  useEffect(() => { trackPageView(location.pathname + location.search); }, [location.pathname, location.search]);
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+    if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
+      window.fbq('track', 'PageView');
+    }
+  }, [location.pathname, location.search]);
   return null;
 }
 
