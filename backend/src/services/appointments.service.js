@@ -357,10 +357,30 @@ const update = async (id, data) => {
  * Actualizar estado de cita
  */
 const updateStatus = async (id, estado) => {
-  return prisma.appointment.update({
-    where: { id },
-    data: { estado },
+  const prev = await prisma.appointment.findUnique({
+    where: { id }, select: { estado: true, reviewToken: true },
   });
+  const data = { estado };
+  // Al pasar a COMPLETED por primera vez: generar reviewToken (para /encuesta)
+  // y disparar agradecimiento T+18h + encuesta T+3d.
+  const transitioning = estado === 'COMPLETED' && prev?.estado !== 'COMPLETED';
+  if (transitioning && !prev?.reviewToken) {
+    data.reviewToken = crypto.randomBytes(16).toString('hex');
+    data.reviewRequestedAt = new Date();
+  }
+  const updated = await prisma.appointment.update({ where: { id }, data });
+
+  if (transitioning) {
+    try {
+      const { onAppointmentCompleted } = require('../notifications/events/appointments');
+      onAppointmentCompleted(updated).catch((e) => {
+        console.error('[appointments.updateStatus] onCompleted:', e.message);
+      });
+    } catch (e) {
+      console.error('[appointments.updateStatus] notifications module:', e.message);
+    }
+  }
+  return updated;
 };
 
 /**

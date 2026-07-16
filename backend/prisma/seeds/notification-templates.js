@@ -104,6 +104,42 @@ const TEMPLATES = [
     category: 'TRANSACTIONAL',
     optOutAllowed: false,
   },
+
+  // ─── AGRADECIMIENTO_POST_CITA (T+18h tras marcar COMPLETED) ─────────
+  {
+    code: 'agradecimiento_post_cita', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'agradecimiento_post_cita',
+    body: '¡Gracias por tu visita, {{nombre}}! Esperamos que tu experiencia con {{tipoConsulta}} en OÍR Conecta haya sido buena. Estamos aquí para lo que necesites.',
+    variables: ['nombre', 'tipoConsulta'],
+    category: 'MARKETING',
+    optOutAllowed: true,
+  },
+  {
+    code: 'agradecimiento_post_cita', channel: 'EMAIL', locale: 'es-CO',
+    subject: 'Gracias por tu visita a OÍR Conecta',
+    body: 'Hola {{nombre}},\n\nGracias por confiar en nosotros para tu {{tipoConsulta}}. Esperamos que la experiencia haya sido buena.\n\nSi tienes cualquier pregunta o inquietud, responde este correo y te atenderemos.\n\nEl equipo de OÍR Conecta.',
+    variables: ['nombre', 'tipoConsulta'],
+    category: 'MARKETING',
+    optOutAllowed: true,
+  },
+
+  // ─── ENCUESTA_POST_CITA (T+3d tras COMPLETED) ───────────────────────
+  {
+    code: 'encuesta_post_cita', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'encuesta_post_cita',
+    body: 'Hola {{nombre}}, ¿nos regalas 30 segundos? Cuéntanos cómo te fue con tu {{tipoConsulta}}: {{linkEncuesta}}\n\nTu opinión ayuda a otros pacientes.',
+    variables: ['nombre', 'tipoConsulta', 'linkEncuesta'],
+    category: 'MARKETING',
+    optOutAllowed: true,
+  },
+  {
+    code: 'encuesta_post_cita', channel: 'EMAIL', locale: 'es-CO',
+    subject: '¿Cómo te fue en tu cita? — OÍR Conecta',
+    body: 'Hola {{nombre}},\n\nHan pasado unos días desde tu {{tipoConsulta}}. Nos encantaría saber cómo te fue.\n\nDéjanos tu opinión en 30 segundos: {{linkEncuesta}}\n\nCada respuesta nos ayuda a mejorar y guía a otros pacientes en su búsqueda.',
+    variables: ['nombre', 'tipoConsulta', 'linkEncuesta'],
+    category: 'MARKETING',
+    optOutAllowed: true,
+  },
 ];
 
 async function main() {

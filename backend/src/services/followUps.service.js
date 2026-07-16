@@ -19,16 +19,20 @@ function generateToken() {
   return crypto.randomBytes(16).toString('hex');
 }
 
+// Cronograma post-adaptación de audífonos (definido por negocio):
+// semana 1, mes 1, 3, 6, 12, 18, 24, 30, 36.
+// El código 'W1' reemplazó al legacy 'D10' (10 días). PatientFollowUp filas
+// antiguas con step='D10' siguen válidas — solo cambia el timing para nuevas.
 const STEPS = [
-  { step: 'D10',  offsetDays: 10,   label: 'Control 10 días' },
+  { step: 'W1',   offsetDays: 7,    label: 'Control 1 semana' },
   { step: 'M1',   offsetDays: 30,   label: 'Control 1 mes' },
   { step: 'M3',   offsetDays: 90,   label: 'Control 3 meses' },
   { step: 'M6',   offsetDays: 180,  label: 'Control 6 meses' },
-  { step: 'Y1',   offsetDays: 365,  label: 'Control 1 año' },
-  { step: 'Y1_5', offsetDays: 545,  label: 'Control 1 año y medio' },
-  { step: 'Y2',   offsetDays: 730,  label: 'Control 2 años' },
-  { step: 'Y2_5', offsetDays: 910,  label: 'Control 2 años y medio' },
-  { step: 'Y3',   offsetDays: 1095, label: 'Renovación 3 años' },
+  { step: 'Y1',   offsetDays: 365,  label: 'Control 12 meses' },
+  { step: 'Y1_5', offsetDays: 545,  label: 'Control 18 meses' },
+  { step: 'Y2',   offsetDays: 730,  label: 'Control 24 meses' },
+  { step: 'Y2_5', offsetDays: 910,  label: 'Control 30 meses' },
+  { step: 'Y3',   offsetDays: 1095, label: 'Control 36 meses (renovación)' },
 ];
 
 function stepLabel(step) {

@@ -40,6 +40,12 @@ function buildVars(appointment) {
     tipoConsulta: appointment.tipoConsulta || 'consulta',
     linkConfirm: `${PUBLIC_BASE}/agendar/confirmar?token=${appointment.rescheduleToken}`,
     linkReagendar: `${PUBLIC_BASE}/agendar/reagendar?token=${appointment.rescheduleToken}`,
+    // Encuesta post-cita reutiliza el flow F6 /dejar-resena/:reviewToken
+    // (endpoint /api/directory/reviews/by-token). El reviewToken se genera
+    // al marcar COMPLETED en appointments.service.updateStatus.
+    linkEncuesta: appointment.reviewToken
+      ? `${PUBLIC_BASE}/dejar-resena/${appointment.reviewToken}`
+      : `${PUBLIC_BASE}/dejar-resena/${appointment.rescheduleToken}`,
     sede: 'OÍR Conecta',
   };
 }
@@ -161,6 +167,43 @@ async function onAppointmentRescheduled(appointment, prisma) {
   return { ok: true };
 }
 
+/**
+ * Cita completada → agradecimiento a T+18h (WA + Email) + encuesta a T+3d.
+ * Se dispara cuando el CRM marca la cita como COMPLETED.
+ */
+async function onAppointmentCompleted(appointment) {
+  if (!appointment?.patientId) return { skipped: 'sin patientId' };
+  const vars = buildVars(appointment);
+  const now = new Date();
+  const t18h = new Date(now.getTime() + 18 * 3600 * 1000);
+  const t3d = new Date(now.getTime() + 3 * 24 * 3600 * 1000);
+  const targetType = 'Appointment';
+  const targetId = appointment.id;
+
+  for (const channel of ['WHATSAPP', 'EMAIL']) {
+    await scheduleReminder({
+      patientId: appointment.patientId,
+      eventCode: 'AGRADECIMIENTO_POST_CITA',
+      channel,
+      templateCode: 'agradecimiento_post_cita',
+      targetType, targetId, payload: vars,
+      scheduledFor: t18h,
+    });
+  }
+  // Encuesta post-cita (CRM-4). El link real /encuesta/:token se resuelve al enviar.
+  for (const channel of ['WHATSAPP', 'EMAIL']) {
+    await scheduleReminder({
+      patientId: appointment.patientId,
+      eventCode: 'ENCUESTA_POST_CITA',
+      channel,
+      templateCode: 'encuesta_post_cita',
+      targetType, targetId, payload: vars,
+      scheduledFor: t3d,
+    });
+  }
+  return { ok: true };
+}
+
 async function onAppointmentCancelled(appointment, prisma) {
   if (!appointment?.patientId) return { skipped: 'sin patientId' };
   await prisma.reminder.updateMany({
@@ -191,4 +234,5 @@ module.exports = {
   onAppointmentCreated,
   onAppointmentRescheduled,
   onAppointmentCancelled,
+  onAppointmentCompleted,
 };

@@ -189,7 +189,7 @@ async function processFollowUpReminders() {
       reminder7dSentAt: null,
       dueDate: { gte: t7Start, lte: t7End },
     },
-    include: { patient: { select: { id: true, nombre: true, email: true } } },
+    include: { patient: { select: { id: true, nombre: true, email: true, telefono: true } } },
     take: 100,
   });
 
@@ -202,7 +202,7 @@ async function processFollowUpReminders() {
       reminder1dSentAt: null,
       dueDate: { gte: t1Start, lte: t1End },
     },
-    include: { patient: { select: { id: true, nombre: true, email: true } } },
+    include: { patient: { select: { id: true, nombre: true, email: true, telefono: true } } },
     take: 100,
   });
 
@@ -214,7 +214,7 @@ async function processFollowUpReminders() {
       overdueSentAt: null,
       dueDate: { lt: overdueBefore },
     },
-    include: { patient: { select: { id: true, nombre: true, email: true } } },
+    include: { patient: { select: { id: true, nombre: true, email: true, telefono: true } } },
     take: 100,
   });
 
@@ -247,7 +247,7 @@ async function processFollowUpReminders() {
         diasDesdeAdaptacion: fu.offsetDays,
         bookingUrl,
       });
-      // Interaction en HC
+      // Interaction en HC (email)
       await prisma.interaction.create({
         data: {
           patientId: fu.patient.id,
@@ -260,6 +260,36 @@ async function processFollowUpReminders() {
           metadata: { followUpId: fu.id, step: fu.step, stage },
         },
       });
+      // Best-effort WA: si el paciente tiene teléfono, mandamos plantilla HSM
+      // 'control_recordatorio' (requiere aprobación en Meta). Fallo silencioso.
+      if (fu.patient.telefono) {
+        try {
+          const { sendWhatsAppTemplate } = require('../notifications/channels/whatsapp');
+          const wa = await sendWhatsAppTemplate({
+            to: String(fu.patient.telefono).replace(/\D/g, ''),
+            metaTemplateName: 'control_recordatorio',
+            bodyParams: [
+              fu.patient.nombre?.split(' ')[0] || 'Hola',
+              followUps.stepLabel(fu.step),
+              bookingUrl,
+            ],
+          });
+          await prisma.interaction.create({
+            data: {
+              patientId: fu.patient.id,
+              type: 'follow_up_control',
+              channel: 'whatsapp',
+              direction: 'outbound',
+              title: `${followUps.stepLabel(fu.step)} — recordatorio ${stage} (WA)`,
+              description: wa.raw?.simulated ? 'WA simulado (credenciales no configuradas)' : `WA enviado a ${fu.patient.telefono}`,
+              status: 'sent',
+              metadata: { followUpId: fu.id, step: fu.step, stage, providerMessageId: wa.providerMessageId },
+            },
+          });
+        } catch (waErr) {
+          console.warn('[cron/followup WA]', fu.id, waErr.message);
+        }
+      }
       return { sent: true };
     } catch (e) {
       // Revertir claim para reintento en próximo tick
