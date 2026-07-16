@@ -3,6 +3,7 @@ import { Box, Button, Stack, TextField, Typography, Alert } from '@mui/material'
 import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded';
 import { subscribeNewsletter } from '../services/newsletterService';
 import { trackEvent } from '../utils/analytics';
+import { fbqTrack } from '../utils/metaPixel';
 
 /**
  * Formulario de suscripción al boletín. Reutilizable (footer, blog, home).
@@ -33,6 +34,7 @@ export default function NewsletterSignup({ source = 'web', compact = false, inli
           hasTelefono: !!form.telefono.trim(),
           ciudad: form.ciudad?.trim() || null,
         });
+        fbqTrack('Subscribe', { content_name: `newsletter_${source}` });
       } else {
         setError(res?.error || 'No pudimos completar la suscripción.');
         setState('error');

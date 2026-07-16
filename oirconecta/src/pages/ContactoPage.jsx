@@ -12,6 +12,7 @@ import {
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { trackEvent } from '../utils/analytics';
+import { fbqTrack } from '../utils/metaPixel';
 import {
   PageHero, SectionEyebrow, SectionTitle, C,
 } from '../components/editorial/EditorialKit';
@@ -79,6 +80,7 @@ const ContactoPage = () => {
         asunto: formData.asunto || null,
         marca: marca || null,
       });
+      fbqTrack('Lead', { content_name: marca ? `contacto_${marca}` : 'contacto_general' });
       setFormData({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
     } catch (err) {
       setSnackbar({

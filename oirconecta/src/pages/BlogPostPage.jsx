@@ -18,6 +18,7 @@ import Footer from '../components/Footer';
 import NewsletterCTA from '../components/NewsletterCTA';
 import PreviewSlot from '../components/marketing/PreviewSlot';
 import { trackEntityEvent, trackEvent } from '../utils/analytics';
+import { fbqTrack } from '../utils/metaPixel';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
@@ -287,6 +288,11 @@ export default function BlogPostPage() {
           entityType: 'BlogPost',
           entityId: p?.id || slug,
           properties: { slug, categoria: p?.categoria || null },
+        });
+        fbqTrack('ViewContent', {
+          content_type: 'article',
+          content_ids: [slug],
+          content_category: p?.categoria || 'blog',
         });
       })
       .catch(() => {

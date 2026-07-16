@@ -26,6 +26,7 @@ import AgendarConProfesionalDialog from '../components/directorio/AgendarConProf
 import AgenteIAFloatingChat from '../components/directorio/AgenteIAFloatingChat';
 import { fetchDirectoryProfilePublic, trackDirectoryWhatsAppClick, trackDirectoryCallClick } from '../services/directorySearchService';
 import { trackEntityEvent } from '../utils/analytics';
+import { fbqTrack } from '../utils/metaPixel';
 import {
   directoryInitials,
   directoryPrimaryCity,
@@ -998,6 +999,11 @@ export default function DirectorioProfesionalPageV2() {
   useEffect(() => {
     if (!profileId) return;
     trackEntityEvent('profile_view_v2', { entityType: 'DirectoryProfile', entityId: profileId });
+    fbqTrack('ViewContent', {
+      content_type: 'professional_profile',
+      content_ids: [profileId],
+      content_category: 'directorio',
+    });
   }, [profileId]);
 
   // F6 — cargar reseñas reales del perfil (APPROVED)

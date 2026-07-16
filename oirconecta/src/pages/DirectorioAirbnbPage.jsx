@@ -15,6 +15,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { trackEvent } from '../utils/analytics';
+import { fbqTrack } from '../utils/metaPixel';
 import DirectoryCardV2 from '../components/directorio/v2/DirectoryCardV2';
 import DirectoryCardSkeleton from '../components/directorio/v2/DirectoryCardSkeleton';
 import DirectoryFiltersDrawer from '../components/directorio/v2/DirectoryFiltersDrawer';
@@ -113,6 +114,10 @@ export default function DirectorioAirbnbPage() {
           trackEvent('directory_search', null, {
             filters,
             resultCount: d.total || 0,
+          });
+          fbqTrack('Search', {
+            search_string: filters?.q || filters?.ciudad || filters?.profesion || '',
+            content_category: 'directorio_profesionales',
           });
         } else {
           setError('No pudimos cargar el directorio. Intenta de nuevo.');

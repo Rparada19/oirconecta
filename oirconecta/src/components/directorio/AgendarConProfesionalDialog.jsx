@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import { trackEvent, trackEntityEvent } from '../../utils/analytics';
+import { fbqTrack } from '../../utils/metaPixel';
 
 const BASE_URL = getApiBaseUrl();
 const ACCENT = '#15803d';
@@ -201,6 +202,11 @@ export default function AgendarConProfesionalDialog({ open, onClose, profileId, 
     }, {
       entityType: 'DirectoryProfile',
       entityId: profileId,
+    });
+    fbqTrack('Schedule', {
+      content_name: selectedType?.nombre || 'cita',
+      value: selectedType?.priceCOP || 0,
+      currency: 'COP',
     });
   };
 
