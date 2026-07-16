@@ -1,4 +1,5 @@
 const directoryService = require('../services/directory.service');
+const metaCapi = require('../services/metaCapi.service');
 
 const register = async (req, res, next) => {
   try {
@@ -211,6 +212,18 @@ const submitProfileInquiry = async (req, res, next) => {
       telefono,
       mensaje,
     });
+    metaCapi.sendEvent('Lead', {
+      user: {
+        email,
+        phone: telefono,
+        firstName: (nombre || '').split(' ')[0],
+        ip: req.ip,
+        userAgent: req.get('user-agent') || undefined,
+      },
+      customData: { content_name: 'contacto_profesional', profile_id: profileId },
+      eventSourceUrl: req.get('referer') || undefined,
+      eventId: `lead_${inquiry.id}`,
+    }).catch(() => {});
     res.status(201).json({
       success: true,
       data: { id: inquiry.id, message: 'Gracias. Hemos recibido tu mensaje y te contactaremos pronto.' },

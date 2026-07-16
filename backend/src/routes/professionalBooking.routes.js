@@ -10,6 +10,7 @@
 
 const express = require('express');
 const booking = require('../services/professionalBooking.service');
+const metaCapi = require('../services/metaCapi.service');
 
 const router = express.Router();
 
@@ -33,7 +34,30 @@ router.get('/public/:profileId/slots/range', (req, res) =>
     appointmentTypeId: req.query.appointmentTypeId || null,
   })));
 
-router.post('/public/:profileId/appointments', (req, res) =>
-  send(res, () => booking.createPublicAppointment(req.params.profileId, req.body || {})));
+router.post('/public/:profileId/appointments', async (req, res) => {
+  try {
+    const data = await booking.createPublicAppointment(req.params.profileId, req.body || {});
+    const patient = req.body?.patient || {};
+    metaCapi.sendEvent('Schedule', {
+      user: {
+        email: patient.email,
+        phone: patient.telefono,
+        firstName: (patient.nombre || '').split(' ')[0],
+        ip: req.ip,
+        userAgent: req.get('user-agent') || undefined,
+      },
+      customData: {
+        content_name: data.tipoConsulta || 'cita',
+        currency: 'COP',
+        value: data.priceCOP || 0,
+      },
+      eventSourceUrl: req.get('referer') || undefined,
+      eventId: `schedule_${data.id}`,
+    }).catch(() => {});
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(e.status || 500).json({ success: false, error: e.message, code: e.code });
+  }
+});
 
 module.exports = router;
