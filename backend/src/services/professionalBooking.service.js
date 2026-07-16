@@ -84,7 +84,7 @@ function overlaps(aStart, aEnd, bStart, bEnd) {
 async function loadContext(profileId) {
   const profile = await prisma.directoryProfile.findUnique({
     where: { id: profileId },
-    select: { id: true, status: true, account: { select: { nombre: true, email: true } } },
+    select: { id: true, status: true, nombreConsultorio: true, account: { select: { nombre: true, email: true } } },
   });
   if (!profile) throw new BookingError('Profesional no encontrado', { status: 404 });
   if (profile.status !== 'APPROVED') {
@@ -386,6 +386,7 @@ async function createPublicAppointment(profileId, payload) {
     durationMinutes: type.durationMinutes,
     directoryProfileId: profileId,
     professionalNotifyEmail: ctx.profile.account?.email || null,
+    professionalDisplayName: ctx.profile.nombreConsultorio || ctx.profile.account?.nombre || null,
     patientId: patientRow.id,
     patientName: patientRow.nombre,
     patientEmail: patientRow.email,

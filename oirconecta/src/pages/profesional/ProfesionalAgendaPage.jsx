@@ -700,9 +700,15 @@ function AppointmentsTab({ appointments, setAppointments, showSnack }) {
           </TableHead>
           <TableBody>
             {filtered.map((a) => {
-              const fechaStr = new Date(a.fecha).toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' });
+              // Fix TZ: a.fecha viene como "2026-07-21T00:00:00.000Z";
+              // toLocaleDateString en UTC-5 lo mueve al día anterior. Cortar a YYYY-MM-DD
+              // y reconstruir como fecha local del día real.
+              const ymd = String(a.fecha).slice(0, 10);
+              const [_y, _m, _d] = ymd.split('-').map(Number);
+              const fechaLocal = new Date(_y, _m - 1, _d);
+              const fechaStr = fechaLocal.toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' });
               const isCancel = a.estado === 'CANCELLED';
-              const isPast = new Date(a.fecha) < new Date(todayStr);
+              const isPast = ymd < todayStr;
               return (
                 <TableRow key={a.id} hover sx={{ opacity: isCancel ? 0.55 : 1 }}>
                   <TableCell sx={{ fontWeight: 600, color: NAVY }}>{fechaStr}</TableCell>
