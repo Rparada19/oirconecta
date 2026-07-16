@@ -231,6 +231,17 @@ const create = async (data, createdById) => {
     });
     if (dp) directoryProfileId = dp.id;
   }
+  // Si no viene directoryProfileId, caemos al retail (centro propio OírConecta).
+  // Así toda cita creada desde CRM o /agendar comparte agenda con la ficha
+  // pública del directorio del centro propio (unificación multi-tenant).
+  if (!directoryProfileId) {
+    try {
+      const retailService = require('./retail.service');
+      directoryProfileId = await retailService.getRetailProfileId();
+    } catch (e) {
+      console.warn('[appointments.create] retailProfileId lookup:', e.message);
+    }
+  }
 
   const appointment = await prisma.appointment.create({
     data: {

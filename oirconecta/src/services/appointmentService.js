@@ -189,25 +189,55 @@ export async function cancelAppointment(appointmentId) {
  * @param {string} [professionalId] - Si se indica, devuelve slots disponibles para ese profesional
  * @returns {Promise<string[]>} Horas disponibles HH:MM
  */
-export async function getAvailableTimeSlots(date, startTime = '07:00', endTime = '18:00', professionalId = null) {
-  let url = `/api/appointments/available-slots?fecha=${date}`;
-  if (professionalId) url += `&professionalId=${encodeURIComponent(professionalId)}`;
-  const { data, error } = await api.get(url, { skipAuth: true });
-  let list = [];
-  if (!error && data?.data?.availableSlots) list = data.data.availableSlots;
+let _retailProfileIdCache = null;
+async function getRetailProfileId() {
+  if (_retailProfileIdCache) return _retailProfileIdCache;
+  try {
+    const { data } = await api.get('/api/public/retail-config', { skipAuth: true });
+    _retailProfileIdCache = data?.data?.professionalId || null;
+    return _retailProfileIdCache;
+  } catch {
+    return null;
+  }
+}
 
+export async function getAvailableTimeSlots(date, startTime = '07:00', endTime = '18:00', professionalId = null) {
   const toMin = (t) => {
     const [h, m] = (t || '00:00').split(':').map(Number);
     return (h || 0) * 60 + (m || 0);
   };
   const start = toMin(startTime);
   const end = toMin(endTime);
-  list = list.filter((slot) => {
+
+  // Motor unificado: si tenemos retailProfileId, usamos /api/booking/public/:id/slots.
+  // Esto asegura que CRM, /agendar y ficha pública lean del MISMO horario
+  // (ProfessionalSchedule + AppointmentType del retail).
+  const retailId = await getRetailProfileId();
+  if (retailId) {
+    const { data, error } = await api.get(
+      `/api/booking/public/${retailId}/slots?date=${date}`,
+      { skipAuth: true }
+    );
+    if (!error && Array.isArray(data?.data?.slots)) {
+      return data.data.slots
+        .map((s) => s.time)
+        .filter((t) => {
+          const m = toMin(t);
+          return m >= start && m <= end;
+        });
+    }
+  }
+
+  // Fallback legacy (si retail-config no responde).
+  let url = `/api/appointments/available-slots?fecha=${date}`;
+  if (professionalId) url += `&professionalId=${encodeURIComponent(professionalId)}`;
+  const { data, error } = await api.get(url, { skipAuth: true });
+  let list = [];
+  if (!error && data?.data?.availableSlots) list = data.data.availableSlots;
+  return list.filter((slot) => {
     const m = toMin(slot);
     return m >= start && m <= end;
   });
-
-  return list;
 }
 
 /**
