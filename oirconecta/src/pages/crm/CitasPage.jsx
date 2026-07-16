@@ -326,6 +326,31 @@ const CitasPage = () => {
     closeMenuOnly();
   };
 
+  // CRM-5: marcar asistencia con 1 clic (sin modal ni kebab). Cambia estado
+  // directo. La consulta clínica y el detalle se siguen guardando por el
+  // kebab si el usuario los necesita.
+  const quickMarkStatus = async (appointment, newStatus) => {
+    if (!appointment?.id) return;
+    const result = await updateAppointmentStatus(appointment.id, newStatus);
+    if (result?.success) {
+      try {
+        recordAppointmentInteraction(appointment.patientEmail, {
+          title: `Cita marcada como ${newStatus === 'completed' ? 'asistida' : 'no asistida'}`,
+          description: `Cambio rápido desde lista de citas.`,
+          scheduledDate: appointment.date,
+          scheduledTime: appointment.time,
+          relatedAppointmentId: appointment.id,
+          status: newStatus,
+          action: newStatus,
+        });
+      } catch {}
+      await loadData();
+      showSnackbar(newStatus === 'completed' ? 'Marcada como asistida' : 'Marcada como no asistida', 'success');
+    } else {
+      showSnackbar('No se pudo actualizar el estado', 'error');
+    }
+  };
+
   const handleUpdateStatus = async (newStatus) => {
     if (selectedAppointment) {
       if (newStatus === 'completed') {
@@ -1216,13 +1241,26 @@ const CitasPage = () => {
                             </Box>
                           </TableCell>
                           <TableCell align="right">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => handleMenuClick(e, appointment)}
-                              sx={{ color: '#085946' }}
-                            >
-                              <MoreVert />
-                            </IconButton>
+                            <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                              {/* CRM-5: asistencia 1 clic */}
+                              {appointment.status !== 'completed' && appointment.status !== 'no-show' && appointment.status !== 'cancelled' && (
+                                <>
+                                  <Tooltip title="Asistió">
+                                    <IconButton size="small" onClick={() => quickMarkStatus(appointment, 'completed')} sx={{ color: '#16a34a' }}>
+                                      <CheckCircle fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="No asistió">
+                                    <IconButton size="small" onClick={() => quickMarkStatus(appointment, 'no-show')} sx={{ color: '#dc2626' }}>
+                                      <Cancel fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                </>
+                              )}
+                              <IconButton size="small" onClick={(e) => handleMenuClick(e, appointment)} sx={{ color: '#085946' }}>
+                                <MoreVert />
+                              </IconButton>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       ))}
