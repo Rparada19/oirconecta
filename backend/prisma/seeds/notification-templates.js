@@ -105,6 +105,172 @@ const TEMPLATES = [
     optOutAllowed: false,
   },
 
+  // ═══════════════════════════════════════════════════════════════════
+  // FASE 2 — Duplicados por audiencia (crm_* y directorio_*).
+  // Los códigos legacy (arriba) se mantienen para compat pero los
+  // disparadores nuevos usan estos prefijados. Copy inicial = mismo copy
+  // del legacy con la sede/marca correspondiente; editable desde cada
+  // buzón (CRM o Admin) por separado.
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ─── CRM_CITA_AGENDADA (centro propio OírConecta) ───────────────────
+  {
+    code: 'crm_cita_agendada', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'crm_cita_agendada',
+    body: 'Hola {{nombre}}, tu cita en OÍR Conecta quedó agendada para el {{fechaCita}} a las {{horaCita}}.\n\nMotivo: {{tipoConsulta}}\nSede: {{sede}}\n\nTe enviaremos un recordatorio el día anterior.',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'tipoConsulta', 'sede'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'crm_cita_agendada', channel: 'EMAIL', locale: 'es-CO',
+    subject: 'Tu cita en OÍR Conecta — {{fechaCita}} {{horaCita}}',
+    body: 'Hola {{nombre}},\n\nTu cita quedó confirmada:\n\n📅 {{fechaCita}}\n🕐 {{horaCita}}\n📋 {{tipoConsulta}}\n📍 {{sede}}\n\nSi necesitas reagendar: {{linkReagendar}}\n\nGracias por confiar en OÍR Conecta.',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'tipoConsulta', 'sede', 'linkReagendar'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
+  // ─── DIRECTORIO_CITA_AGENDADA (profesional adscrito) ────────────────
+  {
+    code: 'directorio_cita_agendada', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'directorio_cita_agendada',
+    body: 'Hola {{nombre}}, tu cita con {{sede}} quedó agendada para el {{fechaCita}} a las {{horaCita}}.\n\nMotivo: {{tipoConsulta}}\n\nTe enviaremos un recordatorio el día anterior.',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'tipoConsulta', 'sede'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'directorio_cita_agendada', channel: 'EMAIL', locale: 'es-CO',
+    subject: 'Tu cita con {{sede}} — {{fechaCita}} {{horaCita}}',
+    body: 'Hola {{nombre}},\n\nTu cita quedó confirmada:\n\n📅 {{fechaCita}}\n🕐 {{horaCita}}\n📋 {{tipoConsulta}}\n👤 {{sede}}\n\nSi necesitas reagendar: {{linkReagendar}}\n\nGracias por usar OírConecta.',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'tipoConsulta', 'sede', 'linkReagendar'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
+  // ─── CRM_RECORDATORIO_24H ───────────────────────────────────────────
+  {
+    code: 'crm_recordatorio_24h', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'crm_recordatorio_24h',
+    body: 'Hola {{nombre}}, te recordamos tu cita mañana {{fechaCita}} a las {{horaCita}} en OÍR Conecta.\n\n¿Asistirás?',
+    variables: ['nombre', 'fechaCita', 'horaCita'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'crm_recordatorio_24h', channel: 'EMAIL', locale: 'es-CO',
+    subject: 'Recordatorio: tu cita mañana en OÍR Conecta',
+    body: 'Hola {{nombre}},\n\nTe recordamos tu cita mañana:\n\n📅 {{fechaCita}}\n🕐 {{horaCita}}\n📋 {{tipoConsulta}}\n\nConfirmar asistencia: {{linkConfirm}}\nReagendar: {{linkReagendar}}',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'tipoConsulta', 'linkConfirm', 'linkReagendar'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
+  // ─── DIRECTORIO_RECORDATORIO_24H ────────────────────────────────────
+  {
+    code: 'directorio_recordatorio_24h', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'directorio_recordatorio_24h',
+    body: 'Hola {{nombre}}, te recordamos tu cita mañana {{fechaCita}} a las {{horaCita}} con {{sede}}.\n\n¿Asistirás?',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'sede'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'directorio_recordatorio_24h', channel: 'EMAIL', locale: 'es-CO',
+    subject: 'Recordatorio: tu cita mañana con {{sede}}',
+    body: 'Hola {{nombre}},\n\nTe recordamos tu cita mañana con {{sede}}:\n\n📅 {{fechaCita}}\n🕐 {{horaCita}}\n📋 {{tipoConsulta}}\n\nConfirmar asistencia: {{linkConfirm}}\nReagendar: {{linkReagendar}}',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'tipoConsulta', 'sede', 'linkConfirm', 'linkReagendar'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
+  // ─── CRM_RECORDATORIO_2H ────────────────────────────────────────────
+  {
+    code: 'crm_recordatorio_2h', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'crm_recordatorio_2h',
+    body: 'Hola {{nombre}}, te esperamos en OÍR Conecta hoy a las {{horaCita}}. Si necesitas cancelar, escríbenos.',
+    variables: ['nombre', 'horaCita'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'crm_recordatorio_2h', channel: 'SMS', locale: 'es-CO',
+    body: 'OÍR Conecta: {{nombre}}, te esperamos hoy a las {{horaCita}}. Si no puedes asistir avísanos.',
+    variables: ['nombre', 'horaCita'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
+  // ─── DIRECTORIO_RECORDATORIO_2H ─────────────────────────────────────
+  {
+    code: 'directorio_recordatorio_2h', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'directorio_recordatorio_2h',
+    body: 'Hola {{nombre}}, {{sede}} te espera hoy a las {{horaCita}}. Si necesitas cancelar, escríbenos.',
+    variables: ['nombre', 'horaCita', 'sede'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'directorio_recordatorio_2h', channel: 'SMS', locale: 'es-CO',
+    body: 'OírConecta: {{nombre}}, {{sede}} te espera hoy a las {{horaCita}}.',
+    variables: ['nombre', 'horaCita', 'sede'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
+  // ─── CRM_REPROGRAMACION ─────────────────────────────────────────────
+  {
+    code: 'crm_reprogramacion', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'crm_reprogramacion',
+    body: 'Hola {{nombre}}, tu cita en OÍR Conecta fue reprogramada para el {{fechaCita}} a las {{horaCita}}.',
+    variables: ['nombre', 'fechaCita', 'horaCita'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'crm_reprogramacion', channel: 'EMAIL', locale: 'es-CO',
+    subject: 'Tu cita en OÍR Conecta fue reprogramada — {{fechaCita}}',
+    body: 'Hola {{nombre}},\n\nTu cita en OÍR Conecta fue reprogramada:\n\n📅 {{fechaCita}}\n🕐 {{horaCita}}\n\nSi no puedes asistir: {{linkReagendar}}',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'linkReagendar'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
+  // ─── DIRECTORIO_REPROGRAMACION ──────────────────────────────────────
+  {
+    code: 'directorio_reprogramacion', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'directorio_reprogramacion',
+    body: 'Hola {{nombre}}, tu cita con {{sede}} fue reprogramada para el {{fechaCita}} a las {{horaCita}}.',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'sede'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'directorio_reprogramacion', channel: 'EMAIL', locale: 'es-CO',
+    subject: 'Tu cita con {{sede}} fue reprogramada — {{fechaCita}}',
+    body: 'Hola {{nombre}},\n\nTu cita con {{sede}} fue reprogramada:\n\n📅 {{fechaCita}}\n🕐 {{horaCita}}\n\nSi no puedes asistir: {{linkReagendar}}',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'sede', 'linkReagendar'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
+  // ─── CRM_CANCELACION ────────────────────────────────────────────────
+  {
+    code: 'crm_cancelacion', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'crm_cancelacion',
+    body: 'Hola {{nombre}}, tu cita del {{fechaCita}} a las {{horaCita}} en OÍR Conecta fue cancelada. Si quieres reagendar, escríbenos.',
+    variables: ['nombre', 'fechaCita', 'horaCita'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'crm_cancelacion', channel: 'EMAIL', locale: 'es-CO',
+    subject: 'Tu cita en OÍR Conecta fue cancelada',
+    body: 'Hola {{nombre}},\n\nTu cita del {{fechaCita}} a las {{horaCita}} en OÍR Conecta fue cancelada.\n\nSi deseas reagendar, escríbenos.',
+    variables: ['nombre', 'fechaCita', 'horaCita'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
+  // ─── DIRECTORIO_CANCELACION ─────────────────────────────────────────
+  {
+    code: 'directorio_cancelacion', channel: 'WHATSAPP', locale: 'es-CO',
+    metaTemplateName: 'directorio_cancelacion',
+    body: 'Hola {{nombre}}, tu cita del {{fechaCita}} a las {{horaCita}} con {{sede}} fue cancelada. Si quieres reagendar: {{linkReagendar}}',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'sede', 'linkReagendar'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+  {
+    code: 'directorio_cancelacion', channel: 'EMAIL', locale: 'es-CO',
+    subject: 'Tu cita con {{sede}} fue cancelada',
+    body: 'Hola {{nombre}},\n\nTu cita del {{fechaCita}} a las {{horaCita}} con {{sede}} fue cancelada.\n\nSi deseas reagendar: {{linkReagendar}}',
+    variables: ['nombre', 'fechaCita', 'horaCita', 'sede', 'linkReagendar'],
+    category: 'TRANSACTIONAL', optOutAllowed: false,
+  },
+
   // ─── AGRADECIMIENTO_POST_CITA (T+18h tras marcar COMPLETED) ─────────
   {
     code: 'agradecimiento_post_cita', channel: 'WHATSAPP', locale: 'es-CO',

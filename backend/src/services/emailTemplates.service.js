@@ -211,17 +211,28 @@ const HARDCODED = {
 // Solo agrega label + group para que la UI los muestre agrupados y con nombre
 // legible. NO tienen defaults hardcoded (no se pueden "restaurar").
 const LEGACY_META = {
-  // Estos códigos hoy los usan tanto CRM como directorio. Los dejo en
-  // CITAS_TRANSACCIONALES (visible en ambos scopes) hasta que se duplique
-  // el copy con prefijo (fase 2).
-  cita_agendada:            { label: 'Cita agendada · confirmación',   group: 'CITAS_TRANSACCIONALES', orderInGroup: 1 },
-  recordatorio_24h:         { label: 'Recordatorio 24h antes',         group: 'CITAS_TRANSACCIONALES', orderInGroup: 2 },
-  recordatorio_2h:          { label: 'Recordatorio 2h antes (WA)',     group: 'CITAS_TRANSACCIONALES', orderInGroup: 3 },
-  cancelacion:              { label: 'Cita cancelada',                 group: 'CITAS_TRANSACCIONALES', orderInGroup: 4 },
-  reprogramacion:           { label: 'Cita reprogramada',              group: 'CITAS_TRANSACCIONALES', orderInGroup: 5 },
-  // Exclusivos del CRM del centro propio.
+  // Códigos legacy (compartidos) — quedan visibles en CITAS_TRANSACCIONALES
+  // mientras exista tráfico apuntando a ellos. Los disparadores nuevos ya
+  // usan las variantes crm_* / directorio_* (ver abajo).
+  cita_agendada:            { label: 'Cita agendada (legacy)',         group: 'CITAS_TRANSACCIONALES', orderInGroup: 1 },
+  recordatorio_24h:         { label: 'Recordatorio 24h (legacy)',      group: 'CITAS_TRANSACCIONALES', orderInGroup: 2 },
+  recordatorio_2h:          { label: 'Recordatorio 2h WA (legacy)',    group: 'CITAS_TRANSACCIONALES', orderInGroup: 3 },
+  cancelacion:              { label: 'Cita cancelada (legacy)',        group: 'CITAS_TRANSACCIONALES', orderInGroup: 4 },
+  reprogramacion:           { label: 'Cita reprogramada (legacy)',     group: 'CITAS_TRANSACCIONALES', orderInGroup: 5 },
+  // CRM del centro propio.
+  crm_cita_agendada:        { label: 'Cita agendada · confirmación',   group: 'CRM_CITAS', orderInGroup: 1 },
+  crm_recordatorio_24h:     { label: 'Recordatorio 24h antes',         group: 'CRM_CITAS', orderInGroup: 2 },
+  crm_recordatorio_2h:      { label: 'Recordatorio 2h antes',          group: 'CRM_CITAS', orderInGroup: 3 },
+  crm_cancelacion:          { label: 'Cita cancelada',                 group: 'CRM_CITAS', orderInGroup: 6 },
+  crm_reprogramacion:       { label: 'Cita reprogramada',              group: 'CRM_CITAS', orderInGroup: 7 },
   agradecimiento_post_cita: { label: 'Agradecimiento post-cita (T+18h)', group: 'CRM_CITAS', orderInGroup: 4 },
   encuesta_post_cita:       { label: 'Encuesta de satisfacción (T+3d)',  group: 'CRM_CITAS', orderInGroup: 5 },
+  // Directorio (profesional adscrito).
+  directorio_cita_agendada:    { label: 'Cita agendada · confirmación', group: 'DIRECTORIO_CITAS', orderInGroup: 1 },
+  directorio_recordatorio_24h: { label: 'Recordatorio 24h antes',       group: 'DIRECTORIO_CITAS', orderInGroup: 2 },
+  directorio_recordatorio_2h:  { label: 'Recordatorio 2h antes',        group: 'DIRECTORIO_CITAS', orderInGroup: 3 },
+  directorio_cancelacion:      { label: 'Cita cancelada',               group: 'DIRECTORIO_CITAS', orderInGroup: 4 },
+  directorio_reprogramacion:   { label: 'Cita reprogramada',            group: 'DIRECTORIO_CITAS', orderInGroup: 5 },
 };
 
 const HARDCODED_CODES = Object.keys(HARDCODED);

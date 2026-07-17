@@ -11,6 +11,28 @@ const { scheduleReminder } = require('../index');
 
 const TZ = 'America/Bogota';
 const PUBLIC_BASE = process.env.PUBLIC_BASE_URL || 'https://oirconecta.com';
+const RETAIL_PROFILE_ID = process.env.RETAIL_PROFESSIONAL_ID || null;
+
+/**
+ * Decide si una cita pertenece al CRM del centro propio (OírConecta) o
+ * al directorio de profesionales adscritos.
+ *
+ * Regla: si no hay directoryProfileId → CRM (compat histórica).
+ *        si directoryProfileId === RETAIL_PROFILE_ID → CRM (retail).
+ *        de lo contrario → directorio.
+ */
+function isCrmAppointment(appointment) {
+  const pid = appointment?.directoryProfileId || null;
+  if (!pid) return true;
+  if (RETAIL_PROFILE_ID && pid === RETAIL_PROFILE_ID) return true;
+  return false;
+}
+
+/** Prefija el templateCode según el origen de la cita. */
+function pickTemplate(base, appointment) {
+  const prefix = isCrmAppointment(appointment) ? 'crm_' : 'directorio_';
+  return `${prefix}${base}`;
+}
 
 function formatFechaLarga(date) {
   return new Intl.DateTimeFormat('es-CO', {
@@ -76,7 +98,7 @@ async function onAppointmentCreated(appointment) {
   for (const channel of ['WHATSAPP', 'EMAIL']) {
     results.push(await scheduleReminder({
       patientId, eventCode: 'CITA_AGENDADA', channel,
-      templateCode: 'cita_agendada',
+      templateCode: pickTemplate('cita_agendada', appointment),
       targetType, targetId, payload,
       scheduledFor: now,
     }));
@@ -88,7 +110,7 @@ async function onAppointmentCreated(appointment) {
     for (const channel of ['WHATSAPP', 'EMAIL']) {
       results.push(await scheduleReminder({
         patientId, eventCode: 'RECORDATORIO_24H', channel,
-        templateCode: 'recordatorio_24h',
+        templateCode: pickTemplate('recordatorio_24h', appointment),
         targetType, targetId, payload,
         scheduledFor: t24,
       }));
@@ -101,7 +123,7 @@ async function onAppointmentCreated(appointment) {
     for (const channel of ['WHATSAPP', 'SMS']) {
       results.push(await scheduleReminder({
         patientId, eventCode: 'RECORDATORIO_2H', channel,
-        templateCode: 'recordatorio_2h',
+        templateCode: pickTemplate('recordatorio_2h', appointment),
         targetType, targetId, payload,
         scheduledFor: t2,
       }));
@@ -139,7 +161,7 @@ async function onAppointmentRescheduled(appointment, prisma) {
   for (const channel of ['WHATSAPP', 'EMAIL']) {
     await scheduleReminder({
       patientId, eventCode: 'REPROGRAMACION', channel,
-      templateCode: 'reprogramacion',
+      templateCode: pickTemplate('reprogramacion', appointment),
       targetType, targetId, payload: vars,
       scheduledFor: now,
     });
@@ -149,7 +171,7 @@ async function onAppointmentRescheduled(appointment, prisma) {
     for (const channel of ['WHATSAPP', 'EMAIL']) {
       await scheduleReminder({
         patientId, eventCode: 'RECORDATORIO_24H', channel,
-        templateCode: 'recordatorio_24h',
+        templateCode: pickTemplate('recordatorio_24h', appointment),
         targetType, targetId, payload: vars, scheduledFor: t24,
       });
     }
@@ -159,7 +181,7 @@ async function onAppointmentRescheduled(appointment, prisma) {
     for (const channel of ['WHATSAPP', 'SMS']) {
       await scheduleReminder({
         patientId, eventCode: 'RECORDATORIO_2H', channel,
-        templateCode: 'recordatorio_2h',
+        templateCode: pickTemplate('recordatorio_2h', appointment),
         targetType, targetId, payload: vars, scheduledFor: t2,
       });
     }
@@ -220,7 +242,7 @@ async function onAppointmentCancelled(appointment, prisma) {
       patientId: appointment.patientId,
       eventCode: 'CANCELACION',
       channel,
-      templateCode: 'cancelacion',
+      templateCode: pickTemplate('cancelacion', appointment),
       targetType: 'Appointment',
       targetId: appointment.id,
       payload: vars,
