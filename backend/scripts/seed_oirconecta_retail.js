@@ -38,23 +38,21 @@ async function main() {
   // 2. DirectoryAccount (upsert por email). Reafirma password en cada deploy
   // para garantizar acceso consistente al portal profesional del retail.
   //
-  // Transición: si existe el perfil retail (marker: allies incluye 'Widex')
-  // pero su account tiene un email distinto al configurado, lo renombramos
-  // antes del upsert. Evita crear una segunda cuenta huérfana.
-  const existingRetailProfile = await prisma.directoryProfile.findFirst({
-    where: { allies: { has: 'Widex' } },
-    include: { account: true },
-  });
-  if (
-    existingRetailProfile?.account &&
-    existingRetailProfile.account.email.toLowerCase() !== RETAIL_EMAIL
-  ) {
-    const oldEmail = existingRetailProfile.account.email;
-    await prisma.directoryAccount.update({
-      where: { id: existingRetailProfile.account.id },
-      data: { email: RETAIL_EMAIL },
-    });
-    console.log(`  ↻ Account renombrada: ${oldEmail} → ${RETAIL_EMAIL}`);
+  // Transición: si existe una cuenta retail con un email histórico distinto
+  // al configurado, la renombramos antes del upsert. Evita crear una
+  // segunda DirectoryAccount huérfana cuando cambia RETAIL_PROFESSIONAL_EMAIL.
+  const LEGACY_EMAILS = ['audiologa@oirconecta.com', 'admin@oirconecta.com'];
+  const candidates = LEGACY_EMAILS.filter((e) => e !== RETAIL_EMAIL);
+  for (const legacy of candidates) {
+    const legacyAcc = await prisma.directoryAccount.findUnique({ where: { email: legacy } });
+    if (legacyAcc) {
+      await prisma.directoryAccount.update({
+        where: { id: legacyAcc.id },
+        data: { email: RETAIL_EMAIL },
+      });
+      console.log(`  ↻ Account renombrada: ${legacy} → ${RETAIL_EMAIL}`);
+      break;
+    }
   }
   const passwordHash = await bcrypt.hash(RETAIL_PASSWORD, 10);
   const account = await prisma.directoryAccount.upsert({
