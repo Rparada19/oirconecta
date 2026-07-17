@@ -41,6 +41,7 @@ const emailTemplatesRoutes = require('./emailTemplates.routes');
 const followUpsRoutes = require('./followUps.routes');
 const waCorporateRoutes = require('./waCorporate.routes');
 const professionalAdsRoutes = require('./professionalAds.routes');
+const adminMaintenanceRoutes = require('./adminMaintenance.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
@@ -72,6 +73,7 @@ router.use('/google-calendar', googleCalendarRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/marketing', marketingRoutes);
 router.use('/audit', auditRoutes);
+router.use('/admin/maintenance', adminMaintenanceRoutes);
 router.use('/consents', consentsRoutes);
 router.use('/sales', salesRoutes);
 router.use('/referrals', referralsRoutes);
