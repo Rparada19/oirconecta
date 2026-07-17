@@ -24,7 +24,7 @@ const prisma = new PrismaClient();
 // Debe coincidir con el fallback de retail.service.js
 const RETAIL_EMAIL = (process.env.RETAIL_PROFESSIONAL_EMAIL || 'admin@oirconecta.com').toLowerCase();
 const RETAIL_PASSWORD = process.env.RETAIL_ACCOUNT_PASSWORD || 'Admin123!';
-const RETAIL_NOMBRE = 'OírConecta · Centro Bogotá';
+const RETAIL_NOMBRE = 'OírConecta';
 
 async function main() {
   console.log('▶ Sembrando perfil retail OírConecta Bogotá…\n');
@@ -65,10 +65,10 @@ async function main() {
   const profileCreateData = {
     status: 'APPROVED',
     personaTipo: 'JURIDICA',
-    direccionPublica: 'Cr 10 #96-25 Cons. 320, Bogotá',
+    direccionPublica: 'Carrera 10 #96-25, Edificio Centro Ejecutivo, Consultorio 320, Bogotá',
     telefonoPublico: '+57 317 150 3944',
     emailPublico: 'contacto@oirconecta.com',
-    nombreConsultorio: 'OírConecta Bogotá',
+    nombreConsultorio: 'OírConecta',
     profesion: 'Audiología',
     profesionesAdicionales: ['Audiología', 'Fonoaudiología'],
     whatsappPublico: '573171503944',
@@ -101,7 +101,8 @@ async function main() {
 
   // 4. Subscription (upsert por profileId)
   const now = new Date();
-  const periodEnd = new Date(now.getTime() + 365 * 24 * 3600 * 1000); // 1 año adelante
+  // Centro propio: sin vencimiento real. Ponemos 2099 como "never expires".
+  const periodEnd = new Date('2099-12-31T23:59:59.000Z');
   const sub = await prisma.subscription.upsert({
     where: { profileId: profile.id },
     create: {
@@ -110,13 +111,14 @@ async function main() {
       status: 'ACTIVE',
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
-      commitmentEnd: periodEnd,
-      metadata: { internalTenant: true, note: 'Centro propio OírConecta; plan premium siempre activo' },
+      commitmentEnd: null,
+      metadata: { internalTenant: true, note: 'Centro propio OírConecta; plan premium sin vencimiento' },
     },
     update: {
       planId: planPremium.id,
       status: 'ACTIVE',
       currentPeriodEnd: periodEnd,
+      commitmentEnd: null,
     },
   });
   console.log('[4] Subscription:', sub.id, '·', sub.status);
