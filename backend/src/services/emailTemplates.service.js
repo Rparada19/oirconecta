@@ -25,14 +25,18 @@ function render(str, payload = {}) {
 }
 
 // ─── Grupos de flujo de negocio (para agrupar en la UI del buzón) ────
-// El orden aquí determina el orden de las secciones en el admin.
+// scopes: quién puede ver/editar → 'admin' (buzón admin), 'crm' (buzón CRM
+// del centro propio). Un grupo puede estar en varios scopes si es compartido.
 const GROUPS = {
-  CRM_CONTROLES:        { label: 'CRM — Controles de adaptación',   order: 1, description: 'Funnel post-venta de audífono en centros propios.' },
-  CITAS_TRANSACCIONALES: { label: 'Citas — Confirmaciones y recordatorios', order: 2, description: 'Comunicaciones alrededor de una cita agendada.' },
-  DIRECTORIO_POST_CITA: { label: 'Directorio — Post-cita',           order: 3, description: 'Acompañamiento tras la consulta con un profesional del directorio.' },
-  DIRECTORIO_NURTURE:   { label: 'Directorio — Nurture de leads',    order: 4, description: 'Secuencia de emails a leads sin cita.' },
-  DIRECTORIO_RETENCION: { label: 'Directorio — Retención',           order: 5, description: 'Cumpleaños y referidos.' },
-  OTROS:                { label: 'Otros',                            order: 99, description: 'Sin agrupar.' },
+  CRM_CITAS:            { label: 'CRM — Ciclo de la cita',           order: 1,  description: 'Confirmación, recordatorio, agradecimiento y encuesta al paciente del centro propio.', scopes: ['crm'] },
+  CRM_CONTROLES:        { label: 'CRM — Controles de adaptación',    order: 2,  description: 'Funnel post-venta de audífono en centros propios.', scopes: ['crm'] },
+  DIRECTORIO_CITAS:     { label: 'Directorio — Ciclo de la cita',    order: 3,  description: 'Comunicaciones alrededor de una cita agendada con profesional adscrito.', scopes: ['admin'] },
+  DIRECTORIO_POST_CITA: { label: 'Directorio — Post-cita',           order: 4,  description: 'Acompañamiento tras la consulta con un profesional del directorio.', scopes: ['admin'] },
+  DIRECTORIO_NURTURE:   { label: 'Directorio — Nurture de leads',    order: 5,  description: 'Secuencia de emails a leads sin cita.', scopes: ['admin'] },
+  DIRECTORIO_RETENCION: { label: 'Directorio — Retención',           order: 6,  description: 'Cumpleaños y referidos.', scopes: ['admin', 'crm'] },
+  // Legacy: mantiene compat con templates que aún no se movieron.
+  CITAS_TRANSACCIONALES: { label: 'Citas — Confirmaciones y recordatorios (legacy)', order: 10, description: 'Compartido histórico. Se irá migrando a CRM_CITAS / DIRECTORIO_CITAS.', scopes: ['admin', 'crm'] },
+  OTROS:                { label: 'Otros',                            order: 99, description: 'Sin agrupar.', scopes: ['admin'] },
 };
 
 // ─── Catálogo de defaults hardcoded ─────────────────────────
@@ -207,9 +211,17 @@ const HARDCODED = {
 // Solo agrega label + group para que la UI los muestre agrupados y con nombre
 // legible. NO tienen defaults hardcoded (no se pueden "restaurar").
 const LEGACY_META = {
-  cita_agendada:   { label: 'Cita agendada · confirmación',   group: 'CITAS_TRANSACCIONALES', orderInGroup: 1 },
-  recordatorio_24h:{ label: 'Recordatorio 24h antes',         group: 'CITAS_TRANSACCIONALES', orderInGroup: 2 },
-  cancelacion:     { label: 'Cita cancelada',                 group: 'CITAS_TRANSACCIONALES', orderInGroup: 3 },
+  // Estos códigos hoy los usan tanto CRM como directorio. Los dejo en
+  // CITAS_TRANSACCIONALES (visible en ambos scopes) hasta que se duplique
+  // el copy con prefijo (fase 2).
+  cita_agendada:            { label: 'Cita agendada · confirmación',   group: 'CITAS_TRANSACCIONALES', orderInGroup: 1 },
+  recordatorio_24h:         { label: 'Recordatorio 24h antes',         group: 'CITAS_TRANSACCIONALES', orderInGroup: 2 },
+  recordatorio_2h:          { label: 'Recordatorio 2h antes (WA)',     group: 'CITAS_TRANSACCIONALES', orderInGroup: 3 },
+  cancelacion:              { label: 'Cita cancelada',                 group: 'CITAS_TRANSACCIONALES', orderInGroup: 4 },
+  reprogramacion:           { label: 'Cita reprogramada',              group: 'CITAS_TRANSACCIONALES', orderInGroup: 5 },
+  // Exclusivos del CRM del centro propio.
+  agradecimiento_post_cita: { label: 'Agradecimiento post-cita (T+18h)', group: 'CRM_CITAS', orderInGroup: 4 },
+  encuesta_post_cita:       { label: 'Encuesta de satisfacción (T+3d)',  group: 'CRM_CITAS', orderInGroup: 5 },
 };
 
 const HARDCODED_CODES = Object.keys(HARDCODED);
@@ -277,12 +289,18 @@ function metaFor(code) {
   return { label: code, group: 'OTROS', orderInGroup: 99, description: null };
 }
 
-async function listAll() {
+async function listAll({ scope } = {}) {
   const dbRows = await prisma.notificationTemplate.findMany({
     where: { channel: 'EMAIL', locale: 'es-CO' },
     orderBy: { code: 'asc' },
   });
   const dbCodes = new Set(dbRows.map((r) => r.code));
+  const inScope = (groupKey) => {
+    if (!scope) return true;
+    const g = GROUPS[groupKey];
+    if (!g?.scopes) return scope === 'admin';
+    return g.scopes.includes(scope);
+  };
 
   // Añade hardcoded que aún no están en DB (aparecen como "por defecto")
   const missing = HARDCODED_CODES.filter((c) => !dbCodes.has(c)).map((c) => {
@@ -308,7 +326,7 @@ async function listAll() {
   const enriched = [
     ...dbRows.map((r) => ({ ...r, isDefault: false, ...metaFor(r.code) })),
     ...missing,
-  ];
+  ].filter((t) => inScope(t.group));
 
   // Orden: grupo (según GROUPS.order), luego orderInGroup, luego label
   enriched.sort((a, b) => {
@@ -322,8 +340,10 @@ async function listAll() {
   return enriched;
 }
 
-function listGroups() {
-  return Object.entries(GROUPS).map(([key, v]) => ({ key, ...v }));
+function listGroups({ scope } = {}) {
+  return Object.entries(GROUPS)
+    .filter(([, v]) => !scope || (v.scopes || ['admin']).includes(scope))
+    .map(([key, v]) => ({ key, ...v }));
 }
 
 /**

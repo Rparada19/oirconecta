@@ -119,6 +119,7 @@ const AdminSuscripcionesPage = lazy(() => import('./pages/admin/AdminSuscripcion
 const AdminIAPage = lazy(() => import('./pages/admin/AdminIAPage'));
 const AdminMarketingPage = lazy(() => import('./pages/admin/AdminMarketingPage'));
 const AdminComunicacionesPage = lazy(() => import('./pages/admin/AdminComunicacionesPage'));
+const CrmPlantillasPage = lazy(() => import('./pages/crm/PlantillasPage'));
 const AdminWhatsAppPage = lazy(() => import('./pages/admin/AdminWhatsAppPage'));
 const AdminInsightsPage = lazy(() => import('./pages/admin/AdminInsightsPage'));
 const SalesDiaPage = lazy(() => import('./pages/admin/sales/SalesDiaPage'));
@@ -278,6 +279,7 @@ export default function App() {
             <Route path="pacientes" element={<PacientesPage />} />
             <Route path="controles" element={<ControlesPage />} />
             <Route path="whatsapp" element={<WhatsAppInboxPage />} />
+            <Route path="plantillas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><CrmPlantillasPage /></ProtectedRouteByRole>} />
             <Route path="campanas" element={<CampanasPage />} />
             <Route path="reportes" element={<ReportesPage />} />
             <Route path="configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />

@@ -18,8 +18,10 @@ router.use(authenticate, authorize('ADMIN'));
 
 router.get('/', async (req, res, next) => {
   try {
-    const list = await templates.listAll();
-    res.json({ success: true, data: list });
+    const scope = req.query.scope === 'crm' ? 'crm' : req.query.scope === 'admin' ? 'admin' : undefined;
+    const list = await templates.listAll({ scope });
+    const groups = templates.listGroups({ scope });
+    res.json({ success: true, data: list, groups });
   } catch (e) { next(e); }
 });
 

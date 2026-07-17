@@ -21,6 +21,7 @@ import {
   Logout, ArrowBack, FlashOn, Person as PersonIcon,
   EventRepeat as EventRepeatIcon,
   WhatsApp as WhatsAppIcon,
+  MailOutline as MailOutlineIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { getMenuForRole, MENU_KEYS } from '../../utils/rolePermissions';
@@ -56,6 +57,8 @@ const NAV_ITEMS = [
     path: '/portal-crm/whatsapp', section: 'operativo' },
   { key: MENU_KEYS.CAMPANAS, label: 'Campañas', icon: Campaign,
     path: '/portal-crm/campanas', section: 'marketing' },
+  { key: MENU_KEYS.PLANTILLAS, label: 'Plantillas de comunicación', icon: MailOutlineIcon,
+    path: '/portal-crm/plantillas', section: 'marketing' },
   { key: MENU_KEYS.PRODUCTOS, label: 'Productos', icon: ShoppingBag,
     path: '/portal-crm/productos', section: 'marketing' },
   { key: MENU_KEYS.REPORTES, label: 'Reportes', icon: Assessment,

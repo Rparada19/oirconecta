@@ -24,7 +24,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { adminFetch } from './adminAuth';
+import { adminFetch as defaultAdminFetch } from './adminAuth';
 
 const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
 const NAVY = '#0F2A4A';
@@ -54,24 +54,29 @@ const CATEGORY_COLORS = {
 
 // Labels de los grupos de flujo (matchean con backend GROUPS)
 const GROUP_LABELS = {
+  CRM_CITAS:            'CRM — Ciclo de la cita',
   CRM_CONTROLES:        'CRM — Controles de adaptación',
-  CITAS_TRANSACCIONALES:'Citas — Confirmaciones y recordatorios',
+  DIRECTORIO_CITAS:     'Directorio — Ciclo de la cita',
   DIRECTORIO_POST_CITA: 'Directorio — Post-cita',
   DIRECTORIO_NURTURE:   'Directorio — Nurture de leads',
-  DIRECTORIO_RETENCION: 'Directorio — Retención',
+  DIRECTORIO_RETENCION: 'Retención (cumpleaños, referidos)',
+  CITAS_TRANSACCIONALES:'Citas — Compartidas (legacy)',
   OTROS:                'Otros',
 };
 
 const GROUP_DESCRIPTIONS = {
+  CRM_CITAS:            'Confirmación, recordatorio, agradecimiento y encuesta al paciente del centro propio.',
   CRM_CONTROLES:        'Funnel post-venta de audífono (centros propios).',
-  CITAS_TRANSACCIONALES:'Comunicaciones alrededor de una cita.',
+  DIRECTORIO_CITAS:     'Cita con un profesional adscrito al directorio.',
   DIRECTORIO_POST_CITA: 'Acompañamiento tras la consulta con un profesional.',
   DIRECTORIO_NURTURE:   'Secuencia a leads sin cita.',
   DIRECTORIO_RETENCION: 'Cumpleaños y referidos.',
+  CITAS_TRANSACCIONALES:'Compartido histórico. Se irá migrando a los grupos por audiencia.',
   OTROS:                'Sin agrupar.',
 };
 
-export default function AdminComunicacionesPage() {
+export default function AdminComunicacionesPage({ scope = null, fetchFn = defaultAdminFetch } = {}) {
+  const adminFetch = fetchFn;
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCode, setSelectedCode] = useState(null);
@@ -91,13 +96,14 @@ export default function AdminComunicacionesPage() {
 
   const loadList = async () => {
     setLoading(true);
-    const r = await adminFetch('/api/email-templates');
+    const qs = scope ? `?scope=${scope}` : '';
+    const r = await adminFetch(`/api/email-templates${qs}`);
     if (!r.ok) { setError(r.data?.error || 'Error'); setLoading(false); return; }
     setList(r.data?.data || []);
     setLoading(false);
   };
 
-  useEffect(() => { loadList(); }, []);
+  useEffect(() => { loadList(); /* eslint-disable-next-line */ }, [scope]);
 
   useEffect(() => {
     if (!selectedCode) return;
