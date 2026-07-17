@@ -19,7 +19,7 @@ import { getAvailableTimeSlots } from '../../services/appointmentService';
 import { getAppointmentDuration } from '../../utils/appointmentDurations';
 import { getAgendaProcedenciaOTipoCita } from '../../utils/agendaDisplayUtils';
 
-const ALL_SLOTS = [
+const FALLBACK_SLOTS = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
   '11:00', '11:30', '12:00', '14:00', '14:30', '15:00',
   '15:30', '16:00', '16:30', '17:00', '17:30',
@@ -69,13 +69,18 @@ const DaySchedulePanel = ({
     const apt = getAppointmentAtSlot(slot);
     if (apt) return { type: 'occupied', appointment: apt };
     if (isSlotAvailable(slot)) return { type: 'available' };
-    // Si la API devolvió vacío (ej. error) y no hay citas, asumir disponible
-    if (availableSlots.length === 0) return { type: 'available' };
     return { type: 'blocked' };
   };
 
-  const availableCount = ALL_SLOTS.filter((s) => getSlotStatus(s).type === 'available').length;
-  const occupiedCount = appointments.filter((a) => a.status !== 'cancelled').length;
+  const activeAppts = appointments.filter((a) => a.status !== 'cancelled');
+  const apptSlots = activeAppts.map((a) => a.time).filter(Boolean);
+  // Grilla dinámica: unión de slots disponibles (API) + slots con cita.
+  // Fallback a grilla estática solo si la API falla Y no hay citas.
+  const dynamicSlots = Array.from(new Set([...availableSlots, ...apptSlots])).sort();
+  const displaySlots = dynamicSlots.length > 0 ? dynamicSlots : FALLBACK_SLOTS;
+
+  const availableCount = displaySlots.filter((s) => getSlotStatus(s).type === 'available').length;
+  const occupiedCount = activeAppts.length;
 
   if (!date) return null;
 
@@ -130,7 +135,7 @@ const DaySchedulePanel = ({
         ) : (
           <Table size="small">
             <TableBody>
-              {ALL_SLOTS.map((slot) => {
+              {displaySlots.map((slot) => {
                 const { type, appointment } = getSlotStatus(slot);
                 return (
                   <TableRow
