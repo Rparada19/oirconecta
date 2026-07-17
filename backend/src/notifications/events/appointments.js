@@ -55,20 +55,31 @@ function citaStartDate(appointment) {
 
 function buildVars(appointment) {
   const start = citaStartDate(appointment);
+  const nombre = appointment.patient?.nombre || appointment.patientName || 'paciente';
+  const fechaCita = formatFechaLarga(start);
+  const horaCita = appointment.hora || '';
+  const tipoConsulta = appointment.tipoConsulta || 'consulta';
+  const linkConfirm = `${PUBLIC_BASE}/agendar/confirmar?token=${appointment.rescheduleToken}`;
+  const linkReagendar = `${PUBLIC_BASE}/agendar/reagendar?token=${appointment.rescheduleToken}`;
+  const linkEncuesta = appointment.reviewToken
+    ? `${PUBLIC_BASE}/dejar-resena/${appointment.reviewToken}`
+    : `${PUBLIC_BASE}/dejar-resena/${appointment.rescheduleToken}`;
+  const sede = isCrmAppointment(appointment)
+    ? 'OÍR Conecta'
+    : (appointment.directoryProfile?.nombreConsultorio
+      || appointment.directoryProfile?.displayName
+      || 'tu profesional');
   return {
-    nombre: appointment.patient?.nombre || appointment.patientName || 'paciente',
-    fechaCita: formatFechaLarga(start),
-    horaCita: appointment.hora || '',
-    tipoConsulta: appointment.tipoConsulta || 'consulta',
-    linkConfirm: `${PUBLIC_BASE}/agendar/confirmar?token=${appointment.rescheduleToken}`,
-    linkReagendar: `${PUBLIC_BASE}/agendar/reagendar?token=${appointment.rescheduleToken}`,
-    // Encuesta post-cita reutiliza el flow F6 /dejar-resena/:reviewToken
-    // (endpoint /api/directory/reviews/by-token). El reviewToken se genera
-    // al marcar COMPLETED en appointments.service.updateStatus.
-    linkEncuesta: appointment.reviewToken
-      ? `${PUBLIC_BASE}/dejar-resena/${appointment.reviewToken}`
-      : `${PUBLIC_BASE}/dejar-resena/${appointment.rescheduleToken}`,
-    sede: 'OÍR Conecta',
+    // camelCase — usado por email templates hardcoded y por el legacy WA.
+    nombre, fechaCita, horaCita, tipoConsulta,
+    linkConfirm, linkReagendar, linkEncuesta, sede,
+    // snake_case — nombres exigidos por Meta en las plantillas HSM crm_*/directorio_*.
+    fecha_cita: fechaCita,
+    hora_cita: horaCita,
+    tipo_consulta: tipoConsulta,
+    link_confirm: linkConfirm,
+    link_reagendar: linkReagendar,
+    link_encuesta: linkEncuesta,
   };
 }
 
