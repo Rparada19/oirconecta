@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField, Button, Select, MenuItem,
   FormControl, InputLabel, Grid, Tabs, Tab, CircularProgress, Alert, Snackbar,
-  Chip, IconButton, Divider, FormControlLabel, Checkbox, Stack,
+  Chip, IconButton, Divider, FormControlLabel, Checkbox, Stack, Autocomplete,
 } from '@mui/material';
 import { AddOutlined, Close, SaveOutlined } from '@mui/icons-material';
 import { directoryApi } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
+import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import { getServiciosSugeridos } from '../../config/serviciosPorProfesion';
 import PhotoUploader from '../../components/profesional/PhotoUploader';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
@@ -276,7 +277,7 @@ function DisponibilidadEditor({ disponibilidad, onChange }) {
 const EMPTY_FORM = {
   nombreConsultorio: '', profesion: '', profesionesAdicionales: [], generoFicha: '', descripcion: '',
   personaTipo: '', documentoIdentidad: '', registroProfesional: '', anosExperiencia: '',
-  telefonoPublico: '', whatsappPublico: '', emailPublico: '', direccionPublica: '',
+  telefonoPublico: '', whatsappPublico: '', emailPublico: '', direccionPublica: '', cityId: null,
   fotoPerfilUrl: '', bannerUrl: '',
   googleMapsEmbedUrl: '', googleMapsLugarUrl: '',
   photoUrls: [], videoUrls: [],
@@ -299,6 +300,14 @@ export default function ProfesionalPerfilPage() {
   const [error, setError] = useState('');
   const [snack, setSnack] = useState({ open: false, msg: '', sev: 'success' });
   const [form, setForm] = useState(EMPTY_FORM);
+  const [cities, setCities] = useState([]);
+
+  useEffect(() => {
+    fetch(`${getApiBaseUrl().replace(/\/$/, '')}/api/directory/cities`)
+      .then((r) => r.json())
+      .then((j) => setCities(Array.isArray(j?.data) ? j.data : []))
+      .catch(() => setCities([]));
+  }, []);
 
   useEffect(() => {
     directoryApi.get(DIRECTORY_API.me).then(({ data, error: err }) => {
@@ -318,6 +327,7 @@ export default function ProfesionalPerfilPage() {
         whatsappPublico: d.whatsappPublico || '',
         emailPublico: d.emailPublico || '',
         direccionPublica: d.direccionPublica || '',
+        cityId: d.cityId || null,
         fotoPerfilUrl: d.fotoPerfilUrl || '',
         bannerUrl: d.bannerUrl || '',
         googleMapsEmbedUrl: d.googleMapsEmbedUrl || '',
@@ -489,6 +499,23 @@ export default function ProfesionalPerfilPage() {
               <Grid item xs={12} sm={6}><TextField fullWidth label="Teléfono público" {...f('telefonoPublico')} placeholder="+57 300 000 0000" sx={fieldSx} /></Grid>
               <Grid item xs={12} sm={6}><TextField fullWidth label="WhatsApp (con código de país)" {...f('whatsappPublico')} placeholder="573001234567" sx={fieldSx} helperText="Solo números, sin espacios ni + (ej: 573001234567)" /></Grid>
               <Grid item xs={12} sm={6}><TextField fullWidth label="Email público" type="email" {...f('emailPublico')} sx={fieldSx} /></Grid>
+              <Grid item xs={12} sm={6}>
+                <Autocomplete
+                  options={cities}
+                  value={cities.find((c) => c.id === form.cityId) || null}
+                  getOptionLabel={(o) => o?.nombre || ''}
+                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  onChange={(_, val) => set('cityId', val?.id || null)}
+                  renderInput={(params) => (
+                    <TextField {...params}
+                      label="Ciudad principal"
+                      placeholder="Empieza a escribir"
+                      helperText="Filtro clave para que te encuentren en el directorio."
+                      sx={fieldSx}
+                    />
+                  )}
+                />
+              </Grid>
               <Grid item xs={12} sm={6}><TextField fullWidth label="Dirección principal" {...f('direccionPublica')} sx={fieldSx} /></Grid>
               <Grid item xs={12}><Divider sx={{ my: 1 }} /></Grid>
               <Grid item xs={12}><TextField fullWidth label="Google Maps — iframe embed" {...f('googleMapsEmbedUrl')} multiline rows={3} sx={fieldSx} helperText='En Google Maps → Compartir → Insertar mapa → copia el iframe completo' /></Grid>

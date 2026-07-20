@@ -183,6 +183,7 @@ router.patch(
     body('fotoPerfilUrl').optional().isString().isLength({ max: 2000 }),
     body('googleMapsEmbedUrl').optional().isString().isLength({ max: 12000 }),
     body('googleMapsLugarUrl').optional().isString().isLength({ max: 2000 }),
+    body('cityId').optional({ values: 'falsy' }).isString().isLength({ max: 64 }),
     body('blogMarkdown').optional().isString().isLength({ max: 120000 }),
     body('liveChatUrl').optional().isString().isLength({ max: 2000 }),
     body('titulosSecciones').optional().custom((v) => v == null || typeof v === 'object'),

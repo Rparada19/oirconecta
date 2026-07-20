@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Stack, Button, TextField, IconButton, Chip,
   LinearProgress, CircularProgress, Alert, Container, Snackbar,
+  Autocomplete,
 } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -407,7 +408,8 @@ function StepMarcas({ data, onChange }) {
   );
 }
 
-function StepContacto({ data, onChange }) {
+function StepContacto({ data, onChange, cities }) {
+  const selectedCity = cities.find((c) => c.id === data.cityId) || null;
   return (
     <>
       <StepHeader step={4} total={STEPS.length}
@@ -415,11 +417,25 @@ function StepContacto({ data, onChange }) {
         subtitle="La dirección y el teléfono son los datos más buscados de tu ficha. Sin ellos, el paciente no puede tomar acción."
       />
       <Stack spacing={2}>
+        <Autocomplete
+          options={cities}
+          value={selectedCity}
+          getOptionLabel={(o) => o?.nombre || ''}
+          isOptionEqualToValue={(a, b) => a.id === b.id}
+          onChange={(_, val) => onChange({ cityId: val?.id || null })}
+          renderInput={(params) => (
+            <TextField {...params}
+              label="Ciudad principal"
+              placeholder="Empieza a escribir el nombre"
+              helperText="Filtro clave para que te encuentren en el buscador del directorio."
+            />
+          )}
+        />
         <TextField
           label="Dirección del consultorio" fullWidth
           value={data.direccionPublica || ''}
           onChange={(e) => onChange({ direccionPublica: e.target.value })}
-          placeholder="Ej: Cra. 13 #85-32, Consultorio 402, Chapinero, Bogotá"
+          placeholder="Ej: Cra. 13 #85-32, Consultorio 402, Chapinero"
         />
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
@@ -460,6 +476,7 @@ export default function ProfesionalWizardPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState({});
+  const [cities, setCities] = useState([]);
   const [snack, setSnack] = useState(null);
   const [error, setError] = useState('');
 
@@ -479,9 +496,15 @@ export default function ProfesionalWizardPage() {
         emailPublico: d.emailPublico || '',
         direccionPublica: d.direccionPublica || '',
         googleMapsLugarUrl: d.googleMapsLugarUrl || '',
+        cityId: d.cityId || null,
       });
       setLoading(false);
     });
+    // Catálogo público de ciudades para el selector de ubicación.
+    fetch(`${getApiBaseUrl().replace(/\/$/, '')}/api/directory/cities`)
+      .then((r) => r.json())
+      .then((j) => setCities(Array.isArray(j?.data) ? j.data : []))
+      .catch(() => setCities([]));
   }, []);
 
   const update = (patch) => setData((prev) => ({ ...prev, ...patch }));
@@ -579,7 +602,7 @@ export default function ProfesionalWizardPage() {
         {step === 1 && <StepHistoria data={data} onChange={update} />}
         {step === 2 && <StepServicios data={data} onChange={update} />}
         {step === 3 && <StepMarcas data={data} onChange={update} />}
-        {step === 4 && <StepContacto data={data} onChange={update} />}
+        {step === 4 && <StepContacto data={data} onChange={update} cities={cities} />}
 
         {/* Actions */}
         <Stack direction="row" spacing={2} sx={{ mt: 5, alignItems: 'center' }}>

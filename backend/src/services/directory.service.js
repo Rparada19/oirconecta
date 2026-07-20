@@ -449,6 +449,23 @@ async function updateMyDirectoryProfile(accountId, body) {
     const d = body.direccionPublica;
     patch.direccionPublica = d == null || d === '' ? null : String(d).trim().slice(0, 500);
   }
+  // Ciudad principal del perfil (FK a City). Valida que el id exista antes de
+  // aceptar; null limpia la asociación. Es el filtro real que usa el buscador
+  // público (/directorio + /profesionales/*), no el texto libre del workplace.
+  if (body.cityId !== undefined) {
+    const cid = body.cityId == null || body.cityId === '' ? null : String(body.cityId).trim();
+    if (cid) {
+      const cityRow = await prisma.city.findUnique({ where: { id: cid }, select: { id: true } });
+      if (!cityRow) {
+        const err = new Error('Ciudad no encontrada');
+        err.statusCode = 400;
+        throw err;
+      }
+      patch.cityId = cid;
+    } else {
+      patch.cityId = null;
+    }
+  }
   if (body.telefonoPublico !== undefined) {
     const t = body.telefonoPublico;
     patch.telefonoPublico = t == null || t === '' ? null : String(t).trim().slice(0, 40);
