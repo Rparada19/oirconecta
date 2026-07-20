@@ -26,6 +26,7 @@ const EcommercePage = lazy(() => import('./pages/EcommercePage'));
 const ComparadorPage = lazy(() => import('./pages/ComparadorPage'));
 const PonteEnSusOidosPage = lazy(() => import('./pages/PonteEnSusOidosPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const ProtectedAdminRoute = lazy(() => import('./pages/admin/ProtectedAdminRoute'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const AgendamientoPage = lazy(() => import('./pages/AgendamientoPage'));
 const AgendarControlPage = lazy(() => import('./pages/AgendarControlPage'));
@@ -222,7 +223,7 @@ export default function App() {
           <Route path="/implantes/medel" element={<ImplantesMedelPage />} />
           <Route path="/ecommerce" element={<EcommercePage />} />
           <Route path="/comparador" element={<ComparadorPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin" element={<ProtectedAdminRoute requireFullAdmin><AdminPage /></ProtectedAdminRoute>} />
           <Route path="/profesionales/otologos" element={<OtologosPage />} />
           <Route path="/profesionales/audiologos" element={<AudiologasPage />} />
           <Route path="/directorio/profesional/:profileId" element={<DirectorioProfesionalPageV2 />} />
@@ -280,7 +281,7 @@ export default function App() {
             <Route path="controles" element={<ControlesPage />} />
             <Route path="whatsapp" element={<WhatsAppInboxPage />} />
             <Route path="plantillas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><CrmPlantillasPage /></ProtectedRouteByRole>} />
-            <Route path="campanas" element={<CampanasPage />} />
+            <Route path="campanas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><CampanasPage /></ProtectedRouteByRole>} />
             <Route path="reportes" element={<ReportesPage />} />
             <Route path="configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />
             <Route path="productos" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ProductosPage /></ProtectedRouteByRole>} />
@@ -313,25 +314,25 @@ export default function App() {
           {/* Portal Administración del sitio — auth independiente del CRM */}
           <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/portal-admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
-            <Route path="blog" element={<AdminBlogPage />} />
-            <Route path="profesionales" element={<AdminProfesionalesPage />} />
-            <Route path="marketplace" element={<AdminMarketplacePage />} />
-            <Route path="pedidos" element={<AdminPedidosPage />} />
-            <Route path="comparador" element={<AdminComparadorPage />} />
-            <Route path="newsletter" element={<AdminNewsletterPage />} />
-            <Route path="contactos" element={<AdminContactosPage />} />
-            <Route path="suscripciones" element={<AdminSuscripcionesPage />} />
-            <Route path="ia" element={<AdminIAPage />} />
-            <Route path="marketing" element={<AdminMarketingPage />} />
-            <Route path="marketing/insights" element={<AdminInsightsPage />} />
-            <Route path="comunicaciones" element={<AdminComunicacionesPage />} />
-            <Route path="whatsapp" element={<AdminWhatsAppPage />} />
-            {/* CRM Sales — captación outbound de profesionales */}
-            <Route path="sales" element={<SalesDiaPage />} />
-            <Route path="sales/leads" element={<SalesLeadsPage />} />
-            <Route path="sales/leads/:id" element={<SalesLeadDetailPage />} />
-            <Route path="sales/reportes" element={<SalesReportesPage />} />
+            <Route index element={<ProtectedAdminRoute requireFullAdmin><AdminDashboardPage /></ProtectedAdminRoute>} />
+            <Route path="blog" element={<ProtectedAdminRoute requireFullAdmin><AdminBlogPage /></ProtectedAdminRoute>} />
+            <Route path="profesionales" element={<ProtectedAdminRoute requireFullAdmin><AdminProfesionalesPage /></ProtectedAdminRoute>} />
+            <Route path="marketplace" element={<ProtectedAdminRoute requireFullAdmin><AdminMarketplacePage /></ProtectedAdminRoute>} />
+            <Route path="pedidos" element={<ProtectedAdminRoute requireFullAdmin><AdminPedidosPage /></ProtectedAdminRoute>} />
+            <Route path="comparador" element={<ProtectedAdminRoute requireFullAdmin><AdminComparadorPage /></ProtectedAdminRoute>} />
+            <Route path="newsletter" element={<ProtectedAdminRoute requireFullAdmin><AdminNewsletterPage /></ProtectedAdminRoute>} />
+            <Route path="contactos" element={<ProtectedAdminRoute requireFullAdmin><AdminContactosPage /></ProtectedAdminRoute>} />
+            <Route path="suscripciones" element={<ProtectedAdminRoute requireFullAdmin><AdminSuscripcionesPage /></ProtectedAdminRoute>} />
+            <Route path="ia" element={<ProtectedAdminRoute requireFullAdmin><AdminIAPage /></ProtectedAdminRoute>} />
+            <Route path="marketing" element={<ProtectedAdminRoute requireFullAdmin><AdminMarketingPage /></ProtectedAdminRoute>} />
+            <Route path="marketing/insights" element={<ProtectedAdminRoute requireFullAdmin><AdminInsightsPage /></ProtectedAdminRoute>} />
+            <Route path="comunicaciones" element={<ProtectedAdminRoute requireFullAdmin><AdminComunicacionesPage /></ProtectedAdminRoute>} />
+            <Route path="whatsapp" element={<ProtectedAdminRoute requireFullAdmin><AdminWhatsAppPage /></ProtectedAdminRoute>} />
+            {/* CRM Sales — captación outbound de profesionales (ADMIN + EJECUTIVO_COMERCIAL) */}
+            <Route path="sales" element={<ProtectedAdminRoute requireSales><SalesDiaPage /></ProtectedAdminRoute>} />
+            <Route path="sales/leads" element={<ProtectedAdminRoute requireSales><SalesLeadsPage /></ProtectedAdminRoute>} />
+            <Route path="sales/leads/:id" element={<ProtectedAdminRoute requireSales><SalesLeadDetailPage /></ProtectedAdminRoute>} />
+            <Route path="sales/reportes" element={<ProtectedAdminRoute requireSales><SalesReportesPage /></ProtectedAdminRoute>} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

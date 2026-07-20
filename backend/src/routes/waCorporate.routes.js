@@ -206,10 +206,21 @@ router.post('/conversations/:id/read', async (req, res, next) => {
 router.post('/conversations/:id/assign', async (req, res, next) => {
   try {
     const { userId } = req.body || {};
-    const targetUserId = userId === null || userId === '' ? null : String(userId || '');
+    // 'me' → resuelve al usuario autenticado. null/'' → desasignar.
+    let targetUserId;
+    if (userId === null || userId === '') {
+      targetUserId = null;
+    } else if (userId === 'me') {
+      targetUserId = req.user?.id || null;
+      if (!targetUserId) {
+        return res.status(401).json({ success: false, error: 'no autenticado' });
+      }
+    } else {
+      targetUserId = String(userId);
+    }
     const updated = await prisma.whatsAppConversation.update({
       where: { id: req.params.id },
-      data: { assignedToId: targetUserId || null },
+      data: { assignedToId: targetUserId },
       include: { assignedTo: { select: { id: true, nombre: true } } },
     });
     res.json({ success: true, data: updated });
