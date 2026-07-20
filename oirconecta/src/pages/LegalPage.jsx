@@ -257,7 +257,6 @@ const LegalPage = () => {
           <ul>
             <li><strong>Neon</strong> (base de datos, servidores en Frankfurt, UE).</li>
             <li><strong>Render</strong> (hosting del backend, servidores en EE. UU.).</li>
-            <li><strong>DreamHost</strong> (hosting del sitio público).</li>
             <li><strong>Meta Platforms</strong> (Pixel y API de Conversiones, cuando el usuario acepta cookies).</li>
             <li><strong>Proveedores de correo transaccional y WhatsApp Business</strong> (notificaciones).</li>
             <li><strong>Pasarelas de pago autorizadas por la Superfinanciera</strong> (cuando aplique).</li>
