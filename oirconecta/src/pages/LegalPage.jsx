@@ -43,7 +43,7 @@ const LegalPage = () => {
           OírConecta es una plataforma que promueve servicios de terceros (profesionales y centros suscritos).
           La <a href="#cookies">Política de cookies</a> está vigente. Los apartados de Términos y Privacidad son
           un borrador y están en revisión con asesoría legal. Contacto:{' '}
-          <a href="mailto:info@oirconecta.com">info@oirconecta.com</a>.
+          <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.
         </Typography>
         <Divider sx={{ my: 4 }} />
 
@@ -64,7 +64,7 @@ const LegalPage = () => {
           </p>
           <p>
             Puedes ejercer derechos de acceso, rectificación o supresión según la normativa aplicable escribiendo a
-            info@oirconecta.com.
+            conversemos@oirconecta.com.
           </p>
         </Section>
 
@@ -97,7 +97,7 @@ const LegalPage = () => {
             Habeas Data y el Decreto 1377 de 2013. Las cookies estrictamente necesarias no requieren consentimiento
             previo. Las analíticas y de marketing se activan bajo tu consentimiento, que puedes retirar en cualquier
             momento configurando tu navegador o escribiéndonos a{' '}
-            <a href="mailto:info@oirconecta.com">info@oirconecta.com</a>.
+            <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.
           </p>
 
           <p style={{ marginTop: 24 }}>
@@ -268,11 +268,12 @@ const LegalPage = () => {
             <strong>8. Contacto y ejercicio de derechos</strong>
           </p>
           <p>
-            Responsable del tratamiento: <strong>OírConecta</strong>, Carrera 10 #96-25, Consultorio 320, Edificio
-            Centro Ejecutivo, Bogotá, Colombia. Correo:{' '}
-            <a href="mailto:info@oirconecta.com">info@oirconecta.com</a>. Puedes ejercer los derechos de acceso,
-            rectificación, actualización, supresión y revocación del consentimiento previstos en la Ley 1581 de
-            2012 escribiendo a ese correo.
+            Responsable del tratamiento: <strong>OírConecta</strong>, NIT 901.416.762-9. Carrera 10 #96-25,
+            Consultorio 320, Edificio Centro Ejecutivo, Bogotá, Colombia. Correo:{' '}
+            <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>. Teléfono / WhatsApp:{' '}
+            <a href="tel:+573171503944">+57 317 150 3944</a>. Puedes ejercer los derechos de acceso, rectificación,
+            actualización, supresión y revocación del consentimiento previstos en la Ley 1581 de 2012 escribiendo
+            a ese correo.
           </p>
         </Section>
       </Container>
