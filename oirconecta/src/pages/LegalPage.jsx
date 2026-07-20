@@ -73,30 +73,248 @@ const LegalPage = () => {
         </Typography>
         <Typography variant="body1" color="text.secondary" paragraph>
           OírConecta es una plataforma que promueve servicios de terceros (profesionales y centros suscritos).
-          La <a href="#cookies">Política de cookies</a> está vigente. Los apartados de Términos y Privacidad son
-          un borrador y están en revisión con asesoría legal. Contacto:{' '}
+          Estos documentos regulan el uso del sitio, la agenda de citas, el directorio de profesionales adscritos y el
+          tratamiento de datos personales bajo la Ley 1581 de 2012 y el Decreto 1377 de 2013. Contacto:{' '}
           <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a>.
         </Typography>
         <Divider sx={{ my: 4 }} />
 
         <Section id="terminos" title="Términos y condiciones de uso">
           <p>
-            El uso del sitio web y los formularios de OírConecta implica la aceptación de estas condiciones. El contenido
-            informativo no sustituye la valoración médica. Los horarios y disponibilidad de citas pueden variar.
+            <strong>Última actualización:</strong> 20 de julio de 2026.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>1. Identificación del responsable</strong></p>
+          <p>
+            El sitio <strong>oirconecta.com</strong> es operado por <strong>OírConecta S.A.S.</strong>, sociedad
+            colombiana identificada con NIT <strong>901.416.762-9</strong>, con domicilio en Bogotá D.C., Colombia. Datos
+            de contacto: <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> · +57 317 150 3944.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>2. Aceptación</strong></p>
+          <p>
+            El acceso al Sitio y el uso de cualquiera de sus formularios, agendamientos, portales o servicios implica la
+            aceptación plena de estos Términos y de la <a href="#privacidad">Política de privacidad</a>. Si no estás de
+            acuerdo, debes abstenerte de usar el Sitio.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>3. Naturaleza del servicio</strong></p>
+          <p>
+            OírConecta ofrece: (i) un <em>directorio</em> de profesionales y centros auditivos adscritos; (ii) una
+            <em> agenda</em> que permite reservar citas con esos terceros o con OírConecta; (iii) contenido educativo
+            sobre salud auditiva; y (iv) una <em>tienda</em> de accesorios auditivos (baterías, moldes, limpieza y
+            similares). <strong>OírConecta no comercializa audífonos</strong> ni prestaciones de salud reguladas fuera de
+            su propia red de audiología.
           </p>
           <p>
-            OírConecta puede modificar el sitio y estos términos; se recomienda revisarlos periódicamente.
+            El contenido del Sitio es informativo y <strong>no reemplaza la consulta profesional</strong>. La relación
+            asistencial se perfecciona entre el paciente y el profesional o centro elegido; OírConecta actúa como
+            intermediario tecnológico salvo cuando la cita se agenda directamente con OírConecta como prestador.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>4. Registro y cuentas</strong></p>
+          <p>
+            El uso del portal profesional, del portal admin y del CRM requiere una cuenta. El usuario es responsable de
+            mantener la confidencialidad de sus credenciales y de toda actividad realizada bajo ellas. OírConecta puede
+            suspender o cancelar cuentas por incumplimiento de estos Términos, uso fraudulento, morosidad o mandato de
+            autoridad.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>5. Contenido de terceros (profesionales adscritos)</strong></p>
+          <p>
+            Los profesionales y centros adscritos son <strong>responsables exclusivos</strong> de la veracidad de su
+            información (títulos, tarifas, horarios, ubicaciones, especialidades) y de los servicios que prestan.
+            OírConecta verifica documentación básica pero no garantiza la exactitud permanente ni la idoneidad clínica de
+            cada prestador. Cualquier reclamo por la atención debe dirigirse al profesional o centro correspondiente, sin
+            perjuicio del derecho del consumidor a acudir a OírConecta cuando la reserva se hizo por el Sitio.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>6. Reservas, cancelaciones y no presentación</strong></p>
+          <p>
+            Las citas agendadas quedan sujetas a las condiciones que informa cada profesional o centro (política de
+            cancelación, ventanas de reagendamiento, cobros por inasistencia). El paciente puede cancelar o reagendar
+            desde el enlace enviado por correo o WhatsApp con al menos 24 horas de anticipación cuando el prestador no
+            haya fijado una regla distinta.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>7. Pagos</strong></p>
+          <p>
+            Los pagos en línea (cuando estén disponibles) se procesan a través de pasarelas externas autorizadas por la
+            Superintendencia Financiera de Colombia. OírConecta no almacena datos completos de tarjetas. Los precios se
+            muestran en pesos colombianos (COP) e incluyen los impuestos aplicables salvo indicación contraria.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>8. Uso permitido y prohibido</strong></p>
+          <p>El usuario se compromete a no:</p>
+          <ul>
+            <li>Publicar información falsa, difamatoria, ilícita o que vulnere derechos de terceros.</li>
+            <li>Suplantar la identidad de otra persona, profesional o entidad.</li>
+            <li>Usar el Sitio para enviar spam, malware, scraping masivo o técnicas de ingeniería social.</li>
+            <li>Vulnerar medidas técnicas de seguridad o acceder a áreas restringidas.</li>
+            <li>Reproducir, revender o explotar comercialmente el contenido sin autorización expresa.</li>
+          </ul>
+
+          <p style={{ marginTop: 24 }}><strong>9. Propiedad intelectual</strong></p>
+          <p>
+            Las marcas, logos, textos, imágenes, código fuente y bases de datos del Sitio son propiedad de OírConecta o
+            de sus licenciantes y están protegidos por la normativa colombiana e internacional sobre propiedad
+            intelectual. Se permite el uso personal y no comercial con atribución. Cualquier otro uso requiere
+            autorización escrita.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>10. Limitación de responsabilidad</strong></p>
+          <p>
+            OírConecta hace esfuerzos razonables para mantener el Sitio operativo y seguro, pero no garantiza
+            disponibilidad ininterrumpida ni ausencia de errores. En la medida permitida por la ley, no responde por: (i)
+            actos u omisiones de profesionales adscritos; (ii) daños indirectos, lucro cesante o pérdida de datos
+            derivados de fuerza mayor, caso fortuito o hecho de un tercero; (iii) contenido publicado por usuarios en
+            reseñas o formularios.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>11. Derechos del consumidor</strong></p>
+          <p>
+            Los usuarios que actúen como consumidores gozan de los derechos reconocidos por la Ley 1480 de 2011
+            (Estatuto del Consumidor), incluida la reversión del pago y el derecho de retracto cuando aplique. Las PQRs
+            pueden radicarse en <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> con respuesta
+            dentro de los 15 días hábiles siguientes.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>12. Modificaciones</strong></p>
+          <p>
+            OírConecta puede modificar el Sitio y estos Términos en cualquier momento. Los cambios entran en vigor al
+            publicarse en esta página. Se recomienda revisar periódicamente. El uso posterior implica aceptación de la
+            nueva versión.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>13. Ley aplicable y jurisdicción</strong></p>
+          <p>
+            Estos Términos se rigen por las leyes de la República de Colombia. Las controversias se someterán a los
+            jueces del domicilio del consumidor cuando aplique la Ley 1480 de 2011; en los demás casos, a los jueces
+            competentes de Bogotá D.C.
           </p>
         </Section>
 
-        <Section id="privacidad" title="Política de privacidad">
+        <Section id="privacidad" title="Política de tratamiento de datos personales">
           <p>
-            Tratamos los datos personales que nos proporciones (por ejemplo, al agendar o contactar) con fines de
-            gestión de solicitudes, mejora del servicio y cumplimiento legal. No vendemos tus datos a terceros.
+            <strong>Última actualización:</strong> 20 de julio de 2026.
           </p>
           <p>
-            Puedes ejercer derechos de acceso, rectificación o supresión según la normativa aplicable escribiendo a
-            conversemos@oirconecta.com.
+            En cumplimiento de la Ley 1581 de 2012, el Decreto 1377 de 2013 y demás normas concordantes, OírConecta
+            informa a los titulares el tratamiento que da a sus datos personales.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>1. Responsable del tratamiento</strong></p>
+          <p>
+            <strong>OírConecta S.A.S.</strong> — NIT 901.416.762-9. Domicilio: Bogotá D.C., Colombia. Contacto para el
+            ejercicio de derechos: <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> · +57 317
+            150 3944.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>2. Datos que recolectamos</strong></p>
+          <ul>
+            <li><strong>Identificación y contacto:</strong> nombre, correo, teléfono, ciudad, documento cuando aplique.</li>
+            <li><strong>Datos de la cita:</strong> motivo de consulta, profesional/centro elegido, fecha, hora, canal.</li>
+            <li><strong>Datos sensibles de salud auditiva:</strong> antecedentes, resultados de audiometría, adaptación de
+              audífonos y controles — solo cuando el titular los suministra voluntariamente en el CRM o los formularios
+              de agendamiento.</li>
+            <li><strong>Datos de navegación:</strong> IP truncada, tipo de dispositivo, páginas visitadas, eventos de
+              conversión (ver <a href="#cookies">Política de cookies</a>).</li>
+            <li><strong>Datos comerciales</strong> del profesional o centro adscrito: razón social, NIT, portafolio,
+              tarifas, credenciales.</li>
+          </ul>
+
+          <p style={{ marginTop: 24 }}><strong>3. Finalidades</strong></p>
+          <ul>
+            <li>Gestionar el registro, la autenticación y el uso de los portales.</li>
+            <li>Agendar, recordar, reagendar o cancelar citas, incluyendo el envío de confirmaciones por correo y
+              WhatsApp.</li>
+            <li>Prestar la atención clínica cuando la cita se agenda con OírConecta como prestador.</li>
+            <li>Contactar al titular para responder solicitudes, PQRs y encuestas de satisfacción.</li>
+            <li>Enviar comunicaciones informativas o comerciales sobre servicios propios, siempre que el titular haya
+              consentido.</li>
+            <li>Cumplir obligaciones legales, contables, tributarias y de reporte a autoridades.</li>
+            <li>Analizar el uso del Sitio y mejorar los servicios (métricas agregadas).</li>
+          </ul>
+
+          <p style={{ marginTop: 24 }}><strong>4. Autorización y datos sensibles</strong></p>
+          <p>
+            Al enviar cualquier formulario, agendar una cita o registrarte en un portal, el titular autoriza expresamente
+            el tratamiento de sus datos para las finalidades descritas. Tratándose de <strong>datos sensibles</strong>
+            {' '}(estado de salud auditiva), se recuerda que <strong>responder es facultativo</strong>; sin ellos no es
+            posible prestar el servicio clínico solicitado.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>5. Menores de edad</strong></p>
+          <p>
+            El tratamiento de datos de niños, niñas y adolescentes se realiza siempre con autorización previa del padre,
+            madre o representante legal, y en su exclusivo interés superior.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>6. Encargados y transferencias</strong></p>
+          <p>
+            Para prestar el servicio, OírConecta se apoya en encargados que procesan datos por su cuenta bajo contrato:
+          </p>
+          <ul>
+            <li><strong>Neon</strong> (base de datos, servidores en Frankfurt, UE).</li>
+            <li><strong>Render</strong> (hosting del backend, servidores en EE. UU.).</li>
+            <li><strong>DreamHost</strong> (hosting del sitio público).</li>
+            <li><strong>Meta Platforms</strong> (Pixel y API de Conversiones, cuando el usuario acepta cookies).</li>
+            <li><strong>Proveedores de correo transaccional y WhatsApp Business</strong> (notificaciones).</li>
+            <li><strong>Pasarelas de pago autorizadas por la Superfinanciera</strong> (cuando aplique).</li>
+          </ul>
+          <p>
+            Estas transferencias internacionales se realizan a países que garantizan un nivel adecuado de protección o
+            mediante cláusulas contractuales que preservan las garantías de la Ley 1581 de 2012.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>7. Derechos del titular</strong></p>
+          <p>Todo titular puede en cualquier momento:</p>
+          <ul>
+            <li>Conocer, actualizar y rectificar sus datos.</li>
+            <li>Solicitar prueba de la autorización otorgada.</li>
+            <li>Ser informado sobre el uso dado a sus datos.</li>
+            <li>Presentar quejas ante la Superintendencia de Industria y Comercio (SIC) por infracciones a la ley.</li>
+            <li>Revocar la autorización o solicitar la supresión de los datos cuando no exista un deber legal o
+              contractual de conservarlos.</li>
+            <li>Acceder gratuitamente a sus datos.</li>
+          </ul>
+
+          <p style={{ marginTop: 24 }}><strong>8. Procedimiento para ejercer derechos</strong></p>
+          <p>
+            Las consultas y reclamos deben radicarse a{' '}
+            <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> indicando: nombre completo,
+            documento, medio de contacto y descripción clara de la solicitud. Plazos legales:
+          </p>
+          <ul>
+            <li><strong>Consultas:</strong> respuesta en máximo 10 días hábiles.</li>
+            <li><strong>Reclamos:</strong> respuesta en máximo 15 días hábiles, prorrogables por 8 días hábiles
+              adicionales previa notificación.</li>
+          </ul>
+          <p>
+            Si transcurridos dos meses desde la reclamación el titular no obtiene respuesta satisfactoria, puede acudir a
+            la SIC — Delegatura para la Protección de Datos Personales (
+            <a href="https://www.sic.gov.co" target="_blank" rel="noopener noreferrer">www.sic.gov.co</a>).
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>9. Seguridad</strong></p>
+          <p>
+            OírConecta aplica medidas técnicas y administrativas razonables para proteger los datos: cifrado en tránsito
+            (HTTPS), autenticación de accesos, control de roles en el CRM y portal admin, hashing de contraseñas, copias
+            de seguridad y registros de auditoría. Ningún sistema es infalible; ante un incidente de seguridad relevante,
+            OírConecta notificará a los titulares afectados y a la SIC según los plazos legales.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>10. Vigencia del tratamiento</strong></p>
+          <p>
+            Los datos se conservan mientras exista una relación con el titular y durante los plazos legales aplicables
+            (por ejemplo, obligaciones contables de 10 años, historia clínica según la Resolución 1995 de 1999). Cumplida
+            la finalidad y los términos legales, los datos se suprimen o anonimizan.
+          </p>
+
+          <p style={{ marginTop: 24 }}><strong>11. Modificaciones</strong></p>
+          <p>
+            Esta política puede modificarse. Cuando el cambio sea sustancial se informará por los canales habituales
+            (correo o aviso en el Sitio) al menos 10 días antes de su entrada en vigor.
           </p>
         </Section>
 
