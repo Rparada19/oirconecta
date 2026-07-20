@@ -56,27 +56,19 @@ const AudiologasPage = () => {
         const parsedData = JSON.parse(savedData);
         setAudiologas(parsedData);
         setUploadStatus(`Base de datos cargada (${parsedData.length} audiólogas)`);
-        console.log('📊 Datos cargados desde localStorage:', parsedData.length, 'audiólogas');
       } else {
-        // Si no hay datos en localStorage, intentar cargar desde el archivo JSON
-        console.log('📊 No hay datos en localStorage, intentando cargar desde archivo JSON...');
-        
-        // Importar datos directamente del archivo JSON
+        // Sin caché local, cargar desde el archivo JSON empacado.
         import('../data/bdatos_audiologas.json')
           .then((module) => {
             const jsonData = module.default;
             if (jsonData && jsonData.length > 0) {
               setAudiologas(jsonData);
               setUploadStatus(`Base de datos cargada desde archivo (${jsonData.length} audiólogas)`);
-              console.log('📊 Datos cargados desde archivo JSON:', jsonData.length, 'audiólogas');
-              
-              // Guardar en localStorage para futuras cargas
               localStorage.setItem('audiologasData', JSON.stringify(jsonData));
               localStorage.setItem('audiologas_data', JSON.stringify(jsonData));
             } else {
               setAudiologas([]);
               setUploadStatus('Base de datos vacía (0 audiólogas)');
-              console.log('📊 Archivo JSON vacío o sin datos');
             }
           })
           .catch((error) => {
@@ -132,7 +124,6 @@ const AudiologasPage = () => {
 
   // Función para manejar filtros del SearchEngine
   const handleSearchFilter = (filters) => {
-    console.log('AudiologasPage - Filtros recibidos:', filters);
     const newSearchTerm = filters.query || '';
     const newCity = filters.ciudad || '';
     const newProfesion = filters.profesion || filters.especialidad || PROFESION_LABEL_TODAS;
@@ -156,27 +147,13 @@ const AudiologasPage = () => {
     const startIndex = (currentPage - 1) * cardsPerPage;
     const endIndex = startIndex + cardsPerPage;
     const currentAudiologas = audiologasFiltradas.slice(startIndex, endIndex);
-    
-    console.log('📊 Paginación:', {
-      currentPage,
-      totalPages,
-      startIndex: startIndex + 1,
-      endIndex: Math.min(endIndex, audiologasFiltradas.length),
-      totalItems: audiologasFiltradas.length,
-      currentAudiologasCount: currentAudiologas.length
-    });
-    
     return { totalPages, currentAudiologas, startIndex: startIndex + 1, endIndex: Math.min(endIndex, audiologasFiltradas.length), totalItems: audiologasFiltradas.length };
   }, [audiologasFiltradas, currentPage]);
 
   const handlePageChange = (newPage) => {
-    console.log('🔄 Cambiando a página:', newPage, 'desde página actual:', currentPage);
     setCurrentPage(newPage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  console.log('🎯 AudiologasPage renderizando con', audiologas.length, 'audiólogas');
-  console.log('📋 Primeras 3 audiólogas:', audiologas.slice(0, 3).map(a => a.nombre));
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

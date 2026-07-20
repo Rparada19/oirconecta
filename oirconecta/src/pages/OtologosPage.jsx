@@ -102,10 +102,6 @@ const OtologosPage = () => {
     }
   }, [searchParams]);
 
-  // Debug: verificar que los datos se cargan
-  console.log('OtologosPage - Datos cargados:', otologosConPrepagadas);
-  console.log('OtologosPage - Número de otólogos:', otologosConPrepagadas.length);
-
   // Obtener ciudades únicas
   const ciudades = useMemo(() => {
     const cities = [...new Set(otologosConPrepagadas.map(otologo => otologo.ciudad).filter(Boolean))];
@@ -140,7 +136,6 @@ const OtologosPage = () => {
 
   // Verificar que los datos existen
   if (!otologosConPrepagadas || otologosConPrepagadas.length === 0) {
-    console.error('No se pudieron cargar los datos de otólogos');
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Header />
@@ -158,7 +153,6 @@ const OtologosPage = () => {
 
   // Función para manejar filtros del SearchEngine
   const handleSearchFilter = (filters) => {
-    console.log('OtologosPage - Filtros recibidos:', filters);
     setSearchTerm(filters.query || '');
     setSelectedCity(filters.ciudad || '');
     setSelectedProfesion(filters.profesion || filters.especialidad || PROFESION_LABEL_TODAS);
@@ -166,8 +160,6 @@ const OtologosPage = () => {
       !filters.poliza || filters.poliza === POLIZA_LABEL_TODAS ? '' : filters.poliza
     );
   };
-
-  console.log('OtologosPage - Otólogos filtrados:', otologosFiltrados.length);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

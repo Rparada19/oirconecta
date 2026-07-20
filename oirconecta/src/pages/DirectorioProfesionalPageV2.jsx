@@ -972,13 +972,25 @@ function StickyBookingCard({ profile, name, phone, wa, onBook, reviewsCount, rat
 export default function DirectorioProfesionalPageV2() {
   const { profileId } = useParams();
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bookingOpen, setBookingOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [realReviews, setRealReviews] = useState([]);
+  // Contenido demo solo se permite en fichas de OírConecta (retail) — mientras
+  // el centro aún no tiene reseñas/casos reales. En cualquier otro profesional
+  // no se muestran datos simulados aunque venga ?demo=1 en la URL.
+  const [retailIds, setRetailIds] = useState([]);
+  useEffect(() => {
+    const API = (import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com').replace(/\/$/, '');
+    fetch(`${API}/api/public/retail-config`)
+      .then((r) => r.json())
+      .then((d) => setRetailIds(d?.data?.ownDirectoryProfileIds || []))
+      .catch(() => {});
+  }, []);
+  const isRetailProfile = !!profileId && retailIds.includes(profileId);
+  const isDemo = searchParams.get('demo') === '1' && isRetailProfile;
 
   const load = useCallback(async () => {
     if (!profileId) return;
