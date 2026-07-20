@@ -207,7 +207,7 @@ function MegaAudifonos({ navigate, onClose }) {
           }}
         >
           <Box sx={{ aspectRatio: '16/9', overflow: 'hidden' }}>
-            <Box component="img" src="/img/blog/audifono-receiver-ric.jpg" alt=""
+            <Box component="img" src="/img/blog/audifono-receiver-ric.jpg" alt="" aria-hidden="true"
               sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block',
                 transition: 'transform 0.6s ease' }} />
           </Box>
@@ -315,7 +315,7 @@ function MegaDirectorio({ navigate, onClose }) {
           '&:hover': { transform: 'translateY(-3px)' },
         }}
       >
-        <Box component="img" src="/img/directorio-profesionales-audicion.jpg" alt=""
+        <Box component="img" src="/img/directorio-profesionales-audicion.jpg" alt="" aria-hidden="true"
           sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />
         <Box sx={{
           position: 'absolute', inset: 0,
@@ -389,7 +389,7 @@ function MegaBlog({ navigate, onClose }) {
               }}
             >
               <Box sx={{ width: 64, height: 64, borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
-                <Box component="img" src={a.cover} alt=""
+                <Box component="img" src={a.cover} alt="" aria-hidden="true"
                   sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </Box>
               <Typography className="oc-blog-title" sx={{
@@ -417,7 +417,7 @@ function MegaBlog({ navigate, onClose }) {
         }}
       >
         <Box sx={{ aspectRatio: '4/3', overflow: 'hidden' }}>
-          <Box component="img" src="/img/directorio-profesionales-audicion.jpg" alt=""
+          <Box component="img" src="/img/directorio-profesionales-audicion.jpg" alt="" aria-hidden="true"
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block',
               transition: 'transform 0.6s ease' }} />
         </Box>

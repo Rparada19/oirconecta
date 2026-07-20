@@ -472,78 +472,74 @@ async function processPendingReminders() {
   return { processed: due.length, sent, failed };
 }
 
+// Estado observable de cada sub-job. Lo consume /health/crons para saber
+// cuándo se ejecutó por última vez cada uno, si falló y qué error dio.
+// Un job que jamás corre → lastRunAt=null; un job que falla varias veces
+// seguidas → lastErrorAt reciente. Sin esto los fallos van solo a stdout.
+const jobStats = {};
+let lastTickAt = null;
+let lastTickMs = null;
+
+async function runJob(name, fn) {
+  const stats = jobStats[name] || (jobStats[name] = { runs: 0, errors: 0 });
+  const started = Date.now();
+  try {
+    const result = await fn();
+    stats.runs += 1;
+    stats.lastRunAt = new Date().toISOString();
+    stats.lastOkAt = stats.lastRunAt;
+    stats.lastDurationMs = Date.now() - started;
+    stats.lastError = null;
+    return result;
+  } catch (e) {
+    stats.runs += 1;
+    stats.errors += 1;
+    stats.lastRunAt = new Date().toISOString();
+    stats.lastErrorAt = stats.lastRunAt;
+    stats.lastError = e?.message || String(e);
+    stats.lastDurationMs = Date.now() - started;
+    console.error(`[cron] ${name} falló:`, e.message);
+    return null;
+  }
+}
+
 async function tick() {
   if (running) return; // no solapar ticks
   running = true;
   const started = Date.now();
   try {
     // 1) Recordatorios de cita (5d/1d/5h) — sistema legacy sin Reminder rows.
-    let apptResult = null;
-    try {
+    const apptResult = await runJob('appointmentReminders', async () => {
       const appointmentsService = require('../services/appointments.service');
       if (typeof appointmentsService.processReminders === 'function') {
-        apptResult = await appointmentsService.processReminders();
+        return appointmentsService.processReminders();
       }
-    } catch (e) {
-      console.error('[cron] processReminders falló:', e.message);
-    }
+      return null;
+    });
 
     // 2) Reminder rows PENDING/QUEUED (sistema nuevo con Reminder model)
-    let remindersResult = null;
-    try {
-      remindersResult = await processPendingReminders();
-    } catch (e) {
-      console.error('[cron] processPendingReminders falló:', e.message);
-    }
+    const remindersResult = await runJob('pendingReminders', processPendingReminders);
 
     // 3) T2-Gap1 — Nurture 7d de leads sin cita
-    let nurtureResult = null;
-    try {
-      nurtureResult = await processLeadNurture();
-    } catch (e) {
-      console.error('[cron] processLeadNurture falló:', e.message);
-    }
+    const nurtureResult = await runJob('leadNurture', processLeadNurture);
 
     // 4) T2-Gap4 — Cumpleaños (solo actúa 8-9am CO, no-op el resto del día)
-    let birthdayResult = null;
-    try {
-      birthdayResult = await processBirthdays();
-    } catch (e) {
-      console.error('[cron] processBirthdays falló:', e.message);
-    }
+    const birthdayResult = await runJob('birthdays', processBirthdays);
 
     // 5) T2-Gap3 — Control 15d post-cita
-    let control15Result = null;
-    try {
-      control15Result = await processControl15d();
-    } catch (e) {
-      console.error('[cron] processControl15d falló:', e.message);
-    }
+    const control15Result = await runJob('control15d', processControl15d);
 
     // 6) Blog IA semanal (solo lunes 8-9am CO si BLOG_AUTO_ENABLED=true)
-    let blogResult = null;
-    try {
-      blogResult = await processBlogWeekly();
-    } catch (e) {
-      console.error('[cron] processBlogWeekly falló:', e.message);
-    }
+    const blogResult = await runJob('blogWeekly', processBlogWeekly);
 
     // 7) F8 — Funnel controles post-adaptación (T-7 / T-1 / OVERDUE) 8-9am CO
-    let followUpResult = null;
-    try {
-      followUpResult = await processFollowUpReminders();
-    } catch (e) {
-      console.error('[cron] processFollowUpReminders falló:', e.message);
-    }
+    const followUpResult = await runJob('followUpReminders', processFollowUpReminders);
 
     // 8) A1 — Nudge de agendamiento post-link /agendar (WhatsApp)
-    let waNudgeResult = null;
-    try {
+    const waNudgeResult = await runJob('waAgendarNudges', async () => {
       const waNudge = require('../services/waNudge.service');
-      waNudgeResult = await waNudge.processWaAgendarNudges();
-    } catch (e) {
-      console.error('[cron] processWaAgendarNudges falló:', e.message);
-    }
+      return waNudge.processWaAgendarNudges();
+    });
 
     const hasActivity =
       (apptResult?.sent || 0) > 0 ||
@@ -567,8 +563,20 @@ async function tick() {
   } catch (e) {
     console.error('[cron] tick falló:', e.message);
   } finally {
+    lastTickAt = new Date().toISOString();
+    lastTickMs = Date.now() - started;
     running = false;
   }
+}
+
+function getHealthStatus() {
+  return {
+    running: !!tickHandle,
+    tickIntervalMs: TICK_MS,
+    lastTickAt,
+    lastTickMs,
+    jobs: jobStats,
+  };
 }
 
 function start() {
@@ -584,4 +592,4 @@ function stop() {
   tickHandle = null;
 }
 
-module.exports = { start, stop, tick, processPendingReminders, processLeadNurture, processBirthdays, processControl15d, processBlogWeekly, processFollowUpReminders };
+module.exports = { start, stop, tick, processPendingReminders, processLeadNurture, processBirthdays, processControl15d, processBlogWeekly, processFollowUpReminders, getHealthStatus, jobStats };

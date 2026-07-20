@@ -86,6 +86,17 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Observabilidad del scheduler in-process (T4). Devuelve último tick + estado
+// por sub-job para detectar cuándo un cron dejó de correr o falla en bucle.
+app.get('/health/crons', (req, res) => {
+  try {
+    const crons = require('./crons');
+    res.json({ success: true, ...crons.getHealthStatus() });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // Raíz: muchos usuarios abren solo el host/puerto; sin esto siempre era 404.
 app.get('/', (req, res) => {
   res.json({

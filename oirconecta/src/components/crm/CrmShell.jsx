@@ -245,41 +245,12 @@ export default function CrmShell() {
               </IconButton>
             )}
 
-            {/* Búsqueda global (placeholder) */}
-            <Box sx={{
-              display: 'flex', alignItems: 'center', gap: 1,
-              bgcolor: '#f8fafc', borderRadius: '10px', px: 1.5, py: 0.5,
-              minWidth: { xs: 0, md: 360 }, flex: { xs: 1, md: 'unset' },
-              border: '1px solid transparent',
-              transition: 'border-color 150ms ease, background-color 150ms ease',
-              '&:focus-within': { borderColor: CRM_ACCENT, bgcolor: '#fff' },
-            }}>
-              <SearchIcon sx={{ fontSize: 18, color: OC_COLORS.grisMedio }} />
-              <InputBase
-                placeholder="Buscar paciente, lead, cita…"
-                sx={{ flex: 1, fontSize: 13.5 }}
-                inputProps={{ 'aria-label': 'Búsqueda global' }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') e.currentTarget.blur();
-                }}
-              />
-              <Box sx={{
-                display: { xs: 'none', sm: 'flex' }, alignItems: 'center',
-                px: 0.75, py: 0.1, border: '1px solid #d1d5db', borderRadius: 0.75,
-                fontSize: 10.5, color: OC_COLORS.grisMedio, fontFamily: 'ui-monospace, monospace',
-              }}>⌘ K</Box>
-            </Box>
+            {/* Buscador global y notificaciones se retiraron hasta implementarlos:
+                el placeholder ⌘K no hacía nada y el badge de la campana estaba
+                siempre invisible. Volverán cuando el backend exponga endpoints
+                de búsqueda unificada y de eventos no leídos. */}
 
             <Box sx={{ flex: 1 }} />
-
-            {/* Notificaciones */}
-            <Tooltip title="Notificaciones">
-              <IconButton size="small" sx={{ color: OC_COLORS.grisOscuro }}>
-                <Badge variant="dot" color="error" invisible>
-                  <NotificationsActive sx={{ fontSize: 20 }} />
-                </Badge>
-              </IconButton>
-            </Tooltip>
 
             {/* Usuario */}
             <Tooltip title={user?.email || ''}>
