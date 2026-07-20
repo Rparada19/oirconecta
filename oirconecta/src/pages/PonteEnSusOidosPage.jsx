@@ -16,6 +16,7 @@ import {
   IcCasa, IcCena, IcLlamada, IcSusurro, IcTV, IcEstetoscopio, IcCopa, IcTelefonoFijo,
   IcAudifonos, IcPlay, IcSlider, IcCompartir,
 } from '../components/simulator/SimulatorIcons';
+import { fbqTrack, trackCustomEvent, generateEventId } from '../utils/metaPixel';
 
 const C = {
   navy: '#272F50',
@@ -125,6 +126,10 @@ export default function PonteEnSusOidosPage() {
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', ciudad: '', mensaje: '' });
   const [formState, setFormState] = useState({ loading: false, ok: false, error: null });
 
+  // Meta Pixel: cada evento se dispara una sola vez por sesión de página.
+  const simulatorStartedRef = useRef(false);
+  const simulatorCompletedRef = useRef(false);
+
   const activeScene = SCENES.find((s) => s.id === activeSceneId) || null;
   const activeLevel = LEVELS.find((l) => l.id === level) || LEVELS[0];
 
@@ -142,6 +147,11 @@ export default function PonteEnSusOidosPage() {
 
   useEffect(() => {
     if (processorRef.current) processorRef.current.applyLevel(level);
+    // Meta Pixel: SimulatorComplete = el usuario probó al menos un nivel con pérdida.
+    if (level !== 'normal' && !simulatorCompletedRef.current) {
+      simulatorCompletedRef.current = true;
+      trackCustomEvent('SimulatorComplete', { level });
+    }
   }, [level]);
 
   useEffect(() => {
@@ -160,6 +170,11 @@ export default function PonteEnSusOidosPage() {
   };
 
   const handlePickScene = async (sceneId) => {
+    // Meta Pixel: primer intento de simulador = SimulatorStart (custom).
+    if (!simulatorStartedRef.current) {
+      simulatorStartedRef.current = true;
+      trackCustomEvent('SimulatorStart', { scene_id: sceneId });
+    }
     // 1) Detén lo que esté sonando + apaga el ruido inmediatamente.
     if (audioRef.current) {
       try { audioRef.current.pause(); } catch (e) { /* ignore */ }
@@ -206,6 +221,7 @@ export default function PonteEnSusOidosPage() {
       return;
     }
     setFormState({ loading: true, ok: false, error: null });
+    const eventId = generateEventId();
     try {
       const res = await fetch(`${API_BASE}/api/public/contact`, {
         method: 'POST',
@@ -216,10 +232,13 @@ export default function PonteEnSusOidosPage() {
           telefono: form.telefono || null,
           asunto: 'Simulador "Ponte en sus oídos" — solicitud de información',
           mensaje: `${form.mensaje}\n\n— Ciudad: ${form.ciudad || 'No especificada'}\n— Origen: /ponte-en-sus-oidos`,
+          metaEvent: 'Lead',
+          metaEventId: eventId,
         }),
       });
       const data = await res.json();
       if (data.success) {
+        fbqTrack('Lead', { content_name: 'lead_simulador_oirasi' }, eventId);
         setFormState({ loading: false, ok: true, error: null });
         setForm({ nombre: '', email: '', telefono: '', ciudad: '', mensaje: '' });
       } else {

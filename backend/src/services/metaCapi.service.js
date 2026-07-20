@@ -20,6 +20,7 @@ const crypto = require('crypto');
 
 const PIXEL_ID = process.env.META_PIXEL_ID || '1056565756928195';
 const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN || '';
+const TEST_EVENT_CODE = process.env.META_CAPI_TEST_EVENT_CODE || '';
 const API_VERSION = 'v21.0';
 
 function sha256(v) {
@@ -76,6 +77,9 @@ async function sendEvent(eventName, opts = {}) {
       },
     ],
   };
+  // Solo en staging/QA: hace que el evento aparezca en la pestaña
+  // "Probar eventos" del Administrador de Eventos.
+  if (TEST_EVENT_CODE) payload.test_event_code = TEST_EVENT_CODE;
 
   try {
     const res = await fetch(`https://graph.facebook.com/${API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`, {

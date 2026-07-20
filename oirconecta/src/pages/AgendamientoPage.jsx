@@ -26,6 +26,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PreviewSlot from '../components/marketing/PreviewSlot';
 import { isNonWorkingDay, isColombianHoliday, getHolidaysForYear } from '../utils/colombiaHolidays';
+import { fbqTrack, generateEventId } from '../utils/metaPixel';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
@@ -207,6 +208,11 @@ export default function AgendamientoPage() {
   // Resolver retailId + tipo de consulta público (motor unificado /api/booking/public).
   // Ambos superficies (widget del directorio y /agendar) consumen la misma agenda
   // que el profesional configura en /portal-profesional/agenda.
+  // Meta Pixel: ViewContent al montar la landing de agendamiento.
+  useEffect(() => {
+    fbqTrack('ViewContent', { content_name: 'agendar', content_category: 'agendamiento' });
+  }, []);
+
   useEffect(() => {
     fetch(`${API}/api/public/retail-config`)
       .then(r => r.json()).then(d => {
@@ -266,6 +272,8 @@ export default function AgendamientoPage() {
       return;
     }
     setSubmitting(true); setError(null);
+    // eventId para dedupe pixel↔CAPI (Meta cuenta como un solo Schedule).
+    const eventId = generateEventId();
     try {
       const res = await fetch(`${API}/api/booking/public/${retailId}/appointments`, {
         method:'POST',
@@ -274,6 +282,7 @@ export default function AgendamientoPage() {
           appointmentTypeId,
           scheduledAt: `${selectedDate}T${selectedTime}`,
           notas: form.motivo || 'Valoración auditiva',
+          metaEventId: eventId,
           patient: {
             nombre: form.name,
             email: form.email,
@@ -283,6 +292,10 @@ export default function AgendamientoPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Error al agendar');
+      fbqTrack('Schedule', {
+        content_name: 'agendamiento_valoracion',
+        content_category: 'audiologia',
+      }, eventId);
       setAppointment(data.data || data.appointment || data);
       setStep(3);
     } catch(e) {

@@ -9,6 +9,7 @@ const { PrismaClient } = require('@prisma/client');
 const config = require('../config');
 const emailService = require('../services/email.service');
 const retailService = require('../services/retail.service');
+const metaCapi = require('../services/metaCapi.service');
 const { authenticate } = require('../middleware/auth');
 
 const prisma = new PrismaClient();
@@ -48,7 +49,7 @@ router.post('/contact',
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
-    const { nombre, email, telefono, asunto, mensaje } = req.body;
+    const { nombre, email, telefono, asunto, mensaje, metaEvent, metaEventId } = req.body;
 
     // 1) Persistir SIEMPRE en BD antes de enviar email
     let message;
@@ -84,6 +85,26 @@ router.post('/contact',
           data: { emailError: e.message.slice(0, 500) },
         }).catch(() => {});
       });
+
+    // Meta CAPI server-side: solo si el frontend marcó el mensaje como Lead
+    // (ej. simulador /ponte-en-sus-oidos). Los mensajes de contacto genéricos
+    // no se cuentan como conversión.
+    if (metaEvent === 'Lead') {
+      const [firstName, ...rest] = String(nombre || '').trim().split(/\s+/);
+      metaCapi.sendEvent('Lead', {
+        user: {
+          email,
+          phone: telefono || undefined,
+          firstName: firstName || undefined,
+          lastName: rest.join(' ') || undefined,
+          ip: req.ip,
+          userAgent: req.get('user-agent') || undefined,
+        },
+        customData: { content_name: 'lead_simulador_oirasi' },
+        eventSourceUrl: req.get('referer') || undefined,
+        eventId: metaEventId || `lead_${message.id}`,
+      }).catch(() => {});
+    }
 
     res.json({ success: true, data: { id: message.id } });
   }

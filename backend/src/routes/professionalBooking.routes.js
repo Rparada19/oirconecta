@@ -52,7 +52,8 @@ router.post('/public/:profileId/appointments', async (req, res) => {
         value: data.priceCOP || 0,
       },
       eventSourceUrl: req.get('referer') || undefined,
-      eventId: `schedule_${data.id}`,
+      // Si el frontend envió metaEventId, se usa para dedupe pixel↔CAPI.
+      eventId: req.body?.metaEventId || `schedule_${data.id}`,
     }).catch(() => {});
     res.json({ success: true, data });
   } catch (e) {
