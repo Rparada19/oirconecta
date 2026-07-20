@@ -15,6 +15,13 @@ import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import MedicalServicesOutlinedIcon from '@mui/icons-material/MedicalServicesOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
+import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined';
+import HeadphonesOutlinedIcon from '@mui/icons-material/HeadphonesOutlined';
+import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PreviewSlot from '../components/marketing/PreviewSlot';
@@ -338,11 +345,24 @@ export default function AgendamientoPage() {
                 fontWeight: 500, lineHeight: 0.98, letterSpacing: '-0.025em',
                 color: '#272F50', mb: { xs: 2.5, md: 3 },
               }}>
-                Agenda tu valoración{' '}
+                Vuelve a escuchar{' '}
                 <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
-                  auditiva.
+                  como antes.
                 </Box>
               </Typography>
+              <Button
+                onClick={() => document.getElementById('agendar-wizard')?.scrollIntoView({ behavior: 'smooth' })}
+                variant="contained"
+                sx={{
+                  mt: 1, borderRadius: '14px', fontWeight: 700, fontSize: '1rem', py: 1.5, px: 3.5,
+                  background: 'linear-gradient(135deg,#085946,#0d7a5f)',
+                  boxShadow: '0 6px 20px rgba(8,89,70,0.28)',
+                  '&:hover': { boxShadow: '0 8px 28px rgba(8,89,70,0.38)', transform: 'translateY(-1px)' },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Agendar mi valoración auditiva
+              </Button>
             </Box>
 
             <Box sx={{ pb: { md: 1.5 } }}>
@@ -351,11 +371,12 @@ export default function AgendamientoPage() {
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
                 color: '#6B7280', lineHeight: 1.55, maxWidth: 460, mb: 3,
               }}>
-                Selecciona el día y la hora. Las citas duran 50 minutos, de lunes a viernes de 8:00 AM a 4:00 PM. Confirmación inmediata por correo.
+                Valoración auditiva con audióloga certificada en Bogotá. 50 minutos, sin costo de agendamiento, confirmación inmediata por correo y WhatsApp.
               </Typography>
               <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
                 {[
                   { icon: <LocationOnOutlinedIcon sx={{ fontSize: 15 }} />, text: 'Bogotá · Cr 10 #96-25' },
+                  { icon: <VerifiedOutlinedIcon sx={{ fontSize: 15 }} />, text: 'Audióloga certificada' },
                   { icon: <CheckCircleIcon sx={{ fontSize: 15 }} />, text: 'Confirmación inmediata' },
                 ].map(c => (
                   <Box key={c.text} sx={{
@@ -377,8 +398,105 @@ export default function AgendamientoPage() {
         </Container>
       </Box>
 
+      {/* ── ¿Por qué OírConecta? ── */}
+      <Box sx={{ bgcolor: '#fff', py: { xs: 6, md: 8 }, borderTop: '1px solid rgba(39,47,80,0.06)' }}>
+        <Container maxWidth="lg">
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+            <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+              textTransform: 'uppercase', color: '#272F50',
+            }}>
+              Por qué OírConecta
+            </Typography>
+          </Stack>
+          <Typography component="h2" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
+            color: '#272F50', letterSpacing: '-0.02em', mb: 5, maxWidth: 720,
+          }}>
+            Una valoración auditiva real, sin afanes y sin búsqueda de ventas.
+          </Typography>
+          <Grid container spacing={3}>
+            {[
+              { icon: <HearingOutlinedIcon />, title: 'Evaluación completa', desc: 'Otoscopia, audiometría, logoaudiometría e impedanciometría. Sin cabina: la tecnología de nuestros equipos y el aislamiento acústico del consultorio la hacen innecesaria.' },
+              { icon: <VerifiedOutlinedIcon />, title: 'Audióloga certificada', desc: 'Profesional con tarjeta profesional vigente y más de 15 años de experiencia clínica.' },
+              { icon: <HeadphonesOutlinedIcon />, title: 'Sin presión de venta', desc: 'Primero diagnosticamos. Si necesitas audífonos, comparamos marcas y tecnología. No trabajamos por comisión.' },
+              { icon: <SupportAgentOutlinedIcon />, title: 'Seguimiento real', desc: 'Recordatorios, controles de adaptación a 15 días y soporte por WhatsApp durante todo el proceso.' },
+            ].map(b => (
+              <Grid item xs={12} sm={6} md={3} key={b.title}>
+                <Box sx={{ p: 3, borderRadius: '16px', bgcolor: '#FBFAF8', height: '100%',
+                  border: '1px solid rgba(39,47,80,0.06)' }}>
+                  <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'rgba(8,89,70,0.10)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2,
+                    '& svg': { color: '#085946', fontSize: 24 } }}>
+                    {b.icon}
+                  </Box>
+                  <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#272F50', mb: 1 }}>
+                    {b.title}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.875rem', color: '#6B7280', lineHeight: 1.6 }}>
+                    {b.desc}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* ── Cómo es tu cita ── */}
+      <Box sx={{ bgcolor: '#FBFAF8', py: { xs: 6, md: 8 } }}>
+        <Container maxWidth="lg">
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+            <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+              textTransform: 'uppercase', color: '#272F50',
+            }}>
+              Cómo es tu cita
+            </Typography>
+          </Stack>
+          <Typography component="h2" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
+            color: '#272F50', letterSpacing: '-0.02em', mb: 5, maxWidth: 720,
+          }}>
+            50 minutos que definen tu salud auditiva.
+          </Typography>
+          <Grid container spacing={3}>
+            {[
+              { n: '01', title: 'Anamnesis', desc: 'Conversamos sobre tu historia auditiva, exposición a ruido, medicamentos y molestias actuales.' },
+              { n: '02', title: 'Otoscopia y audiometría', desc: 'Otoscopia, audiometría tonal, logoaudiometría e impedanciometría — sin cabina, gracias a nuestros equipos y aislamiento acústico.' },
+              { n: '03', title: 'Diagnóstico y opciones', desc: 'Te explicamos los resultados con lenguaje claro y, si aplica, recomendaciones sin obligación de compra.' },
+            ].map(s => (
+              <Grid item xs={12} md={4} key={s.n}>
+                <Box sx={{ p: 3.5, borderRadius: '16px', bgcolor: '#fff', height: '100%',
+                  border: '1px solid rgba(39,47,80,0.06)', boxShadow: '0 2px 12px rgba(39,47,80,0.04)' }}>
+                  <Typography sx={{
+                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontSize: '2.5rem', fontWeight: 500, color: '#C9A86A',
+                    lineHeight: 1, letterSpacing: '-0.02em', mb: 1.5,
+                  }}>
+                    {s.n}
+                  </Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: '1.125rem', color: '#272F50', mb: 1 }}>
+                    {s.title}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.9375rem', color: '#6B7280', lineHeight: 1.65 }}>
+                    {s.desc}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
       {/* Contenido */}
-      <Container maxWidth="lg" sx={{ py:{ xs:4, md:6 } }}>
+      <Container id="agendar-wizard" maxWidth="lg" sx={{ py:{ xs:4, md:6 } }}>
 
         {/* Step indicator */}
         {step < 3 && (
@@ -431,6 +549,29 @@ export default function AgendamientoPage() {
                     </Box>
                   </Box>
                 ))}
+                <Box sx={{ mt:2, borderRadius:'12px', overflow:'hidden', border:'1px solid rgba(8,89,70,0.10)' }}>
+                  <iframe
+                    title="Cómo llegar a OírConecta"
+                    src="https://www.google.com/maps?q=Carrera+10+%2396-25+Bogot%C3%A1&output=embed"
+                    width="100%"
+                    height="200"
+                    style={{ border: 0, display: 'block' }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <Box sx={{ px:1.5, py:1, bgcolor:'#f8fafc', textAlign:'center' }}>
+                    <Typography
+                      component="a"
+                      href="https://www.google.com/maps/dir/?api=1&destination=Carrera+10+%2396-25+Bogot%C3%A1"
+                      target="_blank"
+                      rel="noopener"
+                      sx={{ fontSize:'0.75rem', fontWeight:700, color:'#085946', textDecoration:'none',
+                        '&:hover':{ textDecoration:'underline' } }}
+                    >
+                      Cómo llegar en Google Maps →
+                    </Typography>
+                  </Box>
+                </Box>
               </Box>
             </Grid>
           </Grid>
@@ -616,6 +757,138 @@ export default function AgendamientoPage() {
           </Box>
         )}
       </Container>
+
+      {/* ── Testimonios ── */}
+      <Box sx={{ bgcolor: '#fff', py: { xs: 6, md: 8 }, borderTop: '1px solid rgba(39,47,80,0.06)' }}>
+        <Container maxWidth="lg">
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+            <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+              textTransform: 'uppercase', color: '#272F50',
+            }}>
+              Lo que dicen nuestros pacientes
+            </Typography>
+          </Stack>
+          <Typography component="h2" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
+            color: '#272F50', letterSpacing: '-0.02em', mb: 5, maxWidth: 720,
+          }}>
+            Historias reales de personas que recuperaron su audición.
+          </Typography>
+          <Grid container spacing={3}>
+            {[
+              { name: 'María Elena R.', age: '68 años', text: 'Compré 3 semanas después, cuando fui a varios sitios y en todos sentí que me querían vender. En OírConecta primero me explicaron; la decisión fue mía.' },
+              { name: 'Carlos F.', age: '54 años', text: 'Me sorprendió que no hubiera cabina y aun así la audiometría fue la más detallada que me han hecho. El seguimiento por WhatsApp es un plus.' },
+              { name: 'Doña Cecilia', age: '72 años', text: 'Después de años de decir "¿qué?", mi familia me convenció. La audióloga me trató con dignidad y hoy escucho a mis nietos.' },
+            ].map(t => (
+              <Grid item xs={12} md={4} key={t.name}>
+                <Box sx={{ p: 3.5, borderRadius: '16px', bgcolor: '#FBFAF8', height: '100%',
+                  border: '1px solid rgba(39,47,80,0.06)' }}>
+                  <Stack direction="row" spacing={0.5} sx={{ mb: 2 }}>
+                    {[...Array(5)].map((_, i) => (
+                      <StarRoundedIcon key={i} sx={{ fontSize: 18, color: '#C9A86A' }} />
+                    ))}
+                  </Stack>
+                  <Typography sx={{ fontSize: '0.9375rem', color: '#374151', lineHeight: 1.7, mb: 2.5, fontStyle: 'italic' }}>
+                    "{t.text}"
+                  </Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#272F50' }}>
+                    {t.name}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#6B7280' }}>
+                    {t.age}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* ── FAQ ── */}
+      <Box sx={{ bgcolor: '#FBFAF8', py: { xs: 6, md: 8 } }}>
+        <Container maxWidth="md">
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+            <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+            <Typography sx={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
+              textTransform: 'uppercase', color: '#272F50',
+            }}>
+              Preguntas frecuentes
+            </Typography>
+          </Stack>
+          <Typography component="h2" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
+            color: '#272F50', letterSpacing: '-0.02em', mb: 4,
+          }}>
+            Lo que probablemente te estás preguntando.
+          </Typography>
+          {[
+            { q: '¿Cuánto cuesta la valoración?', a: 'La primera consulta es gratis si la agendas por internet.' },
+            { q: '¿Es obligatorio comprar audífonos después?', a: 'No. La valoración es diagnóstica. Si detectamos pérdida auditiva te explicamos las opciones de tratamiento, pero la decisión siempre es tuya y no trabajamos por comisión.' },
+            { q: '¿Cuánto dura la cita?', a: 'La primera valoración toma 50 minutos: anamnesis, otoscopia, audiometría tonal, logoaudiometría y explicación de resultados.' },
+            { q: '¿Debo llevar algo?', a: 'Documento de identidad, resultados previos si los tienes (audiometrías anteriores, otorrinolaringología) y lista de medicamentos actuales.' },
+            { q: '¿Atienden EPS o medicina prepagada?', a: 'En OírConecta son todos bienvenidos: atendemos personas, no entidades.' },
+            { q: '¿Puedo llevar a un familiar?', a: 'Sí, recomendamos venir acompañado, sobre todo adultos mayores. La compañía ayuda en la comprensión de resultados.' },
+          ].map(f => (
+            <Accordion key={f.q} disableGutters elevation={0} sx={{
+              bgcolor: '#fff', borderRadius: '12px !important', mb: 1.5,
+              border: '1px solid rgba(39,47,80,0.08)',
+              '&:before': { display: 'none' },
+            }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#085946' }} />}
+                sx={{ px: 3, py: 1 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#272F50' }}>
+                  {f.q}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 3, pb: 2.5 }}>
+                <Typography sx={{ fontSize: '0.9375rem', color: '#6B7280', lineHeight: 1.7 }}>
+                  {f.a}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Container>
+      </Box>
+
+      {/* ── CTA final ── */}
+      <Box sx={{ bgcolor: '#272F50', py: { xs: 6, md: 8 } }}>
+        <Container maxWidth="md" sx={{ textAlign: 'center' }}>
+          <Typography component="h2" sx={{
+            fontFamily: '"Playfair Display", Georgia, serif',
+            fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
+            color: '#fff', letterSpacing: '-0.02em', mb: 2,
+          }}>
+            No pospongas más tu audición.
+          </Typography>
+          <Typography sx={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: { xs: '1rem', md: '1.125rem' },
+            color: 'rgba(255,255,255,0.75)', mb: 4, maxWidth: 560, mx: 'auto',
+          }}>
+            Cada mes que pasa dificulta la adaptación posterior. Agendar toma menos de 2 minutos.
+          </Typography>
+          <Button
+            onClick={() => document.getElementById('agendar-wizard')?.scrollIntoView({ behavior: 'smooth' })}
+            variant="contained"
+            sx={{
+              borderRadius: '14px', fontWeight: 700, fontSize: '1rem', py: 1.75, px: 4,
+              bgcolor: '#C9A86A', color: '#272F50',
+              boxShadow: '0 6px 20px rgba(201,168,106,0.35)',
+              '&:hover': { bgcolor: '#d4b578', boxShadow: '0 8px 28px rgba(201,168,106,0.45)', transform: 'translateY(-1px)' },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            Agendar mi valoración
+          </Button>
+        </Container>
+      </Box>
 
       <PreviewSlot slotId="WEBINAR" slotLabel="Webinar patrocinado" minHeight={100} />
       <PreviewSlot slotId="ENCUESTA_NPS" slotLabel="Encuesta patrocinada" minHeight={100} />
