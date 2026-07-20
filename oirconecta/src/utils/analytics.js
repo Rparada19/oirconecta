@@ -18,6 +18,7 @@
  */
 
 import { getApiBaseUrl } from './apiBaseUrl';
+import { hasConsent } from './cookieConsent';
 
 const API = getApiBaseUrl().replace(/\/$/, '');
 const TRACK_URL = `${API}/api/analytics/track`;
@@ -188,6 +189,8 @@ function _basePayload(overrides = {}) {
 }
 
 function _send(eventData) {
+  // Gate consentimiento: sin 'accepted' no se envía nada al backend de analytics.
+  if (!hasConsent()) return;
   const body = _basePayload(eventData);
   try {
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {

@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'react-router-dom';
-import { Box, Container, Typography, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Box, Container, Typography, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Stack, Alert } from '@mui/material';
+import { getConsent, setConsent, clearConsent, onConsentChange } from '../utils/cookieConsent';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -15,6 +16,37 @@ const Section = ({ id, title, children }) => (
     </Typography>
   </Box>
 );
+
+const ConsentPanel = () => {
+  const [consent, setLocal] = React.useState(getConsent());
+  useEffect(() => onConsentChange((v) => setLocal(v)), []);
+  const label = consent === 'accepted'
+    ? 'Actualmente aceptas todas las cookies (analítica + marketing).'
+    : consent === 'rejected'
+      ? 'Actualmente solo se cargan las cookies esenciales.'
+      : 'Aún no has definido tu preferencia; verás el banner al recargar.';
+  return (
+    <Alert severity="info" sx={{ my: 3, borderRadius: '10px' }}>
+      <Typography sx={{ fontSize: '0.9375rem', mb: 1.25 }}>
+        <strong>Tu preferencia actual:</strong> {label}
+      </Typography>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+        <Button size="small" variant="contained" onClick={() => setConsent('accepted')}
+          sx={{ bgcolor: '#085946', '&:hover': { bgcolor: '#0d7a5f' }, textTransform: 'none', borderRadius: '8px' }}>
+          Aceptar todas
+        </Button>
+        <Button size="small" variant="outlined" onClick={() => setConsent('rejected')}
+          sx={{ borderColor: '#272F50', color: '#272F50', textTransform: 'none', borderRadius: '8px' }}>
+          Sólo esenciales
+        </Button>
+        <Button size="small" onClick={() => clearConsent()}
+          sx={{ color: '#6b7280', textTransform: 'none' }}>
+          Volver a preguntarme
+        </Button>
+      </Stack>
+    </Alert>
+  );
+};
 
 const LegalPage = () => {
   const location = useLocation();
@@ -69,6 +101,7 @@ const LegalPage = () => {
         </Section>
 
         <Section id="cookies" title="Política de cookies">
+          <ConsentPanel />
           <p>
             <strong>Última actualización:</strong> 20 de julio de 2026.
           </p>

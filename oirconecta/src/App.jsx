@@ -1,6 +1,8 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { initAnalytics, trackPageView } from './utils/analytics';
+import { initConsent } from './utils/cookieConsent';
+import CookieConsentBanner from './components/CookieConsentBanner';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
@@ -174,7 +176,7 @@ function PageLoader() {
 // para tener acceso a useLocation().
 function AnalyticsRouteTracker() {
   const location = useLocation();
-  useEffect(() => { initAnalytics(); }, []);
+  useEffect(() => { initConsent(); initAnalytics(); }, []);
   useEffect(() => {
     trackPageView(location.pathname + location.search);
     if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
@@ -338,6 +340,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         <FloatingWhatsApp />
+        <CookieConsentBanner />
         </Suspense>
         </AuthProvider>
       </Router>
