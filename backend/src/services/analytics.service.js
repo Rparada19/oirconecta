@@ -145,6 +145,15 @@ async function trackEvent(payload, req) {
   const isPageView = eventType === 'page_view';
   const conv = mapConversion(eventType);
 
+  // Dedup: si ya existe alguna sesión previa con este visitorId (distinta a la
+  // actual), no es un nuevo visitante. Consulta barata; index (visitorId).
+  const priorVisit = visitorId
+    ? await prisma.analyticsSession.findFirst({
+        where: { visitorId, id: { not: sessionId } },
+        select: { id: true },
+      })
+    : null;
+
   await prisma.analyticsSession.upsert({
     where: { id: sessionId },
     create: {
@@ -155,7 +164,7 @@ async function trackEvent(payload, req) {
       device, os, browser,
       pageCount: isPageView ? 1 : 0,
       eventCount: 1,
-      isNewVisitor: true, // TODO: dedup por visitorId con sesión previa
+      isNewVisitor: !priorVisit,
       hadLead: conv.hadLead,
       hadBooking: conv.hadBooking,
       hadPurchase: conv.hadPurchase,

@@ -305,19 +305,21 @@ function BannerCover({ profile, name, city, professional, rating, reviewsCount, 
 }
 
 // ─── SecondaryPhotos ──────────────────────────────────────────
+// Sólo pinta la galería si el profesional cargó al menos una foto real.
+// Antes rellenábamos con gradientes/etiquetas ("Consultorio", "Equipo"…) que
+// engañaban al visitante haciéndole creer que existían fotos genuinas.
 function SecondaryPhotos({ photoUrls }) {
-  const hasPhotos = Array.isArray(photoUrls) && photoUrls.length > 0;
-  const slots = hasPhotos ? photoUrls.slice(0, 4) : [];
-  const placeholders = Array.from({ length: 4 - slots.length });
+  const slots = Array.isArray(photoUrls) ? photoUrls.slice(0, 4) : [];
+  if (slots.length === 0) return null;
 
   return (
     <Container maxWidth="lg" sx={{ pt: { xs: 2, md: 3 } }}>
       <Box sx={{
         display: 'grid', gap: 1.25,
-        gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: `repeat(${slots.length}, 1fr)` },
       }}>
         {slots.map((url, i) => (
-          <Box key={i} sx={{
+          <Box key={i} role="img" aria-label="Foto del consultorio" sx={{
             height: { xs: 90, md: 130 },
             borderRadius: '12px',
             backgroundImage: `url(${url})`,
@@ -325,22 +327,6 @@ function SecondaryPhotos({ photoUrls }) {
             border: `1px solid ${BORDER}`,
           }} />
         ))}
-        {placeholders.map((_, i) => {
-          const [c1, c2, ink] = PLACEHOLDER_GRADIENTS[(slots.length + i) % PLACEHOLDER_GRADIENTS.length];
-          const labels = ['Consultorio', 'Equipo', 'Con pacientes', 'Ambiente'];
-          return (
-            <Box key={`ph-${i}`} sx={{
-              height: { xs: 90, md: 130 },
-              borderRadius: '12px',
-              background: `linear-gradient(135deg, ${c1}, ${c2})`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: ink, fontSize: '0.75rem', fontWeight: 500,
-              border: `1px dashed ${c2}`,
-            }}>
-              {labels[(slots.length + i) % labels.length]}
-            </Box>
-          );
-        })}
       </Box>
     </Container>
   );

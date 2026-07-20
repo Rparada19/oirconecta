@@ -249,7 +249,7 @@ export default function WhatsAppInboxPage({
       }
     } catch (e) {
       if (e.response?.data?.code === 'WINDOW_CLOSED') {
-        setSendError('La ventana de 24h se cerró. Solo se pueden enviar plantillas HSM (próximamente).');
+        setSendError('La ventana de 24h se cerró. Usa "Reactivar" arriba para enviar una plantilla HSM aprobada.');
       } else {
         setSendError(e.response?.data?.error || e.message);
       }
