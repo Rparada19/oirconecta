@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Autocomplete,
   Box,
   Button,
   Chip,
@@ -10,10 +11,11 @@ import {
   Select,
   Slider,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { fetchProfessions, fetchDepartments, fetchCities } from '../../../services/directoryDiscoveryService';
+import { fetchProfessions, fetchCities } from '../../../services/directoryDiscoveryService';
 
 const SORT_OPTIONS = [
   { value: 'ranking', label: 'Recomendados' },
@@ -37,7 +39,6 @@ const MODALIDAD_OPTIONS = [
 export default function DirectoryFiltersDrawer({ open, onClose, value, onApply, onClear }) {
   const [buffer, setBuffer] = useState(value || {});
   const [professions, setProfessions] = useState([]);
-  const [departments, setDepartments] = useState([]);
   const [cities, setCities] = useState([]);
 
   useEffect(() => {
@@ -46,35 +47,17 @@ export default function DirectoryFiltersDrawer({ open, onClose, value, onApply, 
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchProfessions(), fetchDepartments()])
-      .then(([profRes, depRes]) => {
+    Promise.all([fetchProfessions(), fetchCities({ limit: 500 })])
+      .then(([profRes, cityRes]) => {
         if (cancelled) return;
         if (profRes && profRes.data && Array.isArray(profRes.data.data)) setProfessions(profRes.data.data);
-        if (depRes && depRes.data && Array.isArray(depRes.data.data)) setDepartments(depRes.data.data);
+        if (cityRes && cityRes.data && Array.isArray(cityRes.data.data)) setCities(cityRes.data.data);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, []);
-
-  // Carga ciudades cuando cambia el departamento elegido.
-  useEffect(() => {
-    let cancelled = false;
-    const slug = buffer.departmentSlug;
-    if (!slug) {
-      setCities([]);
-      return;
-    }
-    fetchCities({ departmentSlug: slug, limit: 200 })
-      .then((res) => {
-        if (!cancelled && res && res.data && Array.isArray(res.data.data)) setCities(res.data.data);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [buffer.departmentSlug]);
 
   const setField = (key, val) => setBuffer((b) => ({ ...b, [key]: val }));
 
@@ -145,50 +128,22 @@ export default function DirectoryFiltersDrawer({ open, onClose, value, onApply, 
 
           <Box>
             <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 700 }}>
-              Departamento
+              Ciudad
             </Typography>
-            <Select
-              fullWidth
+            <Autocomplete
               size="small"
-              value={buffer.departmentSlug || ''}
-              onChange={(e) => {
-                setField('departmentSlug', e.target.value || undefined);
-                setField('citySlug', undefined);
-              }}
-              displayEmpty
-              sx={{ mt: 1, bgcolor: 'background.paper', borderRadius: 2 }}
-            >
-              <MenuItem value="">Todos los departamentos</MenuItem>
-              {departments.map((d) => (
-                <MenuItem key={d.slug} value={d.slug}>
-                  {d.nombre}
-                </MenuItem>
-              ))}
-            </Select>
+              options={cities}
+              value={cities.find((c) => c.slug === buffer.citySlug) || null}
+              getOptionLabel={(o) => o?.nombre || ''}
+              isOptionEqualToValue={(a, b) => a.slug === b.slug}
+              onChange={(_, val) => setField('citySlug', val?.slug || undefined)}
+              renderInput={(params) => (
+                <TextField {...params} placeholder="Todas las ciudades"
+                  sx={{ mt: 1, bgcolor: 'background.paper', borderRadius: 2 }}
+                />
+              )}
+            />
           </Box>
-
-          {buffer.departmentSlug && cities.length > 0 && (
-            <Box>
-              <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 700 }}>
-                Ciudad / Municipio
-              </Typography>
-              <Select
-                fullWidth
-                size="small"
-                value={buffer.citySlug || ''}
-                onChange={(e) => setField('citySlug', e.target.value || undefined)}
-                displayEmpty
-                sx={{ mt: 1, bgcolor: 'background.paper', borderRadius: 2 }}
-              >
-                <MenuItem value="">Todas las ciudades</MenuItem>
-                {cities.map((c) => (
-                  <MenuItem key={c.slug} value={c.slug}>
-                    {c.nombre}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Box>
-          )}
 
           <Box>
             <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 700 }}>

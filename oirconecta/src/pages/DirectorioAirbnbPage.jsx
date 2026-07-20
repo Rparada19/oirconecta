@@ -24,7 +24,7 @@ import DirectoryHero from '../components/directorio/v2/DirectoryHero';
 
 import {
   fetchProfessions,
-  fetchDepartments,
+  fetchCities,
   fetchFeatured,
   searchDirectoryV2,
 } from '../services/directoryDiscoveryService';
@@ -35,7 +35,6 @@ function readFiltersFromUrl(sp) {
   return {
     q: sp.get('q') || '',
     professionSlug: sp.get('profesion') || undefined,
-    departmentSlug: sp.get('depto') || undefined,
     citySlug: sp.get('ciudad') || undefined,
     modalidad: sp.get('modalidad') || undefined,
     minRating: sp.get('rating') ? Number(sp.get('rating')) : undefined,
@@ -47,7 +46,6 @@ function writeFiltersToUrl(filters) {
   const out = {};
   if (filters.q) out.q = filters.q;
   if (filters.professionSlug) out.profesion = filters.professionSlug;
-  if (filters.departmentSlug) out.depto = filters.departmentSlug;
   if (filters.citySlug) out.ciudad = filters.citySlug;
   if (filters.modalidad) out.modalidad = filters.modalidad;
   if (filters.minRating) out.rating = String(filters.minRating);
@@ -58,7 +56,6 @@ function writeFiltersToUrl(filters) {
 function countActive(filters) {
   let n = 0;
   if (filters.professionSlug) n++;
-  if (filters.departmentSlug) n++;
   if (filters.citySlug) n++;
   if (filters.modalidad) n++;
   if (filters.minRating) n++;
@@ -72,7 +69,7 @@ export default function DirectorioAirbnbPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [professions, setProfessions] = useState([]);
-  const [departments, setDepartments] = useState([]);
+  const [cities, setCities] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
@@ -84,11 +81,11 @@ export default function DirectorioAirbnbPage() {
   // Catálogos arriba (una vez).
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchProfessions(), fetchDepartments(), fetchFeatured(8)])
-      .then(([p, d, f]) => {
+    Promise.all([fetchProfessions(), fetchCities({ limit: 500 }), fetchFeatured(8)])
+      .then(([p, c, f]) => {
         if (cancelled) return;
         if (p?.data?.data) setProfessions(p.data.data);
-        if (d?.data?.data) setDepartments(d.data.data);
+        if (c?.data?.data) setCities(c.data.data);
         if (f?.data?.data) setFeatured(f.data.data);
       })
       .catch(() => {});
@@ -160,7 +157,7 @@ export default function DirectorioAirbnbPage() {
 
   const handleApplyFilters = (next) => setFilters({ ...filters, ...next });
   const handleClearFilters = () =>
-    setFilters({ q: '', sort: 'ranking', professionSlug: undefined, departmentSlug: undefined, citySlug: undefined, modalidad: undefined, minRating: undefined });
+    setFilters({ q: '', sort: 'ranking', professionSlug: undefined, citySlug: undefined, modalidad: undefined, minRating: undefined });
 
   const activeCount = countActive(filters);
   const hasMore = items.length < total;
@@ -170,12 +167,12 @@ export default function DirectorioAirbnbPage() {
       const p = professions.find((x) => x.slug === filters.professionSlug);
       return p ? `${p.nombre}s en Colombia` : 'Profesionales auditivos';
     }
-    if (filters.departmentSlug) {
-      const d = departments.find((x) => x.slug === filters.departmentSlug);
-      return d ? `Profesionales en ${d.nombre}` : 'Profesionales por departamento';
+    if (filters.citySlug) {
+      const c = cities.find((x) => x.slug === filters.citySlug);
+      return c ? `Profesionales en ${c.nombre}` : 'Profesionales por ciudad';
     }
     return 'Encuentra al especialista auditivo ideal';
-  }, [filters, professions, departments]);
+  }, [filters, professions, cities]);
 
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
@@ -204,8 +201,7 @@ export default function DirectorioAirbnbPage() {
         <DirectoryActiveFilters
           value={filters}
           professions={professions}
-          departments={departments}
-          cities={[]}
+          cities={cities}
           onChange={setFilters}
         />
 

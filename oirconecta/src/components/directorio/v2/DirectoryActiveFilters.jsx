@@ -11,7 +11,7 @@ const SORT_LABELS = {
  * Chips de filtros activos. Cada chip tiene `onDelete` para quitar ese filtro
  * sin abrir el drawer. El sort se muestra como informativo (no removible).
  */
-export default function DirectoryActiveFilters({ value, professions = [], departments = [], cities = [], onChange }) {
+export default function DirectoryActiveFilters({ value, professions = [], cities = [], onChange }) {
   if (!value) return null;
   const chips = [];
 
@@ -21,14 +21,6 @@ export default function DirectoryActiveFilters({ value, professions = [], depart
       key: 'prof',
       label: p ? p.nombre : value.professionSlug,
       onDelete: () => onChange({ ...value, professionSlug: undefined }),
-    });
-  }
-  if (value.departmentSlug) {
-    const d = departments.find((x) => x.slug === value.departmentSlug);
-    chips.push({
-      key: 'dep',
-      label: d ? d.nombre : value.departmentSlug,
-      onDelete: () => onChange({ ...value, departmentSlug: undefined, citySlug: undefined }),
     });
   }
   if (value.citySlug) {
