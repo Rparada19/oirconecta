@@ -187,7 +187,9 @@ export default function WhatsAppInboxPage({
       if (filter === 'mine') params.mine = 'true';
       else if (filter === 'unassigned') params.unassigned = 'true';
       else if (filter === 'closed') params.status = 'CLOSED';
-      else params.status = 'HUMAN';
+      // 'all' = todas las abiertas (incluye las que atiende el bot); antes se
+      // filtraba por HUMAN y ocultaba las conversaciones en estado BOT.
+      else params.active = 'true';
       if (q) params.q = q;
 
       const qs = new URLSearchParams(params).toString();
@@ -484,12 +486,20 @@ export default function WhatsAppInboxPage({
                   </Avatar>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Stack direction="row" alignItems="baseline" justifyContent="space-between" spacing={0.5}>
-                      <Typography sx={{
-                        fontSize: '0.88rem', fontWeight: c.unreadCount > 0 ? 800 : 600, color: NAVY,
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>
-                        {shortName(c)}
-                      </Typography>
+                      <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
+                        <Typography sx={{
+                          fontSize: '0.88rem', fontWeight: c.unreadCount > 0 ? 800 : 600, color: NAVY,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>
+                          {shortName(c)}
+                        </Typography>
+                        {c.status && c.status !== 'HUMAN' && (
+                          <Chip label={st.label} size="small" sx={{
+                            height: 16, fontSize: '0.6rem', fontWeight: 700, flexShrink: 0,
+                            color: st.color, bgcolor: st.bg, '& .MuiChip-label': { px: 0.6 },
+                          }} />
+                        )}
+                      </Stack>
                       <Typography sx={{ fontSize: '0.68rem', color: MUTED, flexShrink: 0 }}>
                         {fmtTime(c.lastMessageAt)}
                       </Typography>

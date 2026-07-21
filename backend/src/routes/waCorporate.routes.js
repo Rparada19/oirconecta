@@ -83,13 +83,17 @@ router.post('/conversations/new', async (req, res, next) => {
 router.get('/conversations', async (req, res, next) => {
   try {
     const {
-      businessLine, status, assignedTo, unassigned, mine, q,
+      businessLine, status, active, assignedTo, unassigned, mine, q,
       limit = 50, cursor,
     } = req.query;
 
     const where = {};
     if (businessLine) where.businessLine = String(businessLine).toUpperCase();
-    if (status) where.status = String(status).toUpperCase();
+    // `active=true` = todas las conversaciones abiertas sin importar quién las
+    // atiende (BOT, HUMAN o ESCALATED). Sin esto, filtrar por status=HUMAN
+    // ocultaba las que gestiona el bot (p. ej. las que entran por anuncios).
+    if (active === 'true') where.status = { not: 'CLOSED' };
+    else if (status) where.status = String(status).toUpperCase();
     if (unassigned === 'true') where.assignedToId = null;
     else if (mine === 'true' && req.user?.id) where.assignedToId = req.user.id;
     else if (assignedTo) where.assignedToId = String(assignedTo);
