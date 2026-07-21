@@ -45,12 +45,25 @@ const create = async (data, userId = null) => {
     signosVitales,
     anamnesisClinica,
     anamnesisSocial,
+    attendingProfessionalId,
   } = data;
 
   if (!appointmentId) {
     const err = new Error('appointmentId es requerido');
     err.statusCode = 400;
     throw err;
+  }
+
+  // Profesional que atiende: quien lo indique explícitamente (recepción registrando
+  // por el audiólogo) o, por defecto, el usuario autenticado. Se estampa nombre +
+  // registro como snapshot inmutable para la historia clínica.
+  const attendingId = attendingProfessionalId || userId || null;
+  let attending = null;
+  if (attendingId) {
+    attending = await prisma.user.findUnique({
+      where: { id: attendingId },
+      select: { id: true, nombre: true, registroProfesional: true },
+    });
   }
 
   const appointment = await prisma.appointment.findUnique({
@@ -108,12 +121,23 @@ const create = async (data, userId = null) => {
       perdidaAuditiva: hearingLoss ?? null,
       proximosPasos: nextSteps || null,
       formData: formData && typeof formData === 'object' ? formData : null,
+      attendingProfessionalId: attending?.id || null,
+      attendingProfessionalName: attending?.nombre || null,
+      attendingProfessionalRegistro: attending?.registroProfesional || null,
     },
     include: {
       appointment: true,
       patient: true,
     },
   });
+
+  // Estampa el profesional que atendió también en la cita (trazabilidad).
+  if (attending?.id) {
+    await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: { attendingProfessionalId: attending.id },
+    });
+  }
 
   const isPrimeraVez = String(consultation.tipoConsulta || '').toLowerCase().includes('primera');
 

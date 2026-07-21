@@ -53,7 +53,7 @@ const login = async (email, password) => {
  * Registrar nuevo usuario
  */
 const register = async (data) => {
-  const { email, password, nombre, role = 'RECEPCION' } = data;
+  const { email, password, nombre, role = 'RECEPCION', registroProfesional, especialidad } = data;
 
   // Validar fortaleza de contraseña
   const passwordValidation = validatePasswordStrength(password);
@@ -84,12 +84,16 @@ const register = async (data) => {
       password: hashedPassword,
       nombre,
       role,
+      registroProfesional: registroProfesional?.trim() || null,
+      especialidad: especialidad?.trim() || null,
     },
     select: {
       id: true,
       email: true,
       nombre: true,
       role: true,
+      registroProfesional: true,
+      especialidad: true,
       createdAt: true,
     },
   });
@@ -145,7 +149,7 @@ const CRM_ROLES = ['ADMIN', 'VENDEDOR', 'AUDIOLOGA', 'RECEPCION', 'SOLO_LECTURA'
 
 const listUsers = async () => {
   const users = await prisma.user.findMany({
-    select: { id: true, nombre: true, email: true, role: true, professionalConfigId: true, activo: true, createdAt: true },
+    select: { id: true, nombre: true, email: true, role: true, professionalConfigId: true, registroProfesional: true, especialidad: true, activo: true, createdAt: true },
     orderBy: { nombre: 'asc' },
   });
   return users;
@@ -166,6 +170,12 @@ const updateUser = async (userId, data) => {
   if ('professionalConfigId' in data) {
     patch.professionalConfigId = data.professionalConfigId ?? null;
   }
+  if ('registroProfesional' in data) {
+    patch.registroProfesional = data.registroProfesional?.trim() || null;
+  }
+  if ('especialidad' in data) {
+    patch.especialidad = data.especialidad?.trim() || null;
+  }
   if (data.role !== undefined && data.role !== null && data.role !== '') {
     if (!CRM_ROLES.includes(data.role)) {
       const err = new Error('Rol inválido');
@@ -181,7 +191,7 @@ const updateUser = async (userId, data) => {
   if (Object.keys(patch).length === 0) {
     return prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, nombre: true, role: true, professionalConfigId: true, activo: true },
+      select: { id: true, email: true, nombre: true, role: true, professionalConfigId: true, registroProfesional: true, especialidad: true, activo: true },
     });
   }
 

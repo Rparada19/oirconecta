@@ -111,6 +111,7 @@ import { getConsultationsByEmail, createConsultation, patchConsultation } from '
 import { recordReminder } from '../../services/interactionService';
 import { useAuth } from '../../context/AuthContext';
 import { canAddAndInvoiceProducts, canEditClinicalHistory, canEditClinicalHistoryAfterFirstVisit, canEditAnamnesisAfterFilled, canEditDatosGenerales, canAdminClinicalHistory, canManagePatientConsentSignatures, canUsePatientCrmTabForms } from '../../utils/rolePermissions';
+import { fetchCrmUsers } from '../../services/crmUserService';
 
 /** Contenedor y acordeones — pestaña Historia clínica */
 const HC_PAGE_SX = {
@@ -259,6 +260,20 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   const [evolucionarData, setEvolucionarData] = useState({ notes: '', hearingLoss: false, nextSteps: '', formData: {}, diagnosticos: '', pronostico: '', tratamiento: '', signosVitales: {} });
   // Solo para cita primera vez: 'asistencia' (Asistió/No asistió) → 'form' (historia clínica completa)
   const [evolucionarPrimeraVezStep, setEvolucionarPrimeraVezStep] = useState('asistencia');
+  // Profesionales que pueden atender (usuarios CRM con rol clínico). Para atribución HC.
+  const [clinicalProfessionals, setClinicalProfessionals] = useState([]);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    fetchCrmUsers().then((res) => {
+      if (cancelled) return;
+      const list = (res?.users || []).filter(
+        (u) => u.activo !== false && ['ADMIN', 'AUDIOLOGA'].includes(u.role),
+      );
+      setClinicalProfessionals(list);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [open]);
 
   // Historial de consultas: diálogo para ver detalle de una consulta (qué sucedió)
   const [histConsultaDetalleOpen, setHistConsultaDetalleOpen] = useState(false);
@@ -1429,6 +1444,8 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
         nextSteps: evolucionarData.nextSteps,
         appointmentType: aptType,
         formData: formDataWithEvolucion,
+        // Atribución HC: el profesional que atiende es quien registra (usuario CRM).
+        attendingProfessionalId: evolucionarData.attendingProfessionalId || user?.id || undefined,
       });
       if (!createRes.success) {
         setSnackbar({ open: true, message: createRes.error || 'La evolución quedó en este navegador; revise la conexión con el servidor.', severity: 'warning' });
@@ -6608,6 +6625,28 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                         Sin formulario específico para este tipo de cita. Use las notas generales abajo.
                       </Typography>
                     )}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                        Atendido por <span style={{ color: '#b91c1c' }}>*</span>
+                      </Typography>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        value={evolucionarData.attendingProfessionalId || user?.id || ''}
+                        onChange={(e) => setEvolucionarData((prev) => ({ ...prev, attendingProfessionalId: e.target.value }))}
+                        helperText="Profesional que realiza la consulta. Queda registrado en la historia clínica."
+                      >
+                        {(clinicalProfessionals.length
+                          ? clinicalProfessionals
+                          : (user ? [{ id: user.id, nombre: user.nombre, especialidad: user.especialidad }] : [])
+                        ).map((p) => (
+                          <MenuItem key={p.id} value={p.id}>
+                            {p.nombre}{p.especialidad ? ` — ${p.especialidad}` : ''}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Box>
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
                         Notas de la consulta

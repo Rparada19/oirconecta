@@ -45,6 +45,7 @@ const create = async (req, res, next) => {
       signosVitales,
       anamnesisClinica,
       anamnesisSocial,
+      attendingProfessionalId,
     } = req.body;
 
     const consultation = await consultationsService.create({
@@ -62,6 +63,7 @@ const create = async (req, res, next) => {
       signosVitales,
       anamnesisClinica,
       anamnesisSocial,
+      attendingProfessionalId,
     }, req.user?.id);
 
     res.status(201).json({

@@ -101,6 +101,8 @@ const ConfiguracionPage = () => {
     email: '',
     password: '',
     role: ROLES.RECEPCION,
+    registroProfesional: '',
+    especialidad: '',
   });
 
   useEffect(() => {
@@ -125,7 +127,7 @@ const ConfiguracionPage = () => {
   const goNextTab = () => setActiveTab((t) => (t + 1) % CONFIG_TAB_COUNT);
 
   const handleOpenNewUser = () => {
-    setNewUserForm({ nombre: '', email: '', password: '', role: ROLES.RECEPCION });
+    setNewUserForm({ nombre: '', email: '', password: '', role: ROLES.RECEPCION, registroProfesional: '', especialidad: '' });
     setUserDialogOpen(true);
   };
 
@@ -139,6 +141,8 @@ const ConfiguracionPage = () => {
       email: newUserForm.email.trim().toLowerCase(),
       password: newUserForm.password,
       role: newUserForm.role,
+      registroProfesional: newUserForm.registroProfesional?.trim() || undefined,
+      especialidad: newUserForm.especialidad?.trim() || undefined,
     });
     if (res.success) {
       setSnackbar({ open: true, message: 'Usuario creado correctamente', severity: 'success' });
@@ -770,6 +774,12 @@ const ConfiguracionPage = () => {
                           ))}
                         </Select>
                       </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField fullWidth label="Registro profesional (RETHUS)" helperText="Obligatorio para quien firma historias clínicas" value={newUserForm.registroProfesional || ''} onChange={(e) => setNewUserForm((p) => ({ ...p, registroProfesional: e.target.value }))} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField fullWidth label="Especialidad" placeholder="Ej. Audióloga, Fonoaudióloga" value={newUserForm.especialidad || ''} onChange={(e) => setNewUserForm((p) => ({ ...p, especialidad: e.target.value }))} />
                     </Grid>
                   </Grid>
                 </DialogContent>

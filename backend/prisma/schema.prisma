@@ -23,12 +23,18 @@ model User {
   role                 Role     @default(ADMIN)
   activo               Boolean  @default(true)
   professionalConfigId String? // ID del profesional en config (para audióloga: filtrar pacientes por cita asignada)
+  /// Datos clínicos del profesional (para atribución en historia clínica).
+  /// Número de tarjeta/registro profesional (RETHUS). Se estampa en la consulta.
+  registroProfesional  String?
+  especialidad         String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
   // Relaciones
   leadsCreados          Lead[]                 @relation("LeadCreatedBy")
   citasCreadas          Appointment[]          @relation("AppointmentCreatedBy")
+  citasAtendidas        Appointment[]          @relation("AppointmentAttendingProfessional")
+  consultasRealizadas   Consultation[]         @relation("ConsultationAttendingProfessional")
   ventasCreadas         Sale[]                 @relation("SaleCreatedBy")
   blockedSlotsRequested BlockedSlot[]          @relation("BlockedSlotRequestedBy")
   blockedSlotsApproved  BlockedSlot[]          @relation("BlockedSlotApprovedBy")
@@ -615,6 +621,11 @@ model Appointment {
   /// True cuando la cita entró por self-service multi-profesional y recepción debe asignar.
   needsAssignment Boolean @default(false)
 
+  /// Profesional que ATIENDE la cita (usuario CRM). Se fija al registrar la
+  /// consulta / marcar asistida. Base de la atribución en la historia clínica.
+  attendingProfessionalId String?
+  attendingProfessional   User?   @relation("AppointmentAttendingProfessional", fields: [attendingProfessionalId], references: [id], onDelete: SetNull)
+
   // Sede (Fase 1: 1 sola; preparado multi-sede)
   sedeId String?
   sede   Sede?   @relation(fields: [sedeId], references: [id], onDelete: SetNull)
@@ -701,6 +712,16 @@ model Consultation {
   patient       Patient      @relation(fields: [patientId], references: [id])
   appointmentId String?      @unique
   appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  /// Profesional que realizó la consulta (usuario CRM). onDelete: SetNull para
+  /// no perder la consulta si el usuario se borra; el snapshot preserva la
+  /// atribución legal aunque el usuario cambie de nombre o se elimine.
+  attendingProfessionalId       String?
+  attendingProfessional         User?   @relation("ConsultationAttendingProfessional", fields: [attendingProfessionalId], references: [id], onDelete: SetNull)
+  /// Snapshot inmutable del nombre y registro profesional al momento de firmar
+  /// la consulta (integridad de la historia clínica — Res. 1839/2023).
+  attendingProfessionalName     String?
+  attendingProfessionalRegistro String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
