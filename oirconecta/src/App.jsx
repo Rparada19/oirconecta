@@ -85,6 +85,7 @@ const PortalCRMPage = lazy(() => import('./pages/PortalCRMPage'));
 const CrmShell = lazy(() => import('./components/crm/CrmShell'));
 const DashboardPage = lazy(() => import('./pages/crm/DashboardPage'));
 const CitasPage = lazy(() => import('./pages/crm/CitasPage'));
+const AgendaOirconectaPage = lazy(() => import('./pages/crm/AgendaOirconectaPage'));
 const LeadsPage = lazy(() => import('./pages/crm/LeadsPage'));
 const PacientesPage = lazy(() => import('./pages/crm/PacientesPage'));
 const ControlesPage = lazy(() => import('./pages/crm/ControlesPage'));
@@ -278,6 +279,7 @@ export default function App() {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="acciones-dia" element={<AccionesDiaPage />} />
             <Route path="citas" element={<CitasPage />} />
+            <Route path="agenda" element={<AgendaOirconectaPage />} />
             <Route path="leads" element={<LeadsPage />} />
             <Route path="pacientes" element={<PacientesPage />} />
             <Route path="controles" element={<ControlesPage />} />
