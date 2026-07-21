@@ -78,13 +78,6 @@ import {
   createAppointment,
 } from '../../services/appointmentService';
 import {
-  requestBlock,
-  getAllBlockedSlots,
-  getPendingBlockedSlots,
-  approveBlock,
-  rejectBlock,
-} from '../../services/blockedSlotsService';
-import {
   getPatientRecords,
   addPatientRecord,
   recordConsultation,
@@ -118,15 +111,7 @@ const CitasPage = () => {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [calendarFilters, setCalendarFilters] = useState({ sedeId: '', consultorioId: '', professionalId: '' });
   const [statsPeriodo, setStatsPeriodo] = useState('month'); // week, month, year
-  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
-  const [selectedDateForBlock, setSelectedDateForBlock] = useState(null);
-  const [blockHoraInicio, setBlockHoraInicio] = useState('08:00');
-  const [blockHoraFin, setBlockHoraFin] = useState('18:00');
-  const [blockMotivo, setBlockMotivo] = useState('');
-  const [blockAllDay, setBlockAllDay] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [blockedSlots, setBlockedSlots] = useState([]);
-  const [pendingBlocks, setPendingBlocks] = useState([]);
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   
@@ -180,32 +165,18 @@ const CitasPage = () => {
 
   const loadData = async () => {
     try {
-      const [allAppointments, blocksRes] = await Promise.all([
-        getAllAppointments(),
-        getAllBlockedSlots(),
-      ]);
+      const allAppointments = await getAllAppointments();
       setAppointments(allAppointments);
       setFilteredAppointments(allAppointments);
-      setBlockedSlots(blocksRes.success ? blocksRes.data : []);
     } catch (e) {
       console.error('[CitasPage] Error al cargar:', e);
     }
   };
 
-  const loadPendingBlocks = async () => {
-    if (!isAdmin) {
-      setPendingBlocks([]);
-      return;
-    }
-    const res = await getPendingBlockedSlots();
-    setPendingBlocks(res.success ? res.data : []);
-  };
-
   useEffect(() => {
     loadData();
-    loadPendingBlocks();
     const handleStorageChange = (e) => {
-      if (e.key === 'oirconecta_appointments' || e.key === 'oirconecta_blocked_slots') loadData();
+      if (e.key === 'oirconecta_appointments') loadData();
     };
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(loadData, 10000);
@@ -768,60 +739,6 @@ const CitasPage = () => {
     window.open(`https://wa.me/${cleanPhone}`, '_blank');
   };
 
-  const handleBlockSlot = async () => {
-    if (!selectedDateForBlock) {
-      showSnackbar('Por favor selecciona una fecha', 'error');
-      return;
-    }
-    const horaInicio = blockAllDay ? '08:00' : blockHoraInicio;
-    const horaFin = blockAllDay ? '18:00' : blockHoraFin;
-    if (!blockMotivo?.trim()) {
-      showSnackbar('Por favor escribe el motivo del bloqueo', 'error');
-      return;
-    }
-    const result = await requestBlock({
-      fecha: selectedDateForBlock.toISOString().split('T')[0],
-      horaInicio,
-      horaFin,
-      motivo: blockMotivo.trim(),
-    });
-    if (result.success) {
-      await loadData();
-      await loadPendingBlocks();
-      setBlockDialogOpen(false);
-      setSelectedDateForBlock(null);
-      setBlockHoraInicio('08:00');
-      setBlockHoraFin('18:00');
-      setBlockMotivo('');
-      setBlockAllDay(false);
-      showSnackbar('Solicitud enviada. Un administrador la revisará.', 'success');
-    } else {
-      showSnackbar(result.error || 'Error al enviar la solicitud', 'error');
-    }
-  };
-
-  const handleApproveBlock = async (id) => {
-    const result = await approveBlock(id);
-    if (result.success) {
-      await loadData();
-      await loadPendingBlocks();
-      showSnackbar('Bloqueo aprobado. El horario ya no está disponible.', 'success');
-    } else {
-      showSnackbar(result.error || 'Error al aprobar', 'error');
-    }
-  };
-
-  const handleRejectBlock = async (id) => {
-    const result = await rejectBlock(id);
-    if (result.success) {
-      await loadData();
-      await loadPendingBlocks();
-      showSnackbar('Solicitud de bloqueo rechazada.', 'success');
-    } else {
-      showSnackbar(result.error || 'Error al rechazar', 'error');
-    }
-  };
-
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
@@ -991,15 +908,6 @@ const CitasPage = () => {
   const statsDisponibles = Math.max(0, statsTotalSlots - statsOcupados);
   const statsPctOcupacion = statsTotalSlots > 0 ? Math.round((statsOcupados / statsTotalSlots) * 100) : 0;
   const statsPctLibre = statsTotalSlots > 0 ? Math.round((statsDisponibles / statsTotalSlots) * 100) : 100;
-
-  // Obtener horarios bloqueados del día (solo aprobados)
-  const getBlockedSlotsForDate = (date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return blockedSlots.filter((block) => {
-      const blockDate = block.fecha ? (typeof block.fecha === 'string' ? block.fecha.slice(0, 10) : block.fecha.toISOString?.().slice(0, 10)) : '';
-      return blockDate === dateStr && block.estado === 'APPROVED';
-    });
-  };
 
   const CITA_STATS = [
     { label: 'Agendadas', value: agendadasCount, gradient: 'linear-gradient(135deg,#0284c7,#0369a1)', glow: 'rgba(2,132,199,0.22)' },
@@ -1313,63 +1221,6 @@ const CitasPage = () => {
                 </FormControl>
               </Paper>
             </Grid>
-            {isAdmin && pendingBlocks.length > 0 && (
-              <Grid item xs={12}>
-                <Alert
-                  severity="warning"
-                  sx={{ borderRadius: 2 }}
-                  action={
-                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                      {pendingBlocks.length} solicitud{pendingBlocks.length !== 1 ? 'es' : ''} pendiente{pendingBlocks.length !== 1 ? 's' : ''}
-                    </Typography>
-                  }
-                >
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                    Solicitudes de bloqueo pendientes de aprobación
-                  </Typography>
-                  <Box sx={{ maxHeight: 120, overflowY: 'auto' }}>
-                    {pendingBlocks.map((block) => {
-                      const fechaStr = block.fecha ? (typeof block.fecha === 'string' ? block.fecha.slice(0, 10) : block.fecha.toISOString?.().slice(0, 10)) : '';
-                      const rango = block.horaInicio === '08:00' && block.horaFin === '18:00' ? 'Día completo' : `${block.horaInicio} - ${block.horaFin}`;
-                      return (
-                        <Box
-                          key={block.id}
-                          sx={{
-                            p: 1.5,
-                            mb: 1,
-                            borderRadius: 2,
-                            bgcolor: '#fff8e1',
-                            border: '1px solid #ffc107',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            flexWrap: 'wrap',
-                            gap: 1,
-                          }}
-                        >
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {fechaStr} · {rango}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: '#666', display: 'block' }}>
-                              {block.motivo}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <Button size="small" variant="contained" sx={{ bgcolor: '#085946', '&:hover': { bgcolor: '#0a6b56' } }} onClick={() => handleApproveBlock(block.id) }>
-                              Aprobar
-                            </Button>
-                            <Button size="small" variant="outlined" color="error" onClick={() => handleRejectBlock(block.id) }>
-                              Rechazar
-                            </Button>
-                          </Box>
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </Alert>
-              </Grid>
-            )}
             <Grid item xs={12} md={4}>
               <Card
                 sx={{
@@ -1386,12 +1237,12 @@ const CitasPage = () => {
                     </Typography>
                     <Button
                       size="small"
-                      variant="contained"
+                      variant="outlined"
                       startIcon={<Block />}
-                      onClick={() => { setSelectedDateForBlock(calendarDate); setBlockDialogOpen(true); }}
-                      sx={{ bgcolor: '#085946', '&:hover': { bgcolor: '#0a6b56' } }}
+                      onClick={() => navigate('/portal-crm/agenda')}
+                      sx={{ color: '#085946', borderColor: '#085946', '&:hover': { borderColor: '#0a6b56', bgcolor: '#f0fdf4' } }}
                     >
-                      Bloquear
+                      Horario y bloqueos
                     </Button>
                   </Box>
                   <DateSelector
@@ -2100,139 +1951,6 @@ const CitasPage = () => {
             </Box>
           )}
         </DialogContent>
-      </Dialog>
-
-      {/* Dialog para Bloquear Horario */}
-      <Dialog
-        open={blockDialogOpen}
-        onClose={() => {
-          setBlockDialogOpen(false);
-          setSelectedDateForBlock(null);
-          setBlockHoraInicio('08:00');
-          setBlockHoraFin('18:00');
-          setBlockMotivo('');
-          setBlockAllDay(false);
-        }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ bgcolor: '#085946', color: '#ffffff', fontWeight: 700 }}>
-          Solicitar Bloqueo de Horario
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            La solicitud se enviará al administrador para su aprobación. Una vez aprobada, el horario no estará disponible para agendar.
-          </Alert>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-              Fecha
-            </Typography>
-            <TextField
-              fullWidth
-              type="date"
-              value={selectedDateForBlock ? selectedDateForBlock.toISOString().split('T')[0] : ''}
-              onChange={(e) => setSelectedDateForBlock(new Date(e.target.value + 'T00:00:00'))}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="body2" sx={{ mb: 1.5, fontWeight: 600 }}>
-              Tipo de bloqueo
-            </Typography>
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={6}>
-                <Button
-                  fullWidth
-                  variant={blockAllDay === true ? 'contained' : 'outlined'}
-                  onClick={() => {
-                    setBlockAllDay(true);
-                    setBlockHoraInicio('08:00');
-                    setBlockHoraFin('18:00');
-                  }}
-                  sx={blockAllDay === true ? { bgcolor: '#085946', '&:hover': { bgcolor: '#0a6b56' } } : {}}
-                >
-                  Bloquear día completo
-                </Button>
-              </Grid>
-              <Grid item xs={6}>
-                <Button
-                  fullWidth
-                  variant={blockAllDay === false ? 'contained' : 'outlined'}
-                  onClick={() => setBlockAllDay(false)}
-                  sx={blockAllDay === false ? { bgcolor: '#085946', '&:hover': { bgcolor: '#0a6b56' } } : {}}
-                >
-                  Bloquear franja horaria
-                </Button>
-              </Grid>
-            </Grid>
-            {blockAllDay === false && (
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-                    Hora inicio
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    type="time"
-                    value={blockHoraInicio}
-                    onChange={(e) => setBlockHoraInicio(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-                    Hora fin
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    type="time"
-                    value={blockHoraFin}
-                    onChange={(e) => setBlockHoraFin(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-              </Grid>
-            )}
-          </Box>
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-              Motivo del bloqueo
-            </Typography>
-            <TextareaAutosize
-              minRows={3}
-              placeholder="Ej: Reunión de equipo, capacitación, mantenimiento..."
-              value={blockMotivo}
-              onChange={(e) => setBlockMotivo(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '4px',
-                fontFamily: 'inherit',
-                fontSize: '0.875rem',
-                boxSizing: 'border-box',
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={() => {
-              setBlockDialogOpen(false);
-              setSelectedDateForBlock(null);
-              setBlockHoraInicio('08:00');
-              setBlockHoraFin('18:00');
-              setBlockMotivo('');
-              setBlockAllDay(false);
-            }}
-            variant="outlined"
-          >
-            Cancelar
-          </Button>
-          <Button onClick={handleBlockSlot} variant="contained" sx={{ bgcolor: '#085946' }}>
-            Enviar solicitud
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Dialog de Consulta (Marcar como Asistida) — Evolucionar */}
