@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useLocation } from 'react-router-dom';
 import { initAnalytics, trackPageView } from './utils/analytics';
 import { initConsent } from './utils/cookieConsent';
@@ -152,6 +153,10 @@ function routerBasename() {
 function NotFound() {
   return (
     <Box component="main" sx={{ p: 4, minHeight: '60vh', bgcolor: 'background.default' }}>
+      <Helmet>
+        <meta name="robots" content="noindex, follow" />
+        <title>Página no encontrada — OírConecta</title>
+      </Helmet>
       <Typography variant="h5" sx={{ mb: 2, fontWeight: 700 }}>
         No encontramos esta página
       </Typography>
