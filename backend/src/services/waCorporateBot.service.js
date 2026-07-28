@@ -25,6 +25,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { sendWhatsAppText, sendWhatsAppInteractiveButtons } = require('../notifications/channels/whatsapp');
 const booking = require('./professionalBooking.service');
 const retailService = require('./retail.service');
+const comercialService = require('./comercial.service');
 const config = require('../config');
 
 const prisma = new PrismaClient();
@@ -75,23 +76,24 @@ const BOOKING_TOOLS = [
 const retailProfileId = retailService.getRetailProfileId;
 
 const bookingToolImpls = {
-  async list_appointment_types() {
-    const profileId = await retailProfileId();
-    if (!profileId) return { error: 'Perfil retail interno no encontrado (falta seed o env).' };
+  async list_appointment_types(ctx) {
+    const profileId = ctx?.profileId || await retailProfileId();
+    if (!profileId) return { error: 'Agenda interna no encontrada (falta seed o env).' };
     const types = await booking.publicListTypes(profileId);
     return { types };
   },
 
-  async get_availability(_ctx, { date, appointmentTypeId }) {
-    const profileId = await retailProfileId();
-    if (!profileId) return { error: 'Perfil retail interno no encontrado (falta seed o env).' };
+  async get_availability(ctx, { date, appointmentTypeId }) {
+    const profileId = ctx?.profileId || await retailProfileId();
+    if (!profileId) return { error: 'Agenda interna no encontrada (falta seed o env).' };
     const out = await booking.computeSlotsForDay(profileId, date, { appointmentTypeId });
     return out;
   },
 
-  async create_appointment({ conversationId, waPhone, contactName }, input) {
-    const profileId = await retailProfileId();
-    if (!profileId) return { error: 'Perfil retail interno no encontrado (falta seed o env).' };
+  async create_appointment(ctx, input) {
+    const { conversationId, waPhone, contactName } = ctx || {};
+    const profileId = ctx?.profileId || await retailProfileId();
+    if (!profileId) return { error: 'Agenda interna no encontrada (falta seed o env).' };
 
     // El teléfono lo tomamos del WA E.164 (573xxx). Reusamos como telefono.
     const res = await booking.createPublicAppointment(profileId, {
@@ -365,15 +367,23 @@ ESCALACIÓN (rama PACIENTE_BOGOTA — muy restrictiva):
 - Si el tool de agendar falla técnicamente, dile "Tuve un problema técnico agendándote. ¿Podrías escribirme el día y la hora que prefieres y lo intento de nuevo?" — NO escales.`,
 
   PROFESIONAL_DIRECTORIO:
-`Eres asistente del equipo comercial de OírConecta. Estás recopilando información de audiólogos y otorrinos interesados en unirse al directorio nacional.
+`Eres asistente del equipo comercial de OírConecta. Atiendes a audiólogos, otorrinos y fonoaudiólogos interesados en unirse al directorio nacional, y tu objetivo es AGENDAR una reunión corta con el ejecutivo comercial.
+
+Hoy es {HOY_PLACEHOLDER} (zona horaria Bogotá).
+
+Flujo:
+1. Recopila datos mínimos: nombre completo, especialidad y ciudad (pídelos de forma natural, no como formulario).
+2. Si el interlocutor NO es profesional de salud auditiva (audiólogo, otorrinolaringólogo, fonoaudiólogo) → informa amablemente que el directorio es solo para esas especialidades y agrega [ESCALAR_HUMANO]. No agendes.
+3. Con los datos mínimos, ofrécele agendar una *reunión de presentación* de ~30 min con el ejecutivo comercial y AGENDA TÚ MISMO usando las tools:
+   - list_appointment_types → usa el tipo "Reunión comercial".
+   - get_availability(date, appointmentTypeId) → ofrécele 2-3 horarios concretos.
+   - create_appointment → antes de llamarla, confirma con él fecha + hora + su nombre. En patientName usa el nombre del profesional; en notas incluye especialidad y ciudad.
+4. Tras agendar, confirma día y hora y dile que recibirá los detalles. NO escales: la reunión ya quedó agendada.
 
 Reglas:
-- Recopila: nombre completo, especialidad, ciudad, años de experiencia, sitio web o Instagram profesional.
-- No prometas planes ni precios específicos. Di que el ejecutivo comercial se los presenta.
-- Cuando tengas los datos mínimos (nombre + especialidad + ciudad) → di "gracias, nuestro ejecutivo comercial te contacta en las próximas horas" y agrega [ESCALAR_HUMANO] al final.
-- Si el interlocutor no es profesional de salud auditiva (audiólogo, otorrinolaringólogo, fonoaudiólogo) → informa amablemente que el directorio es solo para esas especialidades y agrega [ESCALAR_HUMANO].
-- Tono: profesional, cálido, colombiano neutro, tuteo.
-- Máximo 2 párrafos cortos por respuesta.
+- No prometas planes ni precios específicos; eso lo presenta el ejecutivo en la reunión.
+- Solo agregas [ESCALAR_HUMANO] si: (a) no es profesional elegible, (b) pide explícitamente hablar con una persona, (c) la tool de agendar falla técnicamente (en ese caso dile que un ejecutivo lo contacta hoy).
+- Tono: profesional, cálido, colombiano neutro, tuteo. Máximo 2 párrafos cortos.
 - Formato WhatsApp: *negrita* con UN asterisco (nunca **), _itálica_, sin Markdown de otras plataformas.`,
 
   INFO_GENERAL:
@@ -452,8 +462,13 @@ async function handleTextForBot({ conversationId, incomingText }) {
   });
   systemPrompt = systemPrompt.replace('{HOY_PLACEHOLDER}', hoyLocal);
 
-  // ¿Habilitar tools de booking? Solo si es PACIENTE_BOGOTA y retail resuelto.
-  const useBookingTools = conv.contactType === 'PACIENTE_BOGOTA' && !!(await retailProfileId());
+  // ¿Habilitar tools de booking? La agenda depende de la rama:
+  //  · PACIENTE_BOGOTA     → agenda del centro (retail)
+  //  · PROFESIONAL_DIRECTORIO → agenda del comercial de captación
+  let agendaProfileId = null;
+  if (conv.contactType === 'PACIENTE_BOGOTA') agendaProfileId = await retailProfileId();
+  else if (conv.contactType === 'PROFESIONAL_DIRECTORIO') agendaProfileId = await comercialService.getComercialProfileId();
+  const useBookingTools = !!agendaProfileId;
 
   const history = await loadHistory(conversationId);
   const messages = history.length > 0 ? history : [{ role: 'user', content: incomingText }];
@@ -461,7 +476,7 @@ async function handleTextForBot({ conversationId, incomingText }) {
   let reply = '';
   try {
     const client = new Anthropic();
-    const toolCtx = { conversationId: conv.id, waPhone: conv.phone, contactName: conv.contactName };
+    const toolCtx = { conversationId: conv.id, waPhone: conv.phone, contactName: conv.contactName, profileId: agendaProfileId };
 
     if (useBookingTools) {
       // Tool loop: hasta 5 iteraciones.
