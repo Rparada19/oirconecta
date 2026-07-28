@@ -83,6 +83,10 @@ model DirectoryProfile {
 
   status DirectoryProfileStatus @default(PENDING)
 
+  /// Si es false, el perfil NO aparece en el directorio público aunque esté APPROVED.
+  /// Se usa para recursos internos agendables (p. ej. la agenda del comercial de captación).
+  listedPublic Boolean @default(true)
+
   /// Persona natural (profesional) o jurídica (centro). No exponer `documentoIdentidad` en la API pública.
   personaTipo         DirectoryPersonaTipo @default(NATURAL)
   /// Cédula (natural) o NIT (jurídica). Solo titular / moderación; no va en la tarjeta pública.

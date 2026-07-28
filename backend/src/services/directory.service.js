@@ -368,6 +368,7 @@ async function searchPublicDirectory({ q, profesion, poliza, ciudad, limit = 40,
 
   const where = {
     status: 'APPROVED',
+    listedPublic: { not: false }, // excluye recursos internos (agenda comercial)
     ...(parts.length ? { AND: parts } : {}),
   };
 
