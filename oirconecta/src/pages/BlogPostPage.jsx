@@ -271,6 +271,7 @@ export default function BlogPostPage() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [related, setRelated] = useState([]);
 
   useEffect(() => {
     setLoading(true);
@@ -306,6 +307,28 @@ export default function BlogPostPage() {
         } else { setNotFound(true); setLoading(false); }
       });
   }, [slug]);
+
+  // Artículos relacionados — enlazado interno para SEO (evita páginas huérfanas)
+  useEffect(() => {
+    if (!post) return;
+    const key = (p) => p.slug || p.id;
+    const self = post.slug || slug;
+    const cat = post.categoria;
+    const pick = (arr) => (arr || []).filter((p) => key(p) !== self);
+    const base = cat ? `${API}/api/blog?limit=7&categoria=${encodeURIComponent(cat)}` : `${API}/api/blog?limit=7`;
+    fetch(base)
+      .then((r) => r.json())
+      .then((data) => {
+        const list = pick(data.data || data.posts);
+        if (list.length >= 3) { setRelated(list.slice(0, 4)); return null; }
+        return fetch(`${API}/api/blog?limit=8`).then((r) => r.json()).then((d2) => {
+          const recent = pick(d2.data || d2.posts);
+          const merged = [...list, ...recent.filter((p) => !list.some((x) => key(x) === key(p)))];
+          setRelated(merged.slice(0, 4));
+        });
+      })
+      .catch(() => {});
+  }, [post, slug]);
 
   // D2 — scroll depth 50% y 100% (una vez cada uno por artículo)
   useEffect(() => {
@@ -665,6 +688,39 @@ export default function BlogPostPage() {
             </Box>
 
             <NewsletterCTA source="blog-post" />
+
+            {/* Artículos relacionados — enlaces internos crawleables */}
+            {related.length > 0 && (
+              <Box component="section" sx={{ mt: 7 }}>
+                <Typography variant="h5" component="h2" sx={{ fontWeight: 800, color: '#272F50', mb: 3 }}>
+                  Artículos relacionados
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+                  {related.map((r) => (
+                    <Box key={r.id || r.slug} component={RouterLink} to={`/blog/${r.slug}`} sx={{
+                      display: 'block', textDecoration: 'none', p: 2.5, height: '100%',
+                      borderRadius: 3, border: '1px solid #e5e7eb', bgcolor: '#fff',
+                      transition: 'box-shadow .2s, border-color .2s',
+                      '&:hover': { boxShadow: '0 8px 24px rgba(0,0,0,0.08)', borderColor: '#d1fae5' },
+                    }}>
+                      <Typography sx={{ fontSize: '0.72rem', color: '#085946', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1 }}>
+                        {CATEGORIAS[r.categoria] || r.categoria || 'Blog'}
+                      </Typography>
+                      <Typography component="h3" sx={{ fontWeight: 700, color: '#272F50', fontSize: '1.0625rem', lineHeight: 1.35, mb: 0.75 }}>
+                        {r.titulo}
+                      </Typography>
+                      {r.resumen && (
+                        <Typography sx={{ fontSize: '0.9rem', color: '#6b7280', lineHeight: 1.5,
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {r.resumen}
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
             <Divider sx={{ mt: 6, mb: 4 }} />
             <Button component={RouterLink} to="/blog" startIcon={<ArrowBackIcon />}
               variant="outlined" sx={{ borderRadius: '12px', borderColor: '#085946', color: '#085946', fontWeight: 600 }}>

@@ -382,7 +382,7 @@ export default function BlogPage() {
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams({ limit: '30' });
+    const params = new URLSearchParams({ limit: '100' });
     if (categoriaParam) params.set('categoria', categoriaParam);
     fetch(`${API}/api/blog?${params}`)
       .then((r) => r.json())
