@@ -128,6 +128,7 @@ const CrmPlantillasPage = lazy(() => import('./pages/crm/PlantillasPage'));
 const AdminWhatsAppPage = lazy(() => import('./pages/admin/AdminWhatsAppPage'));
 const AdminInsightsPage = lazy(() => import('./pages/admin/AdminInsightsPage'));
 const SalesDiaPage = lazy(() => import('./pages/admin/sales/SalesDiaPage'));
+const SalesAgendaPage = lazy(() => import('./pages/admin/sales/SalesAgendaPage'));
 const SalesLeadsPage = lazy(() => import('./pages/admin/sales/SalesLeadsPage'));
 const SalesLeadDetailPage = lazy(() => import('./pages/admin/sales/SalesLeadDetailPage'));
 const SalesReportesPage = lazy(() => import('./pages/admin/sales/SalesReportesPage'));
@@ -339,6 +340,7 @@ export default function App() {
             <Route path="whatsapp" element={<ProtectedAdminRoute requireFullAdmin><AdminWhatsAppPage /></ProtectedAdminRoute>} />
             {/* CRM Sales — captación outbound de profesionales (ADMIN + EJECUTIVO_COMERCIAL) */}
             <Route path="sales" element={<ProtectedAdminRoute requireSales><SalesDiaPage /></ProtectedAdminRoute>} />
+            <Route path="sales/agenda" element={<ProtectedAdminRoute requireSales><SalesAgendaPage /></ProtectedAdminRoute>} />
             <Route path="sales/leads" element={<ProtectedAdminRoute requireSales><SalesLeadsPage /></ProtectedAdminRoute>} />
             <Route path="sales/leads/:id" element={<ProtectedAdminRoute requireSales><SalesLeadDetailPage /></ProtectedAdminRoute>} />
             <Route path="sales/reportes" element={<ProtectedAdminRoute requireSales><SalesReportesPage /></ProtectedAdminRoute>} />

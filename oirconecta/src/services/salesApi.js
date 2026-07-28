@@ -68,6 +68,18 @@ export const salesApi = {
   // Admin: usuarios
   listUsers:    () => json('/api/sales/admin/users'),
   createUser:   (data) => json('/api/sales/admin/users', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Agenda del comercial (misma agenda que el bot de captación)
+  agenda: {
+    config:       () => json('/api/sales/comercial-agenda/config'),
+    availability: () => json('/api/sales/comercial-agenda/availability'),
+    saveWeekly:   (rows) => json('/api/sales/comercial-agenda/availability/weekly', { method: 'PUT', body: JSON.stringify({ rows }) }),
+    blocks:       (params = {}) => json(`/api/sales/comercial-agenda/blocks?${new URLSearchParams(params)}`),
+    createBlock:  (data) => json('/api/sales/comercial-agenda/blocks', { method: 'POST', body: JSON.stringify(data) }),
+    deleteBlock:  (id) => json(`/api/sales/comercial-agenda/blocks/${id}`, { method: 'DELETE' }),
+    appointments: (params = {}) => json(`/api/sales/comercial-agenda/appointments?${new URLSearchParams(params)}`),
+    updateAppt:   (id, data) => json(`/api/sales/comercial-agenda/appointments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  },
 };
 
 /** Parsea un CSV simple en cliente (sin librerías). Soporta comillas básicas. */

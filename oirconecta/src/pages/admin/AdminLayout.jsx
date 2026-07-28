@@ -30,6 +30,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { getAdminToken, clearAdminToken, getAdminUser } from './adminAuth';
 import { canAccessAllAdminPages, canUseSalesCrm, ROLES } from '../../utils/rolePermissions';
@@ -123,6 +124,7 @@ const ADMIN_FULL_NAV = [
 // Items del CRM Sales (captación outbound) — ADMIN + EJECUTIVO_COMERCIAL.
 const SALES_NAV = [
   { label: 'Mi día',   icon: <WbSunnyOutlinedIcon />,    path: '/portal-admin/sales' },
+  { label: 'Agenda',   icon: <EventAvailableOutlinedIcon />, path: '/portal-admin/sales/agenda' },
   { label: 'Leads',    icon: <PeopleAltOutlinedIcon />,  path: '/portal-admin/sales/leads' },
   { label: 'Reportes', icon: <InsightsOutlinedIcon />,   path: '/portal-admin/sales/reportes' },
 ];

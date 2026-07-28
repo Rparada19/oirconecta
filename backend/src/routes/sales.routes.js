@@ -88,6 +88,9 @@ router.use(authenticate);
 // Solo ADMIN o EJECUTIVO_COMERCIAL pueden tocar Sales.
 router.use(authorize('ADMIN', 'EJECUTIVO_COMERCIAL'));
 
+// Agenda del comercial (hereda el auth de arriba). Misma agenda que el bot.
+router.use('/comercial-agenda', require('./salesComercialAgenda.routes'));
+
 const isOwnerOfLeadOrAdmin = async (req, res, next) => {
   if (req.user.role === 'ADMIN') return next();
   const lead = await prisma.salesLead.findUnique({
