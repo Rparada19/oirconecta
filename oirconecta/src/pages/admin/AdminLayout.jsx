@@ -126,6 +126,7 @@ const SALES_NAV = [
   { label: 'Mi día',   icon: <WbSunnyOutlinedIcon />,    path: '/portal-admin/sales' },
   { label: 'Agenda',   icon: <EventAvailableOutlinedIcon />, path: '/portal-admin/sales/agenda' },
   { label: 'Leads',    icon: <PeopleAltOutlinedIcon />,  path: '/portal-admin/sales/leads' },
+  { label: 'Bot de ventas', icon: <SmartToyOutlinedIcon />, path: '/portal-admin/sales/bot' },
   { label: 'Reportes', icon: <InsightsOutlinedIcon />,   path: '/portal-admin/sales/reportes' },
 ];
 

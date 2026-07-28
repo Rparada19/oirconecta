@@ -90,6 +90,8 @@ router.use(authorize('ADMIN', 'EJECUTIVO_COMERCIAL'));
 
 // Agenda del comercial (hereda el auth de arriba). Misma agenda que el bot.
 router.use('/comercial-agenda', require('./salesComercialAgenda.routes'));
+// Cerebro comercial editable del bot de captación.
+router.use('/captacion-bot', require('./salesCaptacionBot.routes'));
 
 const isOwnerOfLeadOrAdmin = async (req, res, next) => {
   if (req.user.role === 'ADMIN') return next();

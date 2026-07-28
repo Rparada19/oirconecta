@@ -80,6 +80,12 @@ export const salesApi = {
     appointments: (params = {}) => json(`/api/sales/comercial-agenda/appointments?${new URLSearchParams(params)}`),
     updateAppt:   (id, data) => json(`/api/sales/comercial-agenda/appointments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   },
+
+  // Cerebro comercial editable del bot de captación
+  captacionBot: {
+    get:  () => json('/api/sales/captacion-bot'),
+    save: (data) => json('/api/sales/captacion-bot', { method: 'PUT', body: JSON.stringify(data) }),
+  },
 };
 
 /** Parsea un CSV simple en cliente (sin librerías). Soporta comillas básicas. */

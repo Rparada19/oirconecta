@@ -2901,3 +2901,23 @@ model GoogleCalendarChannel {
 
   @@map("google_calendar_channels")
 }
+
+/// Cerebro comercial editable del bot de captación (rama "Soy profesional").
+/// Fila única (id fijo). El admin/ejecutivo edita el argumentario de ventas y el
+/// bot lo inyecta en su system prompt para cerrar con profesionales.
+model CaptacionBotConfig {
+  id                 String   @id @default("singleton")
+  propuestaValor     String?  @db.Text
+  planesPrecios      String?  @db.Text
+  diferenciadores    String?  @db.Text
+  objeciones         String?  @db.Text
+  faqs               Json?    // [{ pregunta, respuesta }]
+  tono               String?  @db.Text
+  objetivoCierre     String   @default("AGENDAR") // AGENDAR | CERRAR_CHAT
+  instruccionesExtra String?  @db.Text
+  activo             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("captacion_bot_config")
+}

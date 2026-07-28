@@ -26,6 +26,7 @@ const { sendWhatsAppText, sendWhatsAppInteractiveButtons } = require('../notific
 const booking = require('./professionalBooking.service');
 const retailService = require('./retail.service');
 const comercialService = require('./comercial.service');
+const captacionBotConfig = require('./captacionBotConfig.service');
 const config = require('../config');
 
 const prisma = new PrismaClient();
@@ -461,6 +462,16 @@ async function handleTextForBot({ conversationId, incomingText }) {
     timeZone: 'America/Bogota',
   });
   systemPrompt = systemPrompt.replace('{HOY_PLACEHOLDER}', hoyLocal);
+
+  // Inyecta el argumentario comercial editable en la rama de captación.
+  if (conv.contactType === 'PROFESIONAL_DIRECTORIO') {
+    try {
+      const cfg = await captacionBotConfig.get();
+      systemPrompt += captacionBotConfig.buildPromptSection(cfg);
+    } catch (e) {
+      console.error('[wa-bot] no pude cargar captacionBotConfig:', e.message);
+    }
+  }
 
   // ¿Habilitar tools de booking? La agenda depende de la rama:
   //  · PACIENTE_BOGOTA     → agenda del centro (retail)
