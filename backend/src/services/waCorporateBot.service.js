@@ -182,8 +182,8 @@ Para atenderte mejor cuéntanos: ¿qué te trae por aquí?`;
       footerText: 'Toca una opción para comenzar',
       buttons: [
         { id: BUTTON_IDS.PACIENTE_BOGOTA,       title: '🩺 Agendar cita' },
-        { id: BUTTON_IDS.PROFESIONAL_DIRECTORIO, title: '👩‍⚕️ Soy profesional' },
-        { id: BUTTON_IDS.INFO_GENERAL,           title: 'ℹ️ Solo tengo una duda' },
+        { id: BUTTON_IDS.PROFESIONAL_DIRECTORIO, title: '👤 Soy profesional' },
+        { id: BUTTON_IDS.INFO_GENERAL,           title: '❓ Solo una duda' },
       ],
     });
 
