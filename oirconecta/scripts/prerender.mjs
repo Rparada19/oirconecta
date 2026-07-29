@@ -115,11 +115,17 @@ async function main() {
       ).catch(() => {});
       const html = await page.content();
       if (html && html.length > 2000 && html.includes('</body>')) {
-        const outPath = route === '/'
-          ? join(DIST, 'index.html')
-          : join(DIST, route.replace(/\/$/, ''), 'index.html');
-        await mkdir(dirname(outPath), { recursive: true });
-        await writeFile(outPath, html);
+        const clean = route.replace(/\/$/, '');
+        // Escribe ambas formas para que Render sirva la URL limpia antes del
+        // catch-all `/* → index.html`: `<ruta>.html` (pretty URL) y
+        // `<ruta>/index.html` (directory index).
+        const targets = route === '/'
+          ? [join(DIST, 'index.html')]
+          : [join(DIST, `${clean}.html`), join(DIST, clean, 'index.html')];
+        for (const outPath of targets) {
+          await mkdir(dirname(outPath), { recursive: true });
+          await writeFile(outPath, html);
+        }
         ok++;
       } else {
         fail++;
