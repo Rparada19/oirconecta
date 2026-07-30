@@ -414,7 +414,7 @@ export default function BlogPage() {
       <Helmet>
         <title>Blog OírConecta — Salud auditiva, audífonos y prevención</title>
         <meta name="description" content="Artículos prácticos sobre audición, audífonos, implantes, prevención y bienestar auditivo. Información confiable de la red OírConecta." />
-        <link rel="canonical" href="https://oirconecta.com/blog" />
+        <link rel="canonical" href="https://oirconecta.com/blog/" />
         <meta property="og:title" content="Blog OírConecta — Salud auditiva, audífonos y prevención" />
         <meta property="og:description" content="Artículos prácticos sobre audición, audífonos, implantes, prevención y bienestar auditivo." />
         <meta property="og:url" content="https://oirconecta.com/blog" />

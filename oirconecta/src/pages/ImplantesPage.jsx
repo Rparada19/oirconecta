@@ -204,7 +204,7 @@ export default function ImplantesPage() {
       <Helmet>
         <title>Implantes cocleares y auditivos en Colombia — OírConecta</title>
         <meta name="description" content="Información clara sobre implantes cocleares, implantes de oído medio y dispositivos Baha en Colombia. Marcas Cochlear, Advanced Bionics y MED-EL." />
-        <link rel="canonical" href="https://oirconecta.com/implantes" />
+        <link rel="canonical" href="https://oirconecta.com/implantes/" />
         <meta property="og:title" content="Implantes auditivos — OírConecta" />
         <meta property="og:url" content="https://oirconecta.com/implantes" />
         <meta property="og:image" content="https://oirconecta.com/img/audifono-tecnologia-moderna.jpg" />

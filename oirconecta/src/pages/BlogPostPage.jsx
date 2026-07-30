@@ -437,16 +437,22 @@ export default function BlogPostPage() {
             overflow: 'hidden',
             background: heroCover ? 'transparent' : 'linear-gradient(160deg, #1B2240 0%, #272F50 50%, #085946 100%)',
           }}>
-            {/* Background image */}
+            {/* Imagen de portada como <img> real (indexable por Google Imágenes) */}
             {heroCover && (
-              <Box sx={{
-                position: 'absolute', inset: 0,
-                backgroundImage: `url("${heroCover}")`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                transform: 'scale(1.04)',
-                filter: 'brightness(0.65) saturate(0.9)',
-              }} />
+              <Box
+                component="img"
+                src={heroCover}
+                alt={post?.titulo || 'Artículo de salud auditiva — OírConecta'}
+                width="1200"
+                height="630"
+                sx={{
+                  position: 'absolute', inset: 0,
+                  width: '100%', height: '100%',
+                  objectFit: 'cover', objectPosition: 'center',
+                  transform: 'scale(1.04)',
+                  filter: 'brightness(0.65) saturate(0.9)',
+                }}
+              />
             )}
             {/* Overlay degradado navy */}
             <Box sx={{

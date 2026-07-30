@@ -189,7 +189,8 @@ ${all.map((u) => {
   const imageTag = u.image
     ? `\n    <image:image><image:loc>${escapeXml(u.image.loc)}</image:loc><image:title>${escapeXml(u.image.title)}</image:title></image:image>`
     : '';
-  return `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<changefreq>${u.changefreq}</changefreq><priority>${u.priority}</priority>${imageTag}</url>`;
+  const locSlash = u.loc.endsWith('/') ? u.loc : `${u.loc}/`; // barra final = URL que sirve el prerender
+  return `  <url><loc>${locSlash}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<changefreq>${u.changefreq}</changefreq><priority>${u.priority}</priority>${imageTag}</url>`;
 }).join('\n')}
 </urlset>`;
     res.set('Content-Type', 'application/xml');

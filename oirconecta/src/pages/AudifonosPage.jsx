@@ -159,7 +159,7 @@ export default function AudifonosPage() {
       <Helmet>
         <title>Audífonos en Colombia — OírConecta · Marcas, tipos y guía</title>
         <meta name="description" content="Las 13 marcas de audífonos disponibles en Colombia explicadas sin tecnicismos. Aprende a elegir RIC, BTE, ITC o CIC según tu pérdida y estilo de vida." />
-        <link rel="canonical" href="https://oirconecta.com/audifonos" />
+        <link rel="canonical" href="https://oirconecta.com/audifonos/" />
         <meta property="og:title" content="Audífonos en Colombia — OírConecta" />
         <meta property="og:url" content="https://oirconecta.com/audifonos" />
         <meta property="og:image" content="https://oirconecta.com/img/audifono-retroauricular-bte.jpg" />

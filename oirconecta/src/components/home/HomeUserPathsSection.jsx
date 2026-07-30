@@ -68,7 +68,7 @@ function PathCard({ p, navigate, delay }) {
   return (
     <Box
       ref={ref}
-      component="article"
+      component="div"
       onClick={onClick}
       tabIndex={0}
       role="button"

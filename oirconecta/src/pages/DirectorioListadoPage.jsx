@@ -177,7 +177,7 @@ export default function DirectorioListadoPage() {
       <Helmet>
         <title>Directorio de profesionales auditivos en Colombia | OírConecta</title>
         <meta name="description" content="Directorio completo de audiólogos, otorrinolaringólogos y fonoaudiólogos en Colombia. Filtra por ciudad, profesión y póliza. Perfiles verificados." />
-        <link rel="canonical" href="https://oirconecta.com/directorio/listado" />
+        <link rel="canonical" href="https://oirconecta.com/directorio/listado/" />
         <meta property="og:title" content="Directorio de profesionales auditivos en Colombia | OírConecta" />
         <meta property="og:description" content="Audiólogos, otólogos y fonoaudiólogos en Colombia. Filtra por ciudad, profesión y póliza." />
         <meta property="og:url" content="https://oirconecta.com/directorio/listado" />
