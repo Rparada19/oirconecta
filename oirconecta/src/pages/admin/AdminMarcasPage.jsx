@@ -22,7 +22,7 @@ export default function AdminMarcasPage() {
     setLoading(true); setError('');
     try {
       const r = await adminFetch('/brands');
-      const j = await r.json();
+      const j = r.data || {};
       if (!j.success) throw new Error(j.error || 'Error');
       setKnown(j.known || []);
       const map = {};
@@ -37,7 +37,7 @@ export default function AdminMarcasPage() {
     setBusy(slug); setError('');
     try {
       const r = await adminFetch(`/brands/${slug}/regenerate`, { method: 'POST' });
-      const j = await r.json();
+      const j = r.data || {};
       if (!j.success) throw new Error(j.error || 'Error');
       setByslug((m) => ({ ...m, [slug]: j.data }));
     } catch (e) { setError(`${slug}: ${e.message}`); }
