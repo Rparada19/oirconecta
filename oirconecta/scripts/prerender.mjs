@@ -113,7 +113,22 @@ async function main() {
         () => { const r = document.getElementById('root'); return r && r.children.length > 0 && document.body.innerText.trim().length > 200; },
         { timeout: 6000 },
       ).catch(() => {});
-      const html = await page.content();
+      // Emotion (MUI) inyecta el CSS por JS (insertRule) → NO queda en el HTML,
+      // causando un flash sin estilos. Serializamos esas reglas y las incrustamos.
+      const emotionCss = await page.evaluate(() => {
+        let css = '';
+        for (const sheet of Array.from(document.styleSheets)) {
+          const node = sheet.ownerNode;
+          if (node && node.tagName === 'STYLE' && node.hasAttribute('data-emotion')) {
+            try { for (const rule of Array.from(sheet.cssRules)) css += rule.cssText; } catch { /* cross-origin */ }
+          }
+        }
+        return css;
+      }).catch(() => '');
+      let html = await page.content();
+      if (emotionCss && html.includes('</head>')) {
+        html = html.replace('</head>', `<style data-emotion-ssr>${emotionCss}</style></head>`);
+      }
       if (html && html.length > 2000 && html.includes('</body>')) {
         const clean = route.replace(/\/$/, '');
         // Escribe ambas formas para que Render sirva la URL limpia antes del
