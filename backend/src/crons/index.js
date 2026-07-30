@@ -541,6 +541,12 @@ async function tick() {
       return waNudge.processWaAgendarNudges();
     });
 
+    // 9) Refresco editorial de marcas (día 1 del mes 8-9am CO si BRAND_AUTO_ENABLED=true)
+    const brandResult = await runJob('brandInfoRefresh', async () => {
+      const brandInfo = require('../services/brandInfo.service');
+      return brandInfo.refreshStaleOne();
+    });
+
     const hasActivity =
       (apptResult?.sent || 0) > 0 ||
       (remindersResult?.sent || 0) > 0 ||
@@ -552,7 +558,8 @@ async function tick() {
       (blogResult?.generated || 0) > 0 ||
       (followUpResult?.sent || 0) > 0 ||
       (waNudgeResult?.total?.sent || 0) > 0 ||
-      (waNudgeResult?.total?.booked || 0) > 0;
+      (waNudgeResult?.total?.booked || 0) > 0 ||
+      (brandResult?.generated || 0) > 0;
     if (hasActivity) {
       const ms = Date.now() - started;
       const waSent = waNudgeResult?.nudge?.sent || 0;

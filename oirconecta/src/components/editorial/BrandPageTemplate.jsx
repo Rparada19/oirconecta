@@ -17,7 +17,7 @@
  *   categoria: 'audifonos' | 'implantes'   (para breadcrumb)
  *   seoTitle, seoDescription, canonical
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Box, Container, Typography, Grid, Stack } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -348,12 +348,56 @@ function TecnologiaCard({ t, brand, delay }) {
   );
 }
 
+// Render markdown ligero para el formato controlado del contenido de marca
+// (## títulos, párrafos y viñetas "- "). Evita cargar react-markdown aquí.
+function BrandEditorialBody({ md }) {
+  const blocks = [];
+  let list = null;
+  const flush = () => { if (list) { blocks.push({ type: 'ul', items: list }); list = null; } };
+  md.split('\n').forEach((raw) => {
+    const line = raw.trim();
+    if (!line) { flush(); return; }
+    if (line.startsWith('## ')) { flush(); blocks.push({ type: 'h', text: line.slice(3) }); return; }
+    if (line.startsWith('- ') || line.startsWith('* ')) { (list = list || []).push(line.slice(2)); return; }
+    flush(); blocks.push({ type: 'p', text: line });
+  });
+  flush();
+  return (
+    <Box sx={{ maxWidth: 760 }}>
+      {blocks.map((b, i) => {
+        if (b.type === 'h') return (
+          <Typography key={i} component="h2" sx={{ fontFamily: '"Playfair Display", serif', fontSize: { xs: '1.35rem', md: '1.6rem' }, fontWeight: 600, color: C.navy, mt: i ? 4 : 0, mb: 1.5 }}>{b.text}</Typography>
+        );
+        if (b.type === 'ul') return (
+          <Box key={i} component="ul" sx={{ pl: 2.5, my: 1.5 }}>
+            {b.items.map((it, j) => (
+              <Typography key={j} component="li" sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1.05rem', color: C.gris, lineHeight: 1.7, mb: 0.75 }}>{it}</Typography>
+            ))}
+          </Box>
+        );
+        return (
+          <Typography key={i} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1.08rem', color: C.gris, lineHeight: 1.8, mb: 2 }}>{b.text}</Typography>
+        );
+      })}
+    </Box>
+  );
+}
+
 export default function BrandPageTemplate({
   brand, productos = [], tecnologias = [],
   categoria = 'audifonos',
   seoTitle, seoDescription, canonical,
 }) {
   const navigate = useNavigate();
+  const [editorial, setEditorial] = useState(null);
+  useEffect(() => {
+    if (!brand.slug) return;
+    const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
+    fetch(`${API}/brands/${brand.slug}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j?.data?.contenidoMd) setEditorial(j.data.contenidoMd); })
+      .catch(() => {});
+  }, [brand.slug]);
   const baseUrl = `https://oirconecta.com/${categoria}/${brand.slug || ''}`;
   // Canonical con barra final: es la URL que sirve el HTML prerenderizado.
   const canon = (canonical || baseUrl).replace(/\/?$/, '/');
@@ -424,6 +468,18 @@ export default function BrandPageTemplate({
                 </Grid>
               ))}
             </Grid>
+          </Container>
+        </Box>
+      )}
+
+      {/* CONTENIDO EDITORIAL (generado con IA, refrescado por cron) */}
+      {editorial && (
+        <Box component="section" sx={{ bgcolor: C.cremaCalida, py: { xs: 8, md: 12 } }}>
+          <Container maxWidth="lg">
+            <SectionEyebrow color={C.navy} dash={brand.color} sx={{ mb: 3 }}>
+              La marca
+            </SectionEyebrow>
+            <BrandEditorialBody md={editorial} />
           </Container>
         </Box>
       )}

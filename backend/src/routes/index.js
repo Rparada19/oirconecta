@@ -44,6 +44,7 @@ const professionalAdsRoutes = require('./professionalAds.routes');
 const adminMaintenanceRoutes = require('./adminMaintenance.routes');
 const crmRetailAgendaRoutes = require('./crmRetailAgenda.routes');
 const crmComercialAgendaRoutes = require('./crmComercialAgenda.routes');
+const brandsRoutes = require('./brands.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
@@ -85,6 +86,7 @@ router.use('/wa', waCorporateRoutes);
 router.use('/professional/ads', professionalAdsRoutes);
 router.use('/crm/retail-agenda', crmRetailAgendaRoutes);
 router.use('/crm/comercial-agenda', crmComercialAgendaRoutes);
+router.use('/brands', brandsRoutes);
 
 // Info de la API
 router.get('/', (req, res) => {

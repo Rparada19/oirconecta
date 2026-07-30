@@ -2921,3 +2921,19 @@ model CaptacionBotConfig {
 
   @@map("captacion_bot_config")
 }
+
+// Contenido editorial por marca de audífonos, generado con IA (sin scraping)
+// y renderizado en las landings /audifonos/<slug>. El cron mensual y el botón
+// admin lo refrescan; la landing hace fallback al contenido estático si falta.
+model BrandInfo {
+  slug        String   @id            // widex, oticon, phonak...
+  nombre      String
+  categoria   String   @default("audifonos") // audifonos | implantes
+  contenidoMd String?  @db.Text       // secciones editoriales en markdown
+  resumen     String?  @db.Text       // 1-2 frases para meta description
+  generatedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("brand_info")
+}
