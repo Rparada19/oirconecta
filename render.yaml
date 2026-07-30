@@ -100,6 +100,29 @@ services:
       - type: rewrite
         source: /que-debo-saber-sobre-los-implantes-cocleares/*
         destination: https://oirconecta-api.onrender.com/gone/legacy
+      # Prerender (SSG): servir el HTML generado para URLs limpias (sin barra),
+      # ANTES del catch-all. Las páginas viven en dist/<ruta>/index.html.
+      # Hubs de un solo segmento:
+      - { type: rewrite, source: "/nosotros", destination: "/nosotros/index.html" }
+      - { type: rewrite, source: "/servicios", destination: "/servicios/index.html" }
+      - { type: rewrite, source: "/contacto", destination: "/contacto/index.html" }
+      - { type: rewrite, source: "/agendar", destination: "/agendar/index.html" }
+      - { type: rewrite, source: "/comparador", destination: "/comparador/index.html" }
+      - { type: rewrite, source: "/ponte-en-sus-oidos", destination: "/ponte-en-sus-oidos/index.html" }
+      - { type: rewrite, source: "/ecommerce", destination: "/ecommerce/index.html" }
+      - { type: rewrite, source: "/audifonos", destination: "/audifonos/index.html" }
+      - { type: rewrite, source: "/implantes", destination: "/implantes/index.html" }
+      - { type: rewrite, source: "/blog", destination: "/blog/index.html" }
+      - { type: rewrite, source: "/directorio", destination: "/directorio/index.html" }
+      - { type: rewrite, source: "/directorio/listado", destination: "/directorio/listado/index.html" }
+      - { type: rewrite, source: "/profesionales/audiologos", destination: "/profesionales/audiologos/index.html" }
+      - { type: rewrite, source: "/profesionales/otologos", destination: "/profesionales/otologos/index.html" }
+      # Secciones con páginas hoja prerenderizadas (marcas, implantes, blog, profesiones).
+      # NO incluye /directorio/profesional/* (ese es ruta de cliente → cae al catch-all).
+      - { type: rewrite, source: "/audifonos/*", destination: "/audifonos/:splat/index.html" }
+      - { type: rewrite, source: "/implantes/*", destination: "/implantes/:splat/index.html" }
+      - { type: rewrite, source: "/blog/*", destination: "/blog/:splat/index.html" }
+      - { type: rewrite, source: "/directorio/profesion/*", destination: "/directorio/profesion/:splat/index.html" }
       - type: rewrite
         source: /*
         destination: /index.html
