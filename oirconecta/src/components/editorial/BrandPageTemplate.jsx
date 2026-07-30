@@ -355,15 +355,17 @@ export default function BrandPageTemplate({
 }) {
   const navigate = useNavigate();
   const baseUrl = `https://oirconecta.com/${categoria}/${brand.slug || ''}`;
+  // Canonical con barra final: es la URL que sirve el HTML prerenderizado.
+  const canon = (canonical || baseUrl).replace(/\/?$/, '/');
 
   return (
     <Box component="main" sx={{ bgcolor: C.blanco, minHeight: '100vh' }}>
       <Helmet>
         <title>{seoTitle || `Audífonos ${brand.nombre} en Colombia — OírConecta`}</title>
         <meta name="description" content={seoDescription || `Conoce los audífonos ${brand.nombre} disponibles en Colombia. ${brand.eslogan}.`} />
-        <link rel="canonical" href={canonical || baseUrl} />
+        <link rel="canonical" href={canon} />
         <meta property="og:title" content={seoTitle || `${brand.nombre} — OírConecta`} />
-        <meta property="og:url" content={canonical || baseUrl} />
+        <meta property="og:url" content={canon} />
       </Helmet>
 
       <Header />

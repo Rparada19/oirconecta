@@ -361,7 +361,7 @@ export default function BlogPostPage() {
   const seoSlug = post?.slug || slug || '';
 
   const readingMin = useMemo(() => calcReadingTime(post?.contenido), [post?.contenido]);
-  const articleUrl = `https://oirconecta.com/blog/${seoSlug}`;
+  const articleUrl = `https://oirconecta.com/blog/${seoSlug}/`;
   const heroCover = post?.coverUrl || null;
 
   const handleShare = (network) => {

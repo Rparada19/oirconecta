@@ -164,8 +164,10 @@ app.get('/sitemap.xml', async (req, res) => {
     ];
     const BRANDS_AUD = ['widex','oticon','signia','phonak','resound','starkey','beltone','rexton','audioservice','bernafon','hansaton','sonic','unitron'];
     const BRANDS_IMP = ['cochlear','advanced-bionics','med-el'];
-    BRANDS_AUD.forEach((b) => STATIC_URLS.push({ loc: `https://oirconecta.com/audifonos/${b}`, priority: '0.7', changefreq: 'monthly' }));
-    BRANDS_IMP.forEach((b) => STATIC_URLS.push({ loc: `https://oirconecta.com/implantes/${b}`, priority: '0.7', changefreq: 'monthly' }));
+    // Barra final: Render sirve el HTML prerenderizado (dist/<ruta>/index.html)
+    // de forma nativa en la URL con barra; sin barra devuelve el cascarón.
+    BRANDS_AUD.forEach((b) => STATIC_URLS.push({ loc: `https://oirconecta.com/audifonos/${b}/`, priority: '0.7', changefreq: 'monthly' }));
+    BRANDS_IMP.forEach((b) => STATIC_URLS.push({ loc: `https://oirconecta.com/implantes/${b}/`, priority: '0.7', changefreq: 'monthly' }));
     const PROFESIONES = ['audiologia','fonoaudiologia','otorrinolaringologia','otologia'];
     PROFESIONES.forEach((p) => STATIC_URLS.push({ loc: `https://oirconecta.com/directorio/profesion/${p}`, priority: '0.85', changefreq: 'weekly' }));
 
@@ -173,7 +175,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
     const absUrl = (u) => u && u.startsWith('/') ? `https://oirconecta.com${u}` : u;
     const blogUrls = posts.map((p) => ({
-      loc: `https://oirconecta.com/blog/${p.slug}`,
+      loc: `https://oirconecta.com/blog/${p.slug}/`,
       lastmod: (p.updatedAt || p.publishedAt || new Date()).toISOString().split('T')[0],
       changefreq: 'monthly',
       priority: '0.7',
