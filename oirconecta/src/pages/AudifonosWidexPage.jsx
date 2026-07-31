@@ -13,10 +13,10 @@ const BRAND = {
 };
 
 const productos = [
-  { nombre: 'Moment Sheer™', categoria: 'RIC', descripcion: 'Sonido natural con tecnología PureSound™', caracteristicas: ['PureSound™ Technology', 'Bluetooth 5.0', 'Batería recargable 30h', 'App móvil inteligente'], destacado: true },
-  { nombre: 'Evoke™', categoria: 'BTE', descripcion: 'Audífono inteligente con aprendizaje automático', caracteristicas: ['SoundSense Learn', 'Conectividad universal', 'Batería de larga duración', 'Control por voz'], destacado: false },
+  { nombre: 'Allure™', categoria: 'RIC', descripcion: 'Lo último de Widex: sonido natural en tiempo real', caracteristicas: ['Procesamiento de sonido en tiempo real', 'Bluetooth LE Audio / Auracast', 'Batería recargable', 'App móvil inteligente'], destacado: true },
   { nombre: 'SmartRIC™', categoria: 'RIC', descripcion: 'Diseño discreto con máxima conectividad', caracteristicas: ['Diseño ultra-discreto', 'Conectividad avanzada', 'Audio streaming directo', 'Resistente al agua'], destacado: false },
-  { nombre: 'Moment™', categoria: 'RIC', descripcion: 'Audífono premium con tecnología avanzada', caracteristicas: ['PureSound™ Technology', 'Conectividad Bluetooth', 'Batería recargable 24h', 'Control por app'], destacado: false },
+  { nombre: 'Moment Sheer™', categoria: 'RIC', descripcion: 'Sonido natural con tecnología PureSound™', caracteristicas: ['PureSound™ Technology', 'Bluetooth 5.0', 'Batería recargable 30h', 'App móvil inteligente'], destacado: false },
+  { nombre: 'Evoke™', categoria: 'BTE', descripcion: 'Audífono inteligente con aprendizaje automático', caracteristicas: ['SoundSense Learn', 'Conectividad universal', 'Batería de larga duración', 'Control por voz'], destacado: false },
 ];
 
 const tecnologias = [

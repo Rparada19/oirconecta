@@ -348,9 +348,20 @@ function TecnologiaCard({ t, brand, delay }) {
   );
 }
 
+// Parser inline: convierte **negrita** en <strong> y limpia markers sueltos.
+function renderInline(text) {
+  const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(p)) {
+      return <Box key={i} component="strong" sx={{ fontWeight: 700, color: C.navy }}>{p.slice(2, -2)}</Box>;
+    }
+    return <React.Fragment key={i}>{p.replace(/\*\*/g, '')}</React.Fragment>;
+  });
+}
+
 // Render markdown ligero para el formato controlado del contenido de marca
 // (## títulos, párrafos y viñetas "- "). Evita cargar react-markdown aquí.
-function BrandEditorialBody({ md }) {
+function BrandEditorialBody({ md, accent }) {
   const blocks = [];
   let list = null;
   const flush = () => { if (list) { blocks.push({ type: 'ul', items: list }); list = null; } };
@@ -363,20 +374,26 @@ function BrandEditorialBody({ md }) {
   });
   flush();
   return (
-    <Box sx={{ maxWidth: 760 }}>
+    <Box sx={{ columnGap: { md: 6 }, columnCount: { xs: 1 } }}>
       {blocks.map((b, i) => {
         if (b.type === 'h') return (
-          <Typography key={i} component="h2" sx={{ fontFamily: '"Playfair Display", serif', fontSize: { xs: '1.35rem', md: '1.6rem' }, fontWeight: 600, color: C.navy, mt: i ? 4 : 0, mb: 1.5 }}>{b.text}</Typography>
+          <Box key={i} sx={{ mt: i ? 5 : 0, mb: 2, breakInside: 'avoid' }}>
+            <Box sx={{ width: 40, height: 3, bgcolor: accent, borderRadius: 2, mb: 1.5 }} />
+            <Typography component="h2" sx={{ fontFamily: '"Playfair Display", serif', fontSize: { xs: '1.45rem', md: '1.75rem' }, fontWeight: 600, color: C.navy, lineHeight: 1.2 }}>{b.text}</Typography>
+          </Box>
         );
         if (b.type === 'ul') return (
-          <Box key={i} component="ul" sx={{ pl: 2.5, my: 1.5 }}>
+          <Box key={i} sx={{ my: 2.5, breakInside: 'avoid' }}>
             {b.items.map((it, j) => (
-              <Typography key={j} component="li" sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1.05rem', color: C.gris, lineHeight: 1.7, mb: 0.75 }}>{it}</Typography>
+              <Box key={j} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 1.5 }}>
+                <CheckCircleOutline sx={{ fontSize: 20, color: accent, mt: 0.3, flexShrink: 0 }} />
+                <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1.05rem', color: C.gris, lineHeight: 1.7 }}>{renderInline(it)}</Typography>
+              </Box>
             ))}
           </Box>
         );
         return (
-          <Typography key={i} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1.08rem', color: C.gris, lineHeight: 1.8, mb: 2 }}>{b.text}</Typography>
+          <Typography key={i} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1.1rem', color: C.gris, lineHeight: 1.85, mb: 2.5, textAlign: 'justify', hyphens: 'auto' }}>{renderInline(b.text)}</Typography>
         );
       })}
     </Box>
@@ -474,12 +491,21 @@ export default function BrandPageTemplate({
 
       {/* CONTENIDO EDITORIAL (generado con IA, refrescado por cron) */}
       {editorial && (
-        <Box component="section" sx={{ bgcolor: C.cremaCalida, py: { xs: 8, md: 12 } }}>
-          <Container maxWidth="lg">
-            <SectionEyebrow color={C.navy} dash={brand.color} sx={{ mb: 3 }}>
-              La marca
-            </SectionEyebrow>
-            <BrandEditorialBody md={editorial} />
+        <Box component="section" sx={{ bgcolor: C.blanco, py: { xs: 8, md: 12 } }}>
+          <Container maxWidth="md">
+            <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
+              <SectionEyebrow color={C.navy} dash={brand.color} sx={{ mb: 3, justifyContent: 'center', display: 'inline-flex' }}>
+                La marca
+              </SectionEyebrow>
+              <SectionTitle before="Conoce" accent={brand.nombre} size="md" accentColor={brand.color} />
+            </Box>
+            <Box sx={{
+              bgcolor: C.cremaCalida, borderRadius: '14px',
+              p: { xs: 3, md: 6 }, borderTop: `4px solid ${brand.color}`,
+              boxShadow: '0 20px 50px rgba(15,42,74,0.06)',
+            }}>
+              <BrandEditorialBody md={editorial} accent={brand.color} />
+            </Box>
           </Container>
         </Box>
       )}
