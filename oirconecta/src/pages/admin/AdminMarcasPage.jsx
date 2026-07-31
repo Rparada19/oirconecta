@@ -21,7 +21,7 @@ export default function AdminMarcasPage() {
   const load = async () => {
     setLoading(true); setError('');
     try {
-      const r = await adminFetch('/brands');
+      const r = await adminFetch('/api/brands');
       const j = r.data || {};
       if (!j.success) throw new Error(j.error || 'Error');
       setKnown(j.known || []);
@@ -36,7 +36,7 @@ export default function AdminMarcasPage() {
   const regenerar = async (slug) => {
     setBusy(slug); setError('');
     try {
-      const r = await adminFetch(`/brands/${slug}/regenerate`, { method: 'POST' });
+      const r = await adminFetch(`/api/brands/${slug}/regenerate`, { method: 'POST' });
       const j = r.data || {};
       if (!j.success) throw new Error(j.error || 'Error');
       setByslug((m) => ({ ...m, [slug]: j.data }));

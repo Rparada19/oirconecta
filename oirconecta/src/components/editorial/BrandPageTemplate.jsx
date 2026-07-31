@@ -393,7 +393,7 @@ export default function BrandPageTemplate({
   useEffect(() => {
     if (!brand.slug) return;
     const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
-    fetch(`${API}/brands/${brand.slug}`)
+    fetch(`${API}/api/brands/${brand.slug}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => { if (j?.data?.contenidoMd) setEditorial(j.data.contenidoMd); })
       .catch(() => {});
