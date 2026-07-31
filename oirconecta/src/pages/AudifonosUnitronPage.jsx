@@ -13,8 +13,8 @@ const BRAND = {
 };
 
 const productos = [
-  { nombre: 'Blu RT', categoria: 'RIC', descripcion: 'Recargable con conectividad universal', caracteristicas: ['Bluetooth universal', 'Recargable', 'Audífono dual', 'App'], destacado: true },
-  { nombre: 'Vivante', categoria: 'RIC', descripcion: 'Audífono con coaching de adaptación', caracteristicas: ['Coaching adaptativo', 'Recargable', 'Bluetooth', 'App Unitron Remote Plus'], destacado: false },
+  { nombre: 'Vivante', categoria: 'RIC', descripcion: 'Lo último de Unitron: nueva plataforma con coaching de adaptación', caracteristicas: ['Coaching adaptativo', 'Recargable', 'Bluetooth', 'App Unitron Remote Plus'], destacado: true },
+  { nombre: 'Blu RT', categoria: 'RIC', descripcion: 'Recargable con conectividad universal', caracteristicas: ['Bluetooth universal', 'Recargable', 'Audífono dual', 'App'], destacado: false },
   { nombre: 'Moxi V', categoria: 'BTE', descripcion: 'Robusto y resistente para vida activa', caracteristicas: ['IP68', 'Conectividad', 'Larga vida', 'Discreto'], destacado: false },
   { nombre: 'Discover Next', categoria: 'CIC', descripcion: 'Custom-made con la última tecnología', caracteristicas: ['Custom-made', 'Discreto', 'Procesamiento avanzado', 'Adaptación'], destacado: false },
 ];

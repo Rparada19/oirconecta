@@ -14,7 +14,7 @@ const BRAND = {
 
 const productos = [
   { nombre: 'SYNCHRONY 2', categoria: 'Implante interno', descripcion: 'Compatible con resonancia magnética 3T sin necesidad de cirugía adicional', caracteristicas: ['Compatible 3T MRI', 'Diseño anatómico', 'Larga durabilidad', 'EAS (audición eléctrica + acústica)'], destacado: true },
-  { nombre: 'SONNET 2', categoria: 'Procesador externo', descripcion: 'Procesador detrás de la oreja con conectividad', caracteristicas: ['Resistente al agua', 'Conectividad inalámbrica', 'Personalización', 'Audífono integrado opcional'], destacado: false },
+  { nombre: 'SONNET 3', categoria: 'Procesador externo', descripcion: 'Procesador detrás de la oreja con conectividad y control por app', caracteristicas: ['Resistente al agua', 'Conectividad inalámbrica', 'App AudioKey 2', 'Personalización'], destacado: false },
   { nombre: 'RONDO 3', categoria: 'Off-the-ear', descripcion: 'Procesador single-unit recargable', caracteristicas: ['Diseño off-the-ear único', 'Recargable inalámbrico', 'Discreto', 'Compatible app AudioKey 2'], destacado: false },
 ];
 

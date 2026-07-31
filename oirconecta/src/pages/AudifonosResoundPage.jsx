@@ -13,9 +13,9 @@ const BRAND = {
 };
 
 const productos = [
-  { nombre: 'OMNIA', categoria: 'RIC', descripcion: 'Conversaciones más claras en cualquier entorno', caracteristicas: ['Smart Hearing', 'Made for iPhone', 'Recargable', 'App ReSound Smart 3D'], destacado: true },
+  { nombre: 'Nexia', categoria: 'RIC', descripcion: 'Lo último de ReSound: primer audífono con Bluetooth LE Audio', caracteristicas: ['Bluetooth LE Audio', 'Auracast', 'Recargable', 'App ReSound Smart 3D'], destacado: true },
   { nombre: 'ONE', categoria: 'RIC', descripcion: 'Sonido individualizado con M&RIE', caracteristicas: ['Mic & Receiver In Ear', 'Direccionalidad', 'Recargable', 'Bluetooth'], destacado: false },
-  { nombre: 'Nexia', categoria: 'RIC', descripcion: 'Bluetooth LE Audio para próxima generación', caracteristicas: ['Bluetooth LE Audio', 'Auracast', 'Recargable', 'App'], destacado: false },
+  { nombre: 'OMNIA', categoria: 'RIC', descripcion: 'Conversaciones más claras en cualquier entorno', caracteristicas: ['Smart Hearing', 'Made for iPhone', 'Recargable', 'App ReSound Smart 3D'], destacado: false },
   { nombre: 'Key', categoria: 'BTE', descripcion: 'Solución accesible para todos los grados', caracteristicas: ['Conectividad básica', 'Robusto', 'Larga vida útil', 'Compatible apps'], destacado: false },
 ];
 

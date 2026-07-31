@@ -13,9 +13,9 @@ const BRAND = {
 };
 
 const productos = [
-  { nombre: 'Audéo Lumity', categoria: 'RIC', descripcion: 'AutoSense OS™ 5.0 con SmartSpeech™', caracteristicas: ['AutoSense 5.0', 'SmartSpeech', 'Bluetooth universal', 'Recargable'], destacado: true },
+  { nombre: 'Audéo Sphere Infinio', categoria: 'RIC', descripcion: 'Lo último de Phonak: primer audífono con chip de IA dedicado al habla', caracteristicas: ['Chip DEEPSONIC de IA', 'Separación voz-ruido', 'Bluetooth LE Audio', 'Recargable'], destacado: true },
   { nombre: 'Naída Lumity', categoria: 'BTE', descripcion: 'Para pérdidas severas a profundas', caracteristicas: ['Potencia máxima', 'Roger compatible', 'IP68', 'Streaming'], destacado: false },
-  { nombre: 'Audéo Sphere', categoria: 'RIC', descripcion: 'Primer audífono con IA dedicada al habla', caracteristicas: ['IA en chip dedicado', 'Reducción de ruido', 'Recargable', 'Bluetooth LE'], destacado: false },
+  { nombre: 'Audéo Lumity', categoria: 'RIC', descripcion: 'AutoSense OS™ 5.0 con SmartSpeech™', caracteristicas: ['AutoSense 5.0', 'SmartSpeech', 'Bluetooth universal', 'Recargable'], destacado: false },
   { nombre: 'Slim', categoria: 'RIC', descripcion: 'Diseño moderno y discreto', caracteristicas: ['Diseño slim', 'Recargable', 'Bluetooth', 'IP68'], destacado: false },
 ];
 

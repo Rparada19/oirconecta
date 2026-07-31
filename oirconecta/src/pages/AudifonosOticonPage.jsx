@@ -13,8 +13,8 @@ const BRAND = {
 };
 
 const productos = [
-  { nombre: 'Real™', categoria: 'RIC', descripcion: 'Procesamiento del sonido por el cerebro', caracteristicas: ['BrainHearing™', 'MoreSound Intelligence™', 'Bluetooth Low Energy', 'Conectividad iPhone/Android'], destacado: true },
-  { nombre: 'More™', categoria: 'RIC', descripcion: 'Audífono con inteligencia artificial', caracteristicas: ['Aprendizaje profundo', 'Conectividad total', 'Recargable', 'App móvil'], destacado: false },
+  { nombre: 'Intent™', categoria: 'RIC', descripcion: 'Lo último de Oticon: sensores 4D que leen tu intención de escucha', caracteristicas: ['Sensores 4D', 'Deep Neural Network', 'Bluetooth LE Audio', 'Recargable'], destacado: true },
+  { nombre: 'Real™', categoria: 'RIC', descripcion: 'Procesamiento del sonido por el cerebro', caracteristicas: ['BrainHearing™', 'MoreSound Intelligence™', 'Bluetooth Low Energy', 'Conectividad iPhone/Android'], destacado: false },
   { nombre: 'Zircon', categoria: 'BTE', descripcion: 'Solución accesible y robusta', caracteristicas: ['Filtrado de ruido', 'IP68', 'Compatible con accesorios', 'Larga vida útil'], destacado: false },
   { nombre: 'Own™', categoria: 'ITC', descripcion: 'Personalizado con tu propio nombre', caracteristicas: ['Custom-made', 'Discreto', 'Adaptación profesional', 'Garantía Oticon'], destacado: false },
 ];

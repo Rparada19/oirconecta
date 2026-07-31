@@ -13,8 +13,8 @@ const BRAND = {
 };
 
 const productos = [
-  { nombre: 'Genesis AI', categoria: 'RIC', descripcion: 'Procesador Neuro de nueva generación', caracteristicas: ['Procesador Neuro', 'Edge Mode+', 'Recargable', 'Salud y bienestar'], destacado: true },
-  { nombre: 'Evolv AI', categoria: 'RIC', descripcion: 'Sonido más natural con Edge Mode', caracteristicas: ['Edge Mode', 'Salud auditiva', 'Recargable', 'App Thrive'], destacado: false },
+  { nombre: 'Edge AI', categoria: 'RIC', descripcion: 'Lo último de Starkey: IA en tiempo real sobre el procesador Neuro', caracteristicas: ['Edge Mode con IA', 'Procesador Neuro', 'Recargable', 'Salud y bienestar'], destacado: true },
+  { nombre: 'Genesis AI', categoria: 'RIC', descripcion: 'Procesador Neuro de nueva generación', caracteristicas: ['Procesador Neuro', 'Edge Mode+', 'Recargable', 'Salud y bienestar'], destacado: false },
   { nombre: 'Custom', categoria: 'ITC', descripcion: 'Hecho a medida para tu oído', caracteristicas: ['Custom-made', 'Salud y traducción', 'App Thrive', 'Discreto'], destacado: false },
   { nombre: 'Picasso', categoria: 'CIC', descripcion: 'Casi invisible con IA', caracteristicas: ['Discretísimo', 'Procesador AI', 'Conectividad', 'Custom-made'], destacado: false },
 ];

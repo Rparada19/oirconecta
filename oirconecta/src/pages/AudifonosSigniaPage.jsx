@@ -13,7 +13,7 @@ const BRAND = {
 };
 
 const productos = [
-  { nombre: 'Pure Charge&Go', categoria: 'RIC', descripcion: 'Recargable con Own Voice Processing', caracteristicas: ['Own Voice Processing', 'Recargable', 'Bluetooth', 'Conectividad'], destacado: true },
+  { nombre: 'Pure Charge&Go IX', categoria: 'RIC', descripcion: 'Lo último de Signia: plataforma Integrated Xperience', caracteristicas: ['Integrated Xperience (IX)', 'Enfoque multi-interlocutor', 'Recargable', 'Bluetooth'], destacado: true },
   { nombre: 'Motion Charge&Go', categoria: 'BTE', descripcion: 'Movimiento y rendimiento avanzado', caracteristicas: ['Motion sensors', 'Recargable', 'IP68', 'Conectividad'], destacado: false },
   { nombre: 'Styletto', categoria: 'RIC', descripcion: 'Diseño elegante y discreto', caracteristicas: ['Diseño slim', 'Recargable', 'Bluetooth', 'Estilo único'], destacado: false },
   { nombre: 'Active', categoria: 'CIC', descripcion: 'Pequeño y potente para vida activa', caracteristicas: ['Compacto', 'Resistente', 'Procesamiento avanzado', 'Discreto'], destacado: false },
