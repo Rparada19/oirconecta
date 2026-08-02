@@ -27,6 +27,29 @@
     <!-- Meta / Facebook domain verification (Business Manager oirconecta) -->
     <meta name="facebook-domain-verification" content="sblh2pbw09t6vjegtlquhquen0mkid" />
 
+    <!-- Google tag (gtag.js) — Consent Mode: arranca denegado; el banner de
+         cookies otorga consentimiento explícito (ver src/utils/cookieConsent.js). -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SPKE096LQS"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        analytics_storage: 'denied',
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied'
+      });
+      try {
+        var gaStored = localStorage.getItem('oirconecta_cookie_consent');
+        if (gaStored === 'accepted') {
+          gtag('consent', 'update', { analytics_storage: 'granted' });
+        }
+      } catch (e) {}
+      gtag('js', new Date());
+      gtag('config', 'G-SPKE096LQS');
+    </script>
+    <!-- End Google tag -->
+
     <!-- Meta Pixel (remarketing + audiencias) — arranca revocado; el banner
          de cookies otorga consentimiento explícito. -->
     <script>

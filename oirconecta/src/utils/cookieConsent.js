@@ -30,24 +30,33 @@ function applyToMetaPixel(value) {
   try { window.fbq('consent', value === 'accepted' ? 'grant' : 'revoke'); } catch {}
 }
 
+function applyToGA4(value) {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+  try {
+    window.gtag('consent', 'update', { analytics_storage: value === 'accepted' ? 'granted' : 'denied' });
+  } catch {}
+}
+
 export function setConsent(value) {
   if (value !== 'accepted' && value !== 'rejected') return;
   try { localStorage.setItem(LS_KEY, value); } catch {}
   applyToMetaPixel(value);
+  applyToGA4(value);
   try { window.dispatchEvent(new CustomEvent(EVT, { detail: { value } })); } catch {}
 }
 
 export function clearConsent() {
   try { localStorage.removeItem(LS_KEY); } catch {}
   applyToMetaPixel('rejected');
+  applyToGA4('rejected');
   try { window.dispatchEvent(new CustomEvent(EVT, { detail: { value: null } })); } catch {}
 }
 
-/** Al montar la app: re-aplica el estado guardado al pixel (por si el snippet
- *  de index.html se cargó antes de tiempo). */
+/** Al montar la app: re-aplica el estado guardado al pixel y a GA4 (por si el
+ *  snippet de index.html se cargó antes de tiempo). */
 export function initConsent() {
   const v = getConsent();
-  if (v === 'accepted') applyToMetaPixel('accepted');
+  if (v === 'accepted') { applyToMetaPixel('accepted'); applyToGA4('accepted'); }
 }
 
 /** Suscribirse a cambios (para reaccionar desde React sin re-render manual). */
