@@ -398,6 +398,7 @@ export default function BlogPostPage() {
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
         <link rel="canonical" href={articleUrl} />
+        {notFound && <meta name="robots" content="noindex, follow" />}
         <meta property="og:type" content="article" />
         <meta property="og:title" content={seoTitle} />
         <meta property="og:description" content={seoDesc} />

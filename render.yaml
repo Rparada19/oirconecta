@@ -100,6 +100,12 @@ services:
       - type: rewrite
         source: /que-debo-saber-sobre-los-implantes-cocleares/*
         destination: https://oirconecta-api.onrender.com/gone/legacy
+      - type: rewrite
+        source: /ejercicios-que-nos-ayudan-a-adaptarnos-a-los-audifonos-e-implantes/*
+        destination: https://oirconecta-api.onrender.com/gone/legacy
+      - type: rewrite
+        source: /entrenamiento-auditivo-y-rehabilitacion-auditiva/*
+        destination: https://oirconecta-api.onrender.com/gone/legacy
       # Prerender (SSG): servir el HTML generado para URLs limpias (sin barra),
       # ANTES del catch-all. Las páginas viven en dist/<ruta>/index.html.
       # Hubs de un solo segmento:
