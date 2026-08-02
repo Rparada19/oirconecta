@@ -8,6 +8,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Box, IconButton, Backdrop, Typography, useMediaQuery, useTheme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
@@ -21,14 +22,32 @@ const ACTION_TYPE = 'POPUP_BIENVENIDA';
 const POLL_MS = 60 * 1000;
 const SEEN_KEY = 'oc_popup_seen';
 
+// Rutas donde el pop-up nunca debe interrumpir: flujo de agendamiento
+// (propio y con profesional), perfiles de profesionales, y lectura de
+// artículos del blog (contenido de salud, no debe cortarse con publicidad).
+const EXCLUDED_PREFIXES = [
+  '/agendar',
+  '/directorio/profesional/',
+  '/blog/',
+  '/portal-crm',
+  '/admin',
+  '/profesional',
+];
+
+function isExcludedPath(pathname) {
+  return EXCLUDED_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
 export default function PopupBienvenida() {
   const preview = usePreviewMode();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [camp, setCamp] = useState(null);
   const [shown, setShown] = useState(false);
   const [canClose, setCanClose] = useState(false);
   const [impressed, setImpressed] = useState(false);
+  const excluded = isExcludedPath(location.pathname);
 
   // Polling de campaña activa
   useEffect(() => {
@@ -42,9 +61,15 @@ export default function PopupBienvenida() {
     return () => { alive = false; clearInterval(t); };
   }, []);
 
+  // Si el usuario navega a una ruta excluida mientras el popup está abierto,
+  // ciérralo de inmediato (ej: le da clic a "Reservar consulta" y navega).
+  useEffect(() => {
+    if (excluded && shown) setShown(false);
+  }, [excluded, shown]);
+
   // Mostrar respetando frecuencia
   useEffect(() => {
-    if (!camp) return;
+    if (!camp || excluded) return;
     rememberUtm(camp);
 
     const cfg = camp.config || {};
@@ -66,7 +91,7 @@ export default function PopupBienvenida() {
     }, delaySec * 1000);
 
     return () => clearTimeout(showTimer);
-  }, [camp]);
+  }, [camp, excluded]);
 
   // Tracking de impresión una sola vez
   useEffect(() => {
