@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { Box, Container, Grid, Typography, Link, IconButton, Divider, Stack } from '@mui/material';
-import { Facebook, Instagram, LinkedIn, YouTube, Email, Phone, LocationOn } from '@mui/icons-material';
+import { Facebook, Instagram, Email, Phone, LocationOn } from '@mui/icons-material';
 import { directoryProfesionToSlug } from '../utils/directoryPresentation';
 import { getPhoneHref, getWhatsAppDisplay } from '../config/publicSite';
 import NewsletterSignup from './NewsletterSignup';
@@ -40,8 +40,6 @@ const SECTIONS = [
 const SOCIALS = [
   { icon: <Instagram sx={{ fontSize: 20 }} />, label: 'Instagram', href: 'https://instagram.com/oirconecta' },
   { icon: <Facebook sx={{ fontSize: 20 }} />,  label: 'Facebook',  href: 'https://facebook.com/oirconecta' },
-  { icon: <LinkedIn sx={{ fontSize: 20 }} />,  label: 'LinkedIn',  href: 'https://linkedin.com/company/oirconecta' },
-  { icon: <YouTube sx={{ fontSize: 20 }} />,   label: 'YouTube',   href: 'https://youtube.com/@oirconecta' },
 ];
 
 const CONTACT = [
@@ -182,9 +180,6 @@ const Footer = () => (
                 </IconButton>
               ))}
             </Stack>
-            <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.38)' }}>
-              Redes enlazadas a contacto hasta publicar perfiles oficiales.
-            </Typography>
           </Grid>
 
           {/* Link columns */}

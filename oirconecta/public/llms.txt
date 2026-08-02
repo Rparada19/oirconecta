@@ -1,0 +1,30 @@
+# OírConecta
+
+> Directorio y red de servicios auditivos en Colombia. Conecta a personas con
+> pérdida auditiva y a sus familias con audiólogos, otorrinolaringólogos,
+> fonoaudiólogos y centros auditivos verificados en todo el país, además de
+> información imparcial sobre marcas y tipos de audífonos e implantes cocleares.
+
+OírConecta es una plataforma de referencia en salud auditiva en Colombia, sin
+venta forzada ni sesgo de marca. Ofrece un directorio nacional de
+profesionales verificados, comparativas de las principales marcas de
+audífonos (Widex, Oticon, Phonak, Signia, ReSound, Starkey, Beltone, Rexton,
+AudioService, Bernafon, Hansaton, Unitron, Sonic) e implantes cocleares
+(Cochlear, Advanced Bionics, MED-EL), un simulador interactivo de pérdida
+auditiva ("Ponte en sus oídos"), y un blog educativo con más de cincuenta
+artículos sobre audición, cuidado de audífonos y salud auditiva.
+
+## Páginas principales
+
+- [Inicio](https://oirconecta.com/): presentación general y accesos rápidos.
+- [Directorio de profesionales](https://oirconecta.com/directorio): búsqueda de audiólogos, otorrinos, fonoaudiólogos y otólogos por ciudad y especialidad.
+- [Audífonos](https://oirconecta.com/audifonos): guía de marcas y tipos de audífonos disponibles en Colombia.
+- [Implantes cocleares](https://oirconecta.com/implantes): información sobre soluciones implantables.
+- [Simulador de pérdida auditiva](https://oirconecta.com/ponte-en-sus-oidos): experiencia interactiva para entender distintos niveles de pérdida auditiva.
+- [Blog](https://oirconecta.com/blog): artículos educativos sobre audición y audífonos.
+- [Agendar cita](https://oirconecta.com/agendar): agendamiento con especialistas de la red.
+
+## Notas
+
+OírConecta no vende audífonos directamente ni sustituye una valoración
+audiológica profesional; conecta a los usuarios con especialistas verificados.
