@@ -139,6 +139,7 @@ app.get('/sitemap.xml', async (req, res) => {
       { loc: 'https://oirconecta.com/servicios', priority: '0.7', changefreq: 'monthly',
         image: img('audiologo-prueba-audicion.jpg', 'Audiólogo realizando prueba de audición') },
       { loc: 'https://oirconecta.com/contacto', priority: '0.5', changefreq: 'monthly' },
+      { loc: 'https://oirconecta.com/unete', priority: '0.8', changefreq: 'monthly' },
       { loc: 'https://oirconecta.com/agendar', priority: '0.8', changefreq: 'monthly',
         image: img('audiologa-consulta-paciente.jpg', 'Agenda cita con audióloga en Colombia') },
       { loc: 'https://oirconecta.com/directorio', priority: '0.9', changefreq: 'daily',
