@@ -2595,8 +2595,8 @@ model IaConversationPack {
   usedConversations  Int          @default(0)
   /// Precio pagado COP (sin IVA) al momento de compra
   priceCOP           Int
-  /// Fecha calculada al comprar: purchasedAt + duracionDias
-  expiresAt          DateTime
+  /// Fecha calculada al comprar: purchasedAt + duracionDias. null = sin vencimiento.
+  expiresAt          DateTime?
   purchasedAt        DateTime     @default(now())
   /// ACTIVE | EXPIRED | DEPLETED | REFUNDED
   status             String       @default("ACTIVE")

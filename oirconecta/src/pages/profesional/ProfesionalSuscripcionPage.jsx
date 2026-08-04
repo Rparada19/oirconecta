@@ -3,6 +3,7 @@ import {
   Box, Card, CardContent, Typography, Chip, Stack, Button, Grid, Divider,
   LinearProgress, CircularProgress, Table, TableHead, TableBody, TableRow, TableCell, Alert,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar,
+  ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -29,6 +30,12 @@ const STATUS_META = {
 const fmtCOP = (n) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
 
+const TIERS = [
+  { key: 'VISIBLE', label: 'Visible', desc: 'Te encuentran en el directorio' },
+  { key: 'PRO', label: 'Pro', desc: 'Agenda tus citas online', highlight: true, badge: 'MÁS POPULAR' },
+  { key: 'TOTAL', label: 'Total', desc: 'Agente virtual + WhatsApp', badge: 'CON IA' },
+];
+
 export default function ProfesionalSuscripcionPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +43,7 @@ export default function ProfesionalSuscripcionPage() {
   const [motivo, setMotivo] = useState('');
   const [working, setWorking] = useState(false);
   const [toast, setToast] = useState(null);
+  const [periodo, setPeriodo] = useState('ANUAL');
 
   const reload = () => {
     directoryApi.get('/api/subscriptions/me')
@@ -148,7 +156,7 @@ export default function ProfesionalSuscripcionPage() {
 
           {s.status === 'TRIAL' && (
             <Alert severity="info" sx={{ mt: 3, borderRadius: '8px' }}>
-              Estás disfrutando de tu prueba gratuita de 120 días. Al vencer, elige un plan para mantener tu perfil activo.
+              Estás disfrutando de tu prueba gratuita. Al vencer, elige un plan para mantener tu perfil activo.
             </Alert>
           )}
           {(s.status === 'PAST_DUE' || s.status === 'SUSPENDED') && (
@@ -162,45 +170,52 @@ export default function ProfesionalSuscripcionPage() {
       </Card>
 
       {/* Planes disponibles */}
-      <Typography variant="h6" sx={{ fontWeight: 800, color: NAVY, mb: 2, letterSpacing: '-0.01em' }}>
-        Planes disponibles
-      </Typography>
+      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.5} sx={{ mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, color: NAVY, letterSpacing: '-0.01em' }}>
+          Planes disponibles
+        </Typography>
+        <ToggleButtonGroup
+          value={periodo} exclusive size="small"
+          onChange={(_, v) => v && setPeriodo(v)}
+          sx={{ '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 700, px: 2, borderColor: '#e5e7eb', color: '#64748b',
+            '&.Mui-selected': { bgcolor: ACCENT, color: '#fff', '&:hover': { bgcolor: ACCENT } } } }}>
+          <ToggleButton value="MENSUAL">Mensual</ToggleButton>
+          <ToggleButton value="ANUAL">Anual · ahorra</ToggleButton>
+        </ToggleButtonGroup>
+      </Stack>
       {data.perfil?.personaTipo === 'JURIDICA' && (
         <Alert severity="info" sx={{ mb: 2, borderRadius: '8px' }}>
-          Tu cuenta está registrada como <strong>empresa o centro</strong>: la facturación es de $20.000 mensuales por cada sede registrada.
+          Tu cuenta es <strong>empresa o centro</strong>: cada sede se registra y factura como una suscripción independiente. Ej. 10 sedes con agenda = 10 planes Pro.
         </Alert>
       )}
       <Grid container spacing={2} sx={{ mb: 4 }} alignItems="stretch">
-        {data.plansDisponibles?.map((p) => {
-          const isEmpresa = p.code === 'EMPRESA';
-          const isMensual = (p.duracionDias || 30) < 90;
-          // Plan 2 es el destacado por defecto (entrada al ecosistema completo)
-          const highlight = p.code === 'PLAN_2_ANUAL';
-          const badge = highlight ? 'MÁS POPULAR'
-            : p.code === 'PLAN_3_MENSUAL' ? 'CON IA'
-            : null;
-          const sedeCount = p.detalle?.sedeCount || 1;
-          const periodoLabel = isMensual ? 'mes' : 'año';
+        {TIERS.map((tier) => {
+          const p = data.plansDisponibles?.find((x) => x.tier === tier.key && x.periodo === periodo);
+          if (!p) return null;
+          const highlight = !!tier.highlight;
+          const periodoLabel = periodo === 'MENSUAL' ? 'mes' : 'año';
           const commitmentMonths = p.minCommitmentMonths;
-          // 3 columnas para Plan 1/2/3; full width para legacy EMPRESA
-          const colSize = isEmpresa ? 12 : 4;
+          const trialDays = p.trialDays;
           return (
-            <Grid item xs={12} md={colSize} key={p.id}>
+            <Grid item xs={12} md={4} key={tier.key}>
               <Card sx={{
                 borderRadius: '14px',
                 border: highlight ? `2px solid ${GOLD}` : '1px solid #e5e7eb',
                 position: 'relative', height: '100%',
                 display: 'flex', flexDirection: 'column',
               }}>
-                {badge && (
-                  <Chip label={badge} size="small"
+                {tier.badge && (
+                  <Chip label={tier.badge} size="small"
                     sx={{ position: 'absolute', top: 12, right: 12,
                       bgcolor: highlight ? GOLD : ACCENT, color: '#fff',
                       fontWeight: 800, fontSize: '0.65rem' }} />
                 )}
                 <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <Typography sx={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, mb: 0.5, minHeight: 18 }}>
-                    {p.nombre}
+                  <Typography sx={{ fontSize: '1.05rem', fontWeight: 800, color: NAVY, lineHeight: 1.1 }}>
+                    {tier.label}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', mb: 1.25, minHeight: 30 }}>
+                    {tier.desc}
                   </Typography>
                   <Stack direction="row" alignItems="baseline" spacing={0.5}>
                     <Typography sx={{ fontSize: '2rem', fontWeight: 900, color: NAVY }}>
@@ -210,20 +225,19 @@ export default function ProfesionalSuscripcionPage() {
                       / {periodoLabel}
                     </Typography>
                   </Stack>
-                  {isEmpresa && p.detalle && (
-                    <Typography sx={{ fontSize: '0.8125rem', color: NAVY, mb: 0.5, fontWeight: 600 }}>
-                      {fmtCOP(p.detalle.unitCOP)} × {sedeCount} sede{sedeCount === 1 ? '' : 's'}
-                    </Typography>
-                  )}
                   <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', mb: 0.5 }}>
                     + IVA 19% → total {fmtCOP(p.totalCOP)}
                   </Typography>
+                  {trialDays > 0 ? (
+                    <Typography sx={{ fontSize: '0.75rem', color: '#15803d', mb: commitmentMonths ? 0.25 : 2, fontWeight: 700 }}>
+                      {trialDays} días de prueba gratis
+                    </Typography>
+                  ) : (!commitmentMonths && <Box sx={{ mb: 2 }} />)}
                   {commitmentMonths && (
                     <Typography sx={{ fontSize: '0.75rem', color: '#a16207', mb: 2, fontWeight: 600 }}>
                       Permanencia mínima {commitmentMonths} meses
                     </Typography>
                   )}
-                  {!commitmentMonths && <Box sx={{ mb: 2 }} />}
 
                   <Stack spacing={0.75} sx={{ mb: 3, flex: 1 }}>
                     {(p.beneficios || []).map((b) => (

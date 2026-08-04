@@ -2,8 +2,8 @@
  * F5.4 — Gestión comercial de paquetes de conversaciones IA.
  *
  * Catálogo fijo (definido por producto, no vendible fuera de esto):
- *  - PACK_100:  100 conversaciones, $80.000 COP, 40 días de vigencia
- *  - PACK_300:  300 conversaciones, $200.000 COP, 60 días de vigencia
+ *  - PACK_100:  100 conversaciones, $30.000 COP, sin vencimiento
+ *  - PACK_300:  300 conversaciones, $55.000 COP, sin vencimiento
  *
  * En esta primera versión el admin "vende" el pack manualmente (marca ACTIVE
  * directo). Cuando conectemos Wompi, el flujo self-service creará Payment
@@ -13,9 +13,10 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// durationDays: null → el pack no vence (expiresAt queda null).
 const PACK_CATALOG = {
-  PACK_100: { code: 'PACK_100', totalConversations: 100, priceCOP: 80000,  durationDays: 40, label: 'Paquete 100 conversaciones' },
-  PACK_300: { code: 'PACK_300', totalConversations: 300, priceCOP: 200000, durationDays: 60, label: 'Paquete 300 conversaciones' },
+  PACK_100: { code: 'PACK_100', totalConversations: 100, priceCOP: 30000, durationDays: null, label: 'Paquete 100 conversaciones' },
+  PACK_300: { code: 'PACK_300', totalConversations: 300, priceCOP: 55000, durationDays: null, label: 'Paquete 300 conversaciones' },
 };
 
 class PackError extends Error {
@@ -46,7 +47,9 @@ async function sellPackAdmin(subscriptionId, packCode, { paymentId } = {}) {
   if (!feats.ia) throw new PackError('Esta suscripción no tiene IA en su plan', { status: 400, code: 'IA_NOT_INCLUDED' });
 
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + catalog.durationDays * 24 * 60 * 60 * 1000);
+  const expiresAt = catalog.durationDays
+    ? new Date(now.getTime() + catalog.durationDays * 24 * 60 * 60 * 1000)
+    : null;
 
   const pack = await prisma.iaConversationPack.create({
     data: {
@@ -64,7 +67,7 @@ async function sellPackAdmin(subscriptionId, packCode, { paymentId } = {}) {
     data: {
       subscriptionId,
       tipo: 'IA_PACK_SOLD',
-      notas: `${catalog.label} — $${catalog.priceCOP.toLocaleString('es-CO')} COP · vence ${expiresAt.toISOString().slice(0,10)}`,
+      notas: `${catalog.label} — $${catalog.priceCOP.toLocaleString('es-CO')} COP · ${expiresAt ? `vence ${expiresAt.toISOString().slice(0,10)}` : 'sin vencimiento'}`,
       metadata: { packCode: catalog.code, packId: pack.id, priceCOP: catalog.priceCOP },
     },
   });

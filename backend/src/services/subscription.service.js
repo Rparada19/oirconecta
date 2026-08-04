@@ -17,7 +17,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const IVA_RATE = 0.19;
-const TRIAL_DAYS = 120;
+const TRIAL_DAYS = 90; // Prueba del plan base (Visible)
 
 /**
  * Capacidades del producto. Usadas por `hasFeature()` y por gating de endpoints.
@@ -29,39 +29,88 @@ const FEATURES = {
   IA: 'ia',               // Agente virtual con tools de calendario (Plan 3)
 };
 
-const PLAN_DEFAULTS = [
-  // ── Trial ──
-  { code: 'TRIAL_90D', nombre: 'Prueba gratuita (120 días)', precioCOP: 0, duracionDias: TRIAL_DAYS,
-    beneficios: ['Acceso completo al portal', 'Perfil visible en directorio', 'Recepción de solicitudes', 'Estadísticas'],
-    features: { marketing: true }, trialDays: TRIAL_DAYS, displayOrder: 0 },
-
-  // ── Plan 1: Directorio + Marketing (= ANUAL) ──
-  { code: 'ANUAL', nombre: 'Plan 1 · Directorio + Marketing', precioCOP: 200000, duracionDias: 365,
-    beneficios: ['Perfil verificado en el directorio', 'Aparición prioritaria en búsquedas', 'Paquetes de marketing', 'Prueba gratis de 120 días'],
-    features: { marketing: true }, trialDays: TRIAL_DAYS, displayOrder: 1 },
-
-  // ── Plan 2: + Agendamiento ──
-  { code: 'PLAN_2_ANUAL', nombre: 'Plan 2 · Marketing + Agendamiento', precioCOP: 500000, duracionDias: 365,
-    beneficios: ['Todo lo de Plan 1', 'Sistema de agendamiento propio', 'Reservas desde tu perfil público', 'Integración con Google Calendar', 'Recordatorios automáticos'],
-    features: { marketing: true, agenda: true }, trialDays: TRIAL_DAYS, displayOrder: 2 },
-
-  // ── Plan 3: + Agente IA ──
-  { code: 'PLAN_3_MENSUAL', nombre: 'Plan 3 · Marketing + Agendamiento + Agente IA', precioCOP: 120000, duracionDias: 30,
-    beneficios: ['Todo lo de Plan 2', 'Agente IA que agenda, reagenda y resuelve FAQ', '150 conversaciones/mes incluidas', 'Paquetes adicionales disponibles', 'Permanencia 12 meses'],
-    features: { marketing: true, agenda: true, ia: true }, trialDays: 0,
-    minCommitmentMonths: 12, monthlyConversationLimit: 150, displayOrder: 3 },
-
-  // ── Legacy (mantenidos solo para suscripciones existentes; no se ofrecen a nuevos) ──
-  { code: 'MENSUAL', nombre: 'Profesional independiente · mensual (legacy)', precioCOP: 20000, duracionDias: 30,
-    beneficios: ['Perfil activo', 'Aparición en búsquedas', 'Recepción de solicitudes'],
-    features: { marketing: true }, trialDays: 0, displayOrder: 90, activo: false },
-  { code: 'EMPRESA', nombre: 'Empresa por sede (legacy)', precioCOP: 20000, duracionDias: 30,
-    beneficios: ['Una ficha por sede', '$20.000 mensuales por cada sede'],
-    features: { marketing: true }, trialDays: 0, displayOrder: 91, activo: false },
+// Beneficios base por tier (reutilizados en variante mensual y anual).
+const BEN_VISIBLE = [
+  'Perfil verificado en el directorio',
+  'Presentación personal',
+  'Presentación de servicios',
+  'Marcas que manejas',
+  'Reseñas de pacientes',
+  'Cómo llegar (mapa)',
+  'Mensaje directo de pacientes',
+];
+const BEN_PRO = [
+  'Todo lo de Visible',
+  'Sistema de agendamiento propio',
+  'Reservas desde tu perfil público',
+  'Integración con Google Calendar',
+  'Recordatorios automáticos',
+];
+const BEN_TOTAL = [
+  'Todo lo de Pro',
+  'Agente virtual que agenda, reagenda y resuelve dudas',
+  'Integración con WhatsApp',
+  '120 conversaciones/mes incluidas (chat + WhatsApp)',
+  'Paquetes adicionales de conversaciones disponibles',
 ];
 
-/** Códigos de los planes ofrecidos a nuevos profesionales (Plan 1/2/3). */
-const OFFERED_PLAN_CODES = ['ANUAL', 'PLAN_2_ANUAL', 'PLAN_3_MENSUAL'];
+const PLAN_DEFAULTS = [
+  // ── Trial (se asigna al registrarse; equivale a Visible por 90 días) ──
+  { code: 'TRIAL_90D', nombre: 'Prueba gratuita (90 días)', precioCOP: 0, duracionDias: TRIAL_DAYS,
+    beneficios: BEN_VISIBLE,
+    features: { marketing: true }, trialDays: TRIAL_DAYS, displayOrder: 0 },
+
+  // ── VISIBLE (base: directorio) · prueba 90 días ──
+  { code: 'VISIBLE_MENSUAL', nombre: 'Visible · Mensual', precioCOP: 25000, duracionDias: 30,
+    beneficios: BEN_VISIBLE,
+    features: { marketing: true }, trialDays: 90, displayOrder: 10 },
+  { code: 'VISIBLE_ANUAL', nombre: 'Visible · Anual', precioCOP: 250000, duracionDias: 365,
+    beneficios: [...BEN_VISIBLE, 'Equivale a 10 meses (2 gratis)'],
+    features: { marketing: true }, trialDays: 90, displayOrder: 11 },
+
+  // ── PRO (+ agendamiento) · sin prueba ──
+  { code: 'PRO_MENSUAL', nombre: 'Pro · Mensual', precioCOP: 40000, duracionDias: 30,
+    beneficios: BEN_PRO,
+    features: { marketing: true, agenda: true }, trialDays: 0, displayOrder: 20 },
+  { code: 'PRO_ANUAL', nombre: 'Pro · Anual', precioCOP: 440000, duracionDias: 365,
+    beneficios: [...BEN_PRO, 'Equivale a 11 meses (1 gratis)'],
+    features: { marketing: true, agenda: true }, trialDays: 0, displayOrder: 21 },
+
+  // ── TOTAL (+ agente IA + WhatsApp) · prueba 5 días ──
+  { code: 'TOTAL_MENSUAL', nombre: 'Total · Mensual', precioCOP: 70000, duracionDias: 30,
+    beneficios: BEN_TOTAL,
+    features: { marketing: true, agenda: true, ia: true }, trialDays: 5,
+    monthlyConversationLimit: 120, displayOrder: 30 },
+  { code: 'TOTAL_ANUAL', nombre: 'Total · Anual', precioCOP: 770000, duracionDias: 365,
+    beneficios: [...BEN_TOTAL, 'Equivale a 11 meses (1 gratis)'],
+    features: { marketing: true, agenda: true, ia: true }, trialDays: 5,
+    monthlyConversationLimit: 120, displayOrder: 31 },
+
+  // ── Legacy (mantenidos solo para suscripciones existentes; NO se ofrecen a nuevos) ──
+  { code: 'ANUAL', nombre: 'Plan 1 · Directorio + Marketing (legacy)', precioCOP: 200000, duracionDias: 365,
+    beneficios: ['Perfil verificado en el directorio', 'Aparición prioritaria en búsquedas', 'Paquetes de marketing'],
+    features: { marketing: true }, trialDays: 0, displayOrder: 90, activo: false },
+  { code: 'PLAN_2_ANUAL', nombre: 'Plan 2 · Marketing + Agendamiento (legacy)', precioCOP: 500000, duracionDias: 365,
+    beneficios: ['Todo lo de Plan 1', 'Agendamiento propio', 'Google Calendar', 'Recordatorios'],
+    features: { marketing: true, agenda: true }, trialDays: 0, displayOrder: 91, activo: false },
+  { code: 'PLAN_3_MENSUAL', nombre: 'Plan 3 · + Agente IA (legacy)', precioCOP: 120000, duracionDias: 30,
+    beneficios: ['Todo lo de Plan 2', 'Agente IA', '150 conversaciones/mes'],
+    features: { marketing: true, agenda: true, ia: true }, trialDays: 0,
+    minCommitmentMonths: 12, monthlyConversationLimit: 150, displayOrder: 92, activo: false },
+  { code: 'MENSUAL', nombre: 'Profesional independiente · mensual (legacy)', precioCOP: 20000, duracionDias: 30,
+    beneficios: ['Perfil activo', 'Aparición en búsquedas', 'Recepción de solicitudes'],
+    features: { marketing: true }, trialDays: 0, displayOrder: 93, activo: false },
+  { code: 'EMPRESA', nombre: 'Empresa por sede (legacy)', precioCOP: 20000, duracionDias: 30,
+    beneficios: ['Una ficha por sede', '$20.000 mensuales por cada sede'],
+    features: { marketing: true }, trialDays: 0, displayOrder: 94, activo: false },
+];
+
+/** Códigos de los planes ofrecidos a nuevos profesionales (Visible/Pro/Total, mensual + anual). */
+const OFFERED_PLAN_CODES = [
+  'VISIBLE_MENSUAL', 'VISIBLE_ANUAL',
+  'PRO_MENSUAL', 'PRO_ANUAL',
+  'TOTAL_MENSUAL', 'TOTAL_ANUAL',
+];
 
 /** Lee features del plan asociado a una suscripción. Devuelve {marketing,agenda,ia} normalizado. */
 function getActiveFeatures(sub) {
@@ -242,31 +291,26 @@ async function getMySubscription(profileId) {
     select: { id: true, totalCOP: true, metodo: true, paidAt: true, gatewayRef: true },
   });
 
-  // Plan 1/2/3 son la oferta canónica para todos los profesionales nuevos.
-  // EMPRESA sigue visible si el profesional ya es JURIDICA (legacy).
-  const isEmpresa = profile?.personaTipo === 'JURIDICA';
-  const planCodes = isEmpresa ? [...OFFERED_PLAN_CODES, 'EMPRESA'] : OFFERED_PLAN_CODES;
+  // Visible/Pro/Total (mensual + anual) es la oferta canónica para todos.
+  // Empresas multi-sede = una suscripción por sede (mismo catálogo).
   const plans = await prisma.plan.findMany({
-    where: { code: { in: planCodes } },
+    where: { code: { in: OFFERED_PLAN_CODES } },
     orderBy: { displayOrder: 'asc' },
   });
 
-  const empresa = isEmpresa ? priceEmpresa(profile) : null;
-
   const plansDisponibles = plans.map((p) => {
-    let baseCOP = p.precioCOP;
-    let detalle = null;
-    if (p.code === 'EMPRESA' && empresa) {
-      baseCOP = empresa.totalCOP;
-      detalle = { sedeCount: empresa.sedeCount, unitCOP: empresa.unitCOP };
-    }
+    const baseCOP = p.precioCOP;
     const iva = Math.round(baseCOP * IVA_RATE);
+    // tier/periodo derivados del code para agrupar en el frontend.
+    const [tier, periodo] = p.code.split('_');
     return {
       ...p,
       precioCOP: baseCOP,
       ivaCOP: iva,
       totalCOP: baseCOP + iva,
-      detalle,
+      tier,        // VISIBLE | PRO | TOTAL
+      periodo,     // MENSUAL | ANUAL
+      detalle: null,
     };
   });
 

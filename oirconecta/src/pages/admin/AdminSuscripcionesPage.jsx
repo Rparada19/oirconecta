@@ -34,7 +34,7 @@ const STATUS_COLOR = {
 };
 
 const ESTADOS = ['', 'TRIAL', 'ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
-const PLANES = ['', 'TRIAL_90D', 'ANUAL', 'PLAN_2_ANUAL', 'PLAN_3_MENSUAL', 'MENSUAL', 'EMPRESA'];
+const PLANES = ['', 'TRIAL_90D', 'VISIBLE_MENSUAL', 'VISIBLE_ANUAL', 'PRO_MENSUAL', 'PRO_ANUAL', 'TOTAL_MENSUAL', 'TOTAL_ANUAL', 'ANUAL', 'PLAN_2_ANUAL', 'PLAN_3_MENSUAL', 'MENSUAL', 'EMPRESA'];
 const PROFESIONES = [
   { slug: '', label: 'Todas' },
   { slug: 'fonoaudiologia', label: 'Fonoaudiología' },
@@ -268,12 +268,14 @@ export default function AdminSuscripcionesPage() {
           </TableHead>
           <TableBody>
             {[
-              { plan: 'Prueba gratuita',        target: 'Todos los registros nuevos',                 precio: 0,       vig: '120 días' },
-              { plan: 'Plan 1 · Anual',         target: 'Directorio + Marketing',                     precio: 200000,  vig: '12 meses',  badge: 'Trial 120 días' },
-              { plan: 'Plan 2 · Anual',         target: '+ Sistema de Agendamiento (Google Calendar)', precio: 500000,  vig: '12 meses',  badge: 'Trial 120 días' },
-              { plan: 'Plan 3 · Mensual',       target: '+ Agente IA (hasta 300 conv/mes)',           precio: 120000,  vig: '1 mes',     badge: 'Permanencia 12 meses' },
-              { plan: 'Mensual (legacy)',       target: 'Profesional independiente',                  precio: 20000,   vig: '30 días',   nota: 'plan legacy — no se ofrece a nuevos' },
-              { plan: 'Empresa o centro (legacy)', target: 'Persona jurídica · por sede',             precio: 20000,   vig: '30 días',   nota: '× cada sede · plan legacy' },
+              { plan: 'Prueba gratuita',   target: 'Todos los registros nuevos (equivale a Visible)', precio: 0,      vig: '90 días' },
+              { plan: 'Visible · Mensual', target: 'Directorio + presencia',                          precio: 25000,  vig: '1 mes',    badge: 'Prueba 90 días' },
+              { plan: 'Visible · Anual',   target: 'Directorio + presencia',                          precio: 250000, vig: '12 meses', badge: 'Prueba 90 días' },
+              { plan: 'Pro · Mensual',     target: '+ Agendamiento (Google Calendar)',                precio: 40000,  vig: '1 mes' },
+              { plan: 'Pro · Anual',       target: '+ Agendamiento (Google Calendar)',                precio: 440000, vig: '12 meses' },
+              { plan: 'Total · Mensual',   target: '+ Agente IA + WhatsApp (120 conv/mes)',           precio: 70000,  vig: '1 mes',    badge: 'Prueba 5 días' },
+              { plan: 'Total · Anual',     target: '+ Agente IA + WhatsApp (120 conv/mes)',           precio: 770000, vig: '12 meses', badge: 'Prueba 5 días' },
+              { plan: 'Empresa multi-sede', target: 'Una suscripción por sede (mismo catálogo)',      precio: 0,      vig: '—',        nota: 'Ej. 10 sedes con agenda = 10 planes Pro' },
             ].map((row) => {
               const iva = Math.round(row.precio * 0.19);
               return (
@@ -564,13 +566,16 @@ export default function AdminSuscripcionesPage() {
           </Typography>
           <Alert severity="info" sx={{ mb: 2 }}>
             La suscripción quedará en <strong>PENDING</strong> hasta confirmar pago (gateway aún en stub).
-            Plan 3 incluye permanencia mínima 12 meses. Para pruebas, usa PLAN_3_MENSUAL (incluye todas las features).
+            Total incluye Agente IA + WhatsApp (120 conv/mes). Para pruebas de IA, usa cualquier variante Total.
           </Alert>
           <TextField select fullWidth size="small" label="Nuevo plan"
             value={planNuevo} onChange={(e) => setPlanNuevo(e.target.value)}>
-            <MenuItem value="ANUAL">Plan 1 · Anual — $200.000/año (marketing)</MenuItem>
-            <MenuItem value="PLAN_2_ANUAL">Plan 2 · Anual — $500.000/año (+ agenda)</MenuItem>
-            <MenuItem value="PLAN_3_MENSUAL">Plan 3 · Mensual — $120.000/mes (+ IA, 12 meses mín.)</MenuItem>
+            <MenuItem value="VISIBLE_MENSUAL">Visible · Mensual — $25.000/mes</MenuItem>
+            <MenuItem value="VISIBLE_ANUAL">Visible · Anual — $250.000/año</MenuItem>
+            <MenuItem value="PRO_MENSUAL">Pro · Mensual — $40.000/mes (+ agenda)</MenuItem>
+            <MenuItem value="PRO_ANUAL">Pro · Anual — $440.000/año (+ agenda)</MenuItem>
+            <MenuItem value="TOTAL_MENSUAL">Total · Mensual — $70.000/mes (+ IA + WhatsApp)</MenuItem>
+            <MenuItem value="TOTAL_ANUAL">Total · Anual — $770.000/año (+ IA + WhatsApp)</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>

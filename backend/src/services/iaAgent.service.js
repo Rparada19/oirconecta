@@ -9,7 +9,7 @@
  *   - get_professional_info
  *   - cancel_appointment (sólo si paciente da rescheduleToken)
  *
- * Quota: 300 conversaciones/mes por profesional (Plan 3). Cuenta una conversación
+ * Quota: monthlyConversationLimit del plan (Total = 120/mes). Cuenta una conversación
  * cuando el cliente llama POST /chat sin conversationId. Las llamadas subsiguientes
  * dentro del mismo conversationId no incrementan cuota.
  *
