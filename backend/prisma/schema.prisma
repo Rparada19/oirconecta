@@ -1469,12 +1469,20 @@ enum SubscriptionStatus {
 }
 
 enum PlanCode {
-  TRIAL_90D // Trial gratuito (120 días reales; nombre legacy)
+  TRIAL_90D // Trial gratuito (equivale a Visible por 90 días)
+  // ── Catálogo vigente: Visible / Pro / Total (mensual + anual) ──
+  VISIBLE_MENSUAL // Visible $25.000/mes
+  VISIBLE_ANUAL // Visible $250.000/año
+  PRO_MENSUAL // Pro $40.000/mes (+ agenda)
+  PRO_ANUAL // Pro $440.000/año (+ agenda)
+  TOTAL_MENSUAL // Total $70.000/mes (+ IA + WhatsApp, 120 conv/mes)
+  TOTAL_ANUAL // Total $770.000/año (+ IA + WhatsApp, 120 conv/mes)
+  // ── Legacy (solo suscripciones existentes; no se ofrecen) ──
   MENSUAL // Legacy: Independiente $20.000/mes
-  ANUAL // Plan 1: Directorio + Marketing — $200.000/año
+  ANUAL // Legacy Plan 1: Directorio + Marketing
   EMPRESA // Legacy: Persona jurídica $20.000/mes por sede
-  PLAN_2_ANUAL // Plan 2: Directorio + Marketing + Agendamiento — $500.000/año
-  PLAN_3_MENSUAL // Plan 3: + Agente IA — $120.000/mes, 12 meses mín, 300 conv/mes
+  PLAN_2_ANUAL // Legacy Plan 2: + Agendamiento
+  PLAN_3_MENSUAL // Legacy Plan 3: + Agente IA
 }
 
 model Plan {
