@@ -480,6 +480,42 @@ const jobStats = {};
 let lastTickAt = null;
 let lastTickMs = null;
 
+/**
+ * Email de "prueba vencida — elige un plan". Corre continuo.
+ * Busca trials (plan TRIAL_90D) cuya ventana ya terminó y aún no recibieron el correo.
+ * Idempotente vía trialEndedEmailSentAt.
+ */
+async function processTrialInvites() {
+  const now = new Date();
+  const subs = await prisma.subscription.findMany({
+    where: {
+      trialEndedEmailSentAt: null,
+      currentPeriodEnd: { lt: now },
+      plan: { code: 'TRIAL_90D' },
+    },
+    include: { profile: { include: { account: { select: { email: true, nombre: true } } } } },
+    take: 25,
+  });
+  let sent = 0;
+  for (const sub of subs) {
+    const acc = sub.profile?.account;
+    if (!acc?.email) {
+      // Sin email: marca para no reintentar en cada tick.
+      await prisma.subscription.update({ where: { id: sub.id }, data: { trialEndedEmailSentAt: now } }).catch(() => {});
+      continue;
+    }
+    try {
+      const emailService = require('../services/email.service');
+      await emailService.sendTrialEnded({ email: acc.email, nombre: acc.nombre });
+      await prisma.subscription.update({ where: { id: sub.id }, data: { trialEndedEmailSentAt: new Date() } });
+      sent += 1;
+    } catch (e) {
+      console.error('[cron] trialInvite falló para', sub.id, e.message);
+    }
+  }
+  return { scanned: subs.length, sent };
+}
+
 async function runJob(name, fn) {
   const stats = jobStats[name] || (jobStats[name] = { runs: 0, errors: 0 });
   const started = Date.now();
@@ -547,6 +583,9 @@ async function tick() {
       return brandInfo.refreshStaleOne();
     });
 
+    // 10) Email de prueba vencida → invita a elegir plan
+    const trialInviteResult = await runJob('trialInvites', processTrialInvites);
+
     const hasActivity =
       (apptResult?.sent || 0) > 0 ||
       (remindersResult?.sent || 0) > 0 ||
@@ -559,7 +598,8 @@ async function tick() {
       (followUpResult?.sent || 0) > 0 ||
       (waNudgeResult?.total?.sent || 0) > 0 ||
       (waNudgeResult?.total?.booked || 0) > 0 ||
-      (brandResult?.generated || 0) > 0;
+      (brandResult?.generated || 0) > 0 ||
+      (trialInviteResult?.sent || 0) > 0;
     if (hasActivity) {
       const ms = Date.now() - started;
       const waSent = waNudgeResult?.nudge?.sent || 0;

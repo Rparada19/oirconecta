@@ -1554,6 +1554,9 @@ model Subscription {
   /// Plan 3: inicio del periodo de cuota IA (rotación mensual independiente del periodo de facturación).
   iaConversationsPeriodAt DateTime?
 
+  /// Fecha en que se envió el correo de "prueba vencida, elige un plan". Null = no enviado.
+  trialEndedEmailSentAt   DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

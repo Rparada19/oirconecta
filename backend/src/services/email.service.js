@@ -945,6 +945,37 @@ async function sendSubscriptionCanceled({ email, nombre, motivo, vigenteHasta, r
   }
 }
 
+/**
+ * Prueba gratuita vencida sin conversión — invita a elegir un plan.
+ */
+async function sendTrialEnded({ email, nombre }) {
+  const html = baseTemplate({
+    preheader: 'Tu prueba gratuita terminó. Elige un plan para mantener tu perfil visible.',
+    title: 'Tu prueba gratuita terminó',
+    bodyHtml: [
+      h1(`Tu prueba gratuita llegó a su fin${nombre ? `, ${nombre}` : ''} 🌿`),
+      p('Durante estos días tu perfil estuvo visible en el directorio de OírConecta y los pacientes pudieron encontrarte. Para seguir apareciendo, elige el plan que mejor se ajuste a ti:'),
+      `<table cellpadding="0" cellspacing="0" role="presentation" style="background:#f9fafb;border-radius:12px;padding:16px 20px;margin:16px 0;border-left:4px solid #6d28d9;">
+        <tr><td>
+          <p style="margin:0 0 6px;font-size:14px;color:#374151;"><strong>Visible</strong> — desde $25.000/mes · tu perfil en el directorio.</p>
+          <p style="margin:0 0 6px;font-size:14px;color:#374151;"><strong>Pro</strong> — desde $40.000/mes · + agendamiento online y recordatorios.</p>
+          <p style="margin:0;font-size:14px;color:#374151;"><strong>Total</strong> — desde $70.000/mes · + agente virtual con IA y WhatsApp.</p>
+        </td></tr>
+      </table>`,
+      btn(`${SITE_URL}/portal-profesional/suscripcion`, 'Ver planes y activar mi perfil'),
+      divider(),
+      p('<span style="font-size:13px;color:#6b7280;">¿Dudas para elegir? Escríbenos a <a href="mailto:conversemos@oirconecta.com">conversemos@oirconecta.com</a> o por WhatsApp al <a href="' + WA_HREF + '">' + WA_DISPLAY + '</a> y te ayudamos.</span>'),
+      p('<span style="font-size:13px;color:#085946;font-weight:600;">— El equipo OírConecta</span>'),
+    ].join(''),
+  });
+  await deliver({
+    to: email,
+    toName: nombre,
+    subject: 'Tu prueba gratuita terminó — elige un plan para seguir visible',
+    html,
+  });
+}
+
 async function sendSubscriptionReactivated({ email, nombre }) {
   const html = baseTemplate({
     preheader: '¡Bienvenido/a de regreso a OírConecta!',
@@ -1288,6 +1319,7 @@ module.exports = {
   sendShopOrderEmails,
   sendSubscriptionCanceled,
   sendSubscriptionReactivated,
+  sendTrialEnded,
 
   sendAppointmentReminder,
   sendRescheduledNotification,
