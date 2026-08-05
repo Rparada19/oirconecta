@@ -144,6 +144,11 @@ const CitasPage = () => {
   const [rescheduleData, setRescheduleData] = useState({ date: '', time: '', reason: '', professionalId: '' });
   const [activityTab, setActivityTab] = useState(0);
   const [rescheduleAvailableSlots, setRescheduleAvailableSlots] = useState([]);
+  // Agendar cita nueva (paciente desde cero)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createAvailableSlots, setCreateAvailableSlots] = useState([]);
+  const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '' });
   const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
   const [rescheduledToAppointment, setRescheduledToAppointment] = useState(null);
 
@@ -193,6 +198,11 @@ const CitasPage = () => {
     }
     getAvailableTimeSlots(rescheduleData.date, '07:00', '18:00', rescheduleData.professionalId || null).then(setRescheduleAvailableSlots);
   }, [rescheduleData.date, rescheduleData.professionalId]);
+
+  useEffect(() => {
+    if (!createData.date) { setCreateAvailableSlots([]); return; }
+    getAvailableTimeSlots(createData.date, '07:00', '18:00', createData.professionalId || null).then(setCreateAvailableSlots);
+  }, [createData.date, createData.professionalId]);
 
   useEffect(() => {
     let filtered = appointments;
@@ -743,6 +753,45 @@ const CitasPage = () => {
     setSnackbar({ open: true, message, severity });
   };
 
+  const openCreateDialog = () => {
+    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '' });
+    setCreateDialogOpen(true);
+  };
+
+  const handleCreateAppointment = async () => {
+    const { patientName, patientEmail, patientPhone, date, time } = createData;
+    if (!patientName.trim() || !patientEmail.trim() || !patientPhone.trim()) {
+      showSnackbar('Completa nombre, correo y teléfono del paciente', 'error');
+      return;
+    }
+    if (!date || !time) {
+      showSnackbar('Selecciona fecha y hora', 'error');
+      return;
+    }
+    setCreating(true);
+    const prof = profesionales.find((p) => p.id === createData.professionalId);
+    const result = await createAppointment({
+      date,
+      time,
+      patientName: patientName.trim(),
+      patientEmail: patientEmail.trim(),
+      patientPhone: patientPhone.trim(),
+      reason: createData.reason?.trim() || '',
+      procedencia: 'visita-medica',
+      professionalId: createData.professionalId || undefined,
+      professionalDisplayName: prof?.nombre || undefined,
+      professionalNotifyEmail: prof?.email || undefined,
+    });
+    setCreating(false);
+    if (result.success) {
+      setCreateDialogOpen(false);
+      await loadData();
+      showSnackbar('Cita agendada correctamente', 'success');
+    } else {
+      showSnackbar(result.error || 'No se pudo agendar la cita', 'error');
+    }
+  };
+
   const getStatusChip = (status) => {
     switch (status) {
       case 'confirmed':
@@ -919,7 +968,14 @@ const CitasPage = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4f2 0%, #f8fafc 100%)' }}>
-      <PageHeader icon={CalendarToday} title="Agenda" subtitle="Citas, profesionales y disponibilidad del consultorio" />
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <PageHeader icon={CalendarToday} title="Agenda" subtitle="Citas, profesionales y disponibilidad del consultorio" />
+        <Button variant="contained" startIcon={<Add />} onClick={openCreateDialog}
+          sx={{ bgcolor: '#085946', borderRadius: '10px', textTransform: 'none', fontWeight: 700, px: 2.5, py: 1.1,
+            whiteSpace: 'nowrap', '&:hover': { bgcolor: '#064035' } }}>
+          Agendar cita
+        </Button>
+      </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Stats */}
@@ -2565,6 +2621,71 @@ const CitasPage = () => {
             sx={{ bgcolor: '#c62828' }}
           >
             {rescheduleData.date && rescheduleData.time ? 'Cancelar y Re-agendar' : 'Confirmar Cancelación'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog: Agendar cita nueva (paciente desde cero) */}
+      <Dialog open={createDialogOpen} onClose={() => !creating && setCreateDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: '#272F50', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CalendarToday sx={{ color: '#085946' }} /> Agendar cita
+        </DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth required label="Nombre del paciente" value={createData.patientName}
+                onChange={(e) => setCreateData({ ...createData, patientName: e.target.value })} sx={{ mb: 2 }} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth required type="email" label="Correo" value={createData.patientEmail}
+                onChange={(e) => setCreateData({ ...createData, patientEmail: e.target.value })} sx={{ mb: 2 }} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth required label="Teléfono" value={createData.patientPhone}
+                onChange={(e) => setCreateData({ ...createData, patientPhone: e.target.value })} sx={{ mb: 2 }} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              {profesionales.length > 0 ? (
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Profesional (opcional)</InputLabel>
+                  <Select label="Profesional (opcional)" value={createData.professionalId}
+                    onChange={(e) => setCreateData({ ...createData, professionalId: e.target.value, time: '' })}>
+                    <SelectMenuItem value="">Sin asignar</SelectMenuItem>
+                    {profesionales.map((p) => (
+                      <SelectMenuItem key={p.id} value={p.id}>{p.nombre}</SelectMenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              ) : null}
+            </Grid>
+            <Grid item xs={12}>
+              <TextField fullWidth label="Motivo (opcional)" value={createData.reason}
+                onChange={(e) => setCreateData({ ...createData, reason: e.target.value })} sx={{ mb: 1 }} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>Fecha</Typography>
+              <DateSelector selectedDate={createData.date || ''}
+                onDateSelect={(date) => setCreateData({ ...createData, date, time: '' })} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>Hora</Typography>
+              {createData.date ? (
+                <TimeSelector selectedDate={createData.date} selectedTime={createData.time}
+                  onTimeSelect={(time) => setCreateData({ ...createData, time })}
+                  availableTimes={createAvailableSlots} />
+              ) : (
+                <Typography variant="body2" sx={{ color: '#86899C', py: 4, textAlign: 'center' }}>
+                  Selecciona una fecha primero
+                </Typography>
+              )}
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCreateDialogOpen(false)} disabled={creating}>Cancelar</Button>
+          <Button onClick={handleCreateAppointment} variant="contained" disabled={creating}
+            sx={{ bgcolor: '#085946', '&:hover': { bgcolor: '#064035' } }}>
+            {creating ? 'Agendando…' : 'Agendar cita'}
           </Button>
         </DialogActions>
       </Dialog>
