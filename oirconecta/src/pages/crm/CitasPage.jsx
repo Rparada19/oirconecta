@@ -158,7 +158,7 @@ const CitasPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createAvailableSlots, setCreateAvailableSlots] = useState([]);
-  const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '' });
+  const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: 'agendamiento-manual' });
   const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
   const [rescheduledToAppointment, setRescheduledToAppointment] = useState(null);
 
@@ -764,7 +764,7 @@ const CitasPage = () => {
   };
 
   const openCreateDialog = () => {
-    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '' });
+    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: 'agendamiento-manual' });
     setCreateDialogOpen(true);
   };
 
@@ -788,7 +788,7 @@ const CitasPage = () => {
         patientEmail: (createData.patientEmail || '').trim(),
         patientPhone: patientPhone.trim(),
         reason: createData.reason?.trim() || '',
-        procedencia: 'visita-medica',
+        procedencia: createData.procedencia || 'agendamiento-manual',
         professionalId: createData.professionalId || undefined,
         professionalDisplayName: prof?.nombre || undefined,
         professionalNotifyEmail: prof?.email || undefined,
@@ -2674,7 +2674,22 @@ const CitasPage = () => {
                 </FormControl>
               ) : null}
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <InputLabel>Procedencia</InputLabel>
+                <Select label="Procedencia" value={createData.procedencia}
+                  onChange={(e) => setCreateData({ ...createData, procedencia: e.target.value })}>
+                  <SelectMenuItem value="agendamiento-manual">Agendamiento manual</SelectMenuItem>
+                  <SelectMenuItem value="visita-medica">Visita médica</SelectMenuItem>
+                  <SelectMenuItem value="recomendacion">Recomendación</SelectMenuItem>
+                  <SelectMenuItem value="sitio-web">Sitio web</SelectMenuItem>
+                  <SelectMenuItem value="leads-marketing-digital">Marketing digital</SelectMenuItem>
+                  <SelectMenuItem value="leads-marketing-offline">Marketing offline</SelectMenuItem>
+                  <SelectMenuItem value="renovacion">Renovación</SelectMenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
               <TextField fullWidth label="Motivo (opcional)" value={createData.reason}
                 onChange={(e) => setCreateData({ ...createData, reason: e.target.value })} sx={{ mb: 1 }} />
             </Grid>
