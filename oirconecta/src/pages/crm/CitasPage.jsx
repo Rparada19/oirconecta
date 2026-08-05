@@ -779,27 +779,32 @@ const CitasPage = () => {
       return;
     }
     setCreating(true);
-    const prof = profesionales.find((p) => p.id === createData.professionalId);
-    const result = await createAppointment({
-      date,
-      time,
-      patientName: patientName.trim(),
-      patientEmail: patientEmail.trim(),
-      patientPhone: patientPhone.trim(),
-      reason: createData.reason?.trim() || '',
-      procedencia: 'visita-medica',
-      professionalId: createData.professionalId || undefined,
-      professionalDisplayName: prof?.nombre || undefined,
-      professionalNotifyEmail: prof?.email || undefined,
-      allowManualTime: true,
-    });
-    setCreating(false);
-    if (result.success) {
-      setCreateDialogOpen(false);
-      await loadData();
-      showSnackbar('Cita agendada correctamente', 'success');
-    } else {
-      showSnackbar(result.error || 'No se pudo agendar la cita', 'error');
+    try {
+      const prof = profesionales.find((p) => p.id === createData.professionalId);
+      const result = await createAppointment({
+        date,
+        time,
+        patientName: patientName.trim(),
+        patientEmail: (createData.patientEmail || '').trim(),
+        patientPhone: patientPhone.trim(),
+        reason: createData.reason?.trim() || '',
+        procedencia: 'visita-medica',
+        professionalId: createData.professionalId || undefined,
+        professionalDisplayName: prof?.nombre || undefined,
+        professionalNotifyEmail: prof?.email || undefined,
+        allowManualTime: true,
+      });
+      if (result.success) {
+        setCreateDialogOpen(false);
+        await loadData();
+        showSnackbar('Cita agendada correctamente', 'success');
+      } else {
+        showSnackbar(result.error || 'No se pudo agendar la cita', 'error');
+      }
+    } catch (e) {
+      showSnackbar(e?.message || 'Error al agendar la cita', 'error');
+    } finally {
+      setCreating(false);
     }
   };
 
