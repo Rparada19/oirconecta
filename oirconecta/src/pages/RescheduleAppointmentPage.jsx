@@ -278,6 +278,13 @@ export default function RescheduleAppointmentPage() {
                 }}>
                 {submitting ? <CircularProgress size={22} sx={{ color: '#0a1628' }} /> : 'Confirmar reagendamiento'}
               </Button>
+
+              <Box sx={{ textAlign: 'center', mt: 3 }}>
+                <Typography component={RouterLink} to={`/agendar/cancelar?token=${token}`}
+                  sx={{ color: '#f87171', fontSize: 14, textDecoration: 'underline', cursor: 'pointer' }}>
+                  ¿Prefieres cancelar tu cita?
+                </Typography>
+              </Box>
             </>
           )}
 

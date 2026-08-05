@@ -156,7 +156,8 @@ async function sendNow({ patientId, eventCode, channel, templateCode, payload = 
       // Plantillas de notificación en Meta usan variables con nombre ({{nombre}}…).
       const namedParams = {};
       for (const v of (tpl.variables || [])) namedParams[v] = vars[v] ?? '';
-      // Recordatorio 24h: 2 botones URL (Reagendar / Cancelar) con el token.
+      // Recordatorio 24h: 2 botones URL (Confirmar / Reagendar) con el token.
+      // Meta limita a 2 botones de URL; la página de reagendar también permite cancelar.
       const token = vars.reschedule_token || '';
       const urlButtonParams = (/recordatorio_24h/.test(tpl.metaTemplateName) && token)
         ? [token, token]
