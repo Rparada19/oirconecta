@@ -759,9 +759,9 @@ const CitasPage = () => {
   };
 
   const handleCreateAppointment = async () => {
-    const { patientName, patientEmail, patientPhone, date, time } = createData;
-    if (!patientName.trim() || !patientEmail.trim() || !patientPhone.trim()) {
-      showSnackbar('Completa nombre, correo y teléfono del paciente', 'error');
+    const { patientName, patientPhone, date, time } = createData;
+    if (!patientName.trim() || !patientPhone.trim()) {
+      showSnackbar('Completa nombre y teléfono del paciente', 'error');
       return;
     }
     if (!date || !time) {
@@ -2637,7 +2637,7 @@ const CitasPage = () => {
                 onChange={(e) => setCreateData({ ...createData, patientName: e.target.value })} sx={{ mb: 2 }} />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField fullWidth required type="email" label="Correo" value={createData.patientEmail}
+              <TextField fullWidth type="email" label="Correo (opcional)" value={createData.patientEmail}
                 onChange={(e) => setCreateData({ ...createData, patientEmail: e.target.value })} sx={{ mb: 2 }} />
             </Grid>
             <Grid item xs={12} md={6}>

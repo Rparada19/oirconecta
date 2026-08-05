@@ -132,8 +132,8 @@ export async function createAppointment(appointmentData) {
     professionalDisplayName,
     directoryProfileId,
   } = appointmentData;
-  if (!date || !time || !patientName || !patientEmail || !patientPhone) {
-    return { success: false, appointment: null, error: 'Todos los campos son obligatorios' };
+  if (!date || !time || !patientName || !patientPhone) {
+    return { success: false, appointment: null, error: 'Nombre, teléfono, fecha y hora son obligatorios' };
   }
   const slots = await getAvailableTimeSlots(date, '07:00', '18:00', professionalId || null);
   if (!slots.includes(time)) {
@@ -146,7 +146,7 @@ export async function createAppointment(appointmentData) {
     professionalNotifyEmail: professionalNotifyEmail || undefined,
     professionalDisplayName: professionalDisplayName || undefined,
     patientName,
-    patientEmail: (patientEmail || '').trim().toLowerCase(),
+    patientEmail: (patientEmail || '').trim().toLowerCase() || undefined,
     patientPhone,
     motivo: reason || '',
     procedencia: validarYNormalizarProcedencia(procedencia || 'visita-medica'),

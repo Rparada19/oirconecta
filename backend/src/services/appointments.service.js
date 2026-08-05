@@ -243,6 +243,33 @@ const create = async (data, createdById) => {
     }
   }
 
+  // Vincula (o crea) un paciente por teléfono cuando la cita no trae patientId.
+  // Así toda cita del CRM/agenda dispara las notificaciones (confirmación WA+Email
+  // y recordatorios), que dependen de patientId.
+  let patientId = data.patientId || null;
+  if (!patientId && data.patientPhone) {
+    try {
+      const telefono = String(data.patientPhone).trim();
+      const existing = await prisma.patient.findFirst({ where: { telefono }, select: { id: true } });
+      if (existing) {
+        patientId = existing.id;
+      } else {
+        const nuevo = await prisma.patient.create({
+          data: {
+            nombre: data.patientName || 'Paciente',
+            telefono,
+            email: data.patientEmail ? String(data.patientEmail).trim().toLowerCase() : null,
+            procedencia: data.procedencia || 'visita-medica',
+          },
+          select: { id: true },
+        });
+        patientId = nuevo.id;
+      }
+    } catch (e) {
+      console.warn('[appointments.create] find/create patient:', e.message);
+    }
+  }
+
   const appointment = await prisma.appointment.create({
     data: {
       fecha,
@@ -258,9 +285,9 @@ const create = async (data, createdById) => {
       professionalNotifyEmail: data.professionalNotifyEmail
         ? String(data.professionalNotifyEmail).trim().toLowerCase()
         : null,
-      patientId: data.patientId,
+      patientId,
       patientName: data.patientName,
-      patientEmail: data.patientEmail?.toLowerCase(),
+      patientEmail: data.patientEmail ? data.patientEmail.toLowerCase() : null,
       patientPhone: data.patientPhone,
       createdById,
       rescheduleToken: generateRescheduleToken(),

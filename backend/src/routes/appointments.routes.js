@@ -26,7 +26,7 @@ router.post(
     body('fecha').notEmpty().withMessage('fecha es requerida'),
     body('hora').matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Hora inválida (formato HH:MM)'),
     body('patientName').notEmpty().withMessage('patientName es requerido'),
-    body('patientEmail').notEmpty().withMessage('patientEmail es requerido'),
+    body('patientEmail').optional({ checkFalsy: true }).isEmail().withMessage('Correo inválido'),
     body('patientPhone').notEmpty().withMessage('patientPhone es requerido'),
     body('professionalNotifyEmail').optional().isEmail(),
     body('professionalDisplayName').optional().isString(),
