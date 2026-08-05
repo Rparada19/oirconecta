@@ -97,6 +97,7 @@ import PatientProfileDialog from '../../components/patient/PatientProfileDialog'
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../../components/crm/ui/PageHeader';
 import KpiCard from '../../components/crm/ui/KpiCard';
+import { api } from '../../services/apiClient';
 
 // Horarios sugeridos por defecto (cada 30 min, 7:00–18:00) cuando la agenda del
 // profesional no tiene disponibilidad configurada para la fecha elegida.
@@ -158,6 +159,7 @@ const CitasPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createAvailableSlots, setCreateAvailableSlots] = useState([]);
+  const [motivoTypes, setMotivoTypes] = useState([]); // AppointmentType creados
   const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: 'agendamiento-manual' });
   const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
   const [rescheduledToAppointment, setRescheduledToAppointment] = useState(null);
@@ -764,8 +766,11 @@ const CitasPage = () => {
   };
 
   const openCreateDialog = () => {
-    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: 'agendamiento-manual' });
+    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', motivoOtra: '', date: '', time: '', professionalId: '', procedencia: 'agendamiento-manual' });
     setCreateDialogOpen(true);
+    api.get('/api/crm/retail-agenda/types')
+      .then((r) => { if (Array.isArray(r.data?.data)) setMotivoTypes(r.data.data.filter((t) => t.activo !== false)); })
+      .catch(() => {});
   };
 
   const handleCreateAppointment = async () => {
@@ -787,7 +792,7 @@ const CitasPage = () => {
         patientName: patientName.trim(),
         patientEmail: (createData.patientEmail || '').trim(),
         patientPhone: patientPhone.trim(),
-        reason: createData.reason?.trim() || '',
+        reason: (createData.reason === '__otra__' ? createData.motivoOtra : createData.reason)?.trim() || '',
         procedencia: createData.procedencia || 'agendamiento-manual',
         professionalId: createData.professionalId || undefined,
         professionalDisplayName: prof?.nombre || undefined,
@@ -2690,8 +2695,21 @@ const CitasPage = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField fullWidth label="Motivo (opcional)" value={createData.reason}
-                onChange={(e) => setCreateData({ ...createData, reason: e.target.value })} sx={{ mb: 1 }} />
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <InputLabel>Motivo</InputLabel>
+                <Select label="Motivo" value={createData.reason}
+                  onChange={(e) => setCreateData({ ...createData, reason: e.target.value, motivoOtra: e.target.value === '__otra__' ? createData.motivoOtra : '' })}>
+                  <SelectMenuItem value=""><em>Sin especificar</em></SelectMenuItem>
+                  {motivoTypes.map((t) => (
+                    <SelectMenuItem key={t.id} value={t.nombre}>{t.nombre}</SelectMenuItem>
+                  ))}
+                  <SelectMenuItem value="__otra__">Otra…</SelectMenuItem>
+                </Select>
+              </FormControl>
+              {createData.reason === '__otra__' && (
+                <TextField fullWidth label="Escribe el motivo" value={createData.motivoOtra}
+                  onChange={(e) => setCreateData({ ...createData, motivoOtra: e.target.value })} autoFocus />
+              )}
             </Grid>
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>Fecha</Typography>
