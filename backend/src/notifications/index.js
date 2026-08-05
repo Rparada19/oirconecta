@@ -153,12 +153,14 @@ async function sendNow({ patientId, eventCode, channel, templateCode, payload = 
     } else if (channel === 'WHATSAPP') {
       provider = 'meta_whatsapp_cloud';
       if (!tpl.metaTemplateName) throw new Error(`plantilla ${templateCode} sin metaTemplateName`);
-      const bodyParams = (tpl.variables || []).map((v) => vars[v] ?? '');
+      // Plantillas de notificación en Meta usan variables con nombre ({{nombre}}…).
+      const namedParams = {};
+      for (const v of (tpl.variables || [])) namedParams[v] = vars[v] ?? '';
       const r = await sendWhatsAppTemplate({
         to,
         metaTemplateName: tpl.metaTemplateName,
         locale: 'es_CO',
-        bodyParams,
+        namedParams,
       });
       providerMessageId = r.providerMessageId;
       raw = r.raw;

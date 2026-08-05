@@ -22,11 +22,22 @@
  * @param {string[]} [p.buttonParams=[]] (opcional) parámetros para botones quick-reply
  * @returns {Promise<{providerMessageId:string|null, raw:any}>}
  */
+/**
+ * Normaliza a E.164 sin '+'. Colombia: si son 10 dígitos que empiezan por 3
+ * (celular local sin indicativo), antepone 57. Si ya trae indicativo, lo deja.
+ */
+function normalizePhone(raw) {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (d.length === 10 && d.startsWith('3')) d = '57' + d;
+  return d;
+}
+
 async function sendWhatsAppTemplate({
   to,
   metaTemplateName,
   locale = 'es_CO',
   bodyParams = [],
+  namedParams = null,
   buttonParams = [],
 }) {
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -42,7 +53,15 @@ async function sendWhatsAppTemplate({
   }
 
   const components = [];
-  if (bodyParams.length) {
+  if (namedParams && Object.keys(namedParams).length) {
+    // Plantillas con variables nombradas ({{nombre}}, {{fecha_cita}}…)
+    components.push({
+      type: 'body',
+      parameters: Object.entries(namedParams).map(([name, v]) => ({
+        type: 'text', parameter_name: name, text: String(v ?? ''),
+      })),
+    });
+  } else if (bodyParams.length) {
     components.push({
       type: 'body',
       parameters: bodyParams.map((v) => ({ type: 'text', text: String(v) })),
@@ -61,7 +80,7 @@ async function sendWhatsAppTemplate({
 
   const payload = {
     messaging_product: 'whatsapp',
-    to: String(to).replace(/^\+/, ''),
+    to: normalizePhone(to),
     type: 'template',
     template: {
       name: metaTemplateName,
@@ -112,7 +131,7 @@ async function sendWhatsAppText({ to, text, phoneNumberId }) {
 
   const payload = {
     messaging_product: 'whatsapp',
-    to: String(to).replace(/^\+/, ''),
+    to: normalizePhone(to),
     type: 'text',
     text: { body: String(text).slice(0, 4096) },
   };
@@ -161,7 +180,7 @@ async function sendWhatsAppInteractiveButtons({
 
   const payload = {
     messaging_product: 'whatsapp',
-    to: String(to).replace(/^\+/, ''),
+    to: normalizePhone(to),
     type: 'interactive',
     interactive: {
       type: 'button',
