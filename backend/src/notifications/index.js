@@ -156,18 +156,21 @@ async function sendNow({ patientId, eventCode, channel, templateCode, payload = 
       // Plantillas de notificación en Meta usan variables con nombre ({{nombre}}…).
       const namedParams = {};
       for (const v of (tpl.variables || [])) namedParams[v] = vars[v] ?? '';
-      // Recordatorio 24h: 2 botones URL (Confirmar / Reagendar) con el token.
-      // Meta limita a 2 botones de URL; la página de reagendar también permite cancelar.
+      // Recordatorio 24h: 3 botones en orden Reagendar(URL) · Cancelar(URL) · Confirmar(quick_reply).
       const token = vars.reschedule_token || '';
-      const urlButtonParams = (/recordatorio_24h/.test(tpl.metaTemplateName) && token)
-        ? [token, token]
+      const buttons = (/recordatorio_24h/.test(tpl.metaTemplateName) && token)
+        ? [
+            { type: 'url', text: token },
+            { type: 'url', text: token },
+            { type: 'quick_reply', payload: `confirm_appt:${token}` },
+          ]
         : [];
       const r = await sendWhatsAppTemplate({
         to,
         metaTemplateName: tpl.metaTemplateName,
         locale: 'es_CO',
         namedParams,
-        urlButtonParams,
+        buttons,
       });
       providerMessageId = r.providerMessageId;
       raw = r.raw;

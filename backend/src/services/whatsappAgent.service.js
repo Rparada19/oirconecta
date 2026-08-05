@@ -206,8 +206,11 @@ async function processIncomingEvent(body) {
                 : null;
               textBody = btnPayload?.title || msg.interactive?.body?.text || null;
             } else if (msg.type === 'button') {
-              // Botón de plantilla (no interactivo)
+              // Botón de plantilla (quick reply) — trae payload + texto
               textBody = msg.button?.text || null;
+              btnPayload = msg.button?.payload
+                ? { id: msg.button.payload, title: msg.button?.text || '' }
+                : null;
             }
 
             const r = await corp.persistIncomingMessage({
@@ -220,6 +223,23 @@ async function processIncomingEvent(body) {
               tsSeconds: msg.timestamp,
             });
             if (r.persisted) processed++; else { skipped++; continue; }
+
+            // Confirmación de asistencia desde el recordatorio (botón "Confirmar").
+            if (btnPayload?.id && String(btnPayload.id).startsWith('confirm_appt:')) {
+              const token = String(btnPayload.id).split(':')[1];
+              try {
+                const appointmentsService = require('./appointments.service');
+                await appointmentsService.confirmByToken(token);
+                await corp.sendTextToConversation({
+                  conversationId: r.conversationId,
+                  text: '¡Gracias! Confirmaste tu asistencia. Te esperamos. 🙌',
+                  sentByBot: true,
+                });
+              } catch (ce) {
+                console.error('[wa] confirm_appt falló:', ce.message);
+              }
+              continue; // no pasar al bot
+            }
 
             // F9b — Dispatcher del bot corporativo (solo si WA_BOT_ENABLED=true)
             try {

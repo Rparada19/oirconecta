@@ -40,6 +40,7 @@ async function sendWhatsAppTemplate({
   namedParams = null,
   buttonParams = [],
   urlButtonParams = [],
+  buttons = [], // [{ type:'url', text }, { type:'quick_reply', payload }] en orden EXACTO de la plantilla
 }) {
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -88,6 +89,22 @@ async function sendWhatsAppTemplate({
         index: String(i),
         parameters: [{ type: 'text', text: String(v) }],
       });
+    });
+  }
+  // Botones mixtos en orden exacto de la plantilla (url + quick_reply).
+  if (buttons.length) {
+    buttons.forEach((b, i) => {
+      if (b.type === 'url') {
+        components.push({
+          type: 'button', sub_type: 'url', index: String(i),
+          parameters: [{ type: 'text', text: String(b.text ?? '') }],
+        });
+      } else if (b.type === 'quick_reply') {
+        components.push({
+          type: 'button', sub_type: 'quick_reply', index: String(i),
+          parameters: [{ type: 'payload', payload: String(b.payload ?? '') }],
+        });
+      }
     });
   }
 
