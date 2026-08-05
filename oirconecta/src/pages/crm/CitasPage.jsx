@@ -2666,7 +2666,7 @@ const CitasPage = () => {
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>Fecha</Typography>
               <DateSelector selectedDate={createData.date || ''}
-                onDateSelect={(date) => setCreateData({ ...createData, date, time: '' })} />
+                onDateSelect={(date) => setCreateData({ ...createData, date })} />
             </Grid>
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>Hora</Typography>
