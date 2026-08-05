@@ -80,6 +80,8 @@ function buildVars(appointment) {
     link_confirm: linkConfirm,
     link_reagendar: linkReagendar,
     link_encuesta: linkEncuesta,
+    // Token crudo — parámetro de los botones URL (reagendar/cancelar) en WhatsApp.
+    reschedule_token: appointment.rescheduleToken || '',
   };
 }
 

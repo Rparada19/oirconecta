@@ -39,6 +39,7 @@ async function sendWhatsAppTemplate({
   bodyParams = [],
   namedParams = null,
   buttonParams = [],
+  urlButtonParams = [],
 }) {
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -74,6 +75,18 @@ async function sendWhatsAppTemplate({
         sub_type: 'quick_reply',
         index: String(i),
         parameters: [{ type: 'payload', payload: String(v) }],
+      });
+    });
+  }
+  // Botones URL dinámicos ({{1}} en la URL del botón). Cada índice = un botón.
+  if (urlButtonParams.length) {
+    urlButtonParams.forEach((v, i) => {
+      if (v == null || v === '') return;
+      components.push({
+        type: 'button',
+        sub_type: 'url',
+        index: String(i),
+        parameters: [{ type: 'text', text: String(v) }],
       });
     });
   }
