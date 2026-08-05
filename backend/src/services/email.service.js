@@ -279,7 +279,12 @@ async function sendBookingConfirmation(appointment, meta = {}) {
   const fechaRaw = appointment.fecha instanceof Date
     ? appointment.fecha.toISOString().slice(0, 10)
     : String(appointment.fecha || '').slice(0, 10);
-  const hora     = appointment.hora || '—';
+  const hora     = (() => {
+    const [h, m] = String(appointment.hora || '').split(':').map(Number);
+    if (Number.isNaN(h)) return appointment.hora || '—';
+    const ap = h >= 12 ? 'p.m.' : 'a.m.';
+    return `${h % 12 || 12}:${String(m || 0).padStart(2, '0')} ${ap}`;
+  })();
   const paciente = appointment.patientName || 'Paciente';
   const motivo   = appointment.motivo || '—';
   const [fy, fm, fd] = fechaRaw.split('-').map(Number);

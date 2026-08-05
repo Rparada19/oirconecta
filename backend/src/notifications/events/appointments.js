@@ -36,8 +36,17 @@ function pickTemplate(base, appointment) {
 
 function formatFechaLarga(date) {
   return new Intl.DateTimeFormat('es-CO', {
-    timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short',
+    timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   }).format(new Date(date));
+}
+
+/** "11:00" → "11:00 a.m." · "14:30" → "2:30 p.m." */
+function formatHora12(hhmm) {
+  const [h, m] = String(hhmm || '').split(':').map(Number);
+  if (Number.isNaN(h)) return hhmm || '';
+  const ap = h >= 12 ? 'p.m.' : 'a.m.';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m || 0).padStart(2, '0')} ${ap}`;
 }
 
 function subMinutes(dateLike, mins) {
@@ -57,7 +66,7 @@ function buildVars(appointment) {
   const start = citaStartDate(appointment);
   const nombre = appointment.patient?.nombre || appointment.patientName || 'paciente';
   const fechaCita = formatFechaLarga(start);
-  const horaCita = appointment.hora || '';
+  const horaCita = formatHora12(appointment.hora);
   const tipoConsulta = appointment.tipoConsulta || 'consulta';
   const linkConfirm = `${PUBLIC_BASE}/agendar/confirmar?token=${appointment.rescheduleToken}`;
   const linkReagendar = `${PUBLIC_BASE}/agendar/reagendar?token=${appointment.rescheduleToken}`;
