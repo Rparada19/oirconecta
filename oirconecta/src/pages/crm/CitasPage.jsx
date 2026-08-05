@@ -98,6 +98,16 @@ import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../../components/crm/ui/PageHeader';
 import KpiCard from '../../components/crm/ui/KpiCard';
 
+// Horarios sugeridos por defecto (cada 30 min, 7:00–18:00) cuando la agenda del
+// profesional no tiene disponibilidad configurada para la fecha elegida.
+const DEFAULT_SUGGESTED_SLOTS = (() => {
+  const out = [];
+  for (let m = 7 * 60; m <= 18 * 60; m += 30) {
+    out.push(`${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`);
+  }
+  return out;
+})();
+
 const CitasPage = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
@@ -2677,7 +2687,7 @@ const CitasPage = () => {
               {createData.date ? (
                 <TimeSelector selectedDate={createData.date} selectedTime={createData.time}
                   onTimeSelect={(time) => setCreateData({ ...createData, time, manualTime: false })}
-                  availableTimes={createAvailableSlots} />
+                  availableTimes={createAvailableSlots.length ? createAvailableSlots : DEFAULT_SUGGESTED_SLOTS} />
               ) : (
                 <Typography variant="body2" sx={{ color: '#86899C', py: 2, textAlign: 'center' }}>
                   Selecciona una fecha para ver horarios sugeridos
