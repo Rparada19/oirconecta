@@ -781,6 +781,7 @@ const CitasPage = () => {
       professionalId: createData.professionalId || undefined,
       professionalDisplayName: prof?.nombre || undefined,
       professionalNotifyEmail: prof?.email || undefined,
+      allowManualTime: true,
     });
     setCreating(false);
     if (result.success) {
@@ -2669,13 +2670,17 @@ const CitasPage = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#272F50', mb: 1 }}>Hora</Typography>
+              <TextField type="time" fullWidth label="Hora manual" value={createData.time}
+                onChange={(e) => setCreateData({ ...createData, time: e.target.value, manualTime: true })}
+                InputLabelProps={{ shrink: true }} inputProps={{ step: 300 }} sx={{ mb: 1.5 }}
+                helperText="Escribe cualquier hora (ej. 09:00) o elige un horario sugerido abajo." />
               {createData.date ? (
                 <TimeSelector selectedDate={createData.date} selectedTime={createData.time}
-                  onTimeSelect={(time) => setCreateData({ ...createData, time })}
+                  onTimeSelect={(time) => setCreateData({ ...createData, time, manualTime: false })}
                   availableTimes={createAvailableSlots} />
               ) : (
-                <Typography variant="body2" sx={{ color: '#86899C', py: 4, textAlign: 'center' }}>
-                  Selecciona una fecha primero
+                <Typography variant="body2" sx={{ color: '#86899C', py: 2, textAlign: 'center' }}>
+                  Selecciona una fecha para ver horarios sugeridos
                 </Typography>
               )}
             </Grid>

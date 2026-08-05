@@ -271,8 +271,11 @@ async function sendDirectoryWelcomeWithCredentials({ to, nombre, tempPassword, e
 // ════════════════════════════════════════════════════════════════════════════
 // 1. CONFIRMACIÓN DE CITA
 // ════════════════════════════════════════════════════════════════════════════
+// Dirección del centro OírConecta (retail). Cuando haya multi-sede se moverá a config por profesional.
+const CENTER_ADDRESS = 'Carrera 10 #96-25, Edificio Centro Ejecutivo, consultorio 320';
+
 async function sendBookingConfirmation(appointment, meta = {}) {
-  const proName  = meta.professionalName || 'el profesional';
+  const proName  = meta.professionalName || 'Dra. Piedad Marín';
   const fechaRaw = appointment.fecha instanceof Date
     ? appointment.fecha.toISOString().slice(0, 10)
     : String(appointment.fecha || '').slice(0, 10);
@@ -288,14 +291,15 @@ async function sendBookingConfirmation(appointment, meta = {}) {
       preheader: `Tu cita quedó confirmada para el ${fecha} a las ${hora}.`,
       title: 'Cita confirmada — OírConecta',
       bodyHtml: [
-        h1('Tu cita está confirmada ✓'),
-        p(`Hola <strong>${paciente}</strong>, tu cita quedó registrada exitosamente.`),
+        h1('Gracias por agendar con OírConecta ✓'),
+        p(`Nos vemos el <strong>${fecha}</strong> a las <strong>${hora}</strong>.`),
         highlight([
-          ['Profesional', proName],
-          ['Fecha',       fecha],
-          ['Hora',        hora],
-          ['Motivo',      motivo],
+          ['Profesional que te atenderá', proName],
+          ['Dirección', CENTER_ADDRESS],
         ]),
+        p('Recuerda llegar <strong>10 minutos antes</strong> para que puedas anunciarte en la recepción.'),
+        p('Gracias por confiar tu audición con nosotros.'),
+        p('<span style="font-size:13px;color:#6b7280;">Atentamente,<br>Oír Conecta</span>'),
         appointment.directoryProfileId && appointment.rescheduleToken
           ? [
               `<div style="text-align:center;margin:24px 0;">`,

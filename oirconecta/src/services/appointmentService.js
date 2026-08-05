@@ -131,13 +131,17 @@ export async function createAppointment(appointmentData) {
     professionalNotifyEmail,
     professionalDisplayName,
     directoryProfileId,
+    allowManualTime,
   } = appointmentData;
   if (!date || !time || !patientName || !patientPhone) {
     return { success: false, appointment: null, error: 'Nombre, teléfono, fecha y hora son obligatorios' };
   }
-  const slots = await getAvailableTimeSlots(date, '07:00', '18:00', professionalId || null);
-  if (!slots.includes(time)) {
-    return { success: false, appointment: null, error: 'El horario seleccionado no está disponible. Elige otro.' };
+  // Con hora manual (agendamiento interno) no se exige que esté en los slots.
+  if (!allowManualTime) {
+    const slots = await getAvailableTimeSlots(date, '07:00', '18:00', professionalId || null);
+    if (!slots.includes(time)) {
+      return { success: false, appointment: null, error: 'El horario seleccionado no está disponible. Elige otro.' };
+    }
   }
   const payload = {
     fecha: date.includes('T') ? date : `${date}T12:00:00.000Z`,

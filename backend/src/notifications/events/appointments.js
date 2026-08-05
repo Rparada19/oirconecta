@@ -105,8 +105,9 @@ async function onAppointmentCreated(appointment) {
 
   const results = [];
 
-  // CITA_AGENDADA — inmediato
-  for (const channel of ['WHATSAPP', 'EMAIL']) {
+  // CITA_AGENDADA — inmediato. Solo WhatsApp: el email de confirmación
+  // lo envía directo appointments.service (sendBookingConfirmation) para evitar duplicado.
+  for (const channel of ['WHATSAPP']) {
     results.push(await scheduleReminder({
       patientId, eventCode: 'CITA_AGENDADA', channel,
       templateCode: pickTemplate('cita_agendada', appointment),
