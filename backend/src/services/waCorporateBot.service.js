@@ -241,12 +241,11 @@ async function handleButtonReply({ conversationId, buttonId, buttonTitle }) {
   });
   if (!conv) return { skipped: 'conv-not-found' };
 
-  // Regla del negocio (2026-07-11):
-  // - PACIENTE_BOGOTA / INFO_GENERAL → status='BOT' para que el flow de agendar
-  //   por IA continúe sin necesidad de humano.
-  // - PROFESIONAL_DIRECTORIO → status='ESCALATED' porque va al funnel de
-  //   captación del directorio (humano comercial toma el lead).
-  const nextStatus = contactType === 'PROFESIONAL_DIRECTORIO' ? 'ESCALATED' : 'BOT';
+  // Todas las ramas quedan en BOT para que el asistente atienda:
+  // - PACIENTE_BOGOTA / INFO_GENERAL → agenda por IA.
+  // - PROFESIONAL_DIRECTORIO → captura 3 datos + comparte registro y LUEGO escala
+  //   al equipo comercial (el propio prompt agrega [ESCALAR_HUMANO] al final).
+  const nextStatus = 'BOT';
 
   await prisma.whatsAppConversation.update({
     where: { id: conversationId },
@@ -269,14 +268,13 @@ Estamos en Cr 10 #96-25 Cons. 320, Bogotá.
 
 Si prefieres coordinar por acá o tienes alguna duda antes de agendar, cuéntame y con gusto te ayudo.`,
     PROFESIONAL_DIRECTORIO:
-`¡Genial! En OírConecta estamos armando el directorio de audiólogos y otorrinos verificados del país.
+`¡Genial! Para sumarte a nuestro directorio nacional, cuéntame por favor:
 
-Cuéntanos:
+• Tu nombre completo
 • Tu especialidad
 • Ciudad donde ejerces
-• Años de experiencia
 
-Un miembro del equipo comercial te contacta hoy mismo.`,
+Con eso te comparto el registro y aviso al equipo. 🙌`,
     INFO_GENERAL:
 `Con gusto te ayudamos. Cuéntanos brevemente qué necesitas saber y en un momento te respondemos con la mejor información.`,
   }[contactType];
@@ -368,23 +366,17 @@ ESCALACIÓN (rama PACIENTE_BOGOTA — muy restrictiva):
 - Si el tool de agendar falla técnicamente, dile "Tuve un problema técnico agendándote. ¿Podrías escribirme el día y la hora que prefieres y lo intento de nuevo?" — NO escales.`,
 
   PROFESIONAL_DIRECTORIO:
-`Eres asistente del equipo comercial de OírConecta. Atiendes a audiólogos, otorrinos y fonoaudiólogos interesados en unirse al directorio nacional, y tu objetivo es AGENDAR una reunión corta con el ejecutivo comercial.
+`Eres el asistente de OírConecta. Atiendes a profesionales de salud auditiva (audiólogos, otorrinos, fonoaudiólogos) que quieren unirse al directorio nacional. Tu tarea es SIMPLE: capturar 3 datos y compartir el registro. Nada más.
 
-Hoy es {HOY_PLACEHOLDER} (zona horaria Bogotá).
-
-Flujo:
-1. Recopila datos mínimos: nombre completo, especialidad y ciudad (pídelos de forma natural, no como formulario).
-2. Si el interlocutor NO es profesional de salud auditiva (audiólogo, otorrinolaringólogo, fonoaudiólogo) → informa amablemente que el directorio es solo para esas especialidades y agrega [ESCALAR_HUMANO]. No agendes.
-3. Con los datos mínimos, ofrécele agendar una *reunión de presentación* de ~30 min con el ejecutivo comercial y AGENDA TÚ MISMO usando las tools:
-   - list_appointment_types → usa el tipo "Reunión comercial".
-   - get_availability(date, appointmentTypeId) → ofrécele 2-3 horarios concretos.
-   - create_appointment → antes de llamarla, confirma con él fecha + hora + su nombre. En patientName usa el nombre del profesional; en notas incluye especialidad y ciudad.
-4. Tras agendar, confirma día y hora y dile que recibirá los detalles. NO escales: la reunión ya quedó agendada.
+Flujo (máximo 2-3 mensajes, sin rodeos):
+1. Si te faltan, pide de forma natural: *nombre completo*, *especialidad* y *ciudad* (puedes pedirlos juntos).
+2. Apenas tengas los 3 datos, responde EXACTAMENTE con este espíritu: "¡Gracias, [nombre]! 🙌 Crea tu perfil aquí 👉 https://oirconecta.com/unete — nuestro equipo revisa tu solicitud y te contacta." y agrega al final [ESCALAR_HUMANO] para que el equipo comercial retome.
+3. Si NO es profesional de salud auditiva, dile amablemente que el directorio es solo para esas especialidades y agrega [ESCALAR_HUMANO].
 
 Reglas:
-- No prometas planes ni precios específicos; eso lo presenta el ejecutivo en la reunión.
-- Solo agregas [ESCALAR_HUMANO] si: (a) no es profesional elegible, (b) pide explícitamente hablar con una persona, (c) la tool de agendar falla técnicamente (en ese caso dile que un ejecutivo lo contacta hoy).
-- Tono: profesional, cálido, colombiano neutro, tuteo. Máximo 2 párrafos cortos.
+- NO agendes reuniones ni uses herramientas de calendario. Solo capturas los 3 datos y compartes el link.
+- No prometas precios ni condiciones; eso lo ve el equipo.
+- Tono: cálido, profesional, colombiano, tuteo. Máximo 2-3 líneas por mensaje.
 - Formato WhatsApp: *negrita* con UN asterisco (nunca **), _itálica_, sin Markdown de otras plataformas.`,
 
   INFO_GENERAL:
