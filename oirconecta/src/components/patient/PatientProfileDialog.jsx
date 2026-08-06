@@ -496,13 +496,16 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
       const sourceData = patientAsSource || appointment || lead;
       const email = patientAsSource?.patientEmail || appointment?.patientEmail || lead?.email;
 
-      if (!email) {
-        console.warn('[PatientProfileDialog] No email found in patient/appointment/lead');
+      // Antes se abortaba si no había email; ahora seguimos si tenemos el
+      // paciente (backend) para no dejar la ficha vacía cuando no hay correo.
+      if (!email && !sourceData) {
+        console.warn('[PatientProfileDialog] Sin email ni paciente de origen');
         return;
       }
 
-      // Cargar perfil existente o inicializar
-      let profile = getPatientProfile(email);
+      // Perfil por localStorage SOLO si hay email. Sin email, la llave sería
+      // vacía y se cruzarían pacientes → usamos los datos del paciente (backend).
+      let profile = email ? getPatientProfile(email) : null;
       
       if (!profile) {
         // Inicializar perfil desde datos de cita o lead
