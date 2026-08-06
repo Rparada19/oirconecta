@@ -93,8 +93,9 @@ export const unblockTimeSlot = (blockId) => {
  */
 export async function getAllAppointments(opts = {}) {
   const params = new URLSearchParams();
-  params.set('limit', String(opts.patientEmail ? 500 : 500));
-  if (opts.patientEmail) params.set('patientEmail', (opts.patientEmail || '').trim().toLowerCase());
+  params.set('limit', '500');
+  if (opts.patientId) params.set('patientId', opts.patientId);
+  else if (opts.patientEmail) params.set('patientEmail', (opts.patientEmail || '').trim().toLowerCase());
   const { data, error } = await api.get(`/api/appointments?${params.toString()}`);
   if (error) return [];
   const list = data?.data?.appointments ?? [];

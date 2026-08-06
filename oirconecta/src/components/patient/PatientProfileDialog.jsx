@@ -107,7 +107,7 @@ import TimeSelector from '../appointments/TimeSelector';
 import { getAvailableTimeSlots, createAppointment, updateAppointmentStatus } from '../../services/appointmentService';
 import { getConfig } from '../../services/configService';
 import { getPatientRecords, recordConsultation, updateConsultation, deletePatientRecord, clearAllPatientRecords } from '../../services/patientRecordService';
-import { getConsultationsByEmail, createConsultation, patchConsultation } from '../../services/consultationService';
+import { getConsultationsByEmail, getConsultationsByPatientId, createConsultation, patchConsultation } from '../../services/consultationService';
 import { recordReminder } from '../../services/interactionService';
 import { useAuth } from '../../context/AuthContext';
 import { canAddAndInvoiceProducts, canEditClinicalHistory, canEditClinicalHistoryAfterFirstVisit, canEditAnamnesisAfterFilled, canEditDatosGenerales, canAdminClinicalHistory, canManagePatientConsentSignatures, canUsePatientCrmTabForms } from '../../utils/rolePermissions';
@@ -737,17 +737,20 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
       });
     }
 
-      // Cargar citas del paciente (filtrando por email en API para evitar límite de paginación)
+      // Llave estable: si tenemos patientId (backend), cargamos por ID desde el
+      // servidor y NO tocamos localStorage. Si no, fallback por email (legacy).
+      const patientId = patient?.id || appointment?.patientId || null;
+      // Cargar citas del paciente
       try {
         const emailNorm = (e) => (e || '').trim().toLowerCase();
         const emailKey = emailNorm(email);
-        const patientApts = await getAllAppointments({ patientEmail: emailKey });
+        const patientApts = await getAllAppointments(patientId ? { patientId } : { patientEmail: emailKey });
         setPatientAppointments(patientApts);
-        
-        // Cargar consultas: API (DB) + localStorage, merge por appointmentId
+
+        // Cargar consultas del servidor. Con patientId no se usa localStorage.
         const [apiConsultations, localRecords] = await Promise.all([
-          getConsultationsByEmail(emailKey),
-          Promise.resolve(getPatientRecords(emailKey) || []),
+          patientId ? getConsultationsByPatientId(patientId) : getConsultationsByEmail(emailKey),
+          Promise.resolve(patientId ? [] : (getPatientRecords(emailKey) || [])),
         ]);
         const localConsultations = localRecords.filter((r) => r.type === 'consultation');
         const apiIds = new Set(apiConsultations.map((c) => c.appointmentId).filter(Boolean));
@@ -778,7 +781,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
       // Cargar interacciones del paciente
       try {
         const [interactions, metrics, alertMetrics] = await Promise.all([
-          getPatientInteractions(email),
+          getPatientInteractions(email, patientId),
           getPatientInteractionsMetrics(email),
           getDailyActionsMetricsByPatient(email, 7),
         ]);

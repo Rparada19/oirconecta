@@ -22,6 +22,18 @@ export async function getConsultationsByEmail(patientEmail) {
   }
 }
 
+export async function getConsultationsByPatientId(patientId) {
+  if (!patientId) return [];
+  try {
+    const { data, error } = await api.get(`/api/consultations?patientId=${encodeURIComponent(patientId)}`);
+    if (error) return [];
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch (e) {
+    console.error('[consultationService] getConsultationsByPatientId:', e);
+    return [];
+  }
+}
+
 /**
  * Registrar consulta (cita asistida con historia clínica)
  * @param {Object} payload - { appointmentId, patientEmail?, patientId?, notes, hearingLoss, nextSteps, appointmentType, formData, diagnosticos?, pronostico?, tratamiento?, signosVitales? }

@@ -31,10 +31,12 @@ function generateRescheduleToken() {
 /**
  * Obtener todas las citas
  */
-const getAll = async ({ fecha, estado, patientEmail, page = 1, limit = 50 }) => {
+const getAll = async ({ fecha, estado, patientEmail, patientId, page = 1, limit = 50 }) => {
   const where = {};
 
-  if (patientEmail) {
+  if (patientId) {
+    where.patientId = patientId;
+  } else if (patientEmail) {
     where.patientEmail = (patientEmail || '').trim().toLowerCase();
   }
 
@@ -313,6 +315,24 @@ const create = async (data, createdById) => {
     const adminAppt = { ...appointment, patientEmail: null, professionalNotifyEmail: config.admin.email };
     sendBookingConfirmation(adminAppt, { professionalName: data.professionalDisplayName || undefined })
       .catch((e) => console.error('[appointments.create] admin email notify:', e.message));
+  }
+
+  // Registro CRM: deja constancia del agendamiento en el historial del paciente.
+  if (appointment.patientId) {
+    const fechaLegible = new Date(appointment.fecha).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+    prisma.interaction.create({
+      data: {
+        patientId: appointment.patientId,
+        type: 'appointment',
+        channel: 'system',
+        title: `Cita agendada: ${appointment.tipoConsulta || 'Consulta'}`,
+        description: `${fechaLegible} a las ${appointment.hora}`,
+        status: 'completed',
+        occurredAt: new Date(),
+        relatedAppointmentId: appointment.id,
+        metadata: { procedencia: appointment.procedencia, hora: appointment.hora },
+      },
+    }).catch((e) => console.error('[appointments.create] interaction agendada:', e.message));
   }
 
   // Nuevo sistema de notificaciones (Fase 1):

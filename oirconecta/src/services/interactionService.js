@@ -33,10 +33,14 @@ const saveLocal = (interactions) => {
  * @param {string} patientEmail
  * @returns {Promise<Array>}
  */
-export const getPatientInteractions = async (patientEmail) => {
-  const localList = getAllLocal()[patientEmail] || [];
+export const getPatientInteractions = async (patientEmail, patientId = null) => {
+  // Con patientId cargamos 100% del servidor (sin localStorage).
+  const localList = (!patientId && patientEmail) ? (getAllLocal()[patientEmail] || []) : [];
   try {
-    const { data, error } = await api.get(`/api/interactions?patientEmail=${encodeURIComponent(patientEmail || '')}`);
+    const qs = patientId
+      ? `patientId=${encodeURIComponent(patientId)}`
+      : `patientEmail=${encodeURIComponent(patientEmail || '')}`;
+    const { data, error } = await api.get(`/api/interactions?${qs}`);
     if (error || !data?.data) return localList;
     const apiList = Array.isArray(data.data) ? data.data : [];
     const apiIds = new Set(apiList.map((i) => i.id));
