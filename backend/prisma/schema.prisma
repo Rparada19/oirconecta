@@ -422,6 +422,9 @@ model Patient {
   eps                       String?
   usuarioAudifonosMedicados String    @default("NO")
   procedencia               String    @default("visita-medica")
+  /// True si el registro se creó automáticamente al agendar una cita (aún no es
+  /// paciente real). Se considera paciente real cuando asiste, compra o tiene consulta.
+  createdViaBooking         Boolean   @default(false)
   notas                     String?
 
   // Datos clínicos generales

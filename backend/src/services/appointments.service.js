@@ -260,6 +260,7 @@ const create = async (data, createdById) => {
             telefono,
             email: data.patientEmail ? String(data.patientEmail).trim().toLowerCase() : null,
             procedencia: data.procedencia || 'visita-medica',
+            createdViaBooking: true, // aún no es paciente real (no ha asistido)
           },
           select: { id: true },
         });

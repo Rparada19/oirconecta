@@ -29,6 +29,19 @@ const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointme
     where.sales = { some: { createdById: createdByUserId } };
   }
 
+  // Solo pacientes REALES: creados manualmente, o que ya asistieron / compraron /
+  // tienen consulta o mantenimiento. Los auto-creados al agendar (aún sin asistir)
+  // no aparecen hasta que se marque su cita como asistida (COMPLETED).
+  where.AND = [{
+    OR: [
+      { createdViaBooking: false },
+      { appointments: { some: { estado: 'COMPLETED' } } },
+      { sales: { some: {} } },
+      { consultations: { some: {} } },
+      { maintenances: { some: {} } },
+    ],
+  }];
+
   const [patients, total] = await Promise.all([
     prisma.patient.findMany({
       where,
