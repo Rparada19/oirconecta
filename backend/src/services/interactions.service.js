@@ -49,6 +49,16 @@ const listByPatientEmail = async (patientEmail) => {
   return list.map(toFrontend);
 };
 
+/** Interacciones por patientId (llave estable). */
+const listByPatientId = async (patientId) => {
+  if (!patientId) return [];
+  const list = await prisma.interaction.findMany({
+    where: { patientId },
+    orderBy: { occurredAt: 'desc' },
+  });
+  return list.map(toFrontend);
+};
+
 /**
  * Métricas CRM para un paciente: totales y últimas fechas por tipo
  */
@@ -311,6 +321,7 @@ const getDailyActionsMetrics = async (options = {}) => {
 
 module.exports = {
   listByPatientEmail,
+  listByPatientId,
   getMetricsByPatientEmail,
   getById,
   create,

@@ -6,11 +6,13 @@ const interactionsService = require('../services/interactions.service');
 
 const listByPatientEmail = async (req, res, next) => {
   try {
-    const { patientEmail } = req.query;
-    if (!patientEmail) {
-      return res.status(400).json({ success: false, error: 'patientEmail es requerido' });
+    const { patientEmail, patientId } = req.query;
+    if (!patientEmail && !patientId) {
+      return res.status(400).json({ success: false, error: 'patientEmail o patientId es requerido' });
     }
-    const list = await interactionsService.listByPatientEmail(patientEmail);
+    const list = patientId
+      ? await interactionsService.listByPatientId(patientId)
+      : await interactionsService.listByPatientEmail(patientEmail);
     res.json({ success: true, data: list });
   } catch (error) {
     next(error);

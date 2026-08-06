@@ -25,6 +25,16 @@ const getByPatientEmail = async (patientEmail) => {
   return patient?.consultations ?? [];
 };
 
+/** Consultas por patientId (llave estable, no depende de email). */
+const getByPatientId = async (patientId) => {
+  if (!patientId) return [];
+  return prisma.consultation.findMany({
+    where: { patientId },
+    orderBy: { createdAt: 'desc' },
+    include: { appointment: true },
+  });
+};
+
 /**
  * Registrar consulta (cuando se marca cita como asistida)
  * Crea Consultation en DB, actualiza Patient.anamnesisClinica/anamnesisSocial si es primera vez
@@ -200,6 +210,7 @@ const update = async (id, data) => {
 
 module.exports = {
   getByPatientEmail,
+  getByPatientId,
   create,
   update,
 };

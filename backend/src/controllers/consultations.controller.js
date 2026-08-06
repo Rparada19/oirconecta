@@ -7,14 +7,16 @@ const { logPatientReadBatch } = require('../dataAccessLog');
 
 const getByPatientEmail = async (req, res, next) => {
   try {
-    const { patientEmail } = req.query;
-    if (!patientEmail) {
+    const { patientEmail, patientId } = req.query;
+    if (!patientEmail && !patientId) {
       return res.status(400).json({
         success: false,
-        error: 'patientEmail es requerido',
+        error: 'patientEmail o patientId es requerido',
       });
     }
-    const consultations = await consultationsService.getByPatientEmail(patientEmail);
+    const consultations = patientId
+      ? await consultationsService.getByPatientId(patientId)
+      : await consultationsService.getByPatientEmail(patientEmail);
     const patientIds = [...new Set((consultations || []).map((c) => c.patientId).filter(Boolean))];
     if (patientIds.length) {
       await logPatientReadBatch({ patientIds, entity: 'Consultation' });
