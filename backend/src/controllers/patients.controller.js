@@ -116,6 +116,15 @@ const getProfile = async (req, res, next) => {
   }
 };
 
+const getMessages = async (req, res, next) => {
+  try {
+    const messages = await patientsService.getMessages(req.params.id);
+    res.json({ success: true, data: messages });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const create = async (req, res, next) => {
   try {
     const patient = await patientsService.create(req.body);
@@ -170,6 +179,7 @@ module.exports = {
   getStats,
   getById,
   getProfile,
+  getMessages,
   create,
   update,
   reassign,

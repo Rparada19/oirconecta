@@ -27,6 +27,17 @@ export async function getPatients(opts = {}) {
  * @param {string} email
  * @returns {Promise<{ id: string, nombre: string, email: string, telefono: string } | null>}
  */
+export async function getPatientMessages(patientId) {
+  if (!patientId) return [];
+  try {
+    const { data, error } = await api.get(`/api/patients/${encodeURIComponent(patientId)}/messages`);
+    if (error) return [];
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function getPatientByEmail(email) {
   if (!email?.trim()) return null;
   const norm = email.trim().toLowerCase();

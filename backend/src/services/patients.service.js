@@ -205,11 +205,26 @@ const reassignToProfessional = async (patientId, newProfessionalId) => {
   return { patient, updatedSalesCount: result.count };
 };
 
+/** Mensajes enviados al paciente (Notification): WhatsApp/email/SMS + estado. */
+const getMessages = async (patientId) => {
+  if (!patientId) return [];
+  return prisma.notification.findMany({
+    where: { patientId },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true, channel: true, eventCode: true, templateCode: true,
+      status: true, toAddress: true, createdAt: true,
+    },
+    take: 200,
+  });
+};
+
 module.exports = {
   getAll,
   getStats,
   getById,
   getFullProfile,
+  getMessages,
   create,
   update,
   patientHasSalesByUser,

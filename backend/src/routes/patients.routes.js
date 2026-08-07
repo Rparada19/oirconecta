@@ -44,6 +44,14 @@ router.get(
   patientsController.getProfile
 );
 
+// GET /api/patients/:id/messages - Mensajes enviados (WhatsApp/email/SMS) al paciente
+router.get(
+  '/:id/messages',
+  [param('id').isUUID()],
+  validateRequest,
+  patientsController.getMessages
+);
+
 // POST /api/patients - Crear paciente
 router.post(
   '/',

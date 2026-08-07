@@ -84,7 +84,7 @@ import {
 } from '@mui/icons-material';
 import html2pdf from 'html2pdf.js';
 import { getPatientProfile, savePatientProfile, initializePatientProfile, generateCodigoHistoriaClinica, deletePatientProfile } from '../../services/patientProfileService';
-import { updatePatient as updatePatientApi } from '../../services/patientService';
+import { updatePatient as updatePatientApi, getPatientMessages } from '../../services/patientService';
 import { getAllAppointments } from '../../services/appointmentService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
 import { getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
@@ -168,6 +168,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
     [patientAppointments, patientConsultations],
   );
   const [patientInteractions, setPatientInteractions] = useState([]);
+  const [patientMessages, setPatientMessages] = useState([]); // Notification: WA/email/SMS enviados
   const [crmMetrics, setCrmMetrics] = useState(null);
   const [patientAlertMetrics, setPatientAlertMetrics] = useState({ activas: 0, vencidas: 0, cumplidas: 0 });
   const [interactionForm, setInteractionForm] = useState({
@@ -786,6 +787,12 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
           getDailyActionsMetricsByPatient(email, 7),
         ]);
         setPatientInteractions(interactions || []);
+        // Mensajes enviados (WhatsApp/email/SMS) desde el servidor, por patientId.
+        if (patientId) {
+          getPatientMessages(patientId).then((msgs) => setPatientMessages(msgs || [])).catch(() => setPatientMessages([]));
+        } else {
+          setPatientMessages([]);
+        }
         setCrmMetrics(metrics || null);
         setPatientAlertMetrics(alertMetrics || { activas: 0, vencidas: 0, cumplidas: 0 });
       } catch (error) {
@@ -4736,6 +4743,12 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                   ...citasAsistidas.map((a) => ({ type: 'cita', date: new Date(a.date + 'T' + (a.time || '00:00')).getTime(), title: `Cita asistida: ${a.reason || a.motivo || 'Consulta'}`, subtitle: `${a.date} ${a.time || ''}`, id: a.id, appointment: a })),
                   ...mantenimientosRealizados.map((m) => ({ type: 'mantenimiento', date: new Date(m.scheduledDate + (m.scheduledTime ? 'T' + m.scheduledTime : '')).getTime(), title: `Mantenimiento: ${m.type === 'cleaning' ? 'Limpieza' : m.type === 'repair' ? 'Reparación' : m.type === 'adjustment' ? 'Ajuste' : m.type === 'battery-replacement' ? 'Cambio de Batería' : m.type === 'check-up' ? 'Revisión' : m.type}`, subtitle: m.description || m.scheduledDate, id: m.id, maintenance: m })),
                   ...(patientInteractions || []).map((i) => ({ type: 'interaction', date: new Date(i.occurredAt || i.createdAt).getTime(), title: i.title, subtitle: i.description || (i.channel === 'whatsapp' ? 'WhatsApp' : i.channel === 'phone' ? 'Teléfono' : i.channel || ''), id: i.id, interaction: i })),
+                  ...(patientMessages || []).map((m) => {
+                    const canal = { WHATSAPP: 'WhatsApp', EMAIL: 'Email', SMS: 'SMS' }[m.channel] || m.channel;
+                    const evento = { CITA_AGENDADA: 'Confirmación de cita', RECORDATORIO_24H: 'Recordatorio 24h', RECORDATORIO_2H: 'Recordatorio 2h', CITA_CANCELADA: 'Cancelación', CITA_REPROGRAMADA: 'Reprogramación' }[m.eventCode] || (m.eventCode || 'Mensaje');
+                    const estado = { SENT: 'enviado', DELIVERED: 'entregado', READ: 'leído', FAILED: 'falló' }[m.status] || m.status;
+                    return { type: 'message_sent', date: new Date(m.createdAt).getTime(), title: `${canal}: ${evento}`, subtitle: `Estado: ${estado}${m.toAddress ? ` · ${m.toAddress}` : ''}`, id: `msg-${m.id}` };
+                  }),
                 ].sort((a, b) => b.date - a.date);
 
                 if (timeline.length === 0) {
