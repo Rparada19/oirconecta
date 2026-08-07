@@ -1282,7 +1282,8 @@ const DashboardPage = () => {
               });
 
               const esAsistida = (a) => a.status === 'completed' || a.status === 'patient';
-              const esNoShow = (a) => a.status === 'no-show';
+              // Una cita cancelada es un cupo perdido: cuenta como "no asistió".
+              const esNoShow = (a) => a.status === 'no-show' || a.status === 'cancelled';
               const esCancelada = (a) => a.status === 'cancelled';
               const esPendiente = (a) => a.status === 'confirmed' || a.status === 'rescheduled';
 
@@ -1345,7 +1346,7 @@ const DashboardPage = () => {
                 { label: 'Agendadas', value: agendadas, color: '#272F50', icon: <CalendarToday sx={{ fontSize: 16 }} /> },
                 { label: 'Asistidas', value: asistidas, color: '#059669', icon: <CheckCircle sx={{ fontSize: 16 }} /> },
                 { label: 'No asistieron', value: noAsistidas, color: '#f97316', icon: <EventBusy sx={{ fontSize: 16 }} /> },
-                { label: 'Canceladas', value: canceladas, color: '#dc2626', icon: <Cancel sx={{ fontSize: 16 }} /> },
+                { label: 'de ellas, canceladas', value: canceladas, color: '#dc2626', icon: <Cancel sx={{ fontSize: 16 }} /> },
                 { label: 'Por realizar', value: pendientes, color: '#64748b', icon: <Schedule sx={{ fontSize: 16 }} /> },
               ];
 

@@ -2971,8 +2971,12 @@ model FinanceExpense {
   tipo      String
   concepto  String
   /// nomina | arriendo | servicios | software | marketing | mercancia |
-  /// impuestos | financieros | otros
+  /// impuestos | financieros | leasing | bancos | viajes | representacion |
+  /// combustible | mantenimiento | papeleria | seguros | honorarios | otros
   categoria String @default("otros")
+  /// A qué línea de negocio se imputa: CENTRO | PORTAL | COMPARTIDO.
+  /// COMPARTIDO entra al consolidado pero no se asigna a ninguna línea.
+  linea     String @default("COMPARTIDO")
   montoCOP  Float
 
   /// Solo VARIABLE: mes al que pertenece, formato YYYY-MM.

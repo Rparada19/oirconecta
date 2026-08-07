@@ -22,9 +22,9 @@ const wrap = (fn) => async (req, res, next) => {
 
 router.get(
   '/summary',
-  [query('months').optional().isInt({ min: 1, max: 36 })],
+  [query('year').optional().isInt({ min: 2020, max: 2100 })],
   validateRequest,
-  wrap((req) => financeService.getSummary({ months: parseInt(req.query.months) || 12 }))
+  wrap((req) => financeService.getSummary({ year: parseInt(req.query.year) || undefined }))
 );
 
 // ── Gastos ──
@@ -51,6 +51,20 @@ router.post(
   [body('periodo').matches(/^\d{4}-\d{2}$/)],
   validateRequest,
   wrap((req) => financeService.copyExpensesFromPreviousMonth(req.body.periodo, req.user.id))
+);
+
+router.post(
+  '/expenses/replicate',
+  [
+    body('origen').matches(/^\d{4}-\d{2}$/),
+    body('destinos').isArray({ min: 1, max: 24 }),
+  ],
+  validateRequest,
+  wrap((req) => financeService.replicateExpenses({
+    origen: req.body.origen,
+    destinos: req.body.destinos,
+    excluirConceptos: req.body.excluirConceptos || [],
+  }, req.user.id))
 );
 
 router.put(

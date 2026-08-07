@@ -4,8 +4,9 @@
 
 import { api } from './apiClient';
 
-export async function getFinanceSummary(months = 12) {
-  const { data, error } = await api.get(`/api/finance/summary?months=${months}`);
+export async function getFinanceSummary(year) {
+  const qs = year ? `?year=${year}` : '';
+  const { data, error } = await api.get(`/api/finance/summary${qs}`);
   if (error) return null;
   return data?.data || null;
 }
@@ -24,6 +25,16 @@ export async function createExpense(payload) {
 export async function copyPreviousMonth(periodo) {
   const { data, error } = await api.post('/api/finance/expenses/copy-previous', { periodo });
   return error ? { success: false, error } : { success: true, result: data?.data };
+}
+
+export async function replicateExpenses(payload) {
+  const { data, error } = await api.post('/api/finance/expenses/replicate', payload);
+  return error ? { success: false, error } : { success: true, result: data?.data };
+}
+
+export async function updateAsset(id, payload) {
+  const { data, error } = await api.put(`/api/finance/assets/${id}`, payload);
+  return error ? { success: false, error } : { success: true, asset: data?.data };
 }
 
 export async function updateExpense(id, payload) {

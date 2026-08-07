@@ -108,10 +108,12 @@ const getFunnelPorProcedencia = async ({ desde, hasta } = {}) => {
   citas.forEach((c) => {
     const g = get(c.procedencia);
     g.agendados += 1;
+    // Una cita cancelada es un cupo perdido: cuenta como "no asistió".
     if (c.estado === 'COMPLETED' || c.estado === 'PATIENT') g.asistidos += 1;
-    else if (c.estado === 'NO_SHOW') g.noAsistidos += 1;
-    else if (c.estado === 'CANCELLED') g.cancelados += 1;
-    else g.porRealizar += 1;
+    else if (c.estado === 'NO_SHOW' || c.estado === 'CANCELLED') {
+      g.noAsistidos += 1;
+      if (c.estado === 'CANCELLED') g.cancelados += 1;
+    } else g.porRealizar += 1;
   });
 
   // El diagnóstico solo cuenta si el paciente FUE EVALUADO (tiene consulta).
@@ -152,8 +154,11 @@ const getFunnelPorProcedencia = async ({ desde, hasta } = {}) => {
     g.ingresos = d.ingresos;
   });
 
-  const lista = Object.values(grupos)
-    .filter((g) => g.leads + g.agendados + g.conPerdidaAuditiva + g.audicionNormal + g.cotizados + g.vendidos > 0)
+  // Todas las procedencias se exponen siempre, aunque estén en cero: un canal
+  // sin actividad también es información.
+  PROCEDENCIAS.forEach((p) => get(p));
+  const lista = PROCEDENCIAS
+    .map((p) => grupos[p])
     .sort((a, b) => (b.agendados + b.leads) - (a.agendados + a.leads));
 
   const totales = lista.reduce((acc, g) => {

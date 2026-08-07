@@ -19,15 +19,9 @@ const rangoPeriodo = (periodo) => {
   return { inicio: new Date(y, m - 1, 1, 0, 0, 0, 0), fin: new Date(y, m, 0, 23, 59, 59, 999) };
 };
 
-/** Últimos N periodos terminando en el mes actual (más antiguo primero) */
-const ultimosPeriodos = (n) => {
-  const hoy = new Date();
-  const out = [];
-  for (let i = n - 1; i >= 0; i--) {
-    out.push(toPeriodo(new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)));
-  }
-  return out;
-};
+/** Los 12 meses del año calendario (enero → diciembre). */
+const periodosDelAno = (year) =>
+  Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`);
 
 // ─────────────────────────── Gastos ───────────────────────────
 
@@ -48,6 +42,7 @@ const createExpense = async (data, createdById) => {
       tipo,
       concepto: String(data.concepto || '').trim(),
       categoria: data.categoria || 'otros',
+      linea: ['CENTRO', 'PORTAL', 'COMPARTIDO'].includes(data.linea) ? data.linea : 'COMPARTIDO',
       montoCOP: Number(data.montoCOP) || 0,
       // Tanto fijos como variables se registran mes a mes: los fijos cambian
       // de valor (nómina, arriendo con IPC) y hay que poder ajustarlos.
@@ -62,8 +57,12 @@ const createExpense = async (data, createdById) => {
 
 const updateExpense = async (id, data) => {
   const body = {};
-  for (const k of ['concepto', 'categoria', 'periodo', 'vigenteDesde', 'vigenteHasta', 'notas']) {
+  for (const k of ['concepto', 'categoria', 'periodo', 'notas']) {
     if (data[k] !== undefined) body[k] = data[k];
+  }
+  if (data.tipo !== undefined) body.tipo = data.tipo === 'FIJO' ? 'FIJO' : 'VARIABLE';
+  if (data.linea !== undefined && ['CENTRO', 'PORTAL', 'COMPARTIDO'].includes(data.linea)) {
+    body.linea = data.linea;
   }
   if (data.montoCOP !== undefined) body.montoCOP = Number(data.montoCOP) || 0;
   return prisma.financeExpense.update({ where: { id }, data: body });
@@ -98,11 +97,44 @@ const copyExpensesFromPreviousMonth = async (periodo, createdById) => {
   if (nuevos.length === 0) return { copiados: 0, desde: anterior };
   await prisma.financeExpense.createMany({
     data: nuevos.map((g) => ({
-      tipo: g.tipo, concepto: g.concepto, categoria: g.categoria,
+      tipo: g.tipo, concepto: g.concepto, categoria: g.categoria, linea: g.linea,
       montoCOP: g.montoCOP, periodo, notas: g.notas, createdById: createdById || null,
     })),
   });
   return { copiados: nuevos.length, desde: anterior };
+};
+
+/**
+ * Replica los gastos de un mes a otros meses (útil para cargar el histórico).
+ * `excluirConceptos` permite omitir lo que no existía todavía.
+ * No duplica conceptos que ya estén en el mes destino.
+ */
+const replicateExpenses = async ({ origen, destinos = [], excluirConceptos = [] }, createdById) => {
+  const base = await prisma.financeExpense.findMany({ where: { periodo: origen } });
+  if (base.length === 0) return { creados: 0, meses: 0 };
+  const excluir = new Set(excluirConceptos.map((c) => String(c).toLowerCase().trim()));
+  const plantilla = base.filter((g) => !excluir.has(g.concepto.toLowerCase().trim()));
+
+  const existentes = await prisma.financeExpense.findMany({
+    where: { periodo: { in: destinos } },
+    select: { periodo: true, tipo: true, concepto: true },
+  });
+  const yaHay = new Set(existentes.map((e) => `${e.periodo}|${e.tipo}|${e.concepto.toLowerCase()}`));
+
+  const filas = [];
+  for (const periodo of destinos) {
+    for (const g of plantilla) {
+      if (yaHay.has(`${periodo}|${g.tipo}|${g.concepto.toLowerCase()}`)) continue;
+      filas.push({
+        tipo: g.tipo, concepto: g.concepto, categoria: g.categoria, linea: g.linea,
+        montoCOP: g.montoCOP, periodo, createdById: createdById || null,
+        notas: `Replicado de ${origen} — verificar el valor real del mes`,
+      });
+    }
+  }
+  if (filas.length === 0) return { creados: 0, meses: destinos.length };
+  await prisma.financeExpense.createMany({ data: filas });
+  return { creados: filas.length, meses: destinos.length };
 };
 
 // ─────────────────────────── Activos ───────────────────────────
@@ -159,8 +191,9 @@ const depreciacionEnPeriodo = (asset, periodo) => {
  * Resumen financiero de los últimos `months` meses.
  * Devuelve serie mensual + totales + punto de equilibrio del mes actual.
  */
-const getSummary = async ({ months = 12 } = {}) => {
-  const periodos = ultimosPeriodos(months);
+const getSummary = async ({ year } = {}) => {
+  const anio = Number(year) || new Date().getFullYear();
+  const periodos = periodosDelAno(anio);
   const desde = rangoPeriodo(periodos[0]).inicio;
   const hasta = rangoPeriodo(periodos[periodos.length - 1]).fin;
 
@@ -223,8 +256,14 @@ const getSummary = async ({ months = 12 } = {}) => {
     };
   });
 
-  const actual = serie[serie.length - 1];
-  const anterior = serie.length > 1 ? serie[serie.length - 2] : null;
+  // "Actual" es el mes en curso si el año consultado es el vigente; si no,
+  // el último mes del año que tenga movimiento.
+  const hoy = new Date();
+  const idxActual = anio === hoy.getFullYear()
+    ? hoy.getMonth()
+    : Math.max(0, serie.map((m, i) => (m.ingresos || m.gastosTotales ? i : -1)).reduce((a, b) => Math.max(a, b), 0));
+  const actual = serie[idxActual];
+  const anterior = idxActual > 0 ? serie[idxActual - 1] : null;
 
   // Punto de equilibrio del mes en curso: cuánto falta facturar para cubrir todo.
   const puntoEquilibrio = {
@@ -249,18 +288,50 @@ const getSummary = async ({ months = 12 } = {}) => {
   const depActual = activos.reduce((s, a) => s + depreciacionEnPeriodo(a, actual.periodo), 0);
   if (depActual > 0) porCategoria.depreciacion = depActual;
 
+  // Resultado por línea de negocio. Los gastos COMPARTIDO no se imputan a
+  // ninguna línea: se muestran aparte para no inflar ni desinflar ninguna.
+  const gastoLineaEnPeriodo = (linea, periodo) => gastos
+    .filter((g) => g.linea === linea && fijoAplica(g, periodo))
+    .reduce((s, g) => s + g.montoCOP, 0);
+
+  const porLinea = ['CENTRO', 'PORTAL', 'COMPARTIDO'].map((linea) => {
+    const ingresos = linea === 'CENTRO'
+      ? serie.reduce((s, m) => s + m.ingresosCentro, 0)
+      : linea === 'PORTAL'
+        ? serie.reduce((s, m) => s + m.ingresosPortal, 0)
+        : 0;
+    const gastosLinea = serie.reduce((s, m) => s + gastoLineaEnPeriodo(linea, m.periodo), 0);
+    return {
+      linea,
+      ingresos,
+      gastos: gastosLinea,
+      resultado: ingresos - gastosLinea,
+      margen: ingresos > 0 ? ((ingresos - gastosLinea) / ingresos) * 100 : null,
+    };
+  });
+
   const totales = serie.reduce((acc, m) => ({
     ingresos: acc.ingresos + m.ingresos,
     ingresosCentro: acc.ingresosCentro + m.ingresosCentro,
     ingresosPortal: acc.ingresosPortal + m.ingresosPortal,
     gastosTotales: acc.gastosTotales + m.gastosTotales,
     utilidadNeta: acc.utilidadNeta + m.utilidadNeta,
-  }), { ingresos: 0, ingresosCentro: 0, ingresosPortal: 0, gastosTotales: 0, utilidadNeta: 0 });
+    gastosFijos: acc.gastosFijos + m.gastosFijos,
+    gastosVariables: acc.gastosVariables + m.gastosVariables,
+    depreciacion: acc.depreciacion + m.depreciacion,
+    utilidadOperativa: acc.utilidadOperativa + m.utilidadOperativa,
+  }), {
+    ingresos: 0, ingresosCentro: 0, ingresosPortal: 0, gastosTotales: 0,
+    utilidadNeta: 0, gastosFijos: 0, gastosVariables: 0, depreciacion: 0,
+    utilidadOperativa: 0,
+  });
 
   return {
+    anio,
     serie,
     actual,
     anterior,
+    porLinea,
     puntoEquilibrio,
     gastosPorCategoria: Object.entries(porCategoria)
       .map(([categoria, monto]) => ({ categoria, monto }))
@@ -277,6 +348,7 @@ const getSummary = async ({ months = 12 } = {}) => {
 module.exports = {
   listExpenses,
   copyExpensesFromPreviousMonth,
+  replicateExpenses,
   createExpense,
   updateExpense,
   deleteExpense,

@@ -520,6 +520,7 @@ async function ensureFinanceSchema(prisma) {
       );
     `);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "finance_expenses_tipo_periodo_idx" ON "finance_expenses"("tipo","periodo");`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "finance_expenses" ADD COLUMN IF NOT EXISTS "linea" TEXT NOT NULL DEFAULT 'COMPARTIDO';`);
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "finance_assets" (
         "id" TEXT PRIMARY KEY,
