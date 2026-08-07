@@ -81,6 +81,7 @@ const ETAPAS_FUNNEL = [
   { key: 'agendados', label: 'Agendados', color: '#0284c7' },
   { key: 'asistidos', label: 'Asistidos', color: '#059669' },
   { key: 'noAsistidos', label: 'No asistidos', color: '#f97316' },
+  { key: 'porRealizar', label: 'Por realizar', color: '#94a3b8' },
   { key: 'conPerdidaAuditiva', label: 'Con pérdida auditiva', color: '#7c3aed' },
   { key: 'audicionNormal', label: 'Audición normal', color: '#0891b2' },
   { key: 'cotizados', label: 'Cotizados', color: '#d97706' },
@@ -1452,7 +1453,7 @@ const DashboardPage = () => {
                         Embudo comercial por procedencia
                       </Typography>
                       <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
-                        Del primer contacto a la venta: lead → cita → asistencia → diagnóstico → cotización → cierre.
+                        Del primer contacto a la venta. El diagnóstico solo cuenta pacientes con consulta registrada.
                       </Typography>
                     </Box>
                   </Box>
@@ -1467,7 +1468,7 @@ const DashboardPage = () => {
                     </Box>
                   ) : (
                     <Box sx={{ overflowX: 'auto' }}>
-                      <Box sx={{ minWidth: 900 }}>
+                      <Box sx={{ minWidth: 1080 }}>
                         {/* Encabezado de etapas */}
                         <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, pb: 1, mb: 1, borderBottom: '1px solid rgba(8,89,70,0.12)' }}>
                           <Box sx={{ width: 170, flexShrink: 0 }}>

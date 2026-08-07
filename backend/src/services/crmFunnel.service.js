@@ -49,6 +49,7 @@ const vacio = () => ({
   noAsistidos: 0,
   cancelados: 0,
   porRealizar: 0,
+  evaluados: 0,
   conPerdidaAuditiva: 0,
   audicionNormal: 0,
   cotizados: 0,
@@ -64,7 +65,7 @@ const getFunnelPorProcedencia = async ({ desde, hasta } = {}) => {
     ? { [campo]: { ...(desde ? { gte: desde } : {}), ...(hasta ? { lte: hasta } : {}) } }
     : {});
 
-  const [leads, citas, pacientes, cotizaciones, ventas] = await Promise.all([
+  const [leads, citas, pacientes, consultas, cotizaciones, ventas] = await Promise.all([
     prisma.lead.findMany({
       where: { archivedAt: null, ...rangoFecha('createdAt') },
       select: { procedencia: true },
@@ -77,6 +78,7 @@ const getFunnelPorProcedencia = async ({ desde, hasta } = {}) => {
       where: { archivedAt: null },
       select: { id: true, procedencia: true, tienePerdidaAuditiva: true, createdViaBooking: true },
     }),
+    prisma.consultation.findMany({ select: { patientId: true } }),
     prisma.quote.findMany({
       where: rangoFecha('createdAt'),
       select: { patientId: true },
@@ -112,12 +114,17 @@ const getFunnelPorProcedencia = async ({ desde, hasta } = {}) => {
     else g.porRealizar += 1;
   });
 
+  // El diagnóstico solo cuenta si el paciente FUE EVALUADO (tiene consulta).
+  // `tienePerdidaAuditiva` es false por defecto: sin consulta, "audición normal"
+  // sería una conclusión inventada.
+  const evaluados = new Set(consultas.map((c) => c.patientId).filter(Boolean));
+
   const procDePaciente = {};
   pacientes.forEach((p) => {
     procDePaciente[p.id] = normalizar(p.procedencia);
-    const esReal = !p.createdViaBooking || asistioAlguna.has(p.id);
-    if (!esReal) return;
+    if (!evaluados.has(p.id) || !asistioAlguna.has(p.id)) return;
     const g = get(p.procedencia);
+    g.evaluados += 1;
     if (p.tienePerdidaAuditiva) g.conPerdidaAuditiva += 1;
     else g.audicionNormal += 1;
   });

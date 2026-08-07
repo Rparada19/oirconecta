@@ -1165,7 +1165,7 @@ const ReportesPage = () => {
                   Detalle por procedencia
                 </Typography>
                 <Typography sx={{ fontSize: '0.75rem', color: '#64748b', mb: 2 }}>
-                  Qué canal trae volumen y cuál trae cierres. La tasa es ventas sobre citas agendadas.
+                  Qué canal trae volumen y cuál trae cierres. El diagnóstico solo cuenta pacientes con consulta registrada.
                 </Typography>
                 {!funnelProc ? (
                   <CircularProgress size={24} />
@@ -1183,6 +1183,7 @@ const ReportesPage = () => {
                           <TableCell align="right">Agendados</TableCell>
                           <TableCell align="right">Asistidos</TableCell>
                           <TableCell align="right">No asistidos</TableCell>
+                          <TableCell align="right">Por realizar</TableCell>
                           <TableCell align="right">C/ pérdida</TableCell>
                           <TableCell align="right">Aud. normal</TableCell>
                           <TableCell align="right">Cotizados</TableCell>
@@ -1202,6 +1203,7 @@ const ReportesPage = () => {
                               <TableCell align="right">{g.agendados}</TableCell>
                               <TableCell align="right" sx={{ color: '#059669', fontWeight: 700 }}>{g.asistidos}</TableCell>
                               <TableCell align="right" sx={{ color: '#f97316' }}>{g.noAsistidos}</TableCell>
+                              <TableCell align="right" sx={{ color: '#94a3b8' }}>{g.porRealizar}</TableCell>
                               <TableCell align="right">{g.conPerdidaAuditiva}</TableCell>
                               <TableCell align="right">{g.audicionNormal}</TableCell>
                               <TableCell align="right">{g.cotizados}</TableCell>
