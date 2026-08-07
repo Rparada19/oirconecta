@@ -24,9 +24,10 @@ export const normalizarProcedencia = (procedencia) => {
     'página web': 'sitio-web',
     'pagina-web': 'sitio-web',
     'sitio-web': 'sitio-web',
-    // Agendamiento Manual
-    'agendamiento manual': 'agendamiento-manual',
-    'agendamiento-manual': 'agendamiento-manual',
+    // "Agendamiento manual" no es procedencia: es canal de registro (ver
+    // canalRegistro). Los históricos se reclasifican a su origen real.
+    'agendamiento manual': 'recomendacion',
+    'agendamiento-manual': 'recomendacion',
     // Leads Marketing Digital
     'leads marketing digital': 'leads-marketing-digital',
     'marketing digital': 'leads-marketing-digital',
@@ -63,7 +64,6 @@ export const validarYNormalizarProcedencia = (procedencia) => {
     'renovacion',
     'recomendacion',
     'sitio-web',
-    'agendamiento-manual'
   ];
   
   // Si no está en la lista de válidos, retornar 'visita-medica' como default

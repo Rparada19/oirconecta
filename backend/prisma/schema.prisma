@@ -608,7 +608,12 @@ model Appointment {
   fecha           DateTime
   hora            String
   motivo          String?
+  /// Origen REAL del paciente (de dónde viene): visita-medica, recomendacion,
+  /// sitio-web, renovacion, leads-marketing-digital/offline.
   procedencia     String            @default("visita-medica")
+  /// Canal por el que se REGISTRÓ la cita (no es procedencia): manual-telefono,
+  /// manual-whatsapp, manual-presencial, web, directorio, bot-whatsapp.
+  canalRegistro   String            @default("manual-telefono")
   estado          AppointmentStatus @default(CONFIRMED)
   notas           String?
   tipoConsulta    String? // primera-vez, control, adaptacion, etc.

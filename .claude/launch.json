@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "oirconecta-web-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "preview", "--host", "127.0.0.1", "--port", "4173"],
+      "port": 4173,
+      "cwd": "oirconecta"
+    },
+    {
+      "name": "oirconecta-web-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "ulimit -n 8192; exec npx vite --host 127.0.0.1 --port 5173"],
+      "port": 5173,
+      "cwd": "oirconecta"
+    }
+  ]
+}

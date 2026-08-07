@@ -279,6 +279,8 @@ const create = async (data, createdById) => {
       hora: data.hora,
       motivo: data.motivo,
       procedencia: data.procedencia || 'visita-medica',
+      // Sin createdById la cita entró por self-service público (web/directorio).
+      canalRegistro: data.canalRegistro || (createdById ? 'manual-telefono' : 'web'),
       estado: 'CONFIRMED',
       notas: data.notas,
       tipoConsulta: data.tipoConsulta,

@@ -87,7 +87,7 @@ import {
   getRescheduleHistory,
 } from '../../services/patientRecordService';
 import { recordAppointmentInteraction } from '../../services/interactionService';
-import { formatProcedencia } from '../../utils/procedenciaUtils';
+import { formatProcedencia, getCanalRegistroOptions } from '../../utils/procedenciaUtils';
 import { getAgendaProcedenciaOTipoCita, getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
 import { getConfig, getSedes, getConsultoriosFlat, getAppointmentReasons } from '../../services/configService';
 import DateSelector from '../../components/appointments/DateSelector';
@@ -160,7 +160,7 @@ const CitasPage = () => {
   const [creating, setCreating] = useState(false);
   const [createAvailableSlots, setCreateAvailableSlots] = useState([]);
   const [motivoTypes, setMotivoTypes] = useState([]); // AppointmentType creados
-  const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: 'agendamiento-manual' });
+  const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono' });
   const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
   const [rescheduledToAppointment, setRescheduledToAppointment] = useState(null);
 
@@ -766,7 +766,7 @@ const CitasPage = () => {
   };
 
   const openCreateDialog = () => {
-    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', motivoOtra: '', date: '', time: '', professionalId: '', procedencia: 'agendamiento-manual' });
+    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', motivoOtra: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono' });
     setCreateDialogOpen(true);
     api.get('/api/crm/retail-agenda/types')
       .then((r) => { if (Array.isArray(r.data?.data)) setMotivoTypes(r.data.data.filter((t) => t.activo !== false)); })
@@ -783,6 +783,10 @@ const CitasPage = () => {
       showSnackbar('Selecciona fecha y hora', 'error');
       return;
     }
+    if (!createData.procedencia) {
+      showSnackbar('Selecciona la procedencia (de dónde viene el paciente)', 'error');
+      return;
+    }
     setCreating(true);
     try {
       const prof = profesionales.find((p) => p.id === createData.professionalId);
@@ -793,7 +797,8 @@ const CitasPage = () => {
         patientEmail: (createData.patientEmail || '').trim(),
         patientPhone: patientPhone.trim(),
         reason: (createData.reason === '__otra__' ? createData.motivoOtra : createData.reason)?.trim() || '',
-        procedencia: createData.procedencia || 'agendamiento-manual',
+        procedencia: createData.procedencia || 'visita-medica',
+        canalRegistro: createData.canalRegistro || 'manual-telefono',
         professionalId: createData.professionalId || undefined,
         professionalDisplayName: prof?.nombre || undefined,
         professionalNotifyEmail: prof?.email || undefined,
@@ -2680,17 +2685,29 @@ const CitasPage = () => {
               ) : null}
             </Grid>
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth sx={{ mb: 1 }}>
-                <InputLabel>Procedencia</InputLabel>
-                <Select label="Procedencia" value={createData.procedencia}
+              <FormControl fullWidth required sx={{ mb: 1 }}>
+                <InputLabel>Procedencia (de dónde viene)</InputLabel>
+                <Select label="Procedencia (de dónde viene)" value={createData.procedencia}
                   onChange={(e) => setCreateData({ ...createData, procedencia: e.target.value })}>
-                  <SelectMenuItem value="agendamiento-manual">Agendamiento manual</SelectMenuItem>
                   <SelectMenuItem value="visita-medica">Visita médica</SelectMenuItem>
                   <SelectMenuItem value="recomendacion">Recomendación</SelectMenuItem>
                   <SelectMenuItem value="sitio-web">Sitio web</SelectMenuItem>
                   <SelectMenuItem value="leads-marketing-digital">Marketing digital</SelectMenuItem>
                   <SelectMenuItem value="leads-marketing-offline">Marketing offline</SelectMenuItem>
                   <SelectMenuItem value="renovacion">Renovación</SelectMenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <InputLabel>Canal de registro</InputLabel>
+                <Select label="Canal de registro" value={createData.canalRegistro}
+                  onChange={(e) => setCreateData({ ...createData, canalRegistro: e.target.value })}>
+                  {getCanalRegistroOptions()
+                    .filter((o) => o.value.startsWith('manual-'))
+                    .map((o) => (
+                      <SelectMenuItem key={o.value} value={o.value}>{o.label}</SelectMenuItem>
+                    ))}
                 </Select>
               </FormControl>
             </Grid>

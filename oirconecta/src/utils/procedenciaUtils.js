@@ -15,7 +15,8 @@ export const formatProcedencia = (procedencia, agendamientoManualTipo = null) =>
     'renovacion': 'Renovación',
     'recomendacion': 'Recomendación',
     'sitio-web': 'Sitio Web',
-    'agendamiento-manual': 'Agendamiento Manual',
+    // Legado: "agendamiento manual" era canal, no procedencia. Se reclasificó.
+    'agendamiento-manual': 'Recomendación',
     // Valores antiguos/compatibilidad
     'Marketing Digital': 'Leads Marketing Digital',
     'Marketing Offline': 'Leads Marketing Offline',
@@ -70,18 +71,36 @@ export const getProcedenciaOptionsCRM = () => {
     { value: 'renovacion', label: 'Renovación' },
     { value: 'recomendacion', label: 'Recomendación' },
     { value: 'sitio-web', label: 'Sitio Web' },
-    { value: 'agendamiento-manual', label: 'Agendamiento Manual' },
   ];
 };
 
+/** Color por procedencia, para gráficos y embudos. */
+export const PROCEDENCIA_COLORS = {
+  'leads-marketing-digital': '#085946',
+  'leads-marketing-offline': '#0a6b56',
+  'visita-medica': '#272F50',
+  'renovacion': '#b45309',
+  'recomendacion': '#7c3aed',
+  'sitio-web': '#1976d2',
+};
+
 /**
- * Obtiene las opciones de tipo de agendamiento manual
- * @returns {Array} Array de objetos {value, label}
+ * Canal por el que se REGISTRÓ la cita. NO es procedencia: un paciente que
+ * llamó y fue registrado por servicio al cliente tiene su procedencia real
+ * (recomendación, visita médica, etc.) y canal de registro "teléfono".
  */
-export const getAgendamientoManualOptions = () => {
+export const getCanalRegistroOptions = () => {
   return [
-    { value: 'telefono', label: 'Teléfono' },
-    { value: 'whatsapp', label: 'WhatsApp' },
-    { value: 'referido', label: 'Referido' },
+    { value: 'manual-telefono', label: 'Teléfono' },
+    { value: 'manual-whatsapp', label: 'WhatsApp' },
+    { value: 'manual-presencial', label: 'Presencial' },
+    { value: 'web', label: 'Agendamiento web' },
+    { value: 'directorio', label: 'Ficha directorio' },
+    { value: 'bot-whatsapp', label: 'Bot WhatsApp' },
   ];
+};
+
+export const formatCanalRegistro = (canal) => {
+  const opt = getCanalRegistroOptions().find((o) => o.value === canal);
+  return opt ? opt.label : 'Teléfono';
 };

@@ -48,7 +48,7 @@ import {
 import { api } from '../../services/apiClient';
 import { getAllAppointments } from '../../services/appointmentService';
 import { getAllLeadsCombined } from '../../services/leadService';
-import { formatProcedencia, getProcedenciaOptions, getProcedenciaOptionsCRM } from '../../utils/procedenciaUtils';
+import { formatProcedencia, getProcedenciaOptions, PROCEDENCIA_COLORS, formatCanalRegistro } from '../../utils/procedenciaUtils';
 import { normalizarProcedencia } from '../../utils/procedenciaNormalizer';
 import { getAllPatientProducts } from '../../services/productService';
 import { getConfig } from '../../services/configService';
@@ -1176,7 +1176,7 @@ const DashboardPage = () => {
           </Box>
         </Box>
 
-        {/* Pacientes por Procedencia */}
+        {/* Asistencia (show rate) + Embudo por procedencia */}
         <Box
           sx={{
             mt: 4, borderRadius: '22px',
@@ -1187,20 +1187,25 @@ const DashboardPage = () => {
           }}
         >
           <Box sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box sx={{ width: 40, height: 40, borderRadius: '12px',
                   background: 'linear-gradient(135deg,#272F50,#1a1f38)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <People sx={{ color: '#fff', fontSize: 18 }} />
+                  <Assessment sx={{ color: '#fff', fontSize: 18 }} />
                 </Box>
-                <Typography sx={{ fontWeight: 800, fontSize: '1.125rem', color: '#0f1923', letterSpacing: '-0.02em' }}>
-                  Pacientes por Procedencia
-                </Typography>
+                <Box>
+                  <Typography sx={{ fontWeight: 800, fontSize: '1.125rem', color: '#0f1923', letterSpacing: '-0.02em' }}>
+                    Asistencia y origen de pacientes
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                    Show rate y embudo por procedencia real (de dónde viene el paciente)
+                  </Typography>
+                </Box>
               </Box>
               <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
                 <Button variant="outlined" size="small" startIcon={<Refresh />}
-                  onClick={() => { loadAllData(); setTimeout(() => loadAllData(), 200); }}
+                  onClick={() => loadAllData()}
                   sx={{ borderRadius: '10px', fontWeight: 700, borderColor: '#085946', color: '#085946', fontSize: '0.8125rem',
                     '&:hover': { borderColor: '#085946', bgcolor: 'rgba(8,89,70,0.06)' } }}>
                   Actualizar
@@ -1214,219 +1219,301 @@ const DashboardPage = () => {
                     <MenuItem value="week">Esta Semana</MenuItem>
                     <MenuItem value="month">Este Mes</MenuItem>
                     <MenuItem value="year">Este Año</MenuItem>
+                    <MenuItem value="all">Histórico</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
             </Box>
 
             {(() => {
-              // Filtrar citas por período
               const now = new Date();
-              let startDate = new Date();
+              const hoy = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              let desde = new Date(0);
+              if (citasPeriodo === 'day') desde = hoy;
+              else if (citasPeriodo === 'week') { desde = new Date(hoy); desde.setDate(hoy.getDate() - 6); }
+              else if (citasPeriodo === 'month') desde = new Date(now.getFullYear(), now.getMonth(), 1);
+              else if (citasPeriodo === 'year') desde = new Date(now.getFullYear(), 0, 1);
 
-              switch (citasPeriodo) {
-                case 'day':
-                  startDate.setDate(now.getDate() - 1);
-                  break;
-                case 'week':
-                  startDate.setDate(now.getDate() - 7);
-                  break;
-                case 'month':
-                  startDate.setMonth(now.getMonth() - 1);
-                  break;
-                case 'year':
-                  startDate.setFullYear(now.getFullYear() - 1);
-                  break;
-                default:
-                  startDate = new Date(0); // Todas las citas
-              }
-
-              const citasFiltradasPorPeriodo = appointments.filter((apt) => {
-                const aptDate = new Date(apt.date + 'T00:00:00');
-                // Normalizar fechas para comparación (solo fecha, sin hora)
-                const aptDateNormalized = new Date(aptDate.getFullYear(), aptDate.getMonth(), aptDate.getDate());
-                const startDateNormalized = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-                const nowNormalized = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                return aptDateNormalized >= startDateNormalized && aptDateNormalized <= nowNormalized;
-              });
-              
-              // Debug: Log para verificar qué citas se están filtrando
-              console.log('[Dashboard] Total citas:', appointments.length);
-              console.log('[Dashboard] Citas filtradas:', citasFiltradasPorPeriodo.length);
-              console.log('[Dashboard] Período:', citasPeriodo);
-
-              // Calcular funnel por procedencia - usar opciones del CRM (incluye Agendamiento Manual)
-              const procedenciasOptions = getProcedenciaOptionsCRM();
-              const procedenciasLabels = {};
-              const procedenciasColors = {
-                'leads-marketing-digital': '#085946',
-                'leads-marketing-offline': '#0a6b56',
-                'visita-medica': '#272F50',
-                'renovacion': '#085946',
-                'recomendacion': '#0a6b56',
-                'sitio-web': '#1976d2',
-                'agendamiento-manual': '#7b1fa2', // Color morado para diferenciarlo
+              const parseFecha = (apt) => {
+                if (!apt.date) return null;
+                const [y, m, d] = apt.date.split('-').map(Number);
+                return new Date(y, (m || 1) - 1, d || 1);
               };
-              
-              // Crear labels desde las opciones del CRM
-              procedenciasOptions.forEach(opt => {
-                procedenciasLabels[opt.value] = opt.label;
-                // Asegurar que cada procedencia tenga un color definido
-                if (!procedenciasColors[opt.value]) {
-                  procedenciasColors[opt.value] = '#86899C'; // Color por defecto
-                }
+
+              const citas = appointments.filter((apt) => {
+                const f = parseFecha(apt);
+                return f && f >= desde && f <= hoy;
               });
-              
-              // Asegurar que agendamiento-manual esté siempre incluido (fallback)
-              if (!procedenciasLabels['agendamiento-manual']) {
-                procedenciasLabels['agendamiento-manual'] = 'Agendamiento Manual';
-              }
-              if (!procedenciasColors['agendamiento-manual']) {
-                procedenciasColors['agendamiento-manual'] = '#7b1fa2';
-              }
-              
-              // Debug: verificar que agendamiento-manual esté incluido
-              console.log('[Dashboard Pacientes por Procedencia] Procedencias disponibles:', Object.keys(procedenciasLabels));
-              console.log('[Dashboard Pacientes por Procedencia] Total procedencias:', Object.keys(procedenciasLabels).length);
-              console.log('[Dashboard Pacientes por Procedencia] Incluye agendamiento-manual:', 'agendamiento-manual' in procedenciasLabels);
-              
-              // Obtener procedencias únicas de las citas filtradas
-              const procedenciasConDatos = citasFiltradasPorPeriodo.map(apt => {
-                const proc = (apt.procedencia || 'visita-medica').toLowerCase().trim();
-                // Normalizar recomendación
-                if (proc === 'recomendación') return 'recomendacion';
-                return proc;
-              }).filter((v, i, a) => a.indexOf(v) === i);
-              
-              console.log('[Dashboard Pacientes por Procedencia] Procedencias con datos en citas:', procedenciasConDatos);
-              console.log('[Dashboard Pacientes por Procedencia] Citas filtradas por período:', citasFiltradasPorPeriodo.length);
 
-              // Usar la función de normalización centralizada importada
+              const esAsistida = (a) => a.status === 'completed' || a.status === 'patient';
+              const esNoShow = (a) => a.status === 'no-show';
+              const esCancelada = (a) => a.status === 'cancelled';
+              const esPendiente = (a) => a.status === 'confirmed' || a.status === 'rescheduled';
 
-              const calcularFunnel = (procedencia) => {
-                const procedenciaNormalizada = normalizarProcedencia(procedencia);
-                console.log(`[Dashboard] Calculando funnel para procedencia: "${procedencia}" (normalizada: "${procedenciaNormalizada}")`);
-                
-                const citasProcedencia = citasFiltradasPorPeriodo.filter(
-                  (apt) => {
-                    const aptProcedenciaNormalizada = normalizarProcedencia(apt.procedencia);
-                    const matches = aptProcedenciaNormalizada === procedenciaNormalizada;
-                    
-                    // Debug solo para matches o primeras citas
-                    if (matches) {
-                      console.log(`[Dashboard] ✅ Match encontrado: "${apt.patientName}" - Procedencia original: "${apt.procedencia}" → Normalizada: "${aptProcedenciaNormalizada}"`);
-                    }
-                    
-                    return matches;
-                  }
-                );
-                
-                console.log(`[Dashboard] Citas encontradas para "${procedenciaNormalizada}": ${citasProcedencia.length}`);
-                
-                console.log(`[Dashboard] Citas encontradas para "${procedencia}": ${citasProcedencia.length}`, 
-                  citasProcedencia.map(apt => ({ paciente: apt.patientName, procedencia: apt.procedencia }))
-                );
+              const agendadas = citas.length;
+              const asistidas = citas.filter(esAsistida).length;
+              const noAsistidas = citas.filter(esNoShow).length;
+              const canceladas = citas.filter(esCancelada).length;
+              const pendientes = citas.filter(esPendiente).length;
+              // El show rate se mide sobre citas que YA ocurrieron (asistió o no llegó).
+              // Las canceladas con aviso y las pendientes no entran al denominador.
+              const resueltas = asistidas + noAsistidas;
+              const showRate = resueltas > 0 ? (asistidas / resueltas) * 100 : 0;
+              const noShowRate = resueltas > 0 ? (noAsistidas / resueltas) * 100 : 0;
+              const cancelRate = agendadas > 0 ? (canceladas / agendadas) * 100 : 0;
 
-                // Agendados: todas las citas con esta procedencia (cualquier estado excepto canceladas)
-                const agendados = citasProcedencia.length;
-
-                // Asistidos: citas completadas O marcadas como paciente
-                const asistidos = citasProcedencia.filter((apt) => 
-                  apt.status === 'completed' || apt.status === 'patient'
-                ).length;
-
-                // No asistidos: citas con status no-show
-                const noAsistidos = citasProcedencia.filter((apt) => apt.status === 'no-show').length;
-
-                // Cancelados: citas canceladas
-                const cancelados = citasProcedencia.filter((apt) => apt.status === 'cancelled').length;
-
-                // Re agendados: pacientes que tienen más de una cita (contar emails únicos con múltiples citas)
-                const emailsConMultiplesCitas = new Map();
-                citasProcedencia.forEach((apt) => {
-                  if (!emailsConMultiplesCitas.has(apt.patientEmail)) {
-                    emailsConMultiplesCitas.set(apt.patientEmail, []);
-                  }
-                  emailsConMultiplesCitas.get(apt.patientEmail).push(apt);
+              // Tendencia: últimos 6 meses (independiente del filtro de período)
+              const tendencia = [];
+              for (let i = 5; i >= 0; i--) {
+                const ini = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const fin = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+                const delMes = appointments.filter((apt) => {
+                  const f = parseFecha(apt);
+                  return f && f >= ini && f <= fin;
                 });
-                const reAgendados = Array.from(emailsConMultiplesCitas.values()).filter(
-                  (citas) => citas.length > 1
-                ).length;
+                const a = delMes.filter(esAsistida).length;
+                const n = delMes.filter(esNoShow).length;
+                tendencia.push({
+                  label: ini.toLocaleDateString('es-CO', { month: 'short' }).replace('.', ''),
+                  asistidas: a,
+                  noAsistidas: n,
+                  rate: a + n > 0 ? (a / (a + n)) * 100 : null,
+                });
+              }
 
-                return {
-                  agendados,
-                  asistidos,
-                  noAsistidos,
-                  cancelados,
-                  reAgendados,
-                };
-              };
+              // Embudo por procedencia real
+              const porProcedencia = {};
+              citas.forEach((apt) => {
+                const key = normalizarProcedencia(apt.procedencia);
+                if (!porProcedencia[key]) {
+                  porProcedencia[key] = { key, agendadas: 0, asistidas: 0, noAsistidas: 0, canceladas: 0, pendientes: 0 };
+                }
+                const g = porProcedencia[key];
+                g.agendadas += 1;
+                if (esAsistida(apt)) g.asistidas += 1;
+                else if (esNoShow(apt)) g.noAsistidas += 1;
+                else if (esCancelada(apt)) g.canceladas += 1;
+                else g.pendientes += 1;
+              });
+              const grupos = Object.values(porProcedencia).sort((a, b) => b.agendadas - a.agendadas);
+
+              // Canal de registro (cómo entró la cita — NO es procedencia)
+              const porCanal = {};
+              citas.forEach((apt) => {
+                const k = apt.canalRegistro || 'manual-telefono';
+                porCanal[k] = (porCanal[k] || 0) + 1;
+              });
+              const canales = Object.entries(porCanal).sort((a, b) => b[1] - a[1]);
+
+              const kpis = [
+                { label: 'Agendadas', value: agendadas, color: '#272F50', icon: <CalendarToday sx={{ fontSize: 16 }} /> },
+                { label: 'Asistidas', value: asistidas, color: '#059669', icon: <CheckCircle sx={{ fontSize: 16 }} /> },
+                { label: 'No asistieron', value: noAsistidas, color: '#f97316', icon: <EventBusy sx={{ fontSize: 16 }} /> },
+                { label: 'Canceladas', value: canceladas, color: '#dc2626', icon: <Cancel sx={{ fontSize: 16 }} /> },
+                { label: 'Por realizar', value: pendientes, color: '#64748b', icon: <Schedule sx={{ fontSize: 16 }} /> },
+              ];
+
+              const maxTendencia = Math.max(1, ...tendencia.map((t) => t.asistidas + t.noAsistidas));
 
               return (
-                <Grid container spacing={3}>
-                  {Object.keys(procedenciasLabels).map((key) => {
-                    const funnel = calcularFunnel(key);
-                    const color = procedenciasColors[key];
-                    
-                    // Debug: mostrar información de cada funnel
-                    console.log(`[Dashboard] Funnel para "${procedenciasLabels[key]}" (${key}):`, {
-                      agendados: funnel.agendados,
-                      asistidos: funnel.asistidos,
-                      noAsistidos: funnel.noAsistidos,
-                      cancelados: funnel.cancelados,
-                      reAgendados: funnel.reAgendados
-                    });
-                    
-                    // Mostrar TODAS las procedencias, incluso si están vacías
-                    // Esto permite ver la estructura completa del funnel
-
-                    const funnelRows = [
-                      { label: 'Agendados', value: funnel.agendados, pct: 100, barColor: color, bg: `${color}12` },
-                      { label: 'Asistidos', value: funnel.asistidos, pct: funnel.agendados > 0 ? (funnel.asistidos / funnel.agendados) * 100 : 0, barColor: '#0284c7', bg: 'rgba(2,132,199,0.08)' },
-                      { label: 'No Asistidos', value: funnel.noAsistidos, pct: funnel.agendados > 0 ? (funnel.noAsistidos / funnel.agendados) * 100 : 0, barColor: '#f97316', bg: 'rgba(249,115,22,0.08)' },
-                      { label: 'Cancelados', value: funnel.cancelados, pct: funnel.agendados > 0 ? (funnel.cancelados / funnel.agendados) * 100 : 0, barColor: '#dc2626', bg: 'rgba(220,38,38,0.08)' },
-                      { label: 'Re-agendados', value: funnel.reAgendados, pct: funnel.agendados > 0 ? (funnel.reAgendados / funnel.agendados) * 100 : 0, barColor: '#7c3aed', bg: 'rgba(124,58,237,0.08)' },
-                    ];
-                    return (
-                      <Grid item xs={12} md={6} key={key}>
-                        <Box
-                          sx={{
-                            p: 2.5, borderRadius: '8px', height: '100%',
-                            background: 'rgba(255,255,255,0.70)', backdropFilter: 'blur(12px)',
-                            border: '1px solid rgba(255,255,255,0.60)',
-                            boxShadow: '0 2px 12px rgba(8,89,70,0.06)',
-                            transition: 'all 0.28s ease',
-                            '&:hover': { transform: 'translateY(-4px)', boxShadow: `0 12px 32px ${color}22` },
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                            <Box sx={{ width: 36, height: 36, borderRadius: '10px',
-                              background: `linear-gradient(135deg, ${color}, ${color}cc)`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <People sx={{ color: '#fff', fontSize: 18 }} />
-                            </Box>
-                            <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#0f1923', letterSpacing: '-0.02em' }}>
-                              {procedenciasLabels[key]}
+                <>
+                  {/* ── Show rate ── */}
+                  <Grid container spacing={2.5} sx={{ mb: 4 }}>
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{
+                        p: 3, borderRadius: '16px', height: '100%',
+                        background: showRate >= 80
+                          ? 'linear-gradient(135deg,#065f46,#059669)'
+                          : showRate >= 60 ? 'linear-gradient(135deg,#92400e,#d97706)' : 'linear-gradient(135deg,#7f1d1d,#dc2626)',
+                        color: '#fff',
+                        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                      }}>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.85 }}>
+                          Show rate
+                        </Typography>
+                        <Typography sx={{ fontSize: '3rem', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.03em' }}>
+                          {resueltas > 0 ? `${showRate.toFixed(0)}%` : '—'}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.8125rem', opacity: 0.9 }}>
+                          {resueltas > 0
+                            ? `${asistidas} de ${resueltas} citas ya ocurridas`
+                            : 'Aún no hay citas cerradas en el período'}
+                        </Typography>
+                        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255,255,255,0.25)', display: 'flex', gap: 3 }}>
+                          <Box>
+                            <Typography sx={{ fontSize: '0.6875rem', opacity: 0.8, fontWeight: 600 }}>NO-SHOW</Typography>
+                            <Typography sx={{ fontSize: '1.125rem', fontWeight: 800 }}>
+                              {resueltas > 0 ? `${noShowRate.toFixed(0)}%` : '—'}
                             </Typography>
                           </Box>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            {funnelRows.map((row) => (
-                              <Box key={row.label} sx={{ p: 1.5, borderRadius: '10px', bgcolor: row.bg, borderLeft: `3px solid ${row.barColor}` }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
-                                  <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#272F50' }}>{row.label}</Typography>
-                                  <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: row.barColor, letterSpacing: '-0.02em' }}>{row.value}</Typography>
-                                </Box>
-                                <Box sx={{ height: 5, bgcolor: 'rgba(255,255,255,0.60)', borderRadius: '3px', overflow: 'hidden' }}>
-                                  <Box sx={{ width: `${row.pct}%`, height: '100%', bgcolor: row.barColor, borderRadius: '3px', transition: 'width 0.5s ease' }} />
-                                </Box>
-                              </Box>
-                            ))}
+                          <Box>
+                            <Typography sx={{ fontSize: '0.6875rem', opacity: 0.8, fontWeight: 600 }}>CANCELACIÓN</Typography>
+                            <Typography sx={{ fontSize: '1.125rem', fontWeight: 800 }}>
+                              {agendadas > 0 ? `${cancelRate.toFixed(0)}%` : '—'}
+                            </Typography>
                           </Box>
                         </Box>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} md={8}>
+                      <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                        {kpis.map((k) => (
+                          <Grid item xs={6} sm={4} md={2.4} key={k.label}>
+                            <Box sx={{
+                              p: 1.75, borderRadius: '12px', height: '100%',
+                              bgcolor: `${k.color}0d`, border: `1px solid ${k.color}22`,
+                            }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: k.color, mb: 0.5 }}>
+                                {k.icon}
+                                <Typography sx={{ fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.02em' }}>
+                                  {k.label}
+                                </Typography>
+                              </Box>
+                              <Typography sx={{ fontSize: '1.5rem', fontWeight: 900, color: k.color, letterSpacing: '-0.02em', lineHeight: 1 }}>
+                                {k.value}
+                              </Typography>
+                            </Box>
+                          </Grid>
+                        ))}
                       </Grid>
-                    );
-                  })}
-                </Grid>
+
+                      <Box sx={{ p: 2, borderRadius: '12px', border: '1px solid rgba(8,89,70,0.12)' }}>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', mb: 1.5, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                          Show rate — últimos 6 meses
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1.5, height: 110 }}>
+                          {tendencia.map((t) => {
+                            const total = t.asistidas + t.noAsistidas;
+                            const h = (total / maxTendencia) * 78;
+                            return (
+                              <Box key={t.label} sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                                <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: t.rate == null ? '#cbd5e1' : '#0f1923' }}>
+                                  {t.rate == null ? '—' : `${t.rate.toFixed(0)}%`}
+                                </Typography>
+                                <Box sx={{ width: '100%', height: `${Math.max(h, 4)}px`, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', borderRadius: '6px', overflow: 'hidden', bgcolor: total === 0 ? 'rgba(148,163,184,0.15)' : 'transparent' }}>
+                                  {t.noAsistidas > 0 && (
+                                    <Box sx={{ height: `${(t.noAsistidas / total) * 100}%`, bgcolor: '#f97316' }} />
+                                  )}
+                                  {t.asistidas > 0 && (
+                                    <Box sx={{ height: `${(t.asistidas / total) * 100}%`, bgcolor: '#059669' }} />
+                                  )}
+                                </Box>
+                                <Typography sx={{ fontSize: '0.6875rem', color: '#64748b', fontWeight: 600, textTransform: 'capitalize' }}>
+                                  {t.label}
+                                </Typography>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </Grid>
+
+                  {/* ── Embudo por procedencia ── */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923' }}>
+                      Embudo por procedencia
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                      {[
+                        { l: 'Asistió', c: '#059669' },
+                        { l: 'No asistió', c: '#f97316' },
+                        { l: 'Canceló', c: '#dc2626' },
+                        { l: 'Por realizar', c: '#cbd5e1' },
+                      ].map((x) => (
+                        <Box key={x.l} sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                          <Box sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: x.c }} />
+                          <Typography sx={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{x.l}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+
+                  {grupos.length === 0 ? (
+                    <Box sx={{ p: 4, textAlign: 'center', borderRadius: '12px', border: '1px dashed rgba(8,89,70,0.2)' }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>
+                        No hay citas en el período seleccionado.
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                      {grupos.map((g) => {
+                        const color = PROCEDENCIA_COLORS[g.key] || '#86899C';
+                        const resueltasG = g.asistidas + g.noAsistidas;
+                        const showRateG = resueltasG > 0 ? (g.asistidas / resueltasG) * 100 : null;
+                        const pct = (n) => (g.agendadas > 0 ? (n / g.agendadas) * 100 : 0);
+                        return (
+                          <Box key={g.key} sx={{
+                            p: 2, borderRadius: '14px',
+                            border: '1px solid rgba(8,89,70,0.10)',
+                            borderLeft: `4px solid ${color}`,
+                            bgcolor: 'rgba(255,255,255,0.6)',
+                            transition: 'all 0.2s ease',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.95)', boxShadow: '0 4px 16px rgba(8,89,70,0.08)' },
+                          }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 1.25 }}>
+                              <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923' }}>
+                                {formatProcedencia(g.key)}
+                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Typography sx={{ fontSize: '0.8125rem', color: '#64748b', fontWeight: 600 }}>
+                                  {g.agendadas} agendada{g.agendadas === 1 ? '' : 's'}
+                                </Typography>
+                                <Chip
+                                  size="small"
+                                  label={showRateG == null ? 'sin cerrar' : `show rate ${showRateG.toFixed(0)}%`}
+                                  sx={{
+                                    fontWeight: 800, fontSize: '0.6875rem', height: 22,
+                                    bgcolor: showRateG == null ? 'rgba(148,163,184,0.18)' : showRateG >= 80 ? 'rgba(5,150,105,0.14)' : showRateG >= 60 ? 'rgba(217,119,6,0.14)' : 'rgba(220,38,38,0.14)',
+                                    color: showRateG == null ? '#64748b' : showRateG >= 80 ? '#059669' : showRateG >= 60 ? '#b45309' : '#dc2626',
+                                  }}
+                                />
+                              </Box>
+                            </Box>
+                            <Box sx={{ display: 'flex', height: 12, borderRadius: '6px', overflow: 'hidden', bgcolor: 'rgba(148,163,184,0.15)' }}>
+                              {g.asistidas > 0 && <Box sx={{ width: `${pct(g.asistidas)}%`, bgcolor: '#059669' }} />}
+                              {g.noAsistidas > 0 && <Box sx={{ width: `${pct(g.noAsistidas)}%`, bgcolor: '#f97316' }} />}
+                              {g.canceladas > 0 && <Box sx={{ width: `${pct(g.canceladas)}%`, bgcolor: '#dc2626' }} />}
+                              {g.pendientes > 0 && <Box sx={{ width: `${pct(g.pendientes)}%`, bgcolor: '#cbd5e1' }} />}
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 2.5, mt: 1, flexWrap: 'wrap' }}>
+                              {[
+                                { l: 'Asistió', v: g.asistidas, c: '#059669' },
+                                { l: 'No asistió', v: g.noAsistidas, c: '#f97316' },
+                                { l: 'Canceló', v: g.canceladas, c: '#dc2626' },
+                                { l: 'Por realizar', v: g.pendientes, c: '#64748b' },
+                              ].filter((x) => x.v > 0).map((x) => (
+                                <Typography key={x.l} sx={{ fontSize: '0.75rem', color: '#475569', fontWeight: 600 }}>
+                                  <Box component="span" sx={{ color: x.c, fontWeight: 800 }}>{x.v}</Box> {x.l}
+                                </Typography>
+                              ))}
+                            </Box>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  )}
+
+                  {/* ── Canal de registro (no es procedencia) ── */}
+                  {canales.length > 0 && (
+                    <Box sx={{ mt: 3, pt: 2.5, borderTop: '1px dashed rgba(8,89,70,0.15)' }}>
+                      <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', mb: 1, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                        Cómo se registró la cita
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', mb: 1.5 }}>
+                        El canal de registro no es la procedencia: indica quién y por dónde quedó agendada la cita.
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {canales.map(([canal, n]) => (
+                          <Chip key={canal} size="small"
+                            label={`${formatCanalRegistro(canal)} · ${n}`}
+                            sx={{ fontWeight: 700, fontSize: '0.75rem', bgcolor: 'rgba(39,47,80,0.08)', color: '#272F50' }} />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </>
               );
             })()}
           </Box>

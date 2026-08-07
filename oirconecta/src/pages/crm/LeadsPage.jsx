@@ -73,7 +73,7 @@ import {
 } from '../../services/leadService';
 import { createAppointment, getAllAppointments, getAppointmentById, updateAppointmentStatus, getAvailableTimeSlots } from '../../services/appointmentService';
 import { initializePatientProfile } from '../../services/patientProfileService';
-import { formatProcedencia, getProcedenciaOptions, getProcedenciaOptionsCRM, getAgendamientoManualOptions } from '../../utils/procedenciaUtils';
+import { formatProcedencia, getProcedenciaOptions, getProcedenciaOptionsCRM } from '../../utils/procedenciaUtils';
 import { getConfig } from '../../services/configService';
 import DateSelector from '../../components/appointments/DateSelector';
 import TimeSelector from '../../components/appointments/TimeSelector';
@@ -1435,25 +1435,6 @@ const LeadsPage = () => {
                   value={formData.personaRecomendacion}
                   onChange={(e) => setFormData({ ...formData, personaRecomendacion: e.target.value })}
                 />
-              </Grid>
-            )}
-            {/* Campo condicional: Tipo de Agendamiento Manual */}
-            {formData.procedencia === 'agendamiento-manual' && (
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Tipo de Agendamiento</InputLabel>
-                  <Select
-                    value={formData.agendamientoManualTipo}
-                    label="Tipo de Agendamiento"
-                    onChange={(e) => setFormData({ ...formData, agendamientoManualTipo: e.target.value })}
-                  >
-                    {getAgendamientoManualOptions().map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
               </Grid>
             )}
             <Grid item xs={12}>

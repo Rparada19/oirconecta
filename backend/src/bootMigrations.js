@@ -472,9 +472,37 @@ async function ensureIaSchema(prisma) {
 }
 
 /**
+ * "Agendamiento manual" nunca fue una procedencia: es el canal por el que se
+ * registró la cita. Se separa en `canalRegistro` y las citas/pacientes que la
+ * tenían como procedencia se reclasifican a su origen real (recomendación).
+ */
+async function ensureCanalRegistroColumn(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "appointments"
+      ADD COLUMN IF NOT EXISTS "canalRegistro" TEXT NOT NULL DEFAULT 'manual-telefono';
+    `);
+    await prisma.$executeRawUnsafe(`
+      UPDATE "appointments"
+      SET "canalRegistro" = 'manual-telefono', "procedencia" = 'recomendacion'
+      WHERE lower("procedencia") IN ('agendamiento-manual', 'agendamiento manual');
+    `);
+    await prisma.$executeRawUnsafe(`
+      UPDATE "patients"
+      SET "procedencia" = 'recomendacion'
+      WHERE lower("procedencia") IN ('agendamiento-manual', 'agendamiento manual');
+    `);
+    console.log('[boot-migrate] canalRegistro OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureCanalRegistroColumn falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * Punto único: corre todas las migraciones idempotentes.
  */
 async function runBootMigrations(prisma) {
+  await ensureCanalRegistroColumn(prisma);
   await extendTrialsTo120(prisma);
   await ensureSalesCrmSchema(prisma);
   await ensureDirectoryAccountColumns(prisma);
