@@ -286,3 +286,17 @@ export async function rescheduleAppointment(appointmentId, newDate, newTime, pro
   await updateAppointmentStatus(appointmentId, 'rescheduled');
   return { success: true, newAppointment: createResult.appointment, error: null };
 }
+
+/**
+ * Embudo comercial completo por procedencia (leads → agendados → asistidos →
+ * diagnóstico → cotizados → vendidos). Calculado en el backend.
+ */
+export async function getFunnelPorProcedencia({ desde, hasta } = {}) {
+  const params = new URLSearchParams();
+  if (desde) params.set('desde', desde);
+  if (hasta) params.set('hasta', hasta);
+  const qs = params.toString();
+  const { data, error } = await api.get(`/api/crm/funnel/procedencia${qs ? `?${qs}` : ''}`);
+  if (error) return { procedencias: [], totales: null };
+  return data?.data || { procedencias: [], totales: null };
+}

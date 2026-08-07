@@ -46,7 +46,7 @@ import {
   Dashboard,
 } from '@mui/icons-material';
 import { api } from '../../services/apiClient';
-import { getAllAppointments } from '../../services/appointmentService';
+import { getAllAppointments, getFunnelPorProcedencia } from '../../services/appointmentService';
 import { getAllLeadsCombined } from '../../services/leadService';
 import { formatProcedencia, getProcedenciaOptions, PROCEDENCIA_COLORS, formatCanalRegistro } from '../../utils/procedenciaUtils';
 import { normalizarProcedencia } from '../../utils/procedenciaNormalizer';
@@ -57,12 +57,43 @@ import PageHeader from '../../components/crm/ui/PageHeader';
 import KpiCard from '../../components/crm/ui/KpiCard';
 import InsightCard from '../../components/crm/ui/InsightCard';
 
+/** Rango [desde, hasta] del período seleccionado. Cubre el mes/año COMPLETO. */
+const rangoDePeriodo = (periodo) => {
+  const now = new Date();
+  const hoy = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (periodo === 'day') return { desde: hoy, hasta: hoy };
+  if (periodo === 'week') {
+    const d = new Date(hoy); d.setDate(hoy.getDate() - 6);
+    const h = new Date(hoy); h.setDate(hoy.getDate() + 7);
+    return { desde: d, hasta: h };
+  }
+  if (periodo === 'month') {
+    return { desde: new Date(now.getFullYear(), now.getMonth(), 1), hasta: new Date(now.getFullYear(), now.getMonth() + 1, 0) };
+  }
+  if (periodo === 'year') {
+    return { desde: new Date(now.getFullYear(), 0, 1), hasta: new Date(now.getFullYear(), 11, 31) };
+  }
+  return { desde: new Date(0), hasta: new Date(8640000000000000) };
+};
+
+const ETAPAS_FUNNEL = [
+  { key: 'leads', label: 'Leads', color: '#f59e0b' },
+  { key: 'agendados', label: 'Agendados', color: '#0284c7' },
+  { key: 'asistidos', label: 'Asistidos', color: '#059669' },
+  { key: 'noAsistidos', label: 'No asistidos', color: '#f97316' },
+  { key: 'conPerdidaAuditiva', label: 'Con pérdida auditiva', color: '#7c3aed' },
+  { key: 'audicionNormal', label: 'Audición normal', color: '#0891b2' },
+  { key: 'cotizados', label: 'Cotizados', color: '#d97706' },
+  { key: 'vendidos', label: 'Vendidos', color: '#085946' },
+];
+
 const DashboardPage = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [leads, setLeads] = useState([]);
   const [products, setProducts] = useState({}); // Todos los productos de todos los pacientes
   const [citasPeriodo, setCitasPeriodo] = useState('month');
+  const [funnelProcedencia, setFunnelProcedencia] = useState(null);
   const [pacientesFiltro, setPacientesFiltro] = useState('todos');
   const [ventasTab, setVentasTab] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -70,6 +101,13 @@ const DashboardPage = () => {
   const [actionMetrics, setActionMetrics] = useState({ activas: 0, vencidas: 0, cumplidas: 0, total: 0 });
   const [followUpsSummary, setFollowUpsSummary] = useState({ overdue: 0, upcoming7d: 0, scheduled: 0, totalPending: 0 });
   const [overdueFollowUps, setOverdueFollowUps] = useState([]);
+
+  useEffect(() => {
+    const { desde, hasta } = rangoDePeriodo(citasPeriodo);
+    getFunnelPorProcedencia(
+      citasPeriodo === 'all' ? {} : { desde: desde.toISOString(), hasta: hasta.toISOString() }
+    ).then(setFunnelProcedencia).catch(() => setFunnelProcedencia(null));
+  }, [citasPeriodo]);
 
   const loadAllData = async ({ showSpinner = true } = {}) => {
     setLoadError(null);
@@ -1227,12 +1265,9 @@ const DashboardPage = () => {
 
             {(() => {
               const now = new Date();
-              const hoy = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-              let desde = new Date(0);
-              if (citasPeriodo === 'day') desde = hoy;
-              else if (citasPeriodo === 'week') { desde = new Date(hoy); desde.setDate(hoy.getDate() - 6); }
-              else if (citasPeriodo === 'month') desde = new Date(now.getFullYear(), now.getMonth(), 1);
-              else if (citasPeriodo === 'year') desde = new Date(now.getFullYear(), 0, 1);
+              // El rango cubre el período COMPLETO, no solo hasta hoy: las citas
+              // futuras dentro del mes deben verse como "Por realizar".
+              const { desde, hasta } = rangoDePeriodo(citasPeriodo);
 
               const parseFecha = (apt) => {
                 if (!apt.date) return null;
@@ -1242,7 +1277,7 @@ const DashboardPage = () => {
 
               const citas = appointments.filter((apt) => {
                 const f = parseFecha(apt);
-                return f && f >= desde && f <= hoy;
+                return f && f >= desde && f <= hasta;
               });
 
               const esAsistida = (a) => a.status === 'completed' || a.status === 'patient';
@@ -1410,88 +1445,116 @@ const DashboardPage = () => {
                     </Grid>
                   </Grid>
 
-                  {/* ── Embudo por procedencia ── */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
-                    <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923' }}>
-                      Embudo por procedencia
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                      {[
-                        { l: 'Asistió', c: '#059669' },
-                        { l: 'No asistió', c: '#f97316' },
-                        { l: 'Canceló', c: '#dc2626' },
-                        { l: 'Por realizar', c: '#cbd5e1' },
-                      ].map((x) => (
-                        <Box key={x.l} sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
-                          <Box sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: x.c }} />
-                          <Typography sx={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{x.l}</Typography>
-                        </Box>
-                      ))}
+                  {/* ── Embudo completo por procedencia ── */}
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                    <Box>
+                      <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923' }}>
+                        Embudo comercial por procedencia
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+                        Del primer contacto a la venta: lead → cita → asistencia → diagnóstico → cotización → cierre.
+                      </Typography>
                     </Box>
                   </Box>
 
-                  {grupos.length === 0 ? (
+                  {!funnelProcedencia ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={24} /></Box>
+                  ) : funnelProcedencia.procedencias.length === 0 ? (
                     <Box sx={{ p: 4, textAlign: 'center', borderRadius: '12px', border: '1px dashed rgba(8,89,70,0.2)' }}>
                       <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>
-                        No hay citas en el período seleccionado.
+                        No hay actividad en el período seleccionado.
                       </Typography>
                     </Box>
                   ) : (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-                      {grupos.map((g) => {
-                        const color = PROCEDENCIA_COLORS[g.key] || '#86899C';
-                        const resueltasG = g.asistidas + g.noAsistidas;
-                        const showRateG = resueltasG > 0 ? (g.asistidas / resueltasG) * 100 : null;
-                        const pct = (n) => (g.agendadas > 0 ? (n / g.agendadas) * 100 : 0);
-                        return (
-                          <Box key={g.key} sx={{
-                            p: 2, borderRadius: '14px',
-                            border: '1px solid rgba(8,89,70,0.10)',
-                            borderLeft: `4px solid ${color}`,
-                            bgcolor: 'rgba(255,255,255,0.6)',
-                            transition: 'all 0.2s ease',
-                            '&:hover': { bgcolor: 'rgba(255,255,255,0.95)', boxShadow: '0 4px 16px rgba(8,89,70,0.08)' },
-                          }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 1.25 }}>
-                              <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923' }}>
-                                {formatProcedencia(g.key)}
+                    <Box sx={{ overflowX: 'auto' }}>
+                      <Box sx={{ minWidth: 900 }}>
+                        {/* Encabezado de etapas */}
+                        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, pb: 1, mb: 1, borderBottom: '1px solid rgba(8,89,70,0.12)' }}>
+                          <Box sx={{ width: 170, flexShrink: 0 }}>
+                            <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                              Procedencia
+                            </Typography>
+                          </Box>
+                          {ETAPAS_FUNNEL.map((e) => (
+                            <Box key={e.key} sx={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
+                              <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: e.color, lineHeight: 1.2 }}>
+                                {e.label}
                               </Typography>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Typography sx={{ fontSize: '0.8125rem', color: '#64748b', fontWeight: 600 }}>
-                                  {g.agendadas} agendada{g.agendadas === 1 ? '' : 's'}
+                            </Box>
+                          ))}
+                          <Box sx={{ width: 90, flexShrink: 0, textAlign: 'right' }}>
+                            <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>
+                              Cierre
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {funnelProcedencia.procedencias.map((g) => {
+                          const color = PROCEDENCIA_COLORS[g.procedencia] || '#86899C';
+                          const entrada = Math.max(g.leads, g.agendados, 1);
+                          const tasaCierre = g.agendados > 0 ? (g.vendidos / g.agendados) * 100 : null;
+                          return (
+                            <Box key={g.procedencia} sx={{
+                              display: 'flex', alignItems: 'center', gap: 1, py: 1.25,
+                              borderBottom: '1px solid rgba(8,89,70,0.06)',
+                              '&:hover': { bgcolor: 'rgba(8,89,70,0.03)' },
+                            }}>
+                              <Box sx={{ width: 170, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ width: 4, height: 28, borderRadius: '2px', bgcolor: color, flexShrink: 0 }} />
+                                <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', color: '#0f1923', lineHeight: 1.2 }}>
+                                  {formatProcedencia(g.procedencia)}
                                 </Typography>
-                                <Chip
-                                  size="small"
-                                  label={showRateG == null ? 'sin cerrar' : `show rate ${showRateG.toFixed(0)}%`}
+                              </Box>
+                              {ETAPAS_FUNNEL.map((e) => {
+                                const v = g[e.key] || 0;
+                                const alto = Math.max((v / entrada) * 34, v > 0 ? 6 : 2);
+                                return (
+                                  <Box key={e.key} sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.4 }}>
+                                    <Typography sx={{ fontSize: '0.9375rem', fontWeight: 900, color: v > 0 ? e.color : '#cbd5e1', lineHeight: 1 }}>
+                                      {v}
+                                    </Typography>
+                                    <Box sx={{
+                                      width: '70%', height: `${alto}px`, borderRadius: '3px',
+                                      bgcolor: v > 0 ? e.color : 'rgba(148,163,184,0.25)',
+                                      opacity: v > 0 ? 1 : 0.5,
+                                    }} />
+                                  </Box>
+                                );
+                              })}
+                              <Box sx={{ width: 90, flexShrink: 0, textAlign: 'right' }}>
+                                <Chip size="small"
+                                  label={tasaCierre == null ? '—' : `${tasaCierre.toFixed(0)}%`}
                                   sx={{
                                     fontWeight: 800, fontSize: '0.6875rem', height: 22,
-                                    bgcolor: showRateG == null ? 'rgba(148,163,184,0.18)' : showRateG >= 80 ? 'rgba(5,150,105,0.14)' : showRateG >= 60 ? 'rgba(217,119,6,0.14)' : 'rgba(220,38,38,0.14)',
-                                    color: showRateG == null ? '#64748b' : showRateG >= 80 ? '#059669' : showRateG >= 60 ? '#b45309' : '#dc2626',
-                                  }}
-                                />
+                                    bgcolor: tasaCierre == null ? 'rgba(148,163,184,0.18)'
+                                      : tasaCierre >= 30 ? 'rgba(5,150,105,0.14)'
+                                      : tasaCierre > 0 ? 'rgba(217,119,6,0.14)' : 'rgba(148,163,184,0.18)',
+                                    color: tasaCierre == null ? '#64748b'
+                                      : tasaCierre >= 30 ? '#059669'
+                                      : tasaCierre > 0 ? '#b45309' : '#64748b',
+                                  }} />
                               </Box>
                             </Box>
-                            <Box sx={{ display: 'flex', height: 12, borderRadius: '6px', overflow: 'hidden', bgcolor: 'rgba(148,163,184,0.15)' }}>
-                              {g.asistidas > 0 && <Box sx={{ width: `${pct(g.asistidas)}%`, bgcolor: '#059669' }} />}
-                              {g.noAsistidas > 0 && <Box sx={{ width: `${pct(g.noAsistidas)}%`, bgcolor: '#f97316' }} />}
-                              {g.canceladas > 0 && <Box sx={{ width: `${pct(g.canceladas)}%`, bgcolor: '#dc2626' }} />}
-                              {g.pendientes > 0 && <Box sx={{ width: `${pct(g.pendientes)}%`, bgcolor: '#cbd5e1' }} />}
+                          );
+                        })}
+
+                        {/* Totales */}
+                        {funnelProcedencia.totales && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pt: 1.5, mt: 0.5, borderTop: '2px solid rgba(8,89,70,0.15)' }}>
+                            <Box sx={{ width: 170, flexShrink: 0 }}>
+                              <Typography sx={{ fontWeight: 900, fontSize: '0.8125rem', color: '#0f1923' }}>Total</Typography>
                             </Box>
-                            <Box sx={{ display: 'flex', gap: 2.5, mt: 1, flexWrap: 'wrap' }}>
-                              {[
-                                { l: 'Asistió', v: g.asistidas, c: '#059669' },
-                                { l: 'No asistió', v: g.noAsistidas, c: '#f97316' },
-                                { l: 'Canceló', v: g.canceladas, c: '#dc2626' },
-                                { l: 'Por realizar', v: g.pendientes, c: '#64748b' },
-                              ].filter((x) => x.v > 0).map((x) => (
-                                <Typography key={x.l} sx={{ fontSize: '0.75rem', color: '#475569', fontWeight: 600 }}>
-                                  <Box component="span" sx={{ color: x.c, fontWeight: 800 }}>{x.v}</Box> {x.l}
+                            {ETAPAS_FUNNEL.map((e) => (
+                              <Box key={e.key} sx={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
+                                <Typography sx={{ fontSize: '1rem', fontWeight: 900, color: '#0f1923' }}>
+                                  {funnelProcedencia.totales[e.key] || 0}
                                 </Typography>
-                              ))}
-                            </Box>
+                              </Box>
+                            ))}
+                            <Box sx={{ width: 90, flexShrink: 0 }} />
                           </Box>
-                        );
-                      })}
+                        )}
+                      </Box>
                     </Box>
                   )}
 

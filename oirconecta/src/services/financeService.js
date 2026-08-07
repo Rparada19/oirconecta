@@ -21,6 +21,11 @@ export async function createExpense(payload) {
   return error ? { success: false, error } : { success: true, expense: data?.data };
 }
 
+export async function copyPreviousMonth(periodo) {
+  const { data, error } = await api.post('/api/finance/expenses/copy-previous', { periodo });
+  return error ? { success: false, error } : { success: true, result: data?.data };
+}
+
 export async function updateExpense(id, payload) {
   const { data, error } = await api.put(`/api/finance/expenses/${id}`, payload);
   return error ? { success: false, error } : { success: true, expense: data?.data };

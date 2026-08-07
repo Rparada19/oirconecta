@@ -49,9 +49,11 @@ const createExpense = async (data, createdById) => {
       concepto: String(data.concepto || '').trim(),
       categoria: data.categoria || 'otros',
       montoCOP: Number(data.montoCOP) || 0,
-      periodo: tipo === 'VARIABLE' ? (data.periodo || toPeriodo(new Date())) : null,
-      vigenteDesde: tipo === 'FIJO' ? (data.vigenteDesde || toPeriodo(new Date())) : null,
-      vigenteHasta: tipo === 'FIJO' ? (data.vigenteHasta || null) : null,
+      // Tanto fijos como variables se registran mes a mes: los fijos cambian
+      // de valor (nómina, arriendo con IPC) y hay que poder ajustarlos.
+      periodo: data.periodo || toPeriodo(new Date()),
+      vigenteDesde: null,
+      vigenteHasta: null,
       notas: data.notas || null,
       createdById: createdById || null,
     },
@@ -69,11 +71,38 @@ const updateExpense = async (id, data) => {
 
 const deleteExpense = async (id) => prisma.financeExpense.delete({ where: { id } });
 
-/** Un gasto fijo aplica a un periodo si está dentro de su ventana de vigencia. */
+/**
+ * Un gasto aplica a un periodo si fue registrado para ese mes. Los fijos
+ * antiguos (sin periodo) caen a su ventana de vigencia por compatibilidad.
+ */
 const fijoAplica = (gasto, periodo) => {
+  if (gasto.periodo) return gasto.periodo === periodo;
   const desde = gasto.vigenteDesde || '0000-00';
   const hasta = gasto.vigenteHasta || '9999-99';
   return periodo >= desde && periodo <= hasta;
+};
+
+/**
+ * Copia todos los gastos de un mes al siguiente para no retipearlos.
+ * No duplica los conceptos que ya existan en el mes destino.
+ */
+const copyExpensesFromPreviousMonth = async (periodo, createdById) => {
+  const [y, m] = periodo.split('-').map(Number);
+  const anterior = toPeriodo(new Date(y, m - 2, 1));
+  const [origen, destino] = await Promise.all([
+    prisma.financeExpense.findMany({ where: { periodo: anterior } }),
+    prisma.financeExpense.findMany({ where: { periodo }, select: { concepto: true, tipo: true } }),
+  ]);
+  const yaExiste = new Set(destino.map((d) => `${d.tipo}|${d.concepto.toLowerCase()}`));
+  const nuevos = origen.filter((g) => !yaExiste.has(`${g.tipo}|${g.concepto.toLowerCase()}`));
+  if (nuevos.length === 0) return { copiados: 0, desde: anterior };
+  await prisma.financeExpense.createMany({
+    data: nuevos.map((g) => ({
+      tipo: g.tipo, concepto: g.concepto, categoria: g.categoria,
+      montoCOP: g.montoCOP, periodo, notas: g.notas, createdById: createdById || null,
+    })),
+  });
+  return { copiados: nuevos.length, desde: anterior };
 };
 
 // ─────────────────────────── Activos ───────────────────────────
@@ -167,7 +196,7 @@ const getSummary = async ({ months = 12 } = {}) => {
       .reduce((s, g) => s + g.montoCOP, 0);
 
     const gastosVariables = variables
-      .filter((g) => g.periodo === periodo)
+      .filter((g) => fijoAplica(g, periodo))
       .reduce((s, g) => s + g.montoCOP, 0);
 
     const depreciacion = activos.reduce((s, a) => s + depreciacionEnPeriodo(a, periodo), 0);
@@ -214,7 +243,7 @@ const getSummary = async ({ months = 12 } = {}) => {
   fijos.filter((g) => fijoAplica(g, actual.periodo)).forEach((g) => {
     porCategoria[g.categoria] = (porCategoria[g.categoria] || 0) + g.montoCOP;
   });
-  variables.filter((g) => g.periodo === actual.periodo).forEach((g) => {
+  variables.filter((g) => fijoAplica(g, actual.periodo)).forEach((g) => {
     porCategoria[g.categoria] = (porCategoria[g.categoria] || 0) + g.montoCOP;
   });
   const depActual = activos.reduce((s, a) => s + depreciacionEnPeriodo(a, actual.periodo), 0);
@@ -247,6 +276,7 @@ const getSummary = async ({ months = 12 } = {}) => {
 
 module.exports = {
   listExpenses,
+  copyExpensesFromPreviousMonth,
   createExpense,
   updateExpense,
   deleteExpense,

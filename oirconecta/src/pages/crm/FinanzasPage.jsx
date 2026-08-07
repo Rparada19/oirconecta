@@ -13,11 +13,11 @@ import {
   FormControl, InputLabel, Select, Snackbar, Alert, Tooltip,
 } from '@mui/material';
 import {
-  AccountBalance, Add, Delete, TrendingUp, TrendingDown, Refresh, Savings,
+  AccountBalance, Add, Delete, TrendingUp, TrendingDown, Refresh, Savings, ContentCopy,
 } from '@mui/icons-material';
 import PageHeader from '../../components/crm/ui/PageHeader';
 import {
-  getFinanceSummary, getExpenses, createExpense, deleteExpense,
+  getFinanceSummary, getExpenses, createExpense, deleteExpense, copyPreviousMonth,
   getAssets, createAsset, deleteAsset,
 } from '../../services/financeService';
 
@@ -69,10 +69,10 @@ const periodoActual = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 };
 
-const Card = ({ children, sx }) => (
+const Card = ({ children, sx, fill = true }) => (
   <Box sx={{
     p: 2.5, borderRadius: '16px', bgcolor: '#fff',
-    border: '1px solid #e5e7eb', height: '100%', ...sx,
+    border: '1px solid #e5e7eb', ...(fill ? { height: '100%' } : {}), ...sx,
   }}>
     {children}
   </Box>
@@ -103,6 +103,7 @@ export default function FinanzasPage() {
 
   const [expenseDialog, setExpenseDialog] = useState(null); // 'FIJO' | 'VARIABLE' | null
   const [expenseForm, setExpenseForm] = useState({});
+  const [mesGastos, setMesGastos] = useState(periodoActual());
   const [assetDialog, setAssetDialog] = useState(false);
   const [assetForm, setAssetForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -126,8 +127,7 @@ export default function FinanzasPage() {
       concepto: '',
       categoria: 'otros',
       montoCOP: '',
-      periodo: periodoActual(),
-      vigenteDesde: periodoActual(),
+      periodo: mesGastos,
       notas: '',
     });
     setExpenseDialog(tipo);
@@ -188,8 +188,20 @@ export default function FinanzasPage() {
     load();
   };
 
-  const fijos = expenses.filter((e) => e.tipo === 'FIJO');
-  const variables = expenses.filter((e) => e.tipo === 'VARIABLE');
+  // Los gastos antiguos sin periodo (esquema previo) se muestran en el mes vigente.
+  const delMes = expenses.filter((e) => (e.periodo || e.vigenteDesde) === mesGastos);
+  const fijos = delMes.filter((e) => e.tipo === 'FIJO');
+  const variables = delMes.filter((e) => e.tipo === 'VARIABLE');
+
+  const handleCopiarMesAnterior = async () => {
+    setSaving(true);
+    const r = await copyPreviousMonth(mesGastos);
+    setSaving(false);
+    if (!r.success) return notify('No se pudo copiar', 'error');
+    if (!r.result?.copiados) return notify(`No hay gastos nuevos que copiar desde ${r.result?.desde}`, 'info');
+    notify(`${r.result.copiados} gasto(s) copiados desde ${r.result.desde}`);
+    load();
+  };
 
   return (
     <Box sx={{ bgcolor: '#f8fafc', minHeight: '100%' }}>
@@ -348,7 +360,7 @@ export default function FinanzasPage() {
 
                     {/* Composición de ingresos + gastos por categoría */}
                     <Grid item xs={12} lg={4}>
-                      <Card sx={{ mb: 3 }}>
+                      <Card fill={false} sx={{ mb: 3 }}>
                         <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923', mb: 2 }}>
                           De dónde vienen los ingresos
                         </Typography>
@@ -373,7 +385,7 @@ export default function FinanzasPage() {
                         })}
                       </Card>
 
-                      <Card>
+                      <Card fill={false}>
                         <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923', mb: 2 }}>
                           Gastos del mes por categoría
                         </Typography>
@@ -400,8 +412,76 @@ export default function FinanzasPage() {
                     </Grid>
                   </Grid>
 
+                  {/* Ingresos discriminados por línea de negocio */}
+                  <Card fill={false} sx={{ mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923' }}>
+                          Ingresos por línea de negocio — 12 meses
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+                          Centro auditivo (ventas y servicios) vs portal profesional (suscripciones y paquetes IA).
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                        {[
+                          { l: 'Centro auditivo', v: summary.totales.ingresosCentro, c: '#085946' },
+                          { l: 'Portal profesional', v: summary.totales.ingresosPortal, c: '#7c3aed' },
+                        ].map((x) => (
+                          <Box key={x.l}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                              <Box sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: x.c }} />
+                              <Typography sx={{ fontSize: '0.6875rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+                                {x.l}
+                              </Typography>
+                            </Box>
+                            <Typography sx={{ fontSize: '1.125rem', fontWeight: 900, color: x.c, letterSpacing: '-0.02em' }}>
+                              {cop(x.v)}
+                            </Typography>
+                            <Typography sx={{ fontSize: '0.6875rem', color: '#94a3b8' }}>
+                              {summary.totales.ingresos > 0
+                                ? `${((x.v / summary.totales.ingresos) * 100).toFixed(0)}% del total`
+                                : 'sin ingresos'}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                    {(() => {
+                      const maxLinea = Math.max(1, ...serie.map((m) => Math.max(m.ingresosCentro, m.ingresosPortal)));
+                      return (
+                        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 150 }}>
+                          {serie.map((m) => (
+                            <Box key={m.periodo} sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                              <Tooltip arrow title={
+                                <Box sx={{ fontSize: '0.75rem' }}>
+                                  <div>Centro: {cop(m.ingresosCentro)}</div>
+                                  <div>Portal: {cop(m.ingresosPortal)}</div>
+                                </Box>
+                              }>
+                                <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: 115, width: '100%', justifyContent: 'center' }}>
+                                  <Box sx={{
+                                    width: '42%', borderRadius: '4px 4px 0 0', bgcolor: '#085946',
+                                    height: `${Math.max((m.ingresosCentro / maxLinea) * 100, m.ingresosCentro > 0 ? 2 : 0)}%`,
+                                  }} />
+                                  <Box sx={{
+                                    width: '42%', borderRadius: '4px 4px 0 0', bgcolor: '#7c3aed',
+                                    height: `${Math.max((m.ingresosPortal / maxLinea) * 100, m.ingresosPortal > 0 ? 2 : 0)}%`,
+                                  }} />
+                                </Box>
+                              </Tooltip>
+                              <Typography sx={{ fontSize: '0.6875rem', color: '#64748b', fontWeight: 600, textTransform: 'capitalize' }}>
+                                {mesCorto(m.periodo)}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      );
+                    })()}
+                  </Card>
+
                   {/* Tabla mes a mes */}
-                  <Card sx={{ p: 0, overflow: 'hidden' }}>
+                  <Card fill={false} sx={{ p: 0, overflow: 'hidden' }}>
                     <Box sx={{ p: 2.5, pb: 1.5 }}>
                       <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923' }}>
                         Detalle mes a mes
@@ -452,10 +532,33 @@ export default function FinanzasPage() {
 
             {/* ─────────────── GASTOS ─────────────── */}
             {tab === 1 && (
+              <>
+              <Card fill={false} sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                <Box>
+                  <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923' }}>
+                    Gastos de {mesCorto(mesGastos)} {mesGastos.slice(0, 4)}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+                    Cada mes se registra por separado: los fijos también cambian (nómina, arriendo con IPC).
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <TextField size="small" type="month" label="Mes" InputLabelProps={{ shrink: true }}
+                    value={mesGastos} onChange={(e) => setMesGastos(e.target.value || periodoActual())}
+                    sx={{ minWidth: 160 }} />
+                  <Button size="small" variant="outlined" startIcon={<ContentCopy />}
+                    onClick={handleCopiarMesAnterior} disabled={saving}
+                    sx={{ borderRadius: '10px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                    Copiar mes anterior
+                  </Button>
+                  <Chip label={`Total ${cop(delMes.reduce((t, g) => t + g.montoCOP, 0))}`}
+                    sx={{ fontWeight: 800, bgcolor: 'rgba(15,42,74,0.08)', color: '#0F2A4A' }} />
+                </Box>
+              </Card>
               <Grid container spacing={3}>
                 {[
-                  { tipo: 'FIJO', titulo: 'Gastos fijos mensuales', desc: 'Se repiten todos los meses mientras estén vigentes.', items: fijos },
-                  { tipo: 'VARIABLE', titulo: 'Gastos variables', desc: 'Pertenecen a un mes concreto.', items: variables },
+                  { tipo: 'FIJO', titulo: 'Gastos fijos', desc: 'Recurrentes: arriendo, nómina, servicios, software.', items: fijos },
+                  { tipo: 'VARIABLE', titulo: 'Gastos variables', desc: 'Puntuales del mes: mercancía, campañas, reparaciones.', items: variables },
                 ].map((bloque) => (
                   <Grid item xs={12} lg={6} key={bloque.tipo}>
                     <Card sx={{ p: 0, overflow: 'hidden' }}>
@@ -485,7 +588,7 @@ export default function FinanzasPage() {
                               <TableRow sx={{ '& th': { fontWeight: 800, fontSize: '0.75rem', color: '#475569', bgcolor: '#f8fafc' } }}>
                                 <TableCell>Concepto</TableCell>
                                 <TableCell>Categoría</TableCell>
-                                <TableCell>{bloque.tipo === 'FIJO' ? 'Desde' : 'Mes'}</TableCell>
+                                <TableCell>Mes</TableCell>
                                 <TableCell align="right">Monto</TableCell>
                                 <TableCell align="right" />
                               </TableRow>
@@ -499,7 +602,7 @@ export default function FinanzasPage() {
                                       sx={{ fontSize: '0.6875rem', fontWeight: 700 }} />
                                   </TableCell>
                                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                    {bloque.tipo === 'FIJO' ? (g.vigenteDesde || '—') : (g.periodo || '—')}
+                                    {g.periodo || g.vigenteDesde || '—'}
                                   </TableCell>
                                   <TableCell align="right" sx={{ fontWeight: 800 }}>{cop(g.montoCOP)}</TableCell>
                                   <TableCell align="right">
@@ -524,6 +627,7 @@ export default function FinanzasPage() {
                   </Grid>
                 ))}
               </Grid>
+              </>
             )}
 
             {/* ─────────────── ACTIVOS ─────────────── */}
@@ -603,7 +707,7 @@ export default function FinanzasPage() {
       {/* Diálogo gasto */}
       <Dialog open={!!expenseDialog} onClose={() => setExpenseDialog(null)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>
-          {expenseDialog === 'FIJO' ? 'Nuevo gasto fijo mensual' : 'Nuevo gasto variable'}
+          {expenseDialog === 'FIJO' ? 'Nuevo gasto fijo' : 'Nuevo gasto variable'}
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0 }}>
@@ -623,27 +727,16 @@ export default function FinanzasPage() {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth type="number" label="Monto mensual (COP)"
+              <TextField fullWidth type="number" label="Monto del mes (COP)"
                 value={expenseForm.montoCOP || ''}
                 onChange={(e) => setExpenseForm({ ...expenseForm, montoCOP: e.target.value })} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth type="month"
-                label={expenseDialog === 'FIJO' ? 'Vigente desde' : 'Mes del gasto'}
+              <TextField fullWidth type="month" label="Mes del gasto"
                 InputLabelProps={{ shrink: true }}
-                value={expenseDialog === 'FIJO' ? (expenseForm.vigenteDesde || '') : (expenseForm.periodo || '')}
-                onChange={(e) => setExpenseForm(expenseDialog === 'FIJO'
-                  ? { ...expenseForm, vigenteDesde: e.target.value }
-                  : { ...expenseForm, periodo: e.target.value })} />
+                value={expenseForm.periodo || ''}
+                onChange={(e) => setExpenseForm({ ...expenseForm, periodo: e.target.value })} />
             </Grid>
-            {expenseDialog === 'FIJO' && (
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth type="month" label="Vigente hasta (opcional)"
-                  InputLabelProps={{ shrink: true }}
-                  value={expenseForm.vigenteHasta || ''}
-                  onChange={(e) => setExpenseForm({ ...expenseForm, vigenteHasta: e.target.value })} />
-              </Grid>
-            )}
             <Grid item xs={12}>
               <TextField fullWidth label="Notas (opcional)" value={expenseForm.notas || ''}
                 onChange={(e) => setExpenseForm({ ...expenseForm, notas: e.target.value })} />

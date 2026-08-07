@@ -59,7 +59,7 @@ import {
   LocationOn,
   PhoneCallback,
 } from '@mui/icons-material';
-import { getAllAppointments } from '../../services/appointmentService';
+import { getAllAppointments, getFunnelPorProcedencia } from '../../services/appointmentService';
 import { getAllLeadsCombined } from '../../services/leadService';
 import { getAllPatientProducts, recordSale, updateSale } from '../../services/productService';
 import { getPatients } from '../../services/patientService';
@@ -121,6 +121,7 @@ const ReportesPage = () => {
   const [exportAnchor, setExportAnchor] = useState(null);
   const tabIndices = canSales ? [0, 1, 2, 3, 4, 5] : [0, 1, 3, 4, 5];
   const [period, setPeriod] = useState('month');
+  const [funnelProc, setFunnelProc] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const [appointments, setAppointments] = useState([]);
   const [leads, setLeads] = useState([]);
@@ -160,6 +161,15 @@ const ReportesPage = () => {
   };
 
   const { start: rangeStart, end: rangeEnd } = getDateRange(period);
+
+  useEffect(() => {
+    // Sin `hasta`: las citas ya agendadas a futuro cuentan como agendadas en
+    // el embudo comercial (si no, el canal se ve peor de lo que es).
+    const { start } = getDateRange(period);
+    getFunnelPorProcedencia(
+      period === 'all' ? {} : { desde: new Date(start).toISOString() }
+    ).then(setFunnelProc).catch(() => setFunnelProc(null));
+  }, [period]);
   const workingDays = period === 'all' ? 365 : getWorkingDays(rangeStart, rangeEnd);
   const totalSlots = workingDays * SLOTS_PER_DAY;
 
@@ -1053,41 +1063,163 @@ const ReportesPage = () => {
         )}
 
         {/* TAB FUNNEL */}
-        {realTab === 5 && (
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>Funnel comercial</Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Paper sx={{ p: 2, bgcolor: '#fff3e0' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>Leads totales</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>{totalLeads}</Typography>
+        {realTab === 5 && (() => {
+          const asistidas = aptsByStatus.completed.length;
+
+          const etapas = [
+            { label: 'Leads captados', value: totalLeads, color: '#f59e0b',
+              desc: 'Personas que dejaron sus datos' },
+            { label: 'Cita agendada', value: totalConCita, color: '#0284c7',
+              desc: 'Leads que reservaron una cita' },
+            { label: 'Asistieron', value: asistidas, color: '#059669',
+              desc: 'Citas efectivamente atendidas' },
+            { label: 'Convertidos a paciente', value: totalPacientes, color: '#7c3aed',
+              desc: 'Con historia clínica abierta' },
+            { label: 'Venta cerrada', value: totalVentas, color: '#085946',
+              desc: 'Compraron audífono o servicio' },
+          ];
+          const base = Math.max(etapas[0].value, 1);
+          const conversionGlobal = totalLeads > 0 ? (totalVentas / totalLeads) * 100 : null;
+
+          return (
+            <Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                <Box>
+                  <Typography sx={{ fontWeight: 800, fontSize: '1.125rem', color: '#0f1923' }}>
+                    Funnel comercial
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                    Del primer contacto al cierre. Cada barra es proporcional al volumen que llega a esa etapa.
+                  </Typography>
                 </Box>
-              </Paper>
-              <Typography variant="body2" sx={{ textAlign: 'center', color: '#86899C' }}>↓</Typography>
-              <Paper sx={{ p: 2, bgcolor: '#e3f2fd' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>Con cita agendada</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>{totalConCita}</Typography>
+                <Box sx={{
+                  px: 2.5, py: 1.5, borderRadius: '14px', textAlign: 'center',
+                  background: 'linear-gradient(135deg,#065f46,#059669)', color: '#fff',
+                }}>
+                  <Typography sx={{ fontSize: '0.6875rem', fontWeight: 700, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Conversión total
+                  </Typography>
+                  <Typography sx={{ fontSize: '1.75rem', fontWeight: 900, lineHeight: 1.1 }}>
+                    {conversionGlobal == null ? '—' : `${conversionGlobal.toFixed(1)}%`}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.6875rem', opacity: 0.9 }}>
+                    lead → venta
+                  </Typography>
                 </Box>
-                {totalLeads > 0 && <Typography variant="caption">{Math.round((totalConCita / totalLeads) * 100)}% conversión</Typography>}
-              </Paper>
-              <Typography variant="body2" sx={{ textAlign: 'center', color: '#86899C' }}>↓</Typography>
-              <Paper sx={{ p: 2, bgcolor: '#e8f5e9' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>Pacientes / Convertidos</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>{totalPacientes}</Typography>
-                </Box>
-              </Paper>
-              <Typography variant="body2" sx={{ textAlign: 'center', color: '#86899C' }}>↓</Typography>
-              <Paper sx={{ p: 2, bgcolor: '#f3e5f5' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>Ventas realizadas</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>{totalVentas}</Typography>
-                </Box>
-              </Paper>
+              </Box>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                {etapas.map((e, i) => {
+                  const ancho = Math.max((e.value / base) * 100, e.value > 0 ? 12 : 6);
+                  const previa = i > 0 ? etapas[i - 1] : null;
+                  const conv = previa && previa.value > 0 ? (e.value / previa.value) * 100 : null;
+                  const perdidos = previa ? Math.max(0, previa.value - e.value) : 0;
+                  return (
+                    <Box key={e.label}>
+                      {i > 0 && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.75, pl: 2 }}>
+                          <Box sx={{ width: 2, height: 22, bgcolor: 'rgba(148,163,184,0.4)', ml: '10px' }} />
+                          <Chip size="small"
+                            label={conv == null ? 'sin base' : `${conv.toFixed(0)}% avanza`}
+                            sx={{
+                              height: 22, fontSize: '0.6875rem', fontWeight: 800,
+                              bgcolor: conv == null ? 'rgba(148,163,184,0.15)'
+                                : conv >= 60 ? 'rgba(5,150,105,0.14)'
+                                : conv >= 30 ? 'rgba(217,119,6,0.14)' : 'rgba(220,38,38,0.12)',
+                              color: conv == null ? '#64748b'
+                                : conv >= 60 ? '#059669' : conv >= 30 ? '#b45309' : '#dc2626',
+                            }} />
+                          {perdidos > 0 && (
+                            <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>
+                              se pierden {perdidos}
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                      <Box sx={{
+                        width: `${ancho}%`, minWidth: 260,
+                        p: 2, borderRadius: '14px',
+                        background: `linear-gradient(90deg, ${e.color}, ${e.color}cc)`,
+                        color: '#fff',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2,
+                        transition: 'width .5s ease',
+                      }}>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', lineHeight: 1.2 }}>
+                            {e.label}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.75rem', opacity: 0.85 }}>{e.desc}</Typography>
+                        </Box>
+                        <Typography sx={{ fontSize: '1.75rem', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em' }}>
+                          {e.value}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+
+              {/* Detalle por procedencia */}
+              <Box sx={{ mt: 4 }}>
+                <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923', mb: 0.5 }}>
+                  Detalle por procedencia
+                </Typography>
+                <Typography sx={{ fontSize: '0.75rem', color: '#64748b', mb: 2 }}>
+                  Qué canal trae volumen y cuál trae cierres. La tasa es ventas sobre citas agendadas.
+                </Typography>
+                {!funnelProc ? (
+                  <CircularProgress size={24} />
+                ) : funnelProc.procedencias.length === 0 ? (
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#94a3b8' }}>
+                    Sin actividad en el período.
+                  </Typography>
+                ) : (
+                  <TableContainer component={Paper} sx={{ borderRadius: '14px', boxShadow: 'none', border: '1px solid #e5e7eb' }}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ '& th': { fontWeight: 800, fontSize: '0.75rem', bgcolor: '#f8fafc', whiteSpace: 'nowrap' } }}>
+                          <TableCell>Procedencia</TableCell>
+                          <TableCell align="right">Leads</TableCell>
+                          <TableCell align="right">Agendados</TableCell>
+                          <TableCell align="right">Asistidos</TableCell>
+                          <TableCell align="right">No asistidos</TableCell>
+                          <TableCell align="right">C/ pérdida</TableCell>
+                          <TableCell align="right">Aud. normal</TableCell>
+                          <TableCell align="right">Cotizados</TableCell>
+                          <TableCell align="right">Vendidos</TableCell>
+                          <TableCell align="right">Tasa cierre</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {funnelProc.procedencias.map((g) => {
+                          const tasa = g.agendados > 0 ? (g.vendidos / g.agendados) * 100 : null;
+                          return (
+                            <TableRow key={g.procedencia} hover>
+                              <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                {formatProcedencia(g.procedencia)}
+                              </TableCell>
+                              <TableCell align="right">{g.leads}</TableCell>
+                              <TableCell align="right">{g.agendados}</TableCell>
+                              <TableCell align="right" sx={{ color: '#059669', fontWeight: 700 }}>{g.asistidos}</TableCell>
+                              <TableCell align="right" sx={{ color: '#f97316' }}>{g.noAsistidos}</TableCell>
+                              <TableCell align="right">{g.conPerdidaAuditiva}</TableCell>
+                              <TableCell align="right">{g.audicionNormal}</TableCell>
+                              <TableCell align="right">{g.cotizados}</TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 800 }}>{g.vendidos}</TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 800, color: tasa == null ? '#94a3b8' : tasa >= 30 ? '#059669' : '#b45309' }}>
+                                {tasa == null ? '—' : `${tasa.toFixed(0)}%`}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Box>
             </Box>
-          </Box>
-        )}
+          );
+        })()}
         </Box>
       </Container>
 

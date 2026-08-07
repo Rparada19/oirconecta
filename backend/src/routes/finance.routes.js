@@ -46,6 +46,13 @@ router.post(
   wrap((req) => financeService.createExpense(req.body, req.user.id))
 );
 
+router.post(
+  '/expenses/copy-previous',
+  [body('periodo').matches(/^\d{4}-\d{2}$/)],
+  validateRequest,
+  wrap((req) => financeService.copyExpensesFromPreviousMonth(req.body.periodo, req.user.id))
+);
+
 router.put(
   '/expenses/:id',
   [param('id').isUUID()],
