@@ -23,6 +23,7 @@ import {
   EventAvailable as EventAvailableIcon,
   WhatsApp as WhatsAppIcon,
   MailOutline as MailOutlineIcon,
+  AccountBalance,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { getMenuForRole, MENU_KEYS } from '../../utils/rolePermissions';
@@ -66,6 +67,8 @@ const NAV_ITEMS = [
     path: '/portal-crm/productos', section: 'marketing' },
   { key: MENU_KEYS.REPORTES, label: 'Reportes', icon: Assessment,
     path: '/portal-crm/reportes', section: 'analitica' },
+  { key: MENU_KEYS.FINANZAS, label: 'Finanzas', icon: AccountBalance,
+    path: '/portal-crm/finanzas', section: 'analitica' },
   { key: MENU_KEYS.CONFIGURACION, label: 'Configuración', icon: Settings,
     path: '/portal-crm/configuracion', section: 'sistema' },
 ];

@@ -499,10 +499,55 @@ async function ensureCanalRegistroColumn(prisma) {
 }
 
 /**
+ * Finanzas — gastos capturados a mano + activos para depreciación.
+ */
+async function ensureFinanceSchema(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "finance_expenses" (
+        "id" TEXT PRIMARY KEY,
+        "tipo" TEXT NOT NULL,
+        "concepto" TEXT NOT NULL,
+        "categoria" TEXT NOT NULL DEFAULT 'otros',
+        "montoCOP" DOUBLE PRECISION NOT NULL,
+        "periodo" TEXT,
+        "vigenteDesde" TEXT,
+        "vigenteHasta" TEXT,
+        "notas" TEXT,
+        "createdById" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "finance_expenses_tipo_periodo_idx" ON "finance_expenses"("tipo","periodo");`);
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "finance_assets" (
+        "id" TEXT PRIMARY KEY,
+        "nombre" TEXT NOT NULL,
+        "categoria" TEXT NOT NULL DEFAULT 'equipos',
+        "valorCompra" DOUBLE PRECISION NOT NULL,
+        "valorResidual" DOUBLE PRECISION NOT NULL DEFAULT 0,
+        "fechaCompra" TIMESTAMP(3) NOT NULL,
+        "vidaUtilMeses" INTEGER NOT NULL DEFAULT 60,
+        "notas" TEXT,
+        "dadoDeBajaAt" TIMESTAMP(3),
+        "createdById" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('[boot-migrate] finance schema OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureFinanceSchema falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * Punto único: corre todas las migraciones idempotentes.
  */
 async function runBootMigrations(prisma) {
   await ensureCanalRegistroColumn(prisma);
+  await ensureFinanceSchema(prisma);
   await extendTrialsTo120(prisma);
   await ensureSalesCrmSchema(prisma);
   await ensureDirectoryAccountColumns(prisma);

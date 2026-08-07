@@ -2956,3 +2956,57 @@ model BrandInfo {
 
   @@map("brand_info")
 }
+
+// ===========================================
+// FINANZAS — Salud del negocio (empresa consolidada:
+// centro auditivo + portal profesional). Gastos e inversiones se
+// capturan a mano; los ingresos los trae el sistema.
+// ===========================================
+
+model FinanceExpense {
+  id String @id @default(uuid())
+
+  /// FIJO = se repite todos los meses mientras esté activo.
+  /// VARIABLE = pertenece a un mes concreto (periodo).
+  tipo      String
+  concepto  String
+  /// nomina | arriendo | servicios | software | marketing | mercancia |
+  /// impuestos | financieros | otros
+  categoria String @default("otros")
+  montoCOP  Float
+
+  /// Solo VARIABLE: mes al que pertenece, formato YYYY-MM.
+  periodo String?
+
+  /// Solo FIJO: ventana de vigencia (YYYY-MM). vigenteHasta null = sigue vigente.
+  vigenteDesde String?
+  vigenteHasta String?
+
+  notas String?
+
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tipo, periodo])
+  @@map("finance_expenses")
+}
+
+model FinanceAsset {
+  id             String   @id @default(uuid())
+  nombre         String
+  /// equipos | muebles | tecnologia | vehiculos | otros
+  categoria      String   @default("equipos")
+  valorCompra    Float
+  valorResidual  Float    @default(0)
+  fechaCompra    DateTime
+  vidaUtilMeses  Int      @default(60)
+  notas          String?
+  dadoDeBajaAt   DateTime?
+
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("finance_assets")
+}

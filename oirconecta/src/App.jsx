@@ -94,6 +94,7 @@ const ControlesPage = lazy(() => import('./pages/crm/ControlesPage'));
 const WhatsAppInboxPage = lazy(() => import('./pages/crm/WhatsAppInboxPage'));
 const CampanasPage = lazy(() => import('./pages/crm/CampanasPage'));
 const ReportesPage = lazy(() => import('./pages/crm/ReportesPage'));
+const FinanzasPage = lazy(() => import('./pages/crm/FinanzasPage'));
 const ConfiguracionPage = lazy(() => import('./pages/crm/ConfiguracionPage'));
 const AccionesDiaPage = lazy(() => import('./pages/crm/AccionesDiaPage'));
 const ProductosPage = lazy(() => import('./pages/crm/ProductosPage'));
@@ -297,6 +298,7 @@ export default function App() {
             <Route path="plantillas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><CrmPlantillasPage /></ProtectedRouteByRole>} />
             <Route path="campanas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><CampanasPage /></ProtectedRouteByRole>} />
             <Route path="reportes" element={<ReportesPage />} />
+            <Route path="finanzas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><FinanzasPage /></ProtectedRouteByRole>} />
             <Route path="configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />
             <Route path="productos" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ProductosPage /></ProtectedRouteByRole>} />
           </Route>
