@@ -310,6 +310,36 @@ const getSummary = async ({ year } = {}) => {
     };
   });
 
+  // Acumulado del año hasta el mes en curso (no incluye meses futuros, que
+  // pueden tener gastos ya cargados y falsearían el corrido).
+  const sumar = (meses) => meses.reduce((acc, m) => ({
+    ingresos: acc.ingresos + m.ingresos,
+    ingresosCentro: acc.ingresosCentro + m.ingresosCentro,
+    ingresosPortal: acc.ingresosPortal + m.ingresosPortal,
+    gastosFijos: acc.gastosFijos + m.gastosFijos,
+    gastosVariables: acc.gastosVariables + m.gastosVariables,
+    depreciacion: acc.depreciacion + m.depreciacion,
+    gastosTotales: acc.gastosTotales + m.gastosTotales,
+    utilidadOperativa: acc.utilidadOperativa + m.utilidadOperativa,
+    utilidadNeta: acc.utilidadNeta + m.utilidadNeta,
+  }), {
+    ingresos: 0, ingresosCentro: 0, ingresosPortal: 0, gastosFijos: 0,
+    gastosVariables: 0, depreciacion: 0, gastosTotales: 0,
+    utilidadOperativa: 0, utilidadNeta: 0,
+  });
+
+  const mesesCorridos = serie.slice(0, idxActual + 1);
+  const acumulado = {
+    ...sumar(mesesCorridos),
+    desde: mesesCorridos[0]?.periodo || null,
+    hasta: actual.periodo,
+    meses: mesesCorridos.length,
+  };
+  acumulado.margenNeto = acumulado.ingresos > 0
+    ? (acumulado.utilidadNeta / acumulado.ingresos) * 100 : null;
+  acumulado.margenOperativo = acumulado.ingresos > 0
+    ? (acumulado.utilidadOperativa / acumulado.ingresos) * 100 : null;
+
   const totales = serie.reduce((acc, m) => ({
     ingresos: acc.ingresos + m.ingresos,
     ingresosCentro: acc.ingresosCentro + m.ingresosCentro,
@@ -331,6 +361,7 @@ const getSummary = async ({ year } = {}) => {
     serie,
     actual,
     anterior,
+    acumulado,
     porLinea,
     puntoEquilibrio,
     gastosPorCategoria: Object.entries(porCategoria)

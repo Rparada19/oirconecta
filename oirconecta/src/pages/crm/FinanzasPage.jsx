@@ -304,7 +304,7 @@ export default function FinanzasPage() {
           <>
             {/* ═══════════════ RESUMEN ═══════════════ */}
             {tab === 0 && summary && (() => {
-              const { actual, anterior, puntoEquilibrio: pe, serie, gastosPorCategoria, totales, porLinea } = summary;
+              const { actual, anterior, acumulado, puntoEquilibrio: pe, serie, gastosPorCategoria, totales, porLinea } = summary;
               const maxSerie = Math.max(1, ...serie.map((m) => Math.max(m.ingresos, m.gastosTotales)));
               const maxCat = Math.max(1, ...gastosPorCategoria.map((c) => c.monto));
               const deltaIngresos = anterior && anterior.ingresos > 0
@@ -341,7 +341,10 @@ export default function FinanzasPage() {
                     </Box>
                   </Card>
 
-                  {/* KPIs del mes */}
+                  {/* KPIs del mes en curso */}
+                  <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 1.25 }}>
+                    Mes en curso · {mesCorto(actual.periodo)} {actual.periodo.slice(0, 4)}
+                  </Typography>
                   <Grid container spacing={2} sx={{ mb: 3 }}>
                     <Grid item xs={12} sm={6} md={3}>
                       <Kpi label="Ingresos del mes" value={cop(actual.ingresos)} color="#059669"
@@ -368,6 +371,42 @@ export default function FinanzasPage() {
                           : `Margen operativo ${actual.margenOperativo.toFixed(1)}%`} />
                     </Grid>
                   </Grid>
+
+                  {/* KPIs acumulados del año corrido */}
+                  {acumulado && (
+                    <>
+                      <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 1.25 }}>
+                        Acumulado {summary.anio} · {acumulado.desde ? mesCorto(acumulado.desde) : '—'} a {mesCorto(acumulado.hasta)}
+                        {` (${acumulado.meses} ${acumulado.meses === 1 ? 'mes' : 'meses'})`}
+                      </Typography>
+                      <Grid container spacing={2} sx={{ mb: 3 }}>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Kpi label="Ingresos acumulados" value={cop(acumulado.ingresos)} color="#059669"
+                            icon={<TrendingUp sx={{ fontSize: 16 }} />}
+                            hint={`Centro ${copCorto(acumulado.ingresosCentro)} · Portal ${copCorto(acumulado.ingresosPortal)}`} />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Kpi label="Gastos acumulados" value={cop(acumulado.gastosTotales)} color="#dc2626"
+                            icon={<TrendingDown sx={{ fontSize: 16 }} />}
+                            hint={`Fijos ${copCorto(acumulado.gastosFijos)} · Var. ${copCorto(acumulado.gastosVariables)} · Depr. ${copCorto(acumulado.depreciacion)}`} />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Kpi label="Utilidad acumulada" value={cop(acumulado.utilidadNeta)}
+                            color={acumulado.utilidadNeta >= 0 ? '#059669' : '#dc2626'}
+                            icon={<Savings sx={{ fontSize: 16 }} />}
+                            hint={`Promedio ${cop(acumulado.utilidadNeta / (acumulado.meses || 1))} / mes`} />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Kpi label="Margen acumulado"
+                            value={acumulado.margenNeto == null ? '—' : `${acumulado.margenNeto.toFixed(1)}%`}
+                            color={(acumulado.margenNeto || 0) >= 0 ? '#0F2A4A' : '#dc2626'}
+                            hint={acumulado.margenOperativo == null
+                              ? 'Sin ingresos en el año corrido'
+                              : `Margen operativo ${acumulado.margenOperativo.toFixed(1)}%`} />
+                        </Grid>
+                      </Grid>
+                    </>
+                  )}
 
                   {/* Resultado por línea de negocio */}
                   {porLinea && (
