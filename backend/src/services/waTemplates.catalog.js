@@ -148,6 +148,22 @@ const CATALOG = [
     preview:
       'Hola {{1}}, vimos que dejaste tus datos en oirconecta.com. ¿Cómo podemos ayudarte hoy?',
   },
+  {
+    key: 'retomar_conversacion',
+    metaName: 'retomar_conversacion',
+    locale: 'es_CO',
+    category: 'UTILITY',
+    label: 'Retomar conversación · Pasar a un asesor',
+    description: 'Reabrir la ventana de 24h cuando alguien escribió y no alcanzamos a responder a tiempo. Al responder, la atiende una persona.',
+    // Sirve para cualquier tipo de contacto: es un puente al humano, no un mensaje comercial.
+    anyContactType: true,
+    contactType: 'INFO_GENERAL',
+    variables: [
+      { key: 'nombre', label: 'Nombre del contacto', placeholder: 'Ej. Natalia' },
+    ],
+    preview:
+      'Hola {{1}}, te escribimos de OírConecta. Recibimos tu mensaje y queremos continuar la conversación contigo. Responde por aquí y una persona de nuestro equipo te atiende directamente.',
+  },
 ];
 
 function listContactTypes() {
@@ -166,7 +182,8 @@ function listTemplates({ contactType, businessLine } = {}) {
   let out = CATALOG;
   if (contactType) {
     const type = String(contactType).toUpperCase();
-    out = out.filter((t) => t.contactType === type);
+    // Las marcadas anyContactType siempre aparecen (ej. retomar conversación).
+    out = out.filter((t) => t.anyContactType || t.contactType === type);
   } else if (businessLine) {
     const line = String(businessLine).toUpperCase();
     const typesInLine = CONTACT_TYPES.filter((c) => c.businessLine === line).map((c) => c.key);
