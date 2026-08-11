@@ -408,14 +408,22 @@ const update = async (id, data) => {
  */
 const updateStatus = async (id, estado) => {
   const prev = await prisma.appointment.findUnique({
-    where: { id }, select: { estado: true, reviewToken: true },
+    where: { id }, select: { estado: true, reviewToken: true, reviewRequestedAt: true },
   });
   const data = { estado };
-  // Al pasar a COMPLETED por primera vez: generar reviewToken (para /encuesta)
-  // y disparar agradecimiento T+18h + encuesta T+3d.
-  const transitioning = estado === 'COMPLETED' && prev?.estado !== 'COMPLETED';
-  if (transitioning && !prev?.reviewToken) {
-    data.reviewToken = crypto.randomBytes(16).toString('hex');
+
+  // El flujo post-cita (reseña Google T+3h, agradecimiento T+18h, encuesta
+  // T+3d) se dispara SOLO al marcar que el paciente asistió, y una sola vez.
+  //
+  // "Asistió" son dos estados: COMPLETED y PATIENT. Al registrar la consulta
+  // el CRM pasa por COMPLETED y enseguida por PATIENT, así que sin esta guarda
+  // un segundo paso por COMPLETED volvería a programar todo y el paciente
+  // recibiría los mensajes duplicados. `reviewRequestedAt` es la marca de que
+  // ya se disparó.
+  const ASISTIO = ['COMPLETED', 'PATIENT'];
+  const transitioning = ASISTIO.includes(estado) && !prev?.reviewRequestedAt;
+  if (transitioning) {
+    if (!prev?.reviewToken) data.reviewToken = crypto.randomBytes(16).toString('hex');
     data.reviewRequestedAt = new Date();
   }
   const updated = await prisma.appointment.update({ where: { id }, data });
