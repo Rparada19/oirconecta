@@ -311,12 +311,8 @@ async function startNewConversation({
   let deliveryStatus = 'sent';
   let errorMessage = null;
   try {
-    const result = await sendWhatsAppTemplate({
-      to: phoneClean,
-      metaTemplateName: template.metaName,
-      locale: template.locale || 'es_CO',
-      bodyParams,
-      phoneNumberId,
+    const result = await sendTemplateAutoParams({
+      to: phoneClean, template, bodyParams, phoneNumberId,
     });
     providerId = result?.providerMessageId || null;
   } catch (e) {
@@ -359,6 +355,46 @@ async function startNewConversation({
   return { conversationId: conversation.id, messageId: msg.id, providerId };
 }
 
+
+/**
+ * Envía una plantilla resolviendo el formato de variables que espera Meta.
+ *
+ * En esta WABA conviven plantillas con variables nombradas ({{nombre}}) y
+ * posicionales ({{1}}), y no hay forma de saberlo desde el catálogo local.
+ * Meta responde 132000 ("number of parameters does not match") cuando el
+ * formato no calza, así que probamos: nombradas → posicionales → sin
+ * parámetros. Solo se reintenta ante 132000; cualquier otro error se propaga.
+ */
+async function sendTemplateAutoParams({ to, template, bodyParams, phoneNumberId }) {
+  const named = {};
+  (template.variables || []).forEach((v, i) => {
+    if (bodyParams[i] != null) named[v.key] = bodyParams[i];
+  });
+
+  const intentos = [];
+  if (Object.keys(named).length) intentos.push({ namedParams: named });
+  if (bodyParams.length) intentos.push({ bodyParams });
+  intentos.push({});
+
+  let ultimoError = null;
+  for (const variante of intentos) {
+    try {
+      return await sendWhatsAppTemplate({
+        to,
+        metaTemplateName: template.metaName,
+        locale: template.locale || 'es_CO',
+        phoneNumberId,
+        ...variante,
+      });
+    } catch (e) {
+      const esDesajuste = e.code === 'META_132000' || /132000/.test(e.message || '');
+      if (!esDesajuste) throw e;
+      ultimoError = e;
+    }
+  }
+  throw ultimoError;
+}
+
 /**
  * F9c — Envía una plantilla HSM a una conversación ya existente (útil para
  * reactivar cuando la ventana de 24h se cerró).
@@ -386,10 +422,9 @@ async function sendTemplateToExistingConversation({
   let deliveryStatus = 'sent';
   let errorMessage = null;
   try {
-    const result = await sendWhatsAppTemplate({
+    const result = await sendTemplateAutoParams({
       to: conv.phone,
-      metaTemplateName: template.metaName,
-      locale: template.locale || 'es_CO',
+      template,
       bodyParams,
       // La conversación corporativa sale del número corporativo, no del clínico.
       phoneNumberId: process.env.META_CORPORATE_PHONE_NUMBER_ID
