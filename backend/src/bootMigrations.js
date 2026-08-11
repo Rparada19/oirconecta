@@ -544,11 +544,69 @@ async function ensureFinanceSchema(prisma) {
 }
 
 /**
+ * Siembra las plantillas del flujo de reseña en Google (email + WhatsApp).
+ * Solo crea si faltan: nunca pisa lo que el admin haya editado.
+ */
+async function ensureGoogleReviewTemplates(prisma) {
+  try {
+    const existentes = await prisma.notificationTemplate.findMany({
+      where: { code: 'resena_google' },
+      select: { channel: true },
+    });
+    const hay = new Set(existentes.map((t) => t.channel));
+
+    if (!hay.has('EMAIL')) {
+      await prisma.notificationTemplate.create({
+        data: {
+          code: 'resena_google', channel: 'EMAIL', locale: 'es-CO',
+          subject: '{{nombre}}, ¿cómo te fue en tu cita?',
+          body: [
+            'Hola {{nombre}},',
+            '',
+            'Gracias por visitarnos hoy en OírConecta. Nos ayudaría mucho saber cómo te pareció la atención.',
+            '',
+            'Dejar tu opinión toma menos de un minuto:',
+            '{{link_google}}',
+            '',
+            'Tu comentario ayuda a otras personas con pérdida auditiva a decidir dónde consultar.',
+            '',
+            'Gracias por confiar tu audición con nosotros.',
+            'Equipo OírConecta',
+          ].join('\n'),
+          variables: ['nombre', 'link_google'],
+          category: 'TRANSACTIONAL',
+          optOutAllowed: true,
+          activo: true,
+        },
+      });
+    }
+
+    if (!hay.has('WHATSAPP')) {
+      await prisma.notificationTemplate.create({
+        data: {
+          code: 'resena_google', channel: 'WHATSAPP', locale: 'es-CO',
+          body: 'Hola {{nombre}}, gracias por visitarnos hoy en OírConecta. ¿Nos ayudas con tu opinión? Toma menos de un minuto: {{link_google}}',
+          metaTemplateName: 'resena_google',
+          variables: ['nombre', 'link_google'],
+          category: 'MARKETING',
+          optOutAllowed: true,
+          activo: true,
+        },
+      });
+    }
+    console.log('[boot-migrate] plantillas resena_google OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureGoogleReviewTemplates falló (no bloqueante):', e.message);
+  }
+}
+
+/**
  * Punto único: corre todas las migraciones idempotentes.
  */
 async function runBootMigrations(prisma) {
   await ensureCanalRegistroColumn(prisma);
   await ensureFinanceSchema(prisma);
+  await ensureGoogleReviewTemplates(prisma);
   await extendTrialsTo120(prisma);
   await ensureSalesCrmSchema(prisma);
   await ensureDirectoryAccountColumns(prisma);
