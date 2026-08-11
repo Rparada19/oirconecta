@@ -70,8 +70,11 @@ function buildVars(appointment) {
   const tipoConsulta = appointment.tipoConsulta || 'consulta';
   const linkConfirm = `${PUBLIC_BASE}/agendar/confirmar?token=${appointment.rescheduleToken}`;
   const linkReagendar = `${PUBLIC_BASE}/agendar/reagendar?token=${appointment.rescheduleToken}`;
-  // Enlace de reseña en Google. Sin configurar, el flujo se omite por completo.
-  const linkGoogle = process.env.GOOGLE_REVIEW_URL || '';
+  // Enlace público de reseña del centro. La env var permite cambiarlo sin
+  // desplegar (o vaciarlo para apagar la petición de reseña).
+  const linkGoogle = process.env.GOOGLE_REVIEW_URL !== undefined
+    ? process.env.GOOGLE_REVIEW_URL
+    : 'https://g.page/r/CW2QxMBq6uFtEBM/review';
   const linkEncuesta = appointment.reviewToken
     ? `${PUBLIC_BASE}/dejar-resena/${appointment.reviewToken}`
     : `${PUBLIC_BASE}/dejar-resena/${appointment.rescheduleToken}`;
