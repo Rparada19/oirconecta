@@ -559,18 +559,18 @@ async function ensureGoogleReviewTemplates(prisma) {
       await prisma.notificationTemplate.create({
         data: {
           code: 'resena_google', channel: 'EMAIL', locale: 'es-CO',
-          subject: '{{nombre}}, ¿cómo te fue en tu cita?',
+          subject: 'Gracias por tu visita, {{nombre}}',
           body: [
             'Hola {{nombre}},',
             '',
-            'Gracias por visitarnos hoy en OírConecta. Nos ayudaría mucho saber cómo te pareció la atención.',
+            'Gracias por confiar tu audición con nosotros. Fue un gusto atenderte hoy.',
             '',
-            'Dejar tu opinión toma menos de un minuto:',
+            'Si quedaste a gusto, contarlo en una reseña nos ayuda muchísimo y toma menos de un minuto:',
             '{{link_google}}',
             '',
-            'Tu comentario ayuda a otras personas con pérdida auditiva a decidir dónde consultar.',
+            'Tu comentario le sirve a otras personas con pérdida auditiva que están buscando dónde consultar.',
             '',
-            'Gracias por confiar tu audición con nosotros.',
+            'Cualquier duda que te quede, respóndenos por aquí.',
             'Equipo OírConecta',
           ].join('\n'),
           variables: ['nombre', 'link_google'],
@@ -585,7 +585,7 @@ async function ensureGoogleReviewTemplates(prisma) {
       await prisma.notificationTemplate.create({
         data: {
           code: 'resena_google', channel: 'WHATSAPP', locale: 'es-CO',
-          body: 'Hola {{nombre}}, gracias por visitarnos hoy en OírConecta. ¿Nos ayudas con tu opinión? Toma menos de un minuto: {{link_google}}',
+          body: 'Hola {{nombre}}, gracias por confiar tu audición con nosotros. Fue un gusto atenderte hoy. Si quedaste a gusto, contarlo aquí nos ayuda mucho y toma menos de un minuto: {{link_google}}',
           metaTemplateName: 'resena_google',
           variables: ['nombre', 'link_google'],
           category: 'MARKETING',

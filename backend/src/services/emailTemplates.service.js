@@ -227,7 +227,7 @@ const LEGACY_META = {
   crm_reprogramacion:       { label: 'Cita reprogramada',              group: 'CRM_CITAS', orderInGroup: 7 },
   agradecimiento_post_cita: { label: 'Agradecimiento post-cita (T+18h)', group: 'CRM_CITAS', orderInGroup: 4 },
   encuesta_post_cita:       { label: 'Encuesta de satisfacción (T+3d)',  group: 'CRM_CITAS', orderInGroup: 5 },
-  resena_google:            { label: 'Reseña en Google (T+3h)',          group: 'CRM_CITAS', orderInGroup: 8 },
+  resena_google:            { label: 'Gracias + reseña en Google (T+3h)', group: 'CRM_CITAS', orderInGroup: 4 },
   // Directorio (profesional adscrito).
   directorio_cita_agendada:    { label: 'Cita agendada · confirmación', group: 'DIRECTORIO_CITAS', orderInGroup: 1 },
   directorio_recordatorio_24h: { label: 'Recordatorio 24h antes',       group: 'DIRECTORIO_CITAS', orderInGroup: 2 },

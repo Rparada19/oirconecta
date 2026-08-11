@@ -216,53 +216,32 @@ async function onAppointmentRescheduled(appointment, prisma) {
 }
 
 /**
- * Cita completada → agradecimiento a T+18h (WA + Email) + encuesta a T+3d.
- * Se dispara cuando el CRM marca la cita como COMPLETED.
+ * Cita asistida → UN solo mensaje a T+3h que agradece y pide la reseña.
+ *
+ * Antes eran tres (agradecimiento T+18h, reseña T+3h, encuesta T+3d): demasiado
+ * para una consulta. Se dispara al marcar asistencia y no se repite.
  */
 async function onAppointmentCompleted(appointment) {
   if (!appointment?.patientId) return { skipped: 'sin patientId' };
   const vars = buildVars(appointment);
-  const now = new Date();
-  const t18h = new Date(now.getTime() + 18 * 3600 * 1000);
-  const t3d = new Date(now.getTime() + 3 * 24 * 3600 * 1000);
-  const targetType = 'Appointment';
-  const targetId = appointment.id;
+
+  // Sin enlace de Google configurado no hay nada que pedir: solo agradecemos.
+  const templateCode = vars.link_google ? 'resena_google' : 'agradecimiento_post_cita';
+  const eventCode = vars.link_google ? 'RESENA_GOOGLE' : 'AGRADECIMIENTO_POST_CITA';
+
+  // T+3h: alcanza a llegar a casa y la experiencia sigue fresca.
+  const scheduledFor = new Date(Date.now() + 3 * 3600 * 1000);
 
   for (const channel of ['WHATSAPP', 'EMAIL']) {
     await scheduleReminder({
       patientId: appointment.patientId,
-      eventCode: 'AGRADECIMIENTO_POST_CITA',
+      eventCode,
       channel,
-      templateCode: 'agradecimiento_post_cita',
-      targetType, targetId, payload: vars,
-      scheduledFor: t18h,
-    });
-  }
-  // Reseña en Google a T+3h: la experiencia todavía está fresca y es cuando
-  // más gente responde. Solo si hay URL configurada.
-  if (vars.link_google) {
-    const t3h = new Date(now.getTime() + 3 * 3600 * 1000);
-    for (const channel of ['WHATSAPP', 'EMAIL']) {
-      await scheduleReminder({
-        patientId: appointment.patientId,
-        eventCode: 'RESENA_GOOGLE',
-        channel,
-        templateCode: 'resena_google',
-        targetType, targetId, payload: vars,
-        scheduledFor: t3h,
-      });
-    }
-  }
-
-  // Encuesta post-cita (CRM-4). El link real /encuesta/:token se resuelve al enviar.
-  for (const channel of ['WHATSAPP', 'EMAIL']) {
-    await scheduleReminder({
-      patientId: appointment.patientId,
-      eventCode: 'ENCUESTA_POST_CITA',
-      channel,
-      templateCode: 'encuesta_post_cita',
-      targetType, targetId, payload: vars,
-      scheduledFor: t3d,
+      templateCode,
+      targetType: 'Appointment',
+      targetId: appointment.id,
+      payload: vars,
+      scheduledFor,
     });
   }
   return { ok: true };
