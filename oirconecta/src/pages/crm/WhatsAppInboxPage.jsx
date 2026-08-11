@@ -166,15 +166,13 @@ export default function WhatsAppInboxPage({
         await load();
         if (r.data.data?.conversationId) loadDetail(r.data.data.conversationId);
       } else {
-        setNewError(r?.data?.error || 'Error al iniciar');
+        const msg = r?.error || r?.data?.error || 'No se pudo iniciar la conversación';
+        setNewError(r?.status === 502
+          ? `Meta rechazó el envío — ${msg}. Verifica que la plantilla esté aprobada para este número.`
+          : msg);
       }
     } catch (e) {
-      const errData = e.response?.data;
-      if (errData?.code === 'SEND_FAILED') {
-        setNewError(`Meta rechazó el envío: ${errData.error}. Verifica que la plantilla esté aprobada.`);
-      } else {
-        setNewError(errData?.error || e.message);
-      }
+      setNewError(e?.message || 'Error inesperado al iniciar la conversación');
     } finally {
       setNewLoading(false);
     }
@@ -373,15 +371,11 @@ export default function WhatsAppInboxPage({
         setReactOpen(false);
         await loadDetail(selected.id);
       } else {
-        setReactError(r?.data?.error || 'Error');
+        const msg = r?.error || r?.data?.error || 'No se pudo enviar la plantilla';
+        setReactError(r?.status === 502 ? `Meta rechazó el envío — ${msg}` : msg);
       }
     } catch (e) {
-      const errData = e.response?.data;
-      if (errData?.code === 'SEND_FAILED') {
-        setReactError(`Meta rechazó el envío: ${errData.error}`);
-      } else {
-        setReactError(errData?.error || e.message);
-      }
+      setReactError(e?.message || 'Error inesperado al enviar la plantilla');
     } finally { setReactLoading(false); }
   };
 

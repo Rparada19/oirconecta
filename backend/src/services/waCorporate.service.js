@@ -311,16 +311,12 @@ async function startNewConversation({
   let deliveryStatus = 'sent';
   let errorMessage = null;
   try {
-    // sendWhatsAppTemplate usa WHATSAPP_PHONE_NUMBER_ID por env; para forzar el corporativo
-    // usamos ese mismo env. En este flujo asumimos que WHATSAPP_PHONE_NUMBER_ID = corporativo.
-    if (phoneNumberId && phoneNumberId !== process.env.WHATSAPP_PHONE_NUMBER_ID) {
-      console.warn('[wa-corp] atención: sendWhatsAppTemplate usa WHATSAPP_PHONE_NUMBER_ID, no META_CORPORATE_PHONE_NUMBER_ID');
-    }
     const result = await sendWhatsAppTemplate({
       to: phoneClean,
       metaTemplateName: template.metaName,
       locale: template.locale || 'es_CO',
       bodyParams,
+      phoneNumberId,
     });
     providerId = result?.providerMessageId || null;
   } catch (e) {
@@ -395,6 +391,9 @@ async function sendTemplateToExistingConversation({
       metaTemplateName: template.metaName,
       locale: template.locale || 'es_CO',
       bodyParams,
+      // La conversación corporativa sale del número corporativo, no del clínico.
+      phoneNumberId: process.env.META_CORPORATE_PHONE_NUMBER_ID
+        || process.env.WHATSAPP_PHONE_NUMBER_ID,
     });
     providerId = result?.providerMessageId || null;
   } catch (e) {

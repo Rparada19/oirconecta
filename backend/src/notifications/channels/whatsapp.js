@@ -41,8 +41,9 @@ async function sendWhatsAppTemplate({
   buttonParams = [],
   urlButtonParams = [],
   buttons = [], // [{ type:'url', text }, { type:'quick_reply', payload }] en orden EXACTO de la plantilla
+  phoneNumberId, // override del remitente (multi-número: corporativo vs. clínico)
 }) {
-  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const phoneId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
 
