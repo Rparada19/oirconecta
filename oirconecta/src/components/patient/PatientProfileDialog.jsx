@@ -4746,8 +4746,17 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                   ...(patientMessages || []).map((m) => {
                     const canal = { WHATSAPP: 'WhatsApp', EMAIL: 'Email', SMS: 'SMS' }[m.channel] || m.channel;
                     const evento = { CITA_AGENDADA: 'Confirmación de cita', RECORDATORIO_24H: 'Recordatorio 24h', RECORDATORIO_2H: 'Recordatorio 2h', CITA_CANCELADA: 'Cancelación', CITA_REPROGRAMADA: 'Reprogramación' }[m.eventCode] || (m.eventCode || 'Mensaje');
-                    const estado = { SENT: 'enviado', DELIVERED: 'entregado', READ: 'leído', FAILED: 'falló' }[m.status] || m.status;
-                    return { type: 'message_sent', date: new Date(m.createdAt).getTime(), title: `${canal}: ${evento}`, subtitle: `Estado: ${estado}${m.toAddress ? ` · ${m.toAddress}` : ''}`, id: `msg-${m.id}` };
+                    const estado = { SENT: 'enviado', DELIVERED: 'entregado', READ: 'leído', FAILED: 'no se pudo entregar' }[m.status] || m.status;
+                    // Solo el fallo necesita explicación; el resto se lee de un vistazo.
+                    const detalle = m.status === 'FAILED' && m.errorMessage ? ` — ${m.errorMessage}` : '';
+                    return {
+                      type: 'message_sent',
+                      date: new Date(m.createdAt).getTime(),
+                      title: `${canal}: ${evento}`,
+                      subtitle: `Estado: ${estado}${m.toAddress ? ` · ${m.toAddress}` : ''}${detalle}`,
+                      id: `msg-${m.id}`,
+                      failed: m.status === 'FAILED',
+                    };
                   }),
                 ].sort((a, b) => b.date - a.date);
 

@@ -214,6 +214,7 @@ const getMessages = async (patientId) => {
     select: {
       id: true, channel: true, eventCode: true, templateCode: true,
       status: true, toAddress: true, createdAt: true,
+      deliveredAt: true, readAt: true, failedAt: true, errorMessage: true,
     },
     take: 200,
   });

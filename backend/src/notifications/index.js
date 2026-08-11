@@ -216,4 +216,43 @@ async function sendNow({ patientId, eventCode, channel, templateCode, payload = 
   return notif;
 }
 
-module.exports = { scheduleReminder, sendNow, isTransactional };
+/**
+ * Aplica un acuse de recibo de Meta sobre la notificación correspondiente.
+ *
+ * Los acuses llegan desordenados y repetidos (un mismo mensaje puede reportar
+ * `sent` después de `read`), así que solo avanzamos: nunca se degrada un
+ * estado ya alcanzado. `failed` sí pisa cualquier otro, porque es terminal.
+ */
+const RANGO_ESTADO = { SENT: 1, DELIVERED: 2, READ: 3 };
+
+async function applyDeliveryStatus({ wamid, status, errorText = null, timestamp = null }) {
+  if (!wamid || !status) return { updated: false, reason: 'MISSING_ARGS' };
+
+  const mapa = { sent: 'SENT', delivered: 'DELIVERED', read: 'READ', failed: 'FAILED' };
+  const nuevo = mapa[String(status).toLowerCase()];
+  if (!nuevo) return { updated: false, reason: 'UNKNOWN_STATUS' };
+
+  const notif = await prisma.notification.findFirst({
+    where: { providerMessageId: wamid },
+    select: { id: true, status: true, deliveredAt: true, webhookEvents: true },
+  });
+  if (!notif) return { updated: false, reason: 'NOT_FOUND' };
+
+  if (nuevo !== 'FAILED' && (RANGO_ESTADO[nuevo] || 0) <= (RANGO_ESTADO[notif.status] || 0)) {
+    return { updated: false, reason: 'STALE' };
+  }
+
+  const cuando = timestamp ? new Date(Number(timestamp) * 1000) : new Date();
+  const data = { status: nuevo };
+  if (nuevo === 'DELIVERED') data.deliveredAt = cuando;
+  if (nuevo === 'READ') { data.readAt = cuando; if (!notif.deliveredAt) data.deliveredAt = cuando; }
+  if (nuevo === 'FAILED') { data.failedAt = cuando; data.errorMessage = errorText || 'Meta reportó fallo de entrega'; }
+
+  const previos = Array.isArray(notif.webhookEvents) ? notif.webhookEvents : [];
+  data.webhookEvents = [...previos.slice(-19), { status: nuevo, at: cuando.toISOString(), errorText: errorText || undefined }];
+
+  await prisma.notification.update({ where: { id: notif.id }, data });
+  return { updated: true, status: nuevo };
+}
+
+module.exports = { scheduleReminder, sendNow, isTransactional, applyDeliveryStatus };

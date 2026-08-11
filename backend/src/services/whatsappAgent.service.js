@@ -170,15 +170,20 @@ async function processIncomingEvent(body) {
 
       // Statuses (delivered/read/failed) del outbound — actualizan estado del mensaje
       for (const st of (value.statuses || [])) {
+        const errorText = st.errors?.[0]?.message || st.errors?.[0]?.title || null;
         try {
           if (corp.isCorporatePhoneNumberId(phoneNumberId)) {
-            await corp.persistDeliveryUpdate({
-              wamid: st.id,
-              status: st.status,
-              errorText: st.errors?.[0]?.message,
-            });
+            await corp.persistDeliveryUpdate({ wamid: st.id, status: st.status, errorText });
           }
-        } catch (e) { console.error('[wa] delivery update falló:', e.message); }
+        } catch (e) { console.error('[wa] delivery update (corp) falló:', e.message); }
+        try {
+          // Notificaciones al paciente (confirmaciones y recordatorios): salen del
+          // número clínico, así que se actualizan siempre, no solo en el corporativo.
+          const { applyDeliveryStatus } = require('../notifications');
+          await applyDeliveryStatus({
+            wamid: st.id, status: st.status, errorText, timestamp: st.timestamp,
+          });
+        } catch (e) { console.error('[wa] delivery update (notif) falló:', e.message); }
       }
 
       const contacts = value.contacts || [];
