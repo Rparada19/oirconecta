@@ -37,6 +37,7 @@ const toFrontend = (a) => {
     patientPhone: a.patientPhone,
     procedencia: a.procedencia || 'visita-medica',
     canalRegistro: a.canalRegistro || 'manual-telefono',
+    patientConfirmedAt: a.patientConfirmedAt || null,
     durationMinutes: a.durationMinutes != null ? a.durationMinutes : null,
     createdAt: a.createdAt,
     updatedAt: a.updatedAt,

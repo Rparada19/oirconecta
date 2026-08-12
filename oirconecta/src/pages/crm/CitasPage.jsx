@@ -818,10 +818,20 @@ const CitasPage = () => {
     }
   };
 
-  const getStatusChip = (status) => {
+  // `confirmedAt` distingue la cita que el paciente confirmó (botón del
+  // recordatorio o link del email) de la que solo está agendada.
+  const getStatusChip = (status, confirmedAt = null) => {
     switch (status) {
       case 'confirmed':
-        return (
+        return confirmedAt ? (
+          <Chip
+            icon={<CheckCircle />}
+            label="Confirmada"
+            size="small"
+            title={`El paciente confirmó el ${new Date(confirmedAt).toLocaleString('es-CO')}`}
+            sx={{ bgcolor: '#e8f5e9', color: '#085946', fontWeight: 700 }}
+          />
+        ) : (
           <Chip
             icon={<Schedule />}
             label="Agendada"
@@ -1155,7 +1165,7 @@ const CitasPage = () => {
                               </Typography>
                             </Box>
                           </TableCell>
-                          <TableCell>{getStatusChip(appointment.status)}</TableCell>
+                          <TableCell>{getStatusChip(appointment.status, appointment.patientConfirmedAt)}</TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                               {appointment.status === 'completed' || appointment.status === 'patient' ? (
@@ -1657,7 +1667,7 @@ const CitasPage = () => {
                       <Typography variant="caption" sx={{ color: '#86899C', display: 'block', mb: 0.5 }}>
                         Estado de la Cita
                       </Typography>
-                      {getStatusChip(selectedAppointment.status)}
+                      {getStatusChip(selectedAppointment.status, selectedAppointment.patientConfirmedAt)}
                     </Box>
                     {selectedAppointment.procedencia && (
                       <Box>
