@@ -262,17 +262,11 @@ const CitasPage = () => {
   /** Misma evolución que en Historia clínica del paciente: abre perfil y diálogo Evolucionar. */
   function openClinicalEvolutionFromAgenda({ closeDetail = false } = {}) {
     const apt = selectedAppointment;
-    if (!apt?.patientEmail?.trim()) {
-      setSnackbar({
-        open: true,
-        message: 'Error: La cita no tiene email del paciente',
-        severity: 'error',
-      });
-      return false;
-    }
-    const email = apt.patientEmail.trim().toLowerCase();
+    if (!apt) return false;
+    // Sin email también se puede evolucionar: el perfil trabaja con patientId.
+    const email = apt.patientEmail?.trim().toLowerCase() || '';
     try {
-      setPatientRecords(getPatientRecords(email) || []);
+      setPatientRecords(email ? (getPatientRecords(email) || []) : []);
     } catch (e) {
       console.error('[CitasPage] openClinicalEvolutionFromAgenda:', e);
       setPatientRecords([]);
@@ -286,18 +280,11 @@ const CitasPage = () => {
   const handleViewDetails = () => {
     try {
       if (selectedAppointment) {
-        // Verificar que tenga email antes de abrir
-        if (!selectedAppointment.patientEmail) {
-          setSnackbar({
-            open: true,
-            message: 'Error: La cita no tiene email del paciente',
-            severity: 'error',
-          });
-          closeMenuOnly();
-          return;
-        }
-        
-        const records = getPatientRecords(selectedAppointment.patientEmail);
+        // El email dejó de ser obligatorio: el perfil se resuelve por patientId
+        // y sin él igual se ve el seguimiento (cita, mensajes, interacciones).
+        const records = selectedAppointment.patientEmail
+          ? getPatientRecords(selectedAppointment.patientEmail)
+          : [];
         setPatientRecords(records);
         // Abrir el nuevo diálogo de perfil
         setPatientProfileDialogOpen(true);
