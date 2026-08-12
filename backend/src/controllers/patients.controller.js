@@ -7,7 +7,7 @@ const { logPatientRead } = require('../dataAccessLog');
 
 const getAll = async (req, res, next) => {
   try {
-    const { search, page = 1, limit = 50 } = req.query;
+    const { search, page = 1, limit = 50, includeProspectos } = req.query;
     let createdByUserId = undefined;
     let appointmentProfessionalId = undefined;
     if (req.user.role !== 'ADMIN') {
@@ -20,6 +20,7 @@ const getAll = async (req, res, next) => {
       limit: parseInt(limit),
       createdByUserId,
       appointmentProfessionalId,
+      includeProspectos: includeProspectos === 'true',
     });
     
     res.json({

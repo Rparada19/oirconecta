@@ -23,6 +23,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
   People,
@@ -50,6 +52,9 @@ const PacientesPage = () => {
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  // Los que agendaron y aún no asisten quedan fuera por defecto para no
+  // ensuciar la lista, pero hay que poder verles el seguimiento.
+  const [verProspectos, setVerProspectos] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [patientProfileDialogOpen, setPatientProfileDialogOpen] = useState(false);
@@ -57,7 +62,7 @@ const PacientesPage = () => {
   const loadPatientsList = useCallback(async () => {
     const emailNorm = (e) => (e || '').trim().toLowerCase();
 
-    const fromApi = await getPatients({ limit: 500 }).catch((err) => {
+    const fromApi = await getPatients({ limit: 500, includeProspectos: verProspectos }).catch((err) => {
       console.warn('[PacientesPage] getPatients error:', err);
       return { patients: [] };
     });
@@ -71,6 +76,7 @@ const PacientesPage = () => {
       ultimaCita: '',
       procedencia: p.procedencia || 'visita-medica',
       primeraCita: '',
+      esProspecto: !!p.esProspecto,
     }));
 
     const allAppointments = await getAllAppointments();
@@ -108,7 +114,7 @@ const PacientesPage = () => {
       }
     });
     setPatients(apiList);
-  }, []);
+  }, [verProspectos]);
 
   useEffect(() => {
     loadPatientsList();
@@ -195,8 +201,16 @@ const PacientesPage = () => {
             />
           }
           right={
-            <Box sx={{ fontSize: 12.5, color: '#6b7280', whiteSpace: 'nowrap' }}>
-              {filteredPatients.length} de {patients.length} pacientes
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <FormControlLabel
+                control={<Switch size="small" checked={verProspectos}
+                  onChange={(e) => setVerProspectos(e.target.checked)} />}
+                label="Incluir agendados que aún no asisten"
+                sx={{ m: 0, '& .MuiFormControlLabel-label': { fontSize: 12.5, color: '#4a5568' } }}
+              />
+              <Box sx={{ fontSize: 12.5, color: '#6b7280', whiteSpace: 'nowrap' }}>
+                {filteredPatients.length} de {patients.length} pacientes
+              </Box>
             </Box>
           }
         />
@@ -225,7 +239,14 @@ const PacientesPage = () => {
                             {patient.nombre.charAt(0).toUpperCase()}
                           </Avatar>
                           <Box sx={{ minWidth: 0 }}>
-                            <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: '#0f1923' }}>{patient.nombre}</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                              <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: '#0f1923' }}>{patient.nombre}</Typography>
+                              {patient.esProspecto && (
+                                <Chip label="Aún no asiste" size="small"
+                                  sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700,
+                                    bgcolor: 'rgba(217,119,6,0.14)', color: '#b45309' }} />
+                              )}
+                            </Box>
                             <Box sx={{ mt: 0.5 }}>
                               <PatientFlags flags={computePatientFlags(patient)} dense />
                             </Box>

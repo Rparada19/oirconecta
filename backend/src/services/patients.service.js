@@ -11,7 +11,7 @@ const prisma = require('../db');
  * - Si appointmentProfessionalId está definido (audióloga con profesional asignado): solo pacientes con cita asignada a ese profesional.
  * - Si createdByUserId está definido (audióloga sin profesional de cita): solo pacientes con venta creada por ese usuario.
  */
-const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointmentProfessionalId }) => {
+const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointmentProfessionalId, includeProspectos = false }) => {
   const where = {};
 
   if (search) {
@@ -29,18 +29,20 @@ const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointme
     where.sales = { some: { createdById: createdByUserId } };
   }
 
-  // Solo pacientes REALES: creados manualmente, o que ya asistieron / compraron /
-  // tienen consulta o mantenimiento. Los auto-creados al agendar (aún sin asistir)
-  // no aparecen hasta que se marque su cita como asistida (COMPLETED).
-  where.AND = [{
+  // Por defecto solo pacientes REALES: creados manualmente, o que ya asistieron /
+  // compraron / tienen consulta o mantenimiento. Con includeProspectos se traen
+  // también los auto-creados al agendar que todavía no asisten, para poder
+  // seguirles el rastro aunque no lleguen.
+  const CONDICION_REAL = {
     OR: [
       { createdViaBooking: false },
-      { appointments: { some: { estado: 'COMPLETED' } } },
+      { appointments: { some: { estado: { in: ['COMPLETED', 'PATIENT'] } } } },
       { sales: { some: {} } },
       { consultations: { some: {} } },
       { maintenances: { some: {} } },
     ],
-  }];
+  };
+  if (!includeProspectos) where.AND = [CONDICION_REAL];
 
   const [patients, total] = await Promise.all([
     prisma.patient.findMany({
@@ -48,12 +50,26 @@ const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointme
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
+      include: {
+        _count: { select: { appointments: true, sales: true, consultations: true } },
+        appointments: { select: { estado: true }, take: 100 },
+      },
     }),
     prisma.patient.count({ where }),
   ]);
 
+  // esProspecto: agendó pero todavía no asiste ni compró. La UI lo distingue
+  // del paciente real sin tener que replicar la regla.
+  const conFlag = patients.map((p) => {
+    const asistio = (p.appointments || []).some((a) => ['COMPLETED', 'PATIENT'].includes(a.estado));
+    const esProspecto = p.createdViaBooking && !asistio
+      && p._count.sales === 0 && p._count.consultations === 0;
+    const { appointments, _count, ...rest } = p;
+    return { ...rest, esProspecto, totalCitas: _count.appointments };
+  });
+
   return {
-    patients,
+    patients: conFlag,
     pagination: {
       page,
       limit,
