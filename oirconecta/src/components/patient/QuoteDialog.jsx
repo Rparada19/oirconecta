@@ -30,7 +30,7 @@ import {
   computeAudifonosCampaignTotal,
 } from '../../services/campaignService';
 
-const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData, quoteId, editQuote }) => {
+const QuoteDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patientData, quoteId, editQuote }) => {
   const isEdit = Boolean(quoteId && editQuote);
   const [campaigns, setCampaigns] = useState([]);
   const [formData, setFormData] = useState({
@@ -156,9 +156,11 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData, quot
   };
 
   const handleSubmit = async () => {
+    // El email dejó de ser obligatorio: basta con saber a qué paciente asociar
+    // la cotización. Muchos pacientes agendan por teléfono y no dejan correo.
     const emailToUse = formData.patientEmail || patientEmail || patientData?.email || '';
-    if (!isEdit && !emailToUse?.trim()) {
-      alert('Error: No se encontró el email del paciente. Verifica que el perfil tenga un email válido.');
+    if (!isEdit && !patientId && !emailToUse?.trim()) {
+      alert('No se pudo identificar al paciente para asociar la cotización.');
       return;
     }
     if (!validate()) return;
@@ -203,7 +205,9 @@ const QuoteDialog = ({ open, onClose, patientEmail, onSuccess, patientData, quot
     };
 
     try {
-      const result = isEdit ? await updateQuote(quoteId, quoteData) : await createQuote(emailToUse, quoteData);
+      const result = isEdit
+        ? await updateQuote(quoteId, quoteData)
+        : await createQuote(emailToUse, { ...quoteData, patientId });
       if (result.success) {
         onSuccess?.(result.product);
         handleClose();

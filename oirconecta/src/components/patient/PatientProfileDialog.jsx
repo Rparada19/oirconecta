@@ -5871,6 +5871,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
           setEditQuoteData(null);
         }}
         patientEmail={getPatientEmail()}
+        patientId={patient?.id || appointment?.patientId || null}
         onSuccess={handleQuoteSuccess}
         quoteId={editQuoteId}
         editQuote={editQuoteData}
@@ -5893,6 +5894,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
         open={saleDialogOpen}
         onClose={() => setSaleDialogOpen(false)}
         patientEmail={getPatientEmail()}
+        patientId={patient?.id || appointment?.patientId || null}
         onSuccess={handleSaleSuccess}
         patientData={{
           nombre: formData.nombre || appointment?.patientName || lead?.nombre,

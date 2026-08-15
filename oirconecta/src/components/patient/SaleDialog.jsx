@@ -53,7 +53,7 @@ const formatDateRange = (start, end) => {
   }
 };
 
-const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => {
+const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patientData }) => {
   const [tipoVenta, setTipoVenta] = useState('audifonos'); // 'consulta' | 'accesorio' | 'audifonos'
   const [saleProfessionalId, setSaleProfessionalId] = useState('');
   const [saleSedeId, setSaleSedeId] = useState('');
@@ -207,9 +207,10 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
   };
 
   const handleSubmit = async () => {
+    // Igual que en cotizaciones: alcanza con identificar al paciente.
     const email = audifonos.patientEmail || patientEmail || patientData?.email || '';
-    if (!email?.trim()) {
-      alert('No se encontró el email del paciente. Verifica que el perfil tenga un email válido.');
+    if (!patientId && !email?.trim()) {
+      alert('No se pudo identificar al paciente para asociar la venta.');
       return;
     }
     if (!validate()) return;
@@ -218,6 +219,8 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
 
     if (tipoVenta === 'consulta') {
       const result = await recordSale(email, {
+      patientId,
+        patientId,
         productName: 'Consulta',
         brand: '',
         model: consulta.descripcion || '',
@@ -247,6 +250,8 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
 
     if (tipoVenta === 'accesorio') {
       const result = await recordSale(email, {
+      patientId,
+        patientId,
         productName: accesoriosItems.length === 1 ? accesoriosItems[0].nombre : 'Accesorios',
         brand: '',
         model: accesoriosItems.map((it) => it.nombre).join(', '),
@@ -284,6 +289,7 @@ const SaleDialog = ({ open, onClose, patientEmail, onSuccess, patientData }) => 
     const imageData = images.map((img) => ({ name: img.name, data: img.preview, type: img.file.type }));
 
     const result = await recordSale(email, {
+      patientId,
       productName: audifonos.brand,
       brand: audifonos.brand,
       model: `${audifonos.technology} - ${audifonos.platform}`,

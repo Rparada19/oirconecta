@@ -158,10 +158,29 @@ export async function getPatientProducts(patientEmail) {
  * @param {Object} quoteData - { brand, quantity, unitPrice, totalPrice, discount, metadata, notes, ... }
  * @returns {Promise<{ success: boolean, product?: object, error?: string }>}
  */
+
+/**
+ * Resuelve el paciente destino de una cotización o venta.
+ * `patientId` es la llave estable; el email solo sirve para el camino antiguo
+ * (crear el paciente si no existía). Sin ninguno de los dos no hay a quién
+ * asociar el documento.
+ */
+async function resolvePatient({ patientId, patientEmail, metadata = {} }) {
+  if (patientId) return { id: patientId };
+  if (!patientEmail?.trim()) return null;
+  return ensurePatient({
+    nombre: metadata.patientName || '',
+    email: patientEmail,
+    telefono: metadata.patientPhone || '',
+  });
+}
+
 export async function createQuote(patientEmail, quoteData) {
-  const nombre = quoteData.metadata?.patientName || '';
-  const telefono = quoteData.metadata?.patientPhone || '';
-  const patient = await ensurePatient({ nombre, email: patientEmail, telefono });
+  const patient = await resolvePatient({
+    patientId: quoteData.patientId,
+    patientEmail,
+    metadata: quoteData.metadata,
+  });
   if (!patient) return { success: false, product: null, error: 'No se pudo obtener o crear el paciente' };
 
   const md = quoteData.metadata || {};
@@ -252,9 +271,11 @@ export async function getQuoteHistory(quoteId) {
  */
 export async function recordSale(patientEmail, saleData) {
   const md = saleData.metadata || {};
-  const nombre = md.patientName || '';
-  const telefono = md.patientPhone || '';
-  const patient = await ensurePatient({ nombre, email: patientEmail, telefono });
+  const patient = await resolvePatient({
+    patientId: saleData.patientId,
+    patientEmail,
+    metadata: md,
+  });
   if (!patient) return { success: false, product: null, error: 'No se pudo obtener o crear el paciente' };
 
   const cat = (saleData.category || 'hearing-aid').toLowerCase();
