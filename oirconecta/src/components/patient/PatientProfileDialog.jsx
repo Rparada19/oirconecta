@@ -1353,9 +1353,12 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
 
   const handleSaveEvolucionar = async () => {
     if (!evolucionarAppointment) return;
+    // El email es opcional: la consulta vive en el servidor y se resuelve por
+    // patientId. Sin email simplemente no se guarda el respaldo en localStorage.
     const email = ((evolucionarAppointment.patientEmail || getPatientEmail()) || '').trim().toLowerCase();
-    if (!email) {
-      setSnackbar({ open: true, message: 'Error: No se encontró el email del paciente.', severity: 'error' });
+    const pacienteId = patient?.id || appointment?.patientId || evolucionarAppointment.patientId || null;
+    if (!email && !pacienteId) {
+      setSnackbar({ open: true, message: 'La cita no tiene paciente asociado.', severity: 'error' });
       return;
     }
     const derivedAptType = evolucionarAppointment.appointmentType ?? appointmentTypes.find((t) => t.label === evolucionarAppointment.reason)?.value ?? null;
@@ -1373,7 +1376,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
 
     let formDataToSave = evolucionarData.formData && Object.keys(evolucionarData.formData).length ? evolucionarData.formData : null;
     if (aptType === 'primera-vez') {
-      let currentProfile = getPatientProfile(email);
+      let currentProfile = email ? getPatientProfile(email) : null;
       if (!currentProfile) {
         const initResult = initializePatientProfile(evolucionarAppointment);
         currentProfile = initResult.profile;
@@ -1436,22 +1439,23 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
         setSnackbar({ open: true, message: patchRes.error || 'Error al actualizar la consulta en el servidor.', severity: 'error' });
         return;
       }
-      const locals = getPatientRecords(email) || [];
+      const locals = email ? (getPatientRecords(email) || []) : [];
       const localRow = locals.find((r) => r.type === 'consultation' && r.appointmentId === evolucionarAppointment.id);
-      if (localRow?.id) {
+      if (email && localRow?.id) {
         updateConsultation(email, localRow.id, recordPayload);
       }
-    } else if (existing?.id) {
+    } else if (email && existing?.id) {
       const upd = updateConsultation(email, existing.id, recordPayload);
       if (!upd.success) {
         setSnackbar({ open: true, message: upd.error || 'Error al actualizar el respaldo local.', severity: 'error' });
         return;
       }
     } else {
-      recordConsultation(email, evolucionarAppointment.id, recordPayload);
+      if (email) recordConsultation(email, evolucionarAppointment.id, recordPayload);
       const createRes = await createConsultation({
         appointmentId: evolucionarAppointment.id,
-        patientEmail: email,
+        patientEmail: email || undefined,
+        patientId: pacienteId || undefined,
         notes: evolucionarData.notes,
         hearingLoss: evolucionarData.hearingLoss,
         nextSteps: evolucionarData.nextSteps,
@@ -1466,7 +1470,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
     }
 
     if (aptType === 'primera-vez' && formDataToSave) {
-      let currentProfile = getPatientProfile(email);
+      let currentProfile = email ? getPatientProfile(email) : null;
       if (!currentProfile) {
         const initResult = initializePatientProfile(evolucionarAppointment);
         currentProfile = initResult.profile;
