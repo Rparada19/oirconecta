@@ -25,6 +25,8 @@ const VALID_TYPES = new Set([
 ]);
 const VALID_METHODS = new Set([
   'CLICK', 'OTP_WHATSAPP', 'OTP_SMS', 'WET_SIGN_SCAN', 'BIOMETRIC',
+  // Otorgado en el consultorio y atestiguado por el profesional que atiende.
+  'IN_PERSON',
 ]);
 
 function buildPdfBuffer({ patient, type, version, body, signedAt, method, ip }) {

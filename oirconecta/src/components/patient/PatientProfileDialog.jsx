@@ -169,6 +169,8 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   );
   const [patientInteractions, setPatientInteractions] = useState([]);
   const [patientMessages, setPatientMessages] = useState([]); // Notification: WA/email/SMS enviados
+  // Sin consent CLINICAL vigente el servidor rechaza registrar la consulta.
+  const [consentClinico, setConsentClinico] = useState({ verificado: false, vigente: false, aceptado: false });
   const [crmMetrics, setCrmMetrics] = useState(null);
   const [patientAlertMetrics, setPatientAlertMetrics] = useState({ activas: 0, vencidas: 0, cumplidas: 0 });
   const [interactionForm, setInteractionForm] = useState({
@@ -1054,6 +1056,14 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
     const irDirectoAlFormulario = yaAsistida || evolucionarForcePrimeraVez || aptType !== 'primera-vez' || Boolean(prefillConsultation);
     setEvolucionarPrimeraVezStep(irDirectoAlFormulario ? 'form' : 'asistencia');
     setEvolucionarDialogOpen(true);
+
+    const pid = patient?.id || appointment?.patientId || apt?.patientId || null;
+    setConsentClinico({ verificado: false, vigente: false, aceptado: false });
+    if (pid) {
+      hasClinicalConsent(pid)
+        .then((vigente) => setConsentClinico({ verificado: true, vigente, aceptado: false }))
+        .catch(() => setConsentClinico({ verificado: true, vigente: false, aceptado: false }));
+    }
   };
 
   const handleEvolucionarNoAsistio = async () => {
@@ -1372,6 +1382,24 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
         setSnackbar({ open: true, message: statusResult.error || 'Error al actualizar estado de la cita.', severity: 'error' });
         return;
       }
+    }
+
+    // Habeas Data: sin consent CLINICAL vigente el servidor rechaza la consulta.
+    if (consentClinico.verificado && !consentClinico.vigente) {
+      if (!consentClinico.aceptado) {
+        setSnackbar({
+          open: true,
+          message: 'Falta registrar el consentimiento informado del paciente para poder guardar la historia clínica.',
+          severity: 'error',
+        });
+        return;
+      }
+      const cRes = await createConsent({ patientId: pacienteId, type: 'CLINICAL', method: 'IN_PERSON' });
+      if (!cRes.success) {
+        setSnackbar({ open: true, message: `No se pudo registrar el consentimiento: ${cRes.error}`, severity: 'error' });
+        return;
+      }
+      setConsentClinico((c) => ({ ...c, vigente: true }));
     }
 
     let formDataToSave = evolucionarData.formData && Object.keys(evolucionarData.formData).length ? evolucionarData.formData : null;
@@ -6663,6 +6691,27 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                       <Typography variant="body2" sx={{ color: '#86899C', mb: 2 }}>
                         Sin formulario específico para este tipo de cita. Use las notas generales abajo.
                       </Typography>
+                    )}
+                    {consentClinico.verificado && !consentClinico.vigente && (
+                      <Box sx={{ mb: 3, p: 2, borderRadius: 1.5, border: '1px solid #f59e0b', bgcolor: '#fffbeb' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#b45309', mb: 0.5 }}>
+                          Consentimiento informado pendiente
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#78350f', display: 'block', mb: 1 }}>
+                          Este paciente no tiene consentimiento vigente para el tratamiento de datos
+                          clínicos. Sin él no se puede guardar la historia (Habeas Data, Res. 2003/2014).
+                        </Typography>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={consentClinico.aceptado}
+                              onChange={(e) => setConsentClinico((c) => ({ ...c, aceptado: e.target.checked }))}
+                            />
+                          }
+                          label="El paciente otorgó su consentimiento informado en consulta"
+                          sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+                        />
+                      </Box>
                     )}
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
