@@ -221,6 +221,45 @@ const reassignToProfessional = async (patientId, newProfessionalId) => {
   return { patient, updatedSalesCount: result.count };
 };
 
+/**
+ * Asigna el código de historia clínica si el paciente aún no lo tiene.
+ * Formato OC-<año>-<consecutivo de 4 dígitos>, consecutivo por año.
+ *
+ * El consecutivo se calcula sobre el máximo existente del año en curso; ante
+ * una colisión (dos consultas simultáneas) reintenta con el siguiente.
+ */
+const ensureCodigoHC = async (patientId) => {
+  if (!patientId) return null;
+  const actual = await prisma.patient.findUnique({
+    where: { id: patientId }, select: { codigoHC: true },
+  });
+  if (!actual) return null;
+  if (actual.codigoHC) return actual.codigoHC;
+
+  const anio = new Date().getFullYear();
+  const prefijo = `OC-${anio}-`;
+
+  for (let intento = 0; intento < 5; intento++) {
+    const ultimo = await prisma.patient.findFirst({
+      where: { codigoHC: { startsWith: prefijo } },
+      orderBy: { codigoHC: 'desc' },
+      select: { codigoHC: true },
+    });
+    const consecutivo = (ultimo ? parseInt(ultimo.codigoHC.slice(prefijo.length), 10) : 0) + 1 + intento;
+    const codigo = `${prefijo}${String(consecutivo).padStart(4, '0')}`;
+    try {
+      const upd = await prisma.patient.update({
+        where: { id: patientId }, data: { codigoHC: codigo }, select: { codigoHC: true },
+      });
+      return upd.codigoHC;
+    } catch (e) {
+      if (e.code !== 'P2002') throw e; // P2002 = choque de único: reintenta
+    }
+  }
+  console.warn('[patients] no pude asignar codigoHC tras 5 intentos:', patientId);
+  return null;
+};
+
 /** Mensajes enviados al paciente (Notification): WhatsApp/email/SMS + estado. */
 const getMessages = async (patientId) => {
   if (!patientId) return [];
@@ -238,6 +277,7 @@ const getMessages = async (patientId) => {
 
 module.exports = {
   getAll,
+  ensureCodigoHC,
   getStats,
   getById,
   getFullProfile,

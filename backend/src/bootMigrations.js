@@ -543,6 +543,17 @@ async function ensureFinanceSchema(prisma) {
   }
 }
 
+/** Código de historia clínica (OC-2026-0001). */
+async function ensureCodigoHCColumn(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patients" ADD COLUMN IF NOT EXISTS "codigoHC" TEXT;`);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "patients_codigoHC_key" ON "patients"("codigoHC") WHERE "codigoHC" IS NOT NULL;`);
+    console.log('[boot-migrate] patients.codigoHC OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureCodigoHCColumn falló (no bloqueante):', e.message);
+  }
+}
+
 /**
  * Siembra las plantillas del flujo de reseña en Google (email + WhatsApp).
  * Solo crea si faltan: nunca pisa lo que el admin haya editado.
@@ -615,6 +626,7 @@ async function ensureGoogleReviewTemplates(prisma) {
 async function runBootMigrations(prisma) {
   await ensureCanalRegistroColumn(prisma);
   await ensureFinanceSchema(prisma);
+  await ensureCodigoHCColumn(prisma);
   await ensureGoogleReviewTemplates(prisma);
   await extendTrialsTo120(prisma);
   await ensureSalesCrmSchema(prisma);

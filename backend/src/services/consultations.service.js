@@ -122,6 +122,14 @@ const create = async (data, userId = null) => {
     }
   }
 
+  // Abrir historia clínica = asignar su código (OC-2026-0001).
+  try {
+    const { ensureCodigoHC } = require('./patients.service');
+    await ensureCodigoHC(patient.id);
+  } catch (e) {
+    console.warn('[consultations] no pude asignar codigoHC:', e.message);
+  }
+
   const consultation = await prisma.consultation.create({
     data: {
       patientId: patient.id,

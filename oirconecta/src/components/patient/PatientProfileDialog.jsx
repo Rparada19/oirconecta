@@ -620,7 +620,9 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
           return [empty(), empty()];
         })(),
         consentimientosFirmados: profile.consentimientosFirmados || [],
-        codigoHistoriaClinica: profile.codigoHistoriaClinica || '',
+        // El código lo asigna el servidor al abrir la historia; el valor local
+        // es solo respaldo de perfiles antiguos.
+        codigoHistoriaClinica: patient?.codigoHC || profile.codigoHistoriaClinica || '',
         motivoConsulta: profile.anamnesisClinica?.motivoConsulta || sourceData.reason || sourceData.interes || '',
         sintomasAuditivos: profile.anamnesisClinica?.sintomasAuditivos || defaultSintomasAuditivos,
         antecedentesMedicos: profile.anamnesisClinica?.antecedentesMedicos || defaultAntecedentesMedicos,

@@ -408,6 +408,9 @@ enum LeadEstado {
 
 model Patient {
   id                        String    @id @default(uuid())
+  /// Código de historia clínica, formato OC-<año>-<consecutivo>. Se asigna al
+  /// abrir la historia (primera consulta registrada), no al crear el contacto.
+  codigoHC                  String?   @unique
   nombre                    String
   email                     String?
   telefono                  String
