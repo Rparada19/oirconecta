@@ -126,6 +126,15 @@ const getMessages = async (req, res, next) => {
   }
 };
 
+const getWhatsApp = async (req, res, next) => {
+  try {
+    const mensajes = await patientsService.getWhatsAppMessages(req.params.id);
+    res.json({ success: true, data: mensajes });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const create = async (req, res, next) => {
   try {
     const patient = await patientsService.create(req.body);
@@ -181,6 +190,7 @@ module.exports = {
   getById,
   getProfile,
   getMessages,
+  getWhatsApp,
   create,
   update,
   reassign,

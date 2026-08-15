@@ -260,6 +260,39 @@ const ensureCodigoHC = async (patientId) => {
   return null;
 };
 
+/**
+ * Conversación de WhatsApp del paciente (entrante y saliente). Suele ser el
+ * primer contacto, antes de que exista cita: sin esto el CRM arranca la
+ * historia a la mitad. Se busca por patientId y, si no está vinculada, por
+ * teléfono.
+ */
+const getWhatsAppMessages = async (patientId) => {
+  if (!patientId) return [];
+  const paciente = await prisma.patient.findUnique({
+    where: { id: patientId }, select: { telefono: true },
+  });
+  const telefono = (paciente?.telefono || '').replace(/\D/g, '');
+  const posibles = telefono
+    ? [telefono, telefono.length === 10 ? `57${telefono}` : telefono.replace(/^57/, '')]
+    : [];
+
+  const conv = await prisma.whatsAppConversation.findFirst({
+    where: { OR: [{ patientId }, ...(posibles.length ? [{ phone: { in: posibles } }] : [])] },
+    select: { id: true },
+  });
+  if (!conv) return [];
+
+  return prisma.whatsAppMessage.findMany({
+    where: { conversationId: conv.id },
+    orderBy: { timestamp: 'desc' },
+    select: {
+      id: true, direction: true, type: true, body: true,
+      sentByBot: true, deliveryStatus: true, timestamp: true,
+    },
+    take: 200,
+  });
+};
+
 /** Mensajes enviados al paciente (Notification): WhatsApp/email/SMS + estado. */
 const getMessages = async (patientId) => {
   if (!patientId) return [];
@@ -278,6 +311,7 @@ const getMessages = async (patientId) => {
 module.exports = {
   getAll,
   ensureCodigoHC,
+  getWhatsAppMessages,
   getStats,
   getById,
   getFullProfile,

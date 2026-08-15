@@ -39,6 +39,18 @@ export async function getPatientMessages(patientId) {
   }
 }
 
+/** Conversación de WhatsApp del paciente (primer contacto incluido). */
+export async function getPatientWhatsApp(patientId) {
+  if (!patientId) return [];
+  try {
+    const { data, error } = await api.get(`/api/patients/${encodeURIComponent(patientId)}/whatsapp`);
+    if (error) return [];
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function getPatientByEmail(email) {
   if (!email?.trim()) return null;
   const norm = email.trim().toLowerCase();

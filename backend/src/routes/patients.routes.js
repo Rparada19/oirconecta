@@ -52,6 +52,14 @@ router.get(
   patientsController.getMessages
 );
 
+// GET /api/patients/:id/whatsapp - Conversación de WhatsApp del paciente
+router.get(
+  '/:id/whatsapp',
+  [param('id').isUUID()],
+  validateRequest,
+  patientsController.getWhatsApp
+);
+
 // POST /api/patients - Crear paciente
 router.post(
   '/',

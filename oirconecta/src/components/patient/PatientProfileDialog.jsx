@@ -84,7 +84,7 @@ import {
 } from '@mui/icons-material';
 import html2pdf from 'html2pdf.js';
 import { getPatientProfile, savePatientProfile, initializePatientProfile, generateCodigoHistoriaClinica, deletePatientProfile } from '../../services/patientProfileService';
-import { updatePatient as updatePatientApi, getPatientMessages } from '../../services/patientService';
+import { updatePatient as updatePatientApi, getPatientMessages, getPatientWhatsApp } from '../../services/patientService';
 import { getAllAppointments } from '../../services/appointmentService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
 import { getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
@@ -169,6 +169,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   );
   const [patientInteractions, setPatientInteractions] = useState([]);
   const [patientMessages, setPatientMessages] = useState([]); // Notification: WA/email/SMS enviados
+  const [patientWhatsApp, setPatientWhatsApp] = useState([]); // conversación WA (entrante y saliente)
   // Sin consent CLINICAL vigente el servidor rechaza registrar la consulta.
   const [consentClinico, setConsentClinico] = useState({ verificado: false, vigente: false, aceptado: false });
   const [crmMetrics, setCrmMetrics] = useState(null);
@@ -794,6 +795,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
         // Mensajes enviados (WhatsApp/email/SMS) desde el servidor, por patientId.
         if (patientId) {
           getPatientMessages(patientId).then((msgs) => setPatientMessages(msgs || [])).catch(() => setPatientMessages([]));
+          getPatientWhatsApp(patientId).then((ws) => setPatientWhatsApp(ws || [])).catch(() => setPatientWhatsApp([]));
         } else {
           setPatientMessages([]);
         }
@@ -4797,6 +4799,18 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                       subtitle: `Estado: ${estado}${m.toAddress ? ` · ${m.toAddress}` : ''}${detalle}`,
                       id: `msg-${m.id}`,
                       failed: m.status === 'FAILED',
+                    };
+                  }),
+                  ...(patientWhatsApp || []).map((m) => {
+                    const entrante = m.direction === 'INBOUND';
+                    const autor = entrante ? 'Paciente' : (m.sentByBot ? 'Bot' : 'Equipo');
+                    const texto = (m.body || `[${m.type || 'mensaje'}]`).slice(0, 160);
+                    return {
+                      type: 'whatsapp_chat',
+                      date: new Date(m.timestamp).getTime(),
+                      title: `WhatsApp · ${autor}`,
+                      subtitle: texto,
+                      id: `wa-${m.id}`,
                     };
                   }),
                 ].sort((a, b) => b.date - a.date);
