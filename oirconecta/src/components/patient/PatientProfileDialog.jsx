@@ -1465,7 +1465,14 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
         attendingProfessionalId: evolucionarData.attendingProfessionalId || user?.id || undefined,
       });
       if (!createRes.success) {
-        setSnackbar({ open: true, message: createRes.error || 'La evolución quedó en este navegador; revise la conexión con el servidor.', severity: 'warning' });
+        // Antes se avisaba con un warning que el snackbar de éxito pisaba dos
+        // líneas después: la evolución se perdía y la pantalla decía "guardada".
+        setSnackbar({
+          open: true,
+          message: `No se guardó la evolución: ${createRes.error || 'el servidor rechazó la petición'}`,
+          severity: 'error',
+        });
+        return;
       }
     }
 
@@ -1512,7 +1519,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
           habitos: as.habitos ?? currentProfile.anamnesisSocial?.habitos ?? {},
         },
       };
-      savePatientProfile(email, profileData);
+      if (email) savePatientProfile(email, profileData);
     }
 
     await loadPatientData();
