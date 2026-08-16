@@ -85,6 +85,7 @@ import {
 import html2pdf from 'html2pdf.js';
 import { getPatientProfile, savePatientProfile, initializePatientProfile, generateCodigoHistoriaClinica, deletePatientProfile } from '../../services/patientProfileService';
 import { updatePatient as updatePatientApi, getPatientMessages, getPatientWhatsApp } from '../../services/patientService';
+import { hasClinicalConsent, createConsent } from '../../services/consentService';
 import { getAllAppointments } from '../../services/appointmentService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
 import { getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
