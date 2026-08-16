@@ -4829,18 +4829,25 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                       failed: m.status === 'FAILED',
                     };
                   }),
-                  ...(patientWhatsApp || []).map((m) => {
-                    const entrante = m.direction === 'INBOUND';
-                    const autor = entrante ? 'Paciente' : (m.sentByBot ? 'Bot' : 'Equipo');
-                    const texto = (m.body || `[${m.type || 'mensaje'}]`).slice(0, 160);
-                    return {
-                      type: 'whatsapp_chat',
-                      date: new Date(m.timestamp).getTime(),
-                      title: `WhatsApp · ${autor}`,
-                      subtitle: texto,
-                      id: `wa-${m.id}`,
-                    };
-                  }),
+                  // Un CRM resume el contacto, no transcribe el chat: la
+                  // conversación entra como UNA entrada con lo esencial.
+                  ...(() => {
+                    const chat = patientWhatsApp || [];
+                    if (chat.length === 0) return [];
+                    const ordenados = [...chat].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                    const primero = ordenados[0];
+                    const ultimo = ordenados[ordenados.length - 1];
+                    const delPaciente = chat.filter((m) => m.direction === 'INBOUND').length;
+                    const inicioPaciente = primero.direction === 'INBOUND';
+                    return [{
+                      type: 'whatsapp_resumen',
+                      date: new Date(primero.timestamp).getTime(),
+                      title: `Primer contacto por WhatsApp${inicioPaciente ? ' — escribió el paciente' : ''}`,
+                      subtitle: `${chat.length} mensajes · ${delPaciente} del paciente · último ${new Date(ultimo.timestamp).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}`,
+                      motivo: (ordenados.find((m) => m.direction === 'INBOUND' && (m.body || '').length > 15)?.body || '').slice(0, 180),
+                      id: 'wa-resumen',
+                    }];
+                  })(),
                 ].sort((a, b) => b.date - a.date);
 
                 if (timeline.length === 0) {
@@ -4853,6 +4860,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                 }
 
                 const getIcon = (item) => {
+                  if (item.type === 'whatsapp_resumen') return <Message sx={{ fontSize: 20 }} />;
                   if (item.type === 'cita') return <CalendarToday sx={{ fontSize: 20 }} />;
                   if (item.type === 'mantenimiento') return <Build sx={{ fontSize: 20 }} />;
                   const i = item.interaction;
@@ -4898,7 +4906,12 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                             <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: getColor(item), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{getIcon(item)}</Box>
                             <Box sx={{ flex: 1 }}>
                               <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#272F50' }}>{item.title}</Typography>
-                              <Typography variant="caption" sx={{ color: '#86899C' }}>{new Date(item.date).toLocaleString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} {item.subtitle ? ` · ${item.subtitle}` : ''}</Typography>
+                              <Typography variant="caption" sx={{ color: '#86899C', display: 'block' }}>{new Date(item.date).toLocaleString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} {item.subtitle ? ` · ${item.subtitle}` : ''}</Typography>
+                              {item.motivo && (
+                                <Typography variant="body2" sx={{ mt: 0.75, color: '#334155', fontStyle: 'italic' }}>
+                                  «{item.motivo}»
+                                </Typography>
+                              )}
                             </Box>
                           </Box>
                         </CardContent>
