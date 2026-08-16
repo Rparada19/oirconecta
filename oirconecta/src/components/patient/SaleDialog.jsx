@@ -70,6 +70,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
     nombreOtro: '',
     cantidad: 1,
     valorUnitario: 0,
+    costoUnitario: 0,
     descuento: 0,
   });
   const [accesoriosNotas, setAccesoriosNotas] = useState('');
@@ -183,10 +184,11 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
       nombre,
       cantidad: nuevoAccesorio.cantidad,
       valorUnitario: nuevoAccesorio.valorUnitario,
+      costoUnitario: nuevoAccesorio.costoUnitario || 0,
       descuento: nuevoAccesorio.descuento,
       subtotal,
     }]);
-    setNuevoAccesorio({ tipo: 'Baterías', nombreOtro: '', cantidad: 1, valorUnitario: 0, descuento: 0 });
+    setNuevoAccesorio({ tipo: 'Baterías', nombreOtro: '', cantidad: 1, valorUnitario: 0, costoUnitario: 0, descuento: 0 });
     setErrors((prev) => ({ ...prev, accesorioItem: '' }));
   };
   const handleDeleteAccesorioItem = (id) => setAccesoriosItems((prev) => prev.filter((a) => a.id !== id));
@@ -226,7 +228,6 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
 
     if (tipoVenta === 'consulta') {
       const result = await recordSale(email, {
-      patientId,
         patientId,
         productName: 'Consulta',
         brand: '',
@@ -257,7 +258,6 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
 
     if (tipoVenta === 'accesorio') {
       const result = await recordSale(email, {
-      patientId,
         patientId,
         productName: accesoriosItems.length === 1 ? accesoriosItems[0].nombre : 'Accesorios',
         brand: '',
@@ -265,6 +265,14 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
         category: 'accessory',
         quantity: accesoriosItems.reduce((s, it) => s + it.cantidad, 0),
         unitPrice: 0,
+        // El costo va por unidad: se reparte el costo total entre las unidades.
+        unitCost: (() => {
+          const unidades = accesoriosItems.reduce((s, it) => s + it.cantidad, 0);
+          const costoTotal = accesoriosItems.reduce(
+            (s, it) => s + (it.costoUnitario || 0) * it.cantidad, 0
+          );
+          return unidades > 0 && costoTotal > 0 ? Math.round(costoTotal / unidades) : null;
+        })(),
         totalPrice: totalAccesorios,
         discount: 0,
         saleDate,
@@ -351,7 +359,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
     setSaleSedeId('');
     setConsulta({ descripcion: '', valor: 0, fecha: new Date().toISOString().split('T')[0], notas: '' });
     setAccesoriosItems([]);
-    setNuevoAccesorio({ tipo: 'Baterías', nombreOtro: '', cantidad: 1, valorUnitario: 0, descuento: 0 });
+    setNuevoAccesorio({ tipo: 'Baterías', nombreOtro: '', cantidad: 1, valorUnitario: 0, costoUnitario: 0, descuento: 0 });
     setAccesoriosNotas('');
     setAudifonos((prev) => ({
       brand: '',
@@ -557,6 +565,17 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
                   type="number"
                   value={nuevoAccesorio.valorUnitario || ''}
                   onChange={(e) => setNuevoAccesorio((a) => ({ ...a, valorUnitario: parseFloat(e.target.value) || 0 }))}
+                  InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={2}>
+                <TextField
+                  fullWidth
+                  label="Costo unitario"
+                  type="number"
+                  value={nuevoAccesorio.costoUnitario || ''}
+                  onChange={(e) => setNuevoAccesorio((a) => ({ ...a, costoUnitario: parseFloat(e.target.value) || 0 }))}
+                  helperText="Con IVA"
                   InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
                 />
               </Grid>
