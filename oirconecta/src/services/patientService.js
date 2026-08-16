@@ -90,7 +90,9 @@ export async function updatePatient(id, fields) {
   const body = {};
   const allowed = ['nombre', 'email', 'telefono', 'direccion', 'ciudad',
     'fechaNacimiento', 'genero', 'tipoDocumento', 'numeroDocumento',
-    'ocupacion', 'estadoCivil', 'eps', 'notas'];
+    'ocupacion', 'estadoCivil', 'eps', 'notas',
+    // Historia clínica: vive en el servidor (Res. 839/2017, 15 años).
+    'anamnesisClinica', 'anamnesisSocial'];
   for (const k of allowed) {
     if (fields[k] !== undefined && fields[k] !== null && fields[k] !== '') {
       body[k] = k === 'email' ? String(fields[k]).trim().toLowerCase() : fields[k];

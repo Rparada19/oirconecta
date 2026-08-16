@@ -24,7 +24,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { ArrowBack, Save, Delete, ExpandMore, Edit, PostAdd, Category } from '@mui/icons-material';
+import { ArrowBack, Save, Delete, ExpandMore, Edit, PostAdd, Category, ShoppingBag } from '@mui/icons-material';
 import { getConfig, saveConfig } from '../../services/configService';
 import {
   etiquetaProductoCatalogo,

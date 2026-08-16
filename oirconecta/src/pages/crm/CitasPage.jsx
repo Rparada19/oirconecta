@@ -88,6 +88,7 @@ import {
 } from '../../services/patientRecordService';
 import { recordAppointmentInteraction } from '../../services/interactionService';
 import { formatProcedencia, getCanalRegistroOptions } from '../../utils/procedenciaUtils';
+import { initializePatientProfile } from '../../services/patientProfileService';
 import { getAgendaProcedenciaOTipoCita, getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
 import { getConfig, getSedes, getConsultoriosFlat, getAppointmentReasons } from '../../services/configService';
 import DateSelector from '../../components/appointments/DateSelector';
@@ -408,7 +409,6 @@ const CitasPage = () => {
         
         // Inicializar perfil de paciente si no existe
         try {
-          const { initializePatientProfile } = require('../../services/patientProfileService');
           initializePatientProfile({
             nombre: selectedAppointment.patientName,
             email: selectedAppointment.patientEmail,

@@ -511,7 +511,17 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
       // Perfil por localStorage SOLO si hay email. Sin email, la llave sería
       // vacía y se cruzarían pacientes → usamos los datos del paciente (backend).
       let profile = email ? getPatientProfile(email) : null;
-      
+
+      // El servidor manda sobre el caché del navegador: la anamnesis guardada
+      // desde otro equipo debe verse aquí.
+      if (patient?.anamnesisClinica || patient?.anamnesisSocial) {
+        profile = {
+          ...(profile || {}),
+          ...(patient.anamnesisClinica ? { anamnesisClinica: patient.anamnesisClinica } : {}),
+          ...(patient.anamnesisSocial ? { anamnesisSocial: patient.anamnesisSocial } : {}),
+        };
+      }
+
       if (!profile) {
         // Inicializar perfil desde datos de cita o lead
         try {
@@ -1915,15 +1925,15 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   };
 
   // Guardar solo Anamnesis Clínica
-  const handleSaveAnamnesisClinica = () => {
-    // Priorizar: formData.email > appointment?.patientEmail > lead?.email
-    const email = formData.email || appointment?.patientEmail || lead?.email;
-    if (!email || email.trim() === '') {
-      setSnackbar({ open: true, message: 'Error: No se encontró el email del paciente. Por favor, verifica que el campo Email esté completo.', severity: 'error' });
+  const handleSaveAnamnesisClinica = async () => {
+    const email = formData.email || appointment?.patientEmail || lead?.email || '';
+    const pacienteId = patient?.id || appointment?.patientId || null;
+    if (!email && !pacienteId) {
+      setSnackbar({ open: true, message: 'No se pudo identificar al paciente.', severity: 'error' });
       return;
     }
 
-    let currentProfile = getPatientProfile(email);
+    let currentProfile = email ? getPatientProfile(email) : null;
     if (!currentProfile) {
       const initResult = initializePatientProfile(appointment || lead);
       currentProfile = initResult.profile;
@@ -1945,25 +1955,35 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
       },
     };
 
-    const result = savePatientProfile(email, profileData);
-    if (result.success) {
-      setPatientProfile(result.profile);
-      setSnackbar({ open: true, message: 'Historia clínica guardada exitosamente', severity: 'success' });
-    } else {
-      setSnackbar({ open: true, message: 'Error al guardar la anamnesis clínica', severity: 'error' });
+    // La historia clínica vive en el servidor; localStorage queda como caché.
+    if (pacienteId) {
+      const api = await updatePatientApi(pacienteId, { anamnesisClinica: profileData.anamnesisClinica });
+      if (!api.success) {
+        setSnackbar({ open: true, message: `No se guardó en el servidor: ${api.error}`, severity: 'error' });
+        return;
+      }
     }
+    if (email) {
+      const result = savePatientProfile(email, profileData);
+      if (result.success) setPatientProfile(result.profile);
+    }
+    setSnackbar({
+      open: true,
+      message: pacienteId ? 'Historia clínica guardada.' : 'Guardada solo en este navegador (paciente sin ID).',
+      severity: pacienteId ? 'success' : 'warning',
+    });
   };
 
   // Guardar solo Anamnesis Social
-  const handleSaveAnamnesisSocial = () => {
-    // Priorizar: formData.email > appointment?.patientEmail > lead?.email
-    const email = formData.email || appointment?.patientEmail || lead?.email;
-    if (!email || email.trim() === '') {
-      setSnackbar({ open: true, message: 'Error: No se encontró el email del paciente. Por favor, verifica que el campo Email esté completo.', severity: 'error' });
+  const handleSaveAnamnesisSocial = async () => {
+    const email = formData.email || appointment?.patientEmail || lead?.email || '';
+    const pacienteId = patient?.id || appointment?.patientId || null;
+    if (!email && !pacienteId) {
+      setSnackbar({ open: true, message: 'No se pudo identificar al paciente.', severity: 'error' });
       return;
     }
 
-    let currentProfile = getPatientProfile(email);
+    let currentProfile = email ? getPatientProfile(email) : null;
     if (!currentProfile) {
       const initResult = initializePatientProfile(appointment || lead);
       currentProfile = initResult.profile;
@@ -1983,13 +2003,22 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
       observacionesGenerales: formData.observacionesGenerales,
     };
 
-    const result = savePatientProfile(email, profileData);
-    if (result.success) {
-      setPatientProfile(result.profile);
-      setSnackbar({ open: true, message: 'Anamnesis social guardada exitosamente', severity: 'success' });
-    } else {
-      setSnackbar({ open: true, message: 'Error al guardar la anamnesis social', severity: 'error' });
+    if (pacienteId) {
+      const api = await updatePatientApi(pacienteId, { anamnesisSocial: profileData.anamnesisSocial });
+      if (!api.success) {
+        setSnackbar({ open: true, message: `No se guardó en el servidor: ${api.error}`, severity: 'error' });
+        return;
+      }
     }
+    if (email) {
+      const result = savePatientProfile(email, profileData);
+      if (result.success) setPatientProfile(result.profile);
+    }
+    setSnackbar({
+      open: true,
+      message: pacienteId ? 'Anamnesis social guardada.' : 'Guardada solo en este navegador (paciente sin ID).',
+      severity: pacienteId ? 'success' : 'warning',
+    });
   };
 
   const handleFieldChange = (section, field, value) => {
