@@ -106,23 +106,25 @@ export async function getAllPatientProducts() {
     ]);
     const quotes = quotesRes.data?.data ?? [];
     const sales = salesRes.data?.data ?? [];
-    const byEmail = {};
+    // Se agrupaba por email y se descartaba lo que no lo tuviera: las ventas
+    // de pacientes sin correo desaparecían de todos los indicadores.
+    const porPaciente = {};
 
-    const push = (email, product) => {
-      const e = (email || '').trim().toLowerCase();
-      if (!e) return;
-      if (!byEmail[e]) byEmail[e] = [];
-      byEmail[e].push(product);
+    const push = (patient, product) => {
+      const clave = (patient?.email || '').trim().toLowerCase() || patient?.id;
+      if (!clave) return;
+      if (!porPaciente[clave]) porPaciente[clave] = [];
+      porPaciente[clave].push(product);
     };
 
-    quotes.forEach((q) => push(q.patient?.email, mapQuoteToProduct(q)));
-    sales.forEach((s) => push(s.patient?.email, mapSaleToProduct(s)));
+    quotes.forEach((q) => push(q.patient, mapQuoteToProduct(q)));
+    sales.forEach((s) => push(s.patient, mapSaleToProduct(s)));
 
-    Object.keys(byEmail).forEach((e) => {
-      byEmail[e].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    Object.keys(porPaciente).forEach((k) => {
+      porPaciente[k].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     });
 
-    return byEmail;
+    return porPaciente;
   } catch (e) {
     console.error('[productService] getAllPatientProducts:', e);
     return {};

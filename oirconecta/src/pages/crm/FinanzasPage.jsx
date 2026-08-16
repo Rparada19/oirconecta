@@ -660,7 +660,7 @@ export default function FinanzasPage() {
                             <TableCell align="right">Fijos</TableCell>
                             <TableCell align="right">Variables</TableCell>
                             <TableCell align="right">Depreciación</TableCell>
-                            <TableCell align="right">Gastos</TableCell>
+                            <TableCell align="right">Gastos totales</TableCell>
                             <TableCell align="right">Utilidad neta</TableCell>
                             <TableCell align="right">Margen</TableCell>
                           </TableRow>
