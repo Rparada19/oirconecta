@@ -10,9 +10,25 @@ const PRODUCTS_KEY = 'oirconecta_patient_products';
 
 // --- Mapeo API → frontend "product" ---
 
+/**
+ * Fecha en formato YYYY-MM-DD según la zona del navegador, no la UTC.
+ *
+ * El backend devuelve ISO en UTC. Cortar los primeros 10 caracteres da el día
+ * UTC: una venta registrada a las 7 p.m. en Bogotá (UTC-5) queda fechada al
+ * día siguiente y se sale de los filtros por período.
+ */
+function fechaLocal(v) {
+  if (!v) return '';
+  const d = v instanceof Date ? v : new Date(v);
+  if (Number.isNaN(d.getTime())) return '';
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mes}-${dia}`;
+}
+
 function mapQuoteToProduct(q) {
   const email = q.patient?.email || '';
-  const dateStr = q.createdAt ? (typeof q.createdAt === 'string' ? q.createdAt.slice(0, 10) : q.createdAt.toISOString?.().slice(0, 10)) : '';
+  const dateStr = fechaLocal(q.createdAt);
   const status = (q.estado || 'PENDING').toLowerCase();
   return {
     id: q.id,
@@ -48,7 +64,7 @@ function mapQuoteToProduct(q) {
 
 function mapSaleToProduct(s) {
   const email = s.patient?.email || '';
-  const dateStr = s.fechaVenta ? (typeof s.fechaVenta === 'string' ? s.fechaVenta.slice(0, 10) : s.fechaVenta.toISOString?.().slice(0, 10)) : (s.createdAt ? (typeof s.createdAt === 'string' ? s.createdAt.slice(0, 10) : s.createdAt.toISOString?.().slice(0, 10)) : '');
+  const dateStr = fechaLocal(s.fechaVenta) || fechaLocal(s.createdAt);
   const cat = (s.categoria || 'HEARING_AID').toLowerCase().replace('_', '-');
   const category = cat === 'hearing-aid' ? 'hearing-aid' : cat === 'service' ? 'service' : 'accessory';
   return {
@@ -65,9 +81,9 @@ function mapSaleToProduct(s) {
     status: 'completed',
     saleDate: dateStr,
     patientEmail: email,
-    adaptationDate: s.fechaAdaptacion ? (typeof s.fechaAdaptacion === 'string' ? s.fechaAdaptacion.slice(0, 10) : s.fechaAdaptacion.toISOString?.().slice(0, 10)) : null,
+    adaptationDate: fechaLocal(s.fechaAdaptacion) || null,
     warrantyStartDate: null,
-    warrantyEndDate: s.fechaFinGarantia ? (typeof s.fechaFinGarantia === 'string' ? s.fechaFinGarantia.slice(0, 10) : s.fechaFinGarantia.toISOString?.().slice(0, 10)) : null,
+    warrantyEndDate: fechaLocal(s.fechaFinGarantia) || null,
     professionalId: s.metadata?.professionalId || s.professionalId || null,
     sedeId: s.metadata?.sedeId || s.sedeId || null,
     procedencia: s.patient?.procedencia || 'visita-medica',
@@ -82,7 +98,7 @@ function mapSaleToProduct(s) {
       campaignNombre: s.campaign?.nombre,
       fabricante: s.campaign?.fabricante,
       descripcionConsulta: s.descripcionConsulta,
-      fechaConsulta: s.fechaConsulta ? (typeof s.fechaConsulta === 'string' ? s.fechaConsulta.slice(0, 10) : s.fechaConsulta.toISOString?.().slice(0, 10)) : null,
+      fechaConsulta: fechaLocal(s.fechaConsulta) || null,
       accesoriosItems: s.accesoriosItems || [],
       accessories: s.accesoriosItems || [],
       images: Array.isArray(s.metadata?.images) ? s.metadata.images : [],
@@ -334,7 +350,7 @@ export async function recordSale(patientEmail, saleData) {
   }
 
   // HEARING_AID
-  const warrantyStart = saleData.adaptationDate || saleData.saleDate || new Date().toISOString().slice(0, 10);
+  const warrantyStart = saleData.adaptationDate || saleData.saleDate || fechaLocal(new Date());
   const we = saleData.warrantyEndDate || null;
   const payload = {
     ...base,
@@ -466,7 +482,7 @@ export function recordAdaptation(patientEmail, adaptationData) {
     category: adaptationData.category || 'hearing-aid',
     quantity: adaptationData.quantity ?? 1,
     status: 'adapted',
-    adaptationDate: adaptationData.adaptationDate || new Date().toISOString().slice(0, 10),
+    adaptationDate: adaptationData.adaptationDate || fechaLocal(new Date()),
     notes: adaptationData.notes || '',
     metadata: adaptationData.metadata || {},
   });
