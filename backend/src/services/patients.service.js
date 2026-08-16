@@ -52,7 +52,7 @@ const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointme
       take: limit,
       include: {
         _count: { select: { appointments: true, sales: true, consultations: true } },
-        appointments: { select: { estado: true }, take: 100 },
+        appointments: { select: { estado: true, fecha: true }, orderBy: { fecha: 'desc' }, take: 100 },
       },
     }),
     prisma.patient.count({ where }),
@@ -64,8 +64,16 @@ const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointme
     const asistio = (p.appointments || []).some((a) => ['COMPLETED', 'PATIENT'].includes(a.estado));
     const esProspecto = p.createdViaBooking && !asistio
       && p._count.sales === 0 && p._count.consultations === 0;
+    // La última cita ATENDIDA es la que interesa en la lista de pacientes.
+    const atendidas = (p.appointments || []).filter((a) => ['COMPLETED', 'PATIENT'].includes(a.estado));
     const { appointments, _count, ...rest } = p;
-    return { ...rest, esProspecto, totalCitas: _count.appointments };
+    return {
+      ...rest,
+      esProspecto,
+      totalCitas: _count.appointments,
+      citasAtendidas: atendidas.length,
+      ultimaCita: atendidas[0]?.fecha || null,
+    };
   });
 
   return {

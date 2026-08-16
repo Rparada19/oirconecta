@@ -543,6 +543,16 @@ async function ensureFinanceSchema(prisma) {
   }
 }
 
+/** Perfil clínico completo en servidor (antes solo en localStorage). */
+async function ensurePerfilClinicoColumn(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patients" ADD COLUMN IF NOT EXISTS "perfilClinico" JSONB;`);
+    console.log('[boot-migrate] patients.perfilClinico OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensurePerfilClinicoColumn falló (no bloqueante):', e.message);
+  }
+}
+
 /** Costo unitario en la venta, para calcular utilidad por facturación. */
 async function ensureCostoUnitarioColumn(prisma) {
   try {
@@ -639,6 +649,7 @@ async function runBootMigrations(prisma) {
   await ensureCanalRegistroColumn(prisma);
   await ensureFinanceSchema(prisma);
   await ensureCodigoHCColumn(prisma);
+  await ensurePerfilClinicoColumn(prisma);
   await ensureCostoUnitarioColumn(prisma);
   await ensureGoogleReviewTemplates(prisma);
   await extendTrialsTo120(prisma);

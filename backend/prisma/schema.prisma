@@ -436,6 +436,9 @@ model Patient {
   // Historia clínica y anamnesis (diligencia en primera consulta)
   anamnesisClinica Json? // motivoConsulta, sintomasAuditivos, antecedentes, desarrollo, resultadosEvaluacion, etc.
   anamnesisSocial  Json? // estadoCivil, ocupacion, nivelEducativo, contextoFamiliar, contextoLaboral, habitos, etc.
+  /// Resto del perfil clínico sin columna propia (consentimientos firmados,
+  /// observaciones, datos del documento). Antes vivía solo en el navegador.
+  perfilClinico    Json?
 
   // Sede asignada (Fase 1: multi-sede preparado, hoy 1 sola)
   sedeId String?

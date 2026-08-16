@@ -133,9 +133,13 @@ export async function getAllPatientProducts() {
  * @param {string} patientEmail
  * @returns {Promise<Array>}
  */
-export async function getPatientProducts(patientEmail) {
-  if (!patientEmail?.trim()) return [];
-  const patient = await getPatientByEmail(patientEmail);
+export async function getPatientProducts(patientEmail, patientId = null) {
+  // patientId es la llave estable; el email solo sirve para resolverlo.
+  let patient = patientId ? { id: patientId } : null;
+  if (!patient) {
+    if (!patientEmail?.trim()) return [];
+    patient = await getPatientByEmail(patientEmail);
+  }
   if (!patient) return [];
   try {
     const [quotesRes, salesRes] = await Promise.all([

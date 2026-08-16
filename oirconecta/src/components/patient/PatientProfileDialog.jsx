@@ -479,7 +479,10 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   useEffect(() => {
     const handleProductsUpdate = () => {
       const email = formData.email || appointment?.patientEmail || lead?.email;
-      if (email && open) getPatientProducts(email).then((p) => setPatientProducts([...p]));
+      const pid = patient?.id || appointment?.patientId || null;
+      if ((email || pid) && open) {
+        getPatientProducts(email, pid).then((p) => setPatientProducts([...p]));
+      }
     }
     window.addEventListener('productsUpdated', handleProductsUpdate);
     return () => window.removeEventListener('productsUpdated', handleProductsUpdate);
@@ -514,9 +517,10 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
 
       // El servidor manda sobre el caché del navegador: la anamnesis guardada
       // desde otro equipo debe verse aquí.
-      if (patient?.anamnesisClinica || patient?.anamnesisSocial) {
+      if (patient?.anamnesisClinica || patient?.anamnesisSocial || patient?.perfilClinico) {
         profile = {
           ...(profile || {}),
+          ...(patient.perfilClinico || {}),
           ...(patient.anamnesisClinica ? { anamnesisClinica: patient.anamnesisClinica } : {}),
           ...(patient.anamnesisSocial ? { anamnesisSocial: patient.anamnesisSocial } : {}),
         };
@@ -821,7 +825,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
 
       // Cargar productos del paciente
       try {
-        const products = await getPatientProducts(email);
+        const products = await getPatientProducts(email, patient?.id || appointment?.patientId);
         setPatientProducts(products);
       } catch (error) {
         console.error('[PatientProfileDialog] Error loading products:', error);
@@ -1685,25 +1689,15 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
     }
   };
 
-  const handleQuoteSuccess = async (product) => {
-    const email = getPatientEmail();
-    if (!email?.trim()) {
-      alert('Error: No se encontró el email del paciente. Verifica que el perfil tenga un email válido.');
-      return;
-    }
-    const products = await getPatientProducts(email);
+  const handleQuoteSuccess = async () => {
+    const products = await getPatientProducts(getPatientEmail(), patient?.id || appointment?.patientId);
     setPatientProducts([...products]);
     setActiveTab(4);
     setQuoteDialogOpen(false);
   };
 
-  const handleSaleSuccess = async (product) => {
-    const email = getPatientEmail();
-    if (!email?.trim()) {
-      alert('Error: No se encontró el email del paciente. Verifica que el perfil tenga un email válido.');
-      return;
-    }
-    const products = await getPatientProducts(email);
+  const handleSaleSuccess = async () => {
+    const products = await getPatientProducts(getPatientEmail(), patient?.id || appointment?.patientId);
     setPatientProducts([...products]);
     setActiveTab(4);
     setSaleDialogOpen(false);
@@ -1727,7 +1721,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
     });
 
     if (result.success) {
-      const products = await getPatientProducts(email);
+      const products = await getPatientProducts(email, patient?.id || appointment?.patientId);
       setPatientProducts(products);
     } else {
       console.error('[PatientProfileDialog] Error al convertir cotización:', result.error);
@@ -1808,25 +1802,15 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
 
   // Guardar solo Datos Generales
   const handleSaveDatosGenerales = async () => {
-    // Priorizar: formData.email > appointment?.patientEmail > lead?.email
-    const email = formData.email || appointment?.patientEmail || lead?.email;
-    
-    console.log('[PatientProfileDialog] handleSaveDatosGenerales - Email a usar:', email);
-    console.log('[PatientProfileDialog] formData.email:', formData.email);
-    console.log('[PatientProfileDialog] appointment?.patientEmail:', appointment?.patientEmail);
-    console.log('[PatientProfileDialog] lead?.email:', lead?.email);
-    
-    if (!email || email.trim() === '') {
-      setSnackbar({ 
-        open: true, 
-        message: 'Error: No se encontró el email del paciente. Por favor, verifica que el campo Email esté completo en Información Personal.', 
-        severity: 'error' 
-      });
+    const email = formData.email || appointment?.patientEmail || lead?.email || '';
+    const pacienteIdDG = patient?.id || appointment?.patientId || null;
+    if (!email && !pacienteIdDG) {
+      setSnackbar({ open: true, message: 'No se pudo identificar al paciente.', severity: 'error' });
       return;
     }
 
     // Obtener perfil actual o crear uno nuevo
-    let currentProfile = getPatientProfile(email);
+    let currentProfile = email ? getPatientProfile(email) : null;
     if (!currentProfile) {
       // Si no hay perfil, inicializar con los datos disponibles
       const sourceData = appointment || lead;
@@ -1886,36 +1870,39 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
       codigoHistoriaClinica: (formData.codigoHistoriaClinica || currentProfile.codigoHistoriaClinica) || generateCodigoHistoriaClinica(),
     };
 
-    console.log('[PatientProfileDialog] Guardando perfil con email:', email);
-    const result = savePatientProfile(email, profileData);
+    // El servidor es la fuente de verdad; localStorage queda como caché.
+    if (pacienteIdDG) {
+      const apiResult = await updatePatientApi(pacienteIdDG, {
+        nombre: profileData.nombre,
+        email: profileData.email,
+        telefono: profileData.telefono,
+        direccion: profileData.direccion,
+        ciudad: profileData.ciudad,
+        fechaNacimiento: profileData.fechaNacimiento,
+        genero: profileData.genero,
+        tipoDocumento: profileData.documentoIdentidad?.tipo,
+        numeroDocumento: profileData.documentoIdentidad?.numero,
+        // Consentimientos y demás datos sin columna propia.
+        perfilClinico: {
+          consentimientosFirmados: profileData.consentimientosFirmados || [],
+          observacionesGenerales: profileData.observacionesGenerales || '',
+          documentoIdentidad: profileData.documentoIdentidad || null,
+        },
+      });
+      if (!apiResult.success) {
+        setSnackbar({ open: true, message: `No se guardó en el servidor: ${apiResult.error}`, severity: 'error' });
+        return;
+      }
+    }
+
+    const result = email ? savePatientProfile(email, profileData) : { success: true, profile: profileData };
     if (result.success) {
       setPatientProfile(result.profile);
-
-      // Persistir datos básicos al backend si tenemos el id real del paciente.
-      // Sin esto el cambio solo vivía en localStorage del navegador.
-      const realPatientId = patient?.id;
-      if (realPatientId) {
-        const apiResult = await updatePatientApi(realPatientId, {
-          nombre: profileData.nombre,
-          email: profileData.email,
-          telefono: profileData.telefono,
-          direccion: profileData.direccion,
-          ciudad: profileData.ciudad,
-          fechaNacimiento: profileData.fechaNacimiento,
-          genero: profileData.genero,
-          tipoDocumento: profileData.documentoIdentidad?.tipo,
-          numeroDocumento: profileData.documentoIdentidad?.numero,
-        });
-        if (!apiResult.success) {
-          console.error('[PatientProfileDialog] updatePatient API:', apiResult.error);
-          setSnackbar({ open: true, message: 'Guardado local, pero el servidor rechazó el cambio: ' + (apiResult.error || ''), severity: 'warning' });
-          return;
-        }
-      } else {
-        console.warn('[PatientProfileDialog] sin patient.id, solo localStorage (legacy)');
-      }
-
-      setSnackbar({ open: true, message: 'Datos generales guardados exitosamente', severity: 'success' });
+      setSnackbar({
+        open: true,
+        message: pacienteIdDG ? 'Datos generales guardados.' : 'Guardado solo en este navegador (paciente sin ID).',
+        severity: pacienteIdDG ? 'success' : 'warning',
+      });
       if (typeof onSaved === 'function') {
         try { onSaved(); } catch (e) { console.warn('[PatientProfileDialog] onSaved:', e?.message); }
       }

@@ -72,8 +72,10 @@ const PacientesPage = () => {
       nombre: p.nombre,
       email: p.email,
       telefono: p.telefono || '',
-      totalCitas: 0,
-      ultimaCita: '',
+      // Vienen calculados del servidor: antes se derivaban cruzando por email
+      // y quedaban en 0 / "Invalid Date" para quien no tenía correo.
+      totalCitas: p.citasAtendidas ?? 0,
+      ultimaCita: p.ultimaCita ? String(p.ultimaCita).slice(0, 10) : '',
       procedencia: p.procedencia || 'visita-medica',
       primeraCita: '',
       esProspecto: !!p.esProspecto,
@@ -272,8 +274,10 @@ const PacientesPage = () => {
                           sx={{ bgcolor: 'rgba(8,89,70,0.10)', color: '#085946', fontWeight: 800, borderRadius: '8px', fontSize: '0.875rem', minWidth: 32 }} />
                       </TableCell>
                       <TableCell>
-                        <Typography sx={{ fontSize: '0.875rem', color: '#4a5568' }}>
-                          {new Date(patient.ultimaCita + 'T00:00:00').toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        <Typography sx={{ fontSize: '0.875rem', color: patient.ultimaCita ? '#4a5568' : '#94a3b8' }}>
+                          {patient.ultimaCita
+                            ? new Date(patient.ultimaCita + 'T00:00:00').toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
+                            : 'Sin citas atendidas'}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
