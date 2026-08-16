@@ -307,7 +307,7 @@ export default function FinanzasPage() {
             {/* ═══════════════ RESUMEN ═══════════════ */}
             {tab === 0 && summary && (() => {
               const { actual, anterior, acumulado, puntoEquilibrio: pe, serie, gastosPorCategoria, totales, porLinea } = summary;
-              const maxSerie = Math.max(1, ...serie.map((m) => Math.max(m.ingresos, m.gastosTotales)));
+              const maxSerie = Math.max(1, ...serie.map((m) => Math.max(m.ingresos, m.egresosTotales)));
               const maxCat = Math.max(1, ...gastosPorCategoria.map((c) => c.monto));
               const deltaIngresos = anterior && anterior.ingresos > 0
                 ? ((actual.ingresos - anterior.ingresos) / anterior.ingresos) * 100 : null;
@@ -327,7 +327,7 @@ export default function FinanzasPage() {
                             : `Faltan ${cop(pe.faltante)} por facturar`}
                         </Typography>
                         <Typography sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                          Facturado {cop(pe.facturado)} de {cop(pe.meta)} en gastos del mes (incluye costo de ventas y depreciación)
+                          Facturado {cop(pe.facturado)} de {cop(pe.meta)} entre costo de ventas, gastos operativos y depreciación
                         </Typography>
                         {pe.unidadesEquilibrio != null && (
                           <Typography sx={{ fontSize: '0.8125rem', color: '#0F2A4A', fontWeight: 700, mt: 0.5 }}>
@@ -369,9 +369,9 @@ export default function FinanzasPage() {
                           : `${deltaIngresos >= 0 ? '+' : ''}${deltaIngresos.toFixed(0)}% vs mes anterior`} />
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
-                      <Kpi label="Gastos del mes" value={cop(actual.gastosTotales)} color="#dc2626"
+                      <Kpi label="Gastos operativos" value={cop(actual.gastosOperativos)} color="#dc2626"
                         icon={<TrendingDown sx={{ fontSize: 16 }} />}
-                        hint={`Fijos ${copCorto(actual.gastosFijos)} · Var. ${copCorto(actual.gastosVariables)} · Depr. ${copCorto(actual.depreciacion)}`} />
+                        hint={`Fijos ${copCorto(actual.gastosFijos)} · Var. ${copCorto(actual.gastosVariables)} · aparte: costo de ventas ${copCorto(actual.costoVentas)}`} />
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
                       <Kpi label="Utilidad bruta" value={cop(actual.utilidadBruta)}
@@ -409,7 +409,7 @@ export default function FinanzasPage() {
                             hint={`Centro ${copCorto(acumulado.ingresosCentro)} · Portal ${copCorto(acumulado.ingresosPortal)}`} />
                         </Grid>
                         <Grid item xs={12} sm={6} md={3}>
-                          <Kpi label="Gastos acumulados" value={cop(acumulado.gastosTotales)} color="#dc2626"
+                          <Kpi label="Costos y gastos acumulados" value={cop(acumulado.egresosTotales)} color="#dc2626"
                             icon={<TrendingDown sx={{ fontSize: 16 }} />}
                             hint={`Fijos ${copCorto(acumulado.gastosFijos)} · Var. ${copCorto(acumulado.gastosVariables)} · Depr. ${copCorto(acumulado.depreciacion)}`} />
                         </Grid>
@@ -487,10 +487,10 @@ export default function FinanzasPage() {
                     <Grid item xs={12} lg={8}>
                       <Card>
                         <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', color: '#0f1923', mb: 0.5 }}>
-                          Ingresos vs gastos · {summary.anio}
+                          Ingresos vs costos y gastos · {summary.anio}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                          {[{ l: 'Ingresos', c: '#059669' }, { l: 'Gastos', c: '#dc2626' }].map((x) => (
+                          {[{ l: 'Ingresos', c: '#059669' }, { l: 'Costos y gastos', c: '#dc2626' }].map((x) => (
                             <Box key={x.l} sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
                               <Box sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: x.c }} />
                               <Typography sx={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{x.l}</Typography>
@@ -505,7 +505,8 @@ export default function FinanzasPage() {
                                   <div>Ingresos: {cop(m.ingresos)}</div>
                                   <div>· Centro: {cop(m.ingresosCentro)}</div>
                                   <div>· Portal: {cop(m.ingresosPortal)}</div>
-                                  <div>Gastos: {cop(m.gastosTotales)}</div>
+                                  <div>Costo de ventas: {cop(m.costoVentas)}</div>
+                                  <div>Gastos operativos: {cop(m.gastosOperativos)}</div>
                                   <div>Utilidad: {cop(m.utilidadNeta)}</div>
                                 </Box>
                               }>
@@ -513,7 +514,7 @@ export default function FinanzasPage() {
                                   <Box sx={{ width: '42%', borderRadius: '4px 4px 0 0', bgcolor: '#059669',
                                     height: `${Math.max((m.ingresos / maxSerie) * 100, m.ingresos > 0 ? 2 : 0)}%` }} />
                                   <Box sx={{ width: '42%', borderRadius: '4px 4px 0 0', bgcolor: '#dc2626',
-                                    height: `${Math.max((m.gastosTotales / maxSerie) * 100, m.gastosTotales > 0 ? 2 : 0)}%` }} />
+                                    height: `${Math.max((m.egresosTotales / maxSerie) * 100, m.egresosTotales > 0 ? 2 : 0)}%` }} />
                                 </Box>
                               </Tooltip>
                               <Typography sx={{ fontSize: '0.6875rem', color: '#64748b', fontWeight: 600, textTransform: 'capitalize' }}>
@@ -655,19 +656,19 @@ export default function FinanzasPage() {
                             <TableCell align="right">Centro</TableCell>
                             <TableCell align="right">Portal</TableCell>
                             <TableCell align="right">Ingresos</TableCell>
-                            <TableCell align="right">Costo ventas</TableCell>
-                            <TableCell align="right">Utilidad bruta</TableCell>
-                            <TableCell align="right">Fijos</TableCell>
-                            <TableCell align="right">Variables</TableCell>
-                            <TableCell align="right">Depreciación</TableCell>
-                            <TableCell align="right">Gastos totales</TableCell>
-                            <TableCell align="right">Utilidad neta</TableCell>
+                            <TableCell align="right">− Costo de ventas</TableCell>
+                            <TableCell align="right">= Utilidad bruta</TableCell>
+                            <TableCell align="right">− Gastos fijos</TableCell>
+                            <TableCell align="right">− Gastos variables</TableCell>
+                            <TableCell align="right">= Utilidad operativa</TableCell>
+                            <TableCell align="right">− Depreciación</TableCell>
+                            <TableCell align="right">= Utilidad neta</TableCell>
                             <TableCell align="right">Margen</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {serie.map((m) => {
-                            const sinMovimiento = !m.ingresos && !m.gastosTotales;
+                            const sinMovimiento = !m.ingresos && !m.egresosTotales;
                             return (
                               <TableRow key={m.periodo} hover sx={sinMovimiento ? { opacity: 0.45 } : undefined}>
                                 <TableCell sx={{ fontWeight: 700, textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
@@ -680,8 +681,10 @@ export default function FinanzasPage() {
                                 <TableCell align="right" sx={{ fontWeight: 700 }}>{cop(m.utilidadBruta)}</TableCell>
                                 <TableCell align="right">{cop(m.gastosFijos)}</TableCell>
                                 <TableCell align="right">{cop(m.gastosVariables)}</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 700, color: m.utilidadOperativa >= 0 ? '#059669' : '#dc2626' }}>
+                                  {cop(m.utilidadOperativa)}
+                                </TableCell>
                                 <TableCell align="right">{cop(m.depreciacion)}</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 700 }}>{cop(m.gastosTotales)}</TableCell>
                                 <TableCell align="right" sx={{ fontWeight: 800, color: m.utilidadNeta >= 0 ? '#059669' : '#dc2626' }}>
                                   {cop(m.utilidadNeta)}
                                 </TableCell>
@@ -700,8 +703,10 @@ export default function FinanzasPage() {
                             <TableCell align="right">{cop(totales.utilidadBruta)}</TableCell>
                             <TableCell align="right">{cop(totales.gastosFijos)}</TableCell>
                             <TableCell align="right">{cop(totales.gastosVariables)}</TableCell>
+                            <TableCell align="right" sx={{ color: totales.utilidadOperativa >= 0 ? '#059669' : '#dc2626' }}>
+                              {cop(totales.utilidadOperativa)}
+                            </TableCell>
                             <TableCell align="right">{cop(totales.depreciacion)}</TableCell>
-                            <TableCell align="right">{cop(totales.gastosTotales)}</TableCell>
                             <TableCell align="right" sx={{ color: totales.utilidadNeta >= 0 ? '#059669' : '#dc2626' }}>
                               {cop(totales.utilidadNeta)}
                             </TableCell>

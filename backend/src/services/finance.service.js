@@ -266,7 +266,10 @@ const getSummary = async ({ year } = {}) => {
       gastosVariables,
       gastosOperativos,
       depreciacion,
-      gastosTotales: gastosOperativos + depreciacion + costoVentas,
+      // Suma de todo lo que sale. No se llama "gastos" a propósito: el costo
+      // de ventas es costo, no gasto, y mezclarlos rompe el estado de
+      // resultados. Solo se usa para el punto de equilibrio.
+      egresosTotales: costoVentas + gastosOperativos + depreciacion,
       utilidadOperativa,
       utilidadNeta,
       margenBruto: ingresos > 0 ? (utilidadBruta / ingresos) * 100 : null,
@@ -280,7 +283,7 @@ const getSummary = async ({ year } = {}) => {
   const hoy = new Date();
   const idxActual = anio === hoy.getFullYear()
     ? hoy.getMonth()
-    : Math.max(0, serie.map((m, i) => (m.ingresos || m.gastosTotales ? i : -1)).reduce((a, b) => Math.max(a, b), 0));
+    : Math.max(0, serie.map((m, i) => (m.ingresos || m.egresosTotales ? i : -1)).reduce((a, b) => Math.max(a, b), 0));
   const actual = serie[idxActual];
   const anterior = idxActual > 0 ? serie[idxActual - 1] : null;
 
@@ -297,13 +300,13 @@ const getSummary = async ({ year } = {}) => {
   // Punto de equilibrio del mes en curso: cuánto falta facturar para cubrir todo.
   const puntoEquilibrio = {
     periodo: actual.periodo,
-    meta: actual.gastosTotales,
+    meta: actual.egresosTotales,
     facturado: actual.ingresos,
-    faltante: Math.max(0, actual.gastosTotales - actual.ingresos),
-    avancePct: actual.gastosTotales > 0
-      ? Math.min(100, (actual.ingresos / actual.gastosTotales) * 100)
+    faltante: Math.max(0, actual.egresosTotales - actual.ingresos),
+    avancePct: actual.egresosTotales > 0
+      ? Math.min(100, (actual.ingresos / actual.egresosTotales) * 100)
       : null,
-    cubierto: actual.ingresos >= actual.gastosTotales,
+    cubierto: actual.ingresos >= actual.egresosTotales,
     // Segunda lectura del mismo equilibrio, en unidades vendidas.
     margenContribUnitario,
     unidadesEquilibrio,
@@ -353,7 +356,7 @@ const getSummary = async ({ year } = {}) => {
     gastosFijos: acc.gastosFijos + m.gastosFijos,
     gastosVariables: acc.gastosVariables + m.gastosVariables,
     depreciacion: acc.depreciacion + m.depreciacion,
-    gastosTotales: acc.gastosTotales + m.gastosTotales,
+    egresosTotales: acc.egresosTotales + m.egresosTotales,
     utilidadOperativa: acc.utilidadOperativa + m.utilidadOperativa,
     utilidadNeta: acc.utilidadNeta + m.utilidadNeta,
     costoVentas: acc.costoVentas + m.costoVentas,
@@ -361,7 +364,7 @@ const getSummary = async ({ year } = {}) => {
     unidadesVendidas: acc.unidadesVendidas + m.unidadesVendidas,
   }), {
     ingresos: 0, ingresosCentro: 0, ingresosPortal: 0, gastosFijos: 0,
-    gastosVariables: 0, depreciacion: 0, gastosTotales: 0,
+    gastosVariables: 0, depreciacion: 0, egresosTotales: 0,
     utilidadOperativa: 0, utilidadNeta: 0,
     costoVentas: 0, utilidadBruta: 0, unidadesVendidas: 0,
   });
@@ -384,7 +387,7 @@ const getSummary = async ({ year } = {}) => {
     ingresos: acc.ingresos + m.ingresos,
     ingresosCentro: acc.ingresosCentro + m.ingresosCentro,
     ingresosPortal: acc.ingresosPortal + m.ingresosPortal,
-    gastosTotales: acc.gastosTotales + m.gastosTotales,
+    egresosTotales: acc.egresosTotales + m.egresosTotales,
     utilidadNeta: acc.utilidadNeta + m.utilidadNeta,
     gastosFijos: acc.gastosFijos + m.gastosFijos,
     gastosVariables: acc.gastosVariables + m.gastosVariables,
@@ -394,7 +397,7 @@ const getSummary = async ({ year } = {}) => {
     utilidadBruta: acc.utilidadBruta + m.utilidadBruta,
     unidadesVendidas: acc.unidadesVendidas + m.unidadesVendidas,
   }), {
-    ingresos: 0, ingresosCentro: 0, ingresosPortal: 0, gastosTotales: 0,
+    ingresos: 0, ingresosCentro: 0, ingresosPortal: 0, egresosTotales: 0,
     utilidadNeta: 0, gastosFijos: 0, gastosVariables: 0, depreciacion: 0,
     utilidadOperativa: 0, costoVentas: 0, utilidadBruta: 0, unidadesVendidas: 0,
   });
