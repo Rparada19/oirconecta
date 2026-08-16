@@ -424,7 +424,23 @@ async function processPendingReminders() {
   let sent = 0;
   let failed = 0;
 
+  const { isTransactional } = require('../notifications');
+  const { isWithinQuietHours, nextAllowedSendAt } = require('../notifications/quietHours');
+  const enSilencio = isWithinQuietHours();
+
   for (const r of due) {
+    // El horario silencioso se validaba solo al programar, y únicamente cuando
+    // el envío era inmediato. Todo lo agendado a futuro (reseña, controles)
+    // caía de noche igual. Se valida también al enviar: lo no transaccional
+    // se aplaza a la mañana siguiente en vez de despertar al paciente.
+    if (enSilencio && !isTransactional(r.eventCode)) {
+      await prisma.reminder.update({
+        where: { id: r.id },
+        data: { scheduledFor: nextAllowedSendAt() },
+      }).catch(() => {});
+      continue;
+    }
+
     // Marca QUEUED para evitar doble envío si el tick anterior sigue corriendo
     // (defensivo — el guard `running` ya evita solapamiento, pero por si acaso).
     try {
