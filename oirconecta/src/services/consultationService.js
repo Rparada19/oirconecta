@@ -5,6 +5,10 @@
 
 import { api } from './apiClient';
 
+/** apiClient devuelve `error` como string; algunos callers lo pasan como Error. */
+const msgDe = (error, porDefecto) =>
+  (typeof error === 'string' ? error : error?.message) || porDefecto;
+
 /**
  * Obtener consultas de un paciente por email
  * @param {string} patientEmail
@@ -42,7 +46,7 @@ export async function getConsultationsByPatientId(patientId) {
 export async function createConsultation(payload) {
   try {
     const { data, error } = await api.post('/api/consultations', payload);
-    if (error) return { success: false, error: error.message || 'Error al registrar consulta' };
+    if (error) return { success: false, error: msgDe(error, 'Error al registrar consulta') };
     return { success: true, data: data?.data };
   } catch (e) {
     console.error('[consultationService] createConsultation:', e);
@@ -59,7 +63,7 @@ export async function patchConsultation(id, payload) {
   if (!id) return { success: false, error: 'Id de consulta requerido' };
   try {
     const { data, error } = await api.patch(`/api/consultations/${encodeURIComponent(id)}`, payload);
-    if (error) return { success: false, error: error.message || 'Error al actualizar consulta' };
+    if (error) return { success: false, error: msgDe(error, 'Error al actualizar consulta') };
     return { success: true, data: data?.data };
   } catch (e) {
     console.error('[consultationService] patchConsultation:', e);
