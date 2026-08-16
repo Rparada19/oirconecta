@@ -886,6 +886,11 @@ model Sale {
   descuento     Float @default(0)
   valorTotal    Float
 
+  /// Costo real de adquisición por unidad, para la utilidad de esta venta.
+  /// Causación: el costo se reconoce al vender, no al comprar.
+  /// Accesorios con IVA incluido; audífonos sin IVA (exentos). Servicios: 0.
+  costoUnitario Float?
+
   // Garantía y seguros (audífonos)
   anosGarantia  Int?
   seguroPerdida String?

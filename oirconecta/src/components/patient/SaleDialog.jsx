@@ -86,6 +86,8 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
     seguroPerdidaRobo: 'NO',
     seguroRotura: 'NO',
     unitPrice: 0,
+    unitCost: 0,
+    prontoPago: 0, // % de descuento por pronto pago de ESA factura (suele ser 4%)
     notes: '',
     adaptationDate: '',
     warrantyEndDate: '',
@@ -140,7 +142,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
   const handleChangeAudifonos = (field) => (e) => {
     const v = e.target.value;
     setAudifonos((prev) => {
-      const next = { ...prev, [field]: ['quantity', 'unitPrice', 'warrantyYears', 'valorConsulta'].includes(field) ? (parseFloat(v) || (field === 'warrantyYears' ? 1 : 0)) : v };
+      const next = { ...prev, [field]: ['quantity', 'unitPrice', 'unitCost', 'prontoPago', 'warrantyYears', 'valorConsulta'].includes(field) ? (parseFloat(v) || (field === 'warrantyYears' ? 1 : 0)) : v };
       if (field === 'brand') {
         const cur = campaigns.find((c) => String(c.id) === String(prev.campaignId));
         if (cur && (cur.fabricante || '').trim() !== v) next.campaignId = '';
@@ -205,6 +207,11 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
     setErrors(e);
     return Object.keys(e).length === 0;
   };
+
+  // El costo real de la factura: si vino con pronto pago, es menor.
+  const costoNetoUnitario = Math.round(
+    (audifonos.unitCost || 0) * (1 - (audifonos.prontoPago || 0) / 100)
+  );
 
   const handleSubmit = async () => {
     // Igual que en cotizaciones: alcanza con identificar al paciente.
@@ -296,6 +303,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
       category: 'hearing-aid',
       quantity: audifonos.quantity,
       unitPrice: audifonos.unitPrice,
+      unitCost: audifonos.unitCost ? costoNetoUnitario : null,
       totalPrice: totalAudifonosConExtras,
       discount: discountAud,
       saleDate,
@@ -306,6 +314,8 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
       metadata: {
         technology: audifonos.technology,
         platform: audifonos.platform,
+        costoListaUnitario: audifonos.unitCost || null,
+        prontoPagoPct: audifonos.prontoPago || 0,
         warrantyYears: audifonos.warrantyYears,
         rechargeable: audifonos.rechargeable,
         seguroPerdidaRobo: audifonos.seguroPerdidaRobo,
@@ -783,6 +793,33 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
                   helperText={errors.unitPrice}
                   required
                   InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Costo unitario de esta factura"
+                  type="number"
+                  value={audifonos.unitCost || ''}
+                  onChange={handleChangeAudifonos('unitCost')}
+                  helperText="El de ESTA compra. Audífonos sin IVA (exentos)."
+                  InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Descuento pronto pago (%)"
+                  type="number"
+                  inputProps={{ min: 0, max: 100 }}
+                  value={audifonos.prontoPago || ''}
+                  onChange={handleChangeAudifonos('prontoPago')}
+                  helperText={
+                    costoNetoUnitario > 0 && audifonos.unitPrice > 0
+                      ? `Costo neto $${costoNetoUnitario.toLocaleString('es-CO')} · utilidad $${(audifonos.unitPrice - costoNetoUnitario).toLocaleString('es-CO')} · margen ${(((audifonos.unitPrice - costoNetoUnitario) / audifonos.unitPrice) * 100).toFixed(0)}%`
+                      : 'Solo si esta factura vino con el descuento. Déjalo en 0 si no aplica.'
+                  }
+                  InputProps={{ endAdornment: <Typography sx={{ ml: 1 }}>%</Typography> }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

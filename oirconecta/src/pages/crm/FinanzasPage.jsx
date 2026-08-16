@@ -36,7 +36,9 @@ const CATEGORIAS_GASTO = [
   { value: 'impuestos', label: 'Impuestos' },
   { value: 'financieros', label: 'Gastos financieros' },
   { value: 'marketing', label: 'Marketing y publicidad' },
-  { value: 'mercancia', label: 'Mercancía / costo de venta' },
+  // Con causación el costo entra por la venta: registrarlo también aquí lo
+  // contaría dos veces.
+  { value: 'mercancia', label: 'Mercancía (NO usar: ya entra por la venta)' },
   { value: 'viajes', label: 'Viajes y hospedaje' },
   { value: 'representacion', label: 'Gastos de representación' },
   { value: 'combustible', label: 'Combustible y transporte' },
@@ -325,8 +327,22 @@ export default function FinanzasPage() {
                             : `Faltan ${cop(pe.faltante)} por facturar`}
                         </Typography>
                         <Typography sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                          Facturado {cop(pe.facturado)} de {cop(pe.meta)} en gastos del mes (incluye depreciación)
+                          Facturado {cop(pe.facturado)} de {cop(pe.meta)} en gastos del mes (incluye costo de ventas y depreciación)
                         </Typography>
+                        {pe.unidadesEquilibrio != null && (
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#0F2A4A', fontWeight: 700, mt: 0.5 }}>
+                            Equivale a {pe.unidadesEquilibrio} unidad{pe.unidadesEquilibrio === 1 ? '' : 'es'} al mes
+                            {pe.margenContribUnitario
+                              ? ` · cada una deja ${cop(pe.margenContribUnitario)}`
+                              : ''}
+                            {pe.unidadesVendidas ? ` · llevas ${pe.unidadesVendidas}` : ''}
+                          </Typography>
+                        )}
+                        {pe.ventasSinCosto > 0 && (
+                          <Typography sx={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600, mt: 0.5 }}>
+                            {pe.ventasSinCosto} venta(s) sin costo cargado: la utilidad sale mejor de lo real.
+                          </Typography>
+                        )}
                       </Box>
                       <Typography sx={{ fontSize: '2.5rem', fontWeight: 900, color: pe.cubierto ? '#059669' : '#d97706', letterSpacing: '-0.03em' }}>
                         {pe.avancePct == null ? '—' : `${pe.avancePct.toFixed(0)}%`}
@@ -356,6 +372,13 @@ export default function FinanzasPage() {
                       <Kpi label="Gastos del mes" value={cop(actual.gastosTotales)} color="#dc2626"
                         icon={<TrendingDown sx={{ fontSize: 16 }} />}
                         hint={`Fijos ${copCorto(actual.gastosFijos)} · Var. ${copCorto(actual.gastosVariables)} · Depr. ${copCorto(actual.depreciacion)}`} />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Kpi label="Utilidad bruta" value={cop(actual.utilidadBruta)}
+                        color={actual.utilidadBruta >= 0 ? '#059669' : '#dc2626'}
+                        hint={actual.margenBruto == null
+                          ? `Costo de ventas ${cop(actual.costoVentas)}`
+                          : `Margen ${actual.margenBruto.toFixed(0)}% · costo ${cop(actual.costoVentas)}`} />
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
                       <Kpi label="Utilidad neta" value={cop(actual.utilidadNeta)}
@@ -632,6 +655,8 @@ export default function FinanzasPage() {
                             <TableCell align="right">Centro</TableCell>
                             <TableCell align="right">Portal</TableCell>
                             <TableCell align="right">Ingresos</TableCell>
+                            <TableCell align="right">Costo ventas</TableCell>
+                            <TableCell align="right">Utilidad bruta</TableCell>
                             <TableCell align="right">Fijos</TableCell>
                             <TableCell align="right">Variables</TableCell>
                             <TableCell align="right">Depreciación</TableCell>
@@ -651,6 +676,8 @@ export default function FinanzasPage() {
                                 <TableCell align="right">{cop(m.ingresosCentro)}</TableCell>
                                 <TableCell align="right">{cop(m.ingresosPortal)}</TableCell>
                                 <TableCell align="right" sx={{ fontWeight: 700 }}>{cop(m.ingresos)}</TableCell>
+                                <TableCell align="right">{cop(m.costoVentas)}</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 700 }}>{cop(m.utilidadBruta)}</TableCell>
                                 <TableCell align="right">{cop(m.gastosFijos)}</TableCell>
                                 <TableCell align="right">{cop(m.gastosVariables)}</TableCell>
                                 <TableCell align="right">{cop(m.depreciacion)}</TableCell>
@@ -669,6 +696,8 @@ export default function FinanzasPage() {
                             <TableCell align="right">{cop(totales.ingresosCentro)}</TableCell>
                             <TableCell align="right">{cop(totales.ingresosPortal)}</TableCell>
                             <TableCell align="right">{cop(totales.ingresos)}</TableCell>
+                            <TableCell align="right">{cop(totales.costoVentas)}</TableCell>
+                            <TableCell align="right">{cop(totales.utilidadBruta)}</TableCell>
                             <TableCell align="right">{cop(totales.gastosFijos)}</TableCell>
                             <TableCell align="right">{cop(totales.gastosVariables)}</TableCell>
                             <TableCell align="right">{cop(totales.depreciacion)}</TableCell>

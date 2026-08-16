@@ -292,6 +292,8 @@ const createSale = async (data, createdById) => {
       valorUnitario: data.valorUnitario,
       descuento: data.descuento || 0,
       valorTotal: data.valorTotal,
+      // Servicios: 100% margen por definición del negocio.
+      costoUnitario: data.categoria === 'SERVICE' ? 0 : (data.costoUnitario ?? null),
       anosGarantia: data.anosGarantia,
       seguroPerdida: data.seguroPerdida,
       seguroRotura: data.seguroRotura,

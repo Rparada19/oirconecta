@@ -285,6 +285,7 @@ export async function recordSale(patientEmail, saleData) {
     patientId: patient.id,
     categoria,
     valorUnitario: saleData.unitPrice ?? 0,
+    costoUnitario: saleData.unitCost != null ? Number(saleData.unitCost) : null,
     valorTotal: saleData.totalPrice ?? saleData.unitPrice * (saleData.quantity || 1),
     descuento: saleData.discount ?? 0,
     notas: saleData.notes || null,

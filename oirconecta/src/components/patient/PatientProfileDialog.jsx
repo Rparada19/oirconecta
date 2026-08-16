@@ -1061,13 +1061,6 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
     setEvolucionarPrimeraVezStep(irDirectoAlFormulario ? 'form' : 'asistencia');
     setEvolucionarDialogOpen(true);
 
-    const pid = patient?.id || appointment?.patientId || apt?.patientId || null;
-    setConsentClinico({ verificado: false, vigente: false, aceptado: false });
-    if (pid) {
-      hasClinicalConsent(pid)
-        .then((vigente) => setConsentClinico({ verificado: true, vigente, aceptado: false }))
-        .catch(() => setConsentClinico({ verificado: true, vigente: false, aceptado: false }));
-    }
   };
 
   const handleEvolucionarNoAsistio = async () => {
@@ -1364,6 +1357,24 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
     await handleExportarHistoricoMantenimientosPdf({ showSnackbar: false });
     setSnackbar({ open: true, message: 'Se descargaron varios archivos PDF (historia clínica, citas, productos y mantenimientos). Revise su carpeta de descargas.', severity: 'success' });
   };
+
+  useEffect(() => {
+    if (!evolucionarDialogOpen) return;
+    const pid = patient?.id || appointment?.patientId || evolucionarAppointment?.patientId || null;
+    if (!pid) {
+      setConsentClinico({ verificado: false, vigente: false, aceptado: false });
+      return;
+    }
+    let vigenteAlMontar = true;
+    hasClinicalConsent(pid)
+      .then((vigente) => {
+        if (vigenteAlMontar) setConsentClinico((c) => ({ ...c, verificado: true, vigente }));
+      })
+      .catch(() => {
+        if (vigenteAlMontar) setConsentClinico((c) => ({ ...c, verificado: true, vigente: false }));
+      });
+    return () => { vigenteAlMontar = false; };
+  }, [evolucionarDialogOpen, patient?.id, appointment?.patientId, evolucionarAppointment?.patientId]);
 
   const handleSaveEvolucionar = async () => {
     if (!evolucionarAppointment) return;

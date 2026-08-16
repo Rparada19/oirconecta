@@ -543,6 +543,18 @@ async function ensureFinanceSchema(prisma) {
   }
 }
 
+/** Costo unitario en la venta, para calcular utilidad por facturación. */
+async function ensureCostoUnitarioColumn(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "costoUnitario" DOUBLE PRECISION;`);
+    // Los servicios son 100% margen por definición del negocio.
+    await prisma.$executeRawUnsafe(`UPDATE "sales" SET "costoUnitario" = 0 WHERE "categoria" = 'SERVICE' AND "costoUnitario" IS NULL;`);
+    console.log('[boot-migrate] sales.costoUnitario OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureCostoUnitarioColumn falló (no bloqueante):', e.message);
+  }
+}
+
 /** Código de historia clínica (OC-2026-0001). */
 async function ensureCodigoHCColumn(prisma) {
   try {
@@ -627,6 +639,7 @@ async function runBootMigrations(prisma) {
   await ensureCanalRegistroColumn(prisma);
   await ensureFinanceSchema(prisma);
   await ensureCodigoHCColumn(prisma);
+  await ensureCostoUnitarioColumn(prisma);
   await ensureGoogleReviewTemplates(prisma);
   await extendTrialsTo120(prisma);
   await ensureSalesCrmSchema(prisma);

@@ -202,7 +202,10 @@ const getSummary = async ({ year } = {}) => {
     prisma.financeAsset.findMany(),
     prisma.sale.findMany({
       where: { fechaVenta: { gte: desde, lte: hasta } },
-      select: { valorTotal: true, fechaVenta: true, categoria: true },
+      select: {
+        valorTotal: true, fechaVenta: true, categoria: true,
+        costoUnitario: true, cantidad: true,
+      },
     }),
     prisma.payment.findMany({
       where: { status: 'APPROVED', paidAt: { gte: desde, lte: hasta } },
@@ -224,6 +227,14 @@ const getSummary = async ({ year } = {}) => {
       .filter((p) => p.paidAt >= inicio && p.paidAt <= fin)
       .reduce((s, p) => s + (p.montoCOP || 0), 0);
 
+    // Causación: el costo entra al mes en que se vendió, no al que se compró.
+    const ventasDelMes = ventas.filter((v) => v.fechaVenta >= inicio && v.fechaVenta <= fin);
+    const costoVentas = ventasDelMes
+      .reduce((s, v) => s + (v.costoUnitario || 0) * (v.cantidad || 1), 0);
+    // Ventas sin costo cargado: el margen bruto sale inflado hasta completarlas.
+    const ventasSinCosto = ventasDelMes.filter((v) => v.costoUnitario == null).length;
+    const unidadesVendidas = ventasDelMes.reduce((s, v) => s + (v.cantidad || 1), 0);
+
     const gastosFijos = fijos
       .filter((g) => fijoAplica(g, periodo))
       .reduce((s, g) => s + g.montoCOP, 0);
@@ -235,8 +246,11 @@ const getSummary = async ({ year } = {}) => {
     const depreciacion = activos.reduce((s, a) => s + depreciacionEnPeriodo(a, periodo), 0);
 
     const ingresos = ingresosCentro + ingresosPortal;
+    // Utilidad bruta = ingresos − costo de lo vendido. El portal no tiene costo
+    // de mercancía: su margen bruto es el ingreso completo.
+    const utilidadBruta = ingresos - costoVentas;
     const gastosOperativos = gastosFijos + gastosVariables;
-    const utilidadOperativa = ingresos - gastosOperativos;
+    const utilidadOperativa = utilidadBruta - gastosOperativos;
     const utilidadNeta = utilidadOperativa - depreciacion;
 
     return {
@@ -244,13 +258,18 @@ const getSummary = async ({ year } = {}) => {
       ingresosCentro,
       ingresosPortal,
       ingresos,
+      costoVentas,
+      utilidadBruta,
+      unidadesVendidas,
+      ventasSinCosto,
       gastosFijos,
       gastosVariables,
       gastosOperativos,
       depreciacion,
-      gastosTotales: gastosOperativos + depreciacion,
+      gastosTotales: gastosOperativos + depreciacion + costoVentas,
       utilidadOperativa,
       utilidadNeta,
+      margenBruto: ingresos > 0 ? (utilidadBruta / ingresos) * 100 : null,
       margenOperativo: ingresos > 0 ? (utilidadOperativa / ingresos) * 100 : null,
       margenNeto: ingresos > 0 ? (utilidadNeta / ingresos) * 100 : null,
     };
@@ -265,6 +284,16 @@ const getSummary = async ({ year } = {}) => {
   const actual = serie[idxActual];
   const anterior = idxActual > 0 ? serie[idxActual - 1] : null;
 
+  // Margen de contribución: cuánto deja cada unidad después de su costo. Con
+  // él, el equilibrio se puede expresar en unidades, que es accionable.
+  const margenContribUnitario = actual.unidadesVendidas > 0
+    ? actual.utilidadBruta / actual.unidadesVendidas
+    : null;
+  const gastosACubrir = actual.gastosOperativos + actual.depreciacion;
+  const unidadesEquilibrio = margenContribUnitario > 0
+    ? Math.ceil(gastosACubrir / margenContribUnitario)
+    : null;
+
   // Punto de equilibrio del mes en curso: cuánto falta facturar para cubrir todo.
   const puntoEquilibrio = {
     periodo: actual.periodo,
@@ -275,6 +304,11 @@ const getSummary = async ({ year } = {}) => {
       ? Math.min(100, (actual.ingresos / actual.gastosTotales) * 100)
       : null,
     cubierto: actual.ingresos >= actual.gastosTotales,
+    // Segunda lectura del mismo equilibrio, en unidades vendidas.
+    margenContribUnitario,
+    unidadesEquilibrio,
+    unidadesVendidas: actual.unidadesVendidas,
+    ventasSinCosto: actual.ventasSinCosto,
   };
 
   // Desglose de gastos del mes actual por categoría (fijos vigentes + variables del mes)
@@ -322,10 +356,14 @@ const getSummary = async ({ year } = {}) => {
     gastosTotales: acc.gastosTotales + m.gastosTotales,
     utilidadOperativa: acc.utilidadOperativa + m.utilidadOperativa,
     utilidadNeta: acc.utilidadNeta + m.utilidadNeta,
+    costoVentas: acc.costoVentas + m.costoVentas,
+    utilidadBruta: acc.utilidadBruta + m.utilidadBruta,
+    unidadesVendidas: acc.unidadesVendidas + m.unidadesVendidas,
   }), {
     ingresos: 0, ingresosCentro: 0, ingresosPortal: 0, gastosFijos: 0,
     gastosVariables: 0, depreciacion: 0, gastosTotales: 0,
     utilidadOperativa: 0, utilidadNeta: 0,
+    costoVentas: 0, utilidadBruta: 0, unidadesVendidas: 0,
   });
 
   const mesesCorridos = serie.slice(0, idxActual + 1);
@@ -335,6 +373,8 @@ const getSummary = async ({ year } = {}) => {
     hasta: actual.periodo,
     meses: mesesCorridos.length,
   };
+  acumulado.margenBruto = acumulado.ingresos > 0
+    ? (acumulado.utilidadBruta / acumulado.ingresos) * 100 : null;
   acumulado.margenNeto = acumulado.ingresos > 0
     ? (acumulado.utilidadNeta / acumulado.ingresos) * 100 : null;
   acumulado.margenOperativo = acumulado.ingresos > 0
@@ -350,10 +390,13 @@ const getSummary = async ({ year } = {}) => {
     gastosVariables: acc.gastosVariables + m.gastosVariables,
     depreciacion: acc.depreciacion + m.depreciacion,
     utilidadOperativa: acc.utilidadOperativa + m.utilidadOperativa,
+    costoVentas: acc.costoVentas + m.costoVentas,
+    utilidadBruta: acc.utilidadBruta + m.utilidadBruta,
+    unidadesVendidas: acc.unidadesVendidas + m.unidadesVendidas,
   }), {
     ingresos: 0, ingresosCentro: 0, ingresosPortal: 0, gastosTotales: 0,
     utilidadNeta: 0, gastosFijos: 0, gastosVariables: 0, depreciacion: 0,
-    utilidadOperativa: 0,
+    utilidadOperativa: 0, costoVentas: 0, utilidadBruta: 0, unidadesVendidas: 0,
   });
 
   return {
