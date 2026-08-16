@@ -25,6 +25,7 @@ import {
   MailOutline as MailOutlineIcon,
   AccountBalance,
   AutoAwesome,
+  TrendingUp,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { getMenuForRole, MENU_KEYS } from '../../utils/rolePermissions';
@@ -58,6 +59,8 @@ const NAV_ITEMS = [
     path: '/portal-crm/pacientes', section: 'operativo' },
   { key: MENU_KEYS.CONTROLES, label: 'Controles', icon: EventRepeatIcon,
     path: '/portal-crm/controles', section: 'operativo' },
+  { key: MENU_KEYS.OPORTUNIDADES, label: 'Oportunidades', icon: TrendingUp,
+    path: '/portal-crm/oportunidades', section: 'operativo' },
   { key: MENU_KEYS.WHATSAPP, label: 'WhatsApp', icon: WhatsAppIcon,
     path: '/portal-crm/whatsapp', section: 'operativo' },
   { key: MENU_KEYS.CAMPANAS, label: 'Campañas', icon: Campaign,
