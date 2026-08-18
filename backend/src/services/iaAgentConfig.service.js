@@ -15,6 +15,10 @@ const DEFAULTS = {
   expertise: null,
   signature: null,
   avoidTopics: null,
+  technologies: null,
+  services: null,
+  logistics: null,
+  differentiators: null,
 };
 const HEX_RE = /^#([0-9A-Fa-f]{6})$/;
 const MAX_FAQS = 30;
@@ -22,10 +26,15 @@ const FAQ_Q_MAX = 200;
 const FAQ_A_MAX = 1000;
 const TEXT_LIMITS = {
   personality: 600,
-  expertise: 600,
+  expertise: 1200,
   signature: 200,
   avoidTopics: 600,
+  technologies: 1200,
+  services: 1200,
+  logistics: 900,
+  differentiators: 900,
 };
+const TEXT_FIELDS = Object.keys(TEXT_LIMITS);
 
 // Whitelist de íconos disponibles. El frontend mapea el key a un componente MUI.
 // Cambios aquí requieren ampliar el mapa en el widget/portal profesional.
@@ -74,16 +83,13 @@ async function getEducationForPrompt(profileId) {
       },
     },
   });
-  if (!cfg) return {
-    agentName: DEFAULTS.agentName,
-    personality: null, expertise: null, signature: null, avoidTopics: null, faqs: [],
-  };
+  if (!cfg) {
+    const vacio = Object.fromEntries(TEXT_FIELDS.map((k) => [k, null]));
+    return { agentName: DEFAULTS.agentName, ...vacio, faqs: [] };
+  }
   return {
     agentName: cfg.agentName,
-    personality: cfg.personality,
-    expertise: cfg.expertise,
-    signature: cfg.signature,
-    avoidTopics: cfg.avoidTopics,
+    ...Object.fromEntries(TEXT_FIELDS.map((k) => [k, cfg[k]])),
     faqs: cfg.faqs.map((f) => ({ q: f.question, a: f.answer })),
   };
 }
@@ -113,7 +119,7 @@ async function upsertConfig(profileId, patch) {
     }
     data.welcomeMessage = w || null;
   }
-  for (const key of ['personality', 'expertise', 'signature', 'avoidTopics']) {
+  for (const key of TEXT_FIELDS) {
     if (patch[key] !== undefined) {
       const v = patch[key];
       if (v !== null && v !== '' && typeof v !== 'string') {

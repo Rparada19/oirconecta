@@ -2518,6 +2518,14 @@ model IaAgentConfig {
   signature      String?
   /// Temas que el bot NO debe tocar. Ej: "precios exactos, promociones, diagnósticos". Max 600 chars.
   avoidTopics    String?
+  /// Marcas, plataformas y tecnología que maneja el consultorio. Max 1200 chars.
+  technologies   String?
+  /// Servicios que presta y qué incluye cada uno. Max 1200 chars.
+  services       String?
+  /// Cómo funciona la atención: sedes, horarios, tiempos, convenios. Max 900 chars.
+  logistics      String?
+  /// Qué lo diferencia: garantías, seguimiento, trayectoria. Max 900 chars.
+  differentiators String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 

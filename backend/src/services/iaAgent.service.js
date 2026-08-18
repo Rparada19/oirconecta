@@ -196,6 +196,18 @@ function buildSystemPrompt(profileInfo, hoyLocal, education = {}) {
   if (education.expertise) {
     custom.push(`── Áreas de expertise específicas del profesional (menciónalas cuando aporten valor, sin inventar):\n${education.expertise}`);
   }
+  if (education.technologies) {
+    custom.push(`── Marcas, plataformas y tecnología que maneja el consultorio. Habla de estas con propiedad; si preguntan por una que no está aquí, di que lo consultas con ${profileInfo.nombre}:\n${education.technologies}`);
+  }
+  if (education.services) {
+    custom.push(`── Servicios que se prestan y qué incluye cada uno. Úsalo para responder "¿ustedes hacen X?" sin inventar:\n${education.services}`);
+  }
+  if (education.logistics) {
+    custom.push(`── Cómo funciona la atención (sedes, horarios, tiempos, convenios). Responde dudas logísticas con esto antes de derivar:\n${education.logistics}`);
+  }
+  if (education.differentiators) {
+    custom.push(`── Qué diferencia a este consultorio. Menciónalo cuando el paciente compare opciones o dude, nunca como discurso de venta agresivo:\n${education.differentiators}`);
+  }
   if (education.avoidTopics) {
     custom.push(`── Temas que NUNCA debes tocar (si el paciente insiste, redirige a consulta directa con el profesional):\n${education.avoidTopics}`);
   }

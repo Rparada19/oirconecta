@@ -349,6 +349,12 @@ async function ensureIaAgentConfigSchema(prisma) {
     await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "expertise" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "signature" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "avoidTopics" TEXT`);
+    // Educación ampliada: el profesional necesitaba espacio para marcas,
+    // servicios y logística, que antes no cabían en "expertise".
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "technologies" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "services" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "logistics" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "differentiators" TEXT`);
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "ia_agent_faqs" (
         "id" TEXT PRIMARY KEY,

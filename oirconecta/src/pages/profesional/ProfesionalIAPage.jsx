@@ -25,6 +25,9 @@ import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
 import DrawOutlinedIcon from '@mui/icons-material/DrawOutlined';
+import MemoryOutlinedIcon from '@mui/icons-material/MemoryOutlined';
+import MedicalServicesOutlinedIcon from '@mui/icons-material/MedicalServicesOutlined';
+import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
@@ -56,12 +59,21 @@ export default function ProfesionalIAPage() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [toast, setToast] = useState(null);
   // Educación del asistente (F5.6)
-  const [eduDraft, setEduDraft] = useState({ personality: '', expertise: '', signature: '', avoidTopics: '' });
+  const [eduDraft, setEduDraft] = useState({
+    personality: '', expertise: '', technologies: '', services: '',
+    logistics: '', differentiators: '', signature: '', avoidTopics: '',
+  });
   const [savingEdu, setSavingEdu] = useState(false);
   const [faqs, setFaqs] = useState([]);
   const [faqDialog, setFaqDialog] = useState(null); // null | { id?, question, answer, isActive }
   const [savingFaq, setSavingFaq] = useState(false);
-  const [limits, setLimits] = useState({ text: { personality: 600, expertise: 600, signature: 200, avoidTopics: 600 }, faqs: { max: 30, questionMax: 200, answerMax: 1000 } });
+  const [limits, setLimits] = useState({
+    text: {
+      personality: 600, expertise: 1200, signature: 200, avoidTopics: 600,
+      technologies: 1200, services: 1200, logistics: 900, differentiators: 900,
+    },
+    faqs: { max: 30, questionMax: 200, answerMax: 1000 },
+  });
 
   const loadAll = async () => {
     setLoading(true);
@@ -92,6 +104,10 @@ export default function ProfesionalIAPage() {
       setEduDraft({
         personality: cfg.data.data.personality || '',
         expertise: cfg.data.data.expertise || '',
+        technologies: cfg.data.data.technologies || '',
+        services: cfg.data.data.services || '',
+        logistics: cfg.data.data.logistics || '',
+        differentiators: cfg.data.data.differentiators || '',
         signature: cfg.data.data.signature || '',
         avoidTopics: cfg.data.data.avoidTopics || '',
       });
@@ -106,6 +122,10 @@ export default function ProfesionalIAPage() {
     const r = await directoryApi.put('/api/ia/me/agent-config', {
       personality: eduDraft.personality.trim() || null,
       expertise: eduDraft.expertise.trim() || null,
+      technologies: eduDraft.technologies.trim() || null,
+      services: eduDraft.services.trim() || null,
+      logistics: eduDraft.logistics.trim() || null,
+      differentiators: eduDraft.differentiators.trim() || null,
       signature: eduDraft.signature.trim() || null,
       avoidTopics: eduDraft.avoidTopics.trim() || null,
     });
@@ -395,7 +415,7 @@ export default function ProfesionalIAPage() {
             Enséñale a tu bot cómo debe atender a tus pacientes
           </Typography>
           <Typography sx={{ fontSize: '0.9rem', color: '#475569', maxWidth: 720, lineHeight: 1.55 }}>
-            Cuatro instrucciones y tus preguntas frecuentes. Todo se aplica al instante en la próxima conversación — no necesitas reiniciar nada.
+            Ocho instrucciones y tus preguntas frecuentes. Mientras más le cuentes de tus marcas, servicios y forma de atender, menos improvisa. Todo se aplica al instante en la próxima conversación — no necesitas reiniciar nada.
           </Typography>
         </Box>
         <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
@@ -429,6 +449,66 @@ export default function ProfesionalIAPage() {
                 ),
               }}
               helperText={`${eduDraft.expertise.length}/${limits.text.expertise} · Ej: "Adaptación de audífonos pediátricos, terapia auditiva verbal, manejo de tinnitus."`}
+            />
+            <TextField
+              label="Marcas y tecnología que manejas"
+              size="small" fullWidth multiline minRows={3}
+              value={eduDraft.technologies}
+              onChange={(e) => setEduDraft({ ...eduDraft, technologies: e.target.value })}
+              inputProps={{ maxLength: limits.text.technologies }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
+                    <MemoryOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              helperText={`${eduDraft.technologies.length}/${limits.text.technologies} · Ej: "Widex Moment y Allure, Phonak Lumity, Signia IX. Accesorios: micrófonos remotos, streamers de TV. Apps de control y ajuste remoto."`}
+            />
+            <TextField
+              label="Servicios y qué incluye cada uno"
+              size="small" fullWidth multiline minRows={3}
+              value={eduDraft.services}
+              onChange={(e) => setEduDraft({ ...eduDraft, services: e.target.value })}
+              inputProps={{ maxLength: limits.text.services }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
+                    <MedicalServicesOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              helperText={`${eduDraft.services.length}/${limits.text.services} · Ej: "Valoración auditiva: audiometría, logoaudiometría e impedanciometría, dura 45 min. Adaptación: incluye 3 controles el primer mes. Reparaciones y limpieza de todas las marcas."`}
+            />
+            <TextField
+              label="Cómo funciona la atención"
+              size="small" fullWidth multiline minRows={2}
+              value={eduDraft.logistics}
+              onChange={(e) => setEduDraft({ ...eduDraft, logistics: e.target.value })}
+              inputProps={{ maxLength: limits.text.logistics }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
+                    <PlaceOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              helperText={`${eduDraft.logistics.length}/${limits.text.logistics} · Ej: "Sede norte de Bogotá, lunes a viernes 8am-5pm y sábados hasta mediodía. Atendemos particular y algunas pólizas. Los audífonos llegan en 5 días hábiles."`}
+            />
+            <TextField
+              label="Qué te hace diferente"
+              size="small" fullWidth multiline minRows={2}
+              value={eduDraft.differentiators}
+              onChange={(e) => setEduDraft({ ...eduDraft, differentiators: e.target.value })}
+              inputProps={{ maxLength: limits.text.differentiators }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
+                    <AutoAwesomeOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              helperText={`${eduDraft.differentiators.length}/${limits.text.differentiators} · Ej: "Somos multimarca, no casados con un fabricante. Controles de por vida sin costo. 20 años adaptando en Bogotá."`}
             />
             <TextField
               label="Frase de firma (opcional)"
