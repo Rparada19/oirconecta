@@ -469,6 +469,21 @@ async function handleTextForBot({ conversationId, incomingText }) {
     }
   }
 
+  // Un solo número atiende las dos ramas. La de paciente debe saber lo
+  // mismo que el widget de la ficha: marcas, servicios, horarios.
+  if (conv.contactType === 'PACIENTE_BOGOTA') {
+    try {
+      const retailId = await retailProfileId();
+      if (retailId) {
+        const iaConfig = require('./iaAgentConfig.service');
+        const education = await iaConfig.getEducationForPrompt(retailId);
+        systemPrompt += iaConfig.buildEducationSection(education, 'OírConecta');
+      }
+    } catch (e) {
+      console.error('[wa-bot] no pude cargar la educación del centro:', e.message);
+    }
+  }
+
   // ¿Habilitar tools de booking? La agenda depende de la rama:
   //  · PACIENTE_BOGOTA     → agenda del centro (retail)
   //  · PROFESIONAL_DIRECTORIO → agenda del comercial de captación

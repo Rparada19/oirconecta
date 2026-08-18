@@ -139,6 +139,37 @@ async function upsertConfig(profileId, patch) {
   });
 }
 
+/**
+ * Formatea la educación como bloque de system prompt.
+ *
+ * Existe aparte del agente del directorio porque el WhatsApp corporativo
+ * es un solo número: la rama de paciente necesita el mismo conocimiento
+ * del centro que el widget de la ficha.
+ */
+function buildEducationSection(education, nombre = 'el centro') {
+  if (!education) return '';
+  const bloques = [];
+  const agregar = (campo, encabezado) => {
+    if (education[campo]) bloques.push(`── ${encabezado}:\n${education[campo]}`);
+  };
+  agregar('personality', `Tono y personalidad definidos por ${nombre}`);
+  agregar('expertise', 'Áreas de expertise (menciónalas cuando aporten valor, sin inventar)');
+  agregar('technologies', 'Marcas, plataformas y tecnología que se manejan. Si preguntan por una que no está aquí, di que lo consultas');
+  agregar('services', 'Servicios que se prestan y qué incluye cada uno. Úsalo para responder "¿ustedes hacen X?" sin inventar');
+  agregar('logistics', 'Cómo funciona la atención (sedes, horarios, tiempos, convenios)');
+  agregar('differentiators', 'Qué diferencia a este centro. Úsalo si el paciente compara o duda, nunca como venta agresiva');
+  agregar('avoidTopics', 'Temas que NUNCA debes tocar (si insisten, ofrece agendar con el profesional)');
+  if (Array.isArray(education.faqs) && education.faqs.length > 0) {
+    const faqBlock = education.faqs.map((f, i) => `${i + 1}. P: ${f.q}\n   R: ${f.a}`).join('\n');
+    bloques.push(`── Preguntas frecuentes VERIFICADAS. Responde con base en ellas antes de improvisar:\n${faqBlock}`);
+  }
+  if (education.signature) {
+    bloques.push(`── Frase de cierre habitual, solo al despedirte:\n"${education.signature}"`);
+  }
+  if (bloques.length === 0) return '';
+  return `\n\n═══ CONOCIMIENTO DEL CENTRO ═══\n${bloques.join('\n\n')}\n═══════════════════════════════`;
+}
+
 // ─────────────────────────────────────────────────────────────
 // FAQs CRUD (por profileId)
 // ─────────────────────────────────────────────────────────────
@@ -218,6 +249,7 @@ module.exports = {
   ConfigError,
   getConfigOrDefaults,
   getEducationForPrompt,
+  buildEducationSection,
   upsertConfig,
   listFaqs,
   createFaq,
