@@ -12,7 +12,8 @@
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { join, dirname, extname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, '..', 'dist');
@@ -20,6 +21,10 @@ const API = process.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 const ORIGIN = 'https://oirconecta.com';
 const PORT = 4183;
 const PAGE_TIMEOUT = 30000;
+// Sin este token el API aplica rate limit (200 req/15 min por IP) y el
+// prerender recibe 429 → páginas congeladas como "no encontrado".
+const PRERENDER_TOKEN = process.env.PRERENDER_TOKEN || '';
+const apiCache = new Map();
 const MAX_ROUTES = 250;
 
 const MIME = {
@@ -37,7 +42,7 @@ const STATIC_ROUTES = [
   '/ponte-en-sus-oidos', '/ecommerce', '/audifonos', '/implantes', '/blog',
   '/directorio', '/directorio/listado', '/profesionales/audiologos', '/profesionales/otologos',
   ...['widex', 'oticon', 'signia', 'phonak', 'resound', 'starkey', 'beltone', 'rexton', 'audioservice', 'bernafon', 'hansaton', 'sonic', 'unitron'].map((b) => `/audifonos/${b}`),
-  ...['cochlear', 'advanced-bionics', 'med-el'].map((b) => `/implantes/${b}`),
+  ...['cochlear', 'advanced-bionics', 'medel'].map((b) => `/implantes/${b}`),
   ...['audiologia', 'fonoaudiologia', 'otorrinolaringologia', 'otologia'].map((p) => `/directorio/profesion/${p}`),
 ];
 
@@ -61,6 +66,29 @@ async function routesFromSitemap() {
 function startServer() {
   const server = createServer(async (req, res) => {
     try {
+      // Proxy del API: el bundle llama a `/api/...` (relativo) o al dominio de
+      // Render. Sirviéndolo aquí, el prerender obtiene datos reales y ninguna
+      // página se congela como "no encontrado".
+      if ((req.url || '').startsWith('/api/')) {
+        // `path=` solo varía por ruta y multiplica las llamadas (una por
+        // página); para el prerender la respuesta es equivalente.
+        const key = req.url.replace(/([?&])path=[^&]*/, '$1');
+        const hit = apiCache.get(key);
+        const up = hit || await (async () => {
+          const r = await fetch(`${API}${req.url}`, {
+            headers: PRERENDER_TOKEN ? { 'x-prerender-token': PRERENDER_TOKEN } : {},
+            signal: AbortSignal.timeout(20000),
+          });
+          const entry = { status: r.status, type: r.headers.get('content-type') || 'application/json', body: Buffer.from(await r.arrayBuffer()) };
+          if (r.ok) apiCache.set(key, entry);
+          return entry;
+        })();
+        res.statusCode = up.status;
+        res.setHeader('Content-Type', up.type);
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.end(up.body);
+        return;
+      }
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
       let filePath = join(DIST, urlPath);
       let isFile = false;
@@ -79,7 +107,10 @@ function startServer() {
 async function main() {
   let puppeteer;
   try {
-    puppeteer = (await import('puppeteer')).default;
+    // Resolvemos desde la raíz del front: `scripts/` tiene su propio
+    // node_modules (extractores) con un puppeteer viejo cuyo Chromium no abre.
+    const require = createRequire(join(__dirname, '..', 'package.json'));
+    puppeteer = (await import(pathToFileURL(require.resolve('puppeteer')).href)).default;
   } catch (e) {
     console.warn('[prerender] puppeteer no disponible, se omite:', e.message);
     return;
@@ -94,10 +125,16 @@ async function main() {
   try {
     browser = await puppeteer.launch({
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+      // `--disable-web-security`: durante el prerender el origen es
+      // http://localhost:4183, que NO está en la lista CORS del API. Sin esto,
+      // TODOS los fetch al API fallan y las páginas se congelan como "no
+      // encontrado" + noindex. Es un Chromium efímero de build, no un navegador
+      // de usuario.
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
+             '--disable-web-security', '--user-data-dir=/tmp/prerender-profile'],
     });
   } catch (e) {
-    console.warn('[prerender] no pude lanzar Chromium, se omite el prerender:', e.message);
+    console.warn('[prerender] no pude lanzar Chromium, se omite el prerender:', e.stack || e.message);
     server.close();
     return;
   }
@@ -107,6 +144,18 @@ async function main() {
     let page;
     try {
       page = await browser.newPage();
+      // El bundle apunta al API absoluto de Render; desde localhost eso es
+      // cross-origin y CORS lo bloquea. Redirigimos esas llamadas al proxy
+      // local (mismo origen) para que el prerender vea datos reales.
+      await page.setRequestInterception(true);
+      page.on('request', (r) => {
+        const u = r.url();
+        if (u.startsWith(`${API}/api/`)) {
+          r.continue({ url: `http://localhost:${PORT}${u.slice(API.length)}` });
+        } else {
+          r.continue();
+        }
+      });
       await page.goto(`http://localhost:${PORT}${route}`, { waitUntil: 'networkidle0', timeout: PAGE_TIMEOUT });
       // Espera a que el root tenga contenido real.
       await page.waitForFunction(
@@ -129,7 +178,13 @@ async function main() {
       if (emotionCss && html.includes('</head>')) {
         html = html.replace('</head>', `<style data-emotion-ssr>${emotionCss}</style></head>`);
       }
-      if (html && html.length > 2000 && html.includes('</body>')) {
+      // GUARDA CRÍTICA: si el snapshot quedó con `noindex` (p. ej. el API estaba
+      // dormido y la página renderizó "no encontrado"), NO lo escribimos. Un
+      // HTML así congelado hace que Google desindexe la URL.
+      if (/name="robots"[^>]*noindex/i.test(html) || html.includes('No pudimos cargar')) {
+        console.warn(`[prerender] ${route}: HTML con noindex/error → descartado (¿API caído?)`);
+        fail++;
+      } else if (html && html.length > 2000 && html.includes('</body>')) {
         const clean = route.replace(/\/$/, '');
         // Escribe ambas formas para que Render sirva la URL limpia antes del
         // catch-all `/* → index.html`: `<ruta>.html` (pretty URL) y

@@ -271,13 +271,17 @@ export default function BlogPostPage() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [related, setRelated] = useState([]);
 
   useEffect(() => {
     setLoading(true);
     fetch(`${API}/api/blog/${slug}`)
       .then((r) => {
-        if (!r.ok) throw new Error('not found');
+        // Solo un 404 real del API significa "no existe". Un 5xx o un cold start
+        // de Render NO puede marcar el artículo como noindex (Google lo desindexa).
+        if (r.status === 404) { const e = new Error('not found'); e.is404 = true; throw e; }
+        if (!r.ok) throw new Error('api error');
         return r.json();
       })
       .then((data) => {
@@ -296,7 +300,7 @@ export default function BlogPostPage() {
           content_category: p?.categoria || 'blog',
         });
       })
-      .catch(() => {
+      .catch((err) => {
         const demo = DEMO_POSTS[slug];
         if (demo) {
           setPost(demo); setLoading(false);
@@ -304,7 +308,12 @@ export default function BlogPostPage() {
             entityType: 'BlogPost', entityId: slug,
             properties: { slug, demo: true },
           });
-        } else { setNotFound(true); setLoading(false); }
+        } else if (err?.is404) {
+          setNotFound(true); setLoading(false);
+        } else {
+          // Fallo temporal: mostramos error, pero sin noindex.
+          setLoadError(true); setLoading(false);
+        }
       });
   }, [slug]);
 
@@ -416,10 +425,12 @@ export default function BlogPostPage() {
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
           <CircularProgress size={40} thickness={4} sx={{ color: '#085946' }} />
         </Box>
-      ) : notFound ? (
+      ) : (notFound || loadError) ? (
         <Container maxWidth="md" sx={{ py: 16, textAlign: 'center' }}>
           <ArticleOutlinedIcon sx={{ fontSize: 56, color: 'rgba(8,89,70,0.2)', mb: 2 }} />
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>Artículo no encontrado</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+            {notFound ? 'Artículo no encontrado' : 'No pudimos cargar el artículo. Intenta de nuevo.'}
+          </Typography>
           <Button component={RouterLink} to="/blog" startIcon={<ArrowBackIcon />} variant="contained" sx={{ borderRadius: '12px', bgcolor: '#085946' }}>
             Volver al blog
           </Button>

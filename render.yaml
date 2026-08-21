@@ -19,6 +19,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Mismo valor que en oirconecta-web: exime al prerender del rate limit.
+      - key: PRERENDER_TOKEN
+        sync: false
 
   - type: web
     name: oirconecta-web
@@ -32,6 +35,10 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://oirconecta-api.onrender.com
+      # Mismo valor que en oirconecta-api: sin él el prerender recibe 429 y
+      # genera HTML "no encontrado" que Google desindexa.
+      - key: PRERENDER_TOKEN
+        sync: false
     routes:
       # Proxy del API: `oirconecta.com/api/*` → backend. Mismo origen → no CORS
       # y no depende de VITE_API_URL en build time. El frontend usa rutas

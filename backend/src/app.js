@@ -14,6 +14,11 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+// Render pone un proxy delante. Sin esto, `req.ip` es la IP del proxy para
+// TODOS los visitantes → el rate limit anónimo (200/15 min) se comparte entre
+// el mundo entero y el sitio empieza a mostrar "0 artículos" / listas vacías.
+app.set('trust proxy', 1);
+
 // ===========================================
 // MIDDLEWARE DE SEGURIDAD
 // ===========================================
@@ -41,11 +46,22 @@ if (config.nodeEnv !== 'development') {
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: (req) => (req.headers.authorization ? 1500 : 200),
-    keyGenerator: (req) => req.headers.authorization
-      ? `auth:${(req.headers.authorization || '').slice(-32)}`
-      : (req.ip || 'anon'),
+    // La cadena de proxies varía (Cloudflare → static site de Render → API),
+    // así que no confiamos en `req.ip`: tomamos la IP real del cliente del
+    // primer salto. Si no, todos los anónimos caen en el mismo cubo.
+    keyGenerator: (req) => {
+      if (req.headers.authorization) return `auth:${req.headers.authorization.slice(-32)}`;
+      const fwd = (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || '')
+        .split(',')[0].trim();
+      return fwd || req.ip || 'anon';
+    },
     standardHeaders: true,
     legacyHeaders: false,
+    // El prerender del build hace cientos de llamadas desde una sola IP; si lo
+    // limitamos, las páginas se congelan como "no encontrado" y Google las
+    // desindexa. Con el token compartido lo dejamos pasar.
+    skip: (req) => Boolean(process.env.PRERENDER_TOKEN)
+      && req.headers['x-prerender-token'] === process.env.PRERENDER_TOKEN,
     message: { success: false, error: 'Demasiadas solicitudes, intenta de nuevo más tarde' },
   });
   app.use('/api/', limiter);
@@ -164,7 +180,7 @@ app.get('/sitemap.xml', async (req, res) => {
         image: img('centro-auditivo-colombia.jpg', 'Blog OírConecta sobre audición, audífonos y salud auditiva') },
     ];
     const BRANDS_AUD = ['widex','oticon','signia','phonak','resound','starkey','beltone','rexton','audioservice','bernafon','hansaton','sonic','unitron'];
-    const BRANDS_IMP = ['cochlear','advanced-bionics','med-el'];
+    const BRANDS_IMP = ['cochlear','advanced-bionics','medel'];
     // Barra final: Render sirve el HTML prerenderizado (dist/<ruta>/index.html)
     // de forma nativa en la URL con barra; sin barra devuelve el cascarón.
     BRANDS_AUD.forEach((b) => STATIC_URLS.push({ loc: `https://oirconecta.com/audifonos/${b}/`, priority: '0.7', changefreq: 'monthly' }));
