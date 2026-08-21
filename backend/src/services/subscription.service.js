@@ -444,6 +444,12 @@ async function getAdminStats() {
 
   // Compatibilidad con UI existente que lee estos campos sueltos:
   const findCount = (code) => breakdown.find((p) => p.code === code)?.activeCount || 0;
+  // Activas por periodicidad. OJO: `findCount('MENSUAL')` NO sirve para esto —
+  // 'MENSUAL' y 'ANUAL' son códigos de dos planes legacy concretos, así que el
+  // dashboard mostraba "0 mensuales + 0 anuales" con suscripciones activas.
+  const sumBy = (pred) => breakdown.reduce((acc, p) => acc + (pred(p) ? (p.activeCount || 0) : 0), 0);
+  const activasMensuales = sumBy((p) => (p.duracionDias || 30) <= 31);
+  const activasAnuales = sumBy((p) => (p.duracionDias || 30) >= 300);
   const empresaRow = breakdown.find((p) => p.code === 'EMPRESA');
 
   return {
@@ -460,8 +466,8 @@ async function getAdminStats() {
     // Desglose por plan (Plan 1/2/3 + legacy)
     breakdown,
     // Backward-compat
-    suscripcionesMensualActivas: findCount('MENSUAL'),
-    suscripcionesAnualActivas: findCount('ANUAL'),
+    suscripcionesMensualActivas: activasMensuales,
+    suscripcionesAnualActivas: activasAnuales,
     suscripcionesEmpresaActivas: findCount('EMPRESA'),
     totalSedesEmpresa: empresaRow?.totalSedes || 0,
   };

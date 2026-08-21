@@ -269,13 +269,15 @@ export default function AdminSuscripcionesPage() {
           <TableBody>
             {[
               { plan: 'Prueba gratuita',   target: 'Todos los registros nuevos (equivale a Visible)', precio: 0,      vig: '90 días' },
-              { plan: 'Visible · Mensual', target: 'Directorio + presencia',                          precio: 25000,  vig: '1 mes',    badge: 'Prueba 90 días' },
-              { plan: 'Visible · Anual',   target: 'Directorio + presencia',                          precio: 250000, vig: '12 meses', badge: 'Prueba 90 días' },
-              { plan: 'Pro · Mensual',     target: '+ Agendamiento (Google Calendar)',                precio: 40000,  vig: '1 mes' },
-              { plan: 'Pro · Anual',       target: '+ Agendamiento (Google Calendar)',                precio: 440000, vig: '12 meses' },
-              { plan: 'Total · Mensual',   target: '+ Agente IA + WhatsApp (120 conv/mes)',           precio: 70000,  vig: '1 mes',    badge: 'Prueba 5 días' },
-              { plan: 'Total · Anual',     target: '+ Agente IA + WhatsApp (120 conv/mes)',           precio: 770000, vig: '12 meses', badge: 'Prueba 5 días' },
-              { plan: 'Empresa multi-sede', target: 'Una suscripción por sede (mismo catálogo)',      precio: 0,      vig: '—',        nota: 'Ej. 10 sedes con agenda = 10 planes Pro' },
+              { plan: 'Visible · Mensual', target: 'Directorio + presencia',                          precio: 40000,   vig: '1 mes',    badge: 'Prueba 90 días' },
+              { plan: 'Visible · Anual',   target: 'Directorio + presencia (10 meses)',               precio: 400000,  vig: '12 meses', badge: 'Prueba 90 días' },
+              { plan: 'Pro · Mensual',     target: '+ Agendamiento (Google Calendar)',                precio: 80000,   vig: '1 mes' },
+              { plan: 'Pro · Anual',       target: '+ Agendamiento (10 meses)',                       precio: 800000,  vig: '12 meses' },
+              { plan: 'Total · Mensual',   target: '+ Agente IA (240 conv/mes: chat, widget y WA)',   precio: 150000,  vig: '1 mes' },
+              { plan: 'Total · Anual',     target: '+ Agente IA, 240 conv/mes (10 meses)',            precio: 1500000, vig: '12 meses' },
+              { plan: 'IPS · 2+ sedes · Visible', target: 'Precio por sede · una factura por NIT',    precio: 27000,   vig: '1 mes',    nota: 'Multi-sede: aún no facturable en el sistema' },
+              { plan: 'IPS · 2+ sedes · Pro',     target: 'Precio por sede · una factura por NIT',    precio: 60000,   vig: '1 mes' },
+              { plan: 'IPS · 2+ sedes · Total',   target: 'Por sede · 160 conv c/u, sumadas',         precio: 105000,  vig: '1 mes' },
             ].map((row) => {
               const iva = Math.round(row.precio * 0.19);
               return (
@@ -566,7 +568,7 @@ export default function AdminSuscripcionesPage() {
           </Typography>
           <Alert severity="info" sx={{ mb: 2 }}>
             La suscripción quedará en <strong>PENDING</strong> hasta confirmar pago (gateway aún en stub).
-            Total incluye Agente IA + WhatsApp (120 conv/mes). Para pruebas de IA, usa cualquier variante Total.
+            Total incluye Agente IA (240 conv/mes entre chat, widget y WhatsApp). Para pruebas de IA, usa cualquier variante Total.
           </Alert>
           <TextField select fullWidth size="small" label="Nuevo plan"
             value={planNuevo} onChange={(e) => setPlanNuevo(e.target.value)}>
