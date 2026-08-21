@@ -112,6 +112,27 @@ export default function AdminSuscripcionesPage() {
     );
   }, [items, q]);
 
+  // Las cuentas del equipo (pruebas, demos) no deben sumar en MRR ni en los
+  // contadores: es ingreso que nadie pagó.
+  const toggleInterno = async (sub) => {
+    const marcar = !sub.esInterno;
+    const r = await adminFetch(`/api/subscriptions/admin/interno/${sub.accountId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ esInterno: marcar }),
+    });
+    if (r?.data?.success) {
+      setToast({
+        severity: 'success',
+        msg: marcar
+          ? `${sub.email} marcada como cuenta del equipo: deja de sumar en MRR.`
+          : `${sub.email} vuelve a contar como cliente real.`,
+      });
+      fetchAll();
+    } else {
+      setToast({ severity: 'error', msg: r?.error || 'No se pudo cambiar' });
+    }
+  };
+
   const handleCancel = async () => {
     if (!cancelTarget) return;
     setWorking(true);
@@ -452,6 +473,18 @@ export default function AdminSuscripcionesPage() {
                       <TableCell>
                         <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>{s.nombre || '—'}</Typography>
                         <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8' }}>{s.email}</Typography>
+                        <Chip
+                          size="small"
+                          label={s.esInterno ? 'Equipo · no suma en MRR' : 'Marcar como equipo'}
+                          onClick={() => s.accountId && toggleInterno(s)}
+                          variant={s.esInterno ? 'filled' : 'outlined'}
+                          sx={{
+                            mt: 0.5, height: 20, fontSize: '0.6875rem', cursor: 'pointer',
+                            ...(s.esInterno
+                              ? { bgcolor: '#fef3c7', color: '#92400e', fontWeight: 700 }
+                              : { color: '#94a3b8', borderColor: '#e2e8f0' }),
+                          }}
+                        />
                       </TableCell>
                       <TableCell sx={{ fontSize: '0.8125rem' }}>{s.especialidad || '—'}</TableCell>
                       <TableCell sx={{ fontSize: '0.8125rem' }}>{s.ciudad || '—'}</TableCell>

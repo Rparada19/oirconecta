@@ -65,6 +65,9 @@ model DirectoryAccount {
   /// True cuando la cuenta fue creada por el Ejecutivo Comercial con clave temporal.
   /// Al primer login el profesional debe definir su propia clave antes de operar.
   mustChangePassword Boolean  @default(false)
+  /// Cuenta propia del equipo (pruebas, demos). Su suscripción NO suma en MRR/ARR
+  /// ni en los contadores del dashboard: es ingreso que no existe.
+  esInterno          Boolean  @default(false)
   /// Quién creó la cuenta (opcional — útil para reportería de captación).
   createdByUserId    String?
   createdAt          DateTime @default(now())

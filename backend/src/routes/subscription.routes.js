@@ -9,6 +9,7 @@
  *
  * Admin (JWT ADMIN):
  *  GET  /api/subscriptions/admin/stats        → KPIs ejecutivos
+ *  PATCH /api/subscriptions/admin/interno/:accountId → marcar cuenta del equipo
  *  GET  /api/subscriptions/admin/list         → Tabla con filtros
  *  GET  /api/subscriptions/admin/export.csv   → CSV export (mismo filtro)
  *  POST /api/subscriptions/admin/backfill     → Crear trial para todos los perfiles sin sub
@@ -33,6 +34,23 @@ router.get('/public/plans', async (req, res) => {
     res.json({ success: true, data });
   } catch (e) {
     console.error('[subs/public/plans] ', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Marca una cuenta como interna (del equipo). Su suscripción deja de sumar en
+// MRR/ARR y en los contadores: es ingreso que no existe.
+router.patch('/admin/interno/:accountId', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const esInterno = Boolean(req.body?.esInterno);
+    const cuenta = await prisma.directoryAccount.update({
+      where: { id: req.params.accountId },
+      data: { esInterno },
+      select: { id: true, email: true, esInterno: true },
+    });
+    res.json({ success: true, data: cuenta });
+  } catch (e) {
+    console.error('[subs/admin/interno] ', e);
     res.status(500).json({ success: false, error: e.message });
   }
 });

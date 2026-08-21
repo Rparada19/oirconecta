@@ -364,7 +364,7 @@ async function listForAdmin({ ciudad, profesionSlug, status, plan, limit = 50, o
         plan: true,
         profile: {
           include: {
-            account: { select: { email: true, nombre: true } },
+            account: { select: { id: true, email: true, nombre: true, esInterno: true } },
             profession: { select: { nombre: true, slug: true } },
             city: { select: { nombre: true } },
           },
@@ -386,6 +386,8 @@ async function listForAdmin({ ciudad, profesionSlug, status, plan, limit = 50, o
       profileId: s.profileId,
       nombre: s.profile?.account?.nombre || s.profile?.nombreConsultorio,
       email: s.profile?.account?.email,
+      accountId: s.profile?.account?.id,
+      esInterno: !!s.profile?.account?.esInterno,
       especialidad: s.profile?.profession?.nombre,
       especialidadSlug: s.profile?.profession?.slug,
       ciudad: s.profile?.city?.nombre,
@@ -432,7 +434,13 @@ async function getAdminStats() {
   const ACTIVE_STATUSES = ['ACTIVE', 'EXPIRING_SOON'];
 
   const [byStatus, breakdown] = await Promise.all([
-    prisma.subscription.groupBy({ by: ['status'], _count: { _all: true } }),
+    // Mismo criterio que el breakdown: las cuentas del equipo no cuentan como
+    // profesionales reales ni como suscripciones activas.
+    prisma.subscription.groupBy({
+      by: ['status'],
+      _count: { _all: true },
+      where: { profile: { account: { esInterno: false } } },
+    }),
     getRevenueBreakdown(),
   ]);
 
@@ -479,6 +487,9 @@ async function getAdminStats() {
  */
 async function getRevenueBreakdown() {
   const ACTIVE_STATUSES = ['ACTIVE', 'EXPIRING_SOON'];
+  // Las cuentas del equipo no facturan: contarlas infla el MRR con dinero
+  // que nadie pagó.
+  const NOT_INTERNAL = { profile: { account: { esInterno: false } } };
   const plans = await prisma.plan.findMany({ orderBy: { displayOrder: 'asc' } });
 
   const out = [];
@@ -486,7 +497,7 @@ async function getRevenueBreakdown() {
     // EMPRESA cobra por sede; resto cuenta sub directamente
     if (plan.code === 'EMPRESA') {
       const subs = await prisma.subscription.findMany({
-        where: { planId: plan.id, status: { in: ACTIVE_STATUSES } },
+        where: { planId: plan.id, status: { in: ACTIVE_STATUSES }, ...NOT_INTERNAL },
         select: { profile: { select: { workplaces: { select: { id: true } } } } },
       });
       const totalSedes = subs.reduce((acc, s) => acc + Math.max(1, s.profile?.workplaces?.length || 0), 0);
@@ -507,7 +518,7 @@ async function getRevenueBreakdown() {
     }
 
     const activeCount = await prisma.subscription.count({
-      where: { planId: plan.id, status: { in: ACTIVE_STATUSES } },
+      where: { planId: plan.id, status: { in: ACTIVE_STATUSES }, ...NOT_INTERNAL },
     });
     const monthlyEach = planToMRR(plan, 1);
     const mrr = monthlyEach * activeCount;
