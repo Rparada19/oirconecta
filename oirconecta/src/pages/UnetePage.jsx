@@ -8,27 +8,27 @@ const REGISTRO_URL = 'https://oirconecta.com/registro-profesional';
 const PLANES = [
   {
     tier: 'Visible', sub: 'Te encuentran en el directorio', tag: null, feat: false,
-    m: { precio: '$25.000', per: '/mes', iva: '+ IVA 19% — total $29.750', extra: null },
-    a: { precio: '$250.000', per: '/año', iva: '+ IVA 19% — total $297.500', extra: 'Equivale a 10 meses (2 gratis)' },
+    m: { precio: '$40.000', per: '/mes', iva: '+ IVA 19% — total $47.600', extra: null },
+    a: { precio: '$400.000', per: '/año', iva: '+ IVA 19% — total $476.000', extra: 'Equivale a 10 meses (2 gratis)' },
     trial: '90 días de prueba gratis',
     items: ['Perfil verificado en el directorio', 'Presentación personal', 'Presentación de servicios',
       'Marcas que manejas', 'Reseñas de pacientes', 'Cómo llegar (mapa)', 'Mensaje directo de pacientes'],
   },
   {
     tier: 'Pro', sub: 'Agenda tus citas online', tag: 'Más popular', feat: true,
-    m: { precio: '$40.000', per: '/mes', iva: '+ IVA 19% — total $47.600', extra: null },
-    a: { precio: '$440.000', per: '/año', iva: '+ IVA 19% — total $523.600', extra: 'Equivale a 11 meses (1 gratis)' },
+    m: { precio: '$80.000', per: '/mes', iva: '+ IVA 19% — total $95.200', extra: null },
+    a: { precio: '$800.000', per: '/año', iva: '+ IVA 19% — total $952.000', extra: 'Equivale a 10 meses (2 gratis)' },
     trial: null,
     items: ['Todo lo de Visible', 'Sistema de agendamiento propio', 'Reservas desde tu perfil público',
       'Integración con Google Calendar', 'Recordatorios automáticos'],
   },
   {
     tier: 'Total', sub: 'Agente virtual + WhatsApp', tag: 'Con IA', feat: false, ia: true,
-    m: { precio: '$70.000', per: '/mes', iva: '+ IVA 19% — total $83.300', extra: null },
-    a: { precio: '$770.000', per: '/año', iva: '+ IVA 19% — total $916.300', extra: 'Equivale a 11 meses (1 gratis)' },
-    trial: '5 días de prueba gratis',
+    m: { precio: '$150.000', per: '/mes', iva: '+ IVA 19% — total $178.500', extra: null },
+    a: { precio: '$1.500.000', per: '/año', iva: '+ IVA 19% — total $1.785.000', extra: 'Equivale a 10 meses (2 gratis)' },
+    trial: null,
     items: ['Todo lo de Pro', 'Agente virtual que agenda, reagenda y resuelve dudas',
-      'Integración con WhatsApp', '120 conversaciones/mes (chat + WhatsApp)', 'Paquetes adicionales disponibles'],
+      'Integración con WhatsApp', '240 conversaciones/mes (chat, widget y WhatsApp)', 'Paquetes adicionales disponibles'],
   },
 ];
 

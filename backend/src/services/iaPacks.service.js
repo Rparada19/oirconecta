@@ -2,8 +2,8 @@
  * F5.4 — Gestión comercial de paquetes de conversaciones IA.
  *
  * Catálogo fijo (definido por producto, no vendible fuera de esto):
- *  - PACK_100:  100 conversaciones, $30.000 COP, sin vencimiento
- *  - PACK_300:  300 conversaciones, $55.000 COP, sin vencimiento
+ *  - PACK_100:  100 conversaciones, $30.000 COP, vigencia 12 meses
+ *  - PACK_300:  300 conversaciones, $55.000 COP, vigencia 12 meses
  *
  * En esta primera versión el admin "vende" el pack manualmente (marca ACTIVE
  * directo). Cuando conectemos Wompi, el flujo self-service creará Payment
@@ -13,10 +13,11 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// durationDays: null → el pack no vence (expiresAt queda null).
+// durationDays: 365 → el pack vence al año. Sin vencimiento el saldo queda
+// como pasivo abierto contra costos de tokens y WhatsApp que sí cambian.
 const PACK_CATALOG = {
-  PACK_100: { code: 'PACK_100', totalConversations: 100, priceCOP: 30000, durationDays: null, label: 'Paquete 100 conversaciones' },
-  PACK_300: { code: 'PACK_300', totalConversations: 300, priceCOP: 55000, durationDays: null, label: 'Paquete 300 conversaciones' },
+  PACK_100: { code: 'PACK_100', totalConversations: 100, priceCOP: 30000, durationDays: 365, label: 'Paquete 100 conversaciones' },
+  PACK_300: { code: 'PACK_300', totalConversations: 300, priceCOP: 55000, durationDays: 365, label: 'Paquete 300 conversaciones' },
 };
 
 class PackError extends Error {

@@ -38,7 +38,7 @@ const MIME = {
 };
 
 const STATIC_ROUTES = [
-  '/', '/nosotros', '/servicios', '/contacto', '/agendar', '/comparador', '/unete',
+  '/', '/nosotros', '/servicios', '/contacto', '/agendar', '/comparador', '/unete', '/precios',
   '/ponte-en-sus-oidos', '/ecommerce', '/audifonos', '/implantes', '/blog',
   '/directorio', '/directorio/listado', '/profesionales/audiologos', '/profesionales/otologos',
   ...['widex', 'oticon', 'signia', 'phonak', 'resound', 'starkey', 'beltone', 'rexton', 'audioservice', 'bernafon', 'hansaton', 'sonic', 'unitron'].map((b) => `/audifonos/${b}`),

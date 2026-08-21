@@ -3,14 +3,15 @@
  * F2 añadirá Wompi (capture, webhook, factura PDF).
  *
  * Reglas de negocio:
- *  - Profesional natural recibe TRIAL_90D (120 días reales) al crearse perfil.
- *  - Empresa (persona jurídica) paga $20.000 × sede × mes (sin descuento anual).
- *  - Independiente: $20.000/mes o $200.000/año (10 meses precio anual).
+ *  - Al crear perfil se asigna TRIAL_90D (90 días, equivale a Visible).
+ *  - Catálogo vigente: Visible $40.000, Pro $80.000, Total $150.000 al mes.
+ *  - Anual = 10 meses en los tres tiers (2 meses gratis).
+ *  - La prueba de 90 días es exclusiva del plan de entrada.
  *  - El status se recalcula on-read si no se ha materializado.
  *  - "días restantes" = ceil((currentPeriodEnd - now) / 1 día).
  *  - EXPIRING_SOON cuando faltan <=15 días; EXPIRED cuando ya pasó.
  *  - PAST_DUE cuando expired y han pasado >=1 día sin renovar.
- *  - SUSPENDED a los 30 días de mora (lo aplica el cron).
+ *  - SUSPENDED a los 10 días de mora (lo aplica el cron).
  */
 
 const { PrismaClient } = require('@prisma/client');
@@ -18,6 +19,8 @@ const prisma = new PrismaClient();
 
 const IVA_RATE = 0.19;
 const TRIAL_DAYS = 90; // Prueba del plan base (Visible)
+/// Días de mora tolerados antes de ocultar el perfil del directorio.
+const GRACE_DAYS = 10;
 
 /**
  * Capacidades del producto. Usadas por `hasFeature()` y por gating de endpoints.
@@ -50,7 +53,7 @@ const BEN_TOTAL = [
   'Todo lo de Pro',
   'Agente virtual que agenda, reagenda y resuelve dudas',
   'Integración con WhatsApp',
-  '120 conversaciones/mes incluidas (chat + WhatsApp)',
+  '240 conversaciones/mes incluidas (chat del sitio, widget y WhatsApp)',
   'Paquetes adicionales de conversaciones disponibles',
 ];
 
@@ -61,30 +64,30 @@ const PLAN_DEFAULTS = [
     features: { marketing: true }, trialDays: TRIAL_DAYS, displayOrder: 0 },
 
   // ── VISIBLE (base: directorio) · prueba 90 días ──
-  { code: 'VISIBLE_MENSUAL', nombre: 'Visible · Mensual', precioCOP: 25000, duracionDias: 30,
+  { code: 'VISIBLE_MENSUAL', nombre: 'Visible · Mensual', precioCOP: 40000, duracionDias: 30,
     beneficios: BEN_VISIBLE,
     features: { marketing: true }, trialDays: 90, displayOrder: 10 },
-  { code: 'VISIBLE_ANUAL', nombre: 'Visible · Anual', precioCOP: 250000, duracionDias: 365,
-    beneficios: [...BEN_VISIBLE, 'Equivale a 10 meses (2 gratis)'],
+  { code: 'VISIBLE_ANUAL', nombre: 'Visible · Anual', precioCOP: 400000, duracionDias: 365,
+    beneficios: [...BEN_VISIBLE, 'Equivale a 10 meses (2 meses gratis)'],
     features: { marketing: true }, trialDays: 90, displayOrder: 11 },
 
   // ── PRO (+ agendamiento) · sin prueba ──
-  { code: 'PRO_MENSUAL', nombre: 'Pro · Mensual', precioCOP: 40000, duracionDias: 30,
+  { code: 'PRO_MENSUAL', nombre: 'Pro · Mensual', precioCOP: 80000, duracionDias: 30,
     beneficios: BEN_PRO,
     features: { marketing: true, agenda: true }, trialDays: 0, displayOrder: 20 },
-  { code: 'PRO_ANUAL', nombre: 'Pro · Anual', precioCOP: 440000, duracionDias: 365,
-    beneficios: [...BEN_PRO, 'Equivale a 11 meses (1 gratis)'],
+  { code: 'PRO_ANUAL', nombre: 'Pro · Anual', precioCOP: 800000, duracionDias: 365,
+    beneficios: [...BEN_PRO, 'Equivale a 10 meses (2 meses gratis)'],
     features: { marketing: true, agenda: true }, trialDays: 0, displayOrder: 21 },
 
   // ── TOTAL (+ agente IA + WhatsApp) · prueba 5 días ──
-  { code: 'TOTAL_MENSUAL', nombre: 'Total · Mensual', precioCOP: 70000, duracionDias: 30,
+  { code: 'TOTAL_MENSUAL', nombre: 'Total · Mensual', precioCOP: 150000, duracionDias: 30,
     beneficios: BEN_TOTAL,
-    features: { marketing: true, agenda: true, ia: true }, trialDays: 5,
-    monthlyConversationLimit: 120, displayOrder: 30 },
-  { code: 'TOTAL_ANUAL', nombre: 'Total · Anual', precioCOP: 770000, duracionDias: 365,
-    beneficios: [...BEN_TOTAL, 'Equivale a 11 meses (1 gratis)'],
-    features: { marketing: true, agenda: true, ia: true }, trialDays: 5,
-    monthlyConversationLimit: 120, displayOrder: 31 },
+    features: { marketing: true, agenda: true, ia: true }, trialDays: 0,
+    monthlyConversationLimit: 240, displayOrder: 30 },
+  { code: 'TOTAL_ANUAL', nombre: 'Total · Anual', precioCOP: 1500000, duracionDias: 365,
+    beneficios: [...BEN_TOTAL, 'Equivale a 10 meses (2 meses gratis)'],
+    features: { marketing: true, agenda: true, ia: true }, trialDays: 0,
+    monthlyConversationLimit: 240, displayOrder: 31 },
 
   // ── Legacy (mantenidos solo para suscripciones existentes; NO se ofrecen a nuevos) ──
   { code: 'ANUAL', nombre: 'Plan 1 · Directorio + Marketing (legacy)', precioCOP: 200000, duracionDias: 365,
@@ -200,7 +203,7 @@ async function recomputeStatus(sub) {
   } else {
     // ya venció
     diasMora = -diff;
-    if (diasMora >= 30 && !isTrialPlan) nextStatus = 'SUSPENDED';
+    if (diasMora >= GRACE_DAYS && !isTrialPlan) nextStatus = 'SUSPENDED';
     else if (diasMora >= 1 && !isTrialPlan) nextStatus = 'PAST_DUE';
     else nextStatus = 'EXPIRED';
   }
@@ -721,6 +724,36 @@ async function changePlan(profileId, targetPlanCode, { changedByAdmin = false } 
   return updated;
 }
 
+/**
+ * Catálogo público para la página de precios. Misma fuente que `/me`
+ * (PLAN_DEFAULTS → tabla Plan), para que la web nunca muestre precios viejos.
+ */
+async function listPublicPlans() {
+  const plans = await prisma.plan.findMany({
+    where: { code: { in: OFFERED_PLAN_CODES }, activo: true },
+    orderBy: { displayOrder: 'asc' },
+  });
+  return plans.map((p) => {
+    const baseCOP = p.precioCOP;
+    const ivaCOP = Math.round(baseCOP * IVA_RATE);
+    const [tier, periodo] = p.code.split('_');
+    return {
+      code: p.code,
+      nombre: p.nombre,
+      tier,
+      periodo,
+      precioCOP: baseCOP,
+      ivaCOP,
+      totalCOP: baseCOP + ivaCOP,
+      duracionDias: p.duracionDias,
+      beneficios: p.beneficios,
+      features: p.features,
+      trialDays: p.trialDays,
+      monthlyConversationLimit: p.monthlyConversationLimit,
+    };
+  });
+}
+
 module.exports = {
   IVA_RATE,
   TRIAL_DAYS,
@@ -731,6 +764,7 @@ module.exports = {
   ensurePlans,
   createTrialForProfile,
   getMySubscription,
+  listPublicPlans,
   listForAdmin,
   getAdminStats,
   getRevenueBreakdown,

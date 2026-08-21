@@ -121,6 +121,7 @@ services:
       - { type: rewrite, source: "/contacto", destination: "/contacto/index.html" }
       - { type: rewrite, source: "/agendar", destination: "/agendar/index.html" }
       - { type: rewrite, source: "/comparador", destination: "/comparador/index.html" }
+      - { type: rewrite, source: "/precios", destination: "/precios/index.html" }
       - { type: rewrite, source: "/ponte-en-sus-oidos", destination: "/ponte-en-sus-oidos/index.html" }
       - { type: rewrite, source: "/ecommerce", destination: "/ecommerce/index.html" }
       - { type: rewrite, source: "/audifonos", destination: "/audifonos/index.html" }

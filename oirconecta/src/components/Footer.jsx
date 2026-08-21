@@ -16,6 +16,7 @@ const SECTIONS = [
       { name: 'Servicios',     to: '/servicios' },
       { name: 'Contacto',      to: '/contacto' },
       { name: 'Agendar cita',  to: '/agendar' },
+      { name: 'Precios',       to: '/precios' },
     ],
   },
   {

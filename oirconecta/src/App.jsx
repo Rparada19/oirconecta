@@ -22,6 +22,7 @@ import './utils/clearAllData';
 // Páginas públicas (lazy)
 const NosotrosPage = lazy(() => import('./pages/NosotrosPage'));
 const UnetePage = lazy(() => import('./pages/UnetePage'));
+const PreciosPage = lazy(() => import('./pages/PreciosPage'));
 const ServiciosPage = lazy(() => import('./pages/ServiciosPage'));
 const AudifonosPage = lazy(() => import('./pages/AudifonosPage'));
 const ImplantesPage = lazy(() => import('./pages/ImplantesPage'));
@@ -216,6 +217,7 @@ export default function App() {
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/nosotros" element={<NosotrosPage />} />
           <Route path="/unete" element={<UnetePage />} />
+          <Route path="/precios" element={<PreciosPage />} />
           <Route path="/ponte-en-sus-oidos" element={<PonteEnSusOidosPage />} />
           <Route path="/simulador-audicion" element={<PonteEnSusOidosPage />} />
           <Route path="/servicios" element={<ServiciosPage />} />

@@ -64,9 +64,9 @@ async function getGlobalStats() {
       nombre: s.profile.account?.nombre || s.profile.nombreConsultorio,
       email: s.profile.account?.email,
       usadas: s.iaConversationsUsed || 0,
-      limite: s.plan?.monthlyConversationLimit || 300,
+      limite: s.plan?.monthlyConversationLimit || 0,
       periodoAt: s.iaConversationsPeriodAt,
-      restantes: Math.max(0, (s.plan?.monthlyConversationLimit || 300) - (s.iaConversationsUsed || 0)),
+      restantes: Math.max(0, (s.plan?.monthlyConversationLimit || 0) - (s.iaConversationsUsed || 0)),
     })),
   };
 }

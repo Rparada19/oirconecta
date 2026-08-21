@@ -1,6 +1,9 @@
 /**
  * F1 — Endpoints de suscripciones.
  *
+ * Público:
+ *  GET  /api/subscriptions/public/plans       → Catálogo vigente (página de precios)
+ *
  * Profesional:
  *  GET  /api/subscriptions/me                 → Mi suscripción + planes disponibles
  *
@@ -20,6 +23,19 @@ const subService = require('../services/subscription.service');
 
 const prisma = new PrismaClient();
 const router = express.Router();
+
+// ─── Público (sin sesión) ───
+// La página /precios lo consume; así el sitio nunca queda con precios viejos.
+router.get('/public/plans', async (req, res) => {
+  try {
+    await subService.ensurePlans();
+    const data = await subService.listPublicPlans();
+    res.json({ success: true, data });
+  } catch (e) {
+    console.error('[subs/public/plans] ', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 // ─── Profesional ───
 router.get('/me', authenticateDirectoryAccount, async (req, res) => {
