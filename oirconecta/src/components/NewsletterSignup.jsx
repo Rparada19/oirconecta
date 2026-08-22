@@ -10,7 +10,8 @@ import { fbqTrack } from '../utils/metaPixel';
  * Captura nombre, email, teléfono y ciudad. `source` identifica de dónde vino.
  */
 export default function NewsletterSignup({ source = 'web', compact = false, inline = false, title, subtitle }) {
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', ciudad: '' });
+  // `tipo` segmenta el envío: a un paciente no le mandamos lo mismo que a un profesional.
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', ciudad: '', tipo: 'PACIENTE' });
   const [state, setState] = useState('idle'); // idle | loading | done | error
   const [error, setError] = useState('');
 
@@ -114,6 +115,20 @@ export default function NewsletterSignup({ source = 'web', compact = false, inli
           required
           sx={{ flex: 1, minWidth: 160, bgcolor: 'background.paper', borderRadius: 1 }}
         />
+        <TextField
+          label="¿Quién eres?"
+          select
+          value={form.tipo}
+          onChange={set('tipo')}
+          size="small"
+          SelectProps={{ native: true }}
+          sx={{ flex: 1, minWidth: 160, bgcolor: 'background.paper', borderRadius: 1 }}
+        >
+          <option value="PACIENTE">Uso audífonos o creo que oigo mal</option>
+          <option value="FAMILIAR">Acompaño a un familiar</option>
+          <option value="PROFESIONAL">Soy profesional de la salud auditiva</option>
+          <option value="OTRO">Otro</option>
+        </TextField>
         <TextField
           label="Correo"
           type="email"

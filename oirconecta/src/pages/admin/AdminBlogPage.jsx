@@ -36,7 +36,15 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
+import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import { adminFetch, getAdminToken, ADMIN_TOKEN_KEY } from './adminAuth';
+
+const SEGMENTOS = [
+  { code: 'PACIENTE',    label: 'Pacientes' },
+  { code: 'FAMILIAR',    label: 'Familiares' },
+  { code: 'PROFESIONAL', label: 'Profesionales' },
+  { code: 'OTRO',        label: 'Otros' },
+];
 
 // Sube imagen al endpoint compartido de Cloudinary (mismo que marketing).
 function CoverUploader({ value, onChange }) {
@@ -218,6 +226,36 @@ export default function AdminBlogPage() {
       alert(`Error: ${e.message}`);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // Envío del artículo a los suscriptores del boletín, por segmento.
+  const [envioTarget, setEnvioTarget] = useState(null);
+  const [envioSegmentos, setEnvioSegmentos] = useState(['PACIENTE', 'FAMILIAR']);
+  const [enviandoBoletin, setEnviandoBoletin] = useState(false);
+  const [envioResultado, setEnvioResultado] = useState(null);
+
+  const enviarBoletin = async () => {
+    if (!envioTarget) return;
+    setEnviandoBoletin(true);
+    setEnvioResultado(null);
+    const id = envioTarget._id || envioTarget.id;
+    const creada = await adminFetch(`/api/newsletter/admin/campaigns/from-blog/${id}`, {
+      method: 'POST',
+      body: JSON.stringify({ segmentos: envioSegmentos }),
+    });
+    if (!creada?.data?.success) {
+      setEnviandoBoletin(false);
+      setEnvioResultado({ error: creada?.error || 'No se pudo preparar el envío' });
+      return;
+    }
+    const campanaId = creada.data.data.id;
+    const enviada = await adminFetch(`/api/newsletter/admin/campaigns/${campanaId}/send`, { method: 'POST' });
+    setEnviandoBoletin(false);
+    if (enviada?.data?.success) {
+      setEnvioResultado({ ok: enviada.data.data.recipients });
+    } else {
+      setEnvioResultado({ error: enviada?.error || 'La campaña quedó creada pero no se pudo enviar' });
     }
   };
 
@@ -418,6 +456,17 @@ export default function AdminBlogPage() {
                               <EditOutlinedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
+                          {post.estado === 'PUBLICADO' && (
+                            <Tooltip title="Enviar a suscriptores del boletín">
+                              <IconButton
+                                size="small"
+                                onClick={() => { setEnvioTarget(post); setEnvioResultado(null); }}
+                                sx={{ color: '#085946' }}
+                              >
+                                <SendOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                           <Tooltip title="Eliminar">
                             <IconButton size="small" onClick={() => setDeleteTarget(post)} sx={{ color: '#ef4444' }}>
                               <DeleteOutlineIcon fontSize="small" />
@@ -682,6 +731,65 @@ export default function AdminBlogPage() {
           {snack.msg}
         </Alert>
       </Snackbar>
+
+      {/* Enviar artículo al boletín, segmentado */}
+      <Dialog open={!!envioTarget} onClose={() => setEnvioTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Enviar al boletín</DialogTitle>
+        <DialogContent>
+          {envioResultado?.ok !== undefined ? (
+            <Alert severity="success" sx={{ mt: 1 }}>
+              Enviado a {envioResultado.ok} {envioResultado.ok === 1 ? 'suscriptor' : 'suscriptores'}.
+            </Alert>
+          ) : envioResultado?.error ? (
+            <Alert severity="error" sx={{ mt: 1 }}>{envioResultado.error}</Alert>
+          ) : (
+            <>
+              <Typography sx={{ mb: 2, color: 'text.secondary', fontSize: '0.9375rem' }}>
+                Se enviará <strong>"{envioTarget?.titulo}"</strong> con su portada, el resumen y un
+                botón al artículo completo.
+              </Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', mb: 1 }}>¿A quién?</Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {SEGMENTOS.map((seg) => {
+                  const activo = envioSegmentos.includes(seg.code);
+                  return (
+                    <Chip
+                      key={seg.code}
+                      label={seg.label}
+                      onClick={() => setEnvioSegmentos(activo
+                        ? envioSegmentos.filter((c) => c !== seg.code)
+                        : [...envioSegmentos, seg.code])}
+                      sx={{
+                        cursor: 'pointer', fontWeight: 600,
+                        ...(activo ? { bgcolor: '#085946', color: '#fff' } : { bgcolor: '#f1f5f9', color: '#64748b' }),
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+              <Typography sx={{ mt: 2, color: 'text.secondary', fontSize: '0.8125rem' }}>
+                Sin ningún segmento marcado se envía a todos los suscriptores activos.
+              </Typography>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setEnvioTarget(null)} sx={{ textTransform: 'none' }}>
+            {envioResultado ? 'Cerrar' : 'Cancelar'}
+          </Button>
+          {!envioResultado && (
+            <Button
+              onClick={enviarBoletin}
+              disabled={enviandoBoletin}
+              variant="contained"
+              sx={{ textTransform: 'none', fontWeight: 700, bgcolor: '#085946', '&:hover': { bgcolor: '#064c3c' } }}
+            >
+              {enviandoBoletin ? 'Enviando…' : 'Enviar ahora'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 }

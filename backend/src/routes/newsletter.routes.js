@@ -39,6 +39,8 @@ function unsubscribeUrl(token) {
 }
 
 // ── Público: suscribirse ──
+const TIPOS_SUSCRIPTOR = ['PACIENTE', 'FAMILIAR', 'PROFESIONAL', 'OTRO'];
+
 router.post(
   '/subscribe',
   [
@@ -47,11 +49,12 @@ router.post(
     body('telefono').optional({ nullable: true }).isString().isLength({ max: 40 }),
     body('ciudad').optional({ nullable: true }).isString().isLength({ max: 120 }),
     body('source').optional().isString().isLength({ max: 60 }),
+    body('tipo').optional().isIn(TIPOS_SUSCRIPTOR),
   ],
   validateRequest,
   async (req, res, next) => {
     try {
-      const { nombre, email, telefono, ciudad, source } = req.body;
+      const { nombre, email, telefono, ciudad, source, tipo } = req.body;
 
       const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
       if (existing) {
@@ -59,14 +62,14 @@ router.post(
         if (existing.status !== 'ACTIVE') {
           await prisma.newsletterSubscriber.update({
             where: { id: existing.id },
-            data: { status: 'ACTIVE', unsubscribedAt: null, nombre, telefono, ciudad },
+            data: { status: 'ACTIVE', unsubscribedAt: null, nombre, telefono, ciudad, ...(tipo ? { tipo } : {}) },
           });
         }
         return res.json({ success: true, data: { alreadySubscribed: true } });
       }
 
       const sub = await prisma.newsletterSubscriber.create({
-        data: { nombre, email, telefono: telefono || null, ciudad: ciudad || null, source: source || 'web' },
+        data: { nombre, email, telefono: telefono || null, ciudad: ciudad || null, source: source || 'web', tipo: tipo || 'OTRO' },
       });
 
       // Bienvenida (no bloquea la respuesta)
@@ -230,22 +233,76 @@ router.post(
     body('preheader').optional().isString().isLength({ max: 200 }),
     body('blogPostId').optional().isString(),
     body('scheduledFor').optional().isISO8601(),
+    body('segmentos').optional().isArray(),
   ],
   validateRequest,
   async (req, res, next) => {
     try {
-      const { asunto, htmlContent, preheader, blogPostId, scheduledFor } = req.body;
+      const { asunto, htmlContent, preheader, blogPostId, scheduledFor, segmentos } = req.body;
       const campaign = await prisma.newsletterCampaign.create({
         data: {
           asunto,
           htmlContent,
           preheader,
           blogPostId,
+          segmentos: Array.isArray(segmentos) ? segmentos.filter((t) => TIPOS_SUSCRIPTOR.includes(t)) : [],
           scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
           status: scheduledFor ? 'SCHEDULED' : 'DRAFT',
         },
       });
       res.status(201).json({ success: true, data: campaign });
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+// ── Admin: crear campaña a partir de un artículo publicado ──
+// Evita tener que pegar HTML a mano: arma el correo con portada, título,
+// resumen y botón al artículo.
+router.post(
+  '/admin/campaigns/from-blog/:postId',
+  authenticate,
+  authorize('ADMIN'),
+  [param('postId').isString(), body('segmentos').optional().isArray()],
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const post = await prisma.blogPost.findUnique({ where: { id: req.params.postId } });
+      if (!post) return res.status(404).json({ success: false, error: 'Artículo no encontrado' });
+      if (post.estado !== 'PUBLICADO') {
+        return res.status(400).json({ success: false, error: 'El artículo debe estar publicado' });
+      }
+
+      const url = `https://oirconecta.com/blog/${post.slug}/`;
+      const resumen = post.resumen || '';
+      const htmlContent = `
+        ${post.coverUrl ? `<img src="${post.coverUrl}" alt="${post.titulo}" style="width:100%;max-width:560px;border-radius:12px;margin-bottom:24px;" />` : ''}
+        <h1 style="font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#272F50;margin:0 0 16px;">${post.titulo}</h1>
+        ${resumen ? `<p style="font-size:16px;line-height:1.65;color:#4b5563;margin:0 0 28px;">${resumen}</p>` : ''}
+        <a href="${url}" style="display:inline-block;background:#085946;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">Leer el artículo completo</a>
+      `.trim();
+
+      const segmentos = Array.isArray(req.body?.segmentos)
+        ? req.body.segmentos.filter((t) => TIPOS_SUSCRIPTOR.includes(t))
+        : [];
+
+      const campaign = await prisma.newsletterCampaign.create({
+        data: {
+          asunto: post.titulo,
+          preheader: resumen ? resumen.slice(0, 160) : null,
+          htmlContent,
+          blogPostId: post.id,
+          segmentos,
+          status: 'DRAFT',
+        },
+      });
+
+      const destinatarios = await prisma.newsletterSubscriber.count({
+        where: { status: 'ACTIVE', ...(segmentos.length ? { tipo: { in: segmentos } } : {}) },
+      });
+
+      res.status(201).json({ success: true, data: { ...campaign, destinatarios } });
     } catch (e) {
       next(e);
     }
@@ -267,7 +324,11 @@ router.post(
         return res.status(400).json({ success: false, error: 'La campaña ya fue enviada o está en envío' });
       }
 
-      const subs = await prisma.newsletterSubscriber.findMany({ where: { status: 'ACTIVE' } });
+      // Vacío = a todos. Con segmentos, sólo a esos tipos.
+      const segmentos = Array.isArray(campaign.segmentos) ? campaign.segmentos : [];
+      const subs = await prisma.newsletterSubscriber.findMany({
+        where: { status: 'ACTIVE', ...(segmentos.length ? { tipo: { in: segmentos } } : {}) },
+      });
       await prisma.newsletterCampaign.update({
         where: { id: campaign.id },
         data: { status: 'SENDING', recipientCount: subs.length },

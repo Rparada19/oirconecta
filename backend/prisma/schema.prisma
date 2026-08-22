@@ -1211,6 +1211,9 @@ model NewsletterSubscriber {
   email            String                     @unique
   telefono         String?
   ciudad           String?
+  /// Quién es el suscriptor. Define a quién se le manda cada artículo: lo que
+  /// le sirve a un paciente no es lo que le sirve a un profesional.
+  tipo             NewsletterSubscriberTipo   @default(OTRO)
   status           NewsletterSubscriberStatus @default(ACTIVE)
   /// De dónde vino: home, blog, footer, popup, import, etc.
   source           String?
@@ -1225,7 +1228,15 @@ model NewsletterSubscriber {
 
   @@index([status])
   @@index([ciudad])
+  @@index([tipo])
   @@map("newsletter_subscribers")
+}
+
+enum NewsletterSubscriberTipo {
+  PACIENTE
+  FAMILIAR
+  PROFESIONAL
+  OTRO
 }
 
 enum NewsletterSubscriberStatus {
@@ -1242,6 +1253,8 @@ model NewsletterCampaign {
   htmlContent    String                   @db.Text
   /// Post de blog asociado (opcional), si la campaña difunde un artículo.
   blogPostId     String?
+  /// Segmentos destinatarios. Vacío = todos los activos.
+  segmentos      NewsletterSubscriberTipo[] @default([])
   status         NewsletterCampaignStatus @default(DRAFT)
   /// Contadores agregados (se actualizan al enviar y con el pixel de apertura).
   recipientCount Int                      @default(0)

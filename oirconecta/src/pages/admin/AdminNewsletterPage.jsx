@@ -24,11 +24,14 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { adminFetch } from './adminAuth';
 import { exportRowsToExcel, exportRowsToPdf } from '../../utils/adminExport';
 
+const SEGMENTO_LABEL = { PACIENTE: 'Paciente', FAMILIAR: 'Familiar', PROFESIONAL: 'Profesional', OTRO: 'Otro' };
+
 const subsToRows = (subs) => subs.map((s) => ({
   Nombre: s.nombre || '',
   Correo: s.email || '',
   Teléfono: s.telefono || '',
   Ciudad: s.ciudad || '',
+  Segmento: SEGMENTO_LABEL[s.tipo] || 'Sin clasificar',
   Estado: s.status === 'ACTIVE' ? 'Activo' : s.status === 'UNSUBSCRIBED' ? 'Baja' : 'Rebote',
   Alta: s.createdAt ? new Date(s.createdAt).toLocaleDateString('es-CO') : '',
 }));
@@ -126,6 +129,7 @@ export default function AdminNewsletterPage() {
                   <TableCell sx={{ fontWeight: 700 }}>Correo</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Teléfono</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Ciudad</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Segmento</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Alta</TableCell>
                 </TableRow>
@@ -137,6 +141,13 @@ export default function AdminNewsletterPage() {
                     <TableCell>{s.email}</TableCell>
                     <TableCell>{s.telefono || '—'}</TableCell>
                     <TableCell>{s.ciudad || '—'}</TableCell>
+                    <TableCell>
+                      <Chip
+                        size="small"
+                        label={SEGMENTO_LABEL[s.tipo] || 'Sin clasificar'}
+                        sx={{ bgcolor: '#eef4f2', color: '#085946', fontWeight: 600, fontSize: '0.6875rem' }}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Chip
                         size="small"
