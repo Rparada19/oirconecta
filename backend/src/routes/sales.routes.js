@@ -84,6 +84,42 @@ const renderTemplate = (templateId, lead) => {
 };
 
 // Todas las rutas requieren autenticación.
+// ─── Público (sin sesión) ───
+// Solicitud de demostración desde /precios. Cae en Captación comercial → Leads,
+// NO en los leads de pacientes: son dos negocios distintos.
+router.post('/public/demo-request', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const nombre = String(b.nombre || '').trim();
+    if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es obligatorio' });
+    if (!b.email && !b.telefono) {
+      return res.status(400).json({ success: false, error: 'Déjanos un correo o un teléfono' });
+    }
+    const detalle = [
+      b.sedes ? `Sedes: ${b.sedes}` : null,
+      b.plan ? `Plan de interés: ${b.plan}` : null,
+      b.mensaje ? `Mensaje: ${b.mensaje}` : null,
+    ].filter(Boolean).join('\n');
+
+    const lead = await sales.createLead({
+      nombre,
+      email: b.email,
+      telefono: b.telefono,
+      empresa: b.empresa,
+      ciudad: b.ciudad,
+      profesion: b.profesion,
+      source: 'web-form',
+      status: 'NUEVO',
+      notes: `Solicitó demostración desde /precios.${detalle ? '\n' + detalle : ''}`,
+    }, null);
+
+    res.json({ success: true, data: { id: lead.id } });
+  } catch (e) {
+    console.error('[sales/public/demo-request] ', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 router.use(authenticate);
 // Solo ADMIN o EJECUTIVO_COMERCIAL pueden tocar Sales.
 router.use(authorize('ADMIN', 'EJECUTIVO_COMERCIAL'));

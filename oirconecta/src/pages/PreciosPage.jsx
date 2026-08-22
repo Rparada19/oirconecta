@@ -4,6 +4,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import {
   Box, Container, Typography, Button, Stack, Chip, ToggleButton, ToggleButtonGroup,
   CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Divider,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem,
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -64,8 +65,15 @@ const FAQ = [
   },
 ];
 
+const DEMO_INICIAL = { nombre: '', empresa: '', email: '', telefono: '', ciudad: '', sedes: '', plan: '', mensaje: '' };
+
 export default function PreciosPage() {
   const [periodo, setPeriodo] = useState('MENSUAL');
+  const [demoAbierto, setDemoAbierto] = useState(false);
+  const [demo, setDemo] = useState(DEMO_INICIAL);
+  const [enviando, setEnviando] = useState(false);
+  const [demoError, setDemoError] = useState('');
+  const [demoOk, setDemoOk] = useState(false);
   const [audiencia, setAudiencia] = useState('profesional');
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +85,31 @@ export default function PreciosPage() {
       .catch(() => setPlans([]))
       .finally(() => setLoading(false));
   }, []);
+
+  // La solicitud entra a Captación comercial → Leads (SalesLead), que es el
+  // embudo de clientes del directorio. No se mezcla con los leads de pacientes.
+  const enviarDemo = async () => {
+    setDemoError('');
+    if (!demo.nombre.trim()) return setDemoError('Necesitamos tu nombre.');
+    if (!demo.email.trim() && !demo.telefono.trim()) {
+      return setDemoError('Déjanos un correo o un teléfono para responderte.');
+    }
+    setEnviando(true);
+    try {
+      const r = await fetch(`${API}/api/sales/public/demo-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(demo),
+      });
+      const j = await r.json();
+      if (j?.success) { setDemoOk(true); setDemo(DEMO_INICIAL); }
+      else setDemoError(j?.error || 'No pudimos enviar tu solicitud. Intenta de nuevo.');
+    } catch {
+      setDemoError('No pudimos enviar tu solicitud. Revisa tu conexión.');
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   const visibles = useMemo(
     () => plans.filter((p) => p.periodo === periodo),
@@ -335,8 +368,7 @@ export default function PreciosPage() {
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
               <Button
-                component={RouterLink}
-                to="/contacto"
+                onClick={() => { setDemoOk(false); setDemoError(''); setDemoAbierto(true); }}
                 variant="contained"
                 endIcon={<ArrowForwardIcon />}
                 sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 600, py: 1.25, px: 3, bgcolor: GREEN, '&:hover': { bgcolor: '#064c3c' } }}
@@ -378,6 +410,65 @@ export default function PreciosPage() {
           </Stack>
         </Container>
       </Box>
+
+      {/* Solicitud de demostración → Captación comercial */}
+      <Dialog open={demoAbierto} onClose={() => setDemoAbierto(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.5rem', fontWeight: 600, color: NAVY }}>
+          {demoOk ? 'Recibimos tu solicitud' : 'Solicitar una demostración'}
+        </DialogTitle>
+        <DialogContent>
+          {demoOk ? (
+            <Alert severity="success" sx={{ mt: 1 }}>
+              Gracias. Un asesor te contacta en las próximas 24 horas hábiles para agendar la demostración.
+            </Alert>
+          ) : (
+            <>
+              <Typography sx={{ color: MUTED, fontSize: '0.9375rem', mb: 2.5 }}>
+                Cuéntanos de tu organización y te mostramos cómo quedaría con tus sedes.
+              </Typography>
+              {demoError && <Alert severity="error" sx={{ mb: 2 }}>{demoError}</Alert>}
+              <Stack spacing={2}>
+                <TextField label="Tu nombre" required size="small" fullWidth
+                  value={demo.nombre} onChange={(e) => setDemo({ ...demo, nombre: e.target.value })} />
+                <TextField label="Nombre de la IPS o centro" size="small" fullWidth
+                  value={demo.empresa} onChange={(e) => setDemo({ ...demo, empresa: e.target.value })} />
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <TextField label="Correo" type="email" size="small" fullWidth
+                    value={demo.email} onChange={(e) => setDemo({ ...demo, email: e.target.value })} />
+                  <TextField label="Teléfono" size="small" fullWidth
+                    value={demo.telefono} onChange={(e) => setDemo({ ...demo, telefono: e.target.value })} />
+                </Stack>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <TextField label="Ciudad" size="small" fullWidth
+                    value={demo.ciudad} onChange={(e) => setDemo({ ...demo, ciudad: e.target.value })} />
+                  <TextField label="¿Cuántas sedes?" size="small" fullWidth
+                    value={demo.sedes} onChange={(e) => setDemo({ ...demo, sedes: e.target.value })} />
+                </Stack>
+                <TextField label="Plan de interés" select size="small" fullWidth
+                  value={demo.plan} onChange={(e) => setDemo({ ...demo, plan: e.target.value })}>
+                  <MenuItem value="">Aún no lo sé</MenuItem>
+                  <MenuItem value="Visible">Visible</MenuItem>
+                  <MenuItem value="Pro">Pro</MenuItem>
+                  <MenuItem value="Total">Total</MenuItem>
+                </TextField>
+                <TextField label="¿Algo que debamos saber?" size="small" fullWidth multiline rows={3}
+                  value={demo.mensaje} onChange={(e) => setDemo({ ...demo, mensaje: e.target.value })} />
+              </Stack>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setDemoAbierto(false)} sx={{ textTransform: 'none', color: MUTED }}>
+            {demoOk ? 'Cerrar' : 'Cancelar'}
+          </Button>
+          {!demoOk && (
+            <Button onClick={enviarDemo} disabled={enviando} variant="contained"
+              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '10px', bgcolor: GREEN, '&:hover': { bgcolor: '#064c3c' } }}>
+              {enviando ? 'Enviando…' : 'Enviar solicitud'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
 
       <Footer />
     </Box>
