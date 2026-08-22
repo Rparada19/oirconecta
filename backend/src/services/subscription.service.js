@@ -5,7 +5,7 @@
  * Reglas de negocio:
  *  - Al crear perfil se asigna TRIAL_90D (90 días, equivale a Visible).
  *  - Catálogo vigente: Visible $40.000, Pro $80.000, Total $150.000 al mes.
- *  - Anual = 10 meses en los tres tiers (2 meses gratis).
+ *  - Anual = 12 × el mensual. Sin descuento por pago anticipado.
  *  - La prueba de 90 días es exclusiva del plan de entrada.
  *  - El status se recalcula on-read si no se ha materializado.
  *  - "días restantes" = ceil((currentPeriodEnd - now) / 1 día).
@@ -67,16 +67,16 @@ const PLAN_DEFAULTS = [
   { code: 'VISIBLE_MENSUAL', nombre: 'Visible · Mensual', precioCOP: 40000, duracionDias: 30,
     beneficios: BEN_VISIBLE,
     features: { marketing: true }, trialDays: 90, displayOrder: 10 },
-  { code: 'VISIBLE_ANUAL', nombre: 'Visible · Anual', precioCOP: 400000, duracionDias: 365,
-    beneficios: [...BEN_VISIBLE, 'Equivale a 10 meses (2 meses gratis)'],
+  { code: 'VISIBLE_ANUAL', nombre: 'Visible · Anual', precioCOP: 480000, duracionDias: 365,
+    beneficios: BEN_VISIBLE,
     features: { marketing: true }, trialDays: 90, displayOrder: 11 },
 
   // ── PRO (+ agendamiento) · sin prueba ──
   { code: 'PRO_MENSUAL', nombre: 'Pro · Mensual', precioCOP: 80000, duracionDias: 30,
     beneficios: BEN_PRO,
     features: { marketing: true, agenda: true }, trialDays: 0, displayOrder: 20 },
-  { code: 'PRO_ANUAL', nombre: 'Pro · Anual', precioCOP: 800000, duracionDias: 365,
-    beneficios: [...BEN_PRO, 'Equivale a 10 meses (2 meses gratis)'],
+  { code: 'PRO_ANUAL', nombre: 'Pro · Anual', precioCOP: 960000, duracionDias: 365,
+    beneficios: BEN_PRO,
     features: { marketing: true, agenda: true }, trialDays: 0, displayOrder: 21 },
 
   // ── TOTAL (+ agente IA + WhatsApp) · prueba 5 días ──
@@ -84,8 +84,8 @@ const PLAN_DEFAULTS = [
     beneficios: BEN_TOTAL,
     features: { marketing: true, agenda: true, ia: true }, trialDays: 0,
     monthlyConversationLimit: 240, displayOrder: 30 },
-  { code: 'TOTAL_ANUAL', nombre: 'Total · Anual', precioCOP: 1500000, duracionDias: 365,
-    beneficios: [...BEN_TOTAL, 'Equivale a 10 meses (2 meses gratis)'],
+  { code: 'TOTAL_ANUAL', nombre: 'Total · Anual', precioCOP: 1800000, duracionDias: 365,
+    beneficios: BEN_TOTAL,
     features: { marketing: true, agenda: true, ia: true }, trialDays: 0,
     monthlyConversationLimit: 240, displayOrder: 31 },
 

@@ -164,7 +164,7 @@ export default function PreciosPage() {
               }}
             >
               <ToggleButton value="MENSUAL">Mensual</ToggleButton>
-              <ToggleButton value="ANUAL">Anual · 2 meses gratis</ToggleButton>
+              <ToggleButton value="ANUAL">Anual · 12 meses</ToggleButton>
             </ToggleButtonGroup>
           </Stack>
 

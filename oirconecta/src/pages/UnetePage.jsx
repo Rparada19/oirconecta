@@ -9,7 +9,7 @@ const PLANES = [
   {
     tier: 'Visible', sub: 'Te encuentran en el directorio', tag: null, feat: false,
     m: { precio: '$40.000', per: '/mes', iva: '+ IVA 19% — total $47.600', extra: null },
-    a: { precio: '$400.000', per: '/año', iva: '+ IVA 19% — total $476.000', extra: 'Equivale a 10 meses (2 gratis)' },
+    a: { precio: '$480.000', per: '/año', iva: '+ IVA 19% — total $571.200', extra: '12 meses de servicio' },
     trial: '90 días de prueba gratis',
     items: ['Perfil verificado en el directorio', 'Presentación personal', 'Presentación de servicios',
       'Marcas que manejas', 'Reseñas de pacientes', 'Cómo llegar (mapa)', 'Mensaje directo de pacientes'],
@@ -17,7 +17,7 @@ const PLANES = [
   {
     tier: 'Pro', sub: 'Agenda tus citas online', tag: 'Más popular', feat: true,
     m: { precio: '$80.000', per: '/mes', iva: '+ IVA 19% — total $95.200', extra: null },
-    a: { precio: '$800.000', per: '/año', iva: '+ IVA 19% — total $952.000', extra: 'Equivale a 10 meses (2 gratis)' },
+    a: { precio: '$960.000', per: '/año', iva: '+ IVA 19% — total $1.142.400', extra: '12 meses de servicio' },
     trial: null,
     items: ['Todo lo de Visible', 'Sistema de agendamiento propio', 'Reservas desde tu perfil público',
       'Integración con Google Calendar', 'Recordatorios automáticos'],
@@ -25,7 +25,7 @@ const PLANES = [
   {
     tier: 'Total', sub: 'Agente virtual + WhatsApp', tag: 'Con IA', feat: false, ia: true,
     m: { precio: '$150.000', per: '/mes', iva: '+ IVA 19% — total $178.500', extra: null },
-    a: { precio: '$1.500.000', per: '/año', iva: '+ IVA 19% — total $1.785.000', extra: 'Equivale a 10 meses (2 gratis)' },
+    a: { precio: '$1.800.000', per: '/año', iva: '+ IVA 19% — total $2.142.000', extra: '12 meses de servicio' },
     trial: null,
     items: ['Todo lo de Pro', 'Agente virtual que agenda, reagenda y resuelve dudas',
       'Integración con WhatsApp', '240 conversaciones/mes (chat, widget y WhatsApp)', 'Paquetes adicionales disponibles'],
