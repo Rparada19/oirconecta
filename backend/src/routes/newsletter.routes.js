@@ -28,14 +28,40 @@ const prisma = new PrismaClient();
 const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://oirconecta.com';
 const API_URL = process.env.PUBLIC_API_URL || 'https://oirconecta-api.onrender.com';
 
+/** Los coverUrl del blog son relativos ('/img/x.jpg'): en un correo no resuelven. */
+function urlAbsoluta(u) {
+  if (!u) return null;
+  const s = String(u).trim();
+  if (/^https?:\/\//i.test(s)) return s;
+  return `${SITE_URL}${s.startsWith('/') ? '' : '/'}${s}`;
+}
+
+/** Outlook ignora max-width en <img>: hay que dar width numérico y display:block. */
+function imgCorreo(src, alt = '') {
+  const abs = urlAbsoluta(src);
+  if (!abs) return '';
+  return `<img src="${abs}" alt="${alt}" width="560" style="display:block;width:100%;max-width:560px;height:auto;border:0;outline:none;text-decoration:none;border-radius:12px;margin:0 0 24px;" />`;
+}
+
+/** Reescribe los enlaces del cuerpo para poder medir clics. */
+function conRastreoDeClics(html, campaignId, subscriberId) {
+  return String(html).replace(/href="(https?:\/\/[^"]+)"/gi, (m, url) => {
+    if (url.includes('/api/newsletter/')) return m; // baja y píxel no se rastrean
+    const destino = encodeURIComponent(url);
+    return `href="${API_URL}/api/newsletter/track/click/${campaignId}/${subscriberId}?u=${destino}"`;
+  });
+}
+
 // GIF transparente 1x1 para el pixel de apertura.
 const PIXEL = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
   'base64'
 );
 
-function unsubscribeUrl(token) {
-  return `${API_URL}/api/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;
+function unsubscribeUrl(token, campaignId) {
+  const base = `${API_URL}/api/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;
+  // `c` atribuye la baja a la campaña: así se ve qué envío quema lista.
+  return campaignId ? `${base}&c=${encodeURIComponent(campaignId)}` : base;
 }
 
 // ── Público: suscribirse ──
@@ -88,7 +114,7 @@ router.post(
 // ── Público: baja ──
 router.get(
   '/unsubscribe',
-  [query('token').isString().isLength({ min: 10, max: 80 })],
+  [query('token').isString().isLength({ min: 10, max: 80 }), query('c').optional().isString()],
   validateRequest,
   async (req, res, next) => {
     try {
@@ -96,7 +122,11 @@ router.get(
       if (sub && sub.status === 'ACTIVE') {
         await prisma.newsletterSubscriber.update({
           where: { id: sub.id },
-          data: { status: 'UNSUBSCRIBED', unsubscribedAt: new Date() },
+          data: {
+            status: 'UNSUBSCRIBED',
+            unsubscribedAt: new Date(),
+            unsubFromCampaignId: req.query.c || null,
+          },
         });
       }
       res
@@ -109,6 +139,35 @@ router.get(
     }
   }
 );
+
+// ── Público: rastreo de clic ──
+// Redirige al destino real y marca el clic. Si algo falla, igual redirige:
+// nunca dejar a un lector varado por una métrica.
+router.get('/track/click/:campaignId/:subscriberId', async (req, res) => {
+  const destino = req.query.u ? decodeURIComponent(String(req.query.u)) : SITE_URL;
+  try {
+    const { campaignId, subscriberId } = req.params;
+    const send = await prisma.newsletterSend.findUnique({
+      where: { campaignId_subscriberId: { campaignId, subscriberId } },
+    });
+    if (send && !send.clickedAt) {
+      // Único por persona: el segundo clic del mismo lector no infla la métrica.
+      await prisma.$transaction([
+        prisma.newsletterSend.update({
+          where: { id: send.id },
+          data: { clickedAt: new Date(), status: 'clicked' },
+        }),
+        prisma.newsletterCampaign.update({
+          where: { id: campaignId },
+          data: { clickCount: { increment: 1 } },
+        }),
+      ]);
+    }
+  } catch (e) {
+    console.error('[newsletter/click]', e?.message);
+  }
+  res.redirect(302, destino);
+});
 
 // ── Público: pixel de apertura ──
 router.get('/track/open/:campaignId/:subscriberId.gif', async (req, res) => {
@@ -216,6 +275,44 @@ router.get('/admin/stats', authenticate, authorize('ADMIN'), async (_req, res, n
 router.get('/admin/campaigns', authenticate, authorize('ADMIN'), async (req, res, next) => {
   try {
     const items = await prisma.newsletterCampaign.findMany({ orderBy: { createdAt: 'desc' }, take: 50 });
+
+    // Métricas derivadas de los envíos reales, no de contadores sueltos:
+    // únicos por persona, para que un lector que abre cinco veces cuente una.
+    const ids = items.map((c) => c.id);
+    const [abiertos, clicados, rebotes, bajas] = ids.length
+      ? await Promise.all([
+          prisma.newsletterSend.groupBy({ by: ['campaignId'], where: { campaignId: { in: ids }, openedAt: { not: null } }, _count: { _all: true } }),
+          prisma.newsletterSend.groupBy({ by: ['campaignId'], where: { campaignId: { in: ids }, clickedAt: { not: null } }, _count: { _all: true } }),
+          prisma.newsletterSend.groupBy({ by: ['campaignId'], where: { campaignId: { in: ids }, status: { in: ['bounced', 'failed'] } }, _count: { _all: true } }),
+          prisma.newsletterSubscriber.groupBy({ by: ['unsubFromCampaignId'], where: { unsubFromCampaignId: { in: ids } }, _count: { _all: true } }),
+        ])
+      : [[], [], [], []];
+
+    const cuenta = (rows, key) => (id) => rows.find((r) => r[key] === id)?._count?._all || 0;
+    const abrio = cuenta(abiertos, 'campaignId');
+    const clico = cuenta(clicados, 'campaignId');
+    const reboto = cuenta(rebotes, 'campaignId');
+    const bajo = cuenta(bajas, 'unsubFromCampaignId');
+    const pct = (parte, total) => (total ? Math.round((parte / total) * 1000) / 10 : null);
+
+    for (const c of items) {
+      const enviados = c.sentCount || 0;
+      c.metricas = {
+        destinatarios: c.recipientCount || 0,
+        enviados,
+        aperturasUnicas: abrio(c.id),
+        aperturasTotales: c.openCount || 0,
+        clicsUnicos: clico(c.id),
+        rebotes: reboto(c.id),
+        bajas: bajo(c.id),
+        tasaApertura: pct(abrio(c.id), enviados),
+        tasaClic: pct(clico(c.id), enviados),
+        // CTOR: de los que abrieron, cuántos entraron. Mide si el contenido
+        // convence, sin depender de cuán bueno fue el asunto.
+        tasaClicSobreApertura: pct(clico(c.id), abrio(c.id)),
+        tasaBaja: pct(bajo(c.id), enviados),
+      };
+    }
     res.json({ success: true, data: items });
   } catch (e) {
     next(e);
@@ -277,7 +374,7 @@ router.post(
       const url = `https://oirconecta.com/blog/${post.slug}/`;
       const resumen = post.resumen || '';
       const htmlContent = `
-        ${post.coverUrl ? `<img src="${post.coverUrl}" alt="${post.titulo}" style="width:100%;max-width:560px;border-radius:12px;margin-bottom:24px;" />` : ''}
+        ${imgCorreo(post.coverUrl, post.titulo)}
         <h1 style="font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#272F50;margin:0 0 16px;">${post.titulo}</h1>
         ${resumen ? `<p style="font-size:16px;line-height:1.65;color:#4b5563;margin:0 0 28px;">${resumen}</p>` : ''}
         <a href="${url}" style="display:inline-block;background:#085946;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">Leer el artículo completo</a>
@@ -351,9 +448,9 @@ router.post(
             nombre: sub.nombre,
             subject: campaign.asunto,
             preheader: campaign.preheader,
-            contentHtml: campaign.htmlContent,
+            contentHtml: conRastreoDeClics(campaign.htmlContent, campaign.id, sub.id),
             pixelUrl,
-            unsubscribeUrl: unsubscribeUrl(sub.unsubscribeToken),
+            unsubscribeUrl: unsubscribeUrl(sub.unsubscribeToken, campaign.id),
           });
           sent += 1;
           await prisma.newsletterSend.update({ where: { id: send.id }, data: { status: 'sent' } });

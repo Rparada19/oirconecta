@@ -298,7 +298,10 @@ export default function AdminNewsletterPage() {
                   <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Enviados</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Aperturas</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Tasa</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Clics</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Clic/apertura</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Bajas</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Rebotes</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Fecha</TableCell>
                   <TableCell />
                 </TableRow>
@@ -313,9 +316,26 @@ export default function AdminNewsletterPage() {
                         : 'Todos'}
                     </TableCell>
                     <TableCell><Chip size="small" label={c.status} /></TableCell>
-                    <TableCell>{c.sentCount}</TableCell>
-                    <TableCell>{c.openCount}</TableCell>
-                    <TableCell>{c.sentCount ? `${Math.round((c.openCount / c.sentCount) * 100)}%` : '—'}</TableCell>
+                    <TableCell>{c.metricas?.enviados ?? c.sentCount}</TableCell>
+                    <TableCell>
+                      {c.metricas?.aperturasUnicas ?? c.openCount}
+                      {c.metricas?.tasaApertura != null && (
+                        <Typography component="span" sx={{ ml: 0.75, fontSize: '0.75rem', color: 'text.secondary' }}>
+                          {c.metricas.tasaApertura}%
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {c.metricas?.clicsUnicos ?? 0}
+                      {c.metricas?.tasaClic != null && (
+                        <Typography component="span" sx={{ ml: 0.75, fontSize: '0.75rem', color: 'text.secondary' }}>
+                          {c.metricas.tasaClic}%
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>{c.metricas?.tasaClicSobreApertura != null ? `${c.metricas.tasaClicSobreApertura}%` : '—'}</TableCell>
+                    <TableCell sx={{ color: c.metricas?.bajas ? '#b91c1c' : 'inherit' }}>{c.metricas?.bajas ?? 0}</TableCell>
+                    <TableCell>{c.metricas?.rebotes ?? 0}</TableCell>
                     <TableCell>{c.sentAt ? new Date(c.sentAt).toLocaleDateString('es-CO') : '—'}</TableCell>
                     <TableCell>
                       {(c.status === 'DRAFT' || c.status === 'SCHEDULED') && (
@@ -327,7 +347,7 @@ export default function AdminNewsletterPage() {
                   </TableRow>
                 ))}
                 {campaigns.length === 0 && (
-                  <TableRow><TableCell colSpan={8} sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>Sin campañas todavía.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={11} sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>Sin campañas todavía.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -384,12 +404,23 @@ export default function AdminNewsletterPage() {
             />
             {!campana.blogPostId && (
               <>
-                <TextField
-                  label="Imagen de portada (URL)" size="small" fullWidth
-                  value={campana.imagenUrl}
-                  onChange={(e) => setCampana({ ...campana, imagenUrl: e.target.value })}
-                  helperText="Opcional. Debe ser una imagen ya publicada en el sitio."
-                />
+                <Box>
+                  <TextField
+                    label="Imagen de portada (URL)" size="small" fullWidth
+                    value={campana.imagenUrl}
+                    onChange={(e) => setCampana({ ...campana, imagenUrl: e.target.value })}
+                    helperText="Puedes pegar la ruta del sitio (/img/foto.jpg); la volvemos absoluta al enviar."
+                  />
+                  {campana.imagenUrl && (
+                    <Box
+                      component="img"
+                      src={campana.imagenUrl.startsWith('http') ? campana.imagenUrl : `https://oirconecta.com${campana.imagenUrl.startsWith('/') ? '' : '/'}${campana.imagenUrl}`}
+                      alt="Vista previa de la portada"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      sx={{ mt: 1.5, width: '100%', maxWidth: 360, borderRadius: 2, display: 'block' }}
+                    />
+                  )}
+                </Box>
                 <TextField
                   label="Contenido" multiline rows={9} fullWidth
                   value={campana.htmlContent}

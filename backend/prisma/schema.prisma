@@ -1221,6 +1221,9 @@ model NewsletterSubscriber {
   unsubscribeToken String                     @unique @default(uuid())
   welcomeSentAt    DateTime?
   unsubscribedAt   DateTime?
+  /// Campaña desde la que se dio de baja, si la baja vino de un correo.
+  /// Permite medir qué envío quema lista.
+  unsubFromCampaignId String?
   createdAt        DateTime                   @default(now())
   updatedAt        DateTime                   @updatedAt
 
