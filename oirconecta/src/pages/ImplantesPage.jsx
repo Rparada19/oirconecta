@@ -56,7 +56,7 @@ function MarcaCard({ m, delay }) {
     <Box
       ref={ref}
       component={RouterLink}
-      to={`/implantes/${m.slug}`}
+      to={`/implantes/${m.slug}/`}
       sx={{
         display: 'flex', flexDirection: 'column',
         height: '100%',

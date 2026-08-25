@@ -58,7 +58,7 @@ function FeaturedCard({ post }) {
   return (
     <Box
       component={RouterLink}
-      to={`/blog/${post.slug}`}
+      to={`/blog/${post.slug}/`}
       sx={{
         display: 'block',
         position: 'relative',
@@ -168,7 +168,7 @@ function CompactCard({ post }) {
   return (
     <Box
       component={RouterLink}
-      to={`/blog/${post.slug}`}
+      to={`/blog/${post.slug}/`}
       sx={{
         display: 'flex', gap: 2,
         textDecoration: 'none',
@@ -228,7 +228,7 @@ function PostCard({ post }) {
   return (
     <Box
       component={RouterLink}
-      to={`/blog/${post.slug}`}
+      to={`/blog/${post.slug}/`}
       sx={{
         display: 'flex', flexDirection: 'column',
         textDecoration: 'none',
@@ -511,7 +511,7 @@ export default function BlogPage() {
               <Grid item xs={12} md={6}>
                 <Box
                   component={RouterLink}
-                  to={`/blog/${featured.slug}`}
+                  to={`/blog/${featured.slug}/`}
                   sx={{
                     display: 'block', textDecoration: 'none',
                     borderRadius: '12px', overflow: 'hidden',

@@ -715,7 +715,7 @@ export default function BlogPostPage() {
                 </Typography>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
                   {related.map((r) => (
-                    <Box key={r.id || r.slug} component={RouterLink} to={`/blog/${r.slug}`} sx={{
+                    <Box key={r.id || r.slug} component={RouterLink} to={`/blog/${r.slug}/`} sx={{
                       display: 'block', textDecoration: 'none', p: 2.5, height: '100%',
                       borderRadius: 3, border: '1px solid #e5e7eb', bgcolor: '#fff',
                       transition: 'box-shadow .2s, border-color .2s',

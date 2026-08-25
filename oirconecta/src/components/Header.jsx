@@ -166,7 +166,7 @@ function MegaAudifonos({ navigate, onClose }) {
             <Box
               key={b.slug}
               component={RouterLink}
-              to={`/audifonos/${b.slug}`}
+              to={`/audifonos/${b.slug}/`}
               onClick={onClose}
               sx={{
                 display: 'flex', alignItems: 'center',
@@ -196,7 +196,7 @@ function MegaAudifonos({ navigate, onClose }) {
         </Typography>
         <Box
           component={RouterLink}
-          to="/blog/guia-elegir-primer-audifono"
+          to="/blog/guia-elegir-primer-audifono/"
           onClick={onClose}
           sx={{
             display: 'block', textDecoration: 'none', color: 'inherit',
@@ -234,7 +234,7 @@ function MegaImplantes({ navigate, onClose }) {
         <Box
           key={b.slug}
           component={RouterLink}
-          to={`/implantes/${b.slug}`}
+          to={`/implantes/${b.slug}/`}
           onClick={onClose}
           sx={{
             display: 'block', textDecoration: 'none', color: 'inherit',
@@ -380,7 +380,7 @@ function MegaBlog({ navigate, onClose }) {
             <Box
               key={a.slug}
               component={RouterLink}
-              to={`/blog/${a.slug}`}
+              to={`/blog/${a.slug}/`}
               onClick={onClose}
               sx={{
                 display: 'flex', gap: 1.5, alignItems: 'center', textDecoration: 'none', color: 'inherit',
@@ -406,7 +406,7 @@ function MegaBlog({ navigate, onClose }) {
 
       <Box
         component={RouterLink}
-        to="/blog/menopausia-audicion"
+        to="/blog/menopausia-audicion/"
         onClick={onClose}
         sx={{
           display: 'block', textDecoration: 'none', color: 'inherit',

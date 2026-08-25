@@ -44,7 +44,7 @@ function MarcaCard({ m, delay }) {
     <Box
       ref={ref}
       component={RouterLink}
-      to={`/audifonos/${m.slug}`}
+      to={`/audifonos/${m.slug}/`}
       sx={{
         display: 'block', textDecoration: 'none', color: 'inherit',
         bgcolor: '#fff', border: `1px solid ${C.border}`,

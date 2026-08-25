@@ -322,10 +322,10 @@ export default function DirectorioResultadosPage() {
             <Typography color="text.secondary" sx={{ mb: 2, lineHeight: 1.65, fontSize: { md: '1.0625rem' } }}>
               Para datos de demostración, active <code>VITE_DIRECTORY_DEMO=true</code> o utilice el entorno de desarrollo.
             </Typography>
-            <Button component={RouterLink} to="/profesionales/audiologos" variant="contained" sx={{ mr: 1, borderRadius: 2 }}>
+            <Button component={RouterLink} to="/profesionales/audiologos/" variant="contained" sx={{ mr: 1, borderRadius: 2 }}>
               Material de referencia
             </Button>
-            <Button component={RouterLink} to="/profesionales/otologos" variant="outlined" sx={{ borderRadius: 2 }}>
+            <Button component={RouterLink} to="/profesionales/otologos/" variant="outlined" sx={{ borderRadius: 2 }}>
               ORL de referencia
             </Button>
           </Paper>
