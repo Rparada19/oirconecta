@@ -1,3 +1,16 @@
+# ⚠️ OJO: el static site `oirconecta-web` NO toma sus rewrites de este archivo.
+# Sus reglas viven en el panel (Render → oirconecta-web → Redirects/Rewrites) y
+# solo las de allí surten efecto. Verificado el 2026-08-25: /nosotros y /blog
+# sin barra final siguen sirviendo el home pese a estar aquí desde hace meses.
+# Si agregas una regla, agrégala EN EL PANEL. Este bloque queda como referencia
+# y para el día que se sincronice el blueprint.
+#
+# Estado del panel al 2026-08-25 (todas Rewrite, y `/*` de última):
+#   /items/* /shop/* /wp-content/* /wp-includes/* /wp-admin/* → /gone/... (410)
+#   /sitemap.xml → backend
+#   /category/* /tag/* /author/* /feed/* /doctors/* /wp-json/* → /gone/... (410)
+#   /* → /index.html
+#
 # Render Blueprint para OírConecta.
 # - oirconecta-api: web service Node (backend Express), ya existente.
 # - oirconecta-web: static site (frontend Vite), nuevo. Sirve oirconecta.com.
