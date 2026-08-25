@@ -9,6 +9,7 @@
 #   /items/* /shop/* /wp-content/* /wp-includes/* /wp-admin/* → /gone/... (410)
 #   /sitemap.xml → backend
 #   /category/* /tag/* /author/* /feed/* /doctors/* /wp-json/* → /gone/... (410)
+#   /health-forum/* → /gone/health-forum (410)   [añadida 2026-08-25]
 #   /* → /index.html
 #
 # Render Blueprint para OírConecta.
@@ -100,6 +101,11 @@ services:
       - type: rewrite
         source: /wp-json/*
         destination: https://oirconecta-api.onrender.com/gone/wp-json
+      # Confirmada en el export de GSC (2026-08-25): servía el home con 200,
+      # o sea soft 404. Es la única familia nueva que respaldan los datos.
+      - type: rewrite
+        source: /health-forum/*
+        destination: https://oirconecta-api.onrender.com/gone/health-forum
       - type: rewrite
         source: /xmlrpc.php
         destination: https://oirconecta-api.onrender.com/gone/xmlrpc
