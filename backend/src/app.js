@@ -135,6 +135,38 @@ app.all('/gone/*', (req, res) => {
   res.status(410).type('text/plain').send('410 Gone');
 });
 
+// 404 real para rutas que no existen en el SPA.
+// El static site de Render solo sabe responder 200; sin esto, CUALQUIER URL
+// inventada devolvía el HTML del home y Google la indexaba como un duplicado
+// de la portada — justo lo que mantenía vivas las 360.000 URLs del hack.
+app.get('/notfound', (req, res) => {
+  res.status(404).type('html').send(`<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, follow">
+<title>Página no encontrada — OírConecta</title>
+<style>
+  body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;background:#fbfcfc;color:#272F50;
+       display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px;}
+  .caja{max-width:460px;text-align:center;}
+  h1{font-family:Georgia,serif;font-size:1.75rem;font-weight:600;margin:0 0 12px;}
+  p{color:#5b6b66;line-height:1.65;margin:0 0 28px;}
+  a{display:inline-block;background:#085946;color:#fff;text-decoration:none;
+    padding:13px 26px;border-radius:10px;font-weight:600;}
+</style>
+</head>
+<body>
+  <div class="caja">
+    <h1>No encontramos esta página</h1>
+    <p>Puede que el enlace esté viejo o que la dirección tenga un error. Desde el inicio puedes llegar al directorio, al blog y a los audífonos.</p>
+    <a href="https://oirconecta.com/">Ir al inicio</a>
+  </div>
+</body>
+</html>`);
+});
+
 // Sitemap dinámico: incluye páginas fijas + todos los blog posts publicados
 app.get('/sitemap.xml', async (req, res) => {
   try {
