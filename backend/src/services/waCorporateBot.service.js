@@ -26,7 +26,6 @@ const { sendWhatsAppText, sendWhatsAppInteractiveButtons } = require('../notific
 const booking = require('./professionalBooking.service');
 const retailService = require('./retail.service');
 const comercialService = require('./comercial.service');
-const captacionBotConfig = require('./captacionBotConfig.service');
 const config = require('../config');
 
 const prisma = new PrismaClient();
@@ -174,19 +173,21 @@ async function maybeSendHandshake(conversationId) {
     : '¡Hola! 👋';
 
   const bodyText =
-`${saludo} Somos OírConecta, centro auditivo en Bogotá y directorio nacional de audiólogos.
+`${saludo} Somos *OírConecta*, centro auditivo en Bogotá (Cr 10 #96-25 Cons. 320).
 
-Para atenderte mejor cuéntanos: ¿qué te trae por aquí?`;
+¿En qué te ayudamos hoy?`;
 
   try {
     const result = await sendWhatsAppInteractiveButtons({
       to: conv.phone,
       bodyText,
       footerText: 'Toca una opción para comenzar',
+      // Esta línea es del consultorio: solo pacientes. El profesional que
+      // quiere entrar al directorio va por el formulario de /precios, que cae
+      // en Captación comercial → Leads.
       buttons: [
-        { id: BUTTON_IDS.PACIENTE_BOGOTA,       title: '🩺 Agendar cita' },
-        { id: BUTTON_IDS.PROFESIONAL_DIRECTORIO, title: '👤 Soy profesional' },
-        { id: BUTTON_IDS.INFO_GENERAL,           title: '❓ Solo una duda' },
+        { id: BUTTON_IDS.PACIENTE_BOGOTA, title: '🩺 Agendar cita' },
+        { id: BUTTON_IDS.INFO_GENERAL,    title: '❓ Tengo una duda' },
       ],
     });
 
@@ -243,8 +244,9 @@ async function handleButtonReply({ conversationId, buttonId, buttonTitle }) {
 
   // Todas las ramas quedan en BOT para que el asistente atienda:
   // - PACIENTE_BOGOTA / INFO_GENERAL → agenda por IA.
-  // - PROFESIONAL_DIRECTORIO → captura 3 datos + comparte registro y LUEGO escala
-  //   al equipo comercial (el propio prompt agrega [ESCALAR_HUMANO] al final).
+  // - PROFESIONAL_DIRECTORIO → solo redirige al formulario de /precios. Llega
+  //   por el botón viejo de conversaciones ya abiertas; el handshake nuevo ya
+  //   no ofrece esa opción.
   const nextStatus = 'BOT';
 
   await prisma.whatsAppConversation.update({
@@ -268,13 +270,11 @@ Estamos en Cr 10 #96-25 Cons. 320, Bogotá.
 
 Si prefieres coordinar por acá o tienes alguna duda antes de agendar, cuéntame y con gusto te ayudo.`,
     PROFESIONAL_DIRECTORIO:
-`¡Genial! Para sumarte a nuestro directorio nacional, cuéntame por favor:
+`¡Gracias por escribirnos! 🙌 Esta línea atiende a los pacientes de nuestro centro en Bogotá.
 
-• Tu nombre completo
-• Tu especialidad
-• Ciudad donde ejerces
+Si eres profesional y quieres hacer parte del directorio, déjanos tus datos acá y el equipo comercial te contacta:
 
-Con eso te comparto el registro y aviso al equipo. 🙌`,
+👉 https://oirconecta.com/precios`,
     INFO_GENERAL:
 `Con gusto te ayudamos. Cuéntanos brevemente qué necesitas saber y en un momento te respondemos con la mejor información.`,
   }[contactType];
@@ -363,21 +363,31 @@ FORMATO WHATSAPP (obligatorio):
 ESCALACIÓN (rama PACIENTE_BOGOTA — muy restrictiva):
 - NUNCA agregues [ESCALAR_HUMANO] solo porque el paciente pida "hablar con alguien" o "conectar con el equipo". En ese caso responde: "Con gusto te ayudo directamente por acá — soy parte del equipo. Sigamos con tu agendamiento." y continúa el flow de agendar.
 - SOLO escalás con [ESCALAR_HUMANO] si hay urgencia médica clara (dolor fuerte, sangrado, pérdida súbita de audición) o si el paciente insiste 3+ veces en hablar con humano después de que le explicaste que puedes agendarle tú.
-- Si el tool de agendar falla técnicamente, dile "Tuve un problema técnico agendándote. ¿Podrías escribirme el día y la hora que prefieres y lo intento de nuevo?" — NO escales.`,
+- Si el tool de agendar falla técnicamente, dile "Tuve un problema técnico agendándote. ¿Podrías escribirme el día y la hora que prefieres y lo intento de nuevo?" — NO escales.
+
+SI QUIEN ESCRIBE ES UN PROFESIONAL (o te ofrece productos/servicios):
+- Señales: dice que es audiólogo/otorrino/fonoaudiólogo, que quiere "hacer parte del directorio", "registrar mi consultorio", "pautar", "ser aliado", "venderles" o "una alianza".
+- Respuesta única: agradece, aclara en una línea que esta línea atiende a los pacientes del centro, y comparte https://oirconecta.com/precios para que deje sus datos y lo contacte el equipo comercial.
+- NO le pidas datos, NO le des precios de planes, NO escales a humano. Si insiste, repite el formulario y cierra amable.`,
 
   PROFESIONAL_DIRECTORIO:
-`Eres el asistente de OírConecta. Atiendes a profesionales de salud auditiva (audiólogos, otorrinos, fonoaudiólogos) que quieren unirse al directorio nacional. Tu tarea es SIMPLE: capturar 3 datos y compartir el registro. Nada más.
+`Eres el asistente de OírConecta. Te escribió un profesional de la salud (audiólogo, otorrino, fonoaudiólogo) o alguien que quiere vendernos o proponernos algo.
 
-Flujo (máximo 2-3 mensajes, sin rodeos):
-1. Si te faltan, pide de forma natural: *nombre completo*, *especialidad* y *ciudad* (puedes pedirlos juntos).
-2. Apenas tengas los 3 datos, responde EXACTAMENTE con este espíritu: "¡Gracias, [nombre]! 🙌 Crea tu perfil aquí 👉 https://oirconecta.com/unete — nuestro equipo revisa tu solicitud y te contacta." y agrega al final [ESCALAR_HUMANO] para que el equipo comercial retome.
-3. Si NO es profesional de salud auditiva, dile amablemente que el directorio es solo para esas especialidades y agrega [ESCALAR_HUMANO].
+Esta línea de WhatsApp es SOLO para los pacientes del centro de Bogotá. Tu única tarea es redirigirlo al formulario, con amabilidad y en un solo mensaje.
 
-Reglas:
-- NO agendes reuniones ni uses herramientas de calendario. Solo capturas los 3 datos y compartes el link.
-- No prometas precios ni condiciones; eso lo ve el equipo.
-- Tono: cálido, profesional, colombiano, tuteo. Máximo 2-3 líneas por mensaje.
-- Formato WhatsApp: *negrita* con UN asterisco (nunca **), _itálica_, sin Markdown de otras plataformas.`,
+Qué haces:
+1. Agradece y explica en una línea que esta línea atiende pacientes del centro.
+2. Comparte el formulario: https://oirconecta.com/precios — ahí deja sus datos y el equipo comercial lo contacta.
+3. Si insiste o pregunta por precios, condiciones o cómo funciona el directorio, NO improvises: repite que todo eso lo resuelve el equipo por el formulario.
+
+Prohibido:
+- NO pidas nombre, especialidad ni ciudad. El formulario los pide.
+- NO prometas precios, planes ni tiempos de respuesta.
+- NO agendes reuniones ni uses herramientas de agenda.
+- NO agregues [ESCALAR_HUMANO]: el formulario es el canal, no la bandeja.
+
+Tono: cálido, breve, colombiano, tuteo. Máximo 3 líneas.
+Formato WhatsApp: *negrita* con UN asterisco (nunca **), _itálica_, sin Markdown de otras plataformas.`,
 
   INFO_GENERAL:
 `Eres el asistente virtual de OírConecta, plataforma colombiana de salud auditiva que combina:
@@ -400,7 +410,12 @@ Reglas:
 - Tono: cálido, empático, colombiano neutro, tuteo. Máximo 3 párrafos cortos.
 - No inventes precios exactos. No des diagnósticos.
 - Nunca menciones que eres una IA a menos que te pregunten directamente.
-- Formato WhatsApp: *negrita* con UN asterisco (nunca **), _itálica_, sin Markdown de otras plataformas.`,
+- Formato WhatsApp: *negrita* con UN asterisco (nunca **), _itálica_, sin Markdown de otras plataformas.
+
+SI QUIEN ESCRIBE ES UN PROFESIONAL (o te ofrece productos/servicios):
+- Señales: dice que es audiólogo/otorrino/fonoaudiólogo, que quiere "hacer parte del directorio", "registrar mi consultorio", "pautar", "ser aliado", "venderles" o "una alianza".
+- Respuesta única: agradece, aclara en una línea que esta línea atiende a los pacientes del centro, y comparte https://oirconecta.com/precios para que deje sus datos y lo contacte el equipo comercial.
+- NO le pidas datos, NO le des precios de planes, NO escales a humano. Si insiste, repite el formulario y cierra amable.`,
 };
 
 const ESCALATE_TAG = '[ESCALAR_HUMANO]';
@@ -459,19 +474,14 @@ async function handleTextForBot({ conversationId, incomingText }) {
   });
   systemPrompt = systemPrompt.replace('{HOY_PLACEHOLDER}', hoyLocal);
 
-  // Inyecta el argumentario comercial editable en la rama de captación.
-  if (conv.contactType === 'PROFESIONAL_DIRECTORIO') {
-    try {
-      const cfg = await captacionBotConfig.get();
-      systemPrompt += captacionBotConfig.buildPromptSection(cfg);
-    } catch (e) {
-      console.error('[wa-bot] no pude cargar captacionBotConfig:', e.message);
-    }
-  }
+  // La rama de profesional ya no argumenta ni capta por WhatsApp: solo manda
+  // al formulario de /precios, que cae en Captación comercial → Leads. Por eso
+  // aquí ya NO se inyecta captacionBotConfig.
 
-  // Un solo número atiende las dos ramas. La de paciente debe saber lo
-  // mismo que el widget de la ficha: marcas, servicios, horarios.
-  if (conv.contactType === 'PACIENTE_BOGOTA') {
+  // El número es del consultorio: tanto la rama de paciente como la de dudas
+  // generales deben saber lo mismo que el widget de la ficha (marcas,
+  // servicios, horarios).
+  if (conv.contactType === 'PACIENTE_BOGOTA' || conv.contactType === 'INFO_GENERAL') {
     try {
       const retailId = await retailProfileId();
       if (retailId) {
