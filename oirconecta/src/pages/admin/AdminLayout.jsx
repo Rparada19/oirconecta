@@ -23,7 +23,6 @@ import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import DraftsOutlinedIcon from '@mui/icons-material/DraftsOutlined';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -32,7 +31,6 @@ import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
-import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { getAdminToken, clearAdminToken, getAdminUser } from './adminAuth';
 import { canAccessAllAdminPages, canUseSalesCrm, ROLES } from '../../utils/rolePermissions';
 
@@ -105,6 +103,9 @@ function NavSection({ title, items, isActive }) {
 }
 
 // Items full admin (todo) — solo ADMIN.
+// Se retiraron "WhatsApp captación", "Agente IA" y "Bot de ventas": el número
+// de WhatsApp quedó solo para el consultorio y el profesional que quiere entrar
+// al directorio va por el formulario de /precios → Captación comercial → Leads.
 const ADMIN_FULL_NAV = [
   { label: 'Dashboard', icon: <DashboardOutlinedIcon />, path: '/portal-admin' },
   { label: 'Blog', icon: <ArticleOutlinedIcon />, path: '/portal-admin/blog' },
@@ -114,12 +115,10 @@ const ADMIN_FULL_NAV = [
   { label: 'Comparador', icon: <CompareArrowsOutlinedIcon />, path: '/portal-admin/comparador' },
   { label: 'Newsletter', icon: <MailOutlineRoundedIcon />, path: '/portal-admin/newsletter' },
   { label: 'Comunicaciones', icon: <DraftsOutlinedIcon />, path: '/portal-admin/comunicaciones' },
-  { label: 'WhatsApp captación', icon: <WhatsAppIcon />, path: '/portal-admin/whatsapp' },
   { label: 'Marketing & Ventas', icon: <CampaignOutlinedIcon />, path: '/portal-admin/marketing' },
   { label: 'Insights del sitio',  icon: <InsightsOutlinedIcon />, path: '/portal-admin/marketing/insights' },
   { label: 'Buzón de contacto', icon: <InboxOutlinedIcon />, path: '/portal-admin/contactos' },
   { label: 'Suscripciones', icon: <WorkspacePremiumOutlinedIcon />, path: '/portal-admin/suscripciones' },
-  { label: 'Agente IA', icon: <SmartToyOutlinedIcon />, path: '/portal-admin/ia' },
   { label: 'Marcas (IA)', icon: <AutoAwesomeOutlinedIcon />, path: '/portal-admin/marcas' },
 ];
 
@@ -128,7 +127,6 @@ const SALES_NAV = [
   { label: 'Mi día',   icon: <WbSunnyOutlinedIcon />,    path: '/portal-admin/sales' },
   { label: 'Agenda',   icon: <EventAvailableOutlinedIcon />, path: '/portal-admin/sales/agenda' },
   { label: 'Leads',    icon: <PeopleAltOutlinedIcon />,  path: '/portal-admin/sales/leads' },
-  { label: 'Bot de ventas', icon: <SmartToyOutlinedIcon />, path: '/portal-admin/sales/bot' },
   { label: 'Reportes', icon: <InsightsOutlinedIcon />,   path: '/portal-admin/sales/reportes' },
 ];
 

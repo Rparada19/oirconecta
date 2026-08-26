@@ -127,16 +127,13 @@ const AdminComparadorPage = lazy(() => import('./pages/admin/AdminComparadorPage
 const AdminNewsletterPage = lazy(() => import('./pages/admin/AdminNewsletterPage'));
 const AdminContactosPage = lazy(() => import('./pages/admin/AdminContactosPage'));
 const AdminSuscripcionesPage = lazy(() => import('./pages/admin/AdminSuscripcionesPage'));
-const AdminIAPage = lazy(() => import('./pages/admin/AdminIAPage'));
 const AdminMarcasPage = lazy(() => import('./pages/admin/AdminMarcasPage'));
 const AdminMarketingPage = lazy(() => import('./pages/admin/AdminMarketingPage'));
 const AdminComunicacionesPage = lazy(() => import('./pages/admin/AdminComunicacionesPage'));
 const CrmPlantillasPage = lazy(() => import('./pages/crm/PlantillasPage'));
-const AdminWhatsAppPage = lazy(() => import('./pages/admin/AdminWhatsAppPage'));
 const AdminInsightsPage = lazy(() => import('./pages/admin/AdminInsightsPage'));
 const SalesDiaPage = lazy(() => import('./pages/admin/sales/SalesDiaPage'));
 const SalesAgendaPage = lazy(() => import('./pages/admin/sales/SalesAgendaPage'));
-const SalesBotVentasPage = lazy(() => import('./pages/admin/sales/SalesBotVentasPage'));
 const SalesLeadsPage = lazy(() => import('./pages/admin/sales/SalesLeadsPage'));
 const SalesLeadDetailPage = lazy(() => import('./pages/admin/sales/SalesLeadDetailPage'));
 const SalesReportesPage = lazy(() => import('./pages/admin/sales/SalesReportesPage'));
@@ -347,16 +344,13 @@ export default function App() {
             <Route path="newsletter" element={<ProtectedAdminRoute requireFullAdmin><AdminNewsletterPage /></ProtectedAdminRoute>} />
             <Route path="contactos" element={<ProtectedAdminRoute requireFullAdmin><AdminContactosPage /></ProtectedAdminRoute>} />
             <Route path="suscripciones" element={<ProtectedAdminRoute requireFullAdmin><AdminSuscripcionesPage /></ProtectedAdminRoute>} />
-            <Route path="ia" element={<ProtectedAdminRoute requireFullAdmin><AdminIAPage /></ProtectedAdminRoute>} />
             <Route path="marcas" element={<ProtectedAdminRoute requireFullAdmin><AdminMarcasPage /></ProtectedAdminRoute>} />
             <Route path="marketing" element={<ProtectedAdminRoute requireFullAdmin><AdminMarketingPage /></ProtectedAdminRoute>} />
             <Route path="marketing/insights" element={<ProtectedAdminRoute requireFullAdmin><AdminInsightsPage /></ProtectedAdminRoute>} />
             <Route path="comunicaciones" element={<ProtectedAdminRoute requireFullAdmin><AdminComunicacionesPage /></ProtectedAdminRoute>} />
-            <Route path="whatsapp" element={<ProtectedAdminRoute requireFullAdmin><AdminWhatsAppPage /></ProtectedAdminRoute>} />
             {/* CRM Sales — captación outbound de profesionales (ADMIN + EJECUTIVO_COMERCIAL) */}
             <Route path="sales" element={<ProtectedAdminRoute requireSales><SalesDiaPage /></ProtectedAdminRoute>} />
             <Route path="sales/agenda" element={<ProtectedAdminRoute requireSales><SalesAgendaPage /></ProtectedAdminRoute>} />
-            <Route path="sales/bot" element={<ProtectedAdminRoute requireSales><SalesBotVentasPage /></ProtectedAdminRoute>} />
             <Route path="sales/leads" element={<ProtectedAdminRoute requireSales><SalesLeadsPage /></ProtectedAdminRoute>} />
             <Route path="sales/leads/:id" element={<ProtectedAdminRoute requireSales><SalesLeadDetailPage /></ProtectedAdminRoute>} />
             <Route path="sales/reportes" element={<ProtectedAdminRoute requireSales><SalesReportesPage /></ProtectedAdminRoute>} />
