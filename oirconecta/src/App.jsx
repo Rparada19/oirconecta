@@ -127,6 +127,7 @@ const AdminComparadorPage = lazy(() => import('./pages/admin/AdminComparadorPage
 const AdminNewsletterPage = lazy(() => import('./pages/admin/AdminNewsletterPage'));
 const AdminContactosPage = lazy(() => import('./pages/admin/AdminContactosPage'));
 const AdminSuscripcionesPage = lazy(() => import('./pages/admin/AdminSuscripcionesPage'));
+const AdminIAPage = lazy(() => import('./pages/admin/AdminIAPage'));
 const AdminMarcasPage = lazy(() => import('./pages/admin/AdminMarcasPage'));
 const AdminMarketingPage = lazy(() => import('./pages/admin/AdminMarketingPage'));
 const AdminComunicacionesPage = lazy(() => import('./pages/admin/AdminComunicacionesPage'));
@@ -344,6 +345,7 @@ export default function App() {
             <Route path="newsletter" element={<ProtectedAdminRoute requireFullAdmin><AdminNewsletterPage /></ProtectedAdminRoute>} />
             <Route path="contactos" element={<ProtectedAdminRoute requireFullAdmin><AdminContactosPage /></ProtectedAdminRoute>} />
             <Route path="suscripciones" element={<ProtectedAdminRoute requireFullAdmin><AdminSuscripcionesPage /></ProtectedAdminRoute>} />
+            <Route path="ia" element={<ProtectedAdminRoute requireFullAdmin><AdminIAPage /></ProtectedAdminRoute>} />
             <Route path="marcas" element={<ProtectedAdminRoute requireFullAdmin><AdminMarcasPage /></ProtectedAdminRoute>} />
             <Route path="marketing" element={<ProtectedAdminRoute requireFullAdmin><AdminMarketingPage /></ProtectedAdminRoute>} />
             <Route path="marketing/insights" element={<ProtectedAdminRoute requireFullAdmin><AdminInsightsPage /></ProtectedAdminRoute>} />

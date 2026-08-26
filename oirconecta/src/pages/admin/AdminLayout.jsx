@@ -30,6 +30,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import { getAdminToken, clearAdminToken, getAdminUser } from './adminAuth';
 import { canAccessAllAdminPages, canUseSalesCrm, ROLES } from '../../utils/rolePermissions';
@@ -103,9 +104,10 @@ function NavSection({ title, items, isActive }) {
 }
 
 // Items full admin (todo) — solo ADMIN.
-// Se retiraron "WhatsApp captación", "Agente IA" y "Bot de ventas": el número
-// de WhatsApp quedó solo para el consultorio y el profesional que quiere entrar
-// al directorio va por el formulario de /precios → Captación comercial → Leads.
+// Se retiraron "WhatsApp captación" y "Bot de ventas": el número de WhatsApp
+// quedó solo para el consultorio y el profesional que quiere entrar al
+// directorio va por el formulario de /precios → Captación comercial → Leads.
+// "Agente IA" se queda: es el panel del producto que se le vende al directorio.
 const ADMIN_FULL_NAV = [
   { label: 'Dashboard', icon: <DashboardOutlinedIcon />, path: '/portal-admin' },
   { label: 'Blog', icon: <ArticleOutlinedIcon />, path: '/portal-admin/blog' },
@@ -119,6 +121,7 @@ const ADMIN_FULL_NAV = [
   { label: 'Insights del sitio',  icon: <InsightsOutlinedIcon />, path: '/portal-admin/marketing/insights' },
   { label: 'Buzón de contacto', icon: <InboxOutlinedIcon />, path: '/portal-admin/contactos' },
   { label: 'Suscripciones', icon: <WorkspacePremiumOutlinedIcon />, path: '/portal-admin/suscripciones' },
+  { label: 'Agente IA', icon: <SmartToyOutlinedIcon />, path: '/portal-admin/ia' },
   { label: 'Marcas (IA)', icon: <AutoAwesomeOutlinedIcon />, path: '/portal-admin/marcas' },
 ];
 
