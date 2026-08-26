@@ -8,9 +8,18 @@ const prisma = require('../db');
 
 const getPatientByEmail = async (email) => {
   if (!email || !String(email).trim()) return null;
-  return prisma.patient.findUnique({
+  // findFirst, no findUnique: el índice único de patients.email se eliminó en la
+  // migración fase1_crm_clinico (hay pacientes sin correo y correos repetidos).
+  return prisma.patient.findFirst({
     where: { email: String(email).trim().toLowerCase() },
+    orderBy: { createdAt: 'asc' },
   });
+};
+
+/** Resuelve el paciente por id (llave estable) o, en su defecto, por email. */
+const resolvePatient = async ({ patientId, patientEmail }) => {
+  if (patientId) return prisma.patient.findUnique({ where: { id: String(patientId) } });
+  return getPatientByEmail(patientEmail);
 };
 
 const toFrontend = (i) => {
@@ -62,8 +71,11 @@ const listByPatientId = async (patientId) => {
 /**
  * Métricas CRM para un paciente: totales y últimas fechas por tipo
  */
-const getMetricsByPatientEmail = async (patientEmail) => {
-  const patient = await getPatientByEmail(patientEmail);
+const CONTACT_TYPES = ['call', 'message', 'email', 'visit'];
+
+/** Métricas CRM de un paciente. Acepta id (llave estable) o email (legacy). */
+const getMetricsByPatient = async ({ patientId, patientEmail }) => {
+  const patient = await resolvePatient({ patientId, patientEmail });
   if (!patient) return null;
 
   const interactions = await prisma.interaction.findMany({
@@ -79,6 +91,22 @@ const getMetricsByPatientEmail = async (patientEmail) => {
     return d ? new Date(d).toISOString() : null;
   };
 
+  // Último contacto real con el paciente (cualquier canal). Es el dato que
+  // dice si el paciente está abandonado, no el total de llamadas.
+  const contactos = interactions.filter((i) => CONTACT_TYPES.includes(i.type));
+  const ultimoContacto = contactos[0]?.occurredAt ? new Date(contactos[0].occurredAt).toISOString() : null;
+  const diasSinContacto = ultimoContacto
+    ? Math.floor((Date.now() - new Date(ultimoContacto).getTime()) / 86400000)
+    : null;
+
+  // Próxima acción pendiente: lo agendado que aún no ocurre.
+  const ahora = new Date();
+  const pendientes = interactions
+    .filter((i) => i.scheduledDate && new Date(i.scheduledDate) >= new Date(ahora.toDateString())
+      && !(i.metadata && typeof i.metadata === 'object' && i.metadata.resolvedAt))
+    .sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+  const proxima = pendientes[0] || null;
+
   return {
     totalLlamadas: byType('call').length,
     totalMensajes: byType('message').length,
@@ -87,21 +115,38 @@ const getMetricsByPatientEmail = async (patientEmail) => {
     totalRecordatorios: byType('reminder').length,
     totalSeguimientoConsumibles: byType('follow_up_consumables').length,
     totalSeguimientoGarantias: byType('follow_up_garantia').length,
+    totalContactos: contactos.length,
     ultimaLlamada: lastByType('call'),
     ultimoMensaje: lastByType('message'),
     ultimoCorreo: lastByType('email'),
     ultimaVisita: lastByType('visit'),
+    ultimoContacto,
+    diasSinContacto,
+    proximaAccion: proxima
+      ? {
+          id: proxima.id,
+          title: proxima.title,
+          type: proxima.type,
+          scheduledDate: new Date(proxima.scheduledDate).toISOString(),
+          scheduledTime: proxima.scheduledTime || null,
+        }
+      : null,
   };
 };
+
+/** @deprecated usar getMetricsByPatient. Se mantiene por compatibilidad. */
+const getMetricsByPatientEmail = async (patientEmail) => getMetricsByPatient({ patientEmail });
 
 /**
  * Crear interacción
  */
 const create = async (body) => {
-  const { patientEmail, type, channel, title, description, status, direction, duration, occurredAt, scheduledDate, scheduledTime, relatedAppointmentId, relatedMaintenanceId, metadata } = body;
+  const { patientId, patientEmail, type, channel, title, description, status, direction, duration, occurredAt, scheduledDate, scheduledTime, relatedAppointmentId, relatedMaintenanceId, metadata } = body;
 
-  const patient = await getPatientByEmail(patientEmail);
-  if (!patient) return { success: false, interaction: null, error: 'Paciente no encontrado con ese email' };
+  // patientId manda: hay pacientes sin correo y el CRM debe poder registrarles
+  // actividad igual. El email queda como respaldo para llamadas antiguas.
+  const patient = await resolvePatient({ patientId, patientEmail });
+  if (!patient) return { success: false, interaction: null, error: 'Paciente no encontrado' };
   if (!type || !title) return { success: false, interaction: null, error: 'Tipo y título son obligatorios' };
 
   const payload = {
@@ -183,7 +228,7 @@ const remove = async (id) => {
  * @param {Object} options - { daysAhead: number } para consumibles (días hacia adelante para "próximo")
  */
 const getDailyActions = async (options = {}) => {
-  const { daysAhead = 7, patientEmail: filterPatientEmail } = options;
+  const { daysAhead = 7, patientEmail: filterPatientEmail, patientId: filterPatientId } = options;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const future = new Date(today);
@@ -193,7 +238,11 @@ const getDailyActions = async (options = {}) => {
   const list = await prisma.interaction.findMany({
     where: {
       type: { in: ['follow_up_consumables', 'follow_up_garantia', 'reminder'] },
-      ...(filterPatientEmail && { patient: { email: String(filterPatientEmail).trim().toLowerCase() } }),
+      ...(filterPatientId
+        ? { patientId: String(filterPatientId) }
+        : filterPatientEmail
+          ? { patient: { email: String(filterPatientEmail).trim().toLowerCase() } }
+          : {}),
     },
     include: { patient: true },
     orderBy: { occurredAt: 'desc' },
@@ -319,8 +368,142 @@ const getDailyActionsMetrics = async (options = {}) => {
   return { activas, vencidas, cumplidas, total: actions.length };
 };
 
+
+/**
+ * Vista CRM de pacientes: una fila por paciente con el estado de su seguimiento.
+ * Es lo que alimenta la página "CRM · Seguimiento" (buscar paciente → entrar a
+ * sus acciones) sin tener que abrir la ficha uno por uno.
+ *
+ * @param {{ search?: string, filtro?: string, limit?: number, daysAhead?: number }} opts
+ * filtro: 'todos' | 'vencidas' | 'sin-contacto' | 'nunca' | 'proximas'
+ */
+const getCrmOverview = async ({ search = '', filtro = 'todos', limit = 300, daysAhead = 7 } = {}) => {
+  const where = { archivedAt: null };
+  const term = String(search || '').trim();
+  if (term) {
+    where.OR = [
+      { nombre: { contains: term, mode: 'insensitive' } },
+      { email: { contains: term, mode: 'insensitive' } },
+      { telefono: { contains: term } },
+      { numeroDocumento: { contains: term } },
+    ];
+  }
+
+  const patients = await prisma.patient.findMany({
+    where,
+    take: Math.min(Number(limit) || 300, 1000),
+    orderBy: { updatedAt: 'desc' },
+    select: {
+      id: true, nombre: true, email: true, telefono: true, numeroDocumento: true,
+      procedencia: true,
+    },
+  });
+  if (patients.length === 0) return { rows: [], total: 0 };
+
+  const ids = patients.map((p) => p.id);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const [interactions, appointments, actions] = await Promise.all([
+    prisma.interaction.findMany({
+      where: { patientId: { in: ids } },
+      select: { patientId: true, type: true, occurredAt: true, scheduledDate: true, scheduledTime: true, title: true, metadata: true },
+      orderBy: { occurredAt: 'desc' },
+    }),
+    prisma.appointment.findMany({
+      where: { patientId: { in: ids } },
+      select: { patientId: true, fecha: true, hora: true, estado: true },
+      orderBy: { fecha: 'desc' },
+    }),
+    getDailyActions({ daysAhead }),
+  ]);
+
+  const porPaciente = new Map(ids.map((id) => [id, {
+    contactos: [], programadas: [], citasAtendidas: [], proximaCita: null,
+    alertasActivas: 0, alertasVencidas: 0,
+  }]));
+
+  interactions.forEach((i) => {
+    const acc = porPaciente.get(i.patientId);
+    if (!acc) return;
+    if (CONTACT_TYPES.includes(i.type)) acc.contactos.push(i);
+    const meta = i.metadata && typeof i.metadata === 'object' ? i.metadata : {};
+    if (i.scheduledDate && !meta.resolvedAt && new Date(i.scheduledDate) >= hoy) acc.programadas.push(i);
+  });
+
+  appointments.forEach((a) => {
+    const acc = porPaciente.get(a.patientId);
+    if (!acc || !a.fecha) return;
+    if (['COMPLETED', 'PATIENT'].includes(a.estado)) acc.citasAtendidas.push(a);
+    else if (new Date(a.fecha) >= hoy && a.estado !== 'CANCELLED') {
+      if (!acc.proximaCita || new Date(a.fecha) < new Date(acc.proximaCita.fecha)) acc.proximaCita = a;
+    }
+  });
+
+  actions.forEach((a) => {
+    const acc = porPaciente.get(a.patientId);
+    if (!acc || a.resolvedAt) return;
+    const vencida = a.dueDate && new Date(a.dueDate).setHours(0, 0, 0, 0) < hoy.getTime();
+    if (vencida) acc.alertasVencidas += 1;
+    else acc.alertasActivas += 1;
+  });
+
+  const rows = patients.map((p) => {
+    const acc = porPaciente.get(p.id);
+    const ultimoContacto = acc.contactos[0]?.occurredAt || null;
+    const diasSinContacto = ultimoContacto
+      ? Math.floor((Date.now() - new Date(ultimoContacto).getTime()) / 86400000)
+      : null;
+    const programada = acc.programadas.sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate))[0] || null;
+    const ultimaCita = acc.citasAtendidas[0] || null;
+    // Riesgo: el paciente que nadie ha tocado en 90 días está perdido, el de 30
+    // todavía se recupera. Es la señal que ordena la lista.
+    let riesgo = 'ok';
+    if (acc.alertasVencidas > 0) riesgo = 'alto';
+    else if (diasSinContacto == null || diasSinContacto > 90) riesgo = 'alto';
+    else if (diasSinContacto > 30) riesgo = 'medio';
+
+    return {
+      id: p.id,
+      nombre: p.nombre,
+      email: p.email,
+      telefono: p.telefono,
+      numeroDocumento: p.numeroDocumento,
+      procedencia: p.procedencia,
+      totalContactos: acc.contactos.length,
+      ultimoContacto: ultimoContacto ? new Date(ultimoContacto).toISOString() : null,
+      diasSinContacto,
+      alertasActivas: acc.alertasActivas,
+      alertasVencidas: acc.alertasVencidas,
+      proximaAccion: programada
+        ? { id: programada.id, title: programada.title, type: programada.type, scheduledDate: new Date(programada.scheduledDate).toISOString(), scheduledTime: programada.scheduledTime || null }
+        : null,
+      proximaCita: acc.proximaCita ? { fecha: new Date(acc.proximaCita.fecha).toISOString(), hora: acc.proximaCita.hora || null } : null,
+      ultimaCitaAsistida: ultimaCita ? new Date(ultimaCita.fecha).toISOString() : null,
+      citasAtendidas: acc.citasAtendidas.length,
+      riesgo,
+    };
+  });
+
+  const filtrados = rows.filter((r) => {
+    if (filtro === 'vencidas') return r.alertasVencidas > 0;
+    if (filtro === 'sin-contacto') return r.diasSinContacto == null || r.diasSinContacto > 30;
+    if (filtro === 'nunca') return r.totalContactos === 0;
+    if (filtro === 'proximas') return !!r.proximaAccion || !!r.proximaCita;
+    return true;
+  });
+
+  const orden = { alto: 0, medio: 1, ok: 2 };
+  filtrados.sort((a, b) => (orden[a.riesgo] - orden[b.riesgo])
+    || ((b.diasSinContacto ?? 9999) - (a.diasSinContacto ?? 9999)));
+
+  return { rows: filtrados, total: rows.length };
+};
+
 module.exports = {
   listByPatientEmail,
+  getMetricsByPatient,
+  getCrmOverview,
   listByPatientId,
   getMetricsByPatientEmail,
   getById,

@@ -26,6 +26,7 @@ import {
   AccountBalance,
   AutoAwesome,
   TrendingUp,
+  History,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { getMenuForRole, MENU_KEYS } from '../../utils/rolePermissions';
@@ -57,6 +58,8 @@ const NAV_ITEMS = [
     path: '/portal-crm/leads', section: 'operativo' },
   { key: MENU_KEYS.PACIENTES, label: 'Pacientes', icon: People,
     path: '/portal-crm/pacientes', section: 'operativo' },
+  { key: MENU_KEYS.CRM_SEGUIMIENTO, label: 'CRM · Seguimiento', icon: History,
+    path: '/portal-crm/crm', section: 'operativo' },
   { key: MENU_KEYS.CONTROLES, label: 'Controles', icon: EventRepeatIcon,
     path: '/portal-crm/controles', section: 'operativo' },
   { key: MENU_KEYS.OPORTUNIDADES, label: 'Oportunidades', icon: TrendingUp,
@@ -193,6 +196,7 @@ export default function CrmShell() {
   const isMobile = useMediaQuery('(max-width:900px)');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(null);
+  const [globalSearch, setGlobalSearch] = useState('');
 
   const allowedKeys = useMemo(() => getMenuForRole(user?.role), [user?.role]);
 
@@ -257,10 +261,27 @@ export default function CrmShell() {
               </IconButton>
             )}
 
-            {/* Buscador global y notificaciones se retiraron hasta implementarlos:
-                el placeholder ⌘K no hacía nada y el badge de la campana estaba
-                siempre invisible. Volverán cuando el backend exponga endpoints
-                de búsqueda unificada y de eventos no leídos. */}
+            {/* Búsqueda de paciente desde cualquier pantalla: enter lleva a
+                CRM · Seguimiento con el término aplicado. */}
+            <Box sx={{
+              display: 'flex', alignItems: 'center', gap: 1,
+              bgcolor: '#f8fafc', border: `1px solid ${CRM_SIDEBAR_BORDER}`,
+              borderRadius: 2, px: 1.5, py: 0.4, maxWidth: 380, flex: 1,
+              '&:focus-within': { borderColor: CRM_ACCENT },
+            }}>
+              <SearchIcon sx={{ fontSize: 18, color: CRM_MUTED }} />
+              <InputBase
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter') return;
+                  const q = globalSearch.trim();
+                  navigate(`/portal-crm/crm${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+                }}
+                placeholder="Buscar paciente y abrir su CRM…"
+                sx={{ flex: 1, fontSize: 13.5 }}
+              />
+            </Box>
 
             <Box sx={{ flex: 1 }} />
 

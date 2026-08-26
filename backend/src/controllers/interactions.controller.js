@@ -21,15 +21,31 @@ const listByPatientEmail = async (req, res, next) => {
 
 const getMetrics = async (req, res, next) => {
   try {
-    const { patientEmail } = req.query;
-    if (!patientEmail) {
-      return res.status(400).json({ success: false, error: 'patientEmail es requerido' });
+    const { patientEmail, patientId } = req.query;
+    if (!patientEmail && !patientId) {
+      return res.status(400).json({ success: false, error: 'patientEmail o patientId es requerido' });
     }
-    const metrics = await interactionsService.getMetricsByPatientEmail(patientEmail);
+    const metrics = await interactionsService.getMetricsByPatient({ patientId, patientEmail });
     if (metrics == null) {
       return res.status(404).json({ success: false, error: 'Paciente no encontrado' });
     }
     res.json({ success: true, data: metrics });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** Vista CRM: una fila por paciente con el estado de su seguimiento. */
+const getCrmOverview = async (req, res, next) => {
+  try {
+    const { search, filtro, limit, daysAhead } = req.query;
+    const data = await interactionsService.getCrmOverview({
+      search,
+      filtro,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      daysAhead: daysAhead ? parseInt(daysAhead, 10) : 7,
+    });
+    res.json({ success: true, data });
   } catch (error) {
     next(error);
   }
@@ -107,6 +123,7 @@ const getDailyActionsMetrics = async (req, res, next) => {
 module.exports = {
   listByPatientEmail,
   getMetrics,
+  getCrmOverview,
   getById,
   create,
   update,

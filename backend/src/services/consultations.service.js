@@ -11,7 +11,7 @@ const prisma = require('../db');
  */
 const getByPatientEmail = async (patientEmail) => {
   const key = (patientEmail || '').trim().toLowerCase();
-  const patient = await prisma.patient.findUnique({
+  const patient = await prisma.patient.findFirst({
     where: { email: key },
     include: {
       consultations: {
@@ -98,7 +98,7 @@ const create = async (data, userId = null) => {
       err.statusCode = 400;
       throw err;
     }
-    patient = await prisma.patient.findUnique({ where: { email } });
+    patient = await prisma.patient.findFirst({ where: { email } });
     if (!patient) {
       patient = await prisma.patient.create({
         data: {

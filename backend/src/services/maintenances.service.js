@@ -44,7 +44,7 @@ const toFrontend = (m) => {
  * Obtiene paciente por email. Lanza si no existe.
  */
 const getPatientByEmail = async (email) => {
-  const patient = await prisma.patient.findUnique({
+  const patient = await prisma.patient.findFirst({
     where: { email: (email || '').trim().toLowerCase() },
   });
   if (!patient) return null;

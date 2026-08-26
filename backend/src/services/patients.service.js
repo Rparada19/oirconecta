@@ -160,7 +160,7 @@ const getFullProfile = async (id) => {
  */
 const create = async (data) => {
   // Verificar si ya existe un paciente con ese email
-  const existing = await prisma.patient.findUnique({
+  const existing = await prisma.patient.findFirst({
     where: { email: data.email.toLowerCase() },
   });
 

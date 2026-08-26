@@ -59,9 +59,13 @@ export const getPatientInteractions = async (patientEmail, patientId = null) => 
  * @param {string} patientEmail
  * @returns {Promise<{ totalLlamadas, totalMensajes, totalCorreos, totalVisitas, totalCitas, ultimaLlamada, ultimoMensaje, ultimoCorreo, ultimaVisita }>}
  */
-export const getPatientInteractionsMetrics = async (patientEmail) => {
+export const getPatientInteractionsMetrics = async (patientEmail, patientId = null) => {
+  if (!patientEmail && !patientId) return computeMetricsLocal(patientEmail);
   try {
-    const { data, error } = await api.get(`/api/interactions/metrics?patientEmail=${encodeURIComponent(patientEmail || '')}`);
+    const qs = patientId
+      ? `patientId=${encodeURIComponent(patientId)}`
+      : `patientEmail=${encodeURIComponent(patientEmail || '')}`;
+    const { data, error } = await api.get(`/api/interactions/metrics?${qs}`);
     if (error || !data?.data) return computeMetricsLocal(patientEmail);
     return data.data;
   } catch {
@@ -123,15 +127,32 @@ export const getDailyActionsMetrics = async (daysAhead = 7) => {
 /**
  * Métricas de acciones del día para un paciente específico: activas, vencidas, cumplidas
  */
-export const getDailyActionsMetricsByPatient = async (patientEmail, daysAhead = 7) => {
-  if (!patientEmail) return { activas: 0, vencidas: 0, cumplidas: 0, total: 0 };
+export const getDailyActionsMetricsByPatient = async (patientEmail, daysAhead = 7, patientId = null) => {
+  if (!patientEmail && !patientId) return { activas: 0, vencidas: 0, cumplidas: 0, total: 0 };
   try {
-    const params = new URLSearchParams({ daysAhead, patientEmail });
+    const params = new URLSearchParams(patientId ? { daysAhead, patientId } : { daysAhead, patientEmail });
     const { data, error } = await api.get(`/api/interactions/daily-actions-metrics?${params}`);
     if (error || !data?.data) return { activas: 0, vencidas: 0, cumplidas: 0, total: 0 };
     return data.data;
   } catch {
     return { activas: 0, vencidas: 0, cumplidas: 0, total: 0 };
+  }
+};
+
+/**
+ * Vista CRM de pacientes: una fila por paciente con el estado de su seguimiento.
+ * @param {{ search?: string, filtro?: string, limit?: number }} params
+ * @returns {Promise<{ rows: Array, total: number }>}
+ */
+export const getCrmOverview = async ({ search = '', filtro = 'todos', limit = 300 } = {}) => {
+  try {
+    const params = new URLSearchParams({ filtro, limit: String(limit) });
+    if (search) params.set('search', search);
+    const { data, error } = await api.get(`/api/interactions/crm-overview?${params}`);
+    if (error || !data?.data) return { rows: [], total: 0 };
+    return { rows: data.data.rows || [], total: data.data.total || 0 };
+  } catch {
+    return { rows: [], total: 0 };
   }
 };
 
@@ -157,11 +178,14 @@ export const addInteraction = async (patientEmail, interactionData) => {
     scheduledDate, scheduledTime, relatedAppointmentId, relatedMaintenanceId, metadata,
   } = interactionData;
 
-  if (!patientEmail || !type || !title) {
-    return { success: false, interaction: null, error: 'Email, tipo y título son obligatorios' };
+  // patientId es la llave estable; el email puede faltar (paciente sin correo).
+  const patientId = interactionData.patientId || null;
+  if ((!patientEmail && !patientId) || !type || !title) {
+    return { success: false, interaction: null, error: 'Paciente, tipo y título son obligatorios' };
   }
 
   const payload = {
+    patientId,
     patientEmail,
     type,
     title,

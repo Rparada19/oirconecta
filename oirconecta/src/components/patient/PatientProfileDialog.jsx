@@ -100,6 +100,7 @@ import {
   PROCESS_STEP_ACTIONS,
   isMaintenanceProcessClosed,
 } from '../../services/maintenanceService';
+import KpiCard from '../crm/ui/KpiCard';
 import QuoteDialog from './QuoteDialog';
 import SaleDialog from './SaleDialog';
 import { getClinicalHistoryForm } from './clinicalHistory';
@@ -146,7 +147,7 @@ const HC_ACC_DET_SX = {
   borderTop: '1px solid rgba(8, 89, 70, 0.08)',
 };
 
-const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patient = null, readOnly = false, openEvolucionarOnMount = false, evolucionarForcePrimeraVez = false }) => {
+const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patient = null, readOnly = false, openEvolucionarOnMount = false, evolucionarForcePrimeraVez = false, initialTab = 0 }) => {
   const { user } = useAuth();
   const canSales = canAddAndInvoiceProducts(user?.role); // RECEPCIÓN puede agregar productos y facturar
   const readOnlyDatosGenerales = readOnly || !canEditDatosGenerales(user?.role);
@@ -154,7 +155,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   const canCrmForms = canUsePatientCrmTabForms(user?.role, readOnly);
   /** Barra superior "Editar/Guardar" del perfil: persiste anamnesis parcial; recepción usa solo "Guardar Información" por sección. */
   const showGlobalPerfilSaveBar = canEditClinicalHistory(user?.role) || canAdminClinicalHistory(user?.role);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [appointmentsSubTab, setAppointmentsSubTab] = useState(0); // 0: Historial, 1: Agendar Cita (Nueva cita eliminada: evolución solo desde agenda del día)
   const [isEditing, setIsEditing] = useState(false);
   const [patientProfile, setPatientProfile] = useState(null);
@@ -803,8 +804,8 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
       try {
         const [interactions, metrics, alertMetrics] = await Promise.all([
           getPatientInteractions(email, patientId),
-          getPatientInteractionsMetrics(email),
-          getDailyActionsMetricsByPatient(email, 7),
+          getPatientInteractionsMetrics(email, patientId),
+          getDailyActionsMetricsByPatient(email, 7, patientId),
         ]);
         setPatientInteractions(interactions || []);
         // Mensajes enviados (WhatsApp/email/SMS) desde el servidor, por patientId.
@@ -1631,8 +1632,31 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   };
 
   // Calcular displayEmail antes de usarlo en las funciones
+  // Quien abre el diálogo decide en qué pestaña entra (CRM entra directo a CRM).
+  useEffect(() => {
+    if (open) setActiveTab(initialTab);
+  }, [open, initialTab]);
+
   const getPatientEmail = () => {
     return formData.email || appointment?.patientEmail || lead?.email || '';
+  };
+
+  // Llave estable del paciente. El email puede faltar (mucho paciente mayor no
+  // tiene correo) y sin esto no se le podía registrar nada en CRM.
+  const getPatientId = () => patient?.id || appointment?.patientId || null;
+
+  /** Recarga timeline + métricas CRM tras registrar actividad. */
+  const reloadCrmData = async () => {
+    const email = getPatientEmail();
+    const pid = getPatientId();
+    const [interactions, metrics, alertMetrics] = await Promise.all([
+      getPatientInteractions(email, pid),
+      getPatientInteractionsMetrics(email, pid),
+      getDailyActionsMetricsByPatient(email, 7, pid),
+    ]);
+    setPatientInteractions(interactions || []);
+    setCrmMetrics(metrics || null);
+    setPatientAlertMetrics(alertMetrics || { activas: 0, vencidas: 0, cumplidas: 0 });
   };
 
   const handleDeleteConsultaRecord = async () => {
@@ -4377,107 +4401,74 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                 CRM
               </Typography>
 
-              {/* Métricas */}
+              {/* Métricas — primero el estado del seguimiento, luego el detalle */}
               <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#085946', mb: 1.5 }}>Métricas</Typography>
+                {(() => {
+                  const m = crmMetrics || {};
+                  const citasAsistidas = (patientAppointments || []).filter(
+                    (a) => a.status === 'completed' || a.status === 'patient' || (patientConsultations || []).some((c) => c.appointmentId === a.id)
+                  );
+                  const ultimaCita = citasAsistidas.length > 0
+                    ? citasAsistidas.sort((a, b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')))[0]
+                    : null;
+                  const fmt = (d) => (d ? new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
+                  const fmtHora = (d) => (d ? new Date(d).toLocaleString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—');
+                  const dias = m.diasSinContacto;
+                  // El semáforo es la métrica que importa: un paciente sin contacto
+                  // en 90 días está perdido aunque tenga 20 llamadas históricas.
+                  const tonoDias = dias == null ? 'danger' : dias > 90 ? 'danger' : dias > 30 ? 'warning' : 'success';
+                  const prox = m.proximaAccion;
 
-                {/* Alertas del paciente: activas, vencidas, cumplidas */}
-                <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-                  <Card sx={{ flex: 1, minWidth: 100, bgcolor: '#e8f5e9', borderLeft: 4, borderColor: '#2e7d32' }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Typography variant="caption" sx={{ color: '#1b5e20' }}>Alertas activas</Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#272F50' }}>{patientAlertMetrics.activas}</Typography>
-                    </CardContent>
-                  </Card>
-                  <Card sx={{ flex: 1, minWidth: 100, bgcolor: '#ffebee', borderLeft: 4, borderColor: '#c62828' }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Typography variant="caption" sx={{ color: '#b71c1c' }}>Alertas vencidas</Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#272F50' }}>{patientAlertMetrics.vencidas}</Typography>
-                    </CardContent>
-                  </Card>
-                  <Card sx={{ flex: 1, minWidth: 100, bgcolor: '#e3f2fd', borderLeft: 4, borderColor: '#1565c0' }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Typography variant="caption" sx={{ color: '#0d47a1' }}>Alertas cumplidas</Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#272F50' }}>{patientAlertMetrics.cumplidas}</Typography>
-                    </CardContent>
-                  </Card>
-                </Box>
+                  return (
+                    <>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#085946', mb: 1.5 }}>
+                        Estado del seguimiento
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
+                        <KpiCard
+                          label="Días sin contacto"
+                          value={dias == null ? 'Nunca' : dias}
+                          hint={dias == null ? 'Sin ningún contacto registrado' : `Último: ${fmt(m.ultimoContacto)}`}
+                          tone={tonoDias}
+                        />
+                        <KpiCard
+                          label="Próxima acción"
+                          value={prox ? fmt(prox.scheduledDate) : '—'}
+                          hint={prox ? prox.title : 'Nada programado'}
+                          tone={prox ? 'info' : 'neutral'}
+                        />
+                        <KpiCard
+                          label="Alertas vencidas"
+                          value={patientAlertMetrics.vencidas}
+                          hint="Consumibles, garantías, recordatorios"
+                          tone={patientAlertMetrics.vencidas > 0 ? 'danger' : 'neutral'}
+                        />
+                        <KpiCard label="Alertas activas" value={patientAlertMetrics.activas} tone="success" />
+                        <KpiCard label="Alertas cumplidas" value={patientAlertMetrics.cumplidas} tone="info" />
+                      </Box>
 
-                <Grid container spacing={1.5}>
-                  {(() => {
-                    // Citas asistidas: por estado (completed/patient) o por tener evolución en historia clínica
-                    const citasAsistidas = (patientAppointments || []).filter(
-                      (a) => a.status === 'completed' || a.status === 'patient' || (patientConsultations || []).some((c) => c.appointmentId === a.id)
-                    );
-                    const ultimaCita = citasAsistidas.length > 0 ? citasAsistidas.sort((a, b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')))[0] : null;
-                    const fmt = (d) => (d ? new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—');
-                    const m = crmMetrics || {};
-                    return (
-                      <>
-                        <Grid item xs={6} sm={4} md={2}>
-                          <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', borderColor: '#085946' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Total llamadas</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50' }}>{m.totalLlamadas ?? 0}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={4} md={2}>
-                          <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', borderColor: '#085946' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Total mensajes</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50' }}>{m.totalMensajes ?? 0}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={4} md={2}>
-                          <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', borderColor: '#085946' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Total correos</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50' }}>{m.totalCorreos ?? 0}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={4} md={2}>
-                          <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', borderColor: '#085946' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Citas asistidas</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50' }}>{citasAsistidas.length}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={4} md={2}>
-                          <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', borderColor: '#085946' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Total visitas</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50' }}>{m.totalVisitas ?? 0}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
-                          <Paper variant="outlined" sx={{ p: 1.5, borderColor: '#e0e0e0' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Última llamada</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>{fmt(m.ultimaLlamada)}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
-                          <Paper variant="outlined" sx={{ p: 1.5, borderColor: '#e0e0e0' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Último mensaje</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>{fmt(m.ultimoMensaje)}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
-                          <Paper variant="outlined" sx={{ p: 1.5, borderColor: '#e0e0e0' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Último correo</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>{fmt(m.ultimoCorreo)}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
-                          <Paper variant="outlined" sx={{ p: 1.5, borderColor: '#e0e0e0' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Última visita</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>{fmt(m.ultimaVisita)}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
-                          <Paper variant="outlined" sx={{ p: 1.5, borderColor: '#e0e0e0' }}>
-                            <Typography variant="caption" sx={{ color: '#86899C' }}>Última cita asistida</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>{ultimaCita ? fmt(ultimaCita.date + 'T' + (ultimaCita.time || '00:00')) : '—'}</Typography>
-                          </Paper>
-                        </Grid>
-                      </>
-                    );
-                  })()}
-                </Grid>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#085946', mb: 1.5 }}>
+                        Actividad acumulada
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
+                        {[
+                          { label: 'Llamadas', value: m.totalLlamadas ?? 0, last: m.ultimaLlamada },
+                          { label: 'Mensajes', value: m.totalMensajes ?? 0, last: m.ultimoMensaje },
+                          { label: 'Correos', value: m.totalCorreos ?? 0, last: m.ultimoCorreo },
+                          { label: 'Visitas', value: m.totalVisitas ?? 0, last: m.ultimaVisita },
+                          { label: 'Citas asistidas', value: citasAsistidas.length, last: ultimaCita ? ultimaCita.date : null },
+                        ].map((c) => (
+                          <KpiCard
+                            key={c.label}
+                            label={c.label}
+                            value={c.value}
+                            hint={c.last ? `Último: ${fmtHora(c.last)}` : 'Sin registros'}
+                          />
+                        ))}
+                      </Box>
+                    </>
+                  );
+                })()}
               </Box>
 
               {/* Registrar actividad: llamadas, correos, WhatsApp, SMS, visitas */}
@@ -4554,23 +4545,21 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                         sx={{ bgcolor: '#1565c0' }}
                         onClick={async () => {
                           const email = getPatientEmail();
-                          if (!email) { setSnackbar({ open: true, message: 'No se encontró el email del paciente', severity: 'error' }); return; }
-                          let payload = {};
+                          const pid = getPatientId();
+                          if (!email && !pid) { setSnackbar({ open: true, message: 'No se pudo identificar al paciente', severity: 'error' }); return; }
+                          let payload = { patientId: pid };
                           if (interactionForm.type === 'call') {
-                            payload = { patientEmail: email, type: 'call', title: `Llamada ${interactionForm.direction === 'inbound' ? 'Entrante' : 'Saliente'}`, description: interactionForm.notes || '', channel: 'phone', status: 'completed', direction: interactionForm.direction, duration: interactionForm.duration ? parseInt(interactionForm.duration, 10) : null, metadata: { outcome: interactionForm.outcome, notes: interactionForm.notes } };
+                            payload = { patientId: pid, patientEmail: email, type: 'call', title: `Llamada ${interactionForm.direction === 'inbound' ? 'Entrante' : 'Saliente'}`, description: interactionForm.notes || '', channel: 'phone', status: 'completed', direction: interactionForm.direction, duration: interactionForm.duration ? parseInt(interactionForm.duration, 10) : null, metadata: { outcome: interactionForm.outcome, notes: interactionForm.notes } };
                           } else if (interactionForm.type === 'message') {
-                            payload = { patientEmail: email, type: 'message', title: `Mensaje ${interactionForm.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}`, description: interactionForm.notes || '', channel: interactionForm.channel, status: 'sent', metadata: { content: interactionForm.notes } };
+                            payload = { patientId: pid, patientEmail: email, type: 'message', title: `Mensaje ${interactionForm.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}`, description: interactionForm.notes || '', channel: interactionForm.channel, status: 'sent', metadata: { content: interactionForm.notes } };
                           } else if (interactionForm.type === 'email') {
-                            payload = { patientEmail: email, type: 'email', title: interactionForm.subject || 'Correo enviado', description: interactionForm.content || '', channel: 'email', status: 'sent', metadata: { subject: interactionForm.subject, body: interactionForm.content } };
+                            payload = { patientId: pid, patientEmail: email, type: 'email', title: interactionForm.subject || 'Correo enviado', description: interactionForm.content || '', channel: 'email', status: 'sent', metadata: { subject: interactionForm.subject, body: interactionForm.content } };
                           } else {
-                            payload = { patientEmail: email, type: 'visit', title: 'Visita', description: interactionForm.notes || '', channel: 'in_person', status: 'completed', metadata: { notes: interactionForm.notes } };
+                            payload = { patientId: pid, patientEmail: email, type: 'visit', title: 'Visita', description: interactionForm.notes || '', channel: 'in_person', status: 'completed', metadata: { notes: interactionForm.notes } };
                           }
                           const res = await addInteraction(email, payload);
                           if (res.success) {
-                            const [interactions, metrics, alertMetrics] = await Promise.all([getPatientInteractions(email), getPatientInteractionsMetrics(email), getDailyActionsMetricsByPatient(email, 7)]);
-                            setPatientInteractions(interactions || []);
-                            setCrmMetrics(metrics || null);
-                            setPatientAlertMetrics(alertMetrics || { activas: 0, vencidas: 0, cumplidas: 0 });
+                            await reloadCrmData();
                             setInteractionForm({ type: 'call', direction: 'outbound', duration: '', outcome: '', notes: '', channel: 'whatsapp', subject: '', content: '' });
                             setSnackbar({ open: true, message: 'Actividad registrada', severity: 'success' });
                           } else setSnackbar({ open: true, message: res.error || 'Error al registrar', severity: 'error' });
@@ -4627,9 +4616,11 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                         sx={{ bgcolor: '#085946' }}
                         onClick={async () => {
                           const email = getPatientEmail();
-                          if (!email) return;
+                          const pid = getPatientId();
+                          if (!email && !pid) return;
                           const tipoLabel = { pilas: 'Pilas', filtros: 'Filtros', tubos: 'Tubos', otro: 'Otro' }[consumablesForm.tipo] || consumablesForm.tipo;
                           const res = await addInteraction(email, {
+                            patientId: pid,
                             type: 'follow_up_consumables',
                             title: `Seguimiento ${tipoLabel}`,
                             description: consumablesForm.notas || '',
@@ -4638,10 +4629,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                             metadata: { tipo: consumablesForm.tipo, cantidad: consumablesForm.cantidad || null, nextRecommendationDate: consumablesForm.nextRecommendationDate || null, responsibleName: consumablesForm.responsable || null },
                           });
                           if (res.success) {
-                            const [interactions, metrics, alertMetrics] = await Promise.all([getPatientInteractions(email), getPatientInteractionsMetrics(email), getDailyActionsMetricsByPatient(email, 7)]);
-                            setPatientInteractions(interactions || []);
-                            setCrmMetrics(metrics || null);
-                            setPatientAlertMetrics(alertMetrics || { activas: 0, vencidas: 0, cumplidas: 0 });
+                            await reloadCrmData();
                             setConsumablesForm({ tipo: 'pilas', cantidad: '', notas: '', nextRecommendationDate: '', responsable: '' });
                             setSnackbar({ open: true, message: 'Seguimiento registrado', severity: 'success' });
                           } else setSnackbar({ open: true, message: res.error || 'Error', severity: 'error' });
@@ -4748,13 +4736,15 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                         sx={{ bgcolor: '#e65100' }}
                         onClick={async () => {
                           const email = getPatientEmail();
-                          if (!email) return;
+                          const pid = getPatientId();
+                          if (!email && !pid) return;
                           const ventas = (patientProducts || []).filter((p) => p.type === 'sale');
                           const selectedSale = ventas.find((p) => p.id === garantiaForm.productId);
                           const productLabel = selectedSale
                             ? [...new Set([selectedSale.productName, selectedSale.brand].filter(Boolean))].join(' — ') || 'Producto'
                             : garantiaForm.productId === '__other__' ? (garantiaForm.productRefOther || 'Otro') : '';
                           const res = await addInteraction(email, {
+                            patientId: pid,
                             type: 'follow_up_garantia',
                             title: productLabel ? `Garantía: ${productLabel}` : 'Seguimiento garantía',
                             description: garantiaForm.notas || '',
@@ -4769,10 +4759,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                             },
                           });
                           if (res.success) {
-                            const [interactions, metrics, alertMetrics] = await Promise.all([getPatientInteractions(email), getPatientInteractionsMetrics(email), getDailyActionsMetricsByPatient(email, 7)]);
-                            setPatientInteractions(interactions || []);
-                            setCrmMetrics(metrics || null);
-                            setPatientAlertMetrics(alertMetrics || { activas: 0, vencidas: 0, cumplidas: 0 });
+                            await reloadCrmData();
                             setGarantiaForm({ productId: '', productRefOther: '', fechaFinGarantia: '', estado: 'vigente', notas: '', responsable: '' });
                             setSnackbar({ open: true, message: 'Seguimiento de garantía registrado', severity: 'success' });
                           } else setSnackbar({ open: true, message: res.error || 'Error', severity: 'error' });

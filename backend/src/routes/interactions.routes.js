@@ -3,7 +3,7 @@
  */
 
 const express = require('express');
-const { body, param, query } = require('express-validator');
+const { body, param } = require('express-validator');
 const router = express.Router();
 
 const interactionsController = require('../controllers/interactions.controller');
@@ -17,21 +17,15 @@ router.get('/daily-actions', interactionsController.getDailyActions);
 // GET /api/interactions/daily-actions-metrics?daysAhead=7
 router.get('/daily-actions-metrics', interactionsController.getDailyActionsMetrics);
 
-// GET /api/interactions/metrics?patientEmail=...
-router.get(
-  '/metrics',
-  [query('patientEmail').notEmpty().trim().withMessage('patientEmail requerido')],
-  validateRequest,
-  interactionsController.getMetrics
-);
+// GET /api/interactions/metrics?patientId=... | ?patientEmail=...
+// El controlador valida que venga uno de los dos: hay pacientes sin correo.
+router.get('/metrics', interactionsController.getMetrics);
 
-// GET /api/interactions?patientEmail=...
-router.get(
-  '/',
-  [query('patientEmail').notEmpty().trim().withMessage('patientEmail requerido')],
-  validateRequest,
-  interactionsController.listByPatientEmail
-);
+// GET /api/interactions/crm-overview?search=&filtro=&limit=
+router.get('/crm-overview', interactionsController.getCrmOverview);
+
+// GET /api/interactions?patientId=... | ?patientEmail=...
+router.get('/', interactionsController.listByPatientEmail);
 
 // GET /api/interactions/:id - Obtener una interacción (para editar / añadir comentarios)
 router.get(
@@ -45,7 +39,8 @@ router.get(
 router.post(
   '/',
   [
-    body('patientEmail').notEmpty().trim(),
+    body('patientEmail').optional().trim(),
+    body('patientId').optional().trim(),
     body('type').notEmpty().trim(),
     body('title').notEmpty().trim(),
     body('channel').optional().trim(),

@@ -91,6 +91,7 @@ const CitasPage = lazy(() => import('./pages/crm/CitasPage'));
 const AgendaOirconectaPage = lazy(() => import('./pages/crm/AgendaOirconectaPage'));
 const LeadsPage = lazy(() => import('./pages/crm/LeadsPage'));
 const PacientesPage = lazy(() => import('./pages/crm/PacientesPage'));
+const CrmSeguimientoPage = lazy(() => import('./pages/crm/CrmSeguimientoPage'));
 const ControlesPage = lazy(() => import('./pages/crm/ControlesPage'));
 const WhatsAppInboxPage = lazy(() => import('./pages/crm/WhatsAppInboxPage'));
 const CampanasPage = lazy(() => import('./pages/crm/CampanasPage'));
@@ -297,6 +298,7 @@ export default function App() {
             <Route path="agenda" element={<AgendaOirconectaPage />} />
             <Route path="leads" element={<LeadsPage />} />
             <Route path="pacientes" element={<PacientesPage />} />
+            <Route path="crm" element={<CrmSeguimientoPage />} />
             <Route path="controles" element={<ControlesPage />} />
             <Route path="whatsapp" element={<WhatsAppInboxPage />} />
             <Route path="plantillas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><CrmPlantillasPage /></ProtectedRouteByRole>} />
