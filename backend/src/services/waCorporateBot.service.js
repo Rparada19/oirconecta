@@ -153,7 +153,7 @@ async function maybeSendHandshake(conversationId) {
 
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, phone: true, contactName: true, contactType: true, status: true },
+    select: { id: true, phone: true, contactName: true, contactType: true, status: true, patientId: true },
   });
   if (!conv) return { skipped: 'conv-not-found' };
   if (conv.contactType) return { skipped: 'already-typed' };
@@ -168,9 +168,16 @@ async function maybeSendHandshake(conversationId) {
   });
   if (prevOutbound > 0) return { skipped: 'already-answered' };
 
-  const saludo = conv.contactName
-    ? `¡Hola, ${firstName(conv.contactName)}! 👋`
-    : '¡Hola! 👋';
+  // El nombre de la historia clínica manda sobre el del perfil de WhatsApp,
+  // que puede ser un apodo o estar vacío.
+  let nombre = conv.contactName;
+  if (conv.patientId) {
+    const p = await prisma.patient.findUnique({
+      where: { id: conv.patientId }, select: { nombre: true },
+    }).catch(() => null);
+    if (p?.nombre) nombre = p.nombre;
+  }
+  const saludo = nombre ? `¡Hola, ${firstName(nombre)}! 👋` : '¡Hola! 👋';
 
   const bodyText =
 `${saludo} Somos *OírConecta*, centro auditivo en Bogotá (Cr 10 #96-25 Cons. 320).
@@ -485,13 +492,58 @@ async function loadHistory(conversationId) {
  * un tool loop de hasta 5 iteraciones para permitir que Claude agende directo
  * en WhatsApp (list_types → get_availability → create_appointment).
  */
+
+/**
+ * Ficha corta del paciente para el prompt: quién es y en qué va.
+ *
+ * Deliberadamente SIN datos clínicos. El teléfono no es identidad verificada:
+ * puede escribir el hijo desde el celular de la mamá, o el número puede haber
+ * cambiado de dueño. Saludar por el nombre y saber que es paciente del centro
+ * es seguro; soltar diagnósticos o audiometrías a quien tenga el aparato en la
+ * mano, no. Eso es dato de salud bajo Habeas Data.
+ */
+async function fichaPaciente(patientId) {
+  if (!patientId) return null;
+  const p = await prisma.patient.findUnique({
+    where: { id: patientId },
+    select: {
+      nombre: true,
+      appointments: {
+        select: { fecha: true, estado: true, tipoConsulta: true },
+        orderBy: { fecha: 'desc' },
+        take: 40,
+      },
+      _count: { select: { sales: true } },
+    },
+  });
+  if (!p) return null;
+
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const asistidas = (p.appointments || []).filter((a) => ['COMPLETED', 'PATIENT'].includes(a.estado));
+  const proxima = (p.appointments || [])
+    .filter((a) => a.fecha && new Date(a.fecha) >= hoy && a.estado !== 'CANCELLED')
+    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))[0] || null;
+
+  const fmt = (d) => new Date(d).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+  const lineas = [`Nombre: ${p.nombre}`];
+  if (asistidas.length) {
+    lineas.push(`Ya es paciente del centro. Última visita: ${fmt(asistidas[0].fecha)} (${asistidas.length} en total).`);
+  } else {
+    lineas.push('Está registrado pero todavía no ha asistido a ninguna cita.');
+  }
+  if (p._count.sales > 0) lineas.push('Ya usa audífonos adaptados por nosotros.');
+  if (proxima) lineas.push(`Tiene cita agendada para el ${fmt(proxima.fecha)}. Si escribe por eso, ayúdale a confirmarla, moverla o resolver dudas.`);
+
+  return lineas.join('\n');
+}
+
 async function handleTextForBot({ conversationId, incomingText }) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
   if (!process.env.ANTHROPIC_API_KEY) return { skipped: 'no-anthropic-key' };
 
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, phone: true, contactType: true, status: true, contactName: true },
+    select: { id: true, phone: true, contactType: true, status: true, contactName: true, patientId: true },
   });
   if (!conv) return { skipped: 'conv-not-found' };
   if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
@@ -510,6 +562,16 @@ async function handleTextForBot({ conversationId, incomingText }) {
   // La rama de profesional ya no argumenta ni capta por WhatsApp: solo manda
   // al formulario de /precios, que cae en Captación comercial → Leads. Por eso
   // aquí ya NO se inyecta captacionBotConfig.
+
+  // Quién está del otro lado. Sin esto el bot trata como desconocido a alguien
+  // que lleva dos años con nosotros.
+  const ficha = await fichaPaciente(conv.patientId).catch(() => null);
+  if (ficha) {
+    systemPrompt += `\n\n═══ CON QUIÉN ESTÁS HABLANDO ═══\n${ficha}\n
+Trátalo por su nombre desde el primer mensaje, con naturalidad — no anuncies que "lo tienes registrado".
+NO menciones diagnósticos, resultados de audiometría ni detalles clínicos: el número de teléfono no prueba identidad y puede escribir un familiar. Si te piden datos clínicos, ofrece agendar o pasar con el equipo.
+═══════════════════════════════`;
+  }
 
   // El número es del consultorio: tanto la rama de paciente como la de dudas
   // generales deben saber lo mismo que el widget de la ficha (marcas,

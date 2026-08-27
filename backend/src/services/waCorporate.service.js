@@ -79,6 +79,23 @@ async function persistIncomingMessage({
     }
   }
 
+  // Re-vinculación: el patientId solo se asignaba al crear la conversación,
+  // pero el orden real es al revés — la persona escribe primero y se vuelve
+  // paciente después. Sin esto, esas conversaciones quedan huérfanas para
+  // siempre aunque la historia clínica ya exista.
+  let vincular = {};
+  if (!conversation.patientId) {
+    const last10 = String(fromWaId || '').replace(/\D/g, '').slice(-10);
+    if (last10) {
+      const p = await prisma.patient.findFirst({
+        where: { telefono: { contains: last10 } },
+        select: { id: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      if (p) vincular = { patientId: p.id };
+    }
+  }
+
   const timestamp = tsSeconds ? new Date(Number(tsSeconds) * 1000) : new Date();
 
   const preview = (textBody || `[${type}]`).slice(0, 140);
@@ -110,6 +127,7 @@ async function persistIncomingMessage({
         windowExpiresAt: new Date(Date.now() + WINDOW_MS),
         contactName: conversation.contactName || contactName || undefined,
         ...reabrir,
+        ...vincular,
       },
     }),
   ]);
