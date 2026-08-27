@@ -426,6 +426,54 @@ Prohibido:
 Tono: cálido, breve, colombiano, tuteo. Máximo 3 líneas.
 Formato WhatsApp: *negrita* con UN asterisco (nunca **), _itálica_, sin Markdown de otras plataformas.`,
 
+
+  PACIENTE_EXISTENTE:
+`Eres el asistente del centro auditivo OírConecta en Bogotá (Cr 10 #96-25 Cons. 320). Hablas con alguien que YA es paciente nuestro.
+
+Tu prioridad no es venderle nada: es resolverle. Ya confió en nosotros, y lo que hagas acá decide si vuelve y si nos recomienda.
+
+QUÉ SUELE NECESITAR, y qué haces:
+- *Algo no le funciona* (no suena, pita, se oye distorsionado, se descargó): no diagnostiques por chat. Pregunta qué pasa exactamente y desde cuándo, y agéndale una cita de revisión — no una valoración, es paciente nuevo eso.
+- *Garantía o reparación*: recoge qué producto es y qué le pasa, dile que el equipo revisa el estado de la garantía y confirma, y agrega [ESCALAR_HUMANO].
+- *Control o mantenimiento*: agéndaselo con las tools, igual que una cita normal.
+- *Pilas, filtros, tubos o accesorios*: puede comprarlos en https://oirconecta.com/ecommerce o pedirlos cuando venga al control.
+- *Solo saluda o pregunta algo suelto*: respóndele y ofrécele el control si hace rato no viene.
+
+REGLAS:
+- Trátalo por su nombre desde el primer mensaje.
+- NUNCA le ofrezcas una "valoración auditiva inicial": ya pasó por ahí. Suena a que no lo conocemos.
+- No prometas cobertura de garantía ni tiempos de reparación: eso lo confirma el equipo.
+- Escalas con [ESCALAR_HUMANO] si: hay reclamo o molestia, hay garantía de por medio, o pide hablar con su audióloga.
+
+Tono: cálido, cercano, colombiano, tuteo. Máximo 3-4 líneas.
+Texto plano. Negrita con UN asterisco: *así*. Nunca dos.`,
+
+  ALIADO_PROVEEDOR:
+`Eres el asistente de OírConecta. Te escribe un aliado, proveedor o alguien con una propuesta comercial.
+
+Esta línea atiende a los pacientes del centro. Tu tarea es recibir con cortesía y encaminar, en pocos mensajes:
+1. Agradece y pregunta brevemente de qué se trata, si no lo dijo.
+2. Dile que lo pasas al equipo para que lo contacten.
+3. Agrega [ESCALAR_HUMANO].
+
+Prohibido: negociar, hablar de precios o condiciones, comprometer reuniones, dar datos de proveedores actuales o de volúmenes.
+Tono: cordial y breve. Máximo 3 líneas. Texto plano.`,
+
+  OTROS:
+`Eres el asistente del centro auditivo OírConecta en Bogotá (Cr 10 #96-25 Cons. 320). No sabes todavía qué necesita quien escribe.
+
+Tu primera tarea es entenderlo, con UNA pregunta abierta y amable: "Cuéntame en qué te puedo ayudar."
+
+Según lo que responda:
+- Busca atención auditiva para sí mismo o un familiar → ayúdale a agendar la valoración con las tools.
+- Ya es paciente y algo no le funciona → recoge qué pasa y agéndale revisión.
+- Pregunta por un pedido de la tienda → pide el número de pedido o el correo con que compró y agrega [ESCALAR_HUMANO].
+- Es profesional y quiere entrar al directorio → mándalo a https://oirconecta.com/precios.
+- Ofrece productos o servicios → agradece y agrega [ESCALAR_HUMANO].
+
+Nunca inventes. Si no encaja en nada de lo anterior, responde lo que puedas y agrega [ESCALAR_HUMANO].
+Tono: cálido, colombiano, tuteo. Máximo 3 líneas. Texto plano.`,
+
   INFO_GENERAL:
 `Eres el asistente virtual de OírConecta, plataforma colombiana de salud auditiva que combina:
 1) Un centro auditivo propio en Bogotá (Cr 10 #96-25 Cons. 320).
@@ -578,6 +626,35 @@ Reglas:
 }
 
 
+/** Compras en la tienda de quien escribe. ShopCustomer es un modelo aparte de
+ *  Patient: quien compró accesorios en línea puede no ser paciente, y hasta
+ *  ahora era un desconocido para el bot. */
+async function fichaTienda(phone) {
+  const last10 = String(phone || '').replace(/\D/g, '').slice(-10);
+  if (!last10) return null;
+  const cliente = await prisma.shopCustomer.findFirst({
+    where: { telefono: { contains: last10 } },
+    select: {
+      nombre: true,
+      orders: {
+        select: { numero: true, estado: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+      },
+    },
+  });
+  if (!cliente || cliente.orders.length === 0) return null;
+  const ESTADO = {
+    PENDIENTE_PAGO: 'pendiente de pago', PAGADO: 'pagado, aún sin despachar',
+    EN_PREPARACION: 'en preparación', ENVIADO: 'enviado', ENTREGADO: 'entregado',
+    CANCELADO: 'cancelado',
+  };
+  const fmt = (d) => new Date(d).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+  return `Ha comprado en nuestra tienda en línea (a nombre de ${cliente.nombre}). Últimos pedidos:\n`
+    + cliente.orders.map((o) => `· Pedido #${o.numero} del ${fmt(o.createdAt)} — ${ESTADO[o.estado] || o.estado}`).join('\n')
+    + '\nSi pregunta por su pedido, responde con esto. No prometas fechas de entrega que no tengas.';
+}
+
 async function fichaPaciente(patientId) {
   if (!patientId) return null;
   const p = await prisma.patient.findUnique({
@@ -607,7 +684,7 @@ async function fichaPaciente(patientId) {
   } else {
     lineas.push('Está registrado pero todavía no ha asistido a ninguna cita.');
   }
-  if (p._count.sales > 0) lineas.push('Ya usa audífonos adaptados por nosotros.');
+  if (p._count.sales > 0) lineas.push('Ya usa audífonos adaptados por nosotros. Si escribe por un problema, es soporte, no una venta nueva.');
   if (proxima) lineas.push(`Tiene cita agendada para el ${fmt(proxima.fecha)}. Si escribe por eso, ayúdale a confirmarla, moverla o resolver dudas.`);
 
   return lineas.join('\n');
@@ -623,10 +700,17 @@ async function handleTextForBot({ conversationId, incomingText }) {
   });
   if (!conv) return { skipped: 'conv-not-found' };
   if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
-  if (!conv.contactType) return { skipped: 'no-contact-type' };
+  // Sin tipo asignado tampoco se queda callado: pregunta y se tipifica solo.
+  if (!conv.contactType) conv.contactType = 'OTROS';
 
+  // Antes, un contactType sin prompt dejaba al bot mudo sin dejar rastro:
+  // pasaba con PACIENTE_EXISTENTE y ALIADO_PROVEEDOR, que tienen plantillas
+  // activas. Ahora cualquier tipo desconocido cae en OTROS, que pregunta.
   let systemPrompt = SYSTEM_PROMPTS[conv.contactType];
-  if (!systemPrompt) return { skipped: 'no-prompt-for-type' };
+  if (!systemPrompt) {
+    console.warn('[wa-bot] sin prompt para contactType', conv.contactType, '— uso OTROS');
+    systemPrompt = SYSTEM_PROMPTS.OTROS;
+  }
 
   // Rellena la fecha de hoy en el prompt (solo aplica al de PACIENTE_BOGOTA).
   const hoyLocal = new Date().toLocaleString('es-CO', {
@@ -641,7 +725,13 @@ async function handleTextForBot({ conversationId, incomingText }) {
 
   // Quién está del otro lado. Sin esto el bot trata como desconocido a alguien
   // que lleva dos años con nosotros.
-  const ficha = await fichaPaciente(conv.patientId).catch(() => null);
+  const [ficha, tienda] = await Promise.all([
+    fichaPaciente(conv.patientId).catch(() => null),
+    fichaTienda(conv.phone).catch(() => null),
+  ]);
+  if (tienda) {
+    systemPrompt += `\n\n═══ COMPRAS EN LA TIENDA ═══\n${tienda}\n═══════════════════════════`;
+  }
   if (ficha) {
     systemPrompt += `\n\n═══ CON QUIÉN ESTÁS HABLANDO ═══\n${ficha}\n
 Trátalo por su nombre desde el primer mensaje, con naturalidad — no anuncies que "lo tienes registrado".

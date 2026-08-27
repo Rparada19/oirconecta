@@ -416,10 +416,20 @@ router.patch('/admin/orders/:id', authenticate, async (req, res) => {
     if (estado && !ESTADOS.includes(estado)) {
       return res.status(400).json({ success: false, error: 'Estado inválido' });
     }
+    const previo = await prisma.shopOrder.findUnique({
+      where: { id: req.params.id }, select: { estado: true },
+    });
     const order = await prisma.shopOrder.update({
       where: { id: req.params.id },
       data: { ...(estado && { estado }) },
     });
+    // Avisa al cliente si el estado cambió de verdad. Best-effort: no se espera
+    // ni se deja que un fallo del aviso tumbe el cambio de estado.
+    if (estado && previo && previo.estado !== estado) {
+      require('../services/shopNotify.service')
+        .avisarCambioDeEstado(order.id, estado)
+        .catch((e) => console.warn('[shop-notify]', e.message));
+    }
     res.json({ success: true, data: order });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
