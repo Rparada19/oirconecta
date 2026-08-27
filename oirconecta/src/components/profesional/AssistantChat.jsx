@@ -43,7 +43,10 @@ export default function AssistantChat({ agentName = 'tu asistente' }) {
       if (!r?.data?.success || !data) {
         setError(r?.error || r?.data?.error || 'No pude responder. Revisa que el asistente esté configurado.');
       } else {
-        setMsgs((m) => [...m, { role: 'assistant', content: data.reply, docs: data.usedDocuments || 0 }]);
+        setMsgs((m) => [...m, {
+          role: 'assistant', content: data.reply,
+          docs: data.usedDocuments || 0, sim: !!data.simulated,
+        }]);
       }
     } catch (e) {
       setError(e?.message || 'Error de conexión.');
@@ -64,8 +67,9 @@ export default function AssistantChat({ agentName = 'tu asistente' }) {
           Habla con {agentName}
         </Typography>
         <Typography sx={{ fontSize: '0.85rem', color: C.mute, mt: 0.75, maxWidth: '58ch', lineHeight: 1.55 }}>
-          Responde con todo lo que le has enseñado, igual que le respondería a un paciente
-          en tu ficha pública. Esta prueba no consume tu saldo de conversaciones.
+          Responde con todo lo que le has enseñado y consulta tu agenda real, igual que
+          le respondería a un paciente en tu ficha. No consume saldo, y si llega a agendar
+          lo hace en simulacro: no ocupa cupos.
         </Typography>
       </Box>
 
@@ -98,6 +102,12 @@ export default function AssistantChat({ agentName = 'tu asistente' }) {
               }}>
                 {m.content}
               </Box>
+              {m.role === 'assistant' && m.sim && (
+                <Box component="span" sx={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
+                                            color: C.warn, textTransform: 'uppercase', mt: 0.5, display: 'block' }}>
+                  Agendó en modo prueba · no se ocupó ningún cupo real
+                </Box>
+              )}
               {m.role === 'assistant' && m.docs > 0 && (
                 <Box component="span" sx={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
                                             color: C.trace, textTransform: 'uppercase', mt: 0.5, display: 'block' }}>

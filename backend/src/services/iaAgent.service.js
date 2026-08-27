@@ -269,6 +269,7 @@ Reglas estrictas:
 4. NO ofrezcas tratamientos médicos, diagnósticos, ni recomendaciones clínicas. Si el paciente lo pide, redirige: "Esto lo evalúa ${profileInfo.nombre} directamente en consulta."
 5. Si el paciente quiere cancelar y te da un código (rescheduleToken), usa cancel_appointment. Sin código, dile que revise el email de confirmación de la cita.
 6. Sé breve. Máximo 3-4 líneas por respuesta. Sin emojis salvo que el paciente los use.
+6.b Escribe en texto plano. NADA de Markdown: nada de **negrita**, ni ##, ni viñetas con guiones o asteriscos. El chat los muestra literales y se ven como un error. Si necesitas enumerar, usa números seguidos de punto.
 7. Si el paciente pide algo que no puedes hacer (cobrar, cambiar precios, atender urgencias) di claramente que un humano del consultorio debe ayudarle, y comparte el teléfono del profesional si está disponible.${conductorSection}${customSection}`;
 }
 
@@ -569,24 +570,71 @@ async function previewChat(profileId, { messages }) {
     console.warn('[iaAgent/preview] retrieval falló:', e.message);
   }
 
+  // Mismas herramientas que en producción: sin esto el bot dice "déjame
+  // consultar los horarios" y se queda esperando, porque no tiene con qué.
+  // Excepción: las que ESCRIBEN se simulan. Ensayar no debe crear citas reales
+  // ni ocupar cupos en la agenda.
+  const SOLO_LECTURA = ['list_appointment_types', 'get_professional_info', 'get_availability'];
   const client = new Anthropic();
-  const resp = await client.messages.create({
-    model: MODEL,
-    max_tokens: 1024,
-    system,
-    messages: messages.slice(-12).map((m) => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: String(m.content || ''),
-    })),
-  });
+  const ctx = { profileId, conversation: null };
+  const history = messages.slice(-12).map((m) => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: String(m.content || ''),
+  }));
 
-  const reply = (resp.content || [])
-    .filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+  let reply = '';
+  let simulo = false;
+
+  for (let iter = 0; iter < 5; iter++) {
+    const resp = await client.messages.create({
+      model: MODEL,
+      max_tokens: 1024,
+      system,
+      tools: TOOLS,
+      messages: history,
+    });
+    const toolUses = resp.content.filter((b) => b.type === 'tool_use');
+    reply = resp.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+    if (toolUses.length === 0) break;
+
+    history.push({ role: 'assistant', content: resp.content });
+    const results = [];
+    for (const tu of toolUses) {
+      let output;
+      let isError = false;
+      if (!SOLO_LECTURA.includes(tu.name)) {
+        // Se le responde como si hubiera funcionado, para que el ensayo llegue
+        // hasta el final, pero no se toca la agenda.
+        simulo = true;
+        output = {
+          simulado: true,
+          nota: 'MODO PRUEBA: la acción no se ejecutó. Continúa la conversación como si hubiera salido bien.',
+          appointmentId: 'prueba-0000',
+        };
+      } else {
+        try {
+          const impl = toolImpls[tu.name];
+          if (!impl) throw new IaError(`Tool desconocida: ${tu.name}`);
+          output = await impl(ctx, tu.input || {});
+        } catch (e) {
+          output = { error: e.message || 'Error en herramienta' };
+          isError = true;
+        }
+      }
+      results.push({
+        type: 'tool_result', tool_use_id: tu.id,
+        content: typeof output === 'string' ? output : JSON.stringify(output),
+        is_error: isError,
+      });
+    }
+    history.push({ role: 'user', content: results });
+  }
 
   return {
     reply: reply || 'No pude responder eso.',
     // Le decimos al profesional si la respuesta se apoyó en sus documentos.
     usedDocuments: usados.length,
+    simulated: simulo,
     preview: true,
   };
 }
