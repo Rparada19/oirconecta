@@ -4,7 +4,7 @@
  * export XLSX (compliance habeas data), y solicitud de compra de packs.
  */
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, Stack, Chip, CircularProgress, Alert,
   Table, TableHead, TableBody, TableRow, TableCell, IconButton, Drawer, Divider,
@@ -35,6 +35,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 
 const EDU_SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.01em' };
 import { directoryApi, getDirectoryToken } from '../../services/directoryAccountApi';
+import BrainEducation from '../../components/profesional/BrainEducation';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import IaDocumentsSection from '../../components/profesional/IaDocumentsSection';
@@ -58,6 +59,11 @@ export default function ProfesionalIAPage() {
   const [selected, setSelected] = useState(null);
   const [buyOpen, setBuyOpen] = useState(false);
   const [toast, setToast] = useState(null);
+  // Base de conocimiento: documentos que el bot puede consultar (RAG).
+  const [docs, setDocs] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+
   // Educación del asistente (F5.6)
   const [eduDraft, setEduDraft] = useState({
     personality: '', expertise: '', technologies: '', services: '',
@@ -115,6 +121,53 @@ export default function ProfesionalIAPage() {
     if (Array.isArray(fq.data?.data)) setFaqs(fq.data.data);
     if (lim.data?.data) setLimits(lim.data.data);
     setLoading(false);
+  };
+
+  const loadDocs = useCallback(async () => {
+    const r = await directoryApi.get('/api/ia/me/agent-documents');
+    if (r?.data?.success) setDocs(r.data.data || []);
+    return r?.data?.data || [];
+  }, []);
+
+  useEffect(() => { loadDocs(); }, [loadDocs]);
+
+  // Mientras haya documentos en proceso, refrescamos: la ingesta corre async en
+  // el servidor y no hay push, así que el estado llega sondeando.
+  useEffect(() => {
+    const pendientes = docs.some((d) => d.status === 'PENDING' || d.status === 'PROCESSING');
+    if (!pendientes) return undefined;
+    const t = setInterval(loadDocs, 2500);
+    return () => clearInterval(t);
+  }, [docs, loadDocs]);
+
+  const uploadDocs = async (files) => {
+    setUploadError(null);
+    setUploading(true);
+    try {
+      for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) {
+          setUploadError(`"${file.name}" pesa más de 10 MB. Divídelo o súbelo en partes.`);
+          continue;
+        }
+        const fd = new FormData();
+        fd.append('file', file);
+        const r = await directoryApi.post('/api/ia/me/agent-documents', fd);
+        if (!r?.data?.success) {
+          setUploadError(r?.error || r?.data?.error || `No se pudo subir "${file.name}".`);
+        }
+      }
+      await loadDocs();
+    } catch (e) {
+      setUploadError(e?.message || 'No se pudo subir el documento.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const deleteDoc = async (doc) => {
+    if (!window.confirm(`¿Quitar "${doc.filename}"? El bot dejará de consultarlo.`)) return;
+    await directoryApi.delete(`/api/ia/me/agent-documents/${doc.id}`);
+    loadDocs();
   };
 
   const saveEducation = async () => {
@@ -407,21 +460,28 @@ export default function ProfesionalIAPage() {
 
       {/* Educación del asistente (F5.6) */}
       <Card sx={{ mt: 3, borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-        <Box sx={{ px: 3, py: 2.5, bgcolor: '#fff', borderBottom: '1px solid #eef0f3' }}>
-          <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.16em', color: ACCENT, textTransform: 'uppercase', mb: 0.5 }}>
-            Educación del asistente
-          </Typography>
-          <Typography sx={{ ...EDU_SERIF, fontWeight: 600, color: NAVY, fontSize: { xs: '1.5rem', md: '1.75rem' }, lineHeight: 1.15, mb: 0.75 }}>
-            Enséñale a tu bot cómo debe atender a tus pacientes
-          </Typography>
-          <Typography sx={{ fontSize: '0.9rem', color: '#475569', maxWidth: 720, lineHeight: 1.55 }}>
-            Ocho instrucciones y tus preguntas frecuentes. Mientras más le cuentes de tus marcas, servicios y forma de atender, menos improvisa. Todo se aplica al instante en la próxima conversación — no necesitas reiniciar nada.
-          </Typography>
-        </Box>
+        <BrainEducation
+          fields={eduDraft}
+          limits={limits.text}
+          faqCount={faqs.filter((f) => f.isActive).length}
+          faqMax={limits.faqs.max}
+          docs={docs}
+          uploading={uploading}
+          uploadError={uploadError}
+          onUpload={uploadDocs}
+          onDeleteDoc={deleteDoc}
+          onPick={(key) => {
+            const el = document.getElementById(`edu-${key}`);
+            if (!el) return;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.focus({ preventScroll: true });
+          }}
+        />
         <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
           <Stack spacing={2.5}>
             <TextField
               label="Personalidad y tono"
+              id="edu-personality"
               size="small" fullWidth multiline minRows={2}
               value={eduDraft.personality}
               onChange={(e) => setEduDraft({ ...eduDraft, personality: e.target.value })}
@@ -437,6 +497,7 @@ export default function ProfesionalIAPage() {
             />
             <TextField
               label="Áreas de expertise"
+              id="edu-expertise"
               size="small" fullWidth multiline minRows={2}
               value={eduDraft.expertise}
               onChange={(e) => setEduDraft({ ...eduDraft, expertise: e.target.value })}
@@ -452,6 +513,7 @@ export default function ProfesionalIAPage() {
             />
             <TextField
               label="Marcas y tecnología que manejas"
+              id="edu-technologies"
               size="small" fullWidth multiline minRows={3}
               value={eduDraft.technologies}
               onChange={(e) => setEduDraft({ ...eduDraft, technologies: e.target.value })}
@@ -467,6 +529,7 @@ export default function ProfesionalIAPage() {
             />
             <TextField
               label="Servicios y qué incluye cada uno"
+              id="edu-services"
               size="small" fullWidth multiline minRows={3}
               value={eduDraft.services}
               onChange={(e) => setEduDraft({ ...eduDraft, services: e.target.value })}
@@ -482,6 +545,7 @@ export default function ProfesionalIAPage() {
             />
             <TextField
               label="Cómo funciona la atención"
+              id="edu-logistics"
               size="small" fullWidth multiline minRows={2}
               value={eduDraft.logistics}
               onChange={(e) => setEduDraft({ ...eduDraft, logistics: e.target.value })}
@@ -497,6 +561,7 @@ export default function ProfesionalIAPage() {
             />
             <TextField
               label="Qué te hace diferente"
+              id="edu-differentiators"
               size="small" fullWidth multiline minRows={2}
               value={eduDraft.differentiators}
               onChange={(e) => setEduDraft({ ...eduDraft, differentiators: e.target.value })}
@@ -512,6 +577,7 @@ export default function ProfesionalIAPage() {
             />
             <TextField
               label="Frase de firma (opcional)"
+              id="edu-signature"
               size="small" fullWidth
               value={eduDraft.signature}
               onChange={(e) => setEduDraft({ ...eduDraft, signature: e.target.value })}
@@ -527,6 +593,7 @@ export default function ProfesionalIAPage() {
             />
             <TextField
               label="Temas que el bot NO debe tocar"
+              id="edu-avoidTopics"
               size="small" fullWidth multiline minRows={2}
               value={eduDraft.avoidTopics}
               onChange={(e) => setEduDraft({ ...eduDraft, avoidTopics: e.target.value })}
