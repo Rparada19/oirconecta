@@ -14,18 +14,19 @@ import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import { directoryApi } from '../../services/directoryAccountApi';
+import { C } from './iaConsole';
 
-const ACCENT = '#6d28d9';
-const NAVY = '#0F2A4A';
-const MUTED = '#64748b';
-const BORDER = '#eef0f3';
+const ACCENT = C.signal;
+const NAVY = C.bone;
+const MUTED = C.mute;
+const BORDER = C.line;
 const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.01em' };
 
 const STATUS_META = {
   PENDING:    { label: 'En cola',      color: '#a16207', bg: '#fef3c7' },
   PROCESSING: { label: 'Procesando…',  color: '#0369a1', bg: '#eff6ff' },
-  READY:      { label: 'Listo',        color: '#15803d', bg: '#f0fdf4' },
-  FAILED:     { label: 'Falló',        color: '#b91c1c', bg: '#fef2f2' },
+  READY:      { label: 'Listo',        color: C.ok, bg: '#f0fdf4' },
+  FAILED:     { label: 'Falló',        color: C.danger, bg: '#fef2f2' },
 };
 
 function fmtBytes(n) {
@@ -34,7 +35,7 @@ function fmtBytes(n) {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
-export default function IaDocumentsSection() {
+export default function IaDocumentsSection({ onDocsChange }) {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -46,7 +47,11 @@ export default function IaDocumentsSection() {
   const load = async () => {
     try {
       const r = await directoryApi.get('/api/ia/me/agent-documents');
-      if (r?.data?.success) setDocs(r.data.data || []);
+      if (r?.data?.success) {
+        const list = r.data.data || [];
+        setDocs(list);
+        onDocsChange?.(list);
+      }
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
@@ -144,7 +149,7 @@ export default function IaDocumentsSection() {
           <Box sx={{ textAlign: 'center', py: 3 }}><CircularProgress size={22} sx={{ color: ACCENT }} /></Box>
         ) : docs.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center', bgcolor: '#fafbfc', border: '1px dashed #e2e8f0', borderRadius: '10px' }}>
-            <DescriptionOutlinedIcon sx={{ fontSize: 40, color: '#cbd5e1', mb: 1 }} />
+            <DescriptionOutlinedIcon sx={{ fontSize: 40, color: C.dim, mb: 1 }} />
             <Typography sx={{ fontSize: '0.9rem', color: NAVY, fontWeight: 600, mb: 0.5 }}>Aún no has subido documentos</Typography>
             <Typography sx={{ fontSize: '0.8rem', color: MUTED }}>
               Empieza con un PDF pequeño (protocolo o guía) para probar cómo el bot lo usa.
@@ -177,7 +182,7 @@ export default function IaDocumentsSection() {
                         <Chip label={st.label} size="small"
                           sx={{ bgcolor: st.bg, color: st.color, fontWeight: 700, fontSize: '0.7rem', height: 22 }} />
                         {d.status === 'FAILED' && d.errorMessage && (
-                          <Typography sx={{ fontSize: '0.7rem', color: '#b91c1c', mt: 0.5, maxWidth: 200 }}>
+                          <Typography sx={{ fontSize: '0.7rem', color: C.danger, mt: 0.5, maxWidth: 200 }}>
                             {d.errorMessage}
                           </Typography>
                         )}
@@ -195,7 +200,7 @@ export default function IaDocumentsSection() {
                       <TableCell align="right">
                         <Tooltip title="Eliminar">
                           <IconButton size="small" onClick={() => deleteDoc(d)}>
-                            <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: '#b91c1c' }} />
+                            <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: C.danger }} />
                           </IconButton>
                         </Tooltip>
                       </TableCell>

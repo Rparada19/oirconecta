@@ -10,10 +10,8 @@
  * No es decoración: cada punto es un dato real y se puede tocar para ir a él.
  */
 
-import React, { useMemo, useRef, useState } from 'react';
-import { Box, Typography, CircularProgress, Tooltip } from '@mui/material';
-import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import React, { useMemo } from 'react';
+import { Box, Typography } from '@mui/material';
 
 const CX = 200;
 const CY = 160;
@@ -48,14 +46,10 @@ function synapse(x, y) {
   return `M ${x} ${y} Q ${mx + (-dy / len) * bend} ${my + (dx / len) * bend} ${CX} ${CY}`;
 }
 
-const kb = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
-
 export default function BrainEducation({
   fields = {}, limits = {}, faqCount = 0, faqMax = 20,
-  docs = [], onPick, onUpload, onDeleteDoc, uploading = false, uploadError = null,
+  docs = [], onPick,
 }) {
-  const inputRef = useRef(null);
-  const [dragging, setDragging] = useState(false);
 
   const nodes = useMemo(() => SLOTS.map((s, i) => {
     const raw = (fields[s.key] || '').trim();
@@ -70,11 +64,6 @@ export default function BrainEducation({
   const listos = docs.filter((d) => d.status === 'READY');
   const procesando = docs.filter((d) => d.status === 'PENDING' || d.status === 'PROCESSING');
   const totalChunks = listos.reduce((a, d) => a + (d.chunkCount || 0), 0);
-
-  const pick = (files) => {
-    const arr = Array.from(files || []);
-    if (arr.length && onUpload) onUpload(arr);
-  };
 
   return (
     <Box sx={{
@@ -221,93 +210,6 @@ export default function BrainEducation({
         </Box>
       </Box>
 
-      {/* Materia prima: adjuntos */}
-      <Box sx={{ position: 'relative', zIndex: 1, px: { xs: 2, md: 3.5 }, pb: 3, pt: 1 }}>
-        <Typography sx={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.2em',
-                          textTransform: 'uppercase', color: '#475569', mb: 1.25 }}>
-          Material del consultorio
-        </Typography>
-
-        <Box
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => { e.preventDefault(); setDragging(false); pick(e.dataTransfer.files); }}
-          onClick={() => inputRef.current?.click()}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click(); } }}
-          sx={{
-            border: `1px dashed ${dragging ? '#2dd4bf' : '#1e293b'}`,
-            background: dragging ? 'rgba(45,212,191,0.06)' : 'rgba(255,255,255,0.015)',
-            borderRadius: '10px', p: 2, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 1.5,
-            transition: 'border-color .2s, background .2s',
-            '&:hover': { borderColor: '#334155' },
-            '&:focus-visible': { outline: '2px solid #2dd4bf', outlineOffset: 2 },
-          }}
-        >
-          {uploading
-            ? <CircularProgress size={18} sx={{ color: '#2dd4bf' }} />
-            : <CloudUploadOutlinedIcon sx={{ color: dragging ? '#2dd4bf' : '#475569', fontSize: 22 }} />}
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: '0.875rem', color: '#cbd5e1', fontWeight: 600 }}>
-              {uploading ? 'Subiendo…' : 'Arrastra tus documentos o toca aquí'}
-            </Typography>
-            <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
-              PDF, Word o texto · hasta 10 MB. Protocolos, fichas de producto, listas de precios, guiones de atención.
-            </Typography>
-          </Box>
-          <input ref={inputRef} type="file" multiple hidden
-            accept=".pdf,.doc,.docx,.txt,.md,application/pdf,text/plain"
-            onChange={(e) => { pick(e.target.files); e.target.value = ''; }} />
-        </Box>
-
-        {uploadError && (
-          <Typography sx={{ fontSize: '0.8rem', color: '#f87171', mt: 1 }}>{uploadError}</Typography>
-        )}
-
-        {docs.length > 0 && (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1.5 }}>
-            {docs.map((d) => {
-              const st = DOC_STATE[d.status] || DOC_STATE.PENDING;
-              return (
-                <Tooltip key={d.id} title={d.errorMessage || `${st.label}${d.chunkCount ? ` · ${d.chunkCount} pasajes` : ''}`}>
-                  <Box sx={{
-                    display: 'flex', alignItems: 'center', gap: 1,
-                    border: '1px solid #1e293b', borderRadius: '8px',
-                    bgcolor: 'rgba(255,255,255,0.02)', pl: 1.25, pr: 0.5, py: 0.6, maxWidth: 320,
-                  }}>
-                    <Box sx={{
-                      width: 7, height: 7, borderRadius: '50%', flexShrink: 0, bgcolor: st.color,
-                      animation: st.vivo ? 'ocBreathe 1.6s ease-in-out infinite' : 'none',
-                    }} />
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography noWrap sx={{ fontSize: '0.8rem', color: '#cbd5e1', maxWidth: 210 }}>
-                        {d.filename}
-                      </Typography>
-                      <Typography sx={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em',
-                                        color: st.color, textTransform: 'uppercase' }}>
-                        {st.label}{d.status === 'READY' && d.chunkCount ? ` · ${d.chunkCount} pasajes` : ''}
-                        {d.sizeBytes ? ` · ${kb(d.sizeBytes)}` : ''}
-                      </Typography>
-                    </Box>
-                    {onDeleteDoc && (
-                      <Box component="button" type="button"
-                        onClick={(e) => { e.stopPropagation(); onDeleteDoc(d); }}
-                        aria-label={`Quitar ${d.filename}`}
-                        sx={{ ml: 'auto', border: 0, bgcolor: 'transparent', color: '#475569',
-                              cursor: 'pointer', p: 0.5, lineHeight: 0, borderRadius: '6px',
-                              '&:hover': { color: '#f87171' } }}>
-                        <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
-                      </Box>
-                    )}
-                  </Box>
-                </Tooltip>
-              );
-            })}
-          </Box>
-        )}
-      </Box>
     </Box>
   );
 }

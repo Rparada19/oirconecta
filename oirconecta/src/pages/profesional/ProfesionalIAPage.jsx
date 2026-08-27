@@ -4,7 +4,7 @@
  * export XLSX (compliance habeas data), y solicitud de compra de packs.
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, Stack, Chip, CircularProgress, Alert,
   Table, TableHead, TableBody, TableRow, TableCell, IconButton, Drawer, Divider,
@@ -39,9 +39,11 @@ import BrainEducation from '../../components/profesional/BrainEducation';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import IaDocumentsSection from '../../components/profesional/IaDocumentsSection';
+import { ThemeProvider } from '@mui/material/styles';
+import { C, consoleTheme, ConsoleShell } from '../../components/profesional/iaConsole';
 
-const ACCENT = '#6d28d9';
-const NAVY = '#0F2A4A';
+const ACCENT = C.signal;
+const NAVY = C.bone;
 
 const fmtCOP = (n) => `$${(n || 0).toLocaleString('es-CO')}`;
 const fmtDT = (d) => d ? new Date(d).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -59,10 +61,9 @@ export default function ProfesionalIAPage() {
   const [selected, setSelected] = useState(null);
   const [buyOpen, setBuyOpen] = useState(false);
   const [toast, setToast] = useState(null);
-  // Base de conocimiento: documentos que el bot puede consultar (RAG).
+  // Los documentos los administra IaDocumentsSection; acá solo se guardan para
+  // que el cerebro pueda dibujarlos. Una sola fuente, dos vistas.
   const [docs, setDocs] = useState([]);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
 
   // Educación del asistente (F5.6)
   const [eduDraft, setEduDraft] = useState({
@@ -121,53 +122,6 @@ export default function ProfesionalIAPage() {
     if (Array.isArray(fq.data?.data)) setFaqs(fq.data.data);
     if (lim.data?.data) setLimits(lim.data.data);
     setLoading(false);
-  };
-
-  const loadDocs = useCallback(async () => {
-    const r = await directoryApi.get('/api/ia/me/agent-documents');
-    if (r?.data?.success) setDocs(r.data.data || []);
-    return r?.data?.data || [];
-  }, []);
-
-  useEffect(() => { loadDocs(); }, [loadDocs]);
-
-  // Mientras haya documentos en proceso, refrescamos: la ingesta corre async en
-  // el servidor y no hay push, así que el estado llega sondeando.
-  useEffect(() => {
-    const pendientes = docs.some((d) => d.status === 'PENDING' || d.status === 'PROCESSING');
-    if (!pendientes) return undefined;
-    const t = setInterval(loadDocs, 2500);
-    return () => clearInterval(t);
-  }, [docs, loadDocs]);
-
-  const uploadDocs = async (files) => {
-    setUploadError(null);
-    setUploading(true);
-    try {
-      for (const file of files) {
-        if (file.size > 10 * 1024 * 1024) {
-          setUploadError(`"${file.name}" pesa más de 10 MB. Divídelo o súbelo en partes.`);
-          continue;
-        }
-        const fd = new FormData();
-        fd.append('file', file);
-        const r = await directoryApi.post('/api/ia/me/agent-documents', fd);
-        if (!r?.data?.success) {
-          setUploadError(r?.error || r?.data?.error || `No se pudo subir "${file.name}".`);
-        }
-      }
-      await loadDocs();
-    } catch (e) {
-      setUploadError(e?.message || 'No se pudo subir el documento.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const deleteDoc = async (doc) => {
-    if (!window.confirm(`¿Quitar "${doc.filename}"? El bot dejará de consultarlo.`)) return;
-    await directoryApi.delete(`/api/ia/me/agent-documents/${doc.id}`);
-    loadDocs();
   };
 
   const saveEducation = async () => {
@@ -271,13 +225,13 @@ export default function ProfesionalIAPage() {
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         <ProfesionalPageHeader icon={SmartToyOutlinedIcon} title="Agente IA"
           subtitle="Panel de conversaciones con tus pacientes" />
-        <Card sx={{ mt: 2, borderRadius: '14px', border: '1px solid #e5e7eb', maxWidth: 720 }}>
+        <Card sx={{ mt: 2, borderRadius: '14px', border: `1px solid ${C.line}`, maxWidth: 720 }}>
           <CardContent sx={{ p: 4, textAlign: 'center' }}>
             <SmartToyOutlinedIcon sx={{ fontSize: 56, color: ACCENT, mb: 2 }} />
             <Typography sx={{ fontSize: '1.25rem', fontWeight: 800, color: NAVY, mb: 1 }}>
               {needsUpgrade ? 'El Agente IA está solo en Plan 3' : 'No disponible'}
             </Typography>
-            <Typography sx={{ color: '#475569', mb: 3 }}>{accessError.message}</Typography>
+            <Typography sx={{ color: C.mute, mb: 3 }}>{accessError.message}</Typography>
             {needsUpgrade && (
               <Button variant="contained" href="/portal-profesional/suscripcion"
                 sx={{ background: ACCENT, textTransform: 'none', fontWeight: 700 }}>
@@ -293,31 +247,31 @@ export default function ProfesionalIAPage() {
   const totalUsed = (balance?.base?.used || 0) + balance?.packs?.reduce((a, p) => a + (p.usedConversations || 0), 0);
   const totalCapacity = (balance?.base?.limit || 0) + balance?.packs?.reduce((a, p) => a + (p.totalConversations || 0), 0);
   const pct = totalCapacity > 0 ? Math.round((totalUsed / totalCapacity) * 100) : 0;
-  const alertColor = pct >= 90 ? '#b91c1c' : pct >= 70 ? '#a16207' : ACCENT;
+  const alertColor = pct >= 90 ? C.danger : pct >= 70 ? C.warn : ACCENT;
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 } }}>
-      <ProfesionalPageHeader icon={SmartToyOutlinedIcon} title="Agente IA"
-        subtitle="Saldo de conversaciones, historial y auditoría de tu asistente virtual." />
+    <ThemeProvider theme={consoleTheme}>
+    <ConsoleShell>
+    <Box sx={{ p: { xs: 0, md: 0 } }}>
 
       {/* Saldo */}
-      <Card sx={{ mt: 2, borderRadius: '14px', border: '1px solid #e5e7eb', background: 'linear-gradient(135deg, #faf5ff 0%, #ffffff 100%)' }}>
+      <Card sx={{ mt: 2, background: `linear-gradient(135deg, rgba(124,92,255,0.10) 0%, ${C.ink2} 60%)` }}>
         <CardContent sx={{ p: 3 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ md: 'center' }} spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 0.5 }}>
+              <Typography sx={{ fontSize: '0.75rem', color: C.mute, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 0.5 }}>
                 Conversaciones disponibles
               </Typography>
               <Stack direction="row" alignItems="baseline" spacing={1}>
                 <Typography sx={{ fontSize: '2.5rem', fontWeight: 900, color: alertColor, lineHeight: 1 }}>
                   {balance?.totalRemaining ?? 0}
                 </Typography>
-                <Typography sx={{ color: '#64748b', fontSize: '0.9rem' }}>de {totalCapacity} totales este periodo</Typography>
+                <Typography sx={{ color: C.mute, fontSize: '0.9rem' }}>de {totalCapacity} totales este periodo</Typography>
               </Stack>
-              <Box sx={{ mt: 1.5, height: 8, bgcolor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden', maxWidth: 400 }}>
+              <Box sx={{ mt: 1.5, height: 8, bgcolor: C.line, borderRadius: '4px', overflow: 'hidden', maxWidth: 400 }}>
                 <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: alertColor, transition: 'width 0.3s' }} />
               </Box>
-              <Typography sx={{ fontSize: '0.75rem', color: '#64748b', mt: 0.5 }}>
+              <Typography sx={{ fontSize: '0.75rem', color: C.mute, mt: 0.5 }}>
                 {pct}% consumido · Base: {balance?.base?.remaining}/{balance?.base?.limit} · Packs: {balance?.packs?.reduce((a, p) => a + p.remaining, 0) || 0}
               </Typography>
             </Box>
@@ -336,16 +290,16 @@ export default function ProfesionalIAPage() {
           {/* Packs activos */}
           {balance?.packs?.length > 0 && (
             <Box sx={{ mt: 3 }}>
-              <Typography sx={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1 }}>
+              <Typography sx={{ fontSize: '0.75rem', color: C.mute, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1 }}>
                 Paquetes activos
               </Typography>
               <Stack spacing={1}>
                 {balance.packs.map((p) => (
-                  <Box key={p.id} sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 1.25, border: '1px solid #e5e7eb', borderRadius: '10px', bgcolor: '#fff' }}>
-                    <Chip label={`${p.totalConversations}`} size="small" sx={{ bgcolor: '#faf5ff', color: ACCENT, fontWeight: 800 }} />
+                  <Box key={p.id} sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 1.25, border: `1px solid ${C.line}`, borderRadius: '10px', bgcolor: C.ink2 }}>
+                    <Chip label={`${p.totalConversations}`} size="small" sx={{ bgcolor: 'rgba(124,92,255,0.08)', color: ACCENT, fontWeight: 800 }} />
                     <Box sx={{ flex: 1 }}>
                       <Typography sx={{ fontSize: '0.875rem', fontWeight: 700 }}>Paquete de {p.totalConversations} · pagado {fmtCOP(p.priceCOP)}</Typography>
-                      <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      <Typography sx={{ fontSize: '0.75rem', color: C.mute }}>
                         Restan {p.remaining} · vence {fmtDate(p.expiresAt)}
                       </Typography>
                     </Box>
@@ -358,12 +312,12 @@ export default function ProfesionalIAPage() {
       </Card>
 
       {/* Personalización del asistente */}
-      <Card sx={{ mt: 3, borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-        <Box sx={{ px: 2.5, py: 1.75, bgcolor: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
+      <Card sx={{ mt: 3, borderRadius: '14px', border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+        <Box sx={{ px: 2.5, py: 1.75, bgcolor: C.ink3, borderBottom: `1px solid ${C.line}` }}>
           <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem' }}>
             Personalización del asistente
           </Typography>
-          <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+          <Typography sx={{ fontSize: '0.75rem', color: C.mute }}>
             Elige cómo te representa el chat en tu perfil público.
           </Typography>
         </Box>
@@ -377,7 +331,7 @@ export default function ProfesionalIAPage() {
                 inputProps={{ minLength: 2, maxLength: 30 }}
                 helperText="2 a 30 caracteres. Ej: Sofía, Camilo, Aura." />
               <Box>
-                <Typography sx={{ fontSize: '0.75rem', color: '#475569', mb: 0.5, fontWeight: 600 }}>
+                <Typography sx={{ fontSize: '0.75rem', color: C.mute, mb: 0.5, fontWeight: 600 }}>
                   Color del botón
                 </Typography>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -389,13 +343,13 @@ export default function ProfesionalIAPage() {
                     onChange={(e) => setConfigDraft({ ...configDraft, agentColor: e.target.value })}
                     inputProps={{ pattern: '^#[0-9A-Fa-f]{6}$' }}
                     sx={{ width: 130 }} />
-                  <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8' }}>Formato hex #RRGGBB</Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: C.mute }}>Formato hex #RRGGBB</Typography>
                 </Stack>
               </Box>
 
               {/* Galería de íconos */}
               <Box>
-                <Typography sx={{ fontSize: '0.75rem', color: '#475569', mb: 0.75, fontWeight: 600 }}>
+                <Typography sx={{ fontSize: '0.75rem', color: C.mute, mb: 0.75, fontWeight: 600 }}>
                   Ícono del bot
                 </Typography>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 1 }}>
@@ -407,12 +361,12 @@ export default function ProfesionalIAPage() {
                         sx={{
                           cursor: 'pointer', textAlign: 'center', p: 1, borderRadius: '10px',
                           border: selected ? `2px solid ${configDraft.agentColor}` : '2px solid transparent',
-                          bgcolor: selected ? `${configDraft.agentColor}12` : '#f8fafc',
+                          bgcolor: selected ? `${configDraft.agentColor}22` : C.ink3,
                           transition: 'all 0.15s',
                           '&:hover': { bgcolor: selected ? `${configDraft.agentColor}20` : '#f1f5f9' },
                         }}>
                         <Ico sx={{ fontSize: 28, color: selected ? configDraft.agentColor : '#475569' }} />
-                        <Typography sx={{ fontSize: '0.65rem', color: '#64748b', mt: 0.25, lineHeight: 1.1 }}>
+                        <Typography sx={{ fontSize: '0.65rem', color: C.mute, mt: 0.25, lineHeight: 1.1 }}>
                           {AGENT_ICON_LABELS[key]}
                         </Typography>
                       </Box>
@@ -433,8 +387,8 @@ export default function ProfesionalIAPage() {
             </Stack>
 
             {/* Preview del botón */}
-            <Box sx={{ width: { xs: '100%', md: 260 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
-              <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, mb: 1.5 }}>
+            <Box sx={{ width: { xs: '100%', md: 260 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 2, bgcolor: C.ink3, borderRadius: '12px', border: `1px dashed ${C.line}` }}>
+              <Typography sx={{ fontSize: '0.7rem', color: C.mute, textTransform: 'uppercase', fontWeight: 700, mb: 1.5 }}>
                 Vista previa del botón
               </Typography>
               {(() => {
@@ -450,7 +404,7 @@ export default function ProfesionalIAPage() {
                   </Box>
                 );
               })()}
-              <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', mt: 2, textAlign: 'center' }}>
+              <Typography sx={{ fontSize: '0.75rem', color: C.mute, mt: 2, textAlign: 'center' }}>
                 Así lo verán los pacientes en la esquina inferior de tu ficha pública.
               </Typography>
             </Box>
@@ -459,17 +413,13 @@ export default function ProfesionalIAPage() {
       </Card>
 
       {/* Educación del asistente (F5.6) */}
-      <Card sx={{ mt: 3, borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+      <Card sx={{ mt: 3, borderRadius: '14px', border: `1px solid ${C.line}`, overflow: 'hidden' }}>
         <BrainEducation
           fields={eduDraft}
           limits={limits.text}
           faqCount={faqs.filter((f) => f.isActive).length}
           faqMax={limits.faqs.max}
           docs={docs}
-          uploading={uploading}
-          uploadError={uploadError}
-          onUpload={uploadDocs}
-          onDeleteDoc={deleteDoc}
           onPick={(key) => {
             const el = document.getElementById(`edu-${key}`);
             if (!el) return;
@@ -601,7 +551,7 @@ export default function ProfesionalIAPage() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
-                    <BlockOutlinedIcon sx={{ color: '#b91c1c', fontSize: 20 }} />
+                    <BlockOutlinedIcon sx={{ color: C.danger, fontSize: 20 }} />
                   </InputAdornment>
                 ),
               }}
@@ -620,7 +570,7 @@ export default function ProfesionalIAPage() {
           </Stack>
 
           {/* FAQs */}
-          <Box sx={{ mt: 4.5, pt: 3.5, borderTop: '1px solid #eef0f3' }}>
+          <Box sx={{ mt: 4.5, pt: 3.5, borderTop: `1px solid ${C.line}` }}>
             <Stack direction="row" alignItems="flex-end" spacing={1.5} sx={{ mb: 2 }}>
               <Box sx={{ flex: 1 }}>
                 <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.16em', color: ACCENT, textTransform: 'uppercase', mb: 0.5 }}>
@@ -629,7 +579,7 @@ export default function ProfesionalIAPage() {
                 <Typography sx={{ ...EDU_SERIF, fontWeight: 600, color: NAVY, fontSize: { xs: '1.15rem', md: '1.3rem' }, lineHeight: 1.2, mb: 0.5 }}>
                   Tu conocimiento aprobado
                 </Typography>
-                <Typography sx={{ fontSize: '0.85rem', color: '#475569', maxWidth: 620 }}>
+                <Typography sx={{ fontSize: '0.85rem', color: C.mute, maxWidth: 620 }}>
                   Preguntas y respuestas que <strong>tú apruebas</strong>. El bot las usa como fuente confiable antes de improvisar.
                 </Typography>
               </Box>
@@ -646,8 +596,8 @@ export default function ProfesionalIAPage() {
             </Stack>
 
             {faqs.length === 0 ? (
-              <Box sx={{ p: 4, textAlign: 'center', bgcolor: '#f8fafc', borderRadius: '10px', border: '1px dashed #cbd5e1' }}>
-                <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>
+              <Box sx={{ p: 4, textAlign: 'center', bgcolor: C.ink3, borderRadius: '10px', border: `1px dashed ${C.line}` }}>
+                <Typography sx={{ color: C.mute, fontSize: '0.875rem' }}>
                   Aún no tienes FAQs. Agrega las preguntas que tus pacientes hacen todo el tiempo (horarios, dirección, qué esperar en la primera consulta, medios de pago, etc.).
                 </Typography>
               </Box>
@@ -655,8 +605,8 @@ export default function ProfesionalIAPage() {
               <Stack spacing={1.25}>
                 {faqs.map((f) => (
                   <Box key={f.id} sx={{
-                    p: 1.75, border: '1px solid #e5e7eb', borderRadius: '10px',
-                    bgcolor: f.isActive ? '#fff' : '#f8fafc',
+                    p: 1.75, border: `1px solid ${C.line}`, borderRadius: '10px',
+                    bgcolor: f.isActive ? C.ink2 : C.ink3,
                     opacity: f.isActive ? 1 : 0.65,
                   }}>
                     <Stack direction="row" alignItems="flex-start" spacing={1}>
@@ -664,7 +614,7 @@ export default function ProfesionalIAPage() {
                         <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: NAVY, mb: 0.25 }}>
                           P: {f.question}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.8125rem', color: '#475569', whiteSpace: 'pre-wrap' }}>
+                        <Typography sx={{ fontSize: '0.8125rem', color: C.mute, whiteSpace: 'pre-wrap' }}>
                           R: {f.answer}
                         </Typography>
                       </Box>
@@ -673,10 +623,10 @@ export default function ProfesionalIAPage() {
                           <Switch size="small" checked={f.isActive} onChange={() => toggleFaqActive(f)} />
                         </Tooltip>
                         <IconButton size="small" onClick={() => openFaqEdit(f)}>
-                          <EditRoundedIcon sx={{ fontSize: 18, color: '#64748b' }} />
+                          <EditRoundedIcon sx={{ fontSize: 18, color: C.mute }} />
                         </IconButton>
                         <IconButton size="small" onClick={() => deleteFaq(f)}>
-                          <DeleteOutlineRoundedIcon sx={{ fontSize: 18, color: '#b91c1c' }} />
+                          <DeleteOutlineRoundedIcon sx={{ fontSize: 18, color: C.danger }} />
                         </IconButton>
                       </Stack>
                     </Stack>
@@ -717,7 +667,7 @@ export default function ProfesionalIAPage() {
                 checked={faqDialog?.isActive ?? true}
                 onChange={(e) => setFaqDialog({ ...faqDialog, isActive: e.target.checked })}
               />
-              <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>
+              <Typography sx={{ fontSize: '0.875rem', color: C.mute }}>
                 Activa — el bot puede usarla en conversaciones
               </Typography>
             </Stack>
@@ -738,17 +688,17 @@ export default function ProfesionalIAPage() {
 
       {/* F10 — Documentos del bot (RAG) */}
       <Box sx={{ mt: 3 }}>
-        <IaDocumentsSection />
+        <IaDocumentsSection onDocsChange={setDocs} />
       </Box>
 
       {/* Conversaciones */}
-      <Card sx={{ mt: 3, borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-        <Box sx={{ px: 2.5, py: 1.75, bgcolor: '#f8fafc', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Card sx={{ mt: 3, borderRadius: '14px', border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+        <Box sx={{ px: 2.5, py: 1.75, bgcolor: C.ink3, borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ flex: 1 }}>
             <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: '0.95rem' }}>
               Historial de conversaciones ({convs.total})
             </Typography>
-            <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+            <Typography sx={{ fontSize: '0.75rem', color: C.mute }}>
               Puedes descargar todas las conversaciones como archivo Excel para tu registro clínico o auditorías.
             </Typography>
           </Box>
@@ -758,7 +708,7 @@ export default function ProfesionalIAPage() {
           </Button>
         </Box>
         {convs.items.length === 0 ? (
-          <Box sx={{ p: 5, textAlign: 'center', color: '#94a3b8' }}>
+          <Box sx={{ p: 5, textAlign: 'center', color: C.mute }}>
             <Typography>Aún no hay conversaciones. Aparecerán aquí cuando un paciente use el asistente en tu perfil público.</Typography>
           </Box>
         ) : (
@@ -766,7 +716,7 @@ export default function ProfesionalIAPage() {
             <TableHead>
               <TableRow>
                 {['Fecha', 'Paciente', 'Canal', 'Msgs', 'Cita', 'Última actividad', ''].map((h) => (
-                  <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase' }}>{h}</TableCell>
+                  <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.7rem', color: C.mute, textTransform: 'uppercase' }}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -776,19 +726,19 @@ export default function ProfesionalIAPage() {
                   <TableCell sx={{ fontSize: '0.8125rem' }}>{fmtDT(c.startedAt)}</TableCell>
                   <TableCell>
                     <Typography sx={{ fontWeight: 600 }}>{c.pacienteNombre || 'Anónimo'}</Typography>
-                    {c.pacienteTelefono && <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{c.pacienteTelefono}</Typography>}
+                    {c.pacienteTelefono && <Typography sx={{ fontSize: '0.7rem', color: C.mute }}>{c.pacienteTelefono}</Typography>}
                   </TableCell>
                   <TableCell>
                     <Chip size="small" label={c.canal}
-                      sx={{ bgcolor: c.canal === 'whatsapp' ? '#dcfce7' : '#e0f2fe',
-                            color: c.canal === 'whatsapp' ? '#15803d' : '#0369a1',
+                      sx={{ bgcolor: c.canal === 'whatsapp' ? 'rgba(52,211,153,0.14)' : 'rgba(53,224,200,0.12)',
+                            color: c.canal === 'whatsapp' ? C.ok : '#0369a1',
                             fontWeight: 700, height: 20, fontSize: '0.65rem' }} />
                   </TableCell>
                   <TableCell>{c.messageCount}</TableCell>
                   <TableCell>
                     {c.resultedInAppointmentId
-                      ? <EventAvailableOutlinedIcon sx={{ color: '#15803d', fontSize: 18 }} />
-                      : <Typography sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>—</Typography>}
+                      ? <EventAvailableOutlinedIcon sx={{ color: C.ok, fontSize: 18 }} />
+                      : <Typography sx={{ color: C.mute, fontSize: '0.75rem' }}>—</Typography>}
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.8125rem' }}>{fmtDT(c.lastMessageAt)}</TableCell>
                   <TableCell sx={{ color: ACCENT, fontWeight: 700 }}>Ver →</TableCell>
@@ -802,7 +752,7 @@ export default function ProfesionalIAPage() {
       {/* Drawer detalle */}
       <Drawer anchor="right" open={!!selected} onClose={() => setSelected(null)}
         PaperProps={{ sx: { width: { xs: '100%', md: 560 } } }}>
-        <Box sx={{ p: 2, borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ p: 2, borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'center' }}>
           <Typography sx={{ fontWeight: 800, color: NAVY, flex: 1 }}>Conversación</Typography>
           <IconButton onClick={() => setSelected(null)}><CloseOutlinedIcon /></IconButton>
         </Box>
@@ -811,13 +761,13 @@ export default function ProfesionalIAPage() {
           {selected?.error && <Alert severity="error">{selected.error}</Alert>}
           {selected && !selected.loading && !selected.error && (
             <>
-              <Box sx={{ bgcolor: '#faf5ff', p: 2, borderRadius: '10px', mb: 2 }}>
+              <Box sx={{ bgcolor: 'rgba(124,92,255,0.08)', p: 2, borderRadius: '10px', mb: 2 }}>
                 <Typography sx={{ fontSize: '0.875rem' }}><strong>Paciente:</strong> {selected.pacienteNombre || 'Anónimo'}</Typography>
                 {selected.pacienteTelefono && <Typography sx={{ fontSize: '0.875rem' }}><strong>Teléfono:</strong> {selected.pacienteTelefono}</Typography>}
                 <Typography sx={{ fontSize: '0.875rem' }}><strong>Canal:</strong> {selected.canal}</Typography>
                 <Typography sx={{ fontSize: '0.875rem' }}><strong>Inicio:</strong> {fmtDT(selected.startedAt)}</Typography>
                 {selected.resultedInAppointmentId && (
-                  <Chip size="small" label="Terminó en cita agendada" sx={{ mt: 1, bgcolor: '#dcfce7', color: '#15803d', fontWeight: 700 }} />
+                  <Chip size="small" label="Terminó en cita agendada" sx={{ mt: 1, bgcolor: 'rgba(52,211,153,0.14)', color: C.ok, fontWeight: 700 }} />
                 )}
               </Box>
               <Divider sx={{ mb: 2 }}>Mensajes</Divider>
@@ -825,10 +775,10 @@ export default function ProfesionalIAPage() {
                 {selected.messages?.map((m) => (
                   <Box key={m.id} sx={{
                     p: 1.5, borderRadius: '10px',
-                    bgcolor: m.role === 'user' ? '#e0f2fe' : m.role === 'assistant' ? '#faf5ff' : '#fef3c7',
-                    borderLeft: `3px solid ${m.role === 'user' ? '#0369a1' : m.role === 'assistant' ? ACCENT : '#a16207'}`,
+                    bgcolor: m.role === 'user' ? 'rgba(53,224,200,0.12)' : m.role === 'assistant' ? 'rgba(124,92,255,0.08)' : '#fef3c7',
+                    borderLeft: `3px solid ${m.role === 'user' ? '#0369a1' : m.role === 'assistant' ? ACCENT : C.warn}`,
                   }}>
-                    <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, color: C.mute, textTransform: 'uppercase', mb: 0.5 }}>
                       {m.role === 'user' ? '👤 Paciente' : m.role === 'assistant' ? '🤖 Asistente' : `🔧 ${m.toolName || 'tool'}`}
                       {' · '} {fmtDT(m.createdAt)}
                     </Typography>
@@ -852,10 +802,10 @@ export default function ProfesionalIAPage() {
           </Alert>
           <Stack spacing={1.5}>
             {catalog.map((p) => (
-              <Box key={p.code} sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2, border: '1px solid #e5e7eb', borderRadius: '10px' }}>
+              <Box key={p.code} sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2, border: `1px solid ${C.line}`, borderRadius: '10px' }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography sx={{ fontWeight: 700 }}>{p.label}</Typography>
-                  <Typography sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                  <Typography sx={{ fontSize: '0.8125rem', color: C.mute }}>
                     {p.totalConversations} conversaciones · vence en {p.durationDays} días
                   </Typography>
                 </Box>
@@ -873,5 +823,7 @@ export default function ProfesionalIAPage() {
         {toast && <Alert severity={toast.severity} onClose={() => setToast(null)}>{toast.msg}</Alert>}
       </Snackbar>
     </Box>
+    </ConsoleShell>
+    </ThemeProvider>
   );
 }
