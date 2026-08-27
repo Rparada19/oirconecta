@@ -227,7 +227,16 @@ async function processIncomingEvent(body) {
               contactName: contactByWaId[msg.from],
               tsSeconds: msg.timestamp,
             });
-            if (r.persisted) processed++; else { skipped++; continue; }
+            if (r.persisted) {
+              processed++;
+            } else {
+              // Antes esto era mudo: un descarte por duplicado no dejaba rastro
+              // y el mensaje simplemente no aparecía en la bandeja.
+              console.warn('[wa-corp] mensaje NO persistido', msg.id, 'de', msg.from,
+                'motivo=', r.skipped || 'desconocido', 'conv=', r.conversationId || '-');
+              skipped++;
+              continue;
+            }
 
             // Confirmación de asistencia desde el recordatorio (botón "Confirmar").
             if (btnPayload?.id && String(btnPayload.id).startsWith('confirm_appt:')) {

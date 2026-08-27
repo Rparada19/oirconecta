@@ -73,7 +73,10 @@ async function persistIncomingMessage({
       where: { wamid },
       select: { id: true },
     });
-    if (dup) return { skipped: 'duplicate', conversationId: conversation.id };
+    if (dup) {
+      console.warn('[wa-corp] duplicado: wamid', wamid, 'ya existe (msg', dup.id, ') — se ignora');
+      return { skipped: 'duplicate', conversationId: conversation.id };
+    }
   }
 
   const timestamp = tsSeconds ? new Date(Number(tsSeconds) * 1000) : new Date();
@@ -103,6 +106,9 @@ async function persistIncomingMessage({
     }),
   ]);
 
+  console.log('[wa-corp] guardado wamid', wamid, 'conv', conversation.id,
+    'phone', conversation.phone, 'nueva=', isNew, 'linea=', conversation.businessLine,
+    'estado=', conversation.status);
   return { persisted: true, conversationId: conversation.id, isNew };
 }
 
