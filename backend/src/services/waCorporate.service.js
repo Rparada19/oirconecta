@@ -83,6 +83,13 @@ async function persistIncomingMessage({
 
   const preview = (textBody || `[${type}]`).slice(0, 140);
 
+  // Si el paciente vuelve a escribir a una conversación cerrada, se reabre.
+  // Esto NO depende del bot: una conversación cerrada no sale en la bandeja y
+  // el mensaje quedaría invisible para el equipo aunque esté guardado.
+  const reabrir = conversation.status === 'CLOSED'
+    ? { status: process.env.WA_BOT_ENABLED === 'true' ? 'BOT' : 'HUMAN' }
+    : {};
+
   await prisma.$transaction([
     prisma.whatsAppMessage.create({
       data: {
@@ -102,6 +109,7 @@ async function persistIncomingMessage({
         unreadCount: { increment: 1 },
         windowExpiresAt: new Date(Date.now() + WINDOW_MS),
         contactName: conversation.contactName || contactName || undefined,
+        ...reabrir,
       },
     }),
   ]);

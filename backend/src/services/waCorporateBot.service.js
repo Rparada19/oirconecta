@@ -659,7 +659,9 @@ async function reopenIfClosed(conversationId) {
   });
   if (!conv) return { skipped: 'conv-not-found' };
   if (conv.status !== 'CLOSED') return { skipped: 'not-closed' };
-  if (conv.contactType === 'PROFESIONAL_DIRECTORIO') return { skipped: 'directorio-lead' };
+  // Ya no se deja cerrada a nadie: el número es del consultorio y quien
+  // escribe merece respuesta. Antes PROFESIONAL_DIRECTORIO quedaba cerrada
+  // para siempre, así que sus mensajes no aparecían en la bandeja.
   await prisma.whatsAppConversation.update({
     where: { id: conversationId },
     data: { status: 'BOT' },
