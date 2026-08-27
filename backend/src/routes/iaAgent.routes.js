@@ -221,6 +221,10 @@ async function getConfigId(profileId) {
   return cfg.id;
 }
 
+// Chat de prueba del propio profesional. No consume cuota ni crea conversación.
+router.post('/me/agent-preview-chat', authenticateDirectoryAccount, withProfile, (req, res) =>
+  send(res, () => ia.previewChat(req.profileId, { messages: req.body?.messages })));
+
 // Lista documentos del profesional
 router.get('/me/agent-documents', authenticateDirectoryAccount, withProfile, async (req, res) => {
   try {

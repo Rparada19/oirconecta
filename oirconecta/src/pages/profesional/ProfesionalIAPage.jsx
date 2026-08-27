@@ -36,6 +36,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 const EDU_SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.01em' };
 import { directoryApi, getDirectoryToken } from '../../services/directoryAccountApi';
 import BrainEducation from '../../components/profesional/BrainEducation';
+import AssistantChat from '../../components/profesional/AssistantChat';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import IaDocumentsSection from '../../components/profesional/IaDocumentsSection';
@@ -137,9 +138,10 @@ export default function ProfesionalIAPage() {
       avoidTopics: eduDraft.avoidTopics.trim() || null,
     });
     setSavingEdu(false);
-    if (r.error) return setToast({ severity: 'error', msg: r.error });
+    if (r.error) { setToast({ severity: 'error', msg: r.error }); return false; }
     setConfig(r.data.data);
-    setToast({ severity: 'success', msg: 'Educación guardada. Se aplica al bot en la próxima conversación.' });
+    setToast({ severity: 'success', msg: 'Aprendido. Se aplica en la próxima conversación.' });
+    return true;
   };
 
   const openFaqNew = () => setFaqDialog({ question: '', answer: '', isActive: true });
@@ -420,155 +422,11 @@ export default function ProfesionalIAPage() {
           faqCount={faqs.filter((f) => f.isActive).length}
           faqMax={limits.faqs.max}
           docs={docs}
-          onPick={(key) => {
-            const el = document.getElementById(`edu-${key}`);
-            if (!el) return;
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.focus({ preventScroll: true });
-          }}
+          saving={savingEdu}
+          onChange={(key, value) => setEduDraft((d) => ({ ...d, [key]: value }))}
+          onSave={saveEducation}
         />
         <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
-          <Stack spacing={2.5}>
-            <TextField
-              label="Personalidad y tono"
-              id="edu-personality"
-              size="small" fullWidth multiline minRows={2}
-              value={eduDraft.personality}
-              onChange={(e) => setEduDraft({ ...eduDraft, personality: e.target.value })}
-              inputProps={{ maxLength: limits.text.personality }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
-                    <RecordVoiceOverOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              helperText={`${eduDraft.personality.length}/${limits.text.personality} · Ej: "Cercana, empática, usa términos cotidianos en vez de jerga médica. Trata al paciente con calidez."`}
-            />
-            <TextField
-              label="Áreas de expertise"
-              id="edu-expertise"
-              size="small" fullWidth multiline minRows={2}
-              value={eduDraft.expertise}
-              onChange={(e) => setEduDraft({ ...eduDraft, expertise: e.target.value })}
-              inputProps={{ maxLength: limits.text.expertise }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
-                    <WorkspacePremiumOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              helperText={`${eduDraft.expertise.length}/${limits.text.expertise} · Ej: "Adaptación de audífonos pediátricos, terapia auditiva verbal, manejo de tinnitus."`}
-            />
-            <TextField
-              label="Marcas y tecnología que manejas"
-              id="edu-technologies"
-              size="small" fullWidth multiline minRows={3}
-              value={eduDraft.technologies}
-              onChange={(e) => setEduDraft({ ...eduDraft, technologies: e.target.value })}
-              inputProps={{ maxLength: limits.text.technologies }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
-                    <MemoryOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              helperText={`${eduDraft.technologies.length}/${limits.text.technologies} · Ej: "Widex Moment y Allure, Phonak Lumity, Signia IX. Accesorios: micrófonos remotos, streamers de TV. Apps de control y ajuste remoto."`}
-            />
-            <TextField
-              label="Servicios y qué incluye cada uno"
-              id="edu-services"
-              size="small" fullWidth multiline minRows={3}
-              value={eduDraft.services}
-              onChange={(e) => setEduDraft({ ...eduDraft, services: e.target.value })}
-              inputProps={{ maxLength: limits.text.services }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
-                    <MedicalServicesOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              helperText={`${eduDraft.services.length}/${limits.text.services} · Ej: "Valoración auditiva: audiometría, logoaudiometría e impedanciometría, dura 45 min. Adaptación: incluye 3 controles el primer mes. Reparaciones y limpieza de todas las marcas."`}
-            />
-            <TextField
-              label="Cómo funciona la atención"
-              id="edu-logistics"
-              size="small" fullWidth multiline minRows={2}
-              value={eduDraft.logistics}
-              onChange={(e) => setEduDraft({ ...eduDraft, logistics: e.target.value })}
-              inputProps={{ maxLength: limits.text.logistics }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
-                    <PlaceOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              helperText={`${eduDraft.logistics.length}/${limits.text.logistics} · Ej: "Sede norte de Bogotá, lunes a viernes 8am-5pm y sábados hasta mediodía. Atendemos particular y algunas pólizas. Los audífonos llegan en 5 días hábiles."`}
-            />
-            <TextField
-              label="Qué te hace diferente"
-              id="edu-differentiators"
-              size="small" fullWidth multiline minRows={2}
-              value={eduDraft.differentiators}
-              onChange={(e) => setEduDraft({ ...eduDraft, differentiators: e.target.value })}
-              inputProps={{ maxLength: limits.text.differentiators }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
-                    <AutoAwesomeOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              helperText={`${eduDraft.differentiators.length}/${limits.text.differentiators} · Ej: "Somos multimarca, no casados con un fabricante. Controles de por vida sin costo. 20 años adaptando en Bogotá."`}
-            />
-            <TextField
-              label="Frase de firma (opcional)"
-              id="edu-signature"
-              size="small" fullWidth
-              value={eduDraft.signature}
-              onChange={(e) => setEduDraft({ ...eduDraft, signature: e.target.value })}
-              inputProps={{ maxLength: limits.text.signature }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ mr: 1 }}>
-                    <DrawOutlinedIcon sx={{ color: ACCENT, fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              helperText={`${eduDraft.signature.length}/${limits.text.signature} · Ej: "Cuídate mucho — Piedad." El bot la usa al despedirse.`}
-            />
-            <TextField
-              label="Temas que el bot NO debe tocar"
-              id="edu-avoidTopics"
-              size="small" fullWidth multiline minRows={2}
-              value={eduDraft.avoidTopics}
-              onChange={(e) => setEduDraft({ ...eduDraft, avoidTopics: e.target.value })}
-              inputProps={{ maxLength: limits.text.avoidTopics }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5, mr: 1 }}>
-                    <BlockOutlinedIcon sx={{ color: C.danger, fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              helperText={`${eduDraft.avoidTopics.length}/${limits.text.avoidTopics} · Ej: "Precios exactos de audífonos, diagnósticos, promesas de resultados clínicos."`}
-            />
-            <Button
-              variant="contained"
-              onClick={saveEducation}
-              disabled={savingEdu}
-              sx={{ background: ACCENT, textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start', px: 3, py: 1,
-                    borderRadius: '10px',
-                    '&:hover': { background: ACCENT, filter: 'brightness(0.92)' } }}
-            >
-              {savingEdu ? 'Guardando…' : 'Guardar educación'}
-            </Button>
-          </Stack>
-
           {/* FAQs */}
           <Box sx={{ mt: 4.5, pt: 3.5, borderTop: `1px solid ${C.line}` }}>
             <Stack direction="row" alignItems="flex-end" spacing={1.5} sx={{ mb: 2 }}>
@@ -689,6 +547,11 @@ export default function ProfesionalIAPage() {
       {/* F10 — Documentos del bot (RAG) */}
       <Box sx={{ mt: 3 }}>
         <IaDocumentsSection onDocsChange={setDocs} />
+
+      {/* Prueba en vivo */}
+      <Card sx={{ mt: 3, overflow: 'hidden' }}>
+        <AssistantChat agentName={configDraft.agentName || 'tu asistente'} />
+      </Card>
       </Box>
 
       {/* Conversaciones */}

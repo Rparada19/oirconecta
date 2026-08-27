@@ -483,6 +483,80 @@ async function getIaInfo(profileId) {
  *
  * Devuelve: { conversationId, reply, finishReason, quota }
  */
+
+/**
+ * Chat de prueba para el propio profesional, desde su portal.
+ *
+ * Usa exactamente el mismo system prompt, la misma educación y el mismo
+ * retrieval de documentos que la conversación real — para que lo que vea aquí
+ * sea lo que verá su paciente. Lo que NO hace: crear IaConversation ni consumir
+ * cuota. Probar tu asistente no debería costarte conversaciones.
+ *
+ * @param {string} profileId
+ * @param {{ messages: Array<{role:'user'|'assistant', content:string}> }} p
+ */
+async function previewChat(profileId, { messages }) {
+  if (!Array.isArray(messages) || messages.length === 0) {
+    throw new IaError('messages requerido');
+  }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new IaError('ANTHROPIC_API_KEY no configurada en el servidor', { status: 503 });
+  }
+
+  const ultimo = [...messages].reverse().find((m) => m.role === 'user');
+  const query = ultimo?.content || '';
+
+  const profileInfo = await toolImpls.get_professional_info({ profileId });
+  const tzNow = new Date().toLocaleString('es-CO', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    timeZone: 'America/Bogota',
+  });
+  const education = await require('./iaAgentConfig.service').getEducationForPrompt(profileId);
+  let system = buildSystemPrompt(profileInfo, tzNow, education);
+
+  // Mismo retrieval que en producción: si no, la prueba miente.
+  const usados = [];
+  try {
+    const configRow = await prisma.iaAgentConfig.findUnique({
+      where: { profileId }, select: { id: true },
+    });
+    if (configRow?.id && query) {
+      const ingestion = require('./documentIngestion.service');
+      const chunks = await ingestion.retrieveTopKChunks({ configId: configRow.id, query, k: 3 });
+      if (chunks.length > 0) {
+        const context = chunks
+          .map((c, i) => `[Extracto ${i + 1} · similitud ${c.similarity.toFixed(2)}]\n${c.content}`)
+          .join('\n\n---\n\n');
+        system += `\n\n## Documentos del profesional (contexto adicional)\n\n${context}\n\nUsa estos extractos como referencia autorizada. No expongas los marcadores "[Extracto N]".`;
+        chunks.forEach((c) => usados.push({ similarity: Number(c.similarity.toFixed(2)) }));
+      }
+    }
+  } catch (e) {
+    console.warn('[iaAgent/preview] retrieval falló:', e.message);
+  }
+
+  const client = new Anthropic();
+  const resp = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    system,
+    messages: messages.slice(-12).map((m) => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: String(m.content || ''),
+    })),
+  });
+
+  const reply = (resp.content || [])
+    .filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+
+  return {
+    reply: reply || 'No pude responder eso.',
+    // Le decimos al profesional si la respuesta se apoyó en sus documentos.
+    usedDocuments: usados.length,
+    preview: true,
+  };
+}
+
 async function chat(profileId, { conversationId, message, metadata }) {
   if (!message || typeof message !== 'string' || message.trim().length === 0) {
     throw new IaError('message requerido');
@@ -637,4 +711,4 @@ async function chat(profileId, { conversationId, message, metadata }) {
   };
 }
 
-module.exports = { IaError, getIaInfo, chat, getBalance, consumeConversation, TOOLS };
+module.exports = { IaError, getIaInfo, chat, previewChat, getBalance, consumeConversation, TOOLS };
