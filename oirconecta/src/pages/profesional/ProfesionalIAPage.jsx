@@ -70,6 +70,7 @@ export default function ProfesionalIAPage() {
   const [eduDraft, setEduDraft] = useState({
     personality: '', expertise: '', technologies: '', services: '',
     logistics: '', differentiators: '', signature: '', avoidTopics: '',
+    internalKnowledge: '', objections: '', pricing: '',
   });
   const [savingEdu, setSavingEdu] = useState(false);
   const [faqs, setFaqs] = useState([]);
@@ -118,6 +119,9 @@ export default function ProfesionalIAPage() {
         differentiators: cfg.data.data.differentiators || '',
         signature: cfg.data.data.signature || '',
         avoidTopics: cfg.data.data.avoidTopics || '',
+        internalKnowledge: cfg.data.data.internalKnowledge || '',
+        objections: cfg.data.data.objections || '',
+        pricing: cfg.data.data.pricing || '',
       });
     }
     if (Array.isArray(fq.data?.data)) setFaqs(fq.data.data);
@@ -127,16 +131,11 @@ export default function ProfesionalIAPage() {
 
   const saveEducation = async () => {
     setSavingEdu(true);
-    const r = await directoryApi.put('/api/ia/me/agent-config', {
-      personality: eduDraft.personality.trim() || null,
-      expertise: eduDraft.expertise.trim() || null,
-      technologies: eduDraft.technologies.trim() || null,
-      services: eduDraft.services.trim() || null,
-      logistics: eduDraft.logistics.trim() || null,
-      differentiators: eduDraft.differentiators.trim() || null,
-      signature: eduDraft.signature.trim() || null,
-      avoidTopics: eduDraft.avoidTopics.trim() || null,
-    });
+    // Recorre el draft completo: al agregar un nodo nuevo no hay que tocar esto.
+    const payload = Object.fromEntries(
+      Object.entries(eduDraft).map(([k, v]) => [k, (v || '').trim() || null])
+    );
+    const r = await directoryApi.put('/api/ia/me/agent-config', payload);
     setSavingEdu(false);
     if (r.error) { setToast({ severity: 'error', msg: r.error }); return false; }
     setConfig(r.data.data);

@@ -2,7 +2,7 @@
  * Cerebro del asistente: no es un gráfico encima de un formulario, es la
  * interfaz. Tocas una región de la red y editas esa región ahí mismo.
  *
- *  · Los 8 nodos internos son las instrucciones. El brillo sale de cuánto texto
+ *  · Los nodos internos son las instrucciones. El brillo sale de cuánto texto
  *    lleva el campo y crece mientras se escribe.
  *  · Las motas exteriores son documentos: orbitan mientras se procesan y se
  *    fijan al núcleo al quedar aprendidas.
@@ -19,28 +19,38 @@ const CY = 160;
 
 // Anillo irregular a propósito: un círculo perfecto se lee como diagrama.
 const SLOTS = [
-  { key: 'personality', x: 160, y: 49, label: 'Tono', title: 'Personalidad y tono',
+  { key: 'personality', x: 168, y: 44, label: 'Tono', title: 'Personalidad y tono',
     hint: 'Cómo le hablas a un paciente. ¿Cálida o técnica? ¿Tuteo o usted?',
     ej: 'Cercana, empática, usa términos cotidianos en vez de jerga médica.' },
-  { key: 'expertise', x: 276, y: 52, label: 'Expertise', title: 'Áreas de expertise',
+  { key: 'expertise', x: 268, y: 58, label: 'Expertise', title: 'Áreas de expertise',
     hint: 'Lo que de verdad haces, para que no ofrezca lo que no.',
     ej: 'Adaptación de audífonos pediátricos, terapia auditiva verbal, manejo de tinnitus.' },
-  { key: 'technologies', x: 318, y: 139, label: 'Marcas', title: 'Marcas y tecnología',
+  { key: 'technologies', x: 330, y: 128, label: 'Marcas', title: 'Marcas y tecnología',
     hint: 'Las que adaptas. Si preguntan por una que no manejas, lo dice en vez de inventar.',
-    ej: 'Widex Moment y Allure, Phonak Lumity, Signia IX. Accesorios: micrófonos remotos.' },
-  { key: 'services', x: 305, y: 234, label: 'Servicios', title: 'Servicios y qué incluye',
-    hint: 'De aquí sale la respuesta a "¿ustedes hacen X?" y a cuánto cuesta.',
+    ej: 'Widex Moment y Allure, Phonak Lumity, Signia IX.' },
+  { key: 'pricing', x: 344, y: 200, label: 'Precios', title: 'Qué puede decir de plata',
+    hint: 'La pregunta que más llega y la que más citas mata. Aquí decides cuánto revela.',
+    ej: 'La valoración cuesta $X e incluye audiometría. Los planes se definen en consulta.' },
+  { key: 'services', x: 302, y: 258, label: 'Servicios', title: 'Servicios y qué incluye',
+    hint: 'De aquí sale la respuesta a "¿ustedes hacen X?".',
     ej: 'Valoración: audiometría, logoaudiometría e impedanciometría, 45 min.' },
-  { key: 'logistics', x: 220, y: 270, label: 'Atención', title: 'Cómo funciona la atención',
-    hint: 'Sedes, horarios, convenios, tiempos. Lo que repites veinte veces al día.',
-    ej: 'Sede norte de Bogotá, lunes a viernes 8am-5pm. Los audífonos llegan en 5 días.' },
-  { key: 'differentiators', x: 122, y: 259, label: 'Diferencia', title: 'Qué te hace diferente',
+  { key: 'objections', x: 222, y: 286, label: 'Objeciones', title: 'Cuando el paciente duda',
+    hint: '"Lo voy a pensar", "está caro", "es para mi mamá y no quiere". Aquí se ganan o se pierden las citas.',
+    ej: 'Si dice que lo piensa: apártale el cupo y dile que lo puede mover sin problema.' },
+  { key: 'differentiators', x: 138, y: 272, label: 'Diferencia', title: 'Qué te hace diferente',
     hint: 'Lo usa cuando el paciente compara. Nunca para presionar.',
     ej: 'Somos multimarca, no casados con un fabricante. Controles de por vida.' },
-  { key: 'avoidTopics', x: 83, y: 176, label: 'Vetado', title: 'Lo que NO debe tocar',
+  { key: 'logistics', x: 72, y: 218, label: 'Atención', title: 'Cómo funciona la atención',
+    hint: 'Sedes, horarios, convenios, tiempos. Lo que repites veinte veces al día.',
+    ej: 'Sede norte de Bogotá, lunes a viernes 8am-5pm.' },
+  { key: 'avoidTopics', x: 60, y: 146, label: 'Vetado', title: 'Lo que NO debe tocar',
     hint: 'Los límites. Aquí se protege tu criterio clínico.',
-    ej: 'Diagnósticos, promesas de resultados clínicos, precios exactos por chat.' },
-  { key: 'signature', x: 112, y: 105, label: 'Cierre', title: 'Frase de firma',
+    ej: 'Diagnósticos, promesas de resultados clínicos.' },
+  { key: 'internalKnowledge', x: 96, y: 84, label: 'Interno', title: 'Lo que sabe y no dice',
+    hint: 'Guía sus recomendaciones sin anunciarlo. Si le preguntan de frente no lo niega — responde que se define en la valoración.',
+    ej: 'Los planes de audición se arman hoy con Widex. No lo ofrezcas por iniciativa propia.',
+    interno: true },
+  { key: 'signature', x: 232, y: 118, label: 'Cierre', title: 'Frase de firma',
     hint: 'Tu frase de siempre al despedirte. Detalle pequeño, pero suena a ti.',
     ej: 'Cuídate mucho — Piedad.' },
 ];
@@ -135,7 +145,7 @@ export default function BrainEducation({
         {/* La red */}
         <Box sx={{ justifySelf: 'center', width: '100%', maxWidth: 420 }}>
           <svg viewBox="0 0 400 320" width="100%" role="group"
-            aria-label={`Red del asistente: ${activos} de 8 instrucciones, ${listos.length} documentos aprendidos`}
+            aria-label={`Red del asistente: ${activos} de ${nodes.length} instrucciones, ${listos.length} documentos aprendidos`}
             style={{ display: 'block', overflow: 'visible' }}>
             <defs>
               <radialGradient id="ocCore">
@@ -222,8 +232,11 @@ export default function BrainEducation({
                   <circle cx={n.x} cy={n.y} r="14" fill="none" stroke="#c4b5fd" strokeOpacity="0.5" strokeWidth="1" />
                 )}
                 <circle cx={n.x} cy={n.y} r={n.on ? 5.5 + n.fill * 3.5 : 3.6}
-                  fill={n.on ? '#c4b5fd' : '#1e293b'} stroke={n.on ? '#a78bfa' : '#475569'} strokeWidth="1.1"
-                  filter={n.on ? 'url(#ocGlow)' : undefined}
+                  fill={n.on ? (n.interno ? '#0a0f1c' : '#c4b5fd') : '#1e293b'}
+                  stroke={n.on ? (n.interno ? '#c4b5fd' : '#a78bfa') : '#475569'}
+                  strokeWidth={n.interno && n.on ? 2 : 1.1}
+                  strokeDasharray={n.interno ? '2 2' : 'none'}
+                  filter={n.on && !n.interno ? 'url(#ocGlow)' : undefined}
                   style={{ transition: 'r .5s cubic-bezier(.2,.7,.3,1), fill .5s, stroke .5s' }} />
                 <text x={n.x} y={n.y - (n.on ? 15 : 12)} textAnchor="middle"
                   style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.13em',
@@ -251,7 +264,7 @@ export default function BrainEducation({
                   {pct}<Box component="span" sx={{ fontSize: '0.42em', color: C.signal, ml: 0.5 }}>%</Box>
                 </Box>
                 <Box component="span" sx={{ fontFamily: MONO, fontSize: 10.5, color: C.mute, lineHeight: 1.7 }}>
-                  {activos}/8 INSTRUCCIONES<br />
+                  {activos}/{nodes.length} INSTRUCCIONES<br />
                   {faqCount}/{faqMax} VERIFICADAS<br />
                   {listos.length} DOCUMENTOS · {chunks} PASAJES
                 </Box>

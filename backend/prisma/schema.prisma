@@ -2545,6 +2545,15 @@ model IaAgentConfig {
   logistics      String?
   /// Qué lo diferencia: garantías, seguimiento, trayectoria. Max 900 chars.
   differentiators String?
+
+  /// Conocimiento que el bot USA para guiar sus respuestas pero NUNCA anuncia
+  /// por iniciativa propia (proveedor con el que se arman los planes, etc.).
+  internalKnowledge String?
+  /// Cómo responder cuando el paciente duda: precio, "lo voy a pensar", familiar.
+  objections        String?
+  /// Qué puede decir de dinero y qué no. Antes vivía repartido entre
+  /// services y avoidTopics.
+  pricing           String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 

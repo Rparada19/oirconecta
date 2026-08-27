@@ -182,7 +182,7 @@ const toolImpls = {
 // System prompt
 // ─────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(profileInfo, hoyLocal, education = {}) {
+function buildSystemPrompt(profileInfo, hoyLocal, education = {}, conductor = false) {
   const agentName = education.agentName || 'Asistente';
   const nameLine = agentName && agentName !== 'Asistente'
     ? `Tu nombre es ${agentName}. `
@@ -208,6 +208,15 @@ function buildSystemPrompt(profileInfo, hoyLocal, education = {}) {
   if (education.differentiators) {
     custom.push(`── Qué diferencia a este consultorio. Menciónalo cuando el paciente compare opciones o dude, nunca como discurso de venta agresivo:\n${education.differentiators}`);
   }
+  if (education.pricing) {
+    custom.push(`── Qué puedes decir sobre precios y qué no. Cuando preguntan el precio están interesados: es una objeción, no una consulta. Responde con esto y vuelve a proponer la cita:\n${education.pricing}`);
+  }
+  if (education.objections) {
+    custom.push(`── Cómo responder cuando la persona duda. Reconoce lo que siente, reencuadra y vuelve a proponer un horario concreto. Nunca discutas ni repitas el mismo argumento dos veces:\n${education.objections}`);
+  }
+  if (education.internalKnowledge) {
+    custom.push(`── CONOCIMIENTO INTERNO — úsalo para guiar tus recomendaciones, pero NO lo anuncies por iniciativa propia. Si te preguntan de frente, NO lo niegues ni mientas: responde con naturalidad y aclara que se define en la valoración según cada caso:\n${education.internalKnowledge}`);
+  }
   if (education.avoidTopics) {
     custom.push(`── Temas que NUNCA debes tocar (si el paciente insiste, redirige a consulta directa con el profesional):\n${education.avoidTopics}`);
   }
@@ -220,6 +229,22 @@ function buildSystemPrompt(profileInfo, hoyLocal, education = {}) {
   if (education.signature) {
     custom.push(`── Frase de firma/cierre habitual. Úsala solo cuando cierres la conversación o al despedirte:\n"${education.signature}"`);
   }
+
+  // Modo conductor: el prompt base es un tomador de pedidos (espera a que el
+  // paciente pida). Esto lo vuelve quien lleva la conversación. Hoy solo se
+  // activa para el consultorio propio; los demás profesionales del directorio
+  // siguen con el comportamiento de siempre.
+  const conductorSection = conductor ? `
+
+═══ CONDUCES TÚ LA CONVERSACIÓN ═══
+Tu objetivo es que la persona quede CON CITA AGENDADA. Una conversación amable que termina sin cita es una conversación perdida.
+- Ningún mensaje tuyo termina sin un paso concreto hacia la cita. Nada de "quedo atento" ni "cualquier cosa me avisas".
+- NUNCA preguntes "¿cuándo te queda bien?" en abierto. Llama get_availability y ofrece 2-3 horarios REALES para que elija.
+- Usa cierre asumido: "Te agendo el martes a las 10:00, ¿te sirve?" — no "¿te gustaría agendar?".
+- Si no le sirven, ofrece dos más de otro día. Hasta 3 rondas antes de cambiar de estrategia.
+- Si dice que lo piensa, propón tú: "Te aparto el cupo y si no puedes lo movemos, sin problema."
+- No presiones con culpa ni con miedo. La pérdida auditiva no tratada avanza y aísla: puedes decirlo con respeto, nunca como amenaza.
+═══════════════════════════════════` : '';
 
   const customSection = custom.length > 0
     ? `\n\n═══ EDUCACIÓN ESPECÍFICA DE ESTE CONSULTORIO ═══\n${custom.join('\n\n')}\n═══════════════════════════════════════════════`
@@ -244,7 +269,7 @@ Reglas estrictas:
 4. NO ofrezcas tratamientos médicos, diagnósticos, ni recomendaciones clínicas. Si el paciente lo pide, redirige: "Esto lo evalúa ${profileInfo.nombre} directamente en consulta."
 5. Si el paciente quiere cancelar y te da un código (rescheduleToken), usa cancel_appointment. Sin código, dile que revise el email de confirmación de la cita.
 6. Sé breve. Máximo 3-4 líneas por respuesta. Sin emojis salvo que el paciente los use.
-7. Si el paciente pide algo que no puedes hacer (cobrar, cambiar precios, atender urgencias) di claramente que un humano del consultorio debe ayudarle, y comparte el teléfono del profesional si está disponible.${customSection}`;
+7. Si el paciente pide algo que no puedes hacer (cobrar, cambiar precios, atender urgencias) di claramente que un humano del consultorio debe ayudarle, y comparte el teléfono del profesional si está disponible.${conductorSection}${customSection}`;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -495,6 +520,15 @@ async function getIaInfo(profileId) {
  * @param {string} profileId
  * @param {{ messages: Array<{role:'user'|'assistant', content:string}> }} p
  */
+/** ¿Este perfil conduce la conversación? Hoy solo el consultorio propio. */
+async function esConductor(profileId) {
+  try {
+    const retail = require('./retail.service');
+    const id = await retail.getRetailProfileId();
+    return !!id && String(id) === String(profileId);
+  } catch { return false; }
+}
+
 async function previewChat(profileId, { messages }) {
   if (!Array.isArray(messages) || messages.length === 0) {
     throw new IaError('messages requerido');
@@ -512,7 +546,7 @@ async function previewChat(profileId, { messages }) {
     timeZone: 'America/Bogota',
   });
   const education = await require('./iaAgentConfig.service').getEducationForPrompt(profileId);
-  let system = buildSystemPrompt(profileInfo, tzNow, education);
+  let system = buildSystemPrompt(profileInfo, tzNow, education, await esConductor(profileId));
 
   // Mismo retrieval que en producción: si no, la prueba miente.
   const usados = [];
@@ -598,7 +632,7 @@ async function chat(profileId, { conversationId, message, metadata }) {
   });
   // Nombre + educación custom del profesional (persona, FAQs, temas a evitar).
   const education = await require('./iaAgentConfig.service').getEducationForPrompt(profileId);
-  const system = buildSystemPrompt(profileInfo, tzNow, education);
+  const system = buildSystemPrompt(profileInfo, tzNow, education, await esConductor(profileId));
 
   await saveUserMessage(conversation.id, message);
   const history = await loadConversationMessages(conversation.id);

@@ -33,6 +33,9 @@ const TEXT_LIMITS = {
   services: 1200,
   logistics: 900,
   differentiators: 900,
+  internalKnowledge: 900,
+  objections: 1200,
+  pricing: 900,
 };
 const TEXT_FIELDS = Object.keys(TEXT_LIMITS);
 
@@ -158,6 +161,11 @@ function buildEducationSection(education, nombre = 'el centro') {
   agregar('services', 'Servicios que se prestan y qué incluye cada uno. Úsalo para responder "¿ustedes hacen X?" sin inventar');
   agregar('logistics', 'Cómo funciona la atención (sedes, horarios, tiempos, convenios)');
   agregar('differentiators', 'Qué diferencia a este centro. Úsalo si el paciente compara o duda, nunca como venta agresiva');
+  agregar('pricing', 'Qué puedes decir sobre precios y qué no. Es una objeción, no una consulta: responde y vuelve a proponer la cita');
+  agregar('objections', 'Cómo responder cuando la persona duda. Reconoce, reencuadra y vuelve a proponer un horario. Nunca discutas');
+  if (education.internalKnowledge) {
+    bloques.push(`── CONOCIMIENTO INTERNO. Esto lo SABES y guía tus recomendaciones, pero NO lo anuncias por iniciativa propia. Si te preguntan de frente, no lo niegues ni mientas: responde con naturalidad y aclara que se define en la valoración:\n${education.internalKnowledge}`);
+  }
   agregar('avoidTopics', 'Temas que NUNCA debes tocar (si insisten, ofrece agendar con el profesional)');
   if (Array.isArray(education.faqs) && education.faqs.length > 0) {
     const faqBlock = education.faqs.map((f, i) => `${i + 1}. P: ${f.q}\n   R: ${f.a}`).join('\n');
