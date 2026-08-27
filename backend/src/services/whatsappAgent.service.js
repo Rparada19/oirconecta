@@ -279,6 +279,10 @@ async function processIncomingEvent(body) {
                   conversationId: r.conversationId,
                   incomingText: textBody,
                 });
+                // Memoria larga: se refresca aparte para no demorar la respuesta
+                // al paciente. Solo trabaja cada N mensajes nuevos.
+                bot.actualizarResumen(r.conversationId)
+                  .catch((e) => console.warn('[wa-bot] resumen:', e.message));
               }
             } catch (be) {
               console.error('[wa-bot] dispatcher falló:', be.message);

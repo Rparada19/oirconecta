@@ -2760,6 +2760,14 @@ model WhatsAppConversation {
   agendarEscalatedAt DateTime?
   agendarBookedAt    DateTime?
 
+  /// Memoria larga del bot: resumen rodante de lo ya conversado. El prompt solo
+  /// carga los últimos 12 mensajes, así que sin esto un paciente que vuelve a
+  /// los seis meses arranca de cero.
+  botSummary      String?   @db.Text
+  botSummaryAt    DateTime?
+  /// Cuántos mensajes de la conversación ya están resumidos (marca de agua).
+  botSummaryCount Int       @default(0)
+
   /// Contadores para la bandeja.
   unreadCount        Int       @default(0)
   lastMessageAt      DateTime?

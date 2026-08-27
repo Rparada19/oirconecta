@@ -329,6 +329,17 @@ async function seedPlanDefaults(prisma) {
 /**
  * F5.5 — Personalización agente IA (nombre + color por profesional). Idempotente.
  */
+async function ensureWaConversationMemory(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "botSummary" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "botSummaryAt" TIMESTAMP(3);`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "botSummaryCount" INTEGER NOT NULL DEFAULT 0;`);
+    console.log('[boot-migrate] whatsapp_conversations memoria OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureWaConversationMemory falló:', e.message);
+  }
+}
+
 async function ensureIaAgentConfigSchema(prisma) {
   try {
     await prisma.$executeRawUnsafe(`
@@ -676,6 +687,7 @@ async function runBootMigrations(prisma) {
   await ensureWhatsAppChannelSchema(prisma);
   await ensureIaPacksSchema(prisma);
   await ensureIaAgentConfigSchema(prisma);
+  await ensureWaConversationMemory(prisma);
   await ensureAppointmentCancellationColumns(prisma);
   await ensureGoogleCalendarSchema(prisma);
   await ensureAnalyticsSchema(prisma);

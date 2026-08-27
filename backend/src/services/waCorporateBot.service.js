@@ -502,6 +502,82 @@ async function loadHistory(conversationId) {
  * es seguro; soltar diagnósticos o audiometrías a quien tenga el aparato en la
  * mano, no. Eso es dato de salud bajo Habeas Data.
  */
+const RESUMIR_CADA = 10; // mensajes nuevos antes de refrescar el resumen
+
+/**
+ * Resumen rodante de la conversación.
+ *
+ * El prompt solo carga los últimos 12 mensajes. Un paciente que vuelve a los
+ * seis meses tiene su ficha, pero el bot no recuerda de qué hablaron: qué le
+ * ofrecieron, qué objetó, qué quedó pendiente. Esto lo guarda condensado.
+ *
+ * Corre después de responder, sin bloquear la respuesta. Sin datos clínicos,
+ * por la misma razón que la ficha: el teléfono no prueba identidad.
+ */
+async function actualizarResumen(conversationId) {
+  if (!process.env.ANTHROPIC_API_KEY) return { skipped: 'no-key' };
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: { id: true, botSummary: true, botSummaryCount: true },
+  });
+  if (!conv) return { skipped: 'no-conv' };
+
+  const total = await prisma.whatsAppMessage.count({ where: { conversationId } });
+  if (total - (conv.botSummaryCount || 0) < RESUMIR_CADA) return { skipped: 'sin-novedad' };
+
+  // Solo lo que aún no está resumido, en orden.
+  const nuevos = await prisma.whatsAppMessage.findMany({
+    where: { conversationId, type: { in: ['text', 'interactive'] } },
+    orderBy: { timestamp: 'asc' },
+    skip: conv.botSummaryCount || 0,
+    select: { direction: true, body: true },
+  });
+  const transcripcion = nuevos
+    .filter((m) => m.body)
+    .map((m) => `${m.direction === 'INBOUND' ? 'Paciente' : 'Centro'}: ${m.body}`)
+    .join('\n')
+    .slice(0, 12000);
+  if (!transcripcion) return { skipped: 'sin-texto' };
+
+  try {
+    const anthropic = new Anthropic();
+    const r = await anthropic.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 400,
+      system: `Resumes conversaciones de WhatsApp de un centro auditivo para que el asistente recuerde a un paciente que vuelve semanas o meses después.
+
+Escribe máximo 6 líneas, en tercera persona, español. Prioriza en este orden:
+1. Qué buscaba y para quién (él mismo, su mamá, su papá).
+2. Qué se le ofreció o coordinó, y si quedó cita agendada, movida o cancelada.
+3. Qué objetó o qué le preocupaba (precio, tiempo, distancia, dudas del familiar).
+4. Qué quedó pendiente.
+
+Reglas:
+- NO incluyas diagnósticos, resultados de audiometría ni detalles clínicos.
+- No inventes nada que no esté en la transcripción.
+- Si hay un resumen previo, intégralo con lo nuevo en un solo texto, sin repetir.
+- Texto plano, sin Markdown ni viñetas con asteriscos.`,
+      messages: [{
+        role: 'user',
+        content: conv.botSummary
+          ? `Resumen previo:\n${conv.botSummary}\n\nMensajes nuevos:\n${transcripcion}`
+          : `Mensajes:\n${transcripcion}`,
+      }],
+    });
+    const texto = (r.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+    if (!texto) return { skipped: 'vacio' };
+    await prisma.whatsAppConversation.update({
+      where: { id: conversationId },
+      data: { botSummary: texto.slice(0, 2000), botSummaryAt: new Date(), botSummaryCount: total },
+    });
+    return { updated: true };
+  } catch (e) {
+    console.warn('[wa-bot] resumen falló:', e.message);
+    return { error: e.message };
+  }
+}
+
+
 async function fichaPaciente(patientId) {
   if (!patientId) return null;
   const p = await prisma.patient.findUnique({
@@ -543,7 +619,7 @@ async function handleTextForBot({ conversationId, incomingText }) {
 
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, phone: true, contactType: true, status: true, contactName: true, patientId: true },
+    select: { id: true, phone: true, contactType: true, status: true, contactName: true, patientId: true, botSummary: true },
   });
   if (!conv) return { skipped: 'conv-not-found' };
   if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
@@ -570,6 +646,12 @@ async function handleTextForBot({ conversationId, incomingText }) {
     systemPrompt += `\n\n═══ CON QUIÉN ESTÁS HABLANDO ═══\n${ficha}\n
 Trátalo por su nombre desde el primer mensaje, con naturalidad — no anuncies que "lo tienes registrado".
 NO menciones diagnósticos, resultados de audiometría ni detalles clínicos: el número de teléfono no prueba identidad y puede escribir un familiar. Si te piden datos clínicos, ofrece agendar o pasar con el equipo.
+═══════════════════════════════`;
+  }
+
+  if (conv.botSummary) {
+    systemPrompt += `\n\n═══ LO QUE YA HABLARON ANTES ═══\n${conv.botSummary}\n
+Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le pidas datos que ya dio.
 ═══════════════════════════════`;
   }
 
@@ -735,6 +817,7 @@ module.exports = {
   botEnabled,
   BUTTON_IDS,
   maybeSendHandshake,
+  actualizarResumen,
   handleButtonReply,
   handleTextForBot,
   reopenIfClosed,
