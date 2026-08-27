@@ -234,7 +234,9 @@ async function handleButtonReply({ conversationId, buttonId, buttonTitle }) {
   const contactType = contactTypeByBtn[buttonId];
   if (!contactType) return { skipped: 'unknown-button' };
 
-  const businessLine = contactType === 'PROFESIONAL_DIRECTORIO' ? 'DIRECTORIO' : 'CRM';
+  // El número es del consultorio: todo vive en el mismo buzón. Marcar
+  // DIRECTORIO escondía la conversación de la bandeja del CRM.
+  const businessLine = 'CRM';
 
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },

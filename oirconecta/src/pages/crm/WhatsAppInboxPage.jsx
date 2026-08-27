@@ -181,7 +181,10 @@ export default function WhatsAppInboxPage({
   const load = useCallback(async ({ showSpinner = true } = {}) => {
     if (showSpinner) setLoading(true);
     try {
-      const params = { businessLine, limit: 100 };
+      // Un solo número = un solo buzón. Antes se filtraba por businessLine y
+      // las conversaciones marcadas DIRECTORIO quedaban invisibles acá: el
+      // único sitio donde se veían era la pantalla de captación, ya retirada.
+      const params = { limit: 100 };
       if (filter === 'mine') params.mine = 'true';
       else if (filter === 'unassigned') params.unassigned = 'true';
       else if (filter === 'closed') params.status = 'CLOSED';
