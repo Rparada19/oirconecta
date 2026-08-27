@@ -61,6 +61,7 @@ async function findOrCreateConversation({ phone, contactName }) {
 /** Persiste un mensaje entrante y actualiza contadores/ventana. */
 async function persistIncomingMessage({
   phoneNumberId, fromWaId, wamid, type, textBody, contactName, tsSeconds,
+  mediaId = null, mediaMime = null,
 }) {
   const { conversation, isNew } = await findOrCreateConversation({
     phone: fromWaId,
@@ -115,6 +116,10 @@ async function persistIncomingMessage({
         direction: 'INBOUND',
         type: type || 'text',
         body: textBody || null,
+        // Se guarda el id de Meta, no el binario: no hay almacenamiento de
+        // archivos y una audiometría es dato de salud. Meta lo retiene ~30 días.
+        mediaUrl: mediaId,
+        mediaMimeType: mediaMime,
         timestamp,
       },
     }),
@@ -649,7 +654,13 @@ async function markConversationRead(conversationId) {
   return { ok: true };
 }
 
+/** ¿El bot corporativo está habilitado? Lo consulta el dispatcher de adjuntos. */
+function botHabilitado() {
+  return process.env.WA_BOT_ENABLED === 'true';
+}
+
 module.exports = {
+  botHabilitado,
   isCorporatePhoneNumberId,
   findOrCreateConversation,
   persistIncomingMessage,

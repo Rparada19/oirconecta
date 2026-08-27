@@ -200,6 +200,8 @@ async function processIncomingEvent(body) {
             // Extrae texto según el tipo del mensaje
             let textBody = null;
             let btnPayload = null;
+            let mediaId = null;
+            let mediaMime = null;
             if (msg.type === 'text') {
               textBody = msg.text?.body || null;
             } else if (msg.type === 'interactive') {
@@ -210,6 +212,12 @@ async function processIncomingEvent(body) {
                 ? { id: msg.interactive.list_reply.id, title: msg.interactive.list_reply.title }
                 : null;
               textBody = btnPayload?.title || msg.interactive?.body?.text || null;
+            } else if (msg.type === 'image' || msg.type === 'document') {
+              // El paciente mandó un archivo — típicamente su audiometría.
+              const media = msg[msg.type] || {};
+              mediaId = media.id || null;
+              mediaMime = media.mime_type || null;
+              textBody = media.caption || (msg.type === 'image' ? '[imagen]' : `[documento] ${media.filename || ''}`.trim());
             } else if (msg.type === 'button') {
               // Botón de plantilla (quick reply) — trae payload + texto
               textBody = msg.button?.text || null;
@@ -226,6 +234,8 @@ async function processIncomingEvent(body) {
               textBody,
               contactName: contactByWaId[msg.from],
               tsSeconds: msg.timestamp,
+              mediaId,
+              mediaMime,
             });
             if (r.persisted) {
               processed++;
@@ -253,6 +263,33 @@ async function processIncomingEvent(body) {
                 console.error('[wa] confirm_appt falló:', ce.message);
               }
               continue; // no pasar al bot
+            }
+
+            // Adjunto: se descarga, se lee y se responde orientando a la cita.
+            if (mediaId && corp.botHabilitado()) {
+              try {
+                const waMedia = require('./waMedia.service');
+                const archivo = await waMedia.descargar(mediaId);
+                const lectura = archivo
+                  ? await require('./waExamRead.service').leerExamen(archivo, msg[msg.type]?.caption || '')
+                  : null;
+                if (lectura) {
+                  await corp.sendTextToConversation({
+                    conversationId: r.conversationId,
+                    text: lectura.texto,
+                    sentByBot: true,
+                  });
+                  if (lectura.urgente) {
+                    await prisma.whatsAppConversation.update({
+                      where: { id: r.conversationId },
+                      data: { status: 'ESCALATED', unreadCount: { increment: 1 } },
+                    });
+                  }
+                  continue; // ya se le respondió al adjunto
+                }
+              } catch (me) {
+                console.error('[wa-examen] falló:', me.message);
+              }
             }
 
             // F9b — Dispatcher del bot corporativo (solo si WA_BOT_ENABLED=true)
