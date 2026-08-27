@@ -1,4 +1,4 @@
-# Tareas — jueves 27 de agosto de 2026
+# Tareas — actualizado el 27 de agosto, 5:00 p.m.
 
 Estado al cerrar el miércoles 26. Diez commits desplegados en `main`.
 
@@ -13,13 +13,8 @@ Estado al cerrar el miércoles 26. Diez commits desplegados en `main`.
       Los crons de recordatorios tampoco corren con la instancia dormida.
       *Decisión tuya, no la puedo tomar yo.*
 
-- [ ] **Verificar `OPENAI_API_KEY` en Render.**
-      Sin ella los documentos que subas al Agente IA se procesan y se marcan
-      "aprendido", pero los vectores salen en cero y el bot **no recupera nada**.
-      Se vería funcionando sin funcionar.
-
-- [ ] **Verificar la extensión `vector` (pgvector) en Neon.**
-      Si no está, los pasajes no se guardan. En el Postgres local no existe.
+- [x] ~~Verificar `OPENAI_API_KEY` y pgvector~~ — **CONFIRMADOS VIVOS.** Se
+      subieron dos imágenes al Agente IA y quedaron READY con 4 pasajes.
 
 ---
 
@@ -70,10 +65,9 @@ Lo que quedó pendiente de hablar:
 
 ## 4. Alcance del WhatsApp
 
-- [ ] **La media entrante se pierde.** Audios e imágenes se guardan como el texto
-      literal `[audio]` / `[image]`; `mediaUrl` y `mediaMimeType` existen en el
-      modelo y nunca se llenan. Un paciente mayor que manda una nota de voz, o la
-      foto de su audiograma: en el CRM no se ve nada.
+- [x] ~~Media entrante~~ — **HECHO para imágenes y PDF.** `waMedia.service` los
+      descarga de Meta y el bot los lee. **Falta el audio**: las notas de voz
+      siguen perdiéndose, y es el canal natural de un paciente mayor.
 
 - [ ] **Avisar cuando llega algo a una conversación cerrada.** Ya se reabren
       solas, pero el equipo trabaja en "Abiertas" y conviene una señal explícita.
@@ -114,6 +108,19 @@ Lo que quedó pendiente de hablar:
       `oirconecta-api.onrender.com`. Revisar la regla en el panel de Render.
 
 ---
+
+## 5.b Multitenant — deuda creada hoy a propósito
+
+El servicio se va a ofertar a los profesionales del directorio. Lo de hoy quedó
+amarrado al consultorio propio y hay que soltarlo antes de vender:
+
+- [ ] `esConductor()` compara contra `RETAIL_PROFESSIONAL_ID` → debe ser un flag
+      por perfil en `IaAgentConfig`.
+- [ ] `waExamRead.service` tiene "OírConecta, centro auditivo en Bogotá" en duro.
+- [ ] La lectura de exámenes cuelga del bot corporativo; si se vende debe correr
+      en el pipeline compartido `iaAgent`, sobre el número de cada profesional.
+- [ ] Barrer `SYSTEM_PROMPTS` por datos de Bogotá que ya deberían salir de la
+      educación del perfil.
 
 ## 6. Sin resolver
 
