@@ -15,11 +15,23 @@ function getConnection() {
   if (!url) return null;
   if (connection) return connection;
   const IORedis = require('ioredis');
+  // Un Redis caído no puede colgar el agendamiento de una cita. Antes esto
+  // tenía maxRetriesPerRequest: null y cola offline, así que con la URL de
+  // Upstash muerta cada `add` esperaba para siempre.
   connection = new IORedis(url, {
-    maxRetriesPerRequest: null,
+    maxRetriesPerRequest: 2,
     enableReadyCheck: false,
+    enableOfflineQueue: false,
+    connectTimeout: 5000,
+    retryStrategy: (times) => (times > 5 ? null : Math.min(times * 500, 3000)),
   });
-  connection.on('error', (e) => console.error('[redis]', e.message));
+  connection.on('error', (e) => {
+    // Sin spam: un host muerto emite este error cada pocos segundos.
+    if (!connection.__loggedError) {
+      console.error('[redis]', e.message, '— los recordatorios quedan en PENDING para el cron');
+      connection.__loggedError = true;
+    }
+  });
   return connection;
 }
 
@@ -44,7 +56,9 @@ async function enqueueReminder(reminderId, scheduledFor) {
     return null;
   }
   const delay = Math.max(0, new Date(scheduledFor).getTime() - Date.now());
-  const job = await q.add(
+  // El Reminder ya está en DB: si la cola falla, el cron de pendingReminders lo
+  // recoge igual. Nunca dejamos que esto tumbe ni cuelgue al que llamó.
+  const job = await withTimeout(q.add(
     'send',
     { reminderId },
     {
@@ -55,8 +69,23 @@ async function enqueueReminder(reminderId, scheduledFor) {
       removeOnFail: { age: 30 * 24 * 3600 },
       jobId: `reminder:${reminderId}`, // idempotencia
     }
-  );
-  return job.id;
+  ), 5000).catch((e) => {
+    console.warn('[queue] no pude encolar Reminder', reminderId, '—', e.message,
+      '— queda en PENDING para el cron');
+    return null;
+  });
+  return job ? job.id : null;
+}
+
+/** Rechaza si la promesa no resuelve a tiempo. */
+function withTimeout(promise, ms) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`timeout tras ${ms}ms`)), ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
 }
 
 module.exports = { getQueue, getConnection, enqueueReminder };
