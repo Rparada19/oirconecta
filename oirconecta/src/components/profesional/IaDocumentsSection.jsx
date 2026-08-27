@@ -120,7 +120,7 @@ export default function IaDocumentsSection({ onDocsChange }) {
               Documentos del asistente
             </Typography>
             <Typography sx={{ fontSize: '0.85rem', color: MUTED, maxWidth: 640 }}>
-              Sube PDFs, Word o TXT con información propia (protocolos, catálogos de servicios, guías clínicas). El bot los usará como referencia autorizada al responder a tus pacientes.
+              Sube PDF, Word, texto — o una foto. Si le tomas una imagen a tu lista de precios o a un folleto de marca, Claude la lee y la convierte en algo que el bot puede consultar.
             </Typography>
           </Box>
           <Button
@@ -134,7 +134,7 @@ export default function IaDocumentsSection({ onDocsChange }) {
             {uploading ? 'Subiendo…' : 'Subir documento'}
           </Button>
           <input ref={fileInputRef} type="file" hidden
-            accept=".pdf,.docx,.doc,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/markdown"
+            accept=".pdf,.docx,.doc,.txt,.md,.jpg,.jpeg,.png,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/markdown,image/jpeg,image/png,image/webp"
             onChange={onFile} />
         </Stack>
 

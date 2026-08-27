@@ -16,6 +16,7 @@ const { PrismaClient } = require('@prisma/client');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const embeddings = require('./embeddings.service');
+const Anthropic = require('@anthropic-ai/sdk');
 
 const prisma = new PrismaClient();
 
@@ -26,6 +27,66 @@ const MAX_CHUNKS = 200;     // techo de seguridad por documento
 /** Aproxima tokens desde chars. */
 function approxTokens(chars) {
   return Math.ceil(chars / 4);
+}
+
+// Formatos de imagen que acepta la API de Anthropic.
+const IMAGE_MIME = {
+  'image/jpeg': 'image/jpeg', 'image/jpg': 'image/jpeg', 'image/png': 'image/png',
+  'image/gif': 'image/gif', 'image/webp': 'image/webp',
+};
+const IMAGE_EXT = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp',
+};
+
+/**
+ * Transcribe una imagen a texto con Claude. Sirve para lo que el profesional
+ * tiene en papel: listas de precios, folletos de marca, catálogos fotografiados.
+ * El texto resultante entra al mismo troceado y vectorizado que un PDF.
+ */
+async function transcribeImage(buffer, mediaType, filename) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    const err = new Error('Falta ANTHROPIC_API_KEY: no puedo leer imágenes.');
+    err.code = 'NO_VISION_KEY';
+    throw err;
+  }
+  const client = new Anthropic();
+  const res = await client.messages.create({
+    model: 'claude-opus-5',
+    max_tokens: 16000,
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: buffer.toString('base64') } },
+        {
+          type: 'text',
+          text: [
+            'Transcribe TODO el texto de esta imagen en español, tal cual aparece.',
+            'Es material de un centro auditivo: puede ser una lista de precios, un folleto de audífonos,',
+            'un catálogo de marcas o un protocolo de atención.',
+            '',
+            'Reglas:',
+            '- Conserva cifras, referencias y nombres de producto EXACTAMENTE como están. No redondees precios.',
+            '- Si hay tablas, escríbelas como texto plano legible, una fila por línea.',
+            '- No resumas, no interpretes, no agregues nada que no esté en la imagen.',
+            '- Si algo no se alcanza a leer, escribe [ilegible] en ese punto en vez de adivinar.',
+            '- Si la imagen no tiene texto, describe brevemente qué muestra.',
+          ].join('\n'),
+        },
+      ],
+    }],
+  });
+  if (res.stop_reason === 'refusal') {
+    const err = new Error('No se pudo leer la imagen.');
+    err.code = 'VISION_REFUSAL';
+    throw err;
+  }
+  const texto = (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+  if (!texto) {
+    const err = new Error(`Sin texto extraíble en "${filename}".`);
+    err.code = 'EMPTY_IMAGE';
+    throw err;
+  }
+  return texto;
 }
 
 /** Extrae texto plano según el mimeType. */
@@ -43,6 +104,9 @@ async function extractText(buffer, mimeType, filename) {
   }
   if (mt.startsWith('text/') || ext === 'txt' || ext === 'md') {
     return buffer.toString('utf-8');
+  }
+  if (IMAGE_MIME[mt] || IMAGE_EXT[ext]) {
+    return transcribeImage(buffer, IMAGE_MIME[mt] || IMAGE_EXT[ext], filename);
   }
   const err = new Error(`Formato no soportado: ${mt || ext}`);
   err.code = 'UNSUPPORTED_FORMAT';
