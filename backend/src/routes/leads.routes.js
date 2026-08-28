@@ -5,6 +5,7 @@
 const express = require('express');
 const { body, param, query } = require('express-validator');
 const router = express.Router();
+const { esTelefonoValido, esEmailValido, MSG_TEL, MSG_EMAIL } = require('../utils/validacionContacto');
 
 const leadsController = require('../controllers/leads.controller');
 const { authenticate, authorize } = require('../middleware/auth');
@@ -85,8 +86,8 @@ router.post(
   '/',
   [
     body('nombre').notEmpty().withMessage('Nombre requerido'),
-    body('email').isEmail().withMessage('Email inválido'),
-    body('telefono').notEmpty().withMessage('Teléfono requerido'),
+    body('email').custom((v) => { if (!esEmailValido(v)) throw new Error(MSG_EMAIL); return true; }),
+    body('telefono').custom((v) => { if (!esTelefonoValido(v)) throw new Error(MSG_TEL); return true; }),
     body('procedencia').optional(),
     body('interes').optional(),
   ],

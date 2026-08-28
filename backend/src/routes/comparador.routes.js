@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { esTelefonoValido, esEmailValido, MSG_TEL, MSG_EMAIL } = require('../utils/validacionContacto');
 const { PrismaClient } = require('@prisma/client');
 const { authenticate } = require('../middleware/auth');
 const { generarComparacion, generarRecomendacion } = require('../services/comparadorAI');
@@ -92,6 +93,12 @@ router.post('/leads', async (req, res) => {
     const { nombre, telefono, email, ciudad, marcaSugerida, candidatos, test } = req.body || {};
     if (!nombre || !telefono) {
       return res.status(400).json({ success: false, error: 'Nombre y teléfono son requeridos' });
+    }
+    if (!esTelefonoValido(telefono)) {
+      return res.status(400).json({ success: false, error: MSG_TEL, campo: 'telefono' });
+    }
+    if (email && !esEmailValido(email)) {
+      return res.status(400).json({ success: false, error: MSG_EMAIL, campo: 'email' });
     }
     const lead = await prisma.comparadorLead.create({
       data: {

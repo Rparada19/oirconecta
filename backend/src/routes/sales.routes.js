@@ -22,6 +22,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
+const { esTelefonoValido, esEmailValido, MSG_TEL, MSG_EMAIL } = require('../utils/validacionContacto');
 
 const { authenticate, authorize } = require('../middleware/auth');
 const sales = require('../services/sales.service');
@@ -94,6 +95,12 @@ router.post('/public/demo-request', async (req, res) => {
     if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es obligatorio' });
     if (!b.email && !b.telefono) {
       return res.status(400).json({ success: false, error: 'Déjanos un correo o un teléfono' });
+    }
+    if (b.telefono && !esTelefonoValido(b.telefono)) {
+      return res.status(400).json({ success: false, error: MSG_TEL, campo: 'telefono' });
+    }
+    if (b.email && !esEmailValido(b.email)) {
+      return res.status(400).json({ success: false, error: MSG_EMAIL, campo: 'email' });
     }
     const detalle = [
       b.sedes ? `Sedes: ${b.sedes}` : null,

@@ -13,6 +13,7 @@ const booking = require('../services/professionalBooking.service');
 const metaCapi = require('../services/metaCapi.service');
 
 const router = express.Router();
+const { esTelefonoValido, esEmailValido, MSG_TEL, MSG_EMAIL } = require('../utils/validacionContacto');
 
 function send(res, fn) {
   return Promise.resolve(fn()).then(
@@ -36,6 +37,15 @@ router.get('/public/:profileId/slots/range', (req, res) =>
 
 router.post('/public/:profileId/appointments', async (req, res) => {
   try {
+    // Antes bastaba escribir "5" para quedar agendado. Un teléfono falso es una
+    // cita que nadie puede confirmar ni recordar.
+    const pac = req.body?.patient || {};
+    if (!esTelefonoValido(pac.telefono)) {
+      return res.status(400).json({ success: false, error: MSG_TEL, campo: 'telefono' });
+    }
+    if (pac.email && !esEmailValido(pac.email)) {
+      return res.status(400).json({ success: false, error: MSG_EMAIL, campo: 'email' });
+    }
     const data = await booking.createPublicAppointment(req.params.profileId, req.body || {});
     const patient = req.body?.patient || {};
     metaCapi.sendEvent('Schedule', {

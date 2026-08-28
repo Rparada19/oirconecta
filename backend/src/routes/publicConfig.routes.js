@@ -14,6 +14,7 @@ const { authenticate } = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 const router = express.Router();
+const { esTelefonoValido, esEmailValido, MSG_TEL, MSG_EMAIL } = require('../utils/validacionContacto');
 
 // GET /api/public/retail-config
 // Devuelve el professionalId del consultorio propio de OírConecta para que
@@ -44,7 +45,10 @@ router.get('/retail-config', async (req, res) => {
 // POST /api/public/contact
 router.post('/contact',
   body('nombre').trim().notEmpty(),
-  body('email').isEmail(),
+  body('email').custom((v) => { if (!esEmailValido(v)) throw new Error(MSG_EMAIL); return true; }),
+  // El teléfono es opcional acá, pero si lo escriben tiene que servir.
+  body('telefono').optional({ values: 'falsy' })
+    .custom((v) => { if (!esTelefonoValido(v)) throw new Error(MSG_TEL); return true; }),
   body('mensaje').trim().notEmpty(),
   async (req, res) => {
     const errors = validationResult(req);
