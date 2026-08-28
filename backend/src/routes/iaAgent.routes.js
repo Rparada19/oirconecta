@@ -16,6 +16,7 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 const router = express.Router();
+const { runWithTenant } = require('../tenantContext');
 
 function send(res, fn) {
   return Promise.resolve(fn()).then(
@@ -70,7 +71,9 @@ async function withProfile(req, res, next) {
     req.profileId = profile.id;
     const sub = await prisma.subscription.findUnique({ where: { profileId: profile.id }, select: { id: true } });
     req.subscriptionId = sub?.id || null;
-    next();
+    // Desde aquí, toda consulta a pacientes o leads queda acotada a este
+    // profesional. Deja de depender de que cada handler se acuerde de filtrar.
+    return runWithTenant(profile.id, () => next());
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }

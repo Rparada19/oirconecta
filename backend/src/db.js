@@ -17,6 +17,7 @@
 
 const { PrismaClient } = require('@prisma/client');
 const { getAuditContext } = require('./auditContext');
+const { getTenant } = require('./tenantContext');
 
 /// Modelos cuyas mutaciones siempre se auditan. Mantener corto y centrado en PHI/PII.
 const AUDITED_MODELS = new Set([
@@ -31,6 +32,15 @@ const AUDITED_MODELS = new Set([
   'Consent',
   'OwnedDevice', // futuro Fase 3
 ]);
+
+/// Modelos que pertenecen a un inquilino. Si hay contexto de inquilino activo,
+/// ninguna consulta sobre estos puede salirse de él — ni leyendo ni escribiendo.
+const TENANT_MODELS = new Set(['Patient', 'Lead']);
+
+/// Operaciones de lectura a las que se les inyecta el filtro de dueño.
+const LECTURAS = new Set(['findMany', 'findFirst', 'findFirstOrThrow', 'count', 'aggregate', 'groupBy']);
+/// Operaciones que modifican y hay que acotar para no tocar datos ajenos.
+const ESCRITURAS_MASIVAS = new Set(['updateMany', 'deleteMany']);
 
 const ACTION_MAP = {
   create: 'CREATE',
@@ -90,7 +100,68 @@ function extractId(args) {
   return null;
 }
 
-const prisma = basePrisma.$extends({
+/**
+ * Aislamiento multiinquilino.
+ *
+ * Antes esto dependía de que cada consulta recordara filtrar por dueño, y basta
+ * una que se olvide para que los pacientes de un cliente aparezcan en el CRM de
+ * otro. Aquí deja de ser cuestión de memoria.
+ *
+ * Solo actúa si hay contexto de inquilino: sin él (crons, admin, notificaciones)
+ * el cliente se comporta como siempre.
+ */
+const tenantScoped = basePrisma.$extends({
+  name: 'tenant-scope',
+  query: {
+    $allModels: {
+      async $allOperations({ model, operation, args, query }) {
+        const tenant = getTenant();
+        if (!tenant || !TENANT_MODELS.has(model)) return query(args);
+
+        const filtro = { ownerProfileId: tenant };
+
+        if (LECTURAS.has(operation) || ESCRITURAS_MASIVAS.has(operation)) {
+          return query({ ...args, where: { AND: [args?.where || {}, filtro] } });
+        }
+
+        // findUnique no admite campos no únicos en el where, así que se
+        // comprueba la propiedad después: si el registro es de otro, no existe.
+        if (operation === 'findUnique' || operation === 'findUniqueOrThrow') {
+          const row = await query(args);
+          if (row && row.ownerProfileId && row.ownerProfileId !== tenant) return null;
+          return row;
+        }
+
+        if (operation === 'create' || operation === 'createMany') {
+          const marcar = (d) => ({ ...d, ownerProfileId: d?.ownerProfileId ?? tenant });
+          const data = Array.isArray(args?.data) ? args.data.map(marcar) : marcar(args?.data || {});
+          return query({ ...args, data });
+        }
+
+        // update / delete / upsert apuntan a un id: se verifica antes de tocar.
+        if (['update', 'delete', 'upsert'].includes(operation)) {
+          const id = args?.where?.id;
+          if (id) {
+            const actual = await modelClient(basePrisma, model)
+              .findUnique({ where: { id }, select: { ownerProfileId: true } })
+              .catch(() => null);
+            if (actual && actual.ownerProfileId && actual.ownerProfileId !== tenant) {
+              throw new Error(`Acceso denegado: ese ${model} pertenece a otro inquilino.`);
+            }
+          }
+          if (operation === 'upsert' && args?.create) {
+            args = { ...args, create: { ...args.create, ownerProfileId: args.create.ownerProfileId ?? tenant } };
+          }
+          return query(args);
+        }
+
+        return query(args);
+      },
+    },
+  },
+});
+
+const prisma = tenantScoped.$extends({
   name: 'audit-log',
   query: {
     $allModels: {
