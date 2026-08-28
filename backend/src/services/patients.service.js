@@ -11,8 +11,26 @@ const prisma = require('../db');
  * - Si appointmentProfessionalId está definido (audióloga con profesional asignado): solo pacientes con cita asignada a ese profesional.
  * - Si createdByUserId está definido (audióloga sin profesional de cita): solo pacientes con venta creada por ese usuario.
  */
+/**
+ * El CRM es la herramienta del centro propio, no un producto. Solo debe ver a
+ * SUS pacientes: los del directorio son de cada profesional y el Plan 3 se lo
+ * promete por escrito. Antes esta consulta no filtraba por dueño y listaba
+ * todo lo que hubiera en la tabla.
+ */
+async function scopeDelCentroPropio() {
+  try {
+    const id = await require('./retail.service').getRetailProfileId();
+    // Se incluyen los huérfanos (ownerProfileId null) para no esconder datos
+    // viejos si el backfill aún no corrió en este entorno.
+    // Va como AND, nunca como OR de primer nivel: el OR de la búsqueda lo
+    // pisaría y el aislamiento desaparecería justo al buscar.
+    return id ? { OR: [{ ownerProfileId: id }, { ownerProfileId: null }] } : null;
+  } catch { return null; }
+}
+
 const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointmentProfessionalId, includeProspectos = false }) => {
   const where = {};
+  const scope = await scopeDelCentroPropio();
 
   if (search) {
     where.OR = [
@@ -42,7 +60,10 @@ const getAll = async ({ search, page = 1, limit = 50, createdByUserId, appointme
       { maintenances: { some: {} } },
     ],
   };
-  if (!includeProspectos) where.AND = [CONDICION_REAL];
+  where.AND = [
+    ...(scope ? [scope] : []),
+    ...(includeProspectos ? [] : [CONDICION_REAL]),
+  ];
 
   const [patients, total] = await Promise.all([
     prisma.patient.findMany({

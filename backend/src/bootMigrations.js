@@ -329,6 +329,71 @@ async function seedPlanDefaults(prisma) {
 /**
  * F5.5 — Personalización agente IA (nombre + color por profesional). Idempotente.
  */
+/**
+ * Multiinquilino: cada cliente del directorio es dueño de sus propios pacientes
+ * y leads. Hasta ahora todo caía en un mismo saco que el CRM del centro propio
+ * listaba sin filtrar, contra lo que el Plan 3 le promete al profesional.
+ *
+ * La columna es opcional a propósito: se llena con un backfill y el filtrado se
+ * hace explícito en las consultas. Volverla obligatoria vendrá después, cuando
+ * ninguna ruta escriba sin dueño.
+ */
+async function ensureTenantOwnership(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patients" ADD COLUMN IF NOT EXISTS "ownerProfileId" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "leads" ADD COLUMN IF NOT EXISTS "ownerProfileId" TEXT;`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "patients_owner_idx" ON "patients"("ownerProfileId");`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "leads_owner_idx" ON "leads"("ownerProfileId");`);
+    console.log('[boot-migrate] ownerProfileId OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureTenantOwnership falló:', e.message);
+  }
+}
+
+/**
+ * Backfill de dueño, una sola vez (solo toca filas con ownerProfileId NULL).
+ *
+ * Criterio: si el paciente tiene citas de un perfil del directorio distinto al
+ * centro propio, es de ese profesional. Todo lo demás es del centro propio —
+ * hoy OírConecta es el único Plan 3, así que es la lectura correcta.
+ */
+async function backfillTenantOwnership(prisma) {
+  try {
+    const pendientes = await prisma.patient.count({ where: { ownerProfileId: null } });
+    if (pendientes === 0) return;
+
+    const retail = require('./services/retail.service');
+    const retailId = await retail.getRetailProfileId();
+    if (!retailId) {
+      console.warn('[boot-migrate] backfill de dueño omitido: no se resolvió el perfil del centro propio');
+      return;
+    }
+
+    // 1) Pacientes con citas de OTRO perfil del directorio → de ese profesional.
+    const ajenos = await prisma.$executeRawUnsafe(`
+      UPDATE "patients" p
+      SET "ownerProfileId" = sub."directoryProfileId"
+      FROM (
+        SELECT DISTINCT ON (a."patientId") a."patientId", a."directoryProfileId"
+        FROM "appointments" a
+        WHERE a."directoryProfileId" IS NOT NULL AND a."directoryProfileId" <> $1
+        ORDER BY a."patientId", a."fecha" ASC
+      ) sub
+      WHERE p."id" = sub."patientId" AND p."ownerProfileId" IS NULL;
+    `, retailId);
+
+    // 2) El resto es del centro propio.
+    const propios = await prisma.$executeRawUnsafe(
+      `UPDATE "patients" SET "ownerProfileId" = $1 WHERE "ownerProfileId" IS NULL;`, retailId);
+    const leads = await prisma.$executeRawUnsafe(
+      `UPDATE "leads" SET "ownerProfileId" = $1 WHERE "ownerProfileId" IS NULL;`, retailId);
+
+    console.log('[boot-migrate] backfill dueño → ajenos:', ajenos, 'propios:', propios, 'leads:', leads);
+  } catch (e) {
+    console.warn('[boot-migrate] backfillTenantOwnership falló:', e.message);
+  }
+}
+
 async function ensureWaConversationMemory(prisma) {
   try {
     await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "botSummary" TEXT;`);
@@ -688,6 +753,8 @@ async function runBootMigrations(prisma) {
   await ensureIaPacksSchema(prisma);
   await ensureIaAgentConfigSchema(prisma);
   await ensureWaConversationMemory(prisma);
+  await ensureTenantOwnership(prisma);
+  await backfillTenantOwnership(prisma);
   await ensureAppointmentCancellationColumns(prisma);
   await ensureGoogleCalendarSchema(prisma);
   await ensureAnalyticsSchema(prisma);

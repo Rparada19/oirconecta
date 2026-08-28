@@ -9,8 +9,19 @@ const prisma = require('../db');
 /**
  * Obtener todos los leads
  */
+/** Mismo criterio que en pacientes: el CRM solo ve los leads del centro propio. */
+async function scopeDelCentroPropio() {
+  try {
+    const id = await require('./retail.service').getRetailProfileId();
+    return id ? { OR: [{ ownerProfileId: id }, { ownerProfileId: null }] } : null;
+  } catch { return null; }
+}
+
 const getAll = async ({ estado, page = 1, limit = 50, search }) => {
   const where = {};
+  // Como AND: el OR de la búsqueda lo pisaría si fuera de primer nivel.
+  const scope = await scopeDelCentroPropio();
+  if (scope) where.AND = [scope];
 
   if (estado) {
     where.estado = estado;
@@ -122,6 +133,9 @@ const create = async (data, createdById) => {
       ciudad: data.ciudad,
       usuarioAudifonosMedicados: data.usuarioAudifonosMedicados || 'NO',
       procedencia: data.procedencia || 'visita-medica',
+      // Los leads que capta la plataforma son de OírConecta — es el producto que
+      // vende. Un lead de un cliente llegaría con su propio ownerProfileId.
+      ownerProfileId: data.ownerProfileId || null,
       interes: data.interes || 'Consulta General',
       notas: data.notas,
       estado,

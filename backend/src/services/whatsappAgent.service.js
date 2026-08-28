@@ -44,11 +44,16 @@ function verifyWebhook({ mode, token, challenge }) {
 }
 
 /** Find-or-create Patient global por número WhatsApp. */
-async function findOrCreatePatientByPhone(fromWaId, contactName) {
+async function findOrCreatePatientByPhone(fromWaId, contactName, ownerProfileId = null) {
   const phone = String(fromWaId || '').trim();
   if (!phone) throw new WaError('fromWaId vacío');
+  // Se busca dentro del mismo inquilino: el paciente de otro profesional no es
+  // el nuestro aunque comparta teléfono.
   const existing = await prisma.patient.findFirst({
-    where: { telefono: { contains: phone.slice(-10) } }, // últimos 10 dígitos
+    where: {
+      telefono: { contains: phone.slice(-10) },
+      ...(ownerProfileId ? { ownerProfileId } : {}),
+    },
   });
   if (existing) return existing;
   return prisma.patient.create({
@@ -56,6 +61,9 @@ async function findOrCreatePatientByPhone(fromWaId, contactName) {
       nombre: (contactName && String(contactName).trim()) || `Paciente WhatsApp +${phone}`,
       telefono: phone,
       procedencia: 'whatsapp-ia',
+      // Dueño: el profesional cuyo agente captó a esta persona. Sin esto el
+      // paciente quedaba huérfano y el CRM del centro propio lo listaba.
+      ownerProfileId,
     },
   });
 }
@@ -106,7 +114,7 @@ async function processIncomingMessage({
   if (dup) return { skipped: true, reason: 'DUPLICATE' };
 
   // 3) Patient
-  const patient = await findOrCreatePatientByPhone(fromWaId, contactName);
+  const patient = await findOrCreatePatientByPhone(fromWaId, contactName, channel.profileId);
 
   // 4) Conversación
   const { conversation, isNew } = await findOrCreateConversation(channel.profileId, patient.id, fromWaId);

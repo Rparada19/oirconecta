@@ -348,6 +348,8 @@ enum DirectoryPersonaTipo {
 
 model Lead {
   id                        String     @id @default(uuid())
+  /// Inquilino dueño de este lead. Ver Patient.ownerProfileId.
+  ownerProfileId            String?
   nombre                    String
   email                     String
   telefono                  String
@@ -442,6 +444,11 @@ model Patient {
   /// Resto del perfil clínico sin columna propia (consentimientos firmados,
   /// observaciones, datos del documento). Antes vivía solo en el navegador.
   perfilClinico    Json?
+
+  /// Inquilino dueño de este paciente: el DirectoryProfile del profesional que
+  /// lo captó. El centro propio es un inquilino más. Sin esto, el CRM listaba
+  /// pacientes de los clientes del directorio.
+  ownerProfileId String?
 
   // Sede asignada (Fase 1: multi-sede preparado, hoy 1 sola)
   sedeId String?

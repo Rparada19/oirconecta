@@ -277,7 +277,7 @@ function normEmail(e) {
  * sino por email (si viene), sino crea uno nuevo. Idempotente para evitar
  * que el mismo paciente reservando 2 veces aparezca duplicado.
  */
-async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, numeroDocumento, referredByCode = null }) {
+async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, numeroDocumento, referredByCode = null, ownerProfileId = null }) {
   if (!nombre || !telefono) throw new BookingError('nombre y telefono requeridos');
   const emailNorm = normEmail(email);
   const tel = normPhone(telefono);
@@ -318,6 +318,8 @@ async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, num
       numeroDocumento: numeroDocumento || null,
       procedencia: 'directorio-publico',
       referredByCode: referredByNormalized,
+      // Dueño: el profesional en cuya ficha se agendó.
+      ownerProfileId,
     },
   });
 }
@@ -372,7 +374,7 @@ async function createPublicAppointment(profileId, payload) {
   }
 
   // Find-or-create patient + relación
-  const patientRow = await findOrCreatePatient({ ...(patient || {}), referredByCode });
+  const patientRow = await findOrCreatePatient({ ...(patient || {}), referredByCode, ownerProfileId: profileId });
   await ensureRelation(patientRow.id, profileId);
 
   // Delegamos en appointments.service.create para reutilizar email/notifications/token.
