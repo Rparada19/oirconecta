@@ -100,10 +100,11 @@ Lo que quedó pendiente de hablar:
       auditado**, y es dato de salud bajo Habeas Data), y son 60 pools de
       conexiones contra Neon.
 
-- [ ] **`whatsappAgent.service.js` crea `Patient`** para cualquiera que le escriba
-      al bot de un profesional del directorio. Mezcla los dos negocios: quien
-      escribe al directorio es un cliente, no un paciente del centro. Toca datos
-      existentes — hablarlo antes de mover nada.
+- [x] ~~El bot del directorio creaba Patient del centro propio~~ — **RESUELTO el
+      28-ago** con el aislamiento multiinquilino: columna de dueño, backfill
+      (ajenos 0, propios 3), y forzado central en el cliente Prisma. Falta que
+      `IaConversation` también quede aislada: hoy solo se cerró el acceso del
+      admin, no el almacenamiento.
 
 - [ ] **`PatientProfileDialog.jsx` tiene 7.100 líneas** en un solo archivo.
       Debería partirse por pestaña.
