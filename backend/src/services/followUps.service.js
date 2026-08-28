@@ -37,11 +37,11 @@ function generateToken() {
 /// cuántos entran, empezando por el primero.
 const CONTROLES = [
   { step: 'W1',   offsetDays: 7,   label: 'Control 1 semana' },
+  { step: 'M1',   offsetDays: 30,  label: 'Control 1 mes' },
   { step: 'M3',   offsetDays: 90,  label: 'Control 3 meses' },
   { step: 'M6',   offsetDays: 180, label: 'Control 6 meses' },
   { step: 'Y1',   offsetDays: 365, label: 'Control 12 meses' },
   { step: 'Y1_5', offsetDays: 545, label: 'Control 18 meses' },
-  { step: 'Y2',   offsetDays: 730, label: 'Control 24 meses' },
 ];
 
 /// Meses → días, en la misma rejilla que usan los controles. Sin esto el
