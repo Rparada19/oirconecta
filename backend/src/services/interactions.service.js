@@ -305,6 +305,52 @@ async function adaptacionesPendientes(hoy) {
   return acciones;
 }
 
+
+/**
+ * Controles con costo esperando autorización.
+ *
+ * Mientras nadie los autorice, el paciente NO recibe recordatorio — así que si
+ * nadie los ve, la visita simplemente no ocurre y el silencio parece normal.
+ * Por eso tienen que estar en Acciones del día.
+ */
+async function autorizacionesPendientes(hoy) {
+  try {
+    const filas = await prisma.patientFollowUp.findMany({
+      where: {
+        tieneCosto: true,
+        autorizadoAt: null,
+        status: { in: ['PENDING', 'REMINDED', 'OVERDUE'] },
+      },
+      select: {
+        id: true, step: true, dueDate: true, costoDescripcion: true, patientId: true,
+        patient: { select: { nombre: true, email: true, telefono: true } },
+      },
+      orderBy: { dueDate: 'asc' },
+      take: 100,
+    });
+    const followUps = require('./followUps.service');
+    return filas.map((f) => ({
+      id: `autorizacion:${f.id}`,
+      type: 'autorizacion',
+      kind: new Date(f.dueDate) < hoy ? 'vencido' : 'proximo',
+      dueDate: f.dueDate,
+      title: `Autorizar costo — ${followUps.stepLabel(f.step)}`,
+      description: `${f.costoDescripcion || 'Esta visita tiene costo para el paciente.'} Llámalo para confirmar que autoriza antes de que el sistema le escriba.`,
+      patientId: f.patientId,
+      patientEmail: f.patient?.email || null,
+      patientName: f.patient?.nombre || '',
+      patientPhone: f.patient?.telefono || null,
+      responsibleName: null,
+      resolvedAt: null,
+      comments: [],
+      metadata: { followUpId: f.id, step: f.step },
+    }));
+  } catch (e) {
+    console.warn('[dailyActions] autorizaciones pendientes falló:', e.message);
+    return [];
+  }
+}
+
 const getDailyActions = async (options = {}) => {
   const { daysAhead = 7, patientEmail: filterPatientEmail, patientId: filterPatientId } = options;
   const today = new Date();
@@ -425,6 +471,7 @@ const getDailyActions = async (options = {}) => {
   // no se incluye cuando se piden las acciones de una sola persona.
   if (!filterPatientId && !filterPatientEmail) {
     actions.push(...(await adaptacionesPendientes(today)));
+    actions.push(...(await autorizacionesPendientes(today)));
   }
 
   return actions;

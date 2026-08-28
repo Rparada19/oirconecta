@@ -526,6 +526,14 @@ model PatientFollowUp {
   /// PENDING | REMINDED | SCHEDULED | COMPLETED | OVERDUE | SKIPPED.
   status String @default("PENDING")
 
+  /// Esta visita implica un costo para el paciente (repuesto, reparación fuera
+  /// de garantía, upgrade). Si es true, NO se le notifica hasta que un asesor
+  /// confirme que el paciente autoriza el gasto.
+  tieneCosto       Boolean   @default(false)
+  costoDescripcion String?
+  autorizadoAt     DateTime?
+  autorizadoPorId  String?
+
   /// Token único para link mágico en emails/WhatsApp — agendar sin login.
   scheduleToken String? @unique
 

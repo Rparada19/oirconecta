@@ -187,6 +187,9 @@ async function processFollowUpReminders() {
     where: {
       status: { in: ['PENDING'] },
       reminder7dSentAt: null,
+      // Compuerta: si la visita implica costo, no se le escribe al paciente
+      // hasta que un asesor confirme que autoriza el gasto.
+      OR: [{ tieneCosto: false }, { autorizadoAt: { not: null } }],
       dueDate: { gte: t7Start, lte: t7End },
     },
     include: { patient: { select: { id: true, nombre: true, email: true, telefono: true } } },
@@ -200,6 +203,9 @@ async function processFollowUpReminders() {
     where: {
       status: { in: ['PENDING', 'REMINDED'] },
       reminder1dSentAt: null,
+      // Compuerta: si la visita implica costo, no se le escribe al paciente
+      // hasta que un asesor confirme que autoriza el gasto.
+      OR: [{ tieneCosto: false }, { autorizadoAt: { not: null } }],
       dueDate: { gte: t1Start, lte: t1End },
     },
     include: { patient: { select: { id: true, nombre: true, email: true, telefono: true } } },
@@ -212,6 +218,9 @@ async function processFollowUpReminders() {
     where: {
       status: { in: ['PENDING', 'REMINDED'] },
       overdueSentAt: null,
+      // Compuerta: si la visita implica costo, no se le escribe al paciente
+      // hasta que un asesor confirme que autoriza el gasto.
+      OR: [{ tieneCosto: false }, { autorizadoAt: { not: null } }],
       dueDate: { lt: overdueBefore },
     },
     include: { patient: { select: { id: true, nombre: true, email: true, telefono: true } } },
@@ -243,7 +252,9 @@ async function processFollowUpReminders() {
         stage,
         to: fu.patient.email,
         patientName: fu.patient.nombre,
-        controlLabel: followUps.stepLabel(fu.step),
+        // Dice "+ mantenimiento" cuando en esa visita también se le hace:
+        // el paciente entiende mejor para qué viene, y es una sola cita.
+        controlLabel: followUps.stepLabelCompleto(fu.step),
         diasDesdeAdaptacion: fu.offsetDays,
         bookingUrl,
       });
@@ -270,7 +281,7 @@ async function processFollowUpReminders() {
             metaTemplateName: 'control_recordatorio',
             bodyParams: [
               fu.patient.nombre?.split(' ')[0] || 'Hola',
-              followUps.stepLabel(fu.step),
+              followUps.stepLabelCompleto(fu.step),
               bookingUrl,
             ],
           });

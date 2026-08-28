@@ -30,7 +30,7 @@ router.get('/by-token/:token', async (req, res, next) => {
       data: {
         id: fu.id,
         step: fu.step,
-        stepLabel: followUps.stepLabel(fu.step),
+        stepLabel: followUps.stepLabelCompleto(fu.step),
         offsetDays: fu.offsetDays,
         dueDate: fu.dueDate,
         status: fu.status,
@@ -57,7 +57,7 @@ router.post('/by-token/:token/book', async (req, res, next) => {
       return res.status(409).json({ success: false, error: 'Este control ya está agendado', code: 'ALREADY_SCHEDULED' });
     }
 
-    const stepLabel = followUps.stepLabel(fu.step);
+    const stepLabel = followUps.stepLabelCompleto(fu.step);
     const appointmentsService = require('../services/appointments.service');
     const appt = await appointmentsService.create({
       fecha, hora,

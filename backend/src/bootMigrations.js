@@ -338,6 +338,27 @@ async function seedPlanDefaults(prisma) {
  * hace explícito en las consultas. Volverla obligatoria vendrá después, cuando
  * ninguna ruta escriba sin dueño.
  */
+/**
+ * Compuerta de autorización en los controles.
+ *
+ * Un control de rutina cubierto por garantía se le avisa al paciente solo. Pero
+ * si la visita implica costo —repuesto, reparación fuera de garantía, upgrade—
+ * no se le puede escribir antes de que un asesor confirme que el paciente
+ * autoriza el gasto. Notificar primero y cobrar después es la vía rápida a un
+ * reclamo.
+ */
+async function ensureFollowUpAuthorization(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patient_follow_ups" ADD COLUMN IF NOT EXISTS "tieneCosto" BOOLEAN NOT NULL DEFAULT false;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patient_follow_ups" ADD COLUMN IF NOT EXISTS "costoDescripcion" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patient_follow_ups" ADD COLUMN IF NOT EXISTS "autorizadoAt" TIMESTAMP(3);`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "patient_follow_ups" ADD COLUMN IF NOT EXISTS "autorizadoPorId" TEXT;`);
+    console.log('[boot-migrate] autorización de controles OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureFollowUpAuthorization falló:', e.message);
+  }
+}
+
 async function ensureTenantOwnership(prisma) {
   try {
     await prisma.$executeRawUnsafe(`ALTER TABLE "patients" ADD COLUMN IF NOT EXISTS "ownerProfileId" TEXT;`);
@@ -754,6 +775,7 @@ async function runBootMigrations(prisma) {
   await ensureIaAgentConfigSchema(prisma);
   await ensureWaConversationMemory(prisma);
   await ensureTenantOwnership(prisma);
+  await ensureFollowUpAuthorization(prisma);
   await backfillTenantOwnership(prisma);
   await ensureAppointmentCancellationColumns(prisma);
   await ensureGoogleCalendarSchema(prisma);

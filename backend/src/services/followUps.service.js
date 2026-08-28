@@ -26,20 +26,25 @@ function generateToken() {
 // `minGarantia` = años de garantía mínimos para que el hito aplique. Antes se
 // generaban los 9 sin mirar la garantía, así que a un paciente con 2 años se le
 // programaban controles hasta el mes 36 — fuera de cobertura.
+//
+// `mantenimiento` = en esa visita además se hace mantenimiento técnico del
+// audífono. El mantenimiento va cada 6 meses y los controles caen en 6, 12, 18,
+// 24… así que coinciden SIEMPRE: no se genera un calendario paralelo que luego
+// haya que fusionar, se marca el control y se cita una sola vez.
 const STEPS = [
   { step: 'W1',   offsetDays: 7,    label: 'Control 1 semana',            minGarantia: 2 },
   { step: 'M1',   offsetDays: 30,   label: 'Control 1 mes',               minGarantia: 2 },
   { step: 'M3',   offsetDays: 90,   label: 'Control 3 meses',             minGarantia: 2 },
-  { step: 'M6',   offsetDays: 180,  label: 'Control 6 meses',             minGarantia: 2 },
-  { step: 'Y1',   offsetDays: 365,  label: 'Control 12 meses',            minGarantia: 2 },
-  { step: 'Y1_5', offsetDays: 545,  label: 'Control 18 meses',            minGarantia: 2 },
-  { step: 'Y2',   offsetDays: 730,  label: 'Control 24 meses',            minGarantia: 2 },
-  { step: 'Y2_5', offsetDays: 910,  label: 'Control 30 meses',            minGarantia: 3 },
-  { step: 'Y3',   offsetDays: 1095, label: 'Control 36 meses',            minGarantia: 3 },
-  { step: 'Y3_5', offsetDays: 1277, label: 'Control 42 meses',            minGarantia: 5 },
-  { step: 'Y4',   offsetDays: 1460, label: 'Control 48 meses',            minGarantia: 5 },
-  { step: 'Y4_5', offsetDays: 1642, label: 'Control 54 meses',            minGarantia: 5 },
-  { step: 'Y5',   offsetDays: 1825, label: 'Control 60 meses (renovación)', minGarantia: 5 },
+  { step: 'M6',   offsetDays: 180,  label: 'Control 6 meses',             minGarantia: 2, mantenimiento: true },
+  { step: 'Y1',   offsetDays: 365,  label: 'Control 12 meses',            minGarantia: 2, mantenimiento: true },
+  { step: 'Y1_5', offsetDays: 545,  label: 'Control 18 meses',            minGarantia: 2, mantenimiento: true },
+  { step: 'Y2',   offsetDays: 730,  label: 'Control 24 meses',            minGarantia: 2, mantenimiento: true },
+  { step: 'Y2_5', offsetDays: 910,  label: 'Control 30 meses',            minGarantia: 3, mantenimiento: true },
+  { step: 'Y3',   offsetDays: 1095, label: 'Control 36 meses',            minGarantia: 3, mantenimiento: true },
+  { step: 'Y3_5', offsetDays: 1277, label: 'Control 42 meses',            minGarantia: 5, mantenimiento: true },
+  { step: 'Y4',   offsetDays: 1460, label: 'Control 48 meses',            minGarantia: 5, mantenimiento: true },
+  { step: 'Y4_5', offsetDays: 1642, label: 'Control 54 meses',            minGarantia: 5, mantenimiento: true },
+  { step: 'Y5',   offsetDays: 1825, label: 'Control 60 meses (renovación)', minGarantia: 5, mantenimiento: true },
 ];
 
 /// Garantía por defecto cuando la venta no la registró. 2 años es el piso
@@ -54,6 +59,17 @@ function stepsParaGarantia(anos) {
 
 function stepLabel(step) {
   return STEPS.find((s) => s.step === step)?.label || step;
+}
+
+/** ¿Esta visita incluye mantenimiento técnico? */
+function incluyeMantenimiento(step) {
+  return !!STEPS.find((s) => s.step === step)?.mantenimiento;
+}
+
+/** Etiqueta para el paciente: dice si en esa visita también se le hace mantenimiento. */
+function stepLabelCompleto(step) {
+  const base = stepLabel(step);
+  return incluyeMantenimiento(step) ? `${base} + mantenimiento` : base;
 }
 
 function addDays(date, days) {
@@ -349,6 +365,8 @@ async function summary() {
 module.exports = {
   STEPS,
   stepsParaGarantia,
+  incluyeMantenimiento,
+  stepLabelCompleto,
   STEPS,
   stepLabel,
   ensureFunnel,
