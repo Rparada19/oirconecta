@@ -51,6 +51,7 @@ import {
   updateInteraction,
 } from '../../services/interactionService';
 import { getAllAppointments } from '../../services/appointmentService';
+import { api } from '../../services/apiClient';
 
 const typeLabels = {
   cita_agenda: 'Citas y preparación de atención',
@@ -94,6 +95,28 @@ const AccionesDiaPage = () => {
   const [commentText, setCommentText] = useState('');
   const [savingComment, setSavingComment] = useState(false);
   const [savingResolve, setSavingResolve] = useState(false);
+  // Acciones sobre hitos del funnel (autorizar, pausar, marcar agendado).
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
+
+  /** id del PatientFollowUp cuando la acción viene del funnel de controles. */
+  const followUpIdDe = (a) => a?.metadata?.followUpId
+    || (String(a?.id || '').startsWith('autorizacion:') ? String(a.id).split(':')[1] : null);
+
+  const accionFollowUp = async (ruta, body = {}) => {
+    const fuId = followUpIdDe(detailAction);
+    if (!fuId) return;
+    setSavingFollowUp(true);
+    try {
+      const r = await api.post(`/api/follow-ups/${fuId}/${ruta}`, body);
+      if (r?.error) throw new Error(r.error);
+      setDetailAction(null);
+      await load();
+    } catch (e) {
+      alert(e.message || 'No se pudo completar la acción.');
+    } finally {
+      setSavingFollowUp(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -461,6 +484,42 @@ const AccionesDiaPage = () => {
                 )}
               </Typography>
               {detailAction.description && <Typography variant="body2" sx={{ mb: 1 }}>{detailAction.description}</Typography>}
+
+              {/* Botonera contextual: cada tipo de acción se resuelve distinto. */}
+              {(followUpIdDe(detailAction) || detailAction.type === 'adaptacion') && (
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2, mb: 1,
+                           p: 1.5, borderRadius: 2, bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+                  {detailAction.type === 'autorizacion' && (
+                    <Button variant="contained" size="small" disabled={savingFollowUp}
+                      onClick={() => accionFollowUp('autorizar')}
+                      sx={{ bgcolor: '#b45309', '&:hover': { bgcolor: '#92400e' } }}>
+                      {savingFollowUp ? 'Guardando…' : 'El paciente autoriza el costo'}
+                    </Button>
+                  )}
+                  {followUpIdDe(detailAction) && (
+                    <>
+                      <Button variant="outlined" size="small" disabled={savingFollowUp}
+                        onClick={() => accionFollowUp('agendado-manual')}>
+                        Ya agendó por teléfono
+                      </Button>
+                      <Button variant="outlined" size="small" color="inherit" disabled={savingFollowUp}
+                        onClick={() => {
+                          const motivo = window.prompt('¿Por qué se pausa el seguimiento de este control?');
+                          if (motivo !== null) accionFollowUp('pausar', { motivo });
+                        }}>
+                        Pausar seguimiento
+                      </Button>
+                    </>
+                  )}
+                  {detailAction.type === 'adaptacion' && detailAction.patientEmail && (
+                    <Button variant="contained" size="small"
+                      onClick={() => openPatient(detailAction.patientEmail)}
+                      sx={{ bgcolor: '#b91c1c', '&:hover': { bgcolor: '#991b1b' } }}>
+                      Abrir ficha para agendar la adaptación
+                    </Button>
+                  )}
+                </Box>
+              )}
 
               {/* Recomendaciones contextuales según tipo y motivo */}
               {recommendationsForAction(detailAction).length > 0 && (
