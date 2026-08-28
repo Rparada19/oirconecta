@@ -57,17 +57,37 @@ const audiometrias = (n) => Array.from({ length: n }, (_, i) => ({
   label: `Audiometría anual ${i + 1}`,
 }));
 
-/// Mantenimiento técnico, cada 6 meses, sobre la misma rejilla.
-const mantenimientos = (n) => Array.from({ length: n }, (_, i) => ({
-  step: `MANT${i + 1}`,
-  offsetDays: mesADias(6 * (i + 1)),
-  label: `Mantenimiento ${i + 1}`,
-  mantenimiento: true,
-}));
+/// Controles de garantía: revisión del equipo mientras dura la cobertura.
+const controlesGarantia = (cadaMeses, anos) => {
+  if (!anos || !cadaMeses) return [];
+  const total = Math.floor((anos * 12) / cadaMeses);
+  return Array.from({ length: total }, (_, i) => ({
+    step: `GAR${i + 1}`,
+    offsetDays: mesADias(cadaMeses * (i + 1)),
+    label: `Control de garantía ${i + 1}`,
+  }));
+};
+
+// Los mantenimientos NO se agendan aparte: los programados son exactamente los
+// controles de garantía. El resto del cupo es voluntario — el paciente pasa a
+// cambiar filtros cuando quiera— y por definición no se puede calendarizar.
 
 /// Garantía por defecto cuando la venta no la registró. 2 años es el piso
 /// comercial: si nos equivocamos, es programando de menos, no de más.
 const GARANTIA_DEFECTO = 2;
+
+/**
+ * Cómo se reparte el cupo de mantenimientos de un plan.
+ * Los programados son los controles de garantía; el resto queda a disposición
+ * del paciente para cuando pase por el centro.
+ */
+function repartoMantenimientos(plan) {
+  const total = plan?.mantenimientos || 0;
+  const programados = (plan?.garantiaAnos && plan?.garantiaCadaMeses)
+    ? Math.floor((plan.garantiaAnos * 12) / plan.garantiaCadaMeses)
+    : 0;
+  return { total, programados, voluntarios: Math.max(0, total - programados) };
+}
 
 /**
  * Calendario de un plan de adaptación: sus cupos, cada uno con su ritmo.
@@ -87,7 +107,7 @@ function stepsParaPlan(plan) {
   return [
     ...controles,
     ...audiometrias(plan?.audiometrias || 0),
-    ...mantenimientos(plan?.mantenimientos || 0),
+    ...controlesGarantia(plan?.garantiaCadaMeses || 0, plan?.garantiaAnos || 0),
   ].sort((a, b) => a.offsetDays - b.offsetDays);
 }
 
@@ -113,6 +133,8 @@ function stepLabel(step) {
   if (aud) return `Audiometría anual ${aud[1]}`;
   const man = /^MANT(\d+)$/.exec(step);
   if (man) return `Mantenimiento ${man[1]}`;
+  const gar = /^GAR(\d+)$/.exec(step);
+  if (gar) return `Control de garantía ${gar[1]}`;
   return step;
 }
 
@@ -430,6 +452,7 @@ module.exports = {
   CONTROLES,
   stepsParaGarantia,
   stepsParaPlan,
+  repartoMantenimientos,
   stepLabelCompleto,
   STEPS,
   stepLabel,

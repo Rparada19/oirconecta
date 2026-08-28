@@ -1002,7 +1002,15 @@ model HearingPlan {
   controlesAdaptacion Int @default(0)
   /// Audiometrías anuales incluidas. OBLIGATORIAS para mantener la cobertura.
   audiometrias        Int @default(0)
-  /// Mantenimientos sin costo. No incluye reemplazo de piezas.
+  /// Controles de garantía: revisión periódica del equipo mientras dura la
+  /// cobertura. Cadencia en meses y por cuántos años corre.
+  garantiaCadaMeses   Int @default(6)
+  garantiaAnos        Int @default(0)
+  /// Mantenimientos sin costo del plan, en TOTAL. Se reparten en dos:
+  ///  · los programados, que son los controles de garantía (cadencia × años),
+  ///  · y el resto, voluntarios: el paciente pasa por el centro a cambiar
+  ///    filtros cuando quiera, hasta agotar el cupo.
+  /// No incluye reemplazo de piezas.
   mantenimientos      Int @default(0)
   /// Terapias de entrenamiento auditivo incluidas.
   terapias            Int @default(0)
