@@ -19,6 +19,7 @@ import {
   Paper,
   FormControlLabel,
   Checkbox,
+ FormHelperText,
 } from '@mui/material';
 import { Save, Close, Add, Delete, Image as ImageIcon } from '@mui/icons-material';
 import { recordSale } from '../../services/productService';
@@ -33,6 +34,7 @@ import {
   computeAudifonosCampaignTotal,
 } from '../../services/campaignService';
 import { getConfig } from '../../services/configService';
+import { api } from '../../services/apiClient';
 
 const TIPOS_ACCESORIO = [
   'Baterías',
@@ -84,6 +86,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
     rechargeable: 'NO',
     campaignId: '',
     warrantyYears: 1,
+    hearingPlanId: '',
     seguroPerdidaRobo: 'NO',
     seguroRotura: 'NO',
     unitPrice: 0,
@@ -140,10 +143,33 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
 
   const totalAccesorios = accesoriosItems.reduce((sum, it) => sum + (it.subtotal || 0), 0);
 
+  // Catálogo de planes de adaptación. La meta comercial es vender planes, así
+  // que el selector va antes que los datos del equipo.
+  const [planes, setPlanes] = useState([]);
+  useEffect(() => {
+    if (!open) return;
+    api.get('/api/hearing-plans')
+      .then((r) => setPlanes(r?.data?.data || []))
+      .catch(() => setPlanes([]));
+  }, [open]);
+
   const handleChangeAudifonos = (field) => (e) => {
     const v = e.target.value;
     setAudifonos((prev) => {
       const next = { ...prev, [field]: ['quantity', 'unitPrice', 'unitCost', 'prontoPago', 'warrantyYears', 'valorConsulta'].includes(field) ? (parseFloat(v) || (field === 'warrantyYears' ? 1 : 0)) : v };
+      // Elegir plan rellena lo que el plan ya define, para que el asesor no lo
+      // teclee ni se equivoque. Todo queda editable por si hay excepción.
+      if (field === 'hearingPlanId') {
+        const plan = planes.find((p) => p.id === v);
+        if (plan) {
+          next.warrantyYears = plan.anosGarantia;
+          next.quantity = plan.audifonosIncluidos || 2;
+          next.unitPrice = Math.round(plan.precioCOP / (plan.audifonosIncluidos || 2));
+          if (plan.plataforma) next.platform = plan.plataforma;
+          if (plan.nivelTecnologia) next.technology = String(plan.nivelTecnologia);
+          next.recargable = plan.recargable ? 'SI' : 'NO';
+        }
+      }
       if (field === 'brand') {
         const cur = campaigns.find((c) => String(c.id) === String(prev.campaignId));
         if (cur && (cur.fabricante || '').trim() !== v) next.campaignId = '';
@@ -325,6 +351,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
         costoListaUnitario: audifonos.unitCost || null,
         prontoPagoPct: audifonos.prontoPago || 0,
         warrantyYears: audifonos.warrantyYears,
+        hearingPlanId: audifonos.hearingPlanId || null,
         rechargeable: audifonos.rechargeable,
         seguroPerdidaRobo: audifonos.seguroPerdidaRobo,
         seguroRotura: audifonos.seguroRotura,
@@ -369,6 +396,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
       rechargeable: 'NO',
       campaignId: '',
       warrantyYears: 1,
+      hearingPlanId: '',
       seguroPerdidaRobo: 'NO',
       seguroRotura: 'NO',
       unitPrice: 0,
@@ -744,6 +772,34 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
                   </Grid>
                 </>
               )}
+
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mt: 2, mb: 1 }}>Plan de adaptación</Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Plan vendido</InputLabel>
+                  <Select value={audifonos.hearingPlanId} label="Plan vendido"
+                    onChange={handleChangeAudifonos('hearingPlanId')}>
+                    <MenuItem value="">Audífono suelto (sin plan)</MenuItem>
+                    {planes.map((p) => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {p.nombre} · {p.linea} · ${(p.precioCOP || 0).toLocaleString('es-CO')}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>
+                    {audifonos.hearingPlanId
+                      ? (() => {
+                          const p = planes.find((x) => x.id === audifonos.hearingPlanId);
+                          if (!p) return '';
+                          return `${(p.controlesMeses || []).length} controles · ${p.audiometrias} audiometrías · ${p.mantenimientos} mantenimientos. El seguimiento se programa solo al registrar la fecha de adaptación.`;
+                        })()
+                      : 'Sin plan, el seguimiento se calcula por los años de garantía.'}
+                  </FormHelperText>
+                </FormControl>
+              </Grid>
 
               <Grid item xs={12}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mt: 2, mb: 1 }}>Información de producto</Typography>

@@ -72,6 +72,7 @@ import * as XLSX from 'xlsx';
 import html2pdf from 'html2pdf.js';
 import PageHeader from '../../components/crm/ui/PageHeader';
 import KpiCard from '../../components/crm/ui/KpiCard';
+import { api } from '../../services/apiClient';
 
 const SLOTS_PER_DAY = 19;
 
@@ -118,6 +119,15 @@ const ReportesPage = () => {
   const { user } = useAuth();
   const canSales = canRegisterSales(user?.role);
   const exportRef = useRef(null);
+  // Planes de audición vendidos. Es la meta comercial: interesa más el
+  // porcentaje de audífonos que salen con plan que el número absoluto.
+  const [planStats, setPlanStats] = useState(null);
+  useEffect(() => {
+    api.get('/api/hearing-plans/stats')
+      .then((r) => setPlanStats(r?.data?.data || null))
+      .catch(() => setPlanStats(null));
+  }, []);
+
   const [exportAnchor, setExportAnchor] = useState(null);
   const tabIndices = canSales ? [0, 1, 2, 3, 4, 5] : [0, 1, 3, 4, 5];
   const [period, setPeriod] = useState('month');
@@ -686,6 +696,56 @@ const ReportesPage = () => {
               <Grid item xs={6} sm={3}><MetricCard icon={Hearing} value={formatCurrency(factAudifonos)} label="Audífonos" color="#2e7d32" /></Grid>
               <Grid item xs={6} sm={3}><MetricCard icon={CalendarToday} value={formatCurrency(factConsultas)} label="Consultas" /></Grid>
             </Grid>
+            {planStats && (
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>Planes de audición</Typography>
+                    <Typography sx={{ fontSize: 13, color: '#64748b' }}>
+                      {planStats.totales.conPlan} con plan · {planStats.totales.sueltos} audífonos sueltos
+                    </Typography>
+                  </Box>
+                  <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
+                    <Grid item xs={6} sm={3}>
+                      <KpiCard label="Vendidos con plan" value={planStats.totales.conPlan} tone="success" />
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <KpiCard label="% con plan" value={`${planStats.totales.porcentajeConPlan}%`}
+                        hint="Del total de audífonos vendidos"
+                        tone={planStats.totales.porcentajeConPlan >= 50 ? 'success' : 'warning'} />
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <KpiCard label="Ingresos por planes" value={formatCurrency(planStats.totales.ingresosPlanes)} tone="violet" />
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <KpiCard label="Audífono suelto" value={planStats.totales.sueltos}
+                        hint="Sin plan de adaptación" tone="neutral" />
+                    </Grid>
+                  </Grid>
+                  <Grid container spacing={1.5}>
+                    {planStats.items.map((p) => (
+                      <Grid item xs={12} sm={6} md={4} key={p.id}>
+                        <Paper sx={{ p: 1.75, opacity: p.activo ? 1 : 0.5 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1 }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{p.nombre}</Typography>
+                            <Typography sx={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                              {p.linea}
+                            </Typography>
+                          </Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: '#085946' }}>
+                            {p.vendidos} {p.vendidos === 1 ? 'vendido' : 'vendidos'}
+                          </Typography>
+                          <Typography sx={{ fontSize: 12, color: '#64748b' }}>
+                            {p.vendidos > 0 ? formatCurrency(p.ingresos) : formatCurrency(p.precioCOP) + ' c/u'}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+            )}
+
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Ventas por profesional</Typography>
