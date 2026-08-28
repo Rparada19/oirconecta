@@ -912,6 +912,11 @@ model Sale {
   /// Accesorios con IVA incluido; audífonos sin IVA (exentos). Servicios: 0.
   costoUnitario Float?
 
+  /// Plan de adaptación vendido. Null = venta de audífono suelto, que es como
+  /// funcionaba todo hasta ahora. De esto depende cómo se arma el seguimiento.
+  hearingPlanId String?
+  hearingPlan   HearingPlan? @relation(fields: [hearingPlanId], references: [id], onDelete: SetNull)
+
   // Garantía y seguros (audífonos)
   anosGarantia  Int?
   seguroPerdida String?
@@ -960,6 +965,70 @@ enum SaleCategory {
   HEARING_AID // Audífonos
   SERVICE // Consulta
   ACCESSORY // Accesorio
+}
+
+
+// ===========================================
+// PLANES DE AUDICIÓN (lo que se le vende al paciente)
+// No confundir con `Plan`, que son las suscripciones que se le venden a los
+// profesionales del directorio. Aquí se vende de dos formas: audífono suelto
+// (garantía y nada más) o plan de adaptación, que trae cupos de servicio.
+// ===========================================
+
+model HearingPlan {
+  id     String @id @default(uuid())
+  /// Identificador estable para el código: preludio, sonata, sinfonia…
+  code   String @unique
+  nombre String
+  /// PREMIUM | ACCESO
+  linea  String
+
+  // ── El equipo ──
+  nivelTecnologia   Int?
+  plataforma        String?
+  formatos          String?
+  audifonosIncluidos Int    @default(2)
+  anosGarantia      Int
+  recargable        Boolean @default(false)
+
+  // ── Cupos de servicio: esto es lo que gobierna el seguimiento ──
+  /// Controles de adaptación incluidos. OBLIGATORIOS para mantener la cobertura.
+  controlesAdaptacion Int @default(0)
+  /// Audiometrías anuales incluidas. OBLIGATORIAS para mantener la cobertura.
+  audiometrias        Int @default(0)
+  /// Mantenimientos sin costo. No incluye reemplazo de piezas.
+  mantenimientos      Int @default(0)
+  /// Terapias de entrenamiento auditivo incluidas.
+  terapias            Int @default(0)
+
+  // ── Coberturas ──
+  seguroPerdidaMeses Int?
+  seguroRoturaMeses  Int?
+  filtrosAnticerumen String?
+  bateriasIncluidas  String?
+  cargadorReposicion String?
+  cambioReceptores   String?
+  satisfaccionDias   Int?
+  audifonoRestitucion Boolean @default(false)
+
+  // ── Beneficios ──
+  dctoReparaciones Int?
+  dctoAccesorios   Int?
+  dctoSiguientePlan Int?
+  lineaExclusiva   Boolean @default(false)
+  videoconsulta    Boolean @default(false)
+
+  /// Precio del plan completo por los dos audífonos, en COP sin decimales.
+  precioCOP Int
+  activo    Boolean @default(true)
+  orden     Int     @default(0)
+
+  sales     Sale[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([linea, activo])
+  @@map("hearing_plans")
 }
 
 // ===========================================

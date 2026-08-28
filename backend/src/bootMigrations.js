@@ -347,6 +347,61 @@ async function seedPlanDefaults(prisma) {
  * autoriza el gasto. Notificar primero y cobrar después es la vía rápida a un
  * reclamo.
  */
+/**
+ * Planes de audición: la tabla y su carga inicial desde las fichas comerciales.
+ * Se hace acá y no con `prisma migrate` porque así es como este proyecto crea
+ * estructura en producción.
+ */
+async function ensureHearingPlans(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "hearing_plans" (
+        "id" TEXT PRIMARY KEY,
+        "code" TEXT NOT NULL UNIQUE,
+        "nombre" TEXT NOT NULL,
+        "linea" TEXT NOT NULL,
+        "nivelTecnologia" INTEGER,
+        "plataforma" TEXT,
+        "formatos" TEXT,
+        "audifonosIncluidos" INTEGER NOT NULL DEFAULT 2,
+        "anosGarantia" INTEGER NOT NULL,
+        "recargable" BOOLEAN NOT NULL DEFAULT false,
+        "controlesAdaptacion" INTEGER NOT NULL DEFAULT 0,
+        "audiometrias" INTEGER NOT NULL DEFAULT 0,
+        "mantenimientos" INTEGER NOT NULL DEFAULT 0,
+        "terapias" INTEGER NOT NULL DEFAULT 0,
+        "seguroPerdidaMeses" INTEGER,
+        "seguroRoturaMeses" INTEGER,
+        "filtrosAnticerumen" TEXT,
+        "bateriasIncluidas" TEXT,
+        "cargadorReposicion" TEXT,
+        "cambioReceptores" TEXT,
+        "satisfaccionDias" INTEGER,
+        "audifonoRestitucion" BOOLEAN NOT NULL DEFAULT false,
+        "dctoReparaciones" INTEGER,
+        "dctoAccesorios" INTEGER,
+        "dctoSiguientePlan" INTEGER,
+        "lineaExclusiva" BOOLEAN NOT NULL DEFAULT false,
+        "videoconsulta" BOOLEAN NOT NULL DEFAULT false,
+        "precioCOP" INTEGER NOT NULL,
+        "activo" BOOLEAN NOT NULL DEFAULT true,
+        "orden" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "hearing_plans_linea_idx" ON "hearing_plans"("linea","activo");`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "hearingPlanId" TEXT;`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "sales_hearing_plan_idx" ON "sales"("hearingPlanId");`);
+
+    const { seedHearingPlans } = require('../prisma/seeds/hearing-plans');
+    const n = await seedHearingPlans(prisma);
+    console.log('[boot-migrate] planes de audición OK (', n, ')');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureHearingPlans falló:', e.message);
+  }
+}
+
 async function ensureFollowUpAuthorization(prisma) {
   try {
     await prisma.$executeRawUnsafe(`ALTER TABLE "patient_follow_ups" ADD COLUMN IF NOT EXISTS "tieneCosto" BOOLEAN NOT NULL DEFAULT false;`);
@@ -776,6 +831,7 @@ async function runBootMigrations(prisma) {
   await ensureWaConversationMemory(prisma);
   await ensureTenantOwnership(prisma);
   await ensureFollowUpAuthorization(prisma);
+  await ensureHearingPlans(prisma);
   await backfillTenantOwnership(prisma);
   await ensureAppointmentCancellationColumns(prisma);
   await ensureGoogleCalendarSchema(prisma);
