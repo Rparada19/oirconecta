@@ -230,7 +230,8 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
     } else if (tipoVenta === 'accesorio') {
       if (accesoriosItems.length === 0) e.accesorioItem = 'Agregue al menos un accesorio';
     } else {
-      if (!audifonos.brand?.trim()) e.brand = 'La marca es obligatoria';
+      // Con plan, el equipo lo define el plan: no se le pide marca al asesor.
+      if (tipoVenta !== 'plan' && !audifonos.brand?.trim()) e.brand = 'La marca es obligatoria';
       if (!audifonos.technology?.trim()) e.technology = 'La tecnología es obligatoria';
       if (!audifonos.platform?.trim()) e.platform = 'La plataforma es obligatoria';
       if (audifonos.unitPrice <= 0) e.unitPrice = 'El valor unitario debe ser mayor a 0';
@@ -687,6 +688,8 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
           {/* --- AUDÍFONOS (misma estructura que cotización + facturar consulta + accesorios) --- */}
           {(tipoVenta === 'audifonos' || tipoVenta === 'plan') && (
             <>
+              {tipoVenta === 'audifonos' && (
+              <>
               <Grid item xs={12}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mt: 1, mb: 1 }}>
                   Producto ofertado
@@ -728,6 +731,8 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
                   </Select>
                 </FormControl>
               </Grid>
+              </>
+              )}
 
               <Grid item xs={12}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mt: 2, mb: 1 }}>Información de marketing</Typography>

@@ -214,6 +214,7 @@ export async function createQuote(patientEmail, quoteData) {
     tecnologia: md.technology || quoteData.model || null,
     plataforma: md.platform || null,
     recargable: (md.rechargeable || 'NO').toUpperCase().slice(0, 2) === 'SI' ? 'SI' : 'NO',
+    hearingPlanId: quoteData.hearingPlanId || null,
     anosGarantia: md.warrantyYears ?? 1,
     seguroPerdida: (md.seguroPerdidaRobo || 'NO').toUpperCase().slice(0, 2) === 'SI' ? 'SI' : 'NO',
     seguroRotura: (md.seguroRotura || 'NO').toUpperCase().slice(0, 2) === 'SI' ? 'SI' : 'NO',

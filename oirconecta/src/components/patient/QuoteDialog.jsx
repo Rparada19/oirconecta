@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { api } from '../../services/apiClient';
 import {
   Dialog,
   DialogTitle,
@@ -16,6 +17,7 @@ import {
   Divider,
   IconButton,
   Paper,
+  FormHelperText,
 } from '@mui/material';
 import { Save, Close, Delete, Image as ImageIcon } from '@mui/icons-material';
 import { createQuote, updateQuote } from '../../services/productService';
@@ -34,6 +36,7 @@ const QuoteDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patien
   const isEdit = Boolean(quoteId && editQuote);
   const [campaigns, setCampaigns] = useState([]);
   const [formData, setFormData] = useState({
+    hearingPlanId: '',
     brand: '',
     quantity: 1,
     technology: '',
@@ -51,6 +54,14 @@ const QuoteDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patien
   });
   const [images, setImages] = useState([]);
   const [errors, setErrors] = useState({});
+  // Catálogo de planes: cotizar un plan es donde arranca la venta de un plan.
+  const [planes, setPlanes] = useState([]);
+  useEffect(() => {
+    if (!open) return;
+    api.get('/api/hearing-plans')
+      .then((r) => setPlanes(r?.data?.data || []))
+      .catch(() => setPlanes([]));
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -147,7 +158,8 @@ const QuoteDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patien
 
   const validate = () => {
     const e = {};
-    if (!formData.brand?.trim()) e.brand = 'La marca es obligatoria';
+          // Con plan, el equipo lo define el plan.
+      if (!formData.hearingPlanId && !formData.brand?.trim()) e.brand = 'La marca es obligatoria';
     if (!formData.technology?.trim()) e.technology = 'La tecnología es obligatoria';
     if (!formData.platform?.trim()) e.platform = 'La plataforma es obligatoria';
     if (formData.unitPrice <= 0) e.unitPrice = 'El valor unitario debe ser mayor a 0';
@@ -171,16 +183,20 @@ const QuoteDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patien
       type: img.file.type,
     }));
 
+    // Con plan, el nombre y la marca salen del plan: es lo que se está
+    // cotizando, no un aparato suelto.
+    const plan = planes.find((p) => p.id === formData.hearingPlanId) || null;
     const quoteData = {
-      productName: formData.brand,
-      brand: formData.brand,
+      hearingPlanId: formData.hearingPlanId || null,
+      productName: plan ? `Plan ${plan.nombre}` : formData.brand,
+      brand: plan ? (plan.plataforma || plan.nombre) : formData.brand,
       model: `${formData.technology} - ${formData.platform}`,
       category: 'hearing-aid',
-      quantity: formData.quantity,
-      unitPrice: formData.unitPrice,
+      quantity: plan ? (plan.audifonosIncluidos || 2) : formData.quantity,
+      unitPrice: plan ? Math.round(plan.precioCOP / (plan.audifonosIncluidos || 2)) : formData.unitPrice,
       totalPrice: totalValue,
       discount,
-      warrantyYears: formData.warrantyYears,
+      warrantyYears: plan ? plan.anosGarantia : formData.warrantyYears,
       notes: formData.notes,
       metadata: {
         technology: formData.technology,
@@ -258,7 +274,38 @@ const QuoteDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patien
       </DialogTitle>
       <DialogContent sx={{ mt: 2 }}>
         <Grid container spacing={3}>
-          {/* Sección 1: Producto ofertado */}
+          <Grid item xs={12}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mb: 1 }}>
+              ¿Qué se cotiza?
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+          </Grid>
+          <Grid item xs={12}>
+            <FormControl fullWidth>
+              <InputLabel>Plan de adaptación</InputLabel>
+              <Select value={formData.hearingPlanId} label="Plan de adaptación"
+                onChange={handleChange('hearingPlanId')}>
+                <MenuItem value="">Audífonos sueltos (sin plan)</MenuItem>
+                {planes.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.nombre} · {p.linea} · ${(p.precioCOP || 0).toLocaleString('es-CO')}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>
+                {formData.hearingPlanId
+                  ? (() => {
+                      const p = planes.find((x) => x.id === formData.hearingPlanId);
+                      return p ? `${(p.controlesMeses || []).length} controles · ${p.audiometrias} audiometrías · ${p.mantenimientos} mantenimientos · garantía ${p.anosGarantia} años` : '';
+                    })()
+                  : 'Elige un plan, o cotiza el aparato suelto.'}
+              </FormHelperText>
+            </FormControl>
+          </Grid>
+
+          {/* El equipo solo se detalla si NO hay plan: el plan ya lo define. */}
+          {!formData.hearingPlanId && (
+          <>
           <Grid item xs={12}>
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mb: 1 }}>
               Producto ofertado
@@ -335,6 +382,9 @@ const QuoteDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patien
               </Select>
             </FormControl>
           </Grid>
+
+          </>
+          )}
 
           {/* Sección 2: Información de marketing */}
           <Grid item xs={12}>
