@@ -60,8 +60,13 @@ if (config.nodeEnv !== 'development') {
     // El prerender del build hace cientos de llamadas desde una sola IP; si lo
     // limitamos, las páginas se congelan como "no encontrado" y Google las
     // desindexa. Con el token compartido lo dejamos pasar.
-    skip: (req) => Boolean(process.env.PRERENDER_TOKEN)
-      && req.headers['x-prerender-token'] === process.env.PRERENDER_TOKEN,
+    // Los webhooks de Meta llegan sin Authorization y caían en el cubo anónimo
+    // (200 por 15 min). Un pico de entregas o de acuses recibía 429 y se perdían
+    // mensajes de pacientes sin dejar rastro. Van firmados: la firma es el
+    // control de acceso, no el rate limit.
+    skip: (req) => req.path.startsWith('/webhooks/')
+      || (Boolean(process.env.PRERENDER_TOKEN)
+        && req.headers['x-prerender-token'] === process.env.PRERENDER_TOKEN),
     message: { success: false, error: 'Demasiadas solicitudes, intenta de nuevo más tarde' },
   });
   app.use('/api/', limiter);
@@ -80,8 +85,17 @@ if (config.nodeEnv === 'development') {
   app.use(morgan('combined'));
 }
 
-// Parsear JSON
-app.use(express.json({ limit: '10mb' }));
+// Parsear JSON. Para el webhook de Meta guardamos además el cuerpo crudo: la
+// firma se calcula sobre los bytes tal como llegaron, y reserializar el JSON
+// cambia el hash aunque el contenido sea idéntico.
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, _res, buf) => {
+    if (req.originalUrl && req.originalUrl.startsWith('/api/webhooks/')) {
+      req.rawBody = buf;
+    }
+  },
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Contexto de auditoría por request (AsyncLocalStorage). Captura ip y

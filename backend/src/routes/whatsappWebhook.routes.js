@@ -2,16 +2,19 @@
  * F5.3 — Webhook Meta WhatsApp (público).
  *
  *  GET  /api/webhooks/meta-whatsapp  → verificación de Meta (responde hub.challenge)
- *  POST /api/webhooks/meta-whatsapp  → recibe mensajes entrantes
+ *  POST /api/webhooks/meta-whatsapp  → recibe mensajes entrantes (firmado)
  *
  * Configurar en Meta Business → WhatsApp → Webhooks:
  *  - Callback URL: https://oirconecta-api.onrender.com/api/webhooks/meta-whatsapp
  *  - Verify token: el valor de META_WEBHOOK_VERIFY_TOKEN
+ *  - Además: META_APP_SECRET (App Secret de la app de Meta) para validar la
+ *    firma de cada POST. Sin esa variable el webhook acepta cualquier origen.
  *  - Suscribir a campo "messages"
  */
 
 const express = require('express');
 const wa = require('../services/whatsappAgent.service');
+const verifyMetaSignature = require('../middleware/verifyMetaSignature');
 
 const router = express.Router();
 
@@ -26,7 +29,7 @@ router.get('/meta-whatsapp', (req, res) => {
   res.status(200).send(String(result));
 });
 
-router.post('/meta-whatsapp', async (req, res) => {
+router.post('/meta-whatsapp', verifyMetaSignature, async (req, res) => {
   // Responder rápido SIEMPRE — Meta reintenta si tardamos > pocos segundos.
   res.status(200).send('ok');
   try {
