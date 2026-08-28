@@ -992,7 +992,13 @@ model HearingPlan {
   recargable        Boolean @default(false)
 
   // ── Cupos de servicio: esto es lo que gobierna el seguimiento ──
-  /// Controles de adaptación incluidos. OBLIGATORIOS para mantener la cobertura.
+  /// Meses en que caen los controles de adaptación de ESTE plan. No es un
+  /// prefijo de una secuencia común: cada plan elige sus momentos. 0.25 = a la
+  /// semana. Ej. Preludio [0.25, 1, 6, 12]; Sonata [3, 12].
+  /// OBLIGATORIOS para mantener la cobertura.
+  controlesMeses Float[] @default([])
+  /// Cantidad impresa en la ficha comercial. Se conserva porque es lo que se le
+  /// promete al paciente por escrito, y hoy no coincide con controlesMeses.
   controlesAdaptacion Int @default(0)
   /// Audiometrías anuales incluidas. OBLIGATORIAS para mantener la cobertura.
   audiometrias        Int @default(0)

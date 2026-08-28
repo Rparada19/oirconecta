@@ -47,7 +47,7 @@ const CONTROLES = [
 /// Meses → días, en la misma rejilla que usan los controles. Sin esto el
 /// mantenimiento del mes 12 caería a 360 días y el control a 365: cinco días de
 /// diferencia que obligan a citar dos veces al paciente para lo mismo.
-const MES = { 6: 180, 12: 365, 18: 545, 24: 730, 30: 910, 36: 1095, 42: 1277, 48: 1460, 54: 1642, 60: 1825 };
+const MES = { 0.25: 7, 1: 30, 3: 90, 6: 180, 12: 365, 18: 545, 24: 730, 30: 910, 36: 1095, 42: 1277, 48: 1460, 54: 1642, 60: 1825 };
 const mesADias = (m) => MES[m] ?? Math.round(m * 30.44);
 
 /// Audiometría anual de control, una por año cumplido.
@@ -74,8 +74,18 @@ const GARANTIA_DEFECTO = 2;
  * @param {{controlesAdaptacion:number, audiometrias:number, mantenimientos:number}} plan
  */
 function stepsParaPlan(plan) {
+  // Cada plan elige en qué meses caen sus controles: no es un prefijo de una
+  // secuencia común. Preludio salta el mes 3; Sonata arranca en el mes 3.
+  const controles = (plan?.controlesMeses || []).map((mes) => {
+    const enSecuencia = CONTROLES.find((c) => c.offsetDays === mesADias(mes));
+    return enSecuencia || {
+      step: `C${String(mes).replace('.', '_')}`,
+      offsetDays: mesADias(mes),
+      label: mes < 1 ? 'Control 1 semana' : `Control ${mes} ${mes === 1 ? 'mes' : 'meses'}`,
+    };
+  });
   return [
-    ...CONTROLES.slice(0, plan?.controlesAdaptacion || 0),
+    ...controles,
     ...audiometrias(plan?.audiometrias || 0),
     ...mantenimientos(plan?.mantenimientos || 0),
   ].sort((a, b) => a.offsetDays - b.offsetDays);
