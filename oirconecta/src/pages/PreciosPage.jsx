@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { errorDeContacto } from '../utils/validacionContacto';
 import { Helmet } from 'react-helmet';
 import { Link as RouterLink } from 'react-router-dom';
 import {
@@ -434,9 +435,13 @@ export default function PreciosPage() {
                   value={demo.empresa} onChange={(e) => setDemo({ ...demo, empresa: e.target.value })} />
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                   <TextField label="Correo" type="email" size="small" fullWidth
-                    value={demo.email} onChange={(e) => setDemo({ ...demo, email: e.target.value })} />
+                    value={demo.email} onChange={(e) => setDemo({ ...demo, email: e.target.value })}
+                    error={!!errorDeContacto('email', demo.email)}
+                    helperText={errorDeContacto('email', demo.email) || ' '} />
                   <TextField label="Teléfono" size="small" fullWidth
-                    value={demo.telefono} onChange={(e) => setDemo({ ...demo, telefono: e.target.value })} />
+                    value={demo.telefono} onChange={(e) => setDemo({ ...demo, telefono: e.target.value })}
+                    error={!!errorDeContacto('telefono', demo.telefono)}
+                    helperText={errorDeContacto('telefono', demo.telefono) || ' '} />
                 </Stack>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                   <TextField label="Ciudad" size="small" fullWidth

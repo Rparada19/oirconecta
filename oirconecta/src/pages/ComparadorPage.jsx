@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { esTelefonoValido, esEmailValido, errorDeContacto } from '../utils/validacionContacto';
 import { Helmet } from 'react-helmet';
 import {
   Container, Typography, Grid, Card, CardContent, FormControl, InputLabel,
@@ -68,6 +69,14 @@ export default function ComparadorPage() {
 
   const enviarLead = async () => {
     setLeadState((s) => ({ ...s, error: null }));
+    if (lead.telefono.trim() && !esTelefonoValido(lead.telefono)) {
+      setLeadState((st) => ({ ...st, error: 'Escribe un celular de 10 dígitos (ej. 3001234567): por ahí te contactamos.' }));
+      return;
+    }
+    if (lead.email.trim() && !esEmailValido(lead.email)) {
+      setLeadState((st) => ({ ...st, error: 'Revisa el correo para poder enviarte el resultado.' }));
+      return;
+    }
     if (!lead.nombre.trim() || !lead.telefono.trim()) {
       setLeadState((s) => ({ ...s, error: 'Nombre y teléfono son obligatorios.' })); return;
     }
@@ -146,7 +155,9 @@ export default function ComparadorPage() {
           {leadState.error && <Alert severity="error" sx={{ mb: 2, borderRadius: '10px' }}>{leadState.error}</Alert>}
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}><TextField label="Nombre" value={lead.nombre} onChange={(e) => setLead((l) => ({ ...l, nombre: e.target.value }))} fullWidth size="small" required /></Grid>
-            <Grid item xs={12} sm={6}><TextField label="Teléfono" value={lead.telefono} onChange={(e) => setLead((l) => ({ ...l, telefono: e.target.value }))} fullWidth size="small" required /></Grid>
+            <Grid item xs={12} sm={6}><TextField label="Teléfono" value={lead.telefono} onChange={(e) => setLead((l) => ({ ...l, telefono: e.target.value }))} fullWidth size="small" required
+              error={!!errorDeContacto('telefono', lead.telefono)}
+              helperText={errorDeContacto('telefono', lead.telefono) || ' '} /></Grid>
             <Grid item xs={12} sm={6}><TextField label="Email (opcional)" type="email" value={lead.email} onChange={(e) => setLead((l) => ({ ...l, email: e.target.value }))} fullWidth size="small" /></Grid>
             <Grid item xs={12} sm={6}><TextField label="Ciudad (opcional)" value={lead.ciudad} onChange={(e) => setLead((l) => ({ ...l, ciudad: e.target.value }))} fullWidth size="small" /></Grid>
           </Grid>

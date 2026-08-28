@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { esTelefonoValido, esEmailValido, errorDeContacto } from '../utils/validacionContacto';
 import { Helmet } from 'react-helmet';
 import { useSearchParams, Link as RouterLink } from 'react-router-dom';
 import {
@@ -263,6 +264,14 @@ export default function AgendamientoPage() {
   };
 
   const handleSubmit = async () => {
+    if (!esEmailValido(form.email)) {
+      setError('Revisa el correo: ahí te enviamos la confirmación de la cita.');
+      return;
+    }
+    if (!esTelefonoValido(form.phone)) {
+      setError('Escribe un celular de 10 dígitos (ej. 3001234567). Lo usamos para confirmarte por WhatsApp.');
+      return;
+    }
     if (!form.name || !form.email || !form.phone) {
       setError('Por favor completa todos los campos obligatorios.');
       return;
@@ -675,11 +684,14 @@ export default function AgendamientoPage() {
                     sx={{ '& .MuiOutlinedInput-root':{ borderRadius:'12px' } }} />
                   <TextField fullWidth label="Correo electrónico *" type="email" value={form.email}
                     onChange={e => setForm(f => ({...f, email: e.target.value}))}
-                    helperText="Recibirás la confirmación y recordatorios aquí"
+                    error={!!errorDeContacto('email', form.email)}
+                    helperText={errorDeContacto('email', form.email) || 'Recibirás la confirmación y recordatorios aquí'}
                     InputProps={{ startAdornment: <EmailOutlinedIcon sx={{ mr:1, color:'#9ca3af', fontSize:20 }} /> }}
                     sx={{ '& .MuiOutlinedInput-root':{ borderRadius:'12px' } }} />
                   <TextField fullWidth label="Teléfono / WhatsApp *" value={form.phone}
                     onChange={e => setForm(f => ({...f, phone: e.target.value}))}
+                    error={!!errorDeContacto('telefono', form.phone)}
+                    helperText={errorDeContacto('telefono', form.phone) || 'Te confirmamos la cita por aquí'}
                     InputProps={{ startAdornment: <PhoneOutlinedIcon sx={{ mr:1, color:'#9ca3af', fontSize:20 }} /> }}
                     sx={{ '& .MuiOutlinedInput-root':{ borderRadius:'12px' } }} />
                   <TextField fullWidth label="Motivo de la consulta" value={form.motivo}
@@ -689,7 +701,8 @@ export default function AgendamientoPage() {
                 </Stack>
 
                 <Button fullWidth variant="contained" size="large" onClick={handleSubmit}
-                  disabled={submitting || !form.name || !form.email || !form.phone}
+                  disabled={submitting || !form.name
+                    || !esEmailValido(form.email) || !esTelefonoValido(form.phone)}
                   sx={{ mt:3.5, borderRadius:'14px', fontWeight:700, fontSize:'1rem', py:1.75,
                     background:'linear-gradient(135deg,#085946,#0d7a5f)',
                     boxShadow:'0 6px 20px rgba(8,89,70,0.28)',

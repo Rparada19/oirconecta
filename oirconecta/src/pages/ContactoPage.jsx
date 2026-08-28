@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { errorDeContacto } from '../utils/validacionContacto';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import {
@@ -306,6 +307,8 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth required type="email" name="email" label="Correo electrónico"
                   value={formData.email} onChange={handleChange}
+                  error={!!errorDeContacto('email', formData.email)}
+                  helperText={errorDeContacto('email', formData.email) || ' '}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
                 />
               </Grid>
@@ -314,6 +317,8 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
                   label={asuntoFromUrl ? "Teléfono *" : "Teléfono (opcional)"}
                   required={Boolean(asuntoFromUrl)}
                   value={formData.telefono} onChange={handleChange}
+                  error={!!errorDeContacto('telefono', formData.telefono)}
+                  helperText={errorDeContacto('telefono', formData.telefono) || ' '}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
                 />
               </Grid>
