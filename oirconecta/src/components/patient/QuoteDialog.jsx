@@ -189,7 +189,7 @@ const QuoteDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patien
     const quoteData = {
       hearingPlanId: formData.hearingPlanId || null,
       productName: plan ? `Plan ${plan.nombre}` : formData.brand,
-      brand: plan ? (plan.plataforma || plan.nombre) : formData.brand,
+      brand: plan ? (plan.marca || plan.plataforma || plan.nombre) : formData.brand,
       model: `${formData.technology} - ${formData.platform}`,
       category: 'hearing-aid',
       quantity: plan ? (plan.audifonosIncluidos || 2) : formData.quantity,

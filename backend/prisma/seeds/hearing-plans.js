@@ -14,6 +14,7 @@ const PLANES = [
   // ── Línea Premium ──
   {
     code: 'preludio', nombre: 'Preludio', linea: 'PREMIUM', orden: 1,
+    marca: 'Widex',
     nivelTecnologia: 440, plataforma: 'Allure', formatos: 'Todos',
     audifonosIncluidos: 2, anosGarantia: 5, recargable: true,
     controlesMeses: [0.25, 1, 3, 6, 12, 18, 24, 30, 36], controlesAdaptacion: 9,
@@ -31,6 +32,7 @@ const PLANES = [
   },
   {
     code: 'sonata', nombre: 'Sonata', linea: 'PREMIUM', orden: 2,
+    marca: 'Widex',
     nivelTecnologia: 220, plataforma: 'Smart RIC', formatos: 'RIC',
     audifonosIncluidos: 2, anosGarantia: 2, recargable: true,
     controlesMeses: [0.25, 1, 6, 12, 18, 24], controlesAdaptacion: 6,
@@ -45,6 +47,7 @@ const PLANES = [
   },
   {
     code: 'sinfonia', nombre: 'Sinfonía', linea: 'PREMIUM', orden: 3,
+    marca: 'Widex',
     nivelTecnologia: 110, plataforma: 'Moment', formatos: 'Todos',
     audifonosIncluidos: 2, anosGarantia: 2, recargable: true,
     controlesMeses: [0.25, 1, 6, 12, 18, 24], controlesAdaptacion: 6,
@@ -60,6 +63,7 @@ const PLANES = [
   // ── Línea Acceso ──
   {
     code: 'distinguido', nombre: 'Distinguido', linea: 'ACCESO', orden: 4,
+    marca: 'Widex',
     nivelTecnologia: 110, plataforma: 'Magnify', formatos: 'BTE',
     audifonosIncluidos: 2, anosGarantia: 2, recargable: true,
     controlesMeses: [1, 6, 12, 18], controlesAdaptacion: 4, audiometrias: 1,
@@ -74,6 +78,7 @@ const PLANES = [
   },
   {
     code: 'insignia', nombre: 'Insignia', linea: 'ACCESO', orden: 5,
+    marca: 'Widex',
     nivelTecnologia: 100, plataforma: 'Magnify', formatos: 'BTE',
     audifonosIncluidos: 2, anosGarantia: 2, recargable: false,
     controlesMeses: [1, 6, 12, 18], controlesAdaptacion: 4, audiometrias: 0,
@@ -88,6 +93,7 @@ const PLANES = [
   },
   {
     code: 'esencial', nombre: 'Esencial', linea: 'ACCESO', orden: 6,
+    marca: 'Widex',
     nivelTecnologia: 50, plataforma: 'Magnify', formatos: 'BTE',
     audifonosIncluidos: 2, anosGarantia: 2, recargable: false,
     controlesMeses: [1, 6, 12, 18], controlesAdaptacion: 4, audiometrias: 0,

@@ -390,6 +390,7 @@ async function ensureHearingPlans(prisma) {
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "hearing_plans" ADD COLUMN IF NOT EXISTS "marca" TEXT;`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "hearing_plans_linea_idx" ON "hearing_plans"("linea","activo");`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "hearingPlanId" TEXT;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "hearingPlanId" TEXT;`);

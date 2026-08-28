@@ -986,6 +986,10 @@ model HearingPlan {
   linea  String
 
   // ── El equipo ──
+  /// Marca del equipo con el que se arma el plan. Es dato interno de
+  /// inventario y garantía con el fabricante: el bot NO lo anuncia al paciente
+  /// (ver el nodo de conocimiento interno del agente).
+  marca             String?
   nivelTecnologia   Int?
   plataforma        String?
   formatos          String?

@@ -166,6 +166,8 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
         const plan = planes.find((p) => p.id === v);
         if (plan) {
           next.warrantyYears = plan.anosGarantia;
+          // Marca: dato interno de inventario y garantía con el fabricante.
+          if (plan.marca) next.brand = plan.marca;
           next.quantity = plan.audifonosIncluidos || 2;
           next.unitPrice = Math.round(plan.precioCOP / (plan.audifonosIncluidos || 2));
           if (plan.plataforma) next.platform = plan.plataforma;

@@ -90,7 +90,7 @@ import { getAllAppointments } from '../../services/appointmentService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
 import { getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
 import { getPatientInteractions, getPatientInteractionsMetrics, getDailyActionsMetricsByPatient, addInteraction, updateInteraction, getListUsers } from '../../services/interactionService';
-import { getPatientProducts, convertQuoteToSale, getQuoteHistory } from '../../services/productService';
+import { getPatientProducts, convertQuoteToSale, getQuoteHistory, updateSale } from '../../services/productService';
 import {
   getPatientMaintenances,
   getUpcomingMaintenances,
@@ -218,6 +218,36 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   const [editQuoteId, setEditQuoteId] = useState(null);
   const [editQuoteData, setEditQuoteData] = useState(null);
   const [printMenuAnchor, setPrintMenuAnchor] = useState(null);
+  // La fecha de adaptación dispara TODO el funnel de controles, y hasta ahora
+  // solo se podía poner al crear la venta. Si el paciente no asistió o se
+  // registró mal, no había forma de corregirla.
+  const [editandoAdaptacion, setEditandoAdaptacion] = useState(false);
+  const [nuevaAdaptacion, setNuevaAdaptacion] = useState('');
+  const [guardandoAdaptacion, setGuardandoAdaptacion] = useState(false);
+
+  const guardarFechaAdaptacion = async () => {
+    const venta = viewProductDialog.product;
+    if (!venta?.id) return;
+    setGuardandoAdaptacion(true);
+    try {
+      const r = await updateSale(venta.id, { fechaAdaptacion: nuevaAdaptacion || null });
+      if (r?.error) throw new Error(r.error);
+      setSnackbar({
+        open: true,
+        severity: 'success',
+        message: nuevaAdaptacion
+          ? 'Fecha de adaptación guardada. Los controles del plan se reprograman desde esa fecha.'
+          : 'Fecha de adaptación borrada. El seguimiento no arranca hasta que se registre.',
+      });
+      setEditandoAdaptacion(false);
+      setViewProductDialog({ open: false, product: null, type: null });
+      loadPatientData();
+    } catch (e) {
+      setSnackbar({ open: true, severity: 'error', message: e.message || 'No se pudo guardar.' });
+    } finally {
+      setGuardandoAdaptacion(false);
+    }
+  };
   const printContentRef = useRef(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
@@ -6422,12 +6452,38 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                     </Typography>
                   </Grid>
                 )}
-                {viewProductDialog.type === 'sale' && viewProductDialog.product.adaptationDate && (
-                  <Grid item xs={6} sm={4}>
+                {viewProductDialog.type === 'sale' && viewProductDialog.product.type === 'sale' && (
+                  <Grid item xs={12} sm={6}>
                     <Typography variant="caption" sx={{ color: '#86899C' }}>Fecha de adaptación</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {new Date(viewProductDialog.product.adaptationDate).toLocaleDateString('es-ES')}
-                    </Typography>
+                    {editandoAdaptacion ? (
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5, flexWrap: 'wrap' }}>
+                        <TextField type="date" size="small" value={nuevaAdaptacion}
+                          onChange={(e) => setNuevaAdaptacion(e.target.value)}
+                          InputLabelProps={{ shrink: true }} />
+                        <Button size="small" variant="contained" disabled={guardandoAdaptacion}
+                          onClick={guardarFechaAdaptacion} sx={{ bgcolor: '#085946' }}>
+                          {guardandoAdaptacion ? 'Guardando…' : 'Guardar'}
+                        </Button>
+                        <Button size="small" onClick={() => setEditandoAdaptacion(false)}>Cancelar</Button>
+                      </Box>
+                    ) : (
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {viewProductDialog.product.adaptationDate
+                            ? new Date(viewProductDialog.product.adaptationDate).toLocaleDateString('es-ES')
+                            : 'Sin registrar — el seguimiento no ha arrancado'}
+                        </Typography>
+                        {canSales && (
+                          <Button size="small" onClick={() => {
+                            setNuevaAdaptacion(viewProductDialog.product.adaptationDate
+                              ? String(viewProductDialog.product.adaptationDate).slice(0, 10) : '');
+                            setEditandoAdaptacion(true);
+                          }} sx={{ minWidth: 0, px: 1, color: '#085946' }}>
+                            Editar
+                          </Button>
+                        )}
+                      </Box>
+                    )}
                   </Grid>
                 )}
                 {viewProductDialog.type === 'sale' && viewProductDialog.product.metadata?.firstControlDate && (
