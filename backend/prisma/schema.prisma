@@ -825,6 +825,8 @@ enum CampaignStatus {
 // ===========================================
 
 model Quote {
+  /// Plan de adaptación cotizado. Null = cotización de audífono suelto.
+  hearingPlanId String?
   id     String      @id @default(uuid())
   estado QuoteStatus @default(PENDING)
 

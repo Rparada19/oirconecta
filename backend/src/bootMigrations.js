@@ -392,6 +392,8 @@ async function ensureHearingPlans(prisma) {
     `);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "hearing_plans_linea_idx" ON "hearing_plans"("linea","activo");`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "hearingPlanId" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "hearingPlanId" TEXT;`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "quotes_hearing_plan_idx" ON "quotes"("hearingPlanId");`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "sales_hearing_plan_idx" ON "sales"("hearingPlanId");`);
 
     const { seedHearingPlans } = require('../prisma/seeds/hearing-plans');

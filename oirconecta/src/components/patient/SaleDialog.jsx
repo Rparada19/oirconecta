@@ -56,7 +56,10 @@ const formatDateRange = (start, end) => {
 };
 
 const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patientData }) => {
-  const [tipoVenta, setTipoVenta] = useState('audifonos'); // 'consulta' | 'accesorio' | 'audifonos'
+  // 'plan' comparte formulario con 'audifonos' (la categoría en base es la
+  // misma, HEARING_AID) pero se elige distinto: o vendes un plan, o vendes el
+  // aparato suelto. Es la decisión comercial, no un campo más.
+  const [tipoVenta, setTipoVenta] = useState('plan'); // 'consulta' | 'accesorio' | 'audifonos' | 'plan'
   const [saleProfessionalId, setSaleProfessionalId] = useState('');
   const [saleSedeId, setSaleSedeId] = useState('');
   const [campaigns, setCampaigns] = useState([]);
@@ -434,9 +437,10 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
                 label="Tipo de venta"
                 onChange={(e) => setTipoVenta(e.target.value)}
               >
+                <MenuItem value="plan">Plan de adaptación</MenuItem>
+                <MenuItem value="audifonos">Audífonos</MenuItem>
                 <MenuItem value="consulta">Consulta</MenuItem>
                 <MenuItem value="accesorio">Accesorio</MenuItem>
-                <MenuItem value="audifonos">Audífonos</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -681,7 +685,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
           )}
 
           {/* --- AUDÍFONOS (misma estructura que cotización + facturar consulta + accesorios) --- */}
-          {tipoVenta === 'audifonos' && (
+          {(tipoVenta === 'audifonos' || tipoVenta === 'plan') && (
             <>
               <Grid item xs={12}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mt: 1, mb: 1 }}>
@@ -773,16 +777,17 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
                 </>
               )}
 
+              {tipoVenta === 'plan' && (
+              <>
               <Grid item xs={12}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mt: 2, mb: 1 }}>Plan de adaptación</Typography>
                 <Divider sx={{ mb: 2 }} />
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Plan vendido</InputLabel>
-                  <Select value={audifonos.hearingPlanId} label="Plan vendido"
+                <FormControl fullWidth error={!audifonos.hearingPlanId}>
+                  <InputLabel>Plan vendido *</InputLabel>
+                  <Select value={audifonos.hearingPlanId} label="Plan vendido *"
                     onChange={handleChangeAudifonos('hearingPlanId')}>
-                    <MenuItem value="">Audífono suelto (sin plan)</MenuItem>
                     {planes.map((p) => (
                       <MenuItem key={p.id} value={p.id}>
                         {p.nombre} · {p.linea} · ${(p.precioCOP || 0).toLocaleString('es-CO')}
@@ -796,10 +801,12 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
                           if (!p) return '';
                           return `${(p.controlesMeses || []).length} controles · ${p.audiometrias} audiometrías · ${p.mantenimientos} mantenimientos. El seguimiento se programa solo al registrar la fecha de adaptación.`;
                         })()
-                      : 'Sin plan, el seguimiento se calcula por los años de garantía.'}
+                      : 'Elige el plan para que el seguimiento se programe solo.'}
                   </FormHelperText>
                 </FormControl>
               </Grid>
+              </>
+              )}
 
               <Grid item xs={12}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mt: 2, mb: 1 }}>Información de producto</Typography>
