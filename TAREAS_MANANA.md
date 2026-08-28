@@ -1,4 +1,4 @@
-# Tareas — actualizado el 28 de agosto
+# Tareas — actualizado el 28 de agosto, 4:40 p.m.
 
 Estado al cerrar el miércoles 26. Diez commits desplegados en `main`.
 
@@ -130,6 +130,20 @@ amarrado al consultorio propio y hay que soltarlo antes de vender:
       en el pipeline compartido `iaAgent`, sobre el número de cada profesional.
 - [ ] Barrer `SYSTEM_PROMPTS` por datos de Bogotá que ya deberían salir de la
       educación del perfil.
+
+## 5.c Planes de audición — hecho el 28-ago (tarde)
+
+Catálogo de los 6 planes, selector en venta y cotización, edición de la fecha de
+adaptación, botones de autorizar/pausar/agendado-manual, y KPI de planes
+vendidos. Detalle en la memoria `project_planes_audicion`.
+
+- [ ] **Verificar con una venta real**: Rafael registró una (Sonata, adaptación
+      17/8) pero no confirmamos si se generaron los hitos en la ficha. **Es la
+      prueba pendiente más importante.**
+- [ ] "Marcar costo" solo existe por API: sin eso la compuerta de autorización
+      no se dispara sola.
+- [ ] Agrupar el aviso cuando varios hitos caen el mismo día.
+- [ ] Detección de agendamiento telefónico y cadencia de insistencia.
 
 ## 6. Sin resolver
 
