@@ -295,6 +295,8 @@ const createSale = async (data, createdById) => {
       // Servicios: 100% margen por definición del negocio.
       costoUnitario: data.categoria === 'SERVICE' ? 0 : (data.costoUnitario ?? null),
       anosGarantia: data.anosGarantia,
+      // Plan de adaptación vendido. Null = audífono suelto.
+      hearingPlanId: data.hearingPlanId || null,
       seguroPerdida: data.seguroPerdida,
       seguroRotura: data.seguroRotura,
       fechaAdaptacion: data.fechaAdaptacion ? new Date(data.fechaAdaptacion) : null,
@@ -312,6 +314,7 @@ const createSale = async (data, createdById) => {
     include: {
       patient: true,
       campaign: true,
+      hearingPlan: { select: { id: true, nombre: true, code: true } },
     },
   });
 

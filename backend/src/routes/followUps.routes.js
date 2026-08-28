@@ -14,8 +14,8 @@
 const express = require('express');
 const { authenticate } = require('../middleware/auth');
 const followUps = require('../services/followUps.service');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// Cliente compartido: pasa por la auditoría y no abre otro pool contra Neon.
+const prisma = require('../db');
 
 const router = express.Router();
 
@@ -117,7 +117,6 @@ router.get('/upcoming', async (req, res, next) => {
 router.get('/patient/:id', async (req, res, next) => {
   try {
     const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
     const rows = await prisma.patientFollowUp.findMany({
       where: { patientId: req.params.id },
       orderBy: { offsetDays: 'asc' },
@@ -167,6 +166,72 @@ router.post('/for-patient/:id', async (req, res, next) => {
       saleId: saleId || null,
     });
     res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
+/**
+ * Marcar que la visita tiene costo para el paciente. Mientras no esté
+ * autorizada, el sistema NO le escribe: notificar antes de que autorice el
+ * gasto es la vía rápida a un reclamo.
+ */
+router.post('/:id/marcar-costo', async (req, res, next) => {
+  try {
+    const fu = await prisma.patientFollowUp.update({
+      where: { id: req.params.id },
+      data: {
+        tieneCosto: req.body?.tieneCosto !== false,
+        costoDescripcion: req.body?.descripcion || null,
+        // Marcar costo revoca una autorización previa: si cambió lo que se le
+        // va a cobrar, la autorización anterior ya no vale.
+        autorizadoAt: null,
+        autorizadoPorId: null,
+      },
+    });
+    res.json({ success: true, data: fu });
+  } catch (e) { next(e); }
+});
+
+/** El asesor confirma que el paciente autoriza el costo. Libera los avisos. */
+router.post('/:id/autorizar', async (req, res, next) => {
+  try {
+    const fu = await prisma.patientFollowUp.update({
+      where: { id: req.params.id },
+      data: { autorizadoAt: new Date(), autorizadoPorId: req.user?.id || null },
+    });
+    res.json({ success: true, data: fu });
+  } catch (e) { next(e); }
+});
+
+/**
+ * Pausar el seguimiento: deja de mandar recordatorios sin borrar el hito ni
+ * perder el cupo. Para cuando el paciente pide que no lo contacten, viajó, o
+ * el asesor lo está gestionando por fuera.
+ */
+router.post('/:id/pausar', async (req, res, next) => {
+  try {
+    const fu = await followUps.markSkipped({
+      followUpId: req.params.id,
+      reason: req.body?.motivo || 'Pausado por el asesor',
+      byUserId: req.user?.id || null,
+    });
+    res.json({ success: true, data: fu });
+  } catch (e) { next(e); }
+});
+
+/**
+ * El paciente agendó por teléfono y recepción lo creó a mano: se marca el hito
+ * como agendado y se corta la insistencia.
+ */
+router.post('/:id/agendado-manual', async (req, res, next) => {
+  try {
+    const fu = await prisma.patientFollowUp.update({
+      where: { id: req.params.id },
+      data: {
+        status: 'SCHEDULED',
+        ...(req.body?.appointmentId ? { scheduledAppointmentId: req.body.appointmentId } : {}),
+      },
+    });
+    res.json({ success: true, data: fu });
   } catch (e) { next(e); }
 });
 

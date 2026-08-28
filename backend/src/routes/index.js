@@ -52,6 +52,7 @@ const brandsRoutes = require('./brands.routes');
 
 // Registrar rutas
 router.use('/auth', authRoutes);
+router.use('/hearing-plans', require('./hearingPlans.routes'));
 router.use('/leads', leadsRoutes);
 router.use('/patients', patientsRoutes);
 router.use('/appointments', appointmentsRoutes);
