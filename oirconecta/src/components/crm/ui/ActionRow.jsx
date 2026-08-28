@@ -8,6 +8,9 @@ import { Box, Typography, Avatar, Chip, IconButton, Tooltip } from '@mui/materia
 import { OC_COLORS } from '../../../theme';
 
 const TYPE_CHIP = {
+  // Venta hecha que no arranca garantía ni controles hasta que el paciente
+  // venga a adaptarse. Va en rojo porque es plata ya cobrada en riesgo.
+  adaptacion:  { label: 'Sin adaptar', tone: '#b91c1c', bg: 'rgba(185,28,28,0.10)' },
   cita_agenda: { label: 'Cita', tone: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
   consumibles: { label: 'Consumible', tone: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
   garantia:    { label: 'Garantía', tone: '#8b5cf6', bg: 'rgba(139,92,246,0.10)' },

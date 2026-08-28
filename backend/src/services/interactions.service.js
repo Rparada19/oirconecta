@@ -227,6 +227,84 @@ const remove = async (id) => {
  * garantías en reclamación, recordatorios programados para hoy).
  * @param {Object} options - { daysAhead: number } para consumibles (días hacia adelante para "próximo")
  */
+
+/**
+ * Compró audífonos y no ha sido adaptado.
+ *
+ * Es el hueco más caro del funnel: la venta ya está hecha, el paciente pagó, y
+ * si no vuelve a adaptarse no arranca ningún control ni ninguna garantía — y
+ * nadie lo persigue. El funnel de controles no puede cubrirlo porque
+ * deliberadamente no arranca sin fecha de adaptación.
+ *
+ * Dos casos, con urgencia distinta:
+ *  · `no_asistio`  — tenía cita de adaptación, ya pasó, y no quedó registrada.
+ *  · `sin_agendar` — compró y nunca se le agendó la adaptación.
+ */
+async function adaptacionesPendientes(hoy) {
+  const acciones = [];
+  try {
+    const ventas = await prisma.sale.findMany({
+      where: { categoria: 'HEARING_AID', fechaAdaptacion: null },
+      select: {
+        id: true, fechaVenta: true, patientId: true,
+        patient: { select: { nombre: true, email: true, telefono: true } },
+      },
+      orderBy: { fechaVenta: 'asc' },
+      take: 200,
+    });
+    if (ventas.length === 0) return acciones;
+
+    // Citas de adaptación de esos pacientes, para saber si hubo intento.
+    const citas = await prisma.appointment.findMany({
+      where: {
+        patientId: { in: ventas.map((v) => v.patientId).filter(Boolean) },
+        tipoConsulta: { contains: 'adapt', mode: 'insensitive' },
+      },
+      select: { patientId: true, fecha: true, estado: true },
+      orderBy: { fecha: 'desc' },
+    });
+    const porPaciente = new Map();
+    citas.forEach((c) => {
+      if (!porPaciente.has(c.patientId)) porPaciente.set(c.patientId, []);
+      porPaciente.get(c.patientId).push(c);
+    });
+
+    for (const v of ventas) {
+      if (!v.patientId) continue;
+      const suyas = porPaciente.get(v.patientId) || [];
+      const futura = suyas.find((c) => new Date(c.fecha) >= hoy && c.estado !== 'CANCELLED');
+      if (futura) continue; // ya tiene cita por delante: no hay nada que perseguir
+
+      const pasada = suyas.find((c) => new Date(c.fecha) < hoy);
+      const dias = Math.floor((hoy.getTime() - new Date(v.fechaVenta).getTime()) / 86400000);
+
+      acciones.push({
+        id: `adaptacion:${v.id}`,
+        type: 'adaptacion',
+        kind: pasada ? 'no_asistio' : 'sin_agendar',
+        dueDate: pasada ? pasada.fecha : v.fechaVenta,
+        title: pasada
+          ? 'No asistió a su adaptación'
+          : 'Compró audífonos y no tiene adaptación agendada',
+        description: pasada
+          ? `Tenía cita el ${new Date(pasada.fecha).toISOString().slice(0, 10)} y no quedó registrada la adaptación. Sin adaptación no arrancan sus controles.`
+          : `Compró hace ${dias} días y nunca se le agendó la adaptación.`,
+        patientId: v.patientId,
+        patientEmail: v.patient?.email || null,
+        patientName: v.patient?.nombre || '',
+        patientPhone: v.patient?.telefono || null,
+        responsibleName: null,
+        resolvedAt: null,
+        comments: [],
+        metadata: { saleId: v.id, diasDesdeVenta: dias },
+      });
+    }
+  } catch (e) {
+    console.warn('[dailyActions] adaptaciones pendientes falló:', e.message);
+  }
+  return acciones;
+}
+
 const getDailyActions = async (options = {}) => {
   const { daysAhead = 7, patientEmail: filterPatientEmail, patientId: filterPatientId } = options;
   const today = new Date();
@@ -343,6 +421,12 @@ const getDailyActions = async (options = {}) => {
       }
     }
   }
+  // Ventas de audífonos sin adaptar. Es del centro, no de un paciente puntual:
+  // no se incluye cuando se piden las acciones de una sola persona.
+  if (!filterPatientId && !filterPatientEmail) {
+    actions.push(...(await adaptacionesPendientes(today)));
+  }
+
   return actions;
 };
 

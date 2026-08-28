@@ -23,17 +23,34 @@ function generateToken() {
 // semana 1, mes 1, 3, 6, 12, 18, 24, 30, 36.
 // El código 'W1' reemplazó al legacy 'D10' (10 días). PatientFollowUp filas
 // antiguas con step='D10' siguen válidas — solo cambia el timing para nuevas.
+// `minGarantia` = años de garantía mínimos para que el hito aplique. Antes se
+// generaban los 9 sin mirar la garantía, así que a un paciente con 2 años se le
+// programaban controles hasta el mes 36 — fuera de cobertura.
 const STEPS = [
-  { step: 'W1',   offsetDays: 7,    label: 'Control 1 semana' },
-  { step: 'M1',   offsetDays: 30,   label: 'Control 1 mes' },
-  { step: 'M3',   offsetDays: 90,   label: 'Control 3 meses' },
-  { step: 'M6',   offsetDays: 180,  label: 'Control 6 meses' },
-  { step: 'Y1',   offsetDays: 365,  label: 'Control 12 meses' },
-  { step: 'Y1_5', offsetDays: 545,  label: 'Control 18 meses' },
-  { step: 'Y2',   offsetDays: 730,  label: 'Control 24 meses' },
-  { step: 'Y2_5', offsetDays: 910,  label: 'Control 30 meses' },
-  { step: 'Y3',   offsetDays: 1095, label: 'Control 36 meses (renovación)' },
+  { step: 'W1',   offsetDays: 7,    label: 'Control 1 semana',            minGarantia: 2 },
+  { step: 'M1',   offsetDays: 30,   label: 'Control 1 mes',               minGarantia: 2 },
+  { step: 'M3',   offsetDays: 90,   label: 'Control 3 meses',             minGarantia: 2 },
+  { step: 'M6',   offsetDays: 180,  label: 'Control 6 meses',             minGarantia: 2 },
+  { step: 'Y1',   offsetDays: 365,  label: 'Control 12 meses',            minGarantia: 2 },
+  { step: 'Y1_5', offsetDays: 545,  label: 'Control 18 meses',            minGarantia: 2 },
+  { step: 'Y2',   offsetDays: 730,  label: 'Control 24 meses',            minGarantia: 2 },
+  { step: 'Y2_5', offsetDays: 910,  label: 'Control 30 meses',            minGarantia: 3 },
+  { step: 'Y3',   offsetDays: 1095, label: 'Control 36 meses',            minGarantia: 3 },
+  { step: 'Y3_5', offsetDays: 1277, label: 'Control 42 meses',            minGarantia: 5 },
+  { step: 'Y4',   offsetDays: 1460, label: 'Control 48 meses',            minGarantia: 5 },
+  { step: 'Y4_5', offsetDays: 1642, label: 'Control 54 meses',            minGarantia: 5 },
+  { step: 'Y5',   offsetDays: 1825, label: 'Control 60 meses (renovación)', minGarantia: 5 },
 ];
+
+/// Garantía por defecto cuando la venta no la registró. 2 años es el piso
+/// comercial: si nos equivocamos, es programando de menos, no de más.
+const GARANTIA_DEFECTO = 2;
+
+/** Hitos que caben dentro de la garantía contratada. */
+function stepsParaGarantia(anos) {
+  const g = Number(anos) > 0 ? Number(anos) : GARANTIA_DEFECTO;
+  return STEPS.filter((s) => g >= s.minGarantia);
+}
 
 function stepLabel(step) {
   return STEPS.find((s) => s.step === step)?.label || step;
@@ -56,15 +73,25 @@ function addDays(date, days) {
  * @param {string} [args.saleId] — vínculo opcional a la venta origen
  * @returns {Promise<{ created: number, updated: number, skipped: number }>}
  */
-async function ensureFunnel({ patientId, adaptationDate, saleId = null }) {
+async function ensureFunnel({ patientId, adaptationDate, saleId = null, anosGarantia = null }) {
   if (!patientId) throw new Error('patientId requerido');
   if (!adaptationDate) throw new Error('adaptationDate requerido');
   const base = new Date(adaptationDate);
   if (isNaN(base.getTime())) throw new Error('adaptationDate inválido');
 
+  // Si no vino la garantía, se lee de la venta que originó el funnel.
+  let garantia = anosGarantia;
+  if (!garantia && saleId) {
+    const venta = await prisma.sale.findUnique({
+      where: { id: saleId }, select: { anosGarantia: true },
+    }).catch(() => null);
+    garantia = venta?.anosGarantia || null;
+  }
+  const pasos = stepsParaGarantia(garantia);
+
   let created = 0, updated = 0, skipped = 0;
 
-  for (const s of STEPS) {
+  for (const s of pasos) {
     const dueDate = addDays(base, s.offsetDays);
     const existing = await prisma.patientFollowUp.findUnique({
       where: { patientId_step: { patientId, step: s.step } },
@@ -110,9 +137,9 @@ async function ensureFunnel({ patientId, adaptationDate, saleId = null }) {
           type: 'follow_up_control',
           channel: 'system',
           title: 'Funnel de controles activado',
-          description: `Se programaron ${created} controles a partir de la fecha de adaptación ${base.toISOString().slice(0, 10)}.`,
+          description: `Se programaron ${created} controles a partir de la adaptación del ${base.toISOString().slice(0, 10)}, según la garantía de ${garantia || GARANTIA_DEFECTO} años.`,
           status: 'completed',
-          metadata: { source: 'ensureFunnel', saleId, created, updated, skipped },
+          metadata: { source: 'ensureFunnel', saleId, created, updated, skipped, anosGarantia: garantia || GARANTIA_DEFECTO },
         },
       });
     } catch (e) {
@@ -320,6 +347,8 @@ async function summary() {
 }
 
 module.exports = {
+  STEPS,
+  stepsParaGarantia,
   STEPS,
   stepLabel,
   ensureFunnel,
