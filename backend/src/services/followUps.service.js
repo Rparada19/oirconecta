@@ -23,54 +23,91 @@ function generateToken() {
 // semana 1, mes 1, 3, 6, 12, 18, 24, 30, 36.
 // El código 'W1' reemplazó al legacy 'D10' (10 días). PatientFollowUp filas
 // antiguas con step='D10' siguen válidas — solo cambia el timing para nuevas.
-// `minGarantia` = años de garantía mínimos para que el hito aplique. Antes se
-// generaban los 9 sin mirar la garantía, así que a un paciente con 2 años se le
-// programaban controles hasta el mes 36 — fuera de cobertura.
+// ── Los tres calendarios del seguimiento ──────────────────────────────────
 //
-// `mantenimiento` = en esa visita además se hace mantenimiento técnico del
-// audífono. El mantenimiento va cada 6 meses y los controles caen en 6, 12, 18,
-// 24… así que coinciden SIEMPRE: no se genera un calendario paralelo que luego
-// haya que fusionar, se marca el control y se cita una sola vez.
-const STEPS = [
-  { step: 'W1',   offsetDays: 7,    label: 'Control 1 semana',            minGarantia: 2 },
-  { step: 'M1',   offsetDays: 30,   label: 'Control 1 mes',               minGarantia: 2 },
-  { step: 'M3',   offsetDays: 90,   label: 'Control 3 meses',             minGarantia: 2 },
-  { step: 'M6',   offsetDays: 180,  label: 'Control 6 meses',             minGarantia: 2, mantenimiento: true },
-  { step: 'Y1',   offsetDays: 365,  label: 'Control 12 meses',            minGarantia: 2, mantenimiento: true },
-  { step: 'Y1_5', offsetDays: 545,  label: 'Control 18 meses',            minGarantia: 2, mantenimiento: true },
-  { step: 'Y2',   offsetDays: 730,  label: 'Control 24 meses',            minGarantia: 2, mantenimiento: true },
-  { step: 'Y2_5', offsetDays: 910,  label: 'Control 30 meses',            minGarantia: 3, mantenimiento: true },
-  { step: 'Y3',   offsetDays: 1095, label: 'Control 36 meses',            minGarantia: 3, mantenimiento: true },
-  { step: 'Y3_5', offsetDays: 1277, label: 'Control 42 meses',            minGarantia: 5, mantenimiento: true },
-  { step: 'Y4',   offsetDays: 1460, label: 'Control 48 meses',            minGarantia: 5, mantenimiento: true },
-  { step: 'Y4_5', offsetDays: 1642, label: 'Control 54 meses',            minGarantia: 5, mantenimiento: true },
-  { step: 'Y5',   offsetDays: 1825, label: 'Control 60 meses (renovación)', minGarantia: 5, mantenimiento: true },
+// No son uno solo con distinto ritmo: son tres cosas distintas que el paciente
+// recibe, y cada plan define CUÁNTAS de cada una le tocan. Dos planes con la
+// misma garantía de 2 años pueden traer 4 controles o 2.
+//
+// La ficha comercial lo dice en la letra pequeña y es lo que le da fuerza a los
+// recordatorios: los controles y la audiometría anual son OBLIGATORIOS para
+// mantener la cobertura. Quien no viene pierde el seguro.
+
+/// Controles de adaptación. La secuencia es SIEMPRE la misma; el plan dice
+/// cuántos entran, empezando por el primero.
+const CONTROLES = [
+  { step: 'W1',   offsetDays: 7,   label: 'Control 1 semana' },
+  { step: 'M3',   offsetDays: 90,  label: 'Control 3 meses' },
+  { step: 'M6',   offsetDays: 180, label: 'Control 6 meses' },
+  { step: 'Y1',   offsetDays: 365, label: 'Control 12 meses' },
+  { step: 'Y1_5', offsetDays: 545, label: 'Control 18 meses' },
+  { step: 'Y2',   offsetDays: 730, label: 'Control 24 meses' },
 ];
+
+/// Meses → días, en la misma rejilla que usan los controles. Sin esto el
+/// mantenimiento del mes 12 caería a 360 días y el control a 365: cinco días de
+/// diferencia que obligan a citar dos veces al paciente para lo mismo.
+const MES = { 6: 180, 12: 365, 18: 545, 24: 730, 30: 910, 36: 1095, 42: 1277, 48: 1460, 54: 1642, 60: 1825 };
+const mesADias = (m) => MES[m] ?? Math.round(m * 30.44);
+
+/// Audiometría anual de control, una por año cumplido.
+const audiometrias = (n) => Array.from({ length: n }, (_, i) => ({
+  step: `AUD${i + 1}`,
+  offsetDays: mesADias(12 * (i + 1)),
+  label: `Audiometría anual ${i + 1}`,
+}));
+
+/// Mantenimiento técnico, cada 6 meses, sobre la misma rejilla.
+const mantenimientos = (n) => Array.from({ length: n }, (_, i) => ({
+  step: `MANT${i + 1}`,
+  offsetDays: mesADias(6 * (i + 1)),
+  label: `Mantenimiento ${i + 1}`,
+  mantenimiento: true,
+}));
 
 /// Garantía por defecto cuando la venta no la registró. 2 años es el piso
 /// comercial: si nos equivocamos, es programando de menos, no de más.
 const GARANTIA_DEFECTO = 2;
 
-/** Hitos que caben dentro de la garantía contratada. */
+/**
+ * Calendario de un plan de adaptación: sus cupos, cada uno con su ritmo.
+ * @param {{controlesAdaptacion:number, audiometrias:number, mantenimientos:number}} plan
+ */
+function stepsParaPlan(plan) {
+  return [
+    ...CONTROLES.slice(0, plan?.controlesAdaptacion || 0),
+    ...audiometrias(plan?.audiometrias || 0),
+    ...mantenimientos(plan?.mantenimientos || 0),
+  ].sort((a, b) => a.offsetDays - b.offsetDays);
+}
+
+/**
+ * Calendario de una venta de audífono suelto, sin plan. Solo controles: lo que
+ * cabe dentro de la garantía. No hay cupos de audiometría ni mantenimiento
+ * porque esos los trae el plan, no el aparato.
+ */
 function stepsParaGarantia(anos) {
   const g = Number(anos) > 0 ? Number(anos) : GARANTIA_DEFECTO;
-  return STEPS.filter((s) => g >= s.minGarantia);
+  const tope = g * 365;
+  return CONTROLES.filter((c) => c.offsetDays <= tope);
 }
 
+/// Compatibilidad: algún código viejo importa STEPS.
+const STEPS = CONTROLES;
+
+/** Etiqueta legible de cualquier hito, sea control, audiometría o mantenimiento. */
 function stepLabel(step) {
-  return STEPS.find((s) => s.step === step)?.label || step;
+  const enControles = CONTROLES.find((s) => s.step === step);
+  if (enControles) return enControles.label;
+  const aud = /^AUD(\d+)$/.exec(step);
+  if (aud) return `Audiometría anual ${aud[1]}`;
+  const man = /^MANT(\d+)$/.exec(step);
+  if (man) return `Mantenimiento ${man[1]}`;
+  return step;
 }
 
-/** ¿Esta visita incluye mantenimiento técnico? */
-function incluyeMantenimiento(step) {
-  return !!STEPS.find((s) => s.step === step)?.mantenimiento;
-}
-
-/** Etiqueta para el paciente: dice si en esa visita también se le hace mantenimiento. */
-function stepLabelCompleto(step) {
-  const base = stepLabel(step);
-  return incluyeMantenimiento(step) ? `${base} + mantenimiento` : base;
-}
+/// Se conserva el nombre porque lo usan el cron y las rutas del paciente.
+const stepLabelCompleto = stepLabel;
 
 function addDays(date, days) {
   const d = new Date(date);
@@ -95,15 +132,29 @@ async function ensureFunnel({ patientId, adaptationDate, saleId = null, anosGara
   const base = new Date(adaptationDate);
   if (isNaN(base.getTime())) throw new Error('adaptationDate inválido');
 
-  // Si no vino la garantía, se lee de la venta que originó el funnel.
+  // Dos formas de vender, dos calendarios:
+  //  · Con plan de adaptación → los cupos del plan mandan (controles,
+  //    audiometrías y mantenimientos, cada uno con su ritmo).
+  //  · Audífono suelto → solo los controles que caben en la garantía.
   let garantia = anosGarantia;
-  if (!garantia && saleId) {
+  let plan = null;
+  if (saleId) {
     const venta = await prisma.sale.findUnique({
-      where: { id: saleId }, select: { anosGarantia: true },
+      where: { id: saleId },
+      select: {
+        anosGarantia: true,
+        hearingPlan: {
+          select: {
+            nombre: true, controlesAdaptacion: true, audiometrias: true,
+            mantenimientos: true, anosGarantia: true,
+          },
+        },
+      },
     }).catch(() => null);
-    garantia = venta?.anosGarantia || null;
+    plan = venta?.hearingPlan || null;
+    garantia = garantia || plan?.anosGarantia || venta?.anosGarantia || null;
   }
-  const pasos = stepsParaGarantia(garantia);
+  const pasos = plan ? stepsParaPlan(plan) : stepsParaGarantia(garantia);
 
   let created = 0, updated = 0, skipped = 0;
 
@@ -153,9 +204,11 @@ async function ensureFunnel({ patientId, adaptationDate, saleId = null, anosGara
           type: 'follow_up_control',
           channel: 'system',
           title: 'Funnel de controles activado',
-          description: `Se programaron ${created} controles a partir de la adaptación del ${base.toISOString().slice(0, 10)}, según la garantía de ${garantia || GARANTIA_DEFECTO} años.`,
+          description: plan
+            ? `Se programaron ${created} hitos del plan ${plan.nombre} a partir de la adaptación del ${base.toISOString().slice(0, 10)}: ${plan.controlesAdaptacion} controles, ${plan.audiometrias} audiometrías y ${plan.mantenimientos} mantenimientos.`
+            : `Se programaron ${created} controles a partir de la adaptación del ${base.toISOString().slice(0, 10)}, según la garantía de ${garantia || GARANTIA_DEFECTO} años.`,
           status: 'completed',
-          metadata: { source: 'ensureFunnel', saleId, created, updated, skipped, anosGarantia: garantia || GARANTIA_DEFECTO },
+          metadata: { source: 'ensureFunnel', saleId, created, updated, skipped, plan: plan?.nombre || null, anosGarantia: garantia || GARANTIA_DEFECTO },
         },
       });
     } catch (e) {
@@ -364,8 +417,9 @@ async function summary() {
 
 module.exports = {
   STEPS,
+  CONTROLES,
   stepsParaGarantia,
-  incluyeMantenimiento,
+  stepsParaPlan,
   stepLabelCompleto,
   STEPS,
   stepLabel,
