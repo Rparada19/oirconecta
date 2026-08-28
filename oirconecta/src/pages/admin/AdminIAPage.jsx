@@ -192,7 +192,9 @@ export default function AdminIAPage() {
                 <TableRow key={c.id} hover sx={{ cursor: 'pointer' }} onClick={() => openDetail(c.id)}>
                   <TableCell sx={{ fontWeight: 600, color: NAVY }}>{c.profesionalNombre || '—'}</TableCell>
                   <TableCell>
-                    <Typography sx={{ fontSize: '0.875rem' }}>{c.pacienteNombre || 'Anónimo'}</Typography>
+                    <Typography sx={{ fontSize: '0.875rem', color: c.esPropio ? 'inherit' : '#94a3b8' }}>
+                      {c.esPropio ? (c.pacienteNombre || 'Anónimo') : 'Datos del profesional'}
+                    </Typography>
                     {c.pacienteTelefono && <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>{c.pacienteTelefono}</Typography>}
                   </TableCell>
                   <TableCell>
@@ -241,6 +243,11 @@ export default function AdminIAPage() {
               </Box>
               <Divider sx={{ mb: 2 }}>Mensajes</Divider>
               <Stack spacing={1}>
+                {selected.restringido && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    {selected.motivo} Esta conversación tuvo {selected.totalMensajes} mensajes.
+                  </Alert>
+                )}
                 {selected.messages?.map((m) => (
                   <Box key={m.id} sx={{
                     p: 1.5, borderRadius: '10px',

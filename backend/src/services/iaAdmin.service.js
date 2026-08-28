@@ -74,6 +74,27 @@ async function getGlobalStats() {
 /**
  * Lista conversaciones con filtros básicos. Paginada.
  */
+
+/**
+ * OírConecta es dueño de la plataforma, pero NO de los datos de sus clientes.
+ *
+ * El Plan 3 le promete al profesional que lo que capte su agente no queda
+ * almacenado ni visible dentro de oirconecta.com: "solo vemos las métricas".
+ * Y el agravante: OírConecta tiene un centro auditivo propio que compite con
+ * sus clientes — poder leer las conversaciones de sus pacientes es lo que mata
+ * la venta el día que un cliente pregunte.
+ *
+ * Regla: del inquilino propio (el centro auditivo) se ve todo, porque son sus
+ * pacientes. De cualquier otro perfil, solo métricas.
+ */
+async function esInquilinoPropio(profileId) {
+  try {
+    const retail = require('./retail.service');
+    const id = await retail.getRetailProfileId();
+    return !!id && String(id) === String(profileId);
+  } catch { return false; }
+}
+
 async function listConversations({ profileId, status, from, to, limit = 50, offset = 0 } = {}) {
   const where = {};
   if (profileId) where.profileId = profileId;
@@ -107,14 +128,22 @@ async function listConversations({ profileId, status, from, to, limit = 50, offs
     prisma.iaConversation.count({ where }),
   ]);
 
+  // Un solo lookup para todo el listado.
+  const propioId = await (async () => {
+    try { return await require('./retail.service').getRetailProfileId(); } catch { return null; }
+  })();
+  const esPropio = (pid) => !!propioId && String(pid) === String(propioId);
+
   return {
     items: items.map((c) => ({
       id: c.id,
       profileId: c.profileId,
       profesionalNombre: c.profile?.account?.nombre || c.profile?.nombreConsultorio,
       profesionalEmail: c.profile?.account?.email,
-      pacienteNombre: c.patient?.nombre,
-      pacienteTelefono: c.patient?.telefono,
+      // Los pacientes de otro profesional no se muestran: son suyos, no nuestros.
+      pacienteNombre: esPropio(c.profileId) ? c.patient?.nombre : null,
+      pacienteTelefono: esPropio(c.profileId) ? c.patient?.telefono : null,
+      esPropio: esPropio(c.profileId),
       canal: c.channel,
       status: c.status,
       startedAt: c.startedAt,
@@ -146,6 +175,25 @@ async function getConversationDetail(conversationId) {
     },
   });
   if (!conv) return null;
+
+  // Perfil ajeno: solo métricas. Ni un mensaje, ni un dato de contacto.
+  if (!(await esInquilinoPropio(conv.profileId))) {
+    return {
+      id: conv.id,
+      profileId: conv.profileId,
+      profesionalNombre: conv.profile?.account?.nombre || conv.profile?.nombreConsultorio,
+      canal: conv.channel,
+      status: conv.status,
+      startedAt: conv.startedAt,
+      lastMessageAt: conv.lastMessageAt,
+      totalTokens: conv.totalTokens,
+      totalMensajes: conv.messages.length,
+      resultedInAppointmentId: conv.resultedInAppointmentId,
+      messages: [],
+      restringido: true,
+      motivo: 'El contenido de las conversaciones de un profesional es suyo. Aquí solo se ven métricas.',
+    };
+  }
 
   const messages = conv.messages.map((m) => {
     let displayContent = m.content;
