@@ -1,4 +1,4 @@
-# Tareas — actualizado el 27 de agosto, 5:00 p.m.
+# Tareas — actualizado el 28 de agosto
 
 Estado al cerrar el miércoles 26. Diez commits desplegados en `main`.
 
@@ -51,17 +51,25 @@ Lo que quedó pendiente de hablar:
 
 ## 3. Seguridad — pendiente desde la revisión, sin tocar
 
-- [ ] **El webhook no verifica la firma de Meta.** No hay `X-Hub-Signature-256`
-      ni `APP_SECRET`. Cualquiera que conozca la URL puede inventar mensajes
-      entrantes, hacer que el bot responda (gastando tokens de Claude) y
-      **confirmar citas ajenas**: el handler acepta `confirm_appt:<token>` sin
-      más validación que el propio payload. *Es lo más urgente de esta lista.*
+- [x] ~~Firma del webhook de Meta~~ — **CERRADO el 28-ago.** `META_APP_SECRET`
+      configurado en Render y verificado desde afuera: POST sin firma o con
+      firma falsa devuelve 403. *Ojo: si algún día rotas el App Secret, el
+      webhook rechaza todo y el WhatsApp se queda mudo. Los logs dirían
+      `rechazado: firma inválida` repetido.*
 
-- [ ] **El webhook cae bajo el rate limiter anónimo** (200 req/15 min por IP).
-      Un pico legítimo de Meta puede recibir 429 y perder mensajes de pacientes
-      sin dejar rastro. Debe saltarse el limiter.
+- [x] ~~El webhook bajo el rate limiter~~ — **CERRADO.** Ahora lo salta; el
+      control de acceso es la firma.
 
 ---
+
+## 3.b Validación de formularios — hecho el 28-ago
+
+- [x] ~~Con escribir "5" quedabas registrado~~ — validación real de correo y
+      teléfono en servidor y navegador, en /agendar, contacto, /precios y
+      comparador.
+- [ ] **Limpiar los datos viejos.** Lo anterior evita que entren nuevos, pero
+      los contactos falsos ya registrados siguen ahí. Falta marcarlos para que
+      el equipo no pierda tiempo llamándolos.
 
 ## 4. Alcance del WhatsApp
 
