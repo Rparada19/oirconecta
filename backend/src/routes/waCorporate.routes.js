@@ -328,4 +328,22 @@ router.post('/conversations/:id/link-patient', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+/**
+ * Dispara una alerta de prueba a los canales configurados.
+ *
+ * Existe porque el aviso real solo salta con un número que nunca haya escrito,
+ * y verificar el cableado no debería exigir conseguir un celular virgen.
+ */
+router.post('/alerta-prueba', async (req, res) => {
+  try {
+    const r = await require('../services/alertaEquipo.service').avisar({
+      titulo: 'Prueba de alertas — todo conectado',
+      quien: req.user?.nombre || 'Prueba desde el CRM',
+      telefono: '573171503944',
+      texto: 'Si ves esto en tu celular, los avisos de leads están funcionando.',
+    });
+    res.json({ success: true, data: r });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 module.exports = router;
