@@ -1318,12 +1318,15 @@ async function sendControlReminder({ stage, to, patientName, controlLabel, diasD
  */
 async function sendAlertaEquipo({ to, titulo, quien, telefono, texto }) {
   const wa = String(telefono || '').replace(/\D/g, '');
-  const html = wrap([
-    h1(titulo),
-    p(`<strong>${quien}</strong>${telefono ? ` · <a href="https://wa.me/${wa}">+${telefono}</a>` : ''}`),
-    texto ? p(`<span style="color:#4b5563;font-style:italic;">"${String(texto).slice(0, 300)}"</span>`) : '',
-    btn(`${SITE_URL}/portal-crm/whatsapp`, 'Abrir la conversación'),
-  ].join(''));
+  const html = baseTemplate({
+    title: titulo,
+    bodyHtml: `
+      ${h1(titulo)}
+      ${p(`<strong>${quien}</strong>${telefono ? ` · <a href="https://wa.me/${wa}" style="color:#085946;">+${telefono}</a>` : ''}`)}
+      ${texto ? p(`<span style="color:#4b5563;font-style:italic;">"${String(texto).slice(0, 300)}"</span>`) : ''}
+      ${btn(`${SITE_URL}/portal-crm/whatsapp`, 'Abrir la conversación')}
+    `,
+  });
   await deliver({ to, toName: 'Equipo OírConecta', subject: titulo, html });
 }
 
