@@ -21,6 +21,24 @@ const SITE = process.env.SITE_URL || 'https://oirconecta.com';
 const esc = (s) => String(s || '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+/**
+ * Describe la forma de las credenciales SIN revelarlas, para poder distinguir
+ * "el token está mal escrito" de "el token es válido pero fue revocado".
+ * Un token de bot es `<números>:<35 caracteres>`.
+ */
+function diagnostico(token, chatId) {
+  const t = String(token || '');
+  const partes = t.split(':');
+  return {
+    tokenLargo: t.length,
+    tokenTieneDosPuntos: partes.length === 2,
+    tokenEmpiezaConNumeros: /^\d+$/.test(partes[0] || ''),
+    tokenConEspacios: /\s/.test(t),
+    chatIdLargo: String(chatId || '').length,
+    chatIdEsNumero: /^-?\d+$/.test(String(chatId || '').trim()),
+  };
+}
+
 async function porTelegram({ titulo, quien, telefono, texto }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -48,7 +66,12 @@ async function porTelegram({ titulo, quien, telefono, texto }) {
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
       console.warn('[alerta] Telegram rechazó:', d?.description || res.status);
-      return { error: d?.description || res.status };
+      // "Not Found" siempre es el token; "chat not found" es el chat id. Sin
+      // esta pista había que adivinar cuál de los dos estaba mal.
+      return {
+        error: d?.description || String(res.status),
+        pista: diagnostico(token, chatId),
+      };
     }
     return { sent: true };
   } catch (e) {
