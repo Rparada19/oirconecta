@@ -872,6 +872,16 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
         ...(armAgendarTrigger ? { agendarLinkSentAt: new Date() } : {}),
       },
     });
+    // El bot se rindió: aquí hace falta una persona, y nadie la va a ver si
+    // no le avisamos al teléfono.
+    if (shouldEscalate) {
+      require('./alertaEquipo.service').avisar({
+        titulo: 'El bot escaló — necesita una persona',
+        quien: conv.contactName || 'Paciente',
+        telefono: conv.phone,
+        texto: incomingText,
+      }).catch(() => {});
+    }
     return { sent: true, escalated: shouldEscalate };
   } catch (e) {
     console.error('[wa-bot] envío texto falló:', e.message);

@@ -1311,7 +1311,24 @@ async function sendControlReminder({ stage, to, patientName, controlLabel, diasD
   await deliver({ to, toName: patientName, subject, html });
 }
 
+
+/**
+ * Aviso interno al equipo: entró un lead por WhatsApp o el bot escaló.
+ * Sobrio a propósito — es una alerta operativa, no una pieza de marketing.
+ */
+async function sendAlertaEquipo({ to, titulo, quien, telefono, texto }) {
+  const wa = String(telefono || '').replace(/\D/g, '');
+  const html = wrap([
+    h1(titulo),
+    p(`<strong>${quien}</strong>${telefono ? ` · <a href="https://wa.me/${wa}">+${telefono}</a>` : ''}`),
+    texto ? p(`<span style="color:#4b5563;font-style:italic;">"${String(texto).slice(0, 300)}"</span>`) : '',
+    btn(`${SITE_URL}/portal-crm/whatsapp`, 'Abrir la conversación'),
+  ].join(''));
+  await deliver({ to, toName: 'Equipo OírConecta', subject: titulo, html });
+}
+
 module.exports = {
+  sendAlertaEquipo,
   sendSalesOutreach,
   sendDirectoryWelcomeWithCredentials,
   sendBookingConfirmation,

@@ -247,6 +247,16 @@ async function processIncomingEvent(body) {
             });
             if (r.persisted) {
               processed++;
+              // Lead nuevo: alguien que nunca había escrito. Con el volumen de
+              // hoy cada uno importa, y nadie vive con el CRM abierto.
+              if (r.isNew) {
+                require('./alertaEquipo.service').avisar({
+                  titulo: 'Lead nuevo por WhatsApp',
+                  quien: contactByWaId[msg.from] || 'Sin nombre de perfil',
+                  telefono: msg.from,
+                  texto: textBody,
+                }).catch(() => {});
+              }
             } else {
               // Antes esto era mudo: un descarte por duplicado no dejaba rastro
               // y el mensaje simplemente no aparecía en la bandeja.
