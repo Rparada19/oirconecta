@@ -896,10 +896,10 @@ async function iniciarFlujoAliado(conversationId, partner) {
   });
   if (!conv) return { skipped: 'conv-not-found' };
 
-  const prevOutbound = await prisma.whatsAppMessage.count({
-    where: { conversationId, direction: 'OUTBOUND' },
-  });
-  if (prevOutbound > 0) return { skipped: 'already-answered' };
+  // Antes se abortaba si ya había respuestas nuestras, para no saludar dos
+  // veces. Ya no aplica: quien escanea el QR puede llevar meses escribiéndonos,
+  // y ese saludo es justo lo que necesita ver. La garantía de no repetirlo la
+  // da marcarConversacion, que solo devuelve primeraVez una vez por aliado.
 
   const saludo = conv.contactName ? `¡Hola, ${firstName(conv.contactName)}! 👋` : '¡Hola! 👋';
   const texto =

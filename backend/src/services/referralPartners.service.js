@@ -50,21 +50,35 @@ async function marcarConversacion(conversationId, partnerId) {
     select: { id: true, partnerId: true, contactType: true },
   });
   if (!conv) return null;
-  if (conv.partnerId) return conv.partnerId;
 
-  // Si alguien que ya nos había escrito escanea el QR después, la atribución
-  // vale igual. Solo le cambiamos la rama si no estaba en una específica:
-  // no vamos a reiniciar la toma de datos de quien ya está agendando.
-  const cambiaRama = !conv.contactType || conv.contactType === 'INFO_GENERAL' || conv.contactType === 'OTROS';
+  // Ya atribuida Y en la rama correcta: escaneó otra vez, no hay nada que hacer.
+  if (conv.partnerId === partnerId && conv.contactType === 'REFERIDO_ALIADO') {
+    return { partnerId, primeraVez: false };
+  }
 
+  // Escanear el QR manda sobre cualquier tipificación anterior. Antes se
+  // respetaba la rama previa para no reiniciarle la toma de datos a quien ya
+  // estaba conversando, y el efecto fue peor: alguien tipificado como
+  // profesional en una prueba vieja escaneaba la tarjeta y el bot le hablaba
+  // de "tu paciente". La intención de hoy pesa más que la deducción de ayer.
   await prisma.whatsAppConversation.update({
     where: { id: conversationId },
     data: {
-      partnerId,
-      ...(cambiaRama ? { contactType: 'REFERIDO_ALIADO' } : {}),
+      // Solo se asigna el aliado si no tenía: el primero que lo trajo se queda
+      // con él. Pero la rama y el saludo sí se corrigen siempre.
+      ...(conv.partnerId ? {} : { partnerId }),
+      contactType: 'REFERIDO_ALIADO',
+      businessLine: 'CRM',
+      intent: 'CITA_PACIENTE',
+      status: 'BOT',
+      // El resumen viejo diría que es profesional o proveedor y contaminaría
+      // el prompt aunque la rama ya sea la correcta.
+      botSummary: null,
+      botSummaryAt: null,
+      botSummaryCount: 0,
     },
   });
-  return partnerId;
+  return { partnerId: conv.partnerId || partnerId, primeraVez: true };
 }
 
 /**

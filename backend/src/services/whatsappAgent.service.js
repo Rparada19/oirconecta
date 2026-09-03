@@ -314,12 +314,14 @@ async function processIncomingEvent(body) {
             // Se detecta antes del dispatcher porque cambia el saludo inicial
             // y la rama completa de la conversación.
             let partnerDetectado = null;
+            let aliadoPrimeraVez = false;
             if (textBody) {
               try {
                 const referrals = require('./referralPartners.service');
                 partnerDetectado = await referrals.detectarEnTexto(textBody);
                 if (partnerDetectado) {
-                  await referrals.marcarConversacion(r.conversationId, partnerDetectado.id);
+                  const marca = await referrals.marcarConversacion(r.conversationId, partnerDetectado.id);
+                  aliadoPrimeraVez = !!marca?.primeraVez;
                 }
               } catch (pe) {
                 console.error('[wa-aliado] detección falló:', pe.message);
@@ -328,9 +330,10 @@ async function processIncomingEvent(body) {
 
             // F9b — Dispatcher del bot corporativo (solo si WA_BOT_ENABLED=true)
             try {
-              if (partnerDetectado && r.isNew) {
-                // Primer mensaje y viene del QR → arranca la toma de datos
-                // directamente, sin los botones del handshake.
+              if (partnerDetectado && aliadoPrimeraVez) {
+                // Escaneó el QR. Da igual si nos había escrito antes: arranca
+                // la toma de datos con el saludo de la alianza, sin los botones
+                // del handshake.
                 await bot.iniciarFlujoAliado(r.conversationId, partnerDetectado);
               } else if (btnPayload) {
                 // Respuesta a botones interactivos del handshake → tipifica y escala
