@@ -30,11 +30,37 @@ function redondear(n) {
 }
 
 /**
+ * Quién comisiona esta venta y a qué porcentaje.
+ *
+ * Manda lo pactado en la venta; si no se pactó nada, el referidor del paciente
+ * y el % del convenio. Así el % por defecto sigue siendo del acuerdo, pero
+ * cada negociación puede salirse de él sin tocar el convenio.
+ */
+async function resolverComision(sale) {
+  const partnerId = sale.comisionPartnerId || sale.patient?.partnerId || null;
+  if (!partnerId) return null;
+
+  const partner = await prisma.referralPartner.findUnique({
+    where: { id: partnerId },
+    select: { id: true, comisionPct: true },
+  });
+  if (!partner) return null;
+
+  const pct = sale.comisionPct == null ? Number(partner.comisionPct) : Number(sale.comisionPct);
+  if (!Number.isFinite(pct) || pct <= 0) return null;
+
+  return { partnerId, pct };
+}
+
+/**
  * Causa la comisión de una venta. Idempotente: si ya existe para esa venta,
  * la devuelve sin tocarla. Devuelve null cuando la venta no comisiona.
  *
+ * SOLO causa si la venta está recaudada. Decisión del dueño (2026-09-03): no
+ * se le adelanta comisión al referidor sobre plata que todavía no entró.
+ *
  * Nunca lanza hacia arriba: una venta jamás debe fallar porque la comisión
- * de un aliado no se pudo calcular.
+ * de un referidor no se pudo calcular.
  */
 async function causarPorVenta(saleId) {
   try {
@@ -45,42 +71,60 @@ async function causarPorVenta(saleId) {
         categoria: true,
         valorTotal: true,
         fechaVenta: true,
+        fechaRecaudo: true,
+        comisionPartnerId: true,
+        comisionPct: true,
         patientId: true,
         patient: { select: { id: true, partnerId: true } },
       },
     });
     if (!sale) return null;
     if (sale.categoria !== CATEGORIA_COMISIONABLE) return null;
-
-    const partnerId = sale.patient?.partnerId;
-    if (!partnerId) return null;
+    if (!sale.fechaRecaudo) return null;
 
     const existente = await prisma.partnerCommission.findUnique({ where: { saleId } });
     if (existente) return existente;
 
-    const partner = await prisma.referralPartner.findUnique({
-      where: { id: partnerId },
-      select: { id: true, comisionPct: true, activo: true },
-    });
-    if (!partner) return null;
+    const acuerdo = await resolverComision(sale);
+    if (!acuerdo) return null;
 
     const base = Number(sale.valorTotal) || 0;
-    const pct = Number(partner.comisionPct) || 0;
 
     return await prisma.partnerCommission.create({
       data: {
-        partnerId,
+        partnerId: acuerdo.partnerId,
         saleId: sale.id,
         patientId: sale.patientId,
         baseFacturada: redondear(base),
-        pct,
-        monto: redondear((base * pct) / 100),
-        periodo: periodoDe(sale.fechaVenta),
+        pct: acuerdo.pct,
+        monto: redondear((base * acuerdo.pct) / 100),
+        // El periodo es el del recaudo, que es cuando se causa.
+        periodo: periodoDe(sale.fechaRecaudo),
         estado: 'CAUSADA',
       },
     });
   } catch (e) {
     console.error('[comisiones] causarPorVenta falló para', saleId, '—', e.message);
+    return null;
+  }
+}
+
+/**
+ * Se deshizo el recaudo: la comisión causada deja de tener sustento. Solo
+ * borra si sigue CAUSADA — una ya liquidada o pagada se corrige por nota.
+ */
+async function anularSiNoRecaudada(saleId) {
+  try {
+    const com = await prisma.partnerCommission.findUnique({ where: { saleId } });
+    if (!com || com.estado !== 'CAUSADA') return com || null;
+
+    const sale = await prisma.sale.findUnique({ where: { id: saleId }, select: { fechaRecaudo: true } });
+    if (sale?.fechaRecaudo) return com;
+
+    await prisma.partnerCommission.delete({ where: { saleId } });
+    return null;
+  } catch (e) {
+    console.error('[comisiones] anularSiNoRecaudada falló para', saleId, '—', e.message);
     return null;
   }
 }
@@ -98,7 +142,10 @@ async function recalcularPorVenta(saleId) {
 
     const sale = await prisma.sale.findUnique({
       where: { id: saleId },
-      select: { valorTotal: true, categoria: true },
+      select: {
+        valorTotal: true, categoria: true, comisionPartnerId: true, comisionPct: true,
+        patient: { select: { partnerId: true } },
+      },
     });
     if (!sale) return com;
 
@@ -110,12 +157,14 @@ async function recalcularPorVenta(saleId) {
       });
     }
 
+    const acuerdo = await resolverComision(sale);
+    const pct = acuerdo ? acuerdo.pct : com.pct;
     const base = Number(sale.valorTotal) || 0;
-    if (redondear(base) === redondear(com.baseFacturada)) return com;
+    if (redondear(base) === redondear(com.baseFacturada) && pct === com.pct) return com;
 
     return prisma.partnerCommission.update({
       where: { saleId },
-      data: { baseFacturada: redondear(base), monto: redondear((base * com.pct) / 100) },
+      data: { baseFacturada: redondear(base), pct, monto: redondear((base * pct) / 100) },
     });
   } catch (e) {
     console.error('[comisiones] recalcularPorVenta falló para', saleId, '—', e.message);
@@ -132,7 +181,11 @@ async function backfill() {
     where: {
       categoria: CATEGORIA_COMISIONABLE,
       partnerCommission: { is: null },
-      patient: { partnerId: { not: null } },
+      fechaRecaudo: { not: null },
+      OR: [
+        { patient: { partnerId: { not: null } } },
+        { comisionPartnerId: { not: null } },
+      ],
     },
     select: { id: true },
   });
@@ -191,7 +244,9 @@ async function listarParaCrm({ partnerId, periodo, estado } = {}) {
 module.exports = {
   CATEGORIA_COMISIONABLE,
   periodoDe,
+  resolverComision,
   causarPorVenta,
+  anularSiNoRecaudada,
   recalcularPorVenta,
   backfill,
   marcarEstado,

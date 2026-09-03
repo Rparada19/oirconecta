@@ -179,7 +179,7 @@ const convertQuoteToSale = async (quoteId, additionalData = {}, createdById) => 
     data: { estado: 'CONVERTED' },
   });
 
-  // Comisión del aliado referidor, si el paciente vino por un QR.
+  // Comisión del referidor. Solo prende si la venta nace ya recaudada.
   await require('./partnerCommissions.service').causarPorVenta(sale.id);
 
   // F8 — Si la venta ya trae fechaAdaptacion, dispara el funnel de controles
@@ -297,6 +297,12 @@ const createSale = async (data, createdById) => {
       valorUnitario: data.valorUnitario,
       descuento: data.descuento || 0,
       valorTotal: data.valorTotal,
+      // Recaudo y comisión pactada. Sin fechaRecaudo la comisión no se causa.
+      fechaRecaudo: data.fechaRecaudo ? new Date(data.fechaRecaudo) : null,
+      comisionPartnerId: data.comisionPartnerId || null,
+      comisionPct: data.comisionPct === undefined || data.comisionPct === null || data.comisionPct === ''
+        ? null
+        : Number(data.comisionPct),
       // Servicios: 100% margen por definición del negocio.
       costoUnitario: data.categoria === 'SERVICE' ? 0 : (data.costoUnitario ?? null),
       anosGarantia: data.anosGarantia,
@@ -323,7 +329,7 @@ const createSale = async (data, createdById) => {
     },
   });
 
-  // Comisión del aliado referidor, si el paciente vino por un QR.
+  // Comisión del referidor. Solo prende si la venta nace ya recaudada.
   await require('./partnerCommissions.service').causarPorVenta(sale.id);
 
   // F8 — Dispara el funnel de controles si es venta de audífono con fechaAdaptacion
@@ -347,7 +353,7 @@ const updateSale = async (id, data) => {
   const updateData = { ...data };
 
   // Convertir fechas si vienen
-  ['fechaAdaptacion', 'fechaFinGarantia', 'fechaPrimerControl', 'fechaPrimerMantenimiento', 'fechaConsulta'].forEach((field) => {
+  ['fechaAdaptacion', 'fechaFinGarantia', 'fechaPrimerControl', 'fechaPrimerMantenimiento', 'fechaConsulta', 'fechaRecaudo'].forEach((field) => {
     if (data[field]) {
       updateData[field] = new Date(data[field]);
     }
@@ -365,9 +371,16 @@ const updateSale = async (id, data) => {
     data: updateData,
   });
 
-  // Si cambió el valor facturado, la comisión del aliado sigue el cambio
-  // mientras no esté liquidada.
-  await require('./partnerCommissions.service').recalcularPorVenta(updated.id);
+  // Comisión del referidor. El orden importa: primero se intenta causar (por
+  // si acaban de marcar el recaudo), luego se anula si el recaudo se deshizo,
+  // y por último se reajusta si cambió el valor o el % pactado.
+  const comisiones = require('./partnerCommissions.service');
+  if (updated.fechaRecaudo) {
+    await comisiones.causarPorVenta(updated.id);
+    await comisiones.recalcularPorVenta(updated.id);
+  } else {
+    await comisiones.anularSiNoRecaudada(updated.id);
+  }
 
   // F8 — Si la edición trae fechaAdaptacion en una venta de audífono, dispara/ajusta el funnel
   if (updated.categoria === 'HEARING_AID' && updated.fechaAdaptacion) {

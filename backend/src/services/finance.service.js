@@ -197,7 +197,7 @@ const getSummary = async ({ year } = {}) => {
   const desde = rangoPeriodo(periodos[0]).inicio;
   const hasta = rangoPeriodo(periodos[periodos.length - 1]).fin;
 
-  const [gastos, activos, ventas, pagos] = await Promise.all([
+  const [gastos, activos, ventas, pagos, comisiones] = await Promise.all([
     prisma.financeExpense.findMany(),
     prisma.financeAsset.findMany(),
     prisma.sale.findMany({
@@ -210,6 +210,12 @@ const getSummary = async ({ year } = {}) => {
     prisma.payment.findMany({
       where: { status: 'APPROVED', paidAt: { gte: desde, lte: hasta } },
       select: { montoCOP: true, paidAt: true },
+    }),
+    // Comisiones a referidores (plug-e, médicos que remiten). Son costo de la
+    // venta: sin esto la utilidad bruta salía inflada justo en ese valor.
+    prisma.partnerCommission.findMany({
+      where: { estado: { not: 'ANULADA' } },
+      select: { monto: true, periodo: true },
     }),
   ]);
 
@@ -233,6 +239,12 @@ const getSummary = async ({ year } = {}) => {
       .reduce((s, v) => s + (v.costoUnitario || 0) * (v.cantidad || 1), 0);
     // Ventas sin costo cargado: el margen bruto sale inflado hasta completarlas.
     const ventasSinCosto = ventasDelMes.filter((v) => v.costoUnitario == null).length;
+
+    // La comisión se causa al recaudar, así que entra al mes del recaudo — que
+    // puede no ser el de la venta. Es lo que se le debe al referidor ese mes.
+    const comisionesReferidores = comisiones
+      .filter((c) => c.periodo === periodo)
+      .reduce((s2, c) => s2 + (c.monto || 0), 0);
     const unidadesVendidas = ventasDelMes.reduce((s, v) => s + (v.cantidad || 1), 0);
 
     const gastosFijos = fijos
@@ -248,7 +260,7 @@ const getSummary = async ({ year } = {}) => {
     const ingresos = ingresosCentro + ingresosPortal;
     // Utilidad bruta = ingresos − costo de lo vendido. El portal no tiene costo
     // de mercancía: su margen bruto es el ingreso completo.
-    const utilidadBruta = ingresos - costoVentas;
+    const utilidadBruta = ingresos - costoVentas - comisionesReferidores;
     const gastosOperativos = gastosFijos + gastosVariables;
     const utilidadOperativa = utilidadBruta - gastosOperativos;
     const utilidadNeta = utilidadOperativa - depreciacion;
@@ -259,6 +271,7 @@ const getSummary = async ({ year } = {}) => {
       ingresosPortal,
       ingresos,
       costoVentas,
+      comisionesReferidores,
       utilidadBruta,
       unidadesVendidas,
       ventasSinCosto,
@@ -394,12 +407,14 @@ const getSummary = async ({ year } = {}) => {
     depreciacion: acc.depreciacion + m.depreciacion,
     utilidadOperativa: acc.utilidadOperativa + m.utilidadOperativa,
     costoVentas: acc.costoVentas + m.costoVentas,
+    comisionesReferidores: acc.comisionesReferidores + m.comisionesReferidores,
     utilidadBruta: acc.utilidadBruta + m.utilidadBruta,
     unidadesVendidas: acc.unidadesVendidas + m.unidadesVendidas,
   }), {
     ingresos: 0, ingresosCentro: 0, ingresosPortal: 0, egresosTotales: 0,
     utilidadNeta: 0, gastosFijos: 0, gastosVariables: 0, depreciacion: 0,
-    utilidadOperativa: 0, costoVentas: 0, utilidadBruta: 0, unidadesVendidas: 0,
+    utilidadOperativa: 0, costoVentas: 0, comisionesReferidores: 0,
+    utilidadBruta: 0, unidadesVendidas: 0,
   });
 
   return {

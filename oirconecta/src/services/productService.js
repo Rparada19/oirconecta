@@ -312,6 +312,12 @@ export async function recordSale(patientEmail, saleData) {
     valorTotal: saleData.totalPrice ?? saleData.unitPrice * (saleData.quantity || 1),
     descuento: saleData.discount ?? 0,
     notas: saleData.notes || null,
+    // Recaudo: sin esto la comisión del referidor no se causa.
+    fechaRecaudo: saleData.fechaRecaudo || null,
+    // Comisión pactada para ESTA venta. Vacío = referidor del paciente y % del
+    // convenio; el backend resuelve la caída.
+    comisionPartnerId: saleData.comisionPartnerId || null,
+    comisionPct: saleData.comisionPct === '' || saleData.comisionPct == null ? null : Number(saleData.comisionPct),
   };
 
   const metadataExtra = {};

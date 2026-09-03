@@ -354,8 +354,12 @@ enum DirectoryPersonaTipo {
 // ===========================================
 
 model ReferralPartner {
-  id     String  @id @default(uuid())
+  id     String @id @default(uuid())
   nombre String
+
+  /// EMPRESA (plug-e y similares, con portal propio) | MEDICO (un otorrino que
+  /// remite, se le liquida pero no entra a ver nada) | OTRO.
+  tipo   String  @default("EMPRESA")
   /// Código que viaja en el mensaje prellenado del QR. Se compara en mayúsculas.
   code   String  @unique
   activo Boolean @default(true)
@@ -373,11 +377,12 @@ model ReferralPartner {
   contactoEmail  String?
   notas          String? @db.Text
 
-  leads         Lead[]
-  patients      Patient[]
-  conversations WhatsAppConversation[]
-  commissions   PartnerCommission[]
-  accounts      ReferralPartnerAccount[]
+  leads          Lead[]
+  patients       Patient[]
+  conversations  WhatsAppConversation[]
+  commissions    PartnerCommission[]
+  accounts       ReferralPartnerAccount[]
+  ventasComision Sale[]                   @relation("VentaComision")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1034,6 +1039,19 @@ model Sale {
   anosGarantia  Int?
   seguroPerdida String?
   seguroRotura  String?
+
+  /// Cuándo se recaudó la venta. Null = facturada pero no cobrada.
+  /// La comisión del referidor se causa aquí, no al facturar: es la decisión
+  /// del dueño (2026-09-03) para no adelantar plata que todavía no entró.
+  fechaRecaudo DateTime?
+
+  /// Comisión negociada PARA ESTA VENTA. Ambos campos son opcionales: si van
+  /// vacíos se usa el referidor del paciente y el % del convenio. Existen
+  /// porque el % cambia según la negociación y el referidor puede ser un
+  /// médico puntual, no el aliado que trajo al paciente.
+  comisionPartnerId String?
+  comisionPartner   ReferralPartner? @relation("VentaComision", fields: [comisionPartnerId], references: [id], onDelete: SetNull)
+  comisionPct       Float?
 
   // Fechas importantes
   fechaVenta               DateTime  @default(now())

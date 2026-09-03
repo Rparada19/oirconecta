@@ -378,7 +378,7 @@ export default function FinanzasPage() {
                         color={actual.utilidadBruta >= 0 ? '#059669' : '#dc2626'}
                         hint={actual.margenBruto == null
                           ? `Costo de ventas ${cop(actual.costoVentas)}`
-                          : `Margen ${actual.margenBruto.toFixed(0)}% · costo ${cop(actual.costoVentas)}`} />
+                          : `Margen ${actual.margenBruto.toFixed(0)}% · costo ${cop(actual.costoVentas)}${actual.comisionesReferidores ? ` · comisiones ${cop(actual.comisionesReferidores)}` : ''}`} />
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
                       <Kpi label="Utilidad neta" value={cop(actual.utilidadNeta)}
@@ -506,6 +506,7 @@ export default function FinanzasPage() {
                                   <div>· Centro: {cop(m.ingresosCentro)}</div>
                                   <div>· Portal: {cop(m.ingresosPortal)}</div>
                                   <div>Costo de ventas: {cop(m.costoVentas)}</div>
+                                  {!!m.comisionesReferidores && <div>Comisiones a referidores: {cop(m.comisionesReferidores)}</div>}
                                   <div>Gastos operativos: {cop(m.gastosOperativos)}</div>
                                   <div>Utilidad: {cop(m.utilidadNeta)}</div>
                                 </Box>
@@ -657,6 +658,7 @@ export default function FinanzasPage() {
                             <TableCell align="right">Portal</TableCell>
                             <TableCell align="right">Ingresos</TableCell>
                             <TableCell align="right">− Costo de ventas</TableCell>
+                            <TableCell align="right">− Comisiones</TableCell>
                             <TableCell align="right">= Utilidad bruta</TableCell>
                             <TableCell align="right">− Gastos fijos</TableCell>
                             <TableCell align="right">− Gastos variables</TableCell>
@@ -678,6 +680,7 @@ export default function FinanzasPage() {
                                 <TableCell align="right">{cop(m.ingresosPortal)}</TableCell>
                                 <TableCell align="right" sx={{ fontWeight: 700 }}>{cop(m.ingresos)}</TableCell>
                                 <TableCell align="right">{cop(m.costoVentas)}</TableCell>
+                                <TableCell align="right">{cop(m.comisionesReferidores)}</TableCell>
                                 <TableCell align="right" sx={{ fontWeight: 700 }}>{cop(m.utilidadBruta)}</TableCell>
                                 <TableCell align="right">{cop(m.gastosFijos)}</TableCell>
                                 <TableCell align="right">{cop(m.gastosVariables)}</TableCell>
@@ -700,6 +703,7 @@ export default function FinanzasPage() {
                             <TableCell align="right">{cop(totales.ingresosPortal)}</TableCell>
                             <TableCell align="right">{cop(totales.ingresos)}</TableCell>
                             <TableCell align="right">{cop(totales.costoVentas)}</TableCell>
+                            <TableCell align="right">{cop(totales.comisionesReferidores)}</TableCell>
                             <TableCell align="right">{cop(totales.utilidadBruta)}</TableCell>
                             <TableCell align="right">{cop(totales.gastosFijos)}</TableCell>
                             <TableCell align="right">{cop(totales.gastosVariables)}</TableCell>

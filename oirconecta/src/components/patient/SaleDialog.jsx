@@ -61,6 +61,12 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
   // aparato suelto. Es la decisión comercial, no un campo más.
   const [tipoVenta, setTipoVenta] = useState('plan'); // 'consulta' | 'accesorio' | 'audifonos' | 'plan'
   const [saleProfessionalId, setSaleProfessionalId] = useState('');
+  // Recaudo y comisión pactada. Viven fuera de `audifonos` porque aplican a
+  // cualquier tipo de venta, no solo a los audífonos.
+  const [fechaRecaudo, setFechaRecaudo] = useState('');
+  const [comisionPartnerId, setComisionPartnerId] = useState('');
+  const [comisionPct, setComisionPct] = useState('');
+  const [aliadosDisponibles, setAliadosDisponibles] = useState([]);
   const [saleSedeId, setSaleSedeId] = useState('');
   const [campaigns, setCampaigns] = useState([]);
   const [errors, setErrors] = useState({});
@@ -247,6 +253,13 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
     (audifonos.unitCost || 0) * (1 - (audifonos.prontoPago || 0) / 100)
   );
 
+  useEffect(() => {
+    if (!open) return;
+    api.get('/api/patients/meta/aliados')
+      .then((r) => { if (r?.data?.success) setAliadosDisponibles(r.data.data || []); })
+      .catch(() => setAliadosDisponibles([]));
+  }, [open]);
+
   const handleSubmit = async () => {
     // Igual que en cotizaciones: alcanza con identificar al paciente.
     const email = audifonos.patientEmail || patientEmail || patientData?.email || '';
@@ -270,6 +283,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
         totalPrice: consulta.valor,
         discount: 0,
         saleDate: consulta.fecha || saleDate,
+        fechaRecaudo: fechaRecaudo || null,
         notes: consulta.notas || '',
         metadata: {
           descripcionConsulta: consulta.descripcion,
@@ -308,6 +322,7 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
         totalPrice: totalAccesorios,
         discount: 0,
         saleDate,
+        fechaRecaudo: fechaRecaudo || null,
         notes: accesoriosNotas || '',
         metadata: {
           accesoriosItems: accesoriosItems.map(({ id, ...r }) => r),
@@ -347,6 +362,9 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
       totalPrice: totalAudifonosConExtras,
       discount: discountAud,
       saleDate,
+      fechaRecaudo: fechaRecaudo || null,
+      comisionPartnerId: comisionPartnerId || null,
+      comisionPct: comisionPct === '' ? null : comisionPct,
       adaptationDate: audifonos.adaptationDate || null,
       warrantyStartDate: warrantyStart || null,
       warrantyEndDate: we || null,
@@ -390,6 +408,9 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
     setTipoVenta('audifonos');
     setSaleProfessionalId('');
     setSaleSedeId('');
+    setFechaRecaudo('');
+    setComisionPartnerId('');
+    setComisionPct('');
     setConsulta({ descripcion: '', valor: 0, fecha: new Date().toISOString().split('T')[0], notas: '' });
     setAccesoriosItems([]);
     setNuevoAccesorio({ tipo: 'Baterías', nombreOtro: '', cantidad: 1, valorUnitario: 0, costoUnitario: 0, descuento: 0 });
@@ -1014,6 +1035,39 @@ const SaleDialog = ({ open, onClose, patientEmail, patientId, onSuccess, patient
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth label="Fecha primer mantenimiento" type="date" value={audifonos.firstMaintenanceDate} onChange={handleChangeAudifonos('firstMaintenanceDate')} InputLabelProps={{ shrink: true }} />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#272F50', mt: 2, mb: 1 }}>Recaudo y comisión</Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth label="Fecha de recaudo" type="date"
+                  value={fechaRecaudo} onChange={(e) => setFechaRecaudo(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  helperText="Déjala vacía si aún no se cobra. La comisión se causa al recaudar."
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  select fullWidth label="Comisión para"
+                  value={comisionPartnerId} onChange={(e) => setComisionPartnerId(e.target.value)}
+                  helperText="Vacío = el referidor del paciente"
+                >
+                  <MenuItem value=""><em>El del paciente</em></MenuItem>
+                  {aliadosDisponibles.map((a) => (
+                    <MenuItem key={a.id} value={a.id}>{a.nombre}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth label="% de comisión" type="number"
+                  value={comisionPct} onChange={(e) => setComisionPct(e.target.value)}
+                  helperText="Vacío = el % del convenio"
+                  inputProps={{ min: 0, max: 100, step: 0.5 }}
+                />
               </Grid>
 
               <Grid item xs={12}>
