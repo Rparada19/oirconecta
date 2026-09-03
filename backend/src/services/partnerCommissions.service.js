@@ -42,9 +42,26 @@ async function resolverComision(sale) {
 
   const partner = await prisma.referralPartner.findUnique({
     where: { id: partnerId },
-    select: { id: true, comisionPct: true },
+    select: {
+      id: true, comisionPct: true, comisionaCategorias: true,
+      convenioDesde: true, convenioHasta: true,
+    },
   });
   if (!partner) return null;
+
+  // Qué categorías comisionan según el convenio de ESTE aliado. Si alguien
+  // marcó el referidor a mano en la venta, respeta igual sus condiciones.
+  const categorias = partner.comisionaCategorias?.length
+    ? partner.comisionaCategorias
+    : [CATEGORIA_COMISIONABLE];
+  if (sale.categoria && !categorias.includes(sale.categoria)) return null;
+
+  // Vigencia del convenio. Se mide contra el recaudo, que es cuando se causa.
+  const dia = sale.fechaRecaudo ? new Date(sale.fechaRecaudo).toISOString().slice(0, 10) : null;
+  if (dia) {
+    if (partner.convenioDesde && dia < partner.convenioDesde) return null;
+    if (partner.convenioHasta && dia > partner.convenioHasta) return null;
+  }
 
   const pct = sale.comisionPct == null ? Number(partner.comisionPct) : Number(sale.comisionPct);
   if (!Number.isFinite(pct) || pct <= 0) return null;
@@ -79,7 +96,8 @@ async function causarPorVenta(saleId) {
       },
     });
     if (!sale) return null;
-    if (sale.categoria !== CATEGORIA_COMISIONABLE) return null;
+    // Qué categorías comisionan lo decide el convenio del aliado, no una
+    // constante: resolverComision lo verifica.
     if (!sale.fechaRecaudo) return null;
 
     const existente = await prisma.partnerCommission.findUnique({ where: { saleId } });
@@ -143,22 +161,25 @@ async function recalcularPorVenta(saleId) {
     const sale = await prisma.sale.findUnique({
       where: { id: saleId },
       select: {
-        valorTotal: true, categoria: true, comisionPartnerId: true, comisionPct: true,
+        valorTotal: true, categoria: true, fechaRecaudo: true,
+        comisionPartnerId: true, comisionPct: true,
         patient: { select: { partnerId: true } },
       },
     });
     if (!sale) return com;
 
-    // La venta cambió de categoría y dejó de comisionar.
-    if (sale.categoria !== CATEGORIA_COMISIONABLE) {
+    const acuerdo = await resolverComision(sale);
+
+    // La venta dejó de encajar en el convenio (cambió de categoría, o el
+    // convenio venció). Se anula, no se borra: ya se le había informado.
+    if (!acuerdo) {
       return prisma.partnerCommission.update({
         where: { saleId },
-        data: { estado: 'ANULADA', notas: 'La venta dejó de ser de audífonos.' },
+        data: { estado: 'ANULADA', notas: 'La venta dejó de encajar en el convenio del aliado.' },
       });
     }
 
-    const acuerdo = await resolverComision(sale);
-    const pct = acuerdo ? acuerdo.pct : com.pct;
+    const pct = acuerdo.pct;
     const base = Number(sale.valorTotal) || 0;
     if (redondear(base) === redondear(com.baseFacturada) && pct === com.pct) return com;
 
@@ -179,7 +200,6 @@ async function recalcularPorVenta(saleId) {
 async function backfill() {
   const ventas = await prisma.sale.findMany({
     where: {
-      categoria: CATEGORIA_COMISIONABLE,
       partnerCommission: { is: null },
       fechaRecaudo: { not: null },
       OR: [

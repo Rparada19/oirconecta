@@ -373,9 +373,39 @@ model ReferralPartner {
   /// podría abrirse una cuenta y ver referidos de pacientes.
   registroCode String? @unique
 
-  contactoNombre String?
-  contactoEmail  String?
-  notas          String? @db.Text
+  // ─── Ficha del aliado ───────────────────────────────────────────────
+  nit       String?
+  direccion String?
+  ciudad    String?
+  sitioWeb  String?
+
+  instagram String?
+  facebook  String?
+  linkedin  String?
+  tiktok    String?
+
+  // ─── Persona de contacto ────────────────────────────────────────────
+  contactoNombre   String?
+  contactoCargo    String?
+  contactoEmail    String?
+  contactoTelefono String?
+
+  /// El contacto entra al newsletter como suscriptor tipo ALIADO. Se
+  /// sincroniza al guardar; quitarlo lo da de baja. Reusa toda la máquina de
+  /// campañas: segmentos, aperturas, clics y enlace de baja.
+  newsletterOptIn Boolean @default(false)
+
+  // ─── Condiciones del convenio ───────────────────────────────────────
+  /// Categorías de venta que comisionan. Por defecto solo audífonos, que es lo
+  /// pactado con plug-e: los accesorios y consultas se cargan a OírConecta.
+  comisionaCategorias String[] @default(["HEARING_AID"])
+
+  /// Vigencia del convenio, YYYY-MM-DD. Fuera de la ventana no se causa
+  /// comisión. Vacías = sin límite.
+  convenioDesde String?
+  convenioHasta String?
+
+  notas String? @db.Text
 
   leads          Lead[]
   patients       Patient[]
@@ -1474,6 +1504,9 @@ enum NewsletterSubscriberTipo {
   PACIENTE
   FAMILIAR
   PROFESIONAL
+  /// Contactos de aliados referidores (plug-e y similares). Segmento propio:
+  /// lo que le sirve a un aliado comercial no es lo que le sirve a un paciente.
+  ALIADO
   OTRO
 }
 

@@ -15,6 +15,7 @@ import {
   Box, Typography, Card, Stack, Button, TextField, Alert, Chip, Divider,
   Table, TableHead, TableRow, TableCell, TableBody, CircularProgress, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
+  Grid, FormControlLabel, Checkbox,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBackIosNew';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
@@ -69,55 +70,181 @@ function BotonCopiar({ texto, titulo }) {
   );
 }
 
-function DialogoNuevo({ abierto, onCerrar, onCreado }) {
-  const [nombre, setNombre] = useState('');
-  const [pct, setPct] = useState('10');
-  const [contactoEmail, setContactoEmail] = useState('');
+const CATEGORIAS = [
+  { v: 'HEARING_AID', l: 'Audífonos' },
+  { v: 'ACCESSORY', l: 'Accesorios' },
+  { v: 'SERVICE', l: 'Consultas y servicios' },
+];
+
+const VACIO = {
+  nombre: '', tipo: 'EMPRESA', comisionPct: '10', nit: '', direccion: '', ciudad: '',
+  sitioWeb: '', instagram: '', facebook: '', linkedin: '', tiktok: '',
+  contactoNombre: '', contactoCargo: '', contactoEmail: '', contactoTelefono: '',
+  convenioDesde: '', convenioHasta: '', notas: '',
+  comisionaCategorias: ['HEARING_AID'], newsletterOptIn: false,
+};
+
+/**
+ * Ficha del aliado. El mismo formulario crea y edita: son los mismos campos y
+ * mantener dos formularios en paralelo es la forma segura de que se desincronicen.
+ */
+function DialogoFicha({ abierto, aliado, onCerrar, onGuardado }) {
+  const editando = !!aliado;
+  const [f, setF] = useState(VACIO);
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
 
-  const crear = async () => {
-    setError(''); setGuardando(true);
-    const res = await api.post('/api/aliados-admin', {
-      nombre, comisionPct: Number(pct), contactoEmail: contactoEmail || null,
+  useEffect(() => {
+    if (!abierto) return;
+    setError('');
+    if (!aliado) { setF(VACIO); return; }
+    setF({
+      ...VACIO,
+      ...Object.fromEntries(Object.keys(VACIO).map((k) => [k, aliado[k] ?? VACIO[k]])),
+      comisionPct: String(aliado.comisionPct ?? 10),
+      comisionaCategorias: aliado.comisionaCategorias?.length ? aliado.comisionaCategorias : ['HEARING_AID'],
+      newsletterOptIn: !!aliado.newsletterOptIn,
     });
+  }, [abierto, aliado]);
+
+  const set = (campo) => (e) => setF((p) => ({ ...p, [campo]: e.target.value }));
+
+  const alternarCategoria = (v) => setF((p) => ({
+    ...p,
+    comisionaCategorias: p.comisionaCategorias.includes(v)
+      ? p.comisionaCategorias.filter((x) => x !== v)
+      : [...p.comisionaCategorias, v],
+  }));
+
+  const guardar = async () => {
+    setError(''); setGuardando(true);
+    const cuerpo = { ...f, comisionPct: Number(f.comisionPct) };
+    const res = editando
+      ? await api.patch(`/api/aliados-admin/${aliado.id}`, cuerpo)
+      : await api.post('/api/aliados-admin', cuerpo);
     setGuardando(false);
-    if (res?.data?.success) {
-      setNombre(''); setPct('10'); setContactoEmail('');
-      onCreado(res.data.data);
-    } else {
-      setError(res?.data?.error || res?.error || 'No se pudo crear');
-    }
+    if (res?.data?.success) onGuardado(res.data.data);
+    else setError(res?.data?.error || res?.error || 'No se pudo guardar');
   };
 
+  const Seccion = ({ children }) => (
+    <Grid item xs={12}>
+      <Typography sx={{ ...SERIF, fontSize: 15, color: NAVY, mt: 1 }}>{children}</Typography>
+      <Divider sx={{ mt: 1 }} />
+    </Grid>
+  );
+
   return (
-    <Dialog open={abierto} onClose={onCerrar} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ ...SERIF, color: NAVY }}>Nuevo aliado</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField
-            label="Nombre del aliado" value={nombre} size="small" fullWidth autoFocus
-            onChange={(e) => setNombre(e.target.value)}
-            helperText="Así aparecerá en el mensaje del QR: “Vengo de …”"
-          />
-          <TextField
-            label="Comisión (%)" value={pct} size="small" fullWidth type="number"
-            onChange={(e) => setPct(e.target.value)}
-          />
-          <TextField
-            label="Correo de contacto (opcional)" value={contactoEmail} size="small" fullWidth type="email"
-            onChange={(e) => setContactoEmail(e.target.value)}
-          />
-          {error && <Alert severity="error">{error}</Alert>}
-        </Stack>
+    <Dialog open={abierto} onClose={onCerrar} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ ...SERIF, color: NAVY }}>
+        {editando ? `Editar ${aliado.nombre}` : 'Nuevo aliado'}
+      </DialogTitle>
+      <DialogContent dividers>
+        <Grid container spacing={2}>
+          <Seccion>Identificación</Seccion>
+          <Grid item xs={12} sm={6}>
+            <TextField label="Nombre" value={f.nombre} onChange={set('nombre')} size="small" fullWidth required
+              helperText={editando ? 'Cambiarlo cambia el texto del QR: las tarjetas ya impresas siguen sirviendo por el código.' : 'Aparece en el mensaje del QR: “Vengo de …”'} />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField select label="Tipo" value={f.tipo} onChange={set('tipo')} size="small" fullWidth>
+              <MenuItem value="EMPRESA">Empresa</MenuItem>
+              <MenuItem value="MEDICO">Médico que remite</MenuItem>
+              <MenuItem value="OTRO">Otro</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField label="NIT o cédula" value={f.nit} onChange={set('nit')} size="small" fullWidth />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField label="Dirección" value={f.direccion} onChange={set('direccion')} size="small" fullWidth />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField label="Ciudad" value={f.ciudad} onChange={set('ciudad')} size="small" fullWidth />
+          </Grid>
+
+          <Seccion>Persona de contacto</Seccion>
+          <Grid item xs={12} sm={6}>
+            <TextField label="Nombre" value={f.contactoNombre} onChange={set('contactoNombre')} size="small" fullWidth />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField label="Cargo" value={f.contactoCargo} onChange={set('contactoCargo')} size="small" fullWidth />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField label="Correo" type="email" value={f.contactoEmail} onChange={set('contactoEmail')} size="small" fullWidth />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField label="Teléfono" value={f.contactoTelefono} onChange={set('contactoTelefono')} size="small" fullWidth />
+          </Grid>
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={<Checkbox checked={f.newsletterOptIn}
+                onChange={(e) => setF((p) => ({ ...p, newsletterOptIn: e.target.checked }))} />}
+              label="Incluir este contacto en el newsletter y en los envíos comerciales"
+            />
+            <Typography sx={{ color: MUTED, fontSize: 12, ml: 4 }}>
+              Entra como suscriptor del segmento “Aliado”. Si lo quitas, queda dado de baja,
+              no borrado. Puede darse de baja él mismo desde cualquier correo.
+            </Typography>
+          </Grid>
+
+          <Seccion>Presencia digital</Seccion>
+          <Grid item xs={12} sm={6}>
+            <TextField label="Sitio web" value={f.sitioWeb} onChange={set('sitioWeb')} size="small" fullWidth placeholder="https://" />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField label="Instagram" value={f.instagram} onChange={set('instagram')} size="small" fullWidth placeholder="@usuario" />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField label="Facebook" value={f.facebook} onChange={set('facebook')} size="small" fullWidth />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField label="LinkedIn" value={f.linkedin} onChange={set('linkedin')} size="small" fullWidth />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField label="TikTok" value={f.tiktok} onChange={set('tiktok')} size="small" fullWidth />
+          </Grid>
+
+          <Seccion>Condiciones del convenio</Seccion>
+          <Grid item xs={12} sm={4}>
+            <TextField label="Comisión (%)" type="number" value={f.comisionPct} onChange={set('comisionPct')}
+              size="small" fullWidth inputProps={{ min: 0, max: 100, step: 0.5 }}
+              helperText="Es el valor por defecto; cada venta puede pactar otro." />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField label="Convenio desde" type="date" value={f.convenioDesde} onChange={set('convenioDesde')}
+              size="small" fullWidth InputLabelProps={{ shrink: true }} helperText="Vacío = sin límite" />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField label="Convenio hasta" type="date" value={f.convenioHasta} onChange={set('convenioHasta')}
+              size="small" fullWidth InputLabelProps={{ shrink: true }} helperText="Vacío = sin límite" />
+          </Grid>
+          <Grid item xs={12}>
+            <Typography sx={{ color: MUTED, fontSize: 13, mb: 0.5 }}>Qué ventas comisionan</Typography>
+            <Stack direction="row" spacing={2}>
+              {CATEGORIAS.map((c) => (
+                <FormControlLabel key={c.v}
+                  control={<Checkbox checked={f.comisionaCategorias.includes(c.v)}
+                    onChange={() => alternarCategoria(c.v)} />}
+                  label={c.l} />
+              ))}
+            </Stack>
+          </Grid>
+          <Grid item xs={12}>
+            <TextField label="Notas del acuerdo" value={f.notas} onChange={set('notas')}
+              size="small" fullWidth multiline rows={3}
+              helperText="Lo que se pactó y no cabe en un campo: exclusividades, topes, quién factura." />
+          </Grid>
+
+          {error && <Grid item xs={12}><Alert severity="error">{error}</Alert></Grid>}
+        </Grid>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onCerrar} sx={{ textTransform: 'none', color: MUTED }}>Cancelar</Button>
-        <Button
-          onClick={crear} variant="contained" disabled={!nombre.trim() || guardando}
-          sx={{ bgcolor: ACCENT, textTransform: 'none', '&:hover': { bgcolor: '#5b21b6' } }}
-        >
-          {guardando ? 'Creando…' : 'Crear aliado'}
+        <Button onClick={guardar} variant="contained"
+          disabled={!f.nombre.trim() || f.comisionaCategorias.length === 0 || guardando}
+          sx={{ bgcolor: ACCENT, textTransform: 'none', '&:hover': { bgcolor: '#5b21b6' } }}>
+          {guardando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Crear aliado'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -234,7 +361,7 @@ function Lista({ aliados, onAbrir, onNuevo }) {
   );
 }
 
-function Detalle({ aliado, onVolver, onCambio }) {
+function Detalle({ aliado, onVolver, onCambio, onEditar }) {
   const [referidos, setReferidos] = useState([]);
   const [cuentas, setCuentas] = useState([]);
   const [dialogoCuenta, setDialogoCuenta] = useState(false);
@@ -281,7 +408,35 @@ function Detalle({ aliado, onVolver, onCambio }) {
         Todos los aliados
       </Button>
 
-      <Typography sx={{ ...SERIF, fontSize: 28, color: NAVY, mb: 3 }}>{aliado.nombre}</Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
+        <Box>
+          <Typography sx={{ ...SERIF, fontSize: 28, color: NAVY }}>{aliado.nombre}</Typography>
+          <Typography sx={{ color: MUTED, fontSize: 13 }}>
+            {[
+              aliado.tipo === 'MEDICO' ? 'Médico que remite' : aliado.tipo === 'OTRO' ? 'Otro' : 'Empresa',
+              `${aliado.comisionPct}% de comisión`,
+              aliado.ciudad,
+              aliado.contactoNombre && `Contacto: ${aliado.contactoNombre}${aliado.contactoCargo ? ` (${aliado.contactoCargo})` : ''}`,
+            ].filter(Boolean).join(' · ')}
+          </Typography>
+          {(aliado.contactoEmail || aliado.contactoTelefono) && (
+            <Typography sx={{ color: MUTED, fontSize: 13 }}>
+              {[aliado.contactoEmail, aliado.contactoTelefono].filter(Boolean).join(' · ')}
+              {aliado.newsletterOptIn && ' · recibe newsletter'}
+            </Typography>
+          )}
+          {(aliado.convenioDesde || aliado.convenioHasta) && (
+            <Typography sx={{ color: MUTED, fontSize: 13 }}>
+              Convenio {aliado.convenioDesde ? `desde ${aliado.convenioDesde}` : ''}
+              {aliado.convenioHasta ? ` hasta ${aliado.convenioHasta}` : ''}
+            </Typography>
+          )}
+        </Box>
+        <Button onClick={onEditar} size="small" variant="outlined"
+          sx={{ textTransform: 'none', color: ACCENT, borderColor: ACCENT }}>
+          Editar ficha
+        </Button>
+      </Stack>
 
       <Card sx={{ p: 2.5, mb: 3, border: `1px solid ${BORDER}`, boxShadow: 'none' }}>
         <Typography sx={{ ...SERIF, fontSize: 17, color: NAVY, mb: 2 }}>Lo que le entregas al aliado</Typography>
@@ -493,6 +648,8 @@ export default function AliadosPage() {
   const [aliados, setAliados] = useState([]);
   const [abierto, setAbierto] = useState(null);
   const [dialogo, setDialogo] = useState(false);
+  // Null = el diálogo crea; con aliado = edita ese.
+  const [editando, setEditando] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
 
@@ -521,15 +678,30 @@ export default function AliadosPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {abierto ? (
-        <Detalle aliado={abierto} onVolver={() => { setAbierto(null); cargar(); }} onCambio={refrescar} />
+        <Detalle
+          aliado={abierto}
+          onVolver={() => { setAbierto(null); cargar(); }}
+          onCambio={refrescar}
+          onEditar={() => { setEditando(abierto); setDialogo(true); }}
+        />
       ) : (
-        <Lista aliados={aliados} onAbrir={setAbierto} onNuevo={() => setDialogo(true)} />
+        <Lista
+          aliados={aliados}
+          onAbrir={setAbierto}
+          onNuevo={() => { setEditando(null); setDialogo(true); }}
+        />
       )}
 
-      <DialogoNuevo
+      <DialogoFicha
         abierto={dialogo}
-        onCerrar={() => setDialogo(false)}
-        onCreado={(nuevo) => { setDialogo(false); cargar(); setAbierto(nuevo); }}
+        aliado={editando}
+        onCerrar={() => { setDialogo(false); setEditando(null); }}
+        onGuardado={(guardado) => {
+          setDialogo(false);
+          setEditando(null);
+          cargar();
+          setAbierto(guardado);
+        }}
       />
     </Box>
   );

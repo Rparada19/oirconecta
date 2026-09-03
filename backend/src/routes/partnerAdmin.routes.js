@@ -33,6 +33,58 @@ function nuevoCodigoRegistro(code) {
 
 const WA_NUMBER = (process.env.CENTRO_WHATSAPP || '573171503944').replace(/\D/g, '');
 
+/** Campos de la ficha que el CRM puede editar libremente. */
+const CAMPOS_FICHA = [
+  'nombre', 'tipo', 'nit', 'direccion', 'ciudad', 'sitioWeb',
+  'instagram', 'facebook', 'linkedin', 'tiktok',
+  'contactoNombre', 'contactoCargo', 'contactoEmail', 'contactoTelefono',
+  'convenioDesde', 'convenioHasta', 'notas',
+];
+
+/**
+ * Mantiene al contacto del aliado dentro del newsletter, como suscriptor de
+ * tipo ALIADO. Reusa toda la máquina de campañas en vez de armar un mailer
+ * aparte: segmentos, aperturas, clics y enlace de baja ya existen.
+ *
+ * Quitar el opt-in lo da de baja, no lo borra: así no se pierde el historial
+ * de envíos ni se le vuelve a escribir por error.
+ */
+async function sincronizarNewsletter(aliado) {
+  const email = (aliado.contactoEmail || '').trim().toLowerCase();
+  if (!email) return;
+
+  const existente = await prisma.newsletterSubscriber.findUnique({ where: { email } });
+
+  if (!aliado.newsletterOptIn) {
+    if (existente && existente.status === 'ACTIVE' && existente.tipo === 'ALIADO') {
+      await prisma.newsletterSubscriber.update({
+        where: { email },
+        data: { status: 'UNSUBSCRIBED', unsubscribedAt: new Date() },
+      });
+    }
+    return;
+  }
+
+  const datos = {
+    nombre: aliado.contactoNombre || aliado.nombre,
+    telefono: aliado.contactoTelefono || null,
+    ciudad: aliado.ciudad || null,
+    tipo: 'ALIADO',
+    status: 'ACTIVE',
+    unsubscribedAt: null,
+  };
+
+  if (existente) {
+    // Si se dio de baja por su cuenta, no lo resucitamos a la fuerza.
+    if (existente.status === 'UNSUBSCRIBED' && existente.tipo === 'ALIADO' && existente.unsubFromCampaignId) return;
+    await prisma.newsletterSubscriber.update({ where: { email }, data: datos });
+  } else {
+    await prisma.newsletterSubscriber.create({
+      data: { email, ...datos, source: 'aliado-crm' },
+    });
+  }
+}
+
 /** El enlace exacto que debe llevar el QR de las tarjetas del aliado. */
 function enlaceQr(nombre) {
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Vengo de ${nombre}`)}`;
@@ -46,8 +98,12 @@ router.get('/', async (req, res) => {
         id: true, nombre: true, code: true, comisionPct: true, activo: true,
         // El de invitación se muestra aquí y solo aquí: es lo que el equipo
         // le pasa al aliado para que su gente se cree cuenta.
-        registroCode: true,
-        contactoNombre: true, contactoEmail: true, notas: true, createdAt: true,
+        registroCode: true, tipo: true, comisionaCategorias: true,
+        convenioDesde: true, convenioHasta: true, newsletterOptIn: true,
+        nit: true, direccion: true, ciudad: true, sitioWeb: true,
+        instagram: true, facebook: true, linkedin: true, tiktok: true,
+        contactoNombre: true, contactoCargo: true, contactoEmail: true,
+        contactoTelefono: true, notas: true, createdAt: true,
         _count: { select: { patients: true, leads: true, commissions: true, accounts: true } },
       },
     });
@@ -77,17 +133,28 @@ router.post('/', async (req, res) => {
       return res.status(409).json({ success: false, error: `Ya existe un aliado con el código ${code}` });
     }
 
+    const ficha = {};
+    for (const campo of CAMPOS_FICHA) {
+      if (campo === 'nombre') continue;
+      if (req.body?.[campo] !== undefined) ficha[campo] = req.body[campo] || null;
+    }
+
     const aliado = await prisma.referralPartner.create({
       data: {
+        ...ficha,
         nombre,
         code,
         comisionPct: pct,
         registroCode: nuevoCodigoRegistro(code),
-        contactoNombre: req.body?.contactoNombre || null,
-        contactoEmail: req.body?.contactoEmail || null,
-        notas: req.body?.notas || null,
+        newsletterOptIn: !!req.body?.newsletterOptIn,
+        ...(Array.isArray(req.body?.comisionaCategorias) && req.body.comisionaCategorias.length
+          ? { comisionaCategorias: req.body.comisionaCategorias }
+          : {}),
       },
     });
+
+    await sincronizarNewsletter(aliado).catch((e) =>
+      console.error('[aliados-admin] newsletter:', e.message));
 
     res.status(201).json({ success: true, data: { ...aliado, enlaceQr: enlaceQr(aliado.nombre) } });
   } catch (e) {
@@ -100,11 +167,17 @@ router.post('/', async (req, res) => {
 router.patch('/:id', async (req, res) => {
   try {
     const data = {};
-    if (req.body?.nombre !== undefined) data.nombre = String(req.body.nombre).trim();
+    for (const campo of CAMPOS_FICHA) {
+      if (req.body?.[campo] === undefined) continue;
+      data[campo] = campo === 'nombre'
+        ? String(req.body.nombre).trim()
+        : (req.body[campo] || null);
+    }
     if (req.body?.activo !== undefined) data.activo = !!req.body.activo;
-    if (req.body?.contactoNombre !== undefined) data.contactoNombre = req.body.contactoNombre || null;
-    if (req.body?.contactoEmail !== undefined) data.contactoEmail = req.body.contactoEmail || null;
-    if (req.body?.notas !== undefined) data.notas = req.body.notas || null;
+    if (req.body?.newsletterOptIn !== undefined) data.newsletterOptIn = !!req.body.newsletterOptIn;
+    if (Array.isArray(req.body?.comisionaCategorias)) {
+      data.comisionaCategorias = req.body.comisionaCategorias;
+    }
     if (req.body?.comisionPct !== undefined) {
       const pct = Number(req.body.comisionPct);
       if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
@@ -125,6 +198,10 @@ router.patch('/:id', async (req, res) => {
     }
 
     const aliado = await prisma.referralPartner.update({ where: { id: req.params.id }, data });
+
+    await sincronizarNewsletter(aliado).catch((e) =>
+      console.error('[aliados-admin] newsletter:', e.message));
+
     res.json({ success: true, data: { ...aliado, enlaceQr: enlaceQr(aliado.nombre) } });
   } catch (e) {
     console.error('[aliados-admin] editar falló:', e.message);
