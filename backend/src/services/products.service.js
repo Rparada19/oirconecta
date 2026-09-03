@@ -179,6 +179,9 @@ const convertQuoteToSale = async (quoteId, additionalData = {}, createdById) => 
     data: { estado: 'CONVERTED' },
   });
 
+  // Comisión del aliado referidor, si el paciente vino por un QR.
+  await require('./partnerCommissions.service').causarPorVenta(sale.id);
+
   // F8 — Si la venta ya trae fechaAdaptacion, dispara el funnel de controles
   if (sale.categoria === 'HEARING_AID' && sale.fechaAdaptacion) {
     try {
@@ -320,6 +323,9 @@ const createSale = async (data, createdById) => {
     },
   });
 
+  // Comisión del aliado referidor, si el paciente vino por un QR.
+  await require('./partnerCommissions.service').causarPorVenta(sale.id);
+
   // F8 — Dispara el funnel de controles si es venta de audífono con fechaAdaptacion
   if (sale.categoria === 'HEARING_AID' && sale.fechaAdaptacion) {
     try {
@@ -358,6 +364,10 @@ const updateSale = async (id, data) => {
     where: { id },
     data: updateData,
   });
+
+  // Si cambió el valor facturado, la comisión del aliado sigue el cambio
+  // mientras no esté liquidada.
+  await require('./partnerCommissions.service').recalcularPorVenta(updated.id);
 
   // F8 — Si la edición trae fechaAdaptacion en una venta de audífono, dispara/ajusta el funnel
   if (updated.categoria === 'HEARING_AID' && updated.fechaAdaptacion) {

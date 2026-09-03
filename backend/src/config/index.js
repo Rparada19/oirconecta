@@ -43,6 +43,15 @@ const config = {
     expiresIn: process.env.DIRECTORY_JWT_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '30d',
   },
 
+  // JWT de los aliados referidores (`ReferralPartnerAccount`). Tercer secreto
+  // a propósito: un token de aliado nunca debe servir en el CRM ni al revés.
+  partnerJwt: {
+    secret:
+      process.env.PARTNER_JWT_SECRET ||
+      `${process.env.JWT_SECRET || 'default_secret_change_in_production'}_oirconecta_partner_v1`,
+    expiresIn: process.env.PARTNER_JWT_EXPIRES_IN || '7d',
+  },
+
   // Orígenes del front para CORS (producción: varios separados por coma, ej. https://app.com,https://www.app.com)
   frontendOrigins: (process.env.FRONTEND_URL || 'https://oirconecta.com,https://www.oirconecta.com,http://localhost:5174,http://localhost:5173')
     .split(',')

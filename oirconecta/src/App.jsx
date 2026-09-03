@@ -86,6 +86,9 @@ const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
 // Portal CRM (lazy)
 const PortalCRMPage = lazy(() => import('./pages/PortalCRMPage'));
 const CrmShell = lazy(() => import('./components/crm/CrmShell'));
+// Sección del aliado referidor. Vive bajo /portal-crm pero con sesión propia:
+// no entra al CrmShell ni usa el token del CRM.
+const AliadoPortalPage = lazy(() => import('./pages/aliado/AliadoPortalPage'));
 const DashboardPage = lazy(() => import('./pages/crm/DashboardPage'));
 const CitasPage = lazy(() => import('./pages/crm/CitasPage'));
 const AgendaOirconectaPage = lazy(() => import('./pages/crm/AgendaOirconectaPage'));
@@ -284,6 +287,11 @@ export default function App() {
           <Route path="/login-crm" element={<LoginCRMPage />} />
           <Route path="/crm-login" element={<LoginCRMPage />} />
           
+          {/* Sección del aliado referidor. Va ANTES del bloque del CRM y fuera de
+              ProtectedRoute: el aliado tiene su propia sesión y no debe pasar
+              nunca por el shell del CRM. */}
+          <Route path="/portal-crm/aliado/:code" element={<AliadoPortalPage />} />
+
           {/* Portal y rutas CRM (protegidas) — envueltas por el shell del CRM */}
           <Route path="/portal-crm" element={<ProtectedRoute><CrmShell /></ProtectedRoute>}>
             {/* Home del CRM ahora es "Acciones del día"; el viejo PortalCRMPage

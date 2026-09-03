@@ -92,6 +92,10 @@ router.use('/referrals', referralsRoutes);
 router.use('/email-templates', emailTemplatesRoutes);
 router.use('/follow-ups', followUpsRoutes);
 router.use('/wa', waCorporateRoutes);
+// Aliados referidores (plug-e): auth propia, superficie mínima.
+router.use('/aliado', require('./partnerPortal.routes'));
+// Cara interna de los aliados (corte y liquidación): auth del CRM, solo ADMIN.
+router.use('/aliados-admin', require('./partnerAdmin.routes'));
 router.use('/professional/ads', professionalAdsRoutes);
 router.use('/crm/retail-agenda', crmRetailAgendaRoutes);
 router.use('/crm/comercial-agenda', crmComercialAgendaRoutes);

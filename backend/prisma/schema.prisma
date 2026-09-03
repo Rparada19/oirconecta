@@ -370,11 +370,71 @@ model ReferralPartner {
   leads         Lead[]
   patients      Patient[]
   conversations WhatsAppConversation[]
+  commissions   PartnerCommission[]
+  accounts      ReferralPartnerAccount[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("referral_partners")
+}
+
+/// Cuenta con la que el equipo del aliado entra a su sección. Deliberadamente
+/// separada de `User` (equipo interno) y de `DirectoryAccount` (profesionales
+/// del directorio): el aliado no debe poder existir dentro del CRM, aunque su
+/// pantalla viva bajo /portal-crm/aliado/:code.
+model ReferralPartnerAccount {
+  id        String          @id @default(uuid())
+  partnerId String
+  partner   ReferralPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  email        String  @unique
+  passwordHash String
+  nombre       String?
+  activo       Boolean @default(true)
+
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([partnerId])
+  @@map("referral_partner_accounts")
+}
+
+/// Comisión causada por una venta atribuida a un aliado. Una venta comisiona
+/// una sola vez (saleId único). El monto se congela al causar: si mañana se
+/// renegocia el % del convenio, lo ya causado no se mueve.
+model PartnerCommission {
+  id        String          @id @default(uuid())
+  partnerId String
+  partner   ReferralPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  saleId String @unique
+  sale   Sale   @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  patientId String
+
+  /// Valor facturado que sirve de base, copiado de Sale.valorTotal al causar.
+  baseFacturada Float
+  pct           Float
+  monto         Float
+
+  /// Mes de la venta en formato YYYY-MM. Es la unidad de corte del convenio.
+  periodo String
+
+  /// CAUSADA | LIQUIDADA | PAGADA | ANULADA
+  estado String @default("CAUSADA")
+
+  liquidadaAt DateTime?
+  pagadaAt    DateTime?
+  notas       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([partnerId, periodo])
+  @@index([partnerId, estado])
+  @@map("partner_commissions")
 }
 
 model Lead {
@@ -992,6 +1052,9 @@ model Sale {
 
   // F8 — funnel de controles disparado por esta venta
   followUps PatientFollowUp[]
+
+  /// Comisión del aliado referidor, si el paciente vino por un QR.
+  partnerCommission PartnerCommission?
 
   // Metadata adicional
   metadata Json?
