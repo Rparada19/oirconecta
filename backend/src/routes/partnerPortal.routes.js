@@ -15,6 +15,8 @@ const { PrismaClient } = require('@prisma/client');
 const config = require('../config');
 const { authenticatePartner, matchPartnerCode } = require('../middleware/partnerAuth');
 const portal = require('../services/partnerPortal.service');
+const qr = require('../services/partnerQr.service');
+const storage = require('../services/storage.service');
 const { normalizar } = require('../services/referralPartners.service');
 
 const prisma = new PrismaClient();
@@ -229,13 +231,20 @@ router.post('/restablecer', puertaLimiter, async (req, res) => {
   }
 });
 
-router.get('/me', authenticatePartner, (req, res) => {
+router.get('/me', authenticatePartner, async (req, res) => {
+  const extra = await prisma.referralPartner.findUnique({
+    where: { id: req.partner.partnerId },
+    select: { logoUrl: true },
+  }).catch(() => null);
+
   res.json({
     success: true,
     data: {
       code: req.partner.code,
       nombre: req.partner.partnerNombre,
       usuario: req.partner.nombre || req.partner.email,
+      logoUrl: extra?.logoUrl || null,
+      enlaceQr: qr.enlaceQr(req.partner.partnerNombre),
     },
   });
 });
@@ -248,6 +257,45 @@ router.get('/:code/referidos', authenticatePartner, matchPartnerCode, async (req
     console.error('[aliado] referidos falló:', e.message);
     res.status(500).json({ success: false, error: 'No se pudieron cargar los referidos' });
   }
+});
+
+/**
+ * El QR para las tarjetas, listo para la imprenta.
+ * SVG por defecto (vectorial); ?formato=png&size=1024 para pantalla.
+ */
+router.get('/:code/qr', authenticatePartner, matchPartnerCode, async (req, res) => {
+  try {
+    await qr.responder(res, req.partner.partnerNombre, {
+      formato: req.query.formato,
+      size: req.query.size,
+    });
+  } catch (e) {
+    console.error('[aliado] qr falló:', e.message);
+    res.status(500).json({ success: false, error: 'No se pudo generar el QR' });
+  }
+});
+
+/** El aliado sube su propio logo desde su portal. */
+router.post('/:code/logo', authenticatePartner, matchPartnerCode, (req, res) => {
+  const uploader = storage.makeUploader({ folder: 'aliados/logos', maxSizeMB: 5 });
+  if (!uploader) {
+    return res.status(503).json({ success: false, error: 'La subida de archivos no está configurada' });
+  }
+  uploader.single('archivo')(req, res, async (err) => {
+    if (err) return res.status(400).json({ success: false, error: err.message });
+    if (!req.file?.path) return res.status(400).json({ success: false, error: 'No llegó ningún archivo' });
+    try {
+      const aliado = await prisma.referralPartner.update({
+        where: { id: req.partner.partnerId },
+        data: { logoUrl: req.file.path },
+        select: { logoUrl: true },
+      });
+      res.json({ success: true, data: aliado });
+    } catch (e) {
+      console.error('[aliado] logo falló:', e.message);
+      res.status(500).json({ success: false, error: 'No se pudo guardar el logo' });
+    }
+  });
 });
 
 router.get('/:code/resumen', authenticatePartner, matchPartnerCode, async (req, res) => {

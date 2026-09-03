@@ -379,6 +379,10 @@ model ReferralPartner {
   ciudad    String?
   sitioWeb  String?
 
+  /// Logo del aliado (Cloudinary). Lo sube él desde su portal o el equipo desde
+  /// el CRM. Es de uso interno y de su propio portal, no del sitio público.
+  logoUrl String?
+
   instagram String?
   facebook  String?
   linkedin  String?

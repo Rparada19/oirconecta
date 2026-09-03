@@ -14,7 +14,7 @@ import {
   Table, TableHead, TableRow, TableCell, TableBody, CircularProgress, Divider,
 } from '@mui/material';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import { aliadoApi, getToken, setToken, clearToken } from '../../services/aliadoApi';
+import { aliadoApi, getToken, setToken, clearToken, descargarQr, previsualizarQr, subirLogo } from '../../services/aliadoApi';
 
 const NAVY = '#0F2A4A';
 const ACCENT = '#6d28d9';
@@ -200,6 +200,120 @@ function Puerta({ onEntrar }) {
 }
 
 
+/**
+ * Lo que el aliado necesita para mandar a imprimir: el QR y su logo.
+ *
+ * El QR se descarga en SVG por defecto porque es lo que pide una imprenta:
+ * vectorial, se amplía a cualquier tamaño sin pixelarse.
+ */
+function TarjetaQr({ aliado, onLogo }) {
+  const [preview, setPreview] = useState(null);
+  const [error, setError] = useState('');
+  const [subiendo, setSubiendo] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+
+  useEffect(() => {
+    let vivo = true;
+    let url = null;
+    previsualizarQr(aliado.code)
+      .then((u) => { if (vivo) { url = u; setPreview(u); } else URL.revokeObjectURL(u); })
+      .catch(() => setError('No se pudo generar la vista previa del QR'));
+    // Sin esto, cada visita deja un blob colgado en memoria.
+    return () => { vivo = false; if (url) URL.revokeObjectURL(url); };
+  }, [aliado.code]);
+
+  const bajar = async (formato) => {
+    setError('');
+    try { await descargarQr(aliado.code, formato); }
+    catch (e) { setError(e.message); }
+  };
+
+  const copiarEnlace = async () => {
+    try {
+      await navigator.clipboard.writeText(aliado.enlaceQr);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1800);
+    } catch { /* sin permiso de portapapeles */ }
+  };
+
+  const elegirLogo = async (e) => {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+    setError(''); setSubiendo(true);
+    try {
+      const r = await subirLogo(aliado.code, archivo);
+      onLogo(r.logoUrl);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubiendo(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <Card sx={{ p: 3, mb: 3, border: `1px solid ${BORDER}`, boxShadow: 'none' }}>
+      <Typography sx={{ ...SERIF, fontSize: 18, color: NAVY, mb: 0.5 }}>
+        Tu código QR
+      </Typography>
+      <Typography sx={{ color: MUTED, fontSize: 13, mb: 2.5 }}>
+        Este es el QR que va en tus tarjetas. Quien lo escanee abre WhatsApp con
+        nosotros y queda registrado como referido tuyo.
+      </Typography>
+
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} alignItems="flex-start">
+        <Box sx={{ p: 1.5, border: `1px solid ${BORDER}`, borderRadius: 2, bgcolor: '#fff' }}>
+          {preview
+            ? <Box component="img" src={preview} alt="Código QR" sx={{ width: 168, height: 168, display: 'block' }} />
+            : <Box sx={{ width: 168, height: 168, display: 'grid', placeItems: 'center' }}><CircularProgress size={22} /></Box>}
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography sx={{ color: MUTED, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Para la imprenta
+          </Typography>
+          <Stack direction="row" spacing={1} sx={{ mt: 1, mb: 2, flexWrap: 'wrap', gap: 1 }}>
+            <Button onClick={() => bajar('svg')} variant="contained" size="small"
+              sx={{ bgcolor: ACCENT, textTransform: 'none', '&:hover': { bgcolor: '#5b21b6' } }}>
+              Descargar SVG
+            </Button>
+            <Button onClick={() => bajar('png')} variant="outlined" size="small"
+              sx={{ textTransform: 'none', color: ACCENT, borderColor: ACCENT }}>
+              Descargar PNG
+            </Button>
+            <Button onClick={copiarEnlace} size="small" sx={{ textTransform: 'none', color: MUTED }}>
+              {copiado ? '¡Enlace copiado!' : 'Copiar el enlace'}
+            </Button>
+          </Stack>
+          <Typography sx={{ color: MUTED, fontSize: 12, mb: 2 }}>
+            Dale el <strong>SVG</strong> a tu diseñador o litografía: es vectorial y se
+            amplía a cualquier tamaño sin perder nitidez. El PNG sirve para pantalla.
+          </Typography>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography sx={{ color: MUTED, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', mb: 1 }}>
+            Tu logo
+          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            {aliado.logoUrl && (
+              <Box component="img" src={aliado.logoUrl} alt={aliado.nombre}
+                sx={{ height: 44, maxWidth: 160, objectFit: 'contain' }} />
+            )}
+            <Button component="label" variant="outlined" size="small" disabled={subiendo}
+              sx={{ textTransform: 'none', color: ACCENT, borderColor: ACCENT }}>
+              {subiendo ? 'Subiendo…' : aliado.logoUrl ? 'Cambiar logo' : 'Subir logo'}
+              <input type="file" hidden accept="image/*" onChange={elegirLogo} />
+            </Button>
+          </Stack>
+        </Box>
+      </Stack>
+
+      {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+    </Card>
+  );
+}
+
 function Metrica({ titulo, valor, detalle }) {
   return (
     <Card sx={{ p: 2.5, flex: 1, minWidth: 180, border: `1px solid ${BORDER}`, boxShadow: 'none' }}>
@@ -264,12 +378,18 @@ export default function AliadoPortalPage() {
       <Box sx={{ maxWidth: 1180, mx: 'auto' }}>
 
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
-          <Box>
+          <Stack direction="row" spacing={2} alignItems="center">
+            {aliado.logoUrl && (
+              <Box component="img" src={aliado.logoUrl} alt={aliado.nombre}
+                sx={{ height: 44, maxWidth: 140, objectFit: 'contain' }} />
+            )}
+            <Box>
             <Typography sx={{ ...SERIF, fontSize: 30, color: NAVY }}>{aliado.nombre}</Typography>
             <Typography sx={{ color: MUTED, fontSize: 14 }}>
               Referidos a OírConecta · {aliado.usuario}
             </Typography>
-          </Box>
+            </Box>
+          </Stack>
           <Button
             onClick={salir} startIcon={<LogoutOutlinedIcon />} size="small"
             sx={{ color: MUTED, textTransform: 'none' }}
@@ -279,6 +399,11 @@ export default function AliadoPortalPage() {
         </Stack>
 
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+
+        <TarjetaQr
+          aliado={aliado}
+          onLogo={(logoUrl) => setAliado((p) => ({ ...p, logoUrl }))}
+        />
 
         {resumen && (
           <Stack direction="row" spacing={2} sx={{ mb: 3, flexWrap: 'wrap', gap: 2 }}>

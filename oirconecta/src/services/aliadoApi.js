@@ -59,6 +59,51 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   return json?.data;
 }
 
+/**
+ * Descarga con token: un <a href> normal no lleva la cabecera de sesión, así
+ * que el archivo se pide con fetch y se entrega desde memoria.
+ */
+export async function descargarQr(code, formato = 'svg') {
+  const res = await fetch(
+    `${base()}/api/aliado/${encodeURIComponent(code)}/qr?formato=${formato}&size=1024`,
+    { headers: { Authorization: `Bearer ${getToken()}` } },
+  );
+  if (!res.ok) throw new Error('No se pudo generar el QR');
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `qr-${String(code).toLowerCase()}.${formato}`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Vista previa del QR en pantalla, como URL de objeto. */
+export async function previsualizarQr(code) {
+  const res = await fetch(
+    `${base()}/api/aliado/${encodeURIComponent(code)}/qr?formato=png&size=512`,
+    { headers: { Authorization: `Bearer ${getToken()}` } },
+  );
+  if (!res.ok) throw new Error('No se pudo generar el QR');
+  return URL.createObjectURL(await res.blob());
+}
+
+export async function subirLogo(code, archivo) {
+  const datos = new FormData();
+  datos.append('archivo', archivo);
+  const res = await fetch(`${base()}/api/aliado/${encodeURIComponent(code)}/logo`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: datos,
+  });
+  const json = await res.json().catch(() => null);
+  if (!res.ok || json?.success === false) throw new Error(json?.error || 'No se pudo subir el logo');
+  return json.data;
+}
+
 export const aliadoApi = {
   login: (email, password) => request('/login', { method: 'POST', body: { email, password }, auth: false }),
   registro: (body) => request('/registro', { method: 'POST', body, auth: false }),

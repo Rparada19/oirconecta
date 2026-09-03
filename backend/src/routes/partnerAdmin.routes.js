@@ -103,7 +103,7 @@ router.get('/', async (req, res) => {
         nit: true, direccion: true, ciudad: true, sitioWeb: true,
         instagram: true, facebook: true, linkedin: true, tiktok: true,
         contactoNombre: true, contactoCargo: true, contactoEmail: true,
-        contactoTelefono: true, notas: true, createdAt: true,
+        contactoTelefono: true, notas: true, logoUrl: true, createdAt: true,
         _count: { select: { patients: true, leads: true, commissions: true, accounts: true } },
       },
     });
@@ -228,6 +228,45 @@ router.get('/:id/referidos', async (req, res) => {
  * solo, pero para una cuenta de demostración —o para el aliado que no quiere
  * lidiar con códigos— hace falta crearla desde aquí.
  * ------------------------------------------------------------------------ */
+
+/** El mismo QR, desde el CRM: para mandárselo tú al aliado o a la imprenta. */
+router.get('/:id/qr', async (req, res) => {
+  try {
+    const aliado = await prisma.referralPartner.findUnique({
+      where: { id: req.params.id }, select: { nombre: true },
+    });
+    if (!aliado) return res.status(404).json({ success: false, error: 'Aliado no encontrado' });
+    await require('../services/partnerQr.service').responder(res, aliado.nombre, {
+      formato: req.query.formato,
+      size: req.query.size,
+    });
+  } catch (e) {
+    console.error('[aliados-admin] qr falló:', e.message);
+    res.status(500).json({ success: false, error: 'No se pudo generar el QR' });
+  }
+});
+
+/** Subir el logo del aliado desde el CRM. */
+router.post('/:id/logo', (req, res) => {
+  const storage = require('../services/storage.service');
+  const uploader = storage.makeUploader({ folder: 'aliados/logos', maxSizeMB: 5 });
+  if (!uploader) {
+    return res.status(503).json({ success: false, error: 'La subida de archivos no está configurada' });
+  }
+  uploader.single('archivo')(req, res, async (err) => {
+    if (err) return res.status(400).json({ success: false, error: err.message });
+    if (!req.file?.path) return res.status(400).json({ success: false, error: 'No llegó ningún archivo' });
+    try {
+      const aliado = await prisma.referralPartner.update({
+        where: { id: req.params.id },
+        data: { logoUrl: req.file.path },
+      });
+      res.json({ success: true, data: { ...aliado, enlaceQr: enlaceQr(aliado.nombre) } });
+    } catch (e) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+});
 
 router.get('/:id/cuentas', async (req, res) => {
   try {
