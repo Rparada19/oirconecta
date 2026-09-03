@@ -75,12 +75,32 @@ async function atribuirPaciente(patientId, partnerId) {
   if (!patientId || !partnerId) return null;
   const p = await prisma.patient.findUnique({
     where: { id: patientId },
-    select: { id: true, partnerId: true },
+    select: { id: true, partnerId: true, createdAt: true },
   });
   if (!p || p.partnerId) return p?.partnerId || null;
 
   await prisma.patient.update({ where: { id: patientId }, data: { partnerId } });
+  await programarAudiometrias(patientId, p.createdAt);
   return partnerId;
+}
+
+/**
+ * Todo referido de un aliado tiene derecho a una audiometría anual por 5 años.
+ * El reloj arranca cuando llegó, no en una adaptación que quizá nunca ocurra.
+ *
+ * No lanza: si esto falla, la atribución igual quedó hecha y la comisión no
+ * depende de ello.
+ */
+async function programarAudiometrias(patientId, desde) {
+  try {
+    return await require('./followUps.service').ensureFunnelReferido({
+      patientId,
+      desde: desde || new Date(),
+    });
+  } catch (e) {
+    console.error('[aliados] no pude programar las audiometrías:', e.message);
+    return null;
+  }
 }
 
 /**
@@ -123,5 +143,6 @@ module.exports = {
   detectarEnTexto,
   marcarConversacion,
   atribuirPaciente,
+  programarAudiometrias,
   suscribirAlNewsletter,
 };

@@ -251,6 +251,74 @@ async function ensureFunnel({ patientId, adaptationDate, saleId = null, anosGara
   return { created, updated, skipped };
 }
 
+/**
+ * Audiometría anual por 5 años para el referido de un aliado.
+ *
+ * Es un beneficio del convenio, no un control clínico de adaptación: le toca a
+ * TODO referido, tenga o no pérdida auditiva y haya comprado o no. Por eso el
+ * reloj arranca en la fecha del referido y no en una adaptación que quizá
+ * nunca ocurra.
+ *
+ * Reusa PatientFollowUp con los mismos steps AUD1..AUD5 que ya usan los planes.
+ * Eso resuelve solo el cruce más molesto: quien compró audífonos ya tiene sus
+ * audiometrías del plan, y como la llave es (patientId, step), aquí solo se
+ * crean las que le faltan. Nadie recibe dos recordatorios de lo mismo.
+ *
+ * @returns {Promise<{ created: number, existing: number }>}
+ */
+async function ensureFunnelReferido({ patientId, desde, anos = 5 }) {
+  if (!patientId) throw new Error('patientId requerido');
+  const base = new Date(desde);
+  if (isNaN(base.getTime())) throw new Error('fecha de referido inválida');
+
+  let created = 0;
+  let existing = 0;
+
+  for (const s of audiometrias(anos)) {
+    const ya = await prisma.patientFollowUp.findUnique({
+      where: { patientId_step: { patientId, step: s.step } },
+      select: { id: true },
+    });
+    if (ya) { existing++; continue; }
+
+    await prisma.patientFollowUp.create({
+      data: {
+        patientId,
+        step: s.step,
+        offsetDays: s.offsetDays,
+        dueDate: addDays(base, s.offsetDays),
+        status: 'PENDING',
+        scheduleToken: generateToken(),
+        // Sin saleId: este seguimiento no nace de una venta.
+        notes: 'Audiometría anual incluida en el convenio con el aliado referidor.',
+      },
+    });
+    created++;
+  }
+
+  if (created > 0) {
+    try {
+      await prisma.interaction.create({
+        data: {
+          patientId,
+          type: 'follow_up_control',
+          channel: 'system',
+          title: 'Audiometrías del convenio programadas',
+          description: `Se programaron ${created} audiometrías anuales a partir del ${base.toISOString().slice(0, 10)}, `
+            + `por el convenio con el aliado que lo refirió.`
+            + (existing ? ` Otras ${existing} ya existían por su plan y no se duplicaron.` : ''),
+          status: 'completed',
+          metadata: { source: 'ensureFunnelReferido', created, existing, anos },
+        },
+      });
+    } catch (e) {
+      console.warn('[followUps] no pude registrar Interaction del referido:', e.message);
+    }
+  }
+
+  return { created, existing };
+}
+
 /** Asegura scheduleToken en un follow-up (backfill idempotente). */
 async function ensureToken(followUpId) {
   const fu = await prisma.patientFollowUp.findUnique({
@@ -448,6 +516,7 @@ async function summary() {
 }
 
 module.exports = {
+  ensureFunnelReferido,
   STEPS,
   CONTROLES,
   stepsParaGarantia,

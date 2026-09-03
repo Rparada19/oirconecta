@@ -225,6 +225,12 @@ const convertToPatient = async (id, additionalData = {}) => {
     data: { estado: 'PACIENTE' },
   });
 
+  // Viene de un aliado: le corresponde la audiometría anual del convenio.
+  if (lead.partnerId) {
+    await require('./referralPartners.service')
+      .programarAudiometrias(patient.id, patient.createdAt);
+  }
+
   return { lead, patient };
 };
 

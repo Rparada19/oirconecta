@@ -130,6 +130,15 @@ router.patch('/:id/aliado', [param('id').isUUID()], validateRequest, async (req,
 
     await prisma.patient.update({ where: { id: req.params.id }, data: { partnerId } });
 
+    // Todo referido de un aliado tiene su audiometría anual por 5 años.
+    if (partnerId) {
+      const paciente = await prisma.patient.findUnique({
+        where: { id: req.params.id }, select: { createdAt: true },
+      });
+      await require('../services/referralPartners.service')
+        .programarAudiometrias(req.params.id, paciente?.createdAt);
+    }
+
     let comisionadas = 0;
     if (partnerId) {
       const comisiones = require('../services/partnerCommissions.service');
