@@ -89,6 +89,7 @@ import { hasClinicalConsent, createConsent } from '../../services/consentService
 import { getAllAppointments } from '../../services/appointmentService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
 import AliadoDelPaciente from './AliadoDelPaciente';
+import ComisionVenta from './ComisionVenta';
 import { getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
 import { getPatientInteractions, getPatientInteractionsMetrics, getDailyActionsMetricsByPatient, addInteraction, updateInteraction, getListUsers } from '../../services/interactionService';
 import { getPatientProducts, convertQuoteToSale, getQuoteHistory, updateSale } from '../../services/productService';
@@ -6536,6 +6537,17 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                   </Grid>
                 )}
               </Grid>
+
+              {/* Recaudo, comisión del referidor y controles programados. Solo
+                  aplica a ventas: en una cotización no hay nada que liquidar. */}
+              {viewProductDialog.type === 'sale' && viewProductDialog.product.id && (
+                <ComisionVenta
+                  saleId={viewProductDialog.product.id}
+                  readOnly={readOnly || !canSales}
+                  onGuardado={() => { if (typeof onSaved === 'function') onSaved(); }}
+                />
+              )}
+
               {viewProductDialog.product.metadata?.bondades && (
                 <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1 }}>
                   <Typography variant="caption" sx={{ color: '#86899C', fontWeight: 600 }}>Bondades</Typography>

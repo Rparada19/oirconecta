@@ -279,6 +279,14 @@ const getSaleById = async (id) => {
       createdBy: {
         select: { id: true, nombre: true, email: true },
       },
+      // Comisión del referidor: la ficha de la venta es donde el equipo la
+      // consulta y la ajusta, así que tiene que venir con la venta.
+      partnerCommission: true,
+      comisionPartner: { select: { id: true, nombre: true, comisionPct: true } },
+      followUps: {
+        select: { id: true, step: true, dueDate: true, status: true },
+        orderBy: { dueDate: 'asc' },
+      },
     },
   });
 };
