@@ -86,6 +86,7 @@ const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
 // Portal CRM (lazy)
 const PortalCRMPage = lazy(() => import('./pages/PortalCRMPage'));
 const CrmShell = lazy(() => import('./components/crm/CrmShell'));
+const AliadosPage = lazy(() => import('./pages/crm/AliadosPage'));
 // Sección del aliado referidor. Vive bajo /portal-crm pero con sesión propia:
 // no entra al CrmShell ni usa el token del CRM.
 const AliadoPortalPage = lazy(() => import('./pages/aliado/AliadoPortalPage'));
@@ -311,6 +312,7 @@ export default function App() {
             <Route path="campanas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><CampanasPage /></ProtectedRouteByRole>} />
             <Route path="reportes" element={<ReportesPage />} />
             <Route path="finanzas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><FinanzasPage /></ProtectedRouteByRole>} />
+            <Route path="aliados" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><AliadosPage /></ProtectedRouteByRole>} />
             <Route path="oportunidades" element={<OportunidadesPage />} />
             <Route path="automatizaciones" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><AutomatizacionesPage /></ProtectedRouteByRole>} />
             <Route path="configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />

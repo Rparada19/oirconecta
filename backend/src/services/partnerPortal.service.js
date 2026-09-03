@@ -155,4 +155,78 @@ async function resumen(partnerId) {
   };
 }
 
-module.exports = { ESTADOS, nombreCorto, listarReferidos, resumen };
+/**
+ * La MISMA tabla, pero para adentro. Aquí sí va lo clínico y el contacto: el
+ * que mira es el equipo de OírConecta en su CRM, no el aliado.
+ *
+ * Todo sale de la historia clínica que ya existe — no se duplica ningún dato.
+ */
+async function listarReferidosParaCrm(partnerId) {
+  const pacientes = await prisma.patient.findMany({
+    where: { partnerId, archivedAt: null },
+    select: {
+      id: true,
+      nombre: true,
+      telefono: true,
+      email: true,
+      ciudad: true,
+      createdAt: true,
+      tienePerdidaAuditiva: true,
+      appointments: {
+        select: { id: true, fecha: true, hora: true, estado: true, tipoConsulta: true },
+        orderBy: { fecha: 'desc' },
+      },
+      quotes: {
+        select: { id: true, createdAt: true, marca: true, valorTotal: true, estado: true },
+        orderBy: { createdAt: 'desc' },
+      },
+      sales: {
+        select: {
+          id: true, categoria: true, fechaVenta: true, marca: true, valorTotal: true,
+          partnerCommission: { select: { id: true, monto: true, pct: true, estado: true, periodo: true } },
+        },
+        orderBy: { fechaVenta: 'desc' },
+      },
+      followUps: {
+        where: { status: { in: ['PENDING', 'REMINDED', 'SCHEDULED', 'OVERDUE'] } },
+        select: { step: true, dueDate: true, status: true },
+        orderBy: { dueDate: 'asc' },
+        take: 1,
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const ahora = new Date();
+  return pacientes.map((p) => {
+    const ventasAudifono = p.sales.filter((v) => v.categoria === 'HEARING_AID');
+    const proxima = p.appointments
+      .filter((a) => a.fecha >= ahora && ['CONFIRMED', 'RESCHEDULED'].includes(a.estado))
+      .sort((a, b) => a.fecha - b.fecha)[0] || null;
+    const ultima = p.appointments.find((a) => a.estado === 'COMPLETED') || null;
+
+    return {
+      id: p.id,
+      nombre: p.nombre,
+      telefono: p.telefono,
+      email: p.email,
+      ciudad: p.ciudad || '—',
+      fechaReferido: p.createdAt,
+      estado: estadoDePaciente(p),
+      // Lo clínico: solo en esta vista, nunca en la del aliado.
+      tienePerdidaAuditiva: p.tienePerdidaAuditiva,
+      citas: p.appointments.length,
+      proximaCita: proxima ? { fecha: proxima.fecha, hora: proxima.hora, tipo: proxima.tipoConsulta } : null,
+      ultimaCita: ultima ? { fecha: ultima.fecha, tipo: ultima.tipoConsulta } : null,
+      cotizaciones: p.quotes.map((q) => ({
+        id: q.id, fecha: q.createdAt, marca: q.marca, valor: q.valorTotal, estado: q.estado,
+      })),
+      ventas: ventasAudifono.map((v) => ({
+        id: v.id, fecha: v.fechaVenta, marca: v.marca, valor: v.valorTotal, comision: v.partnerCommission,
+      })),
+      proximoControl: p.followUps[0] || null,
+    };
+  });
+}
+
+module.exports = { ESTADOS, nombreCorto, listarReferidos, listarReferidosParaCrm, resumen };

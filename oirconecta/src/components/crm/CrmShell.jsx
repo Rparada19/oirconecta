@@ -28,6 +28,7 @@ import {
   TrendingUp,
   History,
 } from '@mui/icons-material';
+import Handshake from '@mui/icons-material/HandshakeOutlined';
 import { useAuth } from '../../context/AuthContext';
 import { getMenuForRole, MENU_KEYS } from '../../utils/rolePermissions';
 import { OC_COLORS } from '../../theme';
@@ -76,6 +77,8 @@ const NAV_ITEMS = [
     path: '/portal-crm/reportes', section: 'analitica' },
   { key: MENU_KEYS.FINANZAS, label: 'Finanzas', icon: AccountBalance,
     path: '/portal-crm/finanzas', section: 'analitica' },
+  { key: MENU_KEYS.ALIADOS, label: 'Aliados referidores', icon: Handshake,
+    path: '/portal-crm/aliados', section: 'analitica' },
   { key: MENU_KEYS.AUTOMATIZACIONES, label: 'Automatizaciones', icon: AutoAwesome,
     path: '/portal-crm/automatizaciones', section: 'analitica' },
   { key: MENU_KEYS.CONFIGURACION, label: 'Configuración', icon: Settings,
