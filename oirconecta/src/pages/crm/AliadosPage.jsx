@@ -124,6 +124,57 @@ function DialogoNuevo({ abierto, onCerrar, onCreado }) {
   );
 }
 
+/** Crea una cuenta de acceso para el equipo del aliado, o una de demostración. */
+function DialogoCuenta({ abierto, aliado, onCerrar, onCreada }) {
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [guardando, setGuardando] = useState(false);
+
+  const crear = async () => {
+    setError(''); setGuardando(true);
+    const res = await api.post(`/api/aliados-admin/${aliado.id}/cuentas`, { nombre, email, password });
+    setGuardando(false);
+    if (res?.data?.success) {
+      setNombre(''); setEmail(''); setPassword('');
+      onCreada(res.data.data);
+    } else {
+      setError(res?.data?.error || res?.error || 'No se pudo crear la cuenta');
+    }
+  };
+
+  return (
+    <Dialog open={abierto} onClose={onCerrar} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ ...SERIF, color: NAVY }}>Crear cuenta de acceso</DialogTitle>
+      <DialogContent>
+        <Typography sx={{ color: MUTED, fontSize: 13, mb: 2 }}>
+          Entra a {`https://oirconecta.com/portal-crm/aliado/${String(aliado?.code || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`} con
+          este correo y esta contraseña. Solo verá los referidos de {aliado?.nombre}.
+        </Typography>
+        <Stack spacing={2}>
+          <TextField label="Nombre de la persona" value={nombre} size="small" fullWidth autoFocus
+            onChange={(e) => setNombre(e.target.value)} />
+          <TextField label="Correo" type="email" value={email} size="small" fullWidth required
+            onChange={(e) => setEmail(e.target.value)} />
+          <TextField label="Contraseña" value={password} size="small" fullWidth required
+            onChange={(e) => setPassword(e.target.value)}
+            helperText="Mínimo 10 caracteres. Se la entregas tú; después la puede cambiar desde “Olvidé mi contraseña”." />
+          {error && <Alert severity="error">{error}</Alert>}
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onCerrar} sx={{ textTransform: 'none', color: MUTED }}>Cancelar</Button>
+        <Button onClick={crear} variant="contained"
+          disabled={!email.trim() || password.length < 10 || guardando}
+          sx={{ bgcolor: ACCENT, textTransform: 'none', '&:hover': { bgcolor: '#5b21b6' } }}>
+          {guardando ? 'Creando…' : 'Crear cuenta'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 function Lista({ aliados, onAbrir, onNuevo }) {
   return (
     <>
@@ -185,16 +236,28 @@ function Lista({ aliados, onAbrir, onNuevo }) {
 
 function Detalle({ aliado, onVolver, onCambio }) {
   const [referidos, setReferidos] = useState([]);
+  const [cuentas, setCuentas] = useState([]);
+  const [dialogoCuenta, setDialogoCuenta] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
     setCargando(true);
-    const res = await api.get(`/api/aliados-admin/${aliado.id}/referidos`);
+    const [res, resCuentas] = await Promise.all([
+      api.get(`/api/aliados-admin/${aliado.id}/referidos`),
+      api.get(`/api/aliados-admin/${aliado.id}/cuentas`),
+    ]);
     setCargando(false);
     if (res?.data?.success) setReferidos(res.data.data || []);
     else setError(res?.data?.error || res?.error || 'No se pudieron cargar los referidos');
+    if (resCuentas?.data?.success) setCuentas(resCuentas.data.data || []);
   }, [aliado.id]);
+
+  const cambiarCuenta = async (cuentaId, cambios) => {
+    const res = await api.patch(`/api/aliados-admin/cuentas/${cuentaId}`, cambios);
+    if (res?.data?.success) cargar();
+    else setError(res?.data?.error || 'No se pudo actualizar la cuenta');
+  };
 
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -261,6 +324,72 @@ function Detalle({ aliado, onVolver, onCambio }) {
       </Card>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      <Card sx={{ mb: 3, border: `1px solid ${BORDER}`, boxShadow: 'none' }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2.5, pb: 1.5 }}>
+          <Box>
+            <Typography sx={{ ...SERIF, fontSize: 17, color: NAVY }}>Cuentas de acceso</Typography>
+            <Typography sx={{ color: MUTED, fontSize: 13 }}>
+              Quién de {aliado.nombre} puede entrar a ver sus referidos
+            </Typography>
+          </Box>
+          <Button
+            onClick={() => setDialogoCuenta(true)} startIcon={<AddIcon />} size="small" variant="outlined"
+            sx={{ textTransform: 'none', color: ACCENT, borderColor: ACCENT }}
+          >
+            Crear cuenta
+          </Button>
+        </Stack>
+        <Divider />
+
+        {cuentas.length === 0 ? (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography sx={{ color: MUTED, fontSize: 14 }}>
+              Nadie tiene acceso todavía. Crea una cuenta aquí, o pásales el código de invitación
+              para que se registren solos.
+            </Typography>
+          </Box>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {['Persona', 'Correo', 'Último ingreso', 'Estado', ''].map((h) => (
+                  <TableCell key={h} sx={{ color: MUTED, fontWeight: 600 }}>{h}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {cuentas.map((c) => (
+                <TableRow key={c.id} hover>
+                  <TableCell sx={{ fontWeight: 600, color: NAVY }}>{c.nombre || '—'}</TableCell>
+                  <TableCell>{c.email}</TableCell>
+                  <TableCell sx={{ color: MUTED }}>
+                    {c.lastLoginAt ? fecha(c.lastLoginAt) : 'Nunca entró'}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={c.activo ? 'Activa' : 'Bloqueada'}
+                      size="small"
+                      sx={c.activo
+                        ? { bgcolor: '#f0fdf4', color: '#15803d', fontWeight: 600 }
+                        : { bgcolor: '#f5f5f4', color: '#78716c', fontWeight: 600 }}
+                    />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Button
+                      onClick={() => cambiarCuenta(c.id, { activo: !c.activo })}
+                      size="small"
+                      sx={{ textTransform: 'none', color: c.activo ? '#b91c1c' : ACCENT }}
+                    >
+                      {c.activo ? 'Bloquear' : 'Reactivar'}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
 
       <Card sx={{ border: `1px solid ${BORDER}`, boxShadow: 'none' }}>
         <Typography sx={{ ...SERIF, fontSize: 17, color: NAVY, p: 2.5, pb: 1.5 }}>
@@ -349,6 +478,13 @@ function Detalle({ aliado, onVolver, onCambio }) {
           </Box>
         )}
       </Card>
+
+      <DialogoCuenta
+        abierto={dialogoCuenta}
+        aliado={aliado}
+        onCerrar={() => setDialogoCuenta(false)}
+        onCreada={() => { setDialogoCuenta(false); cargar(); }}
+      />
     </>
   );
 }

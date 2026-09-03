@@ -8,6 +8,7 @@
 
 const express = require('express');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { authenticate, authorize } = require('../middleware/auth');
 const comisiones = require('../services/partnerCommissions.service');
 const portal = require('../services/partnerPortal.service');
@@ -141,6 +142,85 @@ router.get('/:id/referidos', async (req, res) => {
     res.json({ success: true, data });
   } catch (e) {
     console.error('[aliados-admin] referidos falló:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+/* ─── Cuentas de acceso del aliado ─────────────────────────────────────────
+ * El código de invitación sirve para que el equipo del aliado se registre
+ * solo, pero para una cuenta de demostración —o para el aliado que no quiere
+ * lidiar con códigos— hace falta crearla desde aquí.
+ * ------------------------------------------------------------------------ */
+
+router.get('/:id/cuentas', async (req, res) => {
+  try {
+    const cuentas = await prisma.referralPartnerAccount.findMany({
+      where: { partnerId: req.params.id },
+      // Nunca el passwordHash: no tiene por qué salir de la base.
+      select: { id: true, nombre: true, email: true, activo: true, lastLoginAt: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    res.json({ success: true, data: cuentas });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+router.post('/:id/cuentas', async (req, res) => {
+  try {
+    const aliado = await prisma.referralPartner.findUnique({ where: { id: req.params.id } });
+    if (!aliado) return res.status(404).json({ success: false, error: 'Aliado no encontrado' });
+
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const nombre = String(req.body?.nombre || '').trim() || null;
+    const password = String(req.body?.password || '');
+
+    if (!email) return res.status(400).json({ success: false, error: 'Correo requerido' });
+    if (password.length < 10) {
+      return res.status(400).json({ success: false, error: 'La contraseña debe tener al menos 10 caracteres' });
+    }
+
+    const repetido = await prisma.referralPartnerAccount.findUnique({ where: { email } });
+    if (repetido) {
+      return res.status(409).json({ success: false, error: 'Ya existe una cuenta con ese correo' });
+    }
+
+    const cuenta = await prisma.referralPartnerAccount.create({
+      data: { partnerId: aliado.id, email, nombre, passwordHash: await bcrypt.hash(password, 10) },
+      select: { id: true, nombre: true, email: true, activo: true, createdAt: true },
+    });
+
+    res.status(201).json({ success: true, data: cuenta });
+  } catch (e) {
+    console.error('[aliados-admin] crear cuenta falló:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+/** Activar/desactivar una cuenta, o cambiarle la clave. */
+router.patch('/cuentas/:cuentaId', async (req, res) => {
+  try {
+    const data = {};
+    if (req.body?.activo !== undefined) data.activo = !!req.body.activo;
+    if (req.body?.nombre !== undefined) data.nombre = req.body.nombre || null;
+    if (req.body?.password) {
+      if (String(req.body.password).length < 10) {
+        return res.status(400).json({ success: false, error: 'La contraseña debe tener al menos 10 caracteres' });
+      }
+      data.passwordHash = await bcrypt.hash(String(req.body.password), 10);
+      // Una clave nueva invalida cualquier enlace de recuperación pendiente.
+      data.resetTokenHash = null;
+      data.resetTokenExpiresAt = null;
+    }
+
+    const cuenta = await prisma.referralPartnerAccount.update({
+      where: { id: req.params.cuentaId },
+      data,
+      select: { id: true, nombre: true, email: true, activo: true, lastLoginAt: true, createdAt: true },
+    });
+    res.json({ success: true, data: cuenta });
+  } catch (e) {
+    console.error('[aliados-admin] editar cuenta falló:', e.message);
     res.status(500).json({ success: false, error: e.message });
   }
 });
