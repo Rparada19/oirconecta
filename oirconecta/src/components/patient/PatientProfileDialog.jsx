@@ -88,6 +88,7 @@ import { updatePatient as updatePatientApi, getPatientMessages, getPatientWhatsA
 import { hasClinicalConsent, createConsent } from '../../services/consentService';
 import { getAllAppointments } from '../../services/appointmentService';
 import { formatProcedencia } from '../../utils/procedenciaUtils';
+import AliadoDelPaciente from './AliadoDelPaciente';
 import { getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
 import { getPatientInteractions, getPatientInteractionsMetrics, getDailyActionsMetricsByPatient, addInteraction, updateInteraction, getListUsers } from '../../services/interactionService';
 import { getPatientProducts, convertQuoteToSale, getQuoteHistory, updateSale } from '../../services/productService';
@@ -2876,6 +2877,10 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                             </Typography>
                           </Box>
                         )}
+                        <AliadoDelPaciente
+                          patientId={patient?.id || appointment?.patientId || null}
+                          readOnly={readOnly}
+                        />
                         {sourceData?.medicoReferente && (
                           <Box>
                             <Typography variant="caption" sx={{ color: '#86899C', display: 'block', mb: 0.5 }}>
