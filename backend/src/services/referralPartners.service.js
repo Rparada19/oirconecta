@@ -83,9 +83,45 @@ async function atribuirPaciente(patientId, partnerId) {
   return partnerId;
 }
 
+/**
+ * Mete al referido en el newsletter, segmento PACIENTE.
+ *
+ * Se le avisa en el primer mensaje del bot, antes de que entregue un solo
+ * dato, y todo correo lleva enlace de baja: es el mismo esquema de aviso y
+ * oposición con que opera el resto del sitio (Ley 1581).
+ *
+ * No pisa a quien ya está: si alguien se dio de baja por su cuenta, se queda
+ * de baja. Nunca lanza — un fallo aquí no puede tumbar una cita.
+ */
+async function suscribirAlNewsletter({ nombre, email, telefono, ciudad }) {
+  try {
+    const correo = String(email || '').trim().toLowerCase();
+    if (!correo || !correo.includes('@')) return null;
+
+    const existente = await prisma.newsletterSubscriber.findUnique({ where: { email: correo } });
+    if (existente) return existente;
+
+    return await prisma.newsletterSubscriber.create({
+      data: {
+        nombre: String(nombre || '').trim() || 'Paciente',
+        email: correo,
+        telefono: telefono || null,
+        ciudad: ciudad || null,
+        tipo: 'PACIENTE',
+        status: 'ACTIVE',
+        source: 'aliado-qr',
+      },
+    });
+  } catch (e) {
+    console.error('[aliados] suscripción al newsletter falló:', e.message);
+    return null;
+  }
+}
+
 module.exports = {
   normalizar,
   detectarEnTexto,
   marcarConversacion,
   atribuirPaciente,
+  suscribirAlNewsletter,
 };

@@ -161,6 +161,15 @@ const bookingToolImpls = {
               data: { ciudad: String(input.ciudad).trim() },
             });
           }
+          // El referido entra al newsletter. Se le avisó en el primer mensaje.
+          if (ctx?.partnerId && input.patientEmail) {
+            await require('./referralPartners.service').suscribirAlNewsletter({
+              nombre: input.patientName || contactName,
+              email: input.patientEmail,
+              telefono: waPhone,
+              ciudad: input.ciudad || null,
+            });
+          }
         }
       } catch (e) {
         console.error('[wa-bot] ciudad/atribución falló:', e.message);
@@ -220,6 +229,13 @@ const bookingToolImpls = {
         data: { intent: 'CITA_PACIENTE' },
       }).catch(() => {});
     }
+
+    await referrals.suscribirAlNewsletter({
+      nombre: lead.nombre,
+      email: lead.email,
+      telefono: lead.telefono,
+      ciudad,
+    });
 
     require('./alertaEquipo.service').avisar({
       titulo: `Referido de aliado en ${ciudad} — hay que llamarlo`,
@@ -891,7 +907,7 @@ async function iniciarFlujoAliado(conversationId, partner) {
 
 Veo que vienes de parte de *${partner.nombre}*. Te acompañamos con tu *valoración auditiva* sin costo adicional.
 
-Te pido cuatro datos rápidos y te dejo la cita lista. Le contaremos a ${partner.nombre} que atendimos tu caso —nunca tus resultados ni tu historia clínica—; si prefieres que no, dímelo y lo respetamos.
+Te pido cuatro datos rápidos y te dejo la cita lista. Le contaremos a ${partner.nombre} que atendimos tu caso —nunca tus resultados ni tu historia clínica— y te enviaremos de vez en cuando consejos de salud auditiva, con un enlace para darte de baja cuando quieras. Si prefieres que no, dímelo y lo respetamos.
 
 Para empezar, ¿cuál es tu *nombre completo*?`;
 
