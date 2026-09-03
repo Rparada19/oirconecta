@@ -903,13 +903,15 @@ async function iniciarFlujoAliado(conversationId, partner) {
 
   const saludo = conv.contactName ? `¡Hola, ${firstName(conv.contactName)}! 👋` : '¡Hola! 👋';
   const texto =
-`${saludo} Somos *OírConecta*, centro auditivo en Bogotá.
+`${saludo} 🤝 *OírConecta* y *${partner.nombre}* nos unimos para cuidar tu audición de ahora en adelante.
 
-Veo que vienes de parte de *${partner.nombre}*. Te acompañamos con tu *valoración auditiva* sin costo adicional.
+Gracias por comprar tus protectores, y gracias por querer cuidar tu audición con nosotros.
 
-Te pido cuatro datos rápidos y te dejo la cita lista. Le contaremos a ${partner.nombre} que atendimos tu caso —nunca tus resultados ni tu historia clínica— y te enviaremos de vez en cuando consejos de salud auditiva, con un enlace para darte de baja cuando quieras. Si prefieres que no, dímelo y lo respetamos.
+Desde hoy tienes tu *audiometría de control gratis cada año, durante 5 años*. No es una foto de un día: es ver cómo evoluciona tu oído en el tiempo, que es lo que permite actuar a tiempo.
 
-Para empezar, ¿cuál es tu *nombre completo*?`;
+Te pido cuatro datos y te dejo la cita agendada hoy mismo. Le contaremos a ${partner.nombre} que te atendimos —nunca tus resultados ni tu historia clínica— y te enviaremos consejos de audición de vez en cuando, con enlace para darte de baja cuando quieras. Si prefieres que no, dímelo y listo.
+
+¿Cuál es tu *nombre completo*?`;
 
   try {
     const result = await sendWhatsAppText({ to: conv.phone, text: texto });
