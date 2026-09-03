@@ -61,20 +61,51 @@ function Etiqueta({ meta }) {
   );
 }
 
-function Login({ onEntrar }) {
+/**
+ * Puerta del portal: entrar, crear cuenta, pedir enlace y fijar clave nueva.
+ * Los cuatro modos comparten tarjeta para que el aliado no salte entre
+ * pantallas distintas.
+ */
+function Puerta({ onEntrar }) {
+  // El enlace del correo llega como ?reset=<token>: si viene, arranca ahí.
+  const tokenReset = React.useMemo(() => {
+    try { return new URLSearchParams(window.location.search).get('reset'); } catch { return null; }
+  }, []);
+
+  const [modo, setModo] = useState(tokenReset ? 'restablecer' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [codigo, setCodigo] = useState('');
   const [error, setError] = useState('');
+  const [aviso, setAviso] = useState('');
   const [cargando, setCargando] = useState(false);
+
+  const cambiar = (m) => { setModo(m); setError(''); setAviso(''); };
 
   const enviar = async (e) => {
     e.preventDefault();
-    setError('');
-    setCargando(true);
+    setError(''); setAviso(''); setCargando(true);
     try {
-      const data = await aliadoApi.login(email, password);
-      setToken(data.token);
-      onEntrar(data.aliado);
+      if (modo === 'login') {
+        const data = await aliadoApi.login(email, password);
+        setToken(data.token);
+        onEntrar(data.aliado);
+      } else if (modo === 'registro') {
+        const data = await aliadoApi.registro({ nombre, email, password, codigoInvitacion: codigo });
+        setToken(data.token);
+        onEntrar(data.aliado);
+      } else if (modo === 'recuperar') {
+        const data = await aliadoApi.recuperar(email);
+        setAviso(data.mensaje);
+      } else {
+        const data = await aliadoApi.restablecer(tokenReset, password);
+        setAviso(data.mensaje);
+        setPassword('');
+        setModo('login');
+        // Deja la URL limpia: el token ya se usó.
+        try { window.history.replaceState({}, '', window.location.pathname); } catch { /* nada */ }
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -82,39 +113,92 @@ function Login({ onEntrar }) {
     }
   };
 
+  const TEXTOS = {
+    login: { titulo: 'Portal de aliados', boton: 'Entrar', cargando: 'Entrando…' },
+    registro: { titulo: 'Crear cuenta', boton: 'Crear cuenta', cargando: 'Creando…' },
+    recuperar: { titulo: 'Recuperar contraseña', boton: 'Enviarme el enlace', cargando: 'Enviando…' },
+    restablecer: { titulo: 'Nueva contraseña', boton: 'Guardar contraseña', cargando: 'Guardando…' },
+  };
+  const t = TEXTOS[modo];
+
   return (
     <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: '#f8fafc', p: 2 }}>
       <Card sx={{ p: 4, width: '100%', maxWidth: 420, border: `1px solid ${BORDER}`, boxShadow: 'none' }}>
-        <Typography sx={{ ...SERIF, fontSize: 26, color: NAVY, mb: 0.5 }}>
-          Portal de aliados
-        </Typography>
+        <Typography sx={{ ...SERIF, fontSize: 26, color: NAVY, mb: 0.5 }}>{t.titulo}</Typography>
         <Typography sx={{ color: MUTED, fontSize: 14, mb: 3 }}>
-          OírConecta · Programa de referidos
+          {modo === 'registro'
+            ? 'Pide el código de invitación a quien coordina el convenio.'
+            : modo === 'recuperar'
+            ? 'Te mandamos un enlace para crear una contraseña nueva.'
+            : 'OírConecta · Programa de referidos'}
         </Typography>
 
         <form onSubmit={enviar}>
           <Stack spacing={2}>
-            <TextField
-              label="Correo" type="email" value={email} size="small" fullWidth required
-              onChange={(e) => setEmail(e.target.value)} autoComplete="username"
-            />
-            <TextField
-              label="Contraseña" type="password" value={password} size="small" fullWidth required
-              onChange={(e) => setPassword(e.target.value)} autoComplete="current-password"
-            />
+            {modo === 'registro' && (
+              <TextField
+                label="Tu nombre" value={nombre} size="small" fullWidth required
+                onChange={(e) => setNombre(e.target.value)} autoComplete="name"
+              />
+            )}
+
+            {modo !== 'restablecer' && (
+              <TextField
+                label="Correo" type="email" value={email} size="small" fullWidth required
+                onChange={(e) => setEmail(e.target.value)} autoComplete="username"
+              />
+            )}
+
+            {modo !== 'recuperar' && (
+              <TextField
+                label={modo === 'login' ? 'Contraseña' : 'Contraseña nueva'}
+                type="password" value={password} size="small" fullWidth required
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
+                helperText={modo === 'login' ? undefined : 'Mínimo 10 caracteres'}
+              />
+            )}
+
+            {modo === 'registro' && (
+              <TextField
+                label="Código de invitación" value={codigo} size="small" fullWidth required
+                onChange={(e) => setCodigo(e.target.value)}
+              />
+            )}
+
             {error && <Alert severity="error">{error}</Alert>}
+            {aviso && <Alert severity="success">{aviso}</Alert>}
+
             <Button
               type="submit" variant="contained" disabled={cargando}
               sx={{ bgcolor: ACCENT, textTransform: 'none', fontWeight: 600, py: 1.2, '&:hover': { bgcolor: '#5b21b6' } }}
             >
-              {cargando ? 'Entrando…' : 'Entrar'}
+              {cargando ? t.cargando : t.boton}
             </Button>
           </Stack>
         </form>
+
+        <Stack direction="row" justifyContent="space-between" sx={{ mt: 2.5 }}>
+          {modo === 'login' ? (
+            <>
+              <Button onClick={() => cambiar('registro')} size="small" sx={{ textTransform: 'none', color: ACCENT }}>
+                Crear cuenta
+              </Button>
+              <Button onClick={() => cambiar('recuperar')} size="small" sx={{ textTransform: 'none', color: MUTED }}>
+                Olvidé mi contraseña
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => cambiar('login')} size="small" sx={{ textTransform: 'none', color: MUTED }}>
+              ← Volver a entrar
+            </Button>
+          )}
+        </Stack>
       </Card>
     </Box>
   );
 }
+
 
 function Metrica({ titulo, valor, detalle }) {
   return (
@@ -172,7 +256,7 @@ export default function AliadoPortalPage() {
     return <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><CircularProgress /></Box>;
   }
   if (!aliado) {
-    return <Login onEntrar={setAliado} />;
+    return <Puerta onEntrar={setAliado} />;
   }
 
   return (

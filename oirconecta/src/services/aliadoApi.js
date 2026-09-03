@@ -61,6 +61,9 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 
 export const aliadoApi = {
   login: (email, password) => request('/login', { method: 'POST', body: { email, password }, auth: false }),
+  registro: (body) => request('/registro', { method: 'POST', body, auth: false }),
+  recuperar: (email) => request('/recuperar', { method: 'POST', body: { email }, auth: false }),
+  restablecer: (token, password) => request('/restablecer', { method: 'POST', body: { token, password }, auth: false }),
   me: () => request('/me'),
   referidos: (code) => request(`/${encodeURIComponent(code)}/referidos`),
   resumen: (code) => request(`/${encodeURIComponent(code)}/resumen`),

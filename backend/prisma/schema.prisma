@@ -363,6 +363,12 @@ model ReferralPartner {
   /// Porcentaje sobre el valor facturado de la venta de audífonos.
   comisionPct Float @default(10)
 
+  /// Código de invitación que el aliado comparte con su equipo para que cada
+  /// quien se cree su cuenta. Distinto del `code` del QR: ese es público (va
+  /// impreso en las tarjetas), este no. Sin él, cualquiera que dé con la URL
+  /// podría abrirse una cuenta y ver referidos de pacientes.
+  registroCode String? @unique
+
   contactoNombre String?
   contactoEmail  String?
   notas          String? @db.Text
@@ -392,6 +398,11 @@ model ReferralPartnerAccount {
   passwordHash String
   nombre       String?
   activo       Boolean @default(true)
+
+  /// Recuperación de contraseña. Se guarda el hash del token, nunca el token:
+  /// quien lea la base no puede entrar con lo que encuentre ahí.
+  resetTokenHash      String?
+  resetTokenExpiresAt DateTime?
 
   lastLoginAt DateTime?
   createdAt   DateTime  @default(now())

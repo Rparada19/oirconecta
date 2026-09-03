@@ -22,6 +22,9 @@ router.get('/', async (req, res) => {
       orderBy: { nombre: 'asc' },
       select: {
         id: true, nombre: true, code: true, comisionPct: true, activo: true,
+        // El de invitación se muestra aquí y solo aquí: es lo que el equipo
+        // le pasa al aliado para que su gente se cree cuenta.
+        registroCode: true,
         _count: { select: { patients: true, leads: true, commissions: true } },
       },
     });
