@@ -144,6 +144,8 @@ const create = async (data, createdById) => {
       campanaMarketingOffline: data.campanaMarketingOffline,
       personaRecomendacion: data.personaRecomendacion,
       agendamientoManualTipo: data.agendamientoManualTipo,
+      // Aliado referidor (QR de tarjeta). Ver referralPartners.service.
+      partnerId: data.partnerId || null,
       appointmentId: data.appointmentId || null,
       createdById,
     },
@@ -210,6 +212,9 @@ const convertToPatient = async (id, additionalData = {}) => {
       procedencia: lead.procedencia,
       notas: additionalData.notas || lead.notas,
       tienePerdidaAuditiva: additionalData.tienePerdidaAuditiva || false,
+      // La atribución al aliado viaja con el paciente: la comisión se liquida
+      // sobre la venta, que ocurre cuando ya es Patient y no Lead.
+      partnerId: lead.partnerId,
       leadId: lead.id,
     },
   });

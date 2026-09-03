@@ -346,6 +346,37 @@ enum DirectoryPersonaTipo {
 // LEADS
 // ===========================================
 
+// ===========================================
+// ALIADOS REFERIDORES (plug-e y los que sigan)
+// Empresas que mandan clientes al centro con una tarjeta + QR. No confundir
+// con Patient.referralCode, que es paciente-invita-a-paciente.
+// La venta SIEMPRE la factura OírConecta; el aliado solo comisiona.
+// ===========================================
+
+model ReferralPartner {
+  id     String  @id @default(uuid())
+  nombre String
+  /// Código que viaja en el mensaje prellenado del QR. Se compara en mayúsculas.
+  code   String  @unique
+  activo Boolean @default(true)
+
+  /// Porcentaje sobre el valor facturado de la venta de audífonos.
+  comisionPct Float @default(10)
+
+  contactoNombre String?
+  contactoEmail  String?
+  notas          String? @db.Text
+
+  leads         Lead[]
+  patients      Patient[]
+  conversations WhatsAppConversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("referral_partners")
+}
+
 model Lead {
   id                        String     @id @default(uuid())
   /// Inquilino dueño de este lead. Ver Patient.ownerProfileId.
@@ -360,6 +391,11 @@ model Lead {
   interes                   String     @default("Consulta General")
   notas                     String?
   estado                    LeadEstado @default(NUEVO)
+
+  /// Aliado referidor que trajo este lead (QR de su tarjeta). La atribución
+  /// no caduca: la venta que venga del aliado es del aliado.
+  partnerId String?
+  partner   ReferralPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
 
   // Campos adicionales de procedencia
   medicoReferente         String?
@@ -461,6 +497,10 @@ model Patient {
   birthdayLastSentAt DateTime? // último email de cumpleaños enviado (guard idempotencia anual)
   referralCode       String?   @unique // código único para invitar amigos
   referredByCode     String? // código del paciente que lo refirió (si aplica)
+
+  /// Aliado referidor (empresa) que trajo a este paciente. Ver ReferralPartner.
+  partnerId String?
+  partner   ReferralPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
 
   // Relación con lead original
   leadId String? @unique
@@ -827,8 +867,8 @@ enum CampaignStatus {
 model Quote {
   /// Plan de adaptación cotizado. Null = cotización de audífono suelto.
   hearingPlanId String?
-  id     String      @id @default(uuid())
-  estado QuoteStatus @default(PENDING)
+  id            String      @id @default(uuid())
+  estado        QuoteStatus @default(PENDING)
 
   // Producto
   marca      String
@@ -969,7 +1009,6 @@ enum SaleCategory {
   ACCESSORY // Accesorio
 }
 
-
 // ===========================================
 // PLANES DE AUDICIÓN (lo que se le vende al paciente)
 // No confundir con `Plan`, que son las suscripciones que se le venden a los
@@ -989,54 +1028,54 @@ model HearingPlan {
   /// Marca del equipo con el que se arma el plan. Es dato interno de
   /// inventario y garantía con el fabricante: el bot NO lo anuncia al paciente
   /// (ver el nodo de conocimiento interno del agente).
-  marca             String?
-  nivelTecnologia   Int?
-  plataforma        String?
-  formatos          String?
-  audifonosIncluidos Int    @default(2)
-  anosGarantia      Int
-  recargable        Boolean @default(false)
+  marca              String?
+  nivelTecnologia    Int?
+  plataforma         String?
+  formatos           String?
+  audifonosIncluidos Int     @default(2)
+  anosGarantia       Int
+  recargable         Boolean @default(false)
 
   // ── Cupos de servicio: esto es lo que gobierna el seguimiento ──
   /// Meses en que caen los controles de adaptación de ESTE plan. No es un
   /// prefijo de una secuencia común: cada plan elige sus momentos. 0.25 = a la
   /// semana. Ej. Preludio [0.25, 1, 6, 12]; Sonata [3, 12].
   /// OBLIGATORIOS para mantener la cobertura.
-  controlesMeses Float[] @default([])
+  controlesMeses      Float[] @default([])
   /// Cantidad impresa en la ficha comercial. Se conserva porque es lo que se le
   /// promete al paciente por escrito, y hoy no coincide con controlesMeses.
-  controlesAdaptacion Int @default(0)
+  controlesAdaptacion Int     @default(0)
   /// Audiometrías anuales incluidas. OBLIGATORIAS para mantener la cobertura.
-  audiometrias        Int @default(0)
+  audiometrias        Int     @default(0)
   /// Controles de garantía: revisión periódica del equipo mientras dura la
   /// cobertura. Cadencia en meses y por cuántos años corre.
-  garantiaCadaMeses   Int @default(6)
-  garantiaAnos        Int @default(0)
+  garantiaCadaMeses   Int     @default(6)
+  garantiaAnos        Int     @default(0)
   /// Mantenimientos sin costo del plan, en TOTAL. Se reparten en dos:
   ///  · los programados, que son los controles de garantía (cadencia × años),
   ///  · y el resto, voluntarios: el paciente pasa por el centro a cambiar
   ///    filtros cuando quiera, hasta agotar el cupo.
   /// No incluye reemplazo de piezas.
-  mantenimientos      Int @default(0)
+  mantenimientos      Int     @default(0)
   /// Terapias de entrenamiento auditivo incluidas.
-  terapias            Int @default(0)
+  terapias            Int     @default(0)
 
   // ── Coberturas ──
-  seguroPerdidaMeses Int?
-  seguroRoturaMeses  Int?
-  filtrosAnticerumen String?
-  bateriasIncluidas  String?
-  cargadorReposicion String?
-  cambioReceptores   String?
-  satisfaccionDias   Int?
+  seguroPerdidaMeses  Int?
+  seguroRoturaMeses   Int?
+  filtrosAnticerumen  String?
+  bateriasIncluidas   String?
+  cargadorReposicion  String?
+  cambioReceptores    String?
+  satisfaccionDias    Int?
   audifonoRestitucion Boolean @default(false)
 
   // ── Beneficios ──
-  dctoReparaciones Int?
-  dctoAccesorios   Int?
+  dctoReparaciones  Int?
+  dctoAccesorios    Int?
   dctoSiguientePlan Int?
-  lineaExclusiva   Boolean @default(false)
-  videoconsulta    Boolean @default(false)
+  lineaExclusiva    Boolean @default(false)
+  videoconsulta     Boolean @default(false)
 
   /// Precio del plan completo por los dos audífonos, en COP sin decimales.
   precioCOP Int
@@ -1310,26 +1349,26 @@ model ProfileView {
 
 /// Suscriptor del boletín. `email` único. Las bajas se marcan con status, no se borran (trazabilidad).
 model NewsletterSubscriber {
-  id               String                     @id @default(uuid())
-  nombre           String
-  email            String                     @unique
-  telefono         String?
-  ciudad           String?
+  id                  String                     @id @default(uuid())
+  nombre              String
+  email               String                     @unique
+  telefono            String?
+  ciudad              String?
   /// Quién es el suscriptor. Define a quién se le manda cada artículo: lo que
   /// le sirve a un paciente no es lo que le sirve a un profesional.
-  tipo             NewsletterSubscriberTipo   @default(OTRO)
-  status           NewsletterSubscriberStatus @default(ACTIVE)
+  tipo                NewsletterSubscriberTipo   @default(OTRO)
+  status              NewsletterSubscriberStatus @default(ACTIVE)
   /// De dónde vino: home, blog, footer, popup, import, etc.
-  source           String?
+  source              String?
   /// Token para el enlace de baja (un solo valor por suscriptor).
-  unsubscribeToken String                     @unique @default(uuid())
-  welcomeSentAt    DateTime?
-  unsubscribedAt   DateTime?
+  unsubscribeToken    String                     @unique @default(uuid())
+  welcomeSentAt       DateTime?
+  unsubscribedAt      DateTime?
   /// Campaña desde la que se dio de baja, si la baja vino de un correo.
   /// Permite medir qué envío quema lista.
   unsubFromCampaignId String?
-  createdAt        DateTime                   @default(now())
-  updatedAt        DateTime                   @updatedAt
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
 
   sends NewsletterSend[]
 
@@ -1354,24 +1393,24 @@ enum NewsletterSubscriberStatus {
 
 /// Una edición del boletín. Guarda el HTML enviado y contadores agregados para el panel admin.
 model NewsletterCampaign {
-  id             String                   @id @default(uuid())
+  id             String                     @id @default(uuid())
   asunto         String
   preheader      String?
-  htmlContent    String                   @db.Text
+  htmlContent    String                     @db.Text
   /// Post de blog asociado (opcional), si la campaña difunde un artículo.
   blogPostId     String?
   /// Segmentos destinatarios. Vacío = todos los activos.
   segmentos      NewsletterSubscriberTipo[] @default([])
-  status         NewsletterCampaignStatus @default(DRAFT)
+  status         NewsletterCampaignStatus   @default(DRAFT)
   /// Contadores agregados (se actualizan al enviar y con el pixel de apertura).
-  recipientCount Int                      @default(0)
-  sentCount      Int                      @default(0)
-  openCount      Int                      @default(0)
-  clickCount     Int                      @default(0)
+  recipientCount Int                        @default(0)
+  sentCount      Int                        @default(0)
+  openCount      Int                        @default(0)
+  clickCount     Int                        @default(0)
   scheduledFor   DateTime?
   sentAt         DateTime?
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
 
   sends NewsletterSend[]
 
@@ -1697,7 +1736,7 @@ model Subscription {
   iaConversationsPeriodAt DateTime?
 
   /// Fecha en que se envió el correo de "prueba vencida, elige un plan". Null = no enviado.
-  trialEndedEmailSentAt   DateTime?
+  trialEndedEmailSentAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2619,34 +2658,34 @@ model IaMessage {
 /// Nombre visible (ej. "Sofía", "Camilo") y color hex de la burbuja/FAB.
 /// Si no existe registro, el widget usa defaults (nombre "Asistente" + púrpura #6d28d9).
 model IaAgentConfig {
-  id             String           @id @default(uuid())
-  profileId      String           @unique
-  profile        DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  id              String           @id @default(uuid())
+  profileId       String           @unique
+  profile         DirectoryProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   /// Nombre visible del asistente (2-30 chars). Se usa en el system prompt y en el widget.
-  agentName      String           @default("Asistente")
+  agentName       String           @default("Asistente")
   /// Color hex de la burbuja / FAB. Formato "#RRGGBB".
-  agentColor     String           @default("#6d28d9")
+  agentColor      String           @default("#6d28d9")
   /// Ícono del bot. Whitelist de keys (ej. "smart_toy", "auto_awesome", "spa").
   /// El frontend mapea el key a un componente MUI concreto.
-  agentIcon      String           @default("smart_toy")
+  agentIcon       String           @default("smart_toy")
   /// Mensaje de bienvenida opcional (si null, el widget genera uno automático).
-  welcomeMessage String?
+  welcomeMessage  String?
   /// F5.6 — Educación del asistente. Se inyectan en el system prompt.
   /// Tono y personalidad ("cercana, empática, evita jerga clínica"). Max 600 chars.
-  personality    String?
+  personality     String?
   /// Áreas de expertise específicas del profesional para que el bot pueda mencionarlas.
   /// Ej: "adaptación audífonos pediátricos, tinnitus, terapia auditiva". Max 600 chars.
-  expertise      String?
+  expertise       String?
   /// Frase de firma / cierre habitual. Ej: "Cuídate mucho — Piedad". Max 200 chars.
-  signature      String?
+  signature       String?
   /// Temas que el bot NO debe tocar. Ej: "precios exactos, promociones, diagnósticos". Max 600 chars.
-  avoidTopics    String?
+  avoidTopics     String?
   /// Marcas, plataformas y tecnología que maneja el consultorio. Max 1200 chars.
-  technologies   String?
+  technologies    String?
   /// Servicios que presta y qué incluye cada uno. Max 1200 chars.
-  services       String?
+  services        String?
   /// Cómo funciona la atención: sedes, horarios, tiempos, convenios. Max 900 chars.
-  logistics      String?
+  logistics       String?
   /// Qué lo diferencia: garantías, seguimiento, trayectoria. Max 900 chars.
   differentiators String?
 
@@ -2658,8 +2697,8 @@ model IaAgentConfig {
   /// Qué puede decir de dinero y qué no. Antes vivía repartido entre
   /// services y avoidTopics.
   pricing           String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   faqs      IaAgentFaq[]
   documents IaAgentDocument[]
@@ -2849,6 +2888,11 @@ model WhatsAppConversation {
   /// del ejecutivo registra automáticamente una SalesActivity tipo WHATSAPP.
   salesLeadId String?
   salesLead   SalesLead? @relation("WaConvSalesLead", fields: [salesLeadId], references: [id], onDelete: SetNull)
+
+  /// Aliado referidor detectado en el mensaje prellenado del QR. Se copia al
+  /// Lead y al Patient cuando la conversación termina en cita o registro.
+  partnerId String?
+  partner   ReferralPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
 
   /// Ventana de 24h desde el último mensaje INBOUND del cliente. Después → solo HSM.
   windowExpiresAt DateTime?
@@ -3089,7 +3133,7 @@ model CaptacionBotConfig {
   planesPrecios      String?  @db.Text
   diferenciadores    String?  @db.Text
   objeciones         String?  @db.Text
-  faqs               Json?    // [{ pregunta, respuesta }]
+  faqs               Json? // [{ pregunta, respuesta }]
   tono               String?  @db.Text
   objetivoCierre     String   @default("AGENDAR") // AGENDAR | CERRAR_CHAT
   instruccionesExtra String?  @db.Text
@@ -3104,14 +3148,14 @@ model CaptacionBotConfig {
 // y renderizado en las landings /audifonos/<slug>. El cron mensual y el botón
 // admin lo refrescan; la landing hace fallback al contenido estático si falta.
 model BrandInfo {
-  slug        String   @id            // widex, oticon, phonak...
+  slug        String    @id // widex, oticon, phonak...
   nombre      String
-  categoria   String   @default("audifonos") // audifonos | implantes
-  contenidoMd String?  @db.Text       // secciones editoriales en markdown
-  resumen     String?  @db.Text       // 1-2 frases para meta description
+  categoria   String    @default("audifonos") // audifonos | implantes
+  contenidoMd String?   @db.Text // secciones editoriales en markdown
+  resumen     String?   @db.Text // 1-2 frases para meta description
   generatedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@map("brand_info")
 }
@@ -3156,16 +3200,16 @@ model FinanceExpense {
 }
 
 model FinanceAsset {
-  id             String   @id @default(uuid())
-  nombre         String
+  id            String    @id @default(uuid())
+  nombre        String
   /// equipos | muebles | tecnologia | vehiculos | otros
-  categoria      String   @default("equipos")
-  valorCompra    Float
-  valorResidual  Float    @default(0)
-  fechaCompra    DateTime
-  vidaUtilMeses  Int      @default(60)
-  notas          String?
-  dadoDeBajaAt   DateTime?
+  categoria     String    @default("equipos")
+  valorCompra   Float
+  valorResidual Float     @default(0)
+  fechaCompra   DateTime
+  vidaUtilMeses Int       @default(60)
+  notas         String?
+  dadoDeBajaAt  DateTime?
 
   createdById String?
   createdAt   DateTime @default(now())

@@ -310,9 +310,29 @@ async function processIncomingEvent(body) {
               }
             }
 
+            // QR de tarjeta de aliado: el mensaje prellenado trae el código.
+            // Se detecta antes del dispatcher porque cambia el saludo inicial
+            // y la rama completa de la conversación.
+            let partnerDetectado = null;
+            if (textBody) {
+              try {
+                const referrals = require('./referralPartners.service');
+                partnerDetectado = await referrals.detectarEnTexto(textBody);
+                if (partnerDetectado) {
+                  await referrals.marcarConversacion(r.conversationId, partnerDetectado.id);
+                }
+              } catch (pe) {
+                console.error('[wa-aliado] detección falló:', pe.message);
+              }
+            }
+
             // F9b — Dispatcher del bot corporativo (solo si WA_BOT_ENABLED=true)
             try {
-              if (btnPayload) {
+              if (partnerDetectado && r.isNew) {
+                // Primer mensaje y viene del QR → arranca la toma de datos
+                // directamente, sin los botones del handshake.
+                await bot.iniciarFlujoAliado(r.conversationId, partnerDetectado);
+              } else if (btnPayload) {
                 // Respuesta a botones interactivos del handshake → tipifica y escala
                 await bot.handleButtonReply({
                   conversationId: r.conversationId,

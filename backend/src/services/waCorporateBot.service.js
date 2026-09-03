@@ -72,6 +72,31 @@ const BOOKING_TOOLS = [
   },
 ];
 
+// Solo para la rama REFERIDO_ALIADO: fuera de Bogotá no hay agenda propia, así
+// que el bot cierra dejando el lead y la tarea para servicio al cliente.
+const REFERIDO_TOOLS = [
+  {
+    name: 'registrar_referido_otra_ciudad',
+    description: 'Registra a un referido que NO está en Bogotá para que servicio al cliente lo llame. Llama esto SOLO cuando ya tengas nombre, correo y ciudad confirmados.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        nombre: { type: 'string' },
+        email: { type: 'string' },
+        telefono: { type: 'string', description: 'Si la persona dio otro número distinto al de WhatsApp. Opcional.' },
+        ciudad: { type: 'string', description: 'Cartagena, Barranquilla, Cali o Medellín.' },
+      },
+      required: ['nombre', 'email', 'ciudad'],
+    },
+  },
+];
+
+/** Qué herramientas ve el modelo según la rama de la conversación. */
+function toolsFor(contactType) {
+  if (contactType === 'REFERIDO_ALIADO') return [...BOOKING_TOOLS, ...REFERIDO_TOOLS];
+  return BOOKING_TOOLS;
+}
+
 // Delegado a retail.service (misma resolución que /api/public/retail-config).
 const retailProfileId = retailService.getRetailProfileId;
 
@@ -115,6 +140,22 @@ const bookingToolImpls = {
       }).catch(() => {});
     }
 
+    // Atribución al aliado que trajo al paciente por el QR. Va después de
+    // crear la cita para no arriesgar la reserva si esto falla.
+    if (ctx?.partnerId) {
+      try {
+        const appt = await prisma.appointment.findUnique({
+          where: { id: res.id },
+          select: { patientId: true },
+        });
+        if (appt?.patientId) {
+          await require('./referralPartners.service').atribuirPaciente(appt.patientId, ctx.partnerId);
+        }
+      } catch (e) {
+        console.error('[wa-bot] atribución de aliado falló:', e.message);
+      }
+    }
+
     return {
       id: res.id,
       fecha: res.fecha,
@@ -124,7 +165,78 @@ const bookingToolImpls = {
       mensaje: `Cita confirmada. Recibirás email con detalles y enlace para reagendar.`,
     };
   },
+
+  async registrar_referido_otra_ciudad(ctx, input) {
+    const { conversationId, waPhone, partnerId } = ctx || {};
+    const ciudad = String(input.ciudad || '').trim();
+    const referrals = require('./referralPartners.service');
+    const ciudadNorm = referrals.normalizar(ciudad);
+    if (!CIUDADES_SIN_AGENDA.some((c) => referrals.normalizar(c) === ciudadNorm)) {
+      return {
+        error: `"${ciudad}" no es una de las ciudades del convenio. Solo Cartagena, Barranquilla, Cali y Medellín se registran por aquí; Bogotá se agenda con create_appointment y cualquier otra ciudad va al directorio.`,
+      };
+    }
+
+    const lead = await prisma.lead.create({
+      data: {
+        nombre: String(input.nombre || '').trim(),
+        email: String(input.email || '').trim().toLowerCase(),
+        telefono: String(input.telefono || waPhone || '').trim(),
+        ciudad,
+        procedencia: 'aliado-qr',
+        interes: 'Valoración auditiva',
+        estado: 'NUEVO',
+        partnerId: partnerId || null,
+        notas: `Referido por QR de aliado. Fuera de Bogotá (${ciudad}): servicio al cliente debe llamar para agendar.`,
+      },
+    });
+
+    await prisma.task.create({
+      data: {
+        type: 'CALL',
+        title: `Agendar referido de aliado — ${lead.nombre} (${ciudad})`,
+        description: `Llegó por el QR de un aliado.\nTeléfono: ${lead.telefono}\nCorreo: ${lead.email}\nCiudad: ${ciudad}\nSe le prometió llamada al siguiente día hábil.`,
+        priority: 'HIGH',
+        dueAt: siguienteDiaHabil(),
+        createdBy: 'system',
+        sourceEventCode: 'ALIADO_QR_FUERA_BOGOTA',
+      },
+    });
+
+    if (conversationId) {
+      await prisma.whatsAppConversation.update({
+        where: { id: conversationId },
+        data: { intent: 'CITA_PACIENTE' },
+      }).catch(() => {});
+    }
+
+    require('./alertaEquipo.service').avisar({
+      titulo: `Referido de aliado en ${ciudad} — hay que llamarlo`,
+      quien: lead.nombre,
+      telefono: lead.telefono,
+      texto: `Correo: ${lead.email}. Se le prometió llamada al siguiente día hábil.`,
+    }).catch(() => {});
+
+    return {
+      leadId: lead.id,
+      mensaje: 'Registrado. Servicio al cliente lo llama el siguiente día hábil.',
+    };
+  },
 };
+
+/** Siguiente día hábil a las 9:00 (hora Bogotá, guardada en UTC). */
+function siguienteDiaHabil() {
+  const d = new Date();
+  d.setUTCHours(14, 0, 0, 0); // 09:00 en Bogotá (UTC-5)
+  do {
+    d.setUTCDate(d.getUTCDate() + 1);
+  } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+  return d;
+}
+
+// Ciudades del acuerdo con aliados donde NO hay centro propio: no se agenda
+// en el chat, se promete llamada del equipo al siguiente día hábil.
+const CIUDADES_SIN_AGENDA = ['CARTAGENA', 'BARRANQUILLA', 'CALI', 'MEDELLIN'];
 
 const BUTTON_IDS = {
   PACIENTE_BOGOTA: 'wa_intent_paciente',
@@ -326,6 +438,56 @@ Si eres profesional y quieres hacer parte del directorio, déjanos tus datos ac�
 // ─── F9b.2 — Ramas conversacionales con Claude Haiku 4.5 ─────────
 
 const SYSTEM_PROMPTS = {
+  // Rama del QR de las tarjetas de aliados (plug-e y los que sigan). Llega
+  // gente que compró protectores auditivos, no gente que buscaba audiología:
+  // el orden de los datos lo fija el acuerdo comercial, no la conversación.
+  REFERIDO_ALIADO:
+`Eres el asesor de OírConecta, centro auditivo en Bogotá (Cr 10 #96-25 Cons. 320). Escribes por WhatsApp.
+
+Quien te escribe escaneó el QR de la tarjeta de *{ALIADO}*, que recibió al comprar sus protectores auditivos. Viene por una *valoración auditiva*. No sabe casi nada de nosotros y no estaba buscando un audiólogo: sé breve, cálido y no lo abrumes.
+
+Hoy es {HOY_PLACEHOLDER}.
+
+═══ LOS 4 DATOS (en este orden, uno por mensaje) ═══
+1. Nombre completo
+2. Teléfono de contacto (si es el mismo de este WhatsApp, basta con que diga "este mismo")
+3. Correo electrónico
+4. Ciudad de residencia
+
+Reglas de la toma de datos:
+- UN dato por mensaje. Nunca pidas los cuatro de golpe.
+- Si ya te dio uno sin que lo pidieras, no lo vuelvas a pedir: sigue con el siguiente.
+- No avances a la ciudad sin tener nombre, teléfono y correo.
+- Si se niega a dar el correo, insiste una vez ("es donde te llega la confirmación de la cita"); si vuelve a negarse, sigue sin él.
+
+═══ DESPUÉS DE LA CIUDAD, SE PARTE EN DOS ═══
+
+▸ Si dice *Bogotá* (o municipio del área: Chía, Cajicá, Soacha, Cota, Mosquera, Funza, La Calera):
+  Agendas TÚ MISMO, en este chat, con las herramientas.
+  1. list_appointment_types → identifica la valoración auditiva.
+  2. get_availability → mira horarios reales. Nunca inventes fechas ni horas.
+  3. Ofrece 2-3 horarios concretos. Cierre asumido: "Te agendo el *martes 3 a las 10:00 a.m.*, ¿te sirve?".
+  4. Con el sí, llama create_appointment y solo entonces confirmas con fecha, hora y dirección.
+
+▸ Si dice *Cartagena, Barranquilla, Cali o Medellín*:
+  NO agendes. No uses las herramientas de agenda. No mandes links de agenda.
+  Llama registrar_referido_otra_ciudad con nombre, correo y ciudad, y responde:
+  "Listo, {NOMBRE}. En tu ciudad la cita la coordina nuestro equipo: te llaman el *siguiente día hábil* para darte fecha y hora. Ya quedaste registrado."
+
+▸ Si dice cualquier OTRA ciudad:
+  Explica que por ahora la valoración con este beneficio está disponible en Bogotá, Cartagena, Barranquilla, Cali y Medellín, y compártele https://oirconecta.com/directorio para encontrar un profesional verificado cerca. No registres nada.
+
+═══ LÍMITES ═══
+- No des diagnósticos ni interpretes síntomas. Si describe molestias, valida en una línea y encadena con la cita.
+- No des precios de audífonos. El plan se define después de la valoración.
+- Si pregunta por sus protectores auditivos o quiere un reclamo del producto de {ALIADO}, aclara que eso lo maneja {ALIADO} directamente y vuelve a la valoración.
+- Solo agregas [ESCALAR_HUMANO] si hay urgencia médica clara (dolor fuerte, sangrado, pérdida súbita de audición) o si insiste 3+ veces en hablar con una persona.
+
+FORMATO WHATSAPP (obligatorio):
+- Negrita con UN asterisco: *negrita*. NUNCA dos (**): WhatsApp los muestra literales.
+- Máximo 1-2 emojis por mensaje. Mensajes de 2-4 líneas.
+- Tono colombiano, tuteo, cálido.`,
+
   PACIENTE_BOGOTA:
 `Eres el asesor de OírConecta, centro auditivo en Bogotá (Cr 10 #96-25 Cons. 320). Escribes por WhatsApp.
 
@@ -690,13 +852,77 @@ async function fichaPaciente(patientId) {
   return lineas.join('\n');
 }
 
+/**
+ * Primer mensaje de alguien que escaneó el QR de la tarjeta de un aliado.
+ * Reemplaza al handshake de botones: aquí ya sabemos a qué viene, así que
+ * arrancamos la toma de datos de una vez.
+ *
+ * El aviso de tratamiento de datos va en este mensaje a propósito: es el
+ * único momento en que la persona todavía no ha entregado nada.
+ */
+async function iniciarFlujoAliado(conversationId, partner) {
+  if (!botEnabled()) return { skipped: 'bot-disabled' };
+
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: { id: true, phone: true, contactName: true },
+  });
+  if (!conv) return { skipped: 'conv-not-found' };
+
+  const prevOutbound = await prisma.whatsAppMessage.count({
+    where: { conversationId, direction: 'OUTBOUND' },
+  });
+  if (prevOutbound > 0) return { skipped: 'already-answered' };
+
+  const saludo = conv.contactName ? `¡Hola, ${firstName(conv.contactName)}! 👋` : '¡Hola! 👋';
+  const texto =
+`${saludo} Somos *OírConecta*, centro auditivo en Bogotá.
+
+Veo que vienes de parte de *${partner.nombre}*. Te acompañamos con tu *valoración auditiva* sin costo adicional.
+
+Te pido cuatro datos rápidos y te dejo la cita lista. Le contaremos a ${partner.nombre} que atendimos tu caso —nunca tus resultados ni tu historia clínica—; si prefieres que no, dímelo y lo respetamos.
+
+Para empezar, ¿cuál es tu *nombre completo*?`;
+
+  try {
+    const result = await sendWhatsAppText({ to: conv.phone, text: texto });
+    await prisma.whatsAppMessage.create({
+      data: {
+        conversationId,
+        wamid: result?.providerMessageId || null,
+        direction: 'OUTBOUND',
+        type: 'text',
+        body: texto,
+        sentByBot: true,
+        deliveryStatus: 'sent',
+        timestamp: new Date(),
+      },
+    });
+    await prisma.whatsAppConversation.update({
+      where: { id: conversationId },
+      data: {
+        contactType: 'REFERIDO_ALIADO',
+        businessLine: 'CRM',
+        intent: 'CITA_PACIENTE',
+        status: 'BOT',
+        lastMessageAt: new Date(),
+        lastMessagePreview: `Bot: referido de ${partner.nombre} — pidiendo datos`,
+      },
+    });
+    return { sent: true };
+  } catch (e) {
+    console.error('[wa-bot] arranque de flujo aliado falló:', e.message);
+    return { error: e.message };
+  }
+}
+
 async function handleTextForBot({ conversationId, incomingText }) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
   if (!process.env.ANTHROPIC_API_KEY) return { skipped: 'no-anthropic-key' };
 
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, phone: true, contactType: true, status: true, contactName: true, patientId: true, botSummary: true },
+    select: { id: true, phone: true, contactType: true, status: true, contactName: true, patientId: true, botSummary: true, partnerId: true },
   });
   if (!conv) return { skipped: 'conv-not-found' };
   if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
@@ -718,6 +944,16 @@ async function handleTextForBot({ conversationId, incomingText }) {
     timeZone: 'America/Bogota',
   });
   systemPrompt = systemPrompt.replace('{HOY_PLACEHOLDER}', hoyLocal);
+
+  // Rama del QR: el nombre del aliado se nombra varias veces en el prompt.
+  let partner = null;
+  if (conv.partnerId) {
+    partner = await prisma.referralPartner.findUnique({
+      where: { id: conv.partnerId },
+      select: { id: true, nombre: true },
+    }).catch(() => null);
+  }
+  systemPrompt = systemPrompt.split('{ALIADO}').join(partner?.nombre || 'nuestro aliado');
 
   // La rama de profesional ya no argumenta ni capta por WhatsApp: solo manda
   // al formulario de /precios, que cae en Captación comercial → Leads. Por eso
@@ -748,7 +984,7 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
   // El número es del consultorio: tanto la rama de paciente como la de dudas
   // generales deben saber lo mismo que el widget de la ficha (marcas,
   // servicios, horarios).
-  if (conv.contactType === 'PACIENTE_BOGOTA' || conv.contactType === 'INFO_GENERAL') {
+  if (['PACIENTE_BOGOTA', 'INFO_GENERAL', 'REFERIDO_ALIADO'].includes(conv.contactType)) {
     try {
       const retailId = await retailProfileId();
       if (retailId) {
@@ -765,9 +1001,15 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
   //  · PACIENTE_BOGOTA     → agenda del centro (retail)
   //  · PROFESIONAL_DIRECTORIO → agenda del comercial de captación
   let agendaProfileId = null;
-  if (conv.contactType === 'PACIENTE_BOGOTA') agendaProfileId = await retailProfileId();
-  else if (conv.contactType === 'PROFESIONAL_DIRECTORIO') agendaProfileId = await comercialService.getComercialProfileId();
-  const useBookingTools = !!agendaProfileId;
+  if (conv.contactType === 'PACIENTE_BOGOTA' || conv.contactType === 'REFERIDO_ALIADO') {
+    agendaProfileId = await retailProfileId();
+  } else if (conv.contactType === 'PROFESIONAL_DIRECTORIO') {
+    agendaProfileId = await comercialService.getComercialProfileId();
+  }
+  // La rama del aliado necesita tools aunque falte la agenda: fuera de Bogotá
+  // solo registra el lead, y eso no depende del perfil retail.
+  const tools = toolsFor(conv.contactType);
+  const useBookingTools = !!agendaProfileId || conv.contactType === 'REFERIDO_ALIADO';
 
   const history = await loadHistory(conversationId);
   const messages = history.length > 0 ? history : [{ role: 'user', content: incomingText }];
@@ -775,7 +1017,13 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
   let reply = '';
   try {
     const client = new Anthropic();
-    const toolCtx = { conversationId: conv.id, waPhone: conv.phone, contactName: conv.contactName, profileId: agendaProfileId };
+    const toolCtx = {
+      conversationId: conv.id,
+      waPhone: conv.phone,
+      contactName: conv.contactName,
+      profileId: agendaProfileId,
+      partnerId: conv.partnerId || null,
+    };
 
     if (useBookingTools) {
       // Tool loop: hasta 5 iteraciones.
@@ -786,7 +1034,7 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
           model: CLAUDE_MODEL,
           max_tokens: 1024,
           system: systemPrompt,
-          tools: BOOKING_TOOLS,
+          tools,
           messages: workingMessages,
         });
         const toolUses = resp.content.filter((b) => b.type === 'tool_use');
@@ -917,6 +1165,7 @@ module.exports = {
   botEnabled,
   BUTTON_IDS,
   maybeSendHandshake,
+  iniciarFlujoAliado,
   actualizarResumen,
   handleButtonReply,
   handleTextForBot,
