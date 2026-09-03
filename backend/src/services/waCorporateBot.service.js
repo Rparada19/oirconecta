@@ -65,6 +65,7 @@ const BOOKING_TOOLS = [
         scheduledAt: { type: 'string', description: 'YYYY-MM-DDTHH:MM (hora local Bogotá).' },
         patientName: { type: 'string' },
         patientEmail: { type: 'string', description: 'Opcional pero recomendado — se le envía la confirmación.' },
+        ciudad: { type: 'string', description: 'Ciudad de residencia, si la persona ya la dijo.' },
         notas: { type: 'string', description: 'Motivo o info adicional, opcional.' },
       },
       required: ['appointmentTypeId', 'scheduledAt', 'patientName'],
@@ -140,19 +141,29 @@ const bookingToolImpls = {
       }).catch(() => {});
     }
 
-    // Atribución al aliado que trajo al paciente por el QR. Va después de
-    // crear la cita para no arriesgar la reserva si esto falla.
-    if (ctx?.partnerId) {
+    // Ciudad y atribución al aliado. Va después de crear la cita para no
+    // arriesgar la reserva si algo de esto falla.
+    if (ctx?.partnerId || input.ciudad) {
       try {
         const appt = await prisma.appointment.findUnique({
           where: { id: res.id },
           select: { patientId: true },
         });
         if (appt?.patientId) {
-          await require('./referralPartners.service').atribuirPaciente(appt.patientId, ctx.partnerId);
+          if (ctx?.partnerId) {
+            await require('./referralPartners.service').atribuirPaciente(appt.patientId, ctx.partnerId);
+          }
+          // Solo si está vacía: lo que diga la historia clínica manda sobre lo
+          // que se recogió de pasada en un chat.
+          if (input.ciudad) {
+            await prisma.patient.updateMany({
+              where: { id: appt.patientId, OR: [{ ciudad: null }, { ciudad: '' }] },
+              data: { ciudad: String(input.ciudad).trim() },
+            });
+          }
         }
       } catch (e) {
-        console.error('[wa-bot] atribución de aliado falló:', e.message);
+        console.error('[wa-bot] ciudad/atribución falló:', e.message);
       }
     }
 
@@ -467,7 +478,7 @@ Reglas de la toma de datos:
   1. list_appointment_types → identifica la valoración auditiva.
   2. get_availability → mira horarios reales. Nunca inventes fechas ni horas.
   3. Ofrece 2-3 horarios concretos. Cierre asumido: "Te agendo el *martes 3 a las 10:00 a.m.*, ¿te sirve?".
-  4. Con el sí, llama create_appointment y solo entonces confirmas con fecha, hora y dirección.
+  4. Con el sí, llama create_appointment —pasando nombre, correo Y ciudad— y solo entonces confirmas con fecha, hora y dirección.
 
 ▸ Si dice *Cartagena, Barranquilla, Cali o Medellín*:
   NO agendes. No uses las herramientas de agenda. No mandes links de agenda.
