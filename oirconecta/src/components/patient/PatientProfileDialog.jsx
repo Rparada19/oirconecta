@@ -980,9 +980,18 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   }, [appointmentDate, appointmentType, appointmentProfessional]);
 
   const handleCreateAppointmentFromProfile = async () => {
+    // El correo NO es obligatorio para agendar: mucho paciente mayor no tiene,
+    // y exigirlo dejaba la ficha sin poder registrar una cita. Nombre y
+    // teléfono sí, que es lo que pide la agenda.
     const email = getPatientEmail();
-    if (!email || !appointmentDate || !appointmentTime || !appointmentType) {
-      setSnackbar({ open: true, message: 'Por favor completa todos los campos obligatorios', severity: 'error' });
+    if (!appointmentDate || !appointmentTime || !appointmentType) {
+      setSnackbar({
+        open: true,
+        severity: 'error',
+        message: !appointmentType ? 'Falta el tipo de cita'
+          : !appointmentDate ? 'Falta la fecha'
+          : 'Falta la hora',
+      });
       return;
     }
     const selectedType = appointmentTypes.find(t => t.value === appointmentType);
@@ -1009,7 +1018,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
 
     if (result.success) {
       // Crear recordatorios (email, WhatsApp, llamada)
-      if (!citaSilenciosa) {
+      if (!citaSilenciosa && email) {
       const reminderDate = new Date(`${appointmentDate}T${appointmentTime}`);
       reminderDate.setDate(reminderDate.getDate() - 1); // Recordatorio 1 día antes
 
@@ -5932,8 +5941,10 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                             Confirmar Cita
                           </Button>
                         </Box>
-                        <Alert severity="info" sx={{ mt: 2 }}>
-                          Se enviarán recordatorios automáticos por email, WhatsApp y llamada 1 día antes de la cita.
+                        <Alert severity={citaSilenciosa ? 'warning' : 'info'} sx={{ mt: 2 }}>
+                          {citaSilenciosa
+                            ? 'Esta cita se registra en silencio: al paciente no le llega confirmación ni recordatorios.'
+                            : 'Se enviarán recordatorios automáticos por email, WhatsApp y llamada 1 día antes de la cita.'}
                         </Alert>
                       </Grid>
                     )}
