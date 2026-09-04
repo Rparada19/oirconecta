@@ -64,9 +64,9 @@ async function findMatchingAppointment({ waPhone, sinceDate }) {
 }
 
 const NUDGE_TEXT =
-`¡Hola de nuevo! 👋 ¿Pudiste ver los horarios?
+`¿Pudiste abrir el enlace? 👋
 
-Los cupos se van rápido esta semana. Si quieres, dime "sí" y te muestro 3 opciones cercanas ahora mismo, o agenda directo aquí:
+Si prefieres, dime qué día te queda mejor y yo te busco los horarios. También puedes agendar directo aquí:
 
 👉 https://oirconecta.com/agendar`;
 
@@ -229,8 +229,173 @@ async function processWaAgendarNudges() {
   };
 }
 
+
+// ─── Silencio: escribió el bot y nadie contestó ──────────────
+//
+// El nudge de arriba solo existe si se mandó el link de agendar. Pero desde
+// que el bot agenda dentro del chat, casi nunca lo manda — y entonces quien
+// escribe una vez, recibe respuesta y se calla no vuelve a saber de nosotros
+// nunca. Con campañas corriendo, ese es el clic que ya se pagó.
+//
+// Dos reintentos y se suelta:
+//   · A las 3h — retomar con una pregunta más fácil que la anterior.
+//   · A las 20h — despedida honesta, antes de que se cierre la ventana de 24h
+//     de Meta (pasada esa hora solo se puede mandar plantilla aprobada).
+
+const SILENCIO_1_HORAS = 3;
+const SILENCIO_2_HORAS = 20;
+
+const DESPEDIDA =
+`No quiero ser inoportuno, así que te escribo por última vez. 🙂
+
+Si en algún momento quieres resolver una duda sobre tu audición —o la de alguien de tu casa— aquí estoy. Escríbeme cuando quieras, sin compromiso.`;
+
+/**
+ * Redacta el mensaje para retomar. Lo escribe el mismo bot, con el mismo
+ * prompt: así sabe su nombre, de qué anuncio vino y qué alcanzó a decir.
+ * Si algo falla hay un texto de respaldo — un silencio no se queda sin
+ * atender por culpa de una llamada caída.
+ */
+async function redactarRetoma(conv) {
+  const respaldo = conv.contactName
+    ? `Hola, ${String(conv.contactName).split(/\s+/)[0]} 👋 Quedé pendiente de ti.\n\n¿Es algo que vienes notando tú, o preguntas por alguien de tu casa? Con eso te oriento mejor.`
+    : '¡Hola! 👋 Quedé pendiente de ti.\n\n¿Es algo que vienes notando tú, o preguntas por alguien de tu casa? Con eso te oriento mejor.';
+  if (!process.env.ANTHROPIC_API_KEY) return respaldo;
+  try {
+    const bot = require('./waCorporateBot.service');
+    const historia = await prisma.whatsAppMessage.findMany({
+      where: { conversationId: conv.id },
+      orderBy: { timestamp: 'desc' },
+      take: 6,
+      select: { direction: true, body: true },
+    });
+    const transcripcion = historia.reverse()
+      .map((m) => `${m.direction === 'INBOUND' ? 'Paciente' : 'Tú'}: ${m.body || ''}`)
+      .join('\n');
+
+    const r = await bot.ensayar({
+      contactType: conv.contactType || 'PACIENTE_BOGOTA',
+      contactName: conv.contactName,
+      messages: [{
+        role: 'user',
+        content: `[INSTRUCCIÓN DEL SISTEMA, no es un mensaje del paciente]
+
+Esta persona te escribió y no ha vuelto a responder en horas. Esto fue lo último que pasó:
+${transcripcion}
+
+Escribe UN solo mensaje corto para retomar, y nada más. Reglas:
+- No reproches el silencio ni digas "veo que no me has respondido".
+- No repitas lo que ya le dijiste: si tu mensaje anterior fue un menú o una pregunta, ahora haz una pregunta más fácil de contestar.
+- Nada de urgencia, cupos que se acaban ni promociones.
+- Dos o tres líneas. Cálido, con su nombre si lo sabes.
+- No uses herramientas ni propongas horarios: todavía no sabes qué necesita.`,
+      }],
+    });
+    const texto = String(r?.texto || '').trim();
+    return texto.length > 10 ? texto : respaldo;
+  } catch (e) {
+    console.warn('[wa-silencio] no pude redactar la retoma:', e.message);
+    return respaldo;
+  }
+}
+
+async function enviarYGuardar(conv, texto, campo) {
+  // Claim optimista: se marca antes de enviar y se revierte si falla.
+  const claim = await prisma.whatsAppConversation.updateMany({
+    where: { id: conv.id, [campo]: null },
+    data: { [campo]: new Date() },
+  });
+  if (claim.count === 0) return false;
+  try {
+    const result = await sendWhatsAppText({ to: conv.phone, text: texto });
+    await prisma.whatsAppMessage.create({
+      data: {
+        conversationId: conv.id,
+        wamid: result?.providerMessageId || null,
+        direction: 'OUTBOUND',
+        type: 'text',
+        body: texto,
+        sentByBot: true,
+        deliveryStatus: 'sent',
+        timestamp: new Date(),
+      },
+    });
+    await prisma.whatsAppConversation.update({
+      where: { id: conv.id },
+      data: { lastMessageAt: new Date(), lastMessagePreview: `Bot: ${texto.slice(0, 100)}` },
+    });
+    return true;
+  } catch (e) {
+    console.error('[wa-silencio] envío falló:', e.message);
+    await prisma.whatsAppConversation.updateMany({
+      where: { id: conv.id }, data: { [campo]: null },
+    });
+    return false;
+  }
+}
+
+/**
+ * Recorre las conversaciones calladas y manda el reintento que toque.
+ * Solo actúa si el bot sigue a cargo (status BOT): si un humano tomó la
+ * conversación, meterse sería atropellarlo.
+ */
+async function processSilencios() {
+  if (process.env.WA_BOT_ENABLED !== 'true') return { skipped: 'bot-disabled' };
+  const ahora = new Date();
+  let retomas = 0, despedidas = 0;
+
+  const candidatas = await prisma.whatsAppConversation.findMany({
+    where: {
+      status: 'BOT',
+      businessLine: 'CRM',
+      agendarBookedAt: null,
+      windowExpiresAt: { gt: ahora },      // dentro de la ventana de 24h de Meta
+      silencio2At: null,
+      lastMessageAt: { lt: new Date(ahora.getTime() - SILENCIO_1_HORAS * 3600 * 1000) },
+    },
+    select: {
+      id: true, phone: true, contactName: true, contactType: true,
+      lastMessageAt: true, silencio1At: true, silencio2At: true,
+    },
+    orderBy: { lastMessageAt: 'asc' },
+    take: BATCH_LIMIT,
+  });
+
+  for (const conv of candidatas) {
+    try {
+      // El último mensaje tiene que ser NUESTRO. Si el último es del paciente,
+      // no está callado: está esperando respuesta, y eso es otro problema.
+      const ultimo = await prisma.whatsAppMessage.findFirst({
+        where: { conversationId: conv.id },
+        orderBy: { timestamp: 'desc' },
+        select: { direction: true },
+      });
+      if (ultimo?.direction !== 'OUTBOUND') continue;
+
+      const horas = (ahora - new Date(conv.lastMessageAt)) / 3600000;
+
+      if (!conv.silencio1At) {
+        const texto = await redactarRetoma(conv);
+        if (await enviarYGuardar(conv, texto, 'silencio1At')) retomas++;
+      } else if (horas >= SILENCIO_2_HORAS - SILENCIO_1_HORAS) {
+        // La segunda se mide desde la primera retoma, no desde el silencio
+        // original: si no, las dos caerían casi juntas.
+        if (await enviarYGuardar(conv, DESPEDIDA, 'silencio2At')) despedidas++;
+      }
+    } catch (e) {
+      console.error('[wa-silencio] conversación', conv.id, 'falló:', e.message);
+    }
+  }
+
+  if (retomas || despedidas) {
+    console.log('[wa-silencio] retomas:', retomas, 'despedidas:', despedidas);
+  }
+  return { retomas, despedidas, revisadas: candidatas.length };
+}
+
 module.exports = {
   processWaAgendarNudges,
+  processSilencios,
   processNudges,
   processEscalations,
   normalizePhone,

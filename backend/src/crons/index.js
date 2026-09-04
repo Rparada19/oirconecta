@@ -604,6 +604,12 @@ async function tick() {
       return waNudge.processWaAgendarNudges();
     });
 
+    // 8b) Conversaciones calladas: el bot escribió y nadie contestó.
+    const silencioResult = await runJob('waSilencios', async () => {
+      const waNudge = require('../services/waNudge.service');
+      return waNudge.processSilencios();
+    });
+
     // 9) Refresco editorial de marcas (día 1 del mes 8-9am CO si BRAND_AUTO_ENABLED=true)
     const brandResult = await runJob('brandInfoRefresh', async () => {
       const brandInfo = require('../services/brandInfo.service');
@@ -618,6 +624,8 @@ async function tick() {
       (remindersResult?.sent || 0) > 0 ||
       (remindersResult?.failed || 0) > 0 ||
       (nurtureResult?.sent || 0) > 0 ||
+      (silencioResult?.retomas || 0) > 0 ||
+      (silencioResult?.despedidas || 0) > 0 ||
       (nurtureResult?.failed || 0) > 0 ||
       (birthdayResult?.sent || 0) > 0 ||
       (control15Result?.sent || 0) > 0 ||

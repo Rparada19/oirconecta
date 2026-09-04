@@ -3051,6 +3051,12 @@ model WhatsAppConversation {
   agendarEscalatedAt DateTime?
   agendarBookedAt    DateTime?
 
+  /// Silencio: el bot escribió y la persona nunca contestó. Dos reintentos y
+  /// se suelta — dentro de la ventana de 24h de Meta, que es lo único que se
+  /// puede mandar sin plantilla aprobada.
+  silencio1At DateTime?
+  silencio2At DateTime?
+
   /// Memoria larga del bot: resumen rodante de lo ya conversado. El prompt solo
   /// carga los últimos 12 mensajes, así que sin esto un paciente que vuelve a
   /// los seis meses arranca de cero.
