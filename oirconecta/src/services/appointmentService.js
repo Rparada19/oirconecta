@@ -136,6 +136,7 @@ export async function createAppointment(appointmentData) {
     professionalDisplayName,
     directoryProfileId,
     allowManualTime,
+    silencioso,
   } = appointmentData;
   if (!date || !time || !patientName || !patientPhone) {
     return { success: false, appointment: null, error: 'Nombre, teléfono, fecha y hora son obligatorios' };
@@ -162,6 +163,8 @@ export async function createAppointment(appointmentData) {
     tipoConsulta: appointmentType || null,
     durationMinutes: durationMinutes != null ? durationMinutes : undefined,
     directoryProfileId: directoryProfileId || undefined,
+    // Registro interno: la cita queda, pero al paciente no le llega nada.
+    silencioso: silencioso === true ? true : undefined,
   };
   const { data, error } = await api.post('/api/appointments', payload);
   if (error) return { success: false, appointment: null, error };

@@ -8,6 +8,70 @@ const prisma = new PrismaClient();
 
 
 /**
+ * Adaptación registrada → gracias y reseña, como con una cita asistida.
+ *
+ * El día que alguien se lleva puestos sus audífonos es el momento más alto de
+ * todo el proceso, y hasta ahora no disparaba nada: el agradecimiento colgaba
+ * solo de marcar una cita como asistida, así que si la entrega no quedaba
+ * registrada como cita, el paciente no recibía nada.
+ *
+ * Se usa la misma plantilla de la cita asistida (aprobada en Meta) y se
+ * dispara una sola vez por venta.
+ */
+async function programarGraciasPorAdaptacion(sale) {
+  if (!sale || sale.categoria !== 'HEARING_AID') return;
+  if (!sale.fechaAdaptacion || !sale.patientId) return;
+
+  const meta = sale.metadata && typeof sale.metadata === 'object' ? sale.metadata : {};
+  if (meta.graciasAdaptacionAt) return;   // ya se programó para esta venta
+
+  const adaptacion = new Date(sale.fechaAdaptacion);
+  const ahora = new Date();
+  const dias = (ahora - adaptacion) / 86400000;
+  // Una adaptación cargada semanas después es un registro histórico, no algo
+  // que acaba de pasar: escribirle "hoy fue un gusto acompañarte" sería falso.
+  if (dias > 2) return;
+
+  // Si la adaptación es hoy, tres horas después: alcanza a llegar a casa y a
+  // estrenarlos. Si está agendada a futuro, ese mismo día por la tarde.
+  const scheduledFor = dias >= 0
+    ? new Date(ahora.getTime() + 3 * 3600 * 1000)
+    : new Date(new Date(adaptacion).setUTCHours(20, 0, 0, 0));
+
+  const paciente = await prisma.patient.findUnique({
+    where: { id: sale.patientId },
+    select: { nombre: true },
+  }).catch(() => null);
+
+  const linkGoogle = process.env.GOOGLE_REVIEW_URL !== undefined
+    ? process.env.GOOGLE_REVIEW_URL
+    : 'https://g.page/r/CW2QxMBq6uFtEBM/review';
+  const templateCode = linkGoogle ? 'resena_google' : 'agradecimiento_post_cita';
+
+  const { scheduleReminder } = require('../notifications');
+  for (const channel of ['WHATSAPP', 'EMAIL']) {
+    await scheduleReminder({
+      patientId: sale.patientId,
+      eventCode: linkGoogle ? 'RESENA_GOOGLE' : 'AGRADECIMIENTO_POST_CITA',
+      channel,
+      templateCode,
+      targetType: 'Sale',
+      targetId: sale.id,
+      payload: {
+        nombre: paciente?.nombre || 'paciente',
+        link_google: linkGoogle,
+      },
+      scheduledFor,
+    }).catch((e) => console.warn('[venta] gracias por adaptación:', e.message));
+  }
+
+  await prisma.sale.update({
+    where: { id: sale.id },
+    data: { metadata: { ...meta, graciasAdaptacionAt: new Date().toISOString() } },
+  }).catch(() => {});
+}
+
+/**
  * Convierte a Date una fecha que viene del formulario.
  *
  * `new Date('2026-09-03')` es medianoche UTC, que en Bogotá (UTC-5) es el 2 de
@@ -205,6 +269,8 @@ const convertQuoteToSale = async (quoteId, additionalData = {}, createdById) => 
 
   // F8 — Si la venta ya trae fechaAdaptacion, dispara el funnel de controles
   if (sale.categoria === 'HEARING_AID' && sale.fechaAdaptacion) {
+    await programarGraciasPorAdaptacion(sale)
+      .catch((e) => console.warn('[venta] gracias por adaptación:', e.message));
     try {
       const followUps = require('./followUps.service');
       await followUps.ensureFunnel({
@@ -363,6 +429,8 @@ const createSale = async (data, createdById) => {
 
   // F8 — Dispara el funnel de controles si es venta de audífono con fechaAdaptacion
   if (sale.categoria === 'HEARING_AID' && sale.fechaAdaptacion) {
+    await programarGraciasPorAdaptacion(sale)
+      .catch((e) => console.warn('[venta] gracias por adaptación:', e.message));
     try {
       const followUps = require('./followUps.service');
       await followUps.ensureFunnel({
@@ -413,6 +481,8 @@ const updateSale = async (id, data) => {
 
   // F8 — Si la edición trae fechaAdaptacion en una venta de audífono, dispara/ajusta el funnel
   if (updated.categoria === 'HEARING_AID' && updated.fechaAdaptacion) {
+    await programarGraciasPorAdaptacion(updated)
+      .catch((e) => console.warn('[products/updateSale] gracias por adaptación:', e.message));
     try {
       const followUps = require('./followUps.service');
       await followUps.ensureFunnel({

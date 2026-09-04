@@ -305,15 +305,28 @@ const create = async (data, createdById) => {
   // Envío de correos no debe bloquear la respuesta del POST. Si el SMTP cuelga
   // (ej. Render bloquea puerto 465), la cita igual queda registrada y el paciente
   // ve la confirmación inmediata; los emails se intentan en segundo plano.
+  // Cargar una cita a mano no siempre es agendarla: a veces es dejar constancia
+  // de algo ya ocurrido o ya acordado por teléfono. En esos casos avisarle al
+  // paciente lo confunde —recibe una "confirmación" de algo que ya vivió— así
+  // que quien la registra decide si sale o no.
+  // Solo el equipo puede silenciar. La ruta de creación es pública (agenda web),
+  // y sin esta guarda cualquiera podría mandar el flag y quedarse sin la
+  // confirmación de su propia cita.
+  const silencioso = !!createdById
+    && (data.silencioso === true || data.notificarPaciente === false);
+  if (silencioso) {
+    console.log('[appointments.create] cita', appointment.id, 'registrada en silencio — sin avisos al paciente');
+  }
+
   const { sendBookingConfirmations, sendBookingConfirmation } = require('./email.service');
   const config = require('../config');
-  sendBookingConfirmations(appointment, {
+  if (!silencioso) sendBookingConfirmations(appointment, {
     professionalName: data.professionalDisplayName || undefined,
   }).catch((e) => {
     console.error('[appointments.create] email notify:', e.message);
   });
   // Aviso al admin si está configurado y es diferente al profesional
-  if (config.admin.email && config.admin.email !== appointment.professionalNotifyEmail) {
+  if (!silencioso && config.admin.email && config.admin.email !== appointment.professionalNotifyEmail) {
     const adminAppt = { ...appointment, patientEmail: null, professionalNotifyEmail: config.admin.email };
     sendBookingConfirmation(adminAppt, { professionalName: data.professionalDisplayName || undefined })
       .catch((e) => console.error('[appointments.create] admin email notify:', e.message));
@@ -340,7 +353,7 @@ const create = async (data, createdById) => {
   // Nuevo sistema de notificaciones (Fase 1):
   // encola CITA_AGENDADA inmediato + RECORDATORIO_24H + RECORDATORIO_2H.
   // Solo si la cita tiene patientId (paciente registrado).
-  if (appointment.patientId) {
+  if (appointment.patientId && !silencioso) {
     try {
       const { onAppointmentCreated } = require('../notifications/events/appointments');
       onAppointmentCreated(appointment).catch((e) => {

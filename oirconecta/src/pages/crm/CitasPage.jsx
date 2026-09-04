@@ -34,6 +34,7 @@ import {
   Divider,
   Switch,
   FormControlLabel,
+  Checkbox,
   Select,
   MenuItem as SelectMenuItem,
   InputLabel,
@@ -161,7 +162,7 @@ const CitasPage = () => {
   const [creating, setCreating] = useState(false);
   const [createAvailableSlots, setCreateAvailableSlots] = useState([]);
   const [motivoTypes, setMotivoTypes] = useState([]); // AppointmentType creados
-  const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono' });
+  const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono', silencioso: false });
   const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
   const [rescheduledToAppointment, setRescheduledToAppointment] = useState(null);
 
@@ -753,7 +754,7 @@ const CitasPage = () => {
   };
 
   const openCreateDialog = () => {
-    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', motivoOtra: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono' });
+    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', motivoOtra: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono', silencioso: false });
     setCreateDialogOpen(true);
     api.get('/api/crm/retail-agenda/types')
       .then((r) => { if (Array.isArray(r.data?.data)) setMotivoTypes(r.data.data.filter((t) => t.activo !== false)); })
@@ -790,6 +791,7 @@ const CitasPage = () => {
         professionalDisplayName: prof?.nombre || undefined,
         professionalNotifyEmail: prof?.email || undefined,
         allowManualTime: true,
+        silencioso: createData.silencioso === true,
       });
       if (result.success) {
         setCreateDialogOpen(false);
@@ -2707,6 +2709,21 @@ const CitasPage = () => {
                     ))}
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={createData.silencioso === true}
+                    onChange={(e) => setCreateData({ ...createData, silencioso: e.target.checked })}
+                  />
+                }
+                label="No avisarle al paciente"
+              />
+              <Typography variant="caption" sx={{ display: 'block', color: '#86899C', mt: -0.5, ml: 4 }}>
+                La cita queda registrada, pero no sale confirmación ni recordatorios.
+                Úsalo cuando registras algo ya acordado o ya ocurrido.
+              </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth sx={{ mb: 1 }}>
