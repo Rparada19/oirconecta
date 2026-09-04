@@ -619,9 +619,13 @@ Ojo con la trampa contraria: escuchar no es quedarse en el aire. Si ya entendist
 
 ═══ CUANDO PREGUNTAN EL PRECIO ═══
 Preguntar el precio no es una objeción que haya que sortear: es una pregunta legítima, y casi siempre la hace quien tiene miedo de que esto no le alcance. Trátala con respeto.
-- Si es el precio de la VALORACIÓN y la educación del centro te lo da, dilo de una. Sin rodeos y sin condicionarlo a nada. Esquivar el precio de una consulta es lo que más desconfianza genera.
-- Si te preguntan por AUDÍFONOS, la respuesta honesta es que depende de qué necesite su oído, y eso no se sabe sin medirlo. No es una evasiva: decir una cifra sin haber evaluado sería inventarla. Dilo así, con esas palabras, y agrega que hay opciones para distintos presupuestos.
-- NUNCA inventes cifras. Si no tienes el dato, dilo: "ese valor te lo confirman en el centro, no quiero darte un número equivocado".
+
+Antes de responder, BUSCA el dato en lo que sabes: el conocimiento del centro, las preguntas frecuentes verificadas, el material del centro y el catálogo de planes que tienes más abajo. Ahí está lo que se puede decir. Solo si de verdad no aparece, dilo con honestidad: "ese valor te lo confirman en el centro, no quiero darte un número equivocado".
+
+- El precio de la VALORACIÓN, si lo tienes, se dice de una. Sin rodeos y sin condicionarlo a nada. Esquivar el precio de una consulta es lo que más desconfianza genera.
+- Lo demás se responde en PLANES DE ADAPTACIÓN, nunca en audífonos sueltos. "¿Cuánto vale un audífono?" se contesta explicando qué es un plan y desde cuánto empieza — no con la cifra de un aparato, que sin acompañamiento no le sirve a nadie.
+- Cuál plan le conviene depende de lo que se encuentre en la valoración, y eso se dice sin sonar a evasiva: no es que no queramos decirlo, es que sin medir el oído sería inventarlo.
+- NUNCA inventes cifras.
 - Después de responder puedes proponer la cita, pero primero responde. Contestar con un horario a quien preguntó un precio es no contestarle.
 
 ═══ CUANDO DUDAN ═══
@@ -1136,7 +1140,59 @@ function pausaHumana(entrante, respuesta) {
   return Math.round(Math.min(9000, 1200 + leer + escribir + ruido));
 }
 
-async function construirPrompt(conv) {
+/**
+ * El catálogo de planes, tal como se le puede contar a un paciente.
+ *
+ * Lo que se vende no es un audífono: es un plan de adaptación —el equipo más
+ * los controles, las audiometrías, los mantenimientos y las coberturas que lo
+ * acompañan durante años. Hablar de "audífonos" reduce todo eso a un aparato
+ * con precio, que es justo la conversación que no queremos tener.
+ *
+ * La marca y el nivel de tecnología NO van: son datos internos de inventario
+ * y garantía con el fabricante (ver el nodo de conocimiento interno).
+ */
+async function catalogoDePlanes() {
+  const planes = await prisma.hearingPlan.findMany({
+    where: { activo: true },
+    orderBy: [{ orden: 'asc' }, { precioCOP: 'asc' }],
+    select: {
+      nombre: true, linea: true, precioCOP: true, audifonosIncluidos: true,
+      controlesAdaptacion: true, audiometrias: true, mantenimientos: true,
+      anosGarantia: true, terapias: true, satisfaccionDias: true,
+      seguroPerdidaMeses: true, seguroRoturaMeses: true, videoconsulta: true,
+    },
+  }).catch(() => []);
+  if (planes.length === 0) return '';
+
+  const cop = (n) => `$${Number(n || 0).toLocaleString('es-CO')}`;
+  const filas = planes.map((p) => {
+    const incluye = [
+      `${p.audifonosIncluidos} audífonos`,
+      p.controlesAdaptacion ? `${p.controlesAdaptacion} controles de adaptación` : null,
+      p.audiometrias ? `${p.audiometrias} audiometrías de seguimiento` : null,
+      p.mantenimientos ? `${p.mantenimientos} mantenimientos` : null,
+      p.terapias ? `${p.terapias} terapias de entrenamiento auditivo` : null,
+      p.anosGarantia ? `${p.anosGarantia} años de garantía` : null,
+      p.seguroPerdidaMeses ? `seguro de pérdida ${p.seguroPerdidaMeses} meses` : null,
+      p.seguroRoturaMeses ? `seguro de rotura ${p.seguroRoturaMeses} meses` : null,
+      p.satisfaccionDias ? `${p.satisfaccionDias} días de satisfacción garantizada` : null,
+      p.videoconsulta ? 'videoconsulta' : null,
+    ].filter(Boolean).join(', ');
+    return `· *${p.nombre}* (${p.linea}) — ${cop(p.precioCOP)}: ${incluye}.`;
+  }).join('\n');
+
+  return `\n\n═══ LO QUE OFRECEMOS SON PLANES DE ADAPTACIÓN ═══
+${filas}
+
+Cómo hablar de esto:
+· NUNCA digas "los audífonos cuestan X". Se adapta un plan, y el plan incluye el equipo más el acompañamiento de años. Un audífono suelto, sin controles ni seguimiento, es plata botada — y eso es exactamente lo que no hacemos.
+· Estos precios son por el plan completo, para los dos oídos. Dilo así.
+· No recomiendes un plan concreto antes de la valoración: cuál sirve depende de lo que se encuentre. Puedes decir desde cuánto empiezan, para que sepa a qué atenerse.
+· NUNCA menciones la marca ni el nivel de tecnología del equipo. Eso se define en la valoración.
+═══════════════════════════════════`;
+}
+
+async function construirPrompt(conv, consulta = null) {
   // Antes, un contactType sin prompt dejaba al bot mudo sin dejar rastro:
   // pasaba con PACIENTE_EXISTENTE y ALIADO_PROVEEDOR, que tienen plantillas
   // activas. Ahora cualquier tipo desconocido cae en OTROS, que pregunta.
@@ -1225,6 +1281,31 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
         const iaConfig = require('./iaAgentConfig.service');
         const education = await iaConfig.getEducationForPrompt(retailId);
         systemPrompt += iaConfig.buildEducationSection(education, 'OírConecta');
+
+        // Los documentos que se le cargaron al agente. El bot del consultorio
+        // los ignoraba: se entrenaba el cerebro en /portal-profesional/ia y
+        // esta línea, que es la que atiende pacientes, no lo leía.
+        if (consulta) {
+          try {
+            const cfg = await prisma.iaAgentConfig.findUnique({
+              where: { profileId: retailId }, select: { id: true },
+            });
+            if (cfg?.id) {
+              const ingestion = require('./documentIngestion.service');
+              const chunks = await ingestion.retrieveTopKChunks({ configId: cfg.id, query: consulta, k: 3 });
+              if (chunks.length > 0) {
+                const contexto = chunks.map((c) => c.content).join('\n\n---\n\n');
+                systemPrompt += `\n\n═══ MATERIAL DEL CENTRO (referencia autorizada) ═══\n${contexto}\n
+Úsalo como fuente confiable antes de improvisar. No lo cites como documento: habla como quien ya sabe.
+═══════════════════════════════════`;
+              }
+            }
+          } catch (e) {
+            console.warn('[wa-bot] retrieval de documentos falló:', e.message);
+          }
+        }
+
+        systemPrompt += await catalogoDePlanes();
       }
     } catch (e) {
       console.error('[wa-bot] no pude cargar la educación del centro:', e.message);
@@ -1260,7 +1341,11 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
     adHeadline, adBody, adSeenAt: adHeadline ? new Date() : null,
   };
 
-  const { systemPrompt } = await construirPrompt(conv);
+  const ultima = [...messages].reverse().find((m) => m.role === 'user');
+  const { systemPrompt } = await construirPrompt(
+    conv,
+    typeof ultima?.content === 'string' ? ultima.content : null,
+  );
 
   let agendaProfileId = null;
   if (['PACIENTE_BOGOTA', 'REFERIDO_ALIADO'].includes(contactType)) {
@@ -1346,7 +1431,7 @@ async function handleTextForBot({ conversationId, incomingText }) {
   // Sin tipo asignado tampoco se queda callado: pregunta y se tipifica solo.
   if (!conv.contactType) conv.contactType = 'OTROS';
 
-  const { systemPrompt, adVigente } = await construirPrompt(conv);
+  const { systemPrompt, adVigente } = await construirPrompt(conv, incomingText);
 
   // ¿Habilitar tools de booking? La agenda depende de la rama:
   //  · PACIENTE_BOGOTA     → agenda del centro (retail)

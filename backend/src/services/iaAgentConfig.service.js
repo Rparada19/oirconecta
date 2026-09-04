@@ -161,8 +161,8 @@ function buildEducationSection(education, nombre = 'el centro') {
   agregar('services', 'Servicios que se prestan y qué incluye cada uno. Úsalo para responder "¿ustedes hacen X?" sin inventar');
   agregar('logistics', 'Cómo funciona la atención (sedes, horarios, tiempos, convenios)');
   agregar('differentiators', 'Qué diferencia a este centro. Úsalo si el paciente compara o duda, nunca como venta agresiva');
-  agregar('pricing', 'Qué puedes decir sobre precios y qué no. Es una objeción, no una consulta: responde y vuelve a proponer la cita');
-  agregar('objections', 'Cómo responder cuando la persona duda. Reconoce, reencuadra y vuelve a proponer un horario. Nunca discutas');
+  agregar('pricing', 'Qué puedes decir sobre precios y qué no. Preguntar el precio es una pregunta legítima: búscala aquí y respóndela antes de proponer nada');
+  agregar('objections', 'Cómo responder cuando la persona duda. Reconoce lo que te dice y no insistas dos veces con el mismo argumento. Nunca discutas');
   if (education.internalKnowledge) {
     bloques.push(`── CONOCIMIENTO INTERNO. Esto lo SABES y guía tus recomendaciones, pero NO lo anuncias por iniciativa propia. Si te preguntan de frente, no lo niegues ni mientas: responde con naturalidad y aclara que se define en la valoración:\n${education.internalKnowledge}`);
   }
