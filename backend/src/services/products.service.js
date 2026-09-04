@@ -6,6 +6,27 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
+
+/**
+ * Convierte a Date una fecha que viene del formulario.
+ *
+ * `new Date('2026-09-03')` es medianoche UTC, que en Bogotá (UTC-5) es el 2 de
+ * septiembre a las 7 p.m. Al releerla, el CRM mostraba el día anterior y
+ * parecía que la edición no se había guardado. Fijándola al mediodía UTC, la
+ * fecha se lee igual en cualquier huso del continente.
+ *
+ * Las fechas con hora (ISO completo) se respetan tal cual: ahí el instante sí
+ * importa.
+ */
+function fechaDelFormulario(v) {
+  if (!v) return null;
+  if (v instanceof Date) return v;
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(`${s}T12:00:00.000Z`);
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 // ===========================================
 // COTIZACIONES
 // ===========================================
@@ -306,7 +327,7 @@ const createSale = async (data, createdById) => {
       descuento: data.descuento || 0,
       valorTotal: data.valorTotal,
       // Recaudo y comisión pactada. Sin fechaRecaudo la comisión no se causa.
-      fechaRecaudo: data.fechaRecaudo ? new Date(data.fechaRecaudo) : null,
+      fechaRecaudo: data.fechaRecaudo ? fechaDelFormulario(data.fechaRecaudo) : null,
       comisionPartnerId: data.comisionPartnerId || null,
       comisionPct: data.comisionPct === undefined || data.comisionPct === null || data.comisionPct === ''
         ? null
@@ -318,13 +339,13 @@ const createSale = async (data, createdById) => {
       hearingPlanId: data.hearingPlanId || null,
       seguroPerdida: data.seguroPerdida,
       seguroRotura: data.seguroRotura,
-      fechaAdaptacion: data.fechaAdaptacion ? new Date(data.fechaAdaptacion) : null,
-      fechaFinGarantia: data.fechaFinGarantia ? new Date(data.fechaFinGarantia) : null,
-      fechaPrimerControl: data.fechaPrimerControl ? new Date(data.fechaPrimerControl) : null,
-      fechaPrimerMantenimiento: data.fechaPrimerMantenimiento ? new Date(data.fechaPrimerMantenimiento) : null,
+      fechaAdaptacion: data.fechaAdaptacion ? fechaDelFormulario(data.fechaAdaptacion) : null,
+      fechaFinGarantia: data.fechaFinGarantia ? fechaDelFormulario(data.fechaFinGarantia) : null,
+      fechaPrimerControl: data.fechaPrimerControl ? fechaDelFormulario(data.fechaPrimerControl) : null,
+      fechaPrimerMantenimiento: data.fechaPrimerMantenimiento ? fechaDelFormulario(data.fechaPrimerMantenimiento) : null,
       campaignId: data.campaignId,
       descripcionConsulta: data.descripcionConsulta,
-      fechaConsulta: data.fechaConsulta ? new Date(data.fechaConsulta) : null,
+      fechaConsulta: data.fechaConsulta ? fechaDelFormulario(data.fechaConsulta) : null,
       accesoriosItems: data.accesoriosItems,
       metadata: data.metadata,
       notas: data.notas,
@@ -363,7 +384,7 @@ const updateSale = async (id, data) => {
   // Convertir fechas si vienen
   ['fechaAdaptacion', 'fechaFinGarantia', 'fechaPrimerControl', 'fechaPrimerMantenimiento', 'fechaConsulta', 'fechaRecaudo'].forEach((field) => {
     if (data[field]) {
-      updateData[field] = new Date(data[field]);
+      updateData[field] = fechaDelFormulario(data[field]);
     }
   });
 

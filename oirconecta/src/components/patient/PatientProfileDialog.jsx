@@ -1193,7 +1193,20 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   const isConsultationApiId = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
   // Usuario que exporta (logueado en CRM); clave usada en LoginCRMPage
-  const getUsuarioExportador = () => (typeof localStorage !== 'undefined' && localStorage.getItem('oirconecta_crm_user')) || '—';
+  // Lo guardado es el usuario completo en JSON. Sin parsearlo, el comprobante
+  // que se le entrega al paciente imprimía el objeto entero —con el id interno
+  // y el correo de la cuenta— donde debía ir un nombre.
+  const getUsuarioExportador = () => {
+    if (typeof localStorage === 'undefined') return '—';
+    const raw = localStorage.getItem('oirconecta_crm_user');
+    if (!raw) return '—';
+    try {
+      const u = JSON.parse(raw);
+      return u?.nombre || u?.name || u?.email || '—';
+    } catch {
+      return raw;
+    }
+  };
 
   // Encabezado reutilizable para reportes PDF: logo, empresa, título, fecha y usuario exportador
   const renderReportHeader = (documentTitle) => {
