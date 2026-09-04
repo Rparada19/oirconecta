@@ -93,6 +93,7 @@ import ComisionVenta from './ComisionVenta';
 import { getTipoCitaLabelSolo } from '../../utils/agendaDisplayUtils';
 import { getPatientInteractions, getPatientInteractionsMetrics, getDailyActionsMetricsByPatient, addInteraction, updateInteraction, getListUsers } from '../../services/interactionService';
 import { getPatientProducts, convertQuoteToSale, getQuoteHistory, updateSale } from '../../services/productService';
+import { fechaCorta } from '../../utils/fechas';
 import {
   getPatientMaintenances,
   getUpcomingMaintenances,
@@ -1278,7 +1279,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   const handleExportarInformeCotizado = () => {
     handleCloseExportarInformes();
     const cotizaciones = (patientProducts || []).filter((p) => p.type === 'quote');
-    const filas = cotizaciones.map((q) => `<tr><td>${q.productName || '—'}</td><td>${q.quoteDate ? new Date(q.quoteDate).toLocaleDateString('es-ES') : '—'}</td><td>${q.totalPrice != null ? `$${Number(q.totalPrice).toLocaleString()}` : '—'}</td><td>${q.marca || '—'}</td></tr>`).join('');
+    const filas = cotizaciones.map((q) => `<tr><td>${q.productName || '—'}</td><td>${q.quoteDate ? fechaCorta(q.quoteDate, { locale: 'es-ES' }) : '—'}</td><td>${q.totalPrice != null ? `$${Number(q.totalPrice).toLocaleString()}` : '—'}</td><td>${q.marca || '—'}</td></tr>`).join('');
     const nombre = formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente';
     const codigo = formData.codigoHistoriaClinica || '—';
     const body = `<h1 style="color:#085946;">Informe de producto cotizado</h1><p><strong>Paciente:</strong> ${nombre} &nbsp; <strong>Código HC:</strong> ${codigo}</p><table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;"><thead><tr><th>Producto</th><th>Fecha cotización</th><th>Valor total</th><th>Marca</th></tr></thead><tbody>${filas || '<tr><td colspan="4">No hay cotizaciones registradas.</td></tr>'}</tbody></table>`;
@@ -1289,7 +1290,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   const handleExportarInformeAdaptado = () => {
     handleCloseExportarInformes();
     const ventas = (patientProducts || []).filter((p) => p.type === 'sale');
-    const filas = ventas.map((s) => `<tr><td>${s.productName || '—'}</td><td>${s.saleDate ? new Date(s.saleDate).toLocaleDateString('es-ES') : '—'}</td><td>${s.totalPrice != null ? `$${Number(s.totalPrice).toLocaleString()}` : '—'}</td><td>${s.marca || '—'}</td></tr>`).join('');
+    const filas = ventas.map((s) => `<tr><td>${s.productName || '—'}</td><td>${s.saleDate ? fechaCorta(s.saleDate, { locale: 'es-ES' }) : '—'}</td><td>${s.totalPrice != null ? `$${Number(s.totalPrice).toLocaleString()}` : '—'}</td><td>${s.marca || '—'}</td></tr>`).join('');
     const nombre = formData.nombre || appointment?.patientName || lead?.nombre || 'Paciente';
     const codigo = formData.codigoHistoriaClinica || '—';
     const body = `<h1 style="color:#085946;">Informe de producto adaptado (vendido)</h1><p><strong>Paciente:</strong> ${nombre} &nbsp; <strong>Código HC:</strong> ${codigo}</p><table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;"><thead><tr><th>Producto</th><th>Fecha venta</th><th>Valor total</th><th>Marca</th></tr></thead><tbody>${filas || '<tr><td colspan="4">No hay ventas registradas.</td></tr>'}</tbody></table>`;
@@ -4738,7 +4739,7 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
                             <MenuItem key={sale.id} value={sale.id}>
                               {[sale.productName || sale.brand || 'Producto', sale.brand && sale.productName !== sale.brand ? sale.brand : null].filter(Boolean).join(' — ')}
                               {[sale.metadata?.technology, sale.metadata?.platform].filter(Boolean).length ? ` · ${[sale.metadata.technology, sale.metadata.platform].filter(Boolean).join(' / ')}` : ''}
-                              {sale.saleDate ? ` (venta ${new Date(sale.saleDate).toLocaleDateString('es-ES')})` : ''}
+                              {sale.saleDate ? ` (venta ${fechaCorta(sale.saleDate, { locale: 'es-ES' })})` : ''}
                             </MenuItem>
                           ))}
                           <MenuItem value="__other__">Otro (especificar referencia)</MenuItem>
@@ -5083,7 +5084,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                           </Box>
                           {product.quoteDate && (
                             <Typography variant="caption" sx={{ display: 'block', color: '#86899C', mt: 1 }}>
-                              Fecha: {new Date(product.quoteDate).toLocaleDateString('es-ES')}
+                              Fecha: {fechaCorta(product.quoteDate, { locale: 'es-ES' })}
                             </Typography>
                           )}
                           {product.metadata?.warrantyYears && (
@@ -5244,17 +5245,17 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                           </Box>
                           {product.saleDate && (
                             <Typography variant="caption" sx={{ display: 'block', color: '#86899C', mt: 1 }}>
-                              Fecha de Venta: {new Date(product.saleDate).toLocaleDateString('es-ES')}
+                              Fecha de Venta: {fechaCorta(product.saleDate, { locale: 'es-ES' })}
                             </Typography>
                           )}
                           {product.adaptationDate && (
                             <Typography variant="caption" sx={{ display: 'block', color: '#86899C' }}>
-                              Fecha de Adaptación: {new Date(product.adaptationDate).toLocaleDateString('es-ES')}
+                              Fecha de Adaptación: {fechaCorta(product.adaptationDate, { locale: 'es-ES' })}
                             </Typography>
                           )}
                           {product.metadata?.firstMaintenanceDate && (
                             <Typography variant="caption" sx={{ display: 'block', color: '#86899C' }}>
-                              Primer Mantenimiento: {new Date(product.metadata.firstMaintenanceDate).toLocaleDateString('es-ES')}
+                              Primer Mantenimiento: {fechaCorta(product.metadata.firstMaintenanceDate, { locale: 'es-ES' })}
                             </Typography>
                           )}
                           {product.deliveryDate && (
@@ -5363,7 +5364,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                           </Box>
                           {product.adaptationDate && (
                             <Typography variant="caption" sx={{ display: 'block', color: '#86899C', mt: 1 }}>
-                              Fecha de Adaptación: {new Date(product.adaptationDate).toLocaleDateString('es-ES')}
+                              Fecha de Adaptación: {fechaCorta(product.adaptationDate, { locale: 'es-ES' })}
                             </Typography>
                           )}
                           {product.notes && (
@@ -6467,7 +6468,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                   <Grid item xs={6} sm={4}>
                     <Typography variant="caption" sx={{ color: '#86899C' }}>Fecha de venta</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {new Date(viewProductDialog.product.saleDate).toLocaleDateString('es-ES')}
+                      {fechaCorta(viewProductDialog.product.saleDate, { locale: 'es-ES' })}
                     </Typography>
                   </Grid>
                 )}
@@ -6489,7 +6490,7 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                       <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                           {viewProductDialog.product.adaptationDate
-                            ? new Date(viewProductDialog.product.adaptationDate).toLocaleDateString('es-ES')
+                            ? fechaCorta(viewProductDialog.product.adaptationDate, { locale: 'es-ES' })
                             : 'Sin registrar — el seguimiento no ha arrancado'}
                         </Typography>
                         {canSales && (
@@ -6542,9 +6543,9 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                     <Typography variant="caption" sx={{ color: '#86899C' }}>Período de garantía / Fecha finalización</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                       {viewProductDialog.product.warrantyStartDate && viewProductDialog.product.warrantyEndDate
-                        ? `${new Date(viewProductDialog.product.warrantyStartDate).toLocaleDateString('es-ES')} – ${new Date(viewProductDialog.product.warrantyEndDate).toLocaleDateString('es-ES')}`
+                        ? `${fechaCorta(viewProductDialog.product.warrantyStartDate, { locale: 'es-ES' })} – ${fechaCorta(viewProductDialog.product.warrantyEndDate, { locale: 'es-ES' })}`
                         : viewProductDialog.product.warrantyEndDate
-                          ? `Fin: ${new Date(viewProductDialog.product.warrantyEndDate).toLocaleDateString('es-ES')}`
+                          ? `Fin: ${fechaCorta(viewProductDialog.product.warrantyEndDate, { locale: 'es-ES' })}`
                           : `Inicio: ${new Date(viewProductDialog.product.warrantyStartDate).toLocaleDateString('es-ES')}`}
                     </Typography>
                   </Grid>
