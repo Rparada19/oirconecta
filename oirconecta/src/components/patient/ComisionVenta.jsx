@@ -51,6 +51,7 @@ export default function ComisionVenta({ saleId, readOnly = false, onGuardado }) 
   const [recaudo, setRecaudo] = useState('');
   const [partnerId, setPartnerId] = useState('');
   const [pct, setPct] = useState('');
+  const [costo, setCosto] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
@@ -67,6 +68,7 @@ export default function ComisionVenta({ saleId, readOnly = false, onGuardado }) 
       setRecaudo(soloFecha(s.fechaRecaudo));
       setPartnerId(s.comisionPartnerId || '');
       setPct(s.comisionPct == null ? '' : String(s.comisionPct));
+      setCosto(s.costoUnitario == null ? '' : String(s.costoUnitario));
     }
     if (lista?.data?.success) setAliados(lista.data.data || []);
   }, [saleId]);
@@ -86,6 +88,7 @@ export default function ComisionVenta({ saleId, readOnly = false, onGuardado }) 
       fechaRecaudo: recaudo || null,
       comisionPartnerId: partnerId || null,
       comisionPct: pct === '' ? null : Number(pct),
+      costoUnitario: costo === '' ? null : Number(costo),
     });
     setGuardando(false);
     if (res?.data?.success) {
@@ -100,6 +103,16 @@ export default function ComisionVenta({ saleId, readOnly = false, onGuardado }) 
   };
 
   const bloqueada = com && com.estado !== 'CAUSADA';
+
+  // El costo es POR UNIDAD y Finanzas lo multiplica por la cantidad. Quien
+  // registra la venta piensa en el total de la factura, así que aquí se
+  // muestran los dos números: el que se escribe y el que termina contando.
+  const unidades = venta.cantidad || 1;
+  const costoTotal = costo === '' ? null : Number(costo) * unidades;
+  const utilidad = costoTotal == null ? null : (venta.valorTotal || 0) - costoTotal;
+  const margen = utilidad == null || !venta.valorTotal
+    ? null
+    : (utilidad / venta.valorTotal) * 100;
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -136,6 +149,56 @@ export default function ComisionVenta({ saleId, readOnly = false, onGuardado }) 
             inputProps={{ min: 0, max: 100, step: 0.5 }}
             helperText="Vacío = el % del convenio"
           />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider sx={{ my: 1 }} />
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: VERDE, mb: 1.5 }}>
+            Costo y utilidad
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth size="small" type="number" label="Costo unitario (lo que te costó)"
+                value={costo} onChange={(e) => setCosto(e.target.value)}
+                disabled={readOnly}
+                InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
+                helperText={
+                  costoTotal == null
+                    ? 'Sin costo cargado, el margen del mes sale inflado'
+                    : `× ${unidades} ${unidades === 1 ? 'unidad' : 'unidades'} = ${cop(costoTotal)} de costo total`
+                }
+              />
+            </Grid>
+            <Grid item xs={12} sm={8}>
+              <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', gap: 1, pt: 0.5 }}>
+                <Box>
+                  <Typography variant="caption" sx={{ color: MUTED }}>Venta</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{cop(venta.valorTotal || 0)}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: MUTED }}>Costo total</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{costoTotal == null ? '—' : cop(costoTotal)}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: MUTED }}>Utilidad</Typography>
+                  <Typography variant="body2" sx={{
+                    fontWeight: 700, color: utilidad == null ? undefined : utilidad < 0 ? '#b91c1c' : VERDE,
+                  }}>
+                    {utilidad == null ? '—' : cop(utilidad)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: MUTED }}>Margen</Typography>
+                  <Typography variant="body2" sx={{
+                    fontWeight: 700, color: margen == null ? undefined : margen < 0 ? '#b91c1c' : VERDE,
+                  }}>
+                    {margen == null ? '—' : `${margen.toFixed(0)}%`}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Grid>
+          </Grid>
         </Grid>
 
         {com && (
