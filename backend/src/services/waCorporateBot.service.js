@@ -1274,7 +1274,12 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
   // El número es del consultorio: tanto la rama de paciente como la de dudas
   // generales deben saber lo mismo que el widget de la ficha (marcas,
   // servicios, horarios).
-  if (['PACIENTE_BOGOTA', 'INFO_GENERAL', 'REFERIDO_ALIADO'].includes(conv.contactType)) {
+  // El cerebro (nodos, FAQs verificadas, documentos y catálogo de planes) va a
+  // TODA rama que hable con un paciente. Faltaban dos, y una de ellas es la
+  // peor de olvidar: el paciente que ya es nuestro preguntaba por la
+  // diferencia entre exámenes y valoración y el bot improvisaba, mientras que
+  // a un desconocido sí le contestaba con la FAQ aprobada.
+  if (['PACIENTE_BOGOTA', 'PACIENTE_EXISTENTE', 'INFO_GENERAL', 'REFERIDO_ALIADO', 'OTROS'].includes(conv.contactType)) {
     try {
       const retailId = await retailProfileId();
       if (retailId) {
