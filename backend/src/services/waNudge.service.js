@@ -251,52 +251,34 @@ const DESPEDIDA =
 Si en algún momento quieres resolver una duda sobre tu audición —o la de alguien de tu casa— aquí estoy. Escríbeme cuando quieras, sin compromiso.`;
 
 /**
- * Redacta el mensaje para retomar. Lo escribe el mismo bot, con el mismo
- * prompt: así sabe su nombre, de qué anuncio vino y qué alcanzó a decir.
- * Si algo falla hay un texto de respaldo — un silencio no se queda sin
- * atender por culpa de una llamada caída.
+ * Arma el mensaje para retomar.
+ *
+ * NO lo redacta la IA, y es a propósito. El primer intento sí: se le pasaba la
+ * conversación y se le pedía "una pregunta más fácil que la anterior". Con esa
+ * instrucción se inventó un tema nuevo — le preguntó a un referido si vivía en
+ * Cartagena o en Bogotá, dos ciudades que nunca mencionó, y le habló de "tu
+ * cita" cuando no había ninguna. Pedirle originalidad a un mensaje cuyo único
+ * trabajo es insistir es pedirle que alucine.
+ *
+ * Lo que hace ahora: repite la última pregunta que quedó sin respuesta. Es
+ * imposible que invente, y además es lo que haría una persona.
  */
-async function redactarRetoma(conv) {
-  const respaldo = conv.contactName
-    ? `Hola, ${String(conv.contactName).split(/\s+/)[0]} 👋 Quedé pendiente de ti.\n\n¿Es algo que vienes notando tú, o preguntas por alguien de tu casa? Con eso te oriento mejor.`
-    : '¡Hola! 👋 Quedé pendiente de ti.\n\n¿Es algo que vienes notando tú, o preguntas por alguien de tu casa? Con eso te oriento mejor.';
-  if (!process.env.ANTHROPIC_API_KEY) return respaldo;
-  try {
-    const bot = require('./waCorporateBot.service');
-    const historia = await prisma.whatsAppMessage.findMany({
-      where: { conversationId: conv.id },
-      orderBy: { timestamp: 'desc' },
-      take: 6,
-      select: { direction: true, body: true },
-    });
-    const transcripcion = historia.reverse()
-      .map((m) => `${m.direction === 'INBOUND' ? 'Paciente' : 'Tú'}: ${m.body || ''}`)
-      .join('\n');
+function armarRetoma(conv, ultimoTextoBot) {
+  const nombre = conv.contactName ? `, ${String(conv.contactName).split(/\s+/)[0]}` : '';
 
-    const r = await bot.ensayar({
-      contactType: conv.contactType || 'PACIENTE_BOGOTA',
-      contactName: conv.contactName,
-      messages: [{
-        role: 'user',
-        content: `[INSTRUCCIÓN DEL SISTEMA, no es un mensaje del paciente]
+  // La última pregunta del bot: se corta el mensaje en frases y se toma la
+  // última que termine en "?". Sirve igual con un saludo de cinco párrafos que
+  // con una línea suelta.
+  const cuerpo = String(ultimoTextoBot || '').replace(/\s+/g, ' ').trim();
+  const preguntas = cuerpo.match(/[^.!?\n]*\?/g) || [];
+  const pendiente = preguntas.length
+    ? preguntas[preguntas.length - 1].trim()
+    : null;
 
-Esta persona te escribió y no ha vuelto a responder en horas. Esto fue lo último que pasó:
-${transcripcion}
-
-Escribe UN solo mensaje corto para retomar, y nada más. Reglas:
-- No reproches el silencio ni digas "veo que no me has respondido".
-- No repitas lo que ya le dijiste: si tu mensaje anterior fue un menú o una pregunta, ahora haz una pregunta más fácil de contestar.
-- Nada de urgencia, cupos que se acaban ni promociones.
-- Dos o tres líneas. Cálido, con su nombre si lo sabes.
-- No uses herramientas ni propongas horarios: todavía no sabes qué necesita.`,
-      }],
-    });
-    const texto = String(r?.texto || '').trim();
-    return texto.length > 10 ? texto : respaldo;
-  } catch (e) {
-    console.warn('[wa-silencio] no pude redactar la retoma:', e.message);
-    return respaldo;
+  if (pendiente && pendiente.length <= 160) {
+    return `Quedé pendiente de tu respuesta${nombre} 🙂\n\n${pendiente}`;
   }
+  return `Quedé pendiente de ti${nombre} 🙂\n\nCuéntame en qué te puedo ayudar y seguimos.`;
 }
 
 async function enviarYGuardar(conv, texto, campo) {
@@ -375,7 +357,12 @@ async function processSilencios() {
       const horas = (ahora - new Date(conv.lastMessageAt)) / 3600000;
 
       if (!conv.silencio1At) {
-        const texto = await redactarRetoma(conv);
+        const previo = await prisma.whatsAppMessage.findFirst({
+          where: { conversationId: conv.id, direction: 'OUTBOUND' },
+          orderBy: { timestamp: 'desc' },
+          select: { body: true },
+        });
+        const texto = armarRetoma(conv, previo?.body);
         if (await enviarYGuardar(conv, texto, 'silencio1At')) retomas++;
       } else if (horas >= SILENCIO_2_HORAS - SILENCIO_1_HORAS) {
         // La segunda se mide desde la primera retoma, no desde el silencio
