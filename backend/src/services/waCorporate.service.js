@@ -61,7 +61,7 @@ async function findOrCreateConversation({ phone, contactName }) {
 /** Persiste un mensaje entrante y actualiza contadores/ventana. */
 async function persistIncomingMessage({
   phoneNumberId, fromWaId, wamid, type, textBody, contactName, tsSeconds,
-  mediaId = null, mediaMime = null,
+  mediaId = null, mediaMime = null, referral = null,
 }) {
   const { conversation, isNew } = await findOrCreateConversation({
     phone: fromWaId,
@@ -95,6 +95,27 @@ async function persistIncomingMessage({
       });
       if (p) vincular = { patientId: p.id };
     }
+  }
+
+  // Click-to-WhatsApp: Meta manda el objeto `referral` solo en el primer
+  // mensaje después de tocar el anuncio. Que venga = clic nuevo, aunque la
+  // persona ya nos hubiera escrito antes por otra campaña. El último anuncio
+  // manda: es el que la trajo esta vez.
+  let atribucion = {};
+  const adNuevo = !!(referral && (referral.source_id || referral.ctwa_clid));
+  if (adNuevo) {
+    atribucion = {
+      adSourceType: referral.source_type || null,
+      adSourceId: referral.source_id || null,
+      adHeadline: referral.headline || null,
+      adBody: referral.body || null,
+      adSourceUrl: referral.source_url || null,
+      adCtwaClid: referral.ctwa_clid || null,
+      adSeenAt: new Date(),
+      adClicks: { increment: 1 },
+    };
+    console.log('[wa-ads] clic de anuncio', referral.source_id || referral.ctwa_clid,
+      'de', fromWaId, '—', (referral.headline || '').slice(0, 60));
   }
 
   const timestamp = tsSeconds ? new Date(Number(tsSeconds) * 1000) : new Date();
@@ -133,6 +154,7 @@ async function persistIncomingMessage({
         contactName: conversation.contactName || contactName || undefined,
         ...reabrir,
         ...vincular,
+        ...atribucion,
       },
     }),
   ]);
@@ -140,7 +162,7 @@ async function persistIncomingMessage({
   console.log('[wa-corp] guardado wamid', wamid, 'conv', conversation.id,
     'phone', conversation.phone, 'nueva=', isNew, 'linea=', conversation.businessLine,
     'estado=', conversation.status);
-  return { persisted: true, conversationId: conversation.id, isNew };
+  return { persisted: true, conversationId: conversation.id, isNew, adNuevo };
 }
 
 /**

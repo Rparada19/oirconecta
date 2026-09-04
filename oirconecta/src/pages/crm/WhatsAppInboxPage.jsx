@@ -27,6 +27,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import LaunchIcon from '@mui/icons-material/Launch';
+import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import { api } from '../../services/apiClient';
 
@@ -101,6 +102,22 @@ export default function WhatsAppInboxPage({
 
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
+
+  // Campañas (anuncios click-to-WhatsApp)
+  const [campOpen, setCampOpen] = useState(false);
+  const [camp, setCamp] = useState({ data: [], total: null });
+  const [campLoading, setCampLoading] = useState(false);
+
+  const openCampanas = async () => {
+    setCampOpen(true);
+    setCampLoading(true);
+    try {
+      const r = await api.get('/api/wa/campanas');
+      if (r?.data?.success) setCamp({ data: r.data.data || [], total: r.data.total });
+    } catch (e) {
+      setCamp({ data: [], total: null });
+    } finally { setCampLoading(false); }
+  };
 
   // Nueva conversación
   const [newOpen, setNewOpen] = useState(false);
@@ -188,6 +205,9 @@ export default function WhatsAppInboxPage({
       if (filter === 'mine') params.mine = 'true';
       else if (filter === 'unassigned') params.unassigned = 'true';
       else if (filter === 'closed') params.status = 'CLOSED';
+      // Campañas activas: poder aislar a los que llegaron por un anuncio es lo
+      // que permite ver si la pauta está trayendo gente o ruido.
+      else if (filter === 'ads') { params.active = 'true'; params.soloAnuncios = 'true'; }
       // 'all' = todas las abiertas (incluye las que atiende el bot); antes se
       // filtraba por HUMAN y ocultaba las conversaciones en estado BOT.
       else params.active = 'true';
@@ -412,12 +432,20 @@ export default function WhatsAppInboxPage({
               </Typography>
               <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>{subtitle}</Typography>
             </Box>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+            <Tooltip title="Rendimiento de las campañas">
+              <IconButton onClick={openCampanas}
+                sx={{ bgcolor: '#fef3c7', color: '#92400e', width: 36, height: 36, '&:hover': { bgcolor: '#fde68a' } }}>
+                <CampaignOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Nueva conversación">
               <IconButton onClick={openNewDialog}
                 sx={{ bgcolor: ACCENT, color: '#fff', width: 36, height: 36, '&:hover': { bgcolor: '#5b21b6' } }}>
                 <AddIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+            </Stack>
           </Stack>
         </Box>
 
@@ -437,6 +465,7 @@ export default function WhatsAppInboxPage({
               { key: 'all', label: 'Abiertas' },
               { key: 'mine', label: 'Mías' },
               { key: 'unassigned', label: 'Sin asignar' },
+              { key: 'ads', label: '📣 Anuncios' },
               { key: 'closed', label: 'Cerradas' },
             ].map((f) => (
               <Chip
@@ -501,6 +530,17 @@ export default function WhatsAppInboxPage({
                         {fmtTime(c.lastMessageAt)}
                       </Typography>
                     </Stack>
+                    {c.adSourceId && (
+                      <Chip
+                        size="small"
+                        label={`📣 ${c.adHeadline || 'Anuncio'}`}
+                        title={c.adHeadline || c.adSourceId}
+                        sx={{
+                          mt: 0.4, height: 16, maxWidth: '100%', fontSize: '0.6rem', fontWeight: 700,
+                          bgcolor: '#fef3c7', color: '#92400e', '& .MuiChip-label': { px: 0.6 },
+                        }}
+                      />
+                    )}
                     <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.25 }}>
                       <Typography sx={{
                         fontSize: '0.75rem', color: c.unreadCount > 0 ? '#0f172a' : MUTED,
@@ -593,6 +633,30 @@ export default function WhatsAppInboxPage({
                 </Tooltip>
               )}
             </Box>
+
+            {/* De qué anuncio llegó. El asesor que retoma la conversación
+                necesita ver la promesa que esta persona ya leyó. */}
+            {selected.adSourceId && (
+              <Box sx={{
+                px: 3, py: 1, bgcolor: '#fffbeb', borderBottom: `1px solid #fde68a`,
+                display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap',
+              }}>
+                <Typography sx={{ fontSize: '0.72rem', color: '#92400e', fontWeight: 800 }}>
+                  📣 Llegó por anuncio
+                </Typography>
+                <Typography sx={{ fontSize: '0.72rem', color: '#92400e', flex: 1, minWidth: 0 }}>
+                  {selected.adHeadline || selected.adSourceId}
+                  {selected.adBody ? ` — ${String(selected.adBody).slice(0, 120)}` : ''}
+                </Typography>
+                {selected.adSourceUrl && (
+                  <Tooltip title="Ver el anuncio">
+                    <IconButton size="small" onClick={() => window.open(selected.adSourceUrl, '_blank')}>
+                      <LaunchIcon sx={{ fontSize: 15, color: '#92400e' }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+            )}
 
             {/* Mensajes */}
             <Box sx={{
@@ -966,6 +1030,94 @@ export default function WhatsAppInboxPage({
               '&:hover': { bgcolor: '#1fb85a' } }}>
             {reactLoading ? 'Enviando…' : 'Enviar plantilla'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ─── Campañas: qué anuncio trae gente y cuánta agenda ─── */}
+      <Dialog open={campOpen} onClose={() => setCampOpen(false)} maxWidth="md" fullWidth
+        PaperProps={{ sx: { borderRadius: '14px' } }}>
+        <DialogTitle sx={{ ...SERIF, fontWeight: 700, color: NAVY }}>
+          📣 Campañas de WhatsApp
+          <Typography sx={{ fontSize: '0.78rem', color: MUTED, fontWeight: 400 }}>
+            Anuncios de Facebook e Instagram que abren chat con nosotros
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          {campLoading ? (
+            <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={24} sx={{ color: ACCENT }} /></Box>
+          ) : camp.data.length === 0 ? (
+            <Box sx={{ p: 3, textAlign: 'center', color: MUTED, fontSize: '0.85rem' }}>
+              Todavía no ha entrado nadie por un anuncio.<br />
+              Aparecen aquí en cuanto alguien toque un anuncio de click-to-WhatsApp.
+            </Box>
+          ) : (
+            <>
+              {camp.total && (
+                <Stack direction="row" spacing={3} sx={{ mb: 2 }}>
+                  {[
+                    { k: 'Anuncios', v: camp.total.anuncios },
+                    { k: 'Conversaciones', v: camp.total.conversaciones },
+                    { k: 'Citas agendadas', v: camp.total.citas },
+                    { k: 'Conversión', v: `${camp.total.conversion}%` },
+                  ].map((m) => (
+                    <Box key={m.k}>
+                      <Typography sx={{ fontSize: '1.4rem', fontWeight: 800, color: NAVY, lineHeight: 1.1 }}>{m.v}</Typography>
+                      <Typography sx={{ fontSize: '0.7rem', color: MUTED, fontWeight: 700 }}>{m.k}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+              <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                <Box component="thead">
+                  <Box component="tr" sx={{ '& th': { textAlign: 'left', py: 1, color: MUTED, fontSize: '0.7rem', fontWeight: 800, borderBottom: `1px solid ${BORDER}` } }}>
+                    <th>Anuncio</th>
+                    <th>Conversaciones</th>
+                    <th>Citas</th>
+                    <th>Conversión</th>
+                    <th>Último clic</th>
+                    <th />
+                  </Box>
+                </Box>
+                <Box component="tbody">
+                  {camp.data.map((f) => (
+                    <Box component="tr" key={f.adSourceId}
+                      sx={{ '& td': { py: 1.1, borderBottom: `1px solid ${BORDER}`, verticalAlign: 'top' } }}>
+                      <td>
+                        <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: NAVY }}>
+                          {f.titular || '(sin titular)'}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.68rem', color: MUTED }}>id {f.adSourceId}</Typography>
+                      </td>
+                      <td><Typography sx={{ fontSize: '0.85rem', fontWeight: 700 }}>{f.conversaciones}</Typography></td>
+                      <td><Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#15803d' }}>{f.citas}</Typography></td>
+                      <td>
+                        <Chip size="small" label={`${f.conversion}%`} sx={{
+                          height: 20, fontSize: '0.68rem', fontWeight: 800,
+                          bgcolor: f.conversion >= 30 ? '#dcfce7' : f.conversion >= 10 ? '#fef3c7' : '#fee2e2',
+                          color: f.conversion >= 30 ? '#15803d' : f.conversion >= 10 ? '#92400e' : '#b91c1c',
+                        }} />
+                      </td>
+                      <td><Typography sx={{ fontSize: '0.72rem', color: MUTED }}>{fmtTime(f.ultimoClic)}</Typography></td>
+                      <td>
+                        <Tooltip title="Ver estas conversaciones">
+                          <IconButton size="small" onClick={() => {
+                            setCampOpen(false);
+                            setFilter('ads');
+                            setQ('');
+                          }}>
+                            <LaunchIcon sx={{ fontSize: 15, color: ACCENT }} />
+                          </IconButton>
+                        </Tooltip>
+                      </td>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setCampOpen(false)} sx={{ textTransform: 'none' }}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Box>

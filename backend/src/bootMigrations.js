@@ -1084,6 +1084,17 @@ async function ensureAppointmentCancellationColumns(prisma) {
     await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "agendarNudgeSentAt" TIMESTAMP`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "agendarEscalatedAt" TIMESTAMP`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "agendarBookedAt" TIMESTAMP`);
+    // Atribución de campañas: el objeto `referral` del click-to-WhatsApp.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "adSourceType" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "adSourceId" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "adHeadline" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "adBody" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "adSourceUrl" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "adCtwaClid" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "adSeenAt" TIMESTAMP`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "whatsapp_conversations" ADD COLUMN IF NOT EXISTS "adClicks" INTEGER NOT NULL DEFAULT 0`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_conversations_ad_idx" ON "whatsapp_conversations" ("adSourceId", "adSeenAt")`);
+
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "whatsapp_conversations_agendar_nudge_idx" ON "whatsapp_conversations" ("agendarLinkSentAt", "agendarBookedAt", "agendarEscalatedAt") WHERE "agendarLinkSentAt" IS NOT NULL`);
 
     // F10 — RAG documents del bot del directorio (pgvector)

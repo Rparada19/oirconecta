@@ -94,6 +94,8 @@ router.get('/conversations', async (req, res, next) => {
     // ocultaba las que gestiona el bot (p. ej. las que entran por anuncios).
     if (active === 'true') where.status = { not: 'CLOSED' };
     else if (status) where.status = String(status).toUpperCase();
+    if (req.query.adSourceId) where.adSourceId = String(req.query.adSourceId);
+    if (req.query.soloAnuncios === 'true') where.adSourceId = { not: null };
     if (unassigned === 'true') where.assignedToId = null;
     else if (mine === 'true' && req.user?.id) where.assignedToId = req.user.id;
     else if (assignedTo) where.assignedToId = String(assignedTo);
@@ -144,6 +146,80 @@ router.get('/conversations/summary', async (req, res, next) => {
       data: {
         crm: { total: crmTotal, unread: crmUnread, unassigned: crmUnassigned },
         directorio: { total: dirTotal, unread: dirUnread, unassigned: dirUnassigned },
+      },
+    });
+  } catch (e) { next(e); }
+});
+
+// ─── Campañas: qué anuncio trajo qué ───────────────────────
+// Una fila por anuncio de click-to-WhatsApp, con lo único que importa para
+// decidir dónde poner el presupuesto: cuántos escribieron y cuántos agendaron.
+router.get('/campanas', async (req, res, next) => {
+  try {
+    const { desde, hasta } = req.query;
+    const where = { adSourceId: { not: null } };
+    if (desde || hasta) {
+      where.adSeenAt = {};
+      if (desde) where.adSeenAt.gte = new Date(String(desde));
+      if (hasta) where.adSeenAt.lte = new Date(String(hasta));
+    }
+
+    const convs = await prisma.whatsAppConversation.findMany({
+      where,
+      select: {
+        adSourceId: true, adSourceType: true, adHeadline: true, adSourceUrl: true,
+        adSeenAt: true, adClicks: true, status: true, agendarBookedAt: true,
+      },
+    });
+
+    const porAnuncio = new Map();
+    for (const c of convs) {
+      const k = c.adSourceId;
+      if (!porAnuncio.has(k)) {
+        porAnuncio.set(k, {
+          adSourceId: k,
+          adSourceType: c.adSourceType,
+          titular: c.adHeadline,
+          url: c.adSourceUrl,
+          conversaciones: 0,
+          clics: 0,
+          citas: 0,
+          escaladas: 0,
+          abiertas: 0,
+          ultimoClic: null,
+        });
+      }
+      const f = porAnuncio.get(k);
+      f.conversaciones += 1;
+      f.clics += c.adClicks || 1;
+      if (c.agendarBookedAt) f.citas += 1;
+      if (c.status === 'ESCALATED') f.escaladas += 1;
+      if (c.status !== 'CLOSED') f.abiertas += 1;
+      if (!f.titular && c.adHeadline) f.titular = c.adHeadline;
+      if (!f.ultimoClic || (c.adSeenAt && c.adSeenAt > f.ultimoClic)) f.ultimoClic = c.adSeenAt;
+    }
+
+    const data = [...porAnuncio.values()]
+      .map((f) => ({
+        ...f,
+        // Conversión sobre conversaciones, no sobre impresiones: es lo único
+        // que este lado del embudo puede saber.
+        conversion: f.conversaciones ? Math.round((f.citas / f.conversaciones) * 100) : 0,
+      }))
+      .sort((a, b) => b.conversaciones - a.conversaciones);
+
+    const total = data.reduce((acc, f) => ({
+      conversaciones: acc.conversaciones + f.conversaciones,
+      citas: acc.citas + f.citas,
+    }), { conversaciones: 0, citas: 0 });
+
+    res.json({
+      success: true,
+      data,
+      total: {
+        ...total,
+        anuncios: data.length,
+        conversion: total.conversaciones ? Math.round((total.citas / total.conversaciones) * 100) : 0,
       },
     });
   } catch (e) { next(e); }

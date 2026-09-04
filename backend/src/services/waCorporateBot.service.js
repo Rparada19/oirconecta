@@ -143,6 +143,24 @@ const bookingToolImpls = {
 
     // Ciudad y atribución al aliado. Va después de crear la cita para no
     // arriesgar la reserva si algo de esto falla.
+    // De qué anuncio salió esta cita. Se guarda en la ficha del paciente para
+    // que la campaña se pueda medir por citas, no solo por conversaciones.
+    if (ctx?.adSourceId) {
+      try {
+        const appt = await prisma.appointment.findUnique({
+          where: { id: res.id }, select: { patientId: true },
+        });
+        if (appt?.patientId) {
+          await prisma.patient.updateMany({
+            where: { id: appt.patientId, OR: [{ procedencia: null }, { procedencia: '' }] },
+            data: { procedencia: `anuncio-wa:${ctx.adSourceId}` },
+          });
+        }
+      } catch (e) {
+        console.error('[wa-ads] atribución de la cita falló:', e.message);
+      }
+    }
+
     if (ctx?.partnerId || input.ciudad) {
       try {
         const appt = await prisma.appointment.findUnique({
@@ -945,13 +963,96 @@ Te pido cuatro datos y te dejo la cita agendada hoy mismo. Le contaremos a ${par
   }
 }
 
+/**
+ * Arranque de la rama de campaña: la persona tocó un anuncio de
+ * click-to-WhatsApp. Meta manda qué anuncio fue en el objeto `referral`, y eso
+ * ya quedó guardado en la conversación.
+ *
+ * No se le muestran los botones del handshake: quien toca un anuncio ya dijo a
+ * qué viene, y devolverle un menú es hacerle repetir lo que acaba de decir.
+ */
+async function iniciarFlujoAnuncio(conversationId, incomingText) {
+  if (!botEnabled()) return { skipped: 'bot-disabled' };
+
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: { id: true, phone: true, contactName: true, contactType: true, adHeadline: true },
+  });
+  if (!conv) return { skipped: 'conv-not-found' };
+
+  // La campaña es del centro: quien llega por ahí es paciente, no aliado ni
+  // proveedor. Si ya venía tipificado como referido de aliado, se respeta —
+  // ese flujo tiene su propio beneficio prometido.
+  const respetar = ['REFERIDO_ALIADO', 'PACIENTE_EXISTENTE'];
+  await prisma.whatsAppConversation.update({
+    where: { id: conversationId },
+    data: {
+      contactType: respetar.includes(conv.contactType) ? conv.contactType : 'PACIENTE_BOGOTA',
+      businessLine: 'CRM',
+      intent: 'CITA_PACIENTE',
+      status: 'BOT',
+    },
+  });
+
+  // Con texto, contesta lo que preguntó (el prompt ya sabe de qué anuncio
+  // viene). Sin texto —abrió el chat desde el anuncio y no escribió— el saludo
+  // lo damos nosotros.
+  if (incomingText && incomingText.trim()) {
+    return handleTextForBot({ conversationId, incomingText });
+  }
+
+  const saludo = conv.contactName ? `¡Hola, ${firstName(conv.contactName)}! 👋` : '¡Hola! 👋';
+  const gancho = conv.adHeadline
+    ? `Veo que vienes por *${conv.adHeadline}*.`
+    : 'Veo que vienes por nuestro anuncio.';
+  const texto =
+`${saludo} Somos *OírConecta*, centro auditivo en Bogotá (Cr 10 #96-25, Cons. 320).
+
+${gancho}
+
+Con gusto te agendo tu *valoración auditiva* — dura cerca de una hora y sales sabiendo exactamente cómo está tu oído.
+
+¿Te sirve mejor en la mañana o en la tarde?`;
+
+  try {
+    const result = await sendWhatsAppText({ to: conv.phone, text: texto });
+    await prisma.whatsAppMessage.create({
+      data: {
+        conversationId,
+        wamid: result?.providerMessageId || null,
+        direction: 'OUTBOUND',
+        type: 'text',
+        body: texto,
+        sentByBot: true,
+        deliveryStatus: 'sent',
+        timestamp: new Date(),
+      },
+    });
+    await prisma.whatsAppConversation.update({
+      where: { id: conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        lastMessagePreview: 'Bot: llegó por anuncio — proponiendo horario',
+      },
+    });
+    return { sent: true };
+  } catch (e) {
+    console.error('[wa-bot] arranque de flujo de anuncio falló:', e.message);
+    return { error: e.message };
+  }
+}
+
 async function handleTextForBot({ conversationId, incomingText }) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
   if (!process.env.ANTHROPIC_API_KEY) return { skipped: 'no-anthropic-key' };
 
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, phone: true, contactType: true, status: true, contactName: true, patientId: true, botSummary: true, partnerId: true },
+    select: {
+      id: true, phone: true, contactType: true, status: true, contactName: true,
+      patientId: true, botSummary: true, partnerId: true,
+      adSourceId: true, adHeadline: true, adBody: true, adSeenAt: true,
+    },
   });
   if (!conv) return { skipped: 'conv-not-found' };
   if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
@@ -1004,6 +1105,25 @@ NO menciones diagnósticos, resultados de audiometría ni detalles clínicos: el
 ═══════════════════════════════`;
   }
 
+  // Vino de una campaña. Saber por cuál anuncio entró cambia el arranque: la
+  // promesa del anuncio es lo que la persona tiene en la cabeza, y el bot debe
+  // recogerla en vez de empezar de cero.
+  const AD_VIGENCIA_MS = 7 * 24 * 60 * 60 * 1000;
+  const adVigente = conv.adSeenAt && (Date.now() - new Date(conv.adSeenAt).getTime()) < AD_VIGENCIA_MS;
+  if (adVigente && (conv.adHeadline || conv.adBody)) {
+    systemPrompt += `\n\n═══ VIENE DE UN ANUNCIO NUESTRO ═══
+Tocó este anuncio en Facebook/Instagram hace poco:
+· Titular: ${conv.adHeadline || '(sin titular)'}
+${conv.adBody ? `· Texto: ${String(conv.adBody).slice(0, 400)}` : ''}
+
+Cómo usarlo, en este orden:
+1. Reconoce por qué vino, con las palabras del anuncio, en tu primera frase. Una sola vez — después no lo vuelvas a mencionar.
+2. Responde lo que preguntó.
+3. Propón la valoración con día y hora concretos.
+NO prometas nada que el anuncio no diga, y NO inventes descuentos, promociones ni precios. Si el anuncio ofrece algo puntual, respétalo tal cual está escrito arriba.
+═══════════════════════════════════`;
+  }
+
   if (conv.botSummary) {
     systemPrompt += `\n\n═══ LO QUE YA HABLARON ANTES ═══\n${conv.botSummary}\n
 Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le pidas datos que ya dio.
@@ -1052,6 +1172,7 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
       contactName: conv.contactName,
       profileId: agendaProfileId,
       partnerId: conv.partnerId || null,
+      adSourceId: adVigente ? conv.adSourceId : null,
     };
 
     if (useBookingTools) {
@@ -1195,6 +1316,7 @@ module.exports = {
   BUTTON_IDS,
   maybeSendHandshake,
   iniciarFlujoAliado,
+  iniciarFlujoAnuncio,
   actualizarResumen,
   handleButtonReply,
   handleTextForBot,

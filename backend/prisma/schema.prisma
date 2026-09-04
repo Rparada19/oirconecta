@@ -3023,6 +3023,20 @@ model WhatsAppConversation {
   partnerId String?
   partner   ReferralPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
 
+  /// Anuncio de click-to-WhatsApp que originó la conversación (objeto `referral`
+  /// que Meta manda solo en el primer mensaje después del clic). Si la persona
+  /// vuelve por otro anuncio, se sobrescribe: el último clic manda.
+  adSourceType String?
+  adSourceId   String?
+  adHeadline   String?
+  adBody       String?  @db.Text
+  adSourceUrl  String?
+  /// click id de Meta — es lo que permite devolverle la conversión al anuncio.
+  adCtwaClid   String?
+  adSeenAt     DateTime?
+  /// Cuántas veces esta persona ha entrado por un anuncio.
+  adClicks     Int      @default(0)
+
   /// Ventana de 24h desde el último mensaje INBOUND del cliente. Después → solo HSM.
   windowExpiresAt DateTime?
 
@@ -3058,6 +3072,7 @@ model WhatsAppConversation {
   @@index([businessLine, status, updatedAt])
   @@index([assignedToId, status])
   @@index([agendarLinkSentAt, agendarBookedAt, agendarEscalatedAt])
+  @@index([adSourceId, adSeenAt])
   @@map("whatsapp_conversations")
 }
 

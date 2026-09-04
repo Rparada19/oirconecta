@@ -226,6 +226,10 @@ async function processIncomingEvent(body) {
               mediaId = media.id || null;
               mediaMime = media.mime_type || null;
               textBody = media.caption || (msg.type === 'image' ? '[imagen]' : `[documento] ${media.filename || ''}`.trim());
+            } else if (msg.type === 'request_welcome') {
+              // Meta avisa que alguien abrió el chat desde el anuncio sin
+              // escribir todavía. No hay texto: el saludo lo damos nosotros.
+              textBody = null;
             } else if (msg.type === 'button') {
               // Botón de plantilla (quick reply) — trae payload + texto
               textBody = msg.button?.text || null;
@@ -244,14 +248,18 @@ async function processIncomingEvent(body) {
               tsSeconds: msg.timestamp,
               mediaId,
               mediaMime,
+              // Anuncio de click-to-WhatsApp. Solo viene en el primer mensaje
+              // después del clic — si no lo capturamos aquí, se pierde.
+              referral: msg.referral || null,
             });
             if (r.persisted) {
               processed++;
               // Lead nuevo: alguien que nunca había escrito. Con el volumen de
               // hoy cada uno importa, y nadie vive con el CRM abierto.
               if (r.isNew) {
+                const anuncio = msg.referral?.headline || msg.referral?.source_id;
                 require('./alertaEquipo.service').avisar({
-                  titulo: 'Lead nuevo por WhatsApp',
+                  titulo: anuncio ? `Lead nuevo por anuncio: ${anuncio}` : 'Lead nuevo por WhatsApp',
                   quien: contactByWaId[msg.from] || 'Sin nombre de perfil',
                   telefono: msg.from,
                   texto: textBody,
@@ -330,7 +338,12 @@ async function processIncomingEvent(body) {
 
             // F9b — Dispatcher del bot corporativo (solo si WA_BOT_ENABLED=true)
             try {
-              if (partnerDetectado && aliadoPrimeraVez) {
+              if (r.adNuevo) {
+                // Viene de una campaña. El saludo nombra el anuncio y va
+                // directo a la cita: quien acaba de tocar un anuncio ya dijo
+                // a qué viene, preguntárselo otra vez con botones lo enfría.
+                await bot.iniciarFlujoAnuncio(r.conversationId, textBody);
+              } else if (partnerDetectado && aliadoPrimeraVez) {
                 // Escaneó el QR. Da igual si nos había escrito antes: arranca
                 // la toma de datos con el saludo de la alianza, sin los botones
                 // del handshake.
