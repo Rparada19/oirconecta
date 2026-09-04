@@ -260,6 +260,8 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
   const [appointmentType, setAppointmentType] = useState('');
   const [appointmentProfessional, setAppointmentProfessional] = useState('');
   const [appointmentReason, setAppointmentReason] = useState('');
+  // Registrar una cita ya acordada (o ya ocurrida) sin escribirle al paciente.
+  const [citaSilenciosa, setCitaSilenciosa] = useState(false);
   const [availableTimes, setAvailableTimes] = useState([]);
   const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
 
@@ -1002,10 +1004,12 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
       procedencia: 'paciente-existente',
       durationMinutes: duration,
       professionalId: appointmentProfessional || undefined,
+      silencioso: citaSilenciosa,
     });
 
     if (result.success) {
       // Crear recordatorios (email, WhatsApp, llamada)
+      if (!citaSilenciosa) {
       const reminderDate = new Date(`${appointmentDate}T${appointmentTime}`);
       reminderDate.setDate(reminderDate.getDate() - 1); // Recordatorio 1 día antes
 
@@ -1045,8 +1049,10 @@ const PatientProfileDialog = ({ open, onClose, onSaved, appointment, lead, patie
         status: 'scheduled',
         responsibleName,
       });
+      }
 
       await loadPatientData();
+      setCitaSilenciosa(false);
       setAppointmentDate('');
       setAppointmentTime('');
       setAppointmentType('');
@@ -5881,6 +5887,22 @@ case 'follow_up_consumables': return <Build sx={{ fontSize: 20 }} />;
                           rows={3}
                           placeholder="Agrega cualquier información adicional sobre esta cita..."
                         />
+                      </Grid>
+                    )}
+
+                    {appointmentDate && appointmentTime && appointmentType && (
+                      <Grid item xs={12}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox checked={citaSilenciosa}
+                              onChange={(e) => setCitaSilenciosa(e.target.checked)} />
+                          }
+                          label="No avisarle al paciente"
+                        />
+                        <Typography variant="caption" sx={{ display: 'block', color: '#86899C', mt: -0.5, ml: 4 }}>
+                          La cita queda en la agenda y en su historia, pero no sale confirmación
+                          ni recordatorios. Para registrar algo ya acordado o ya ocurrido.
+                        </Typography>
                       </Grid>
                     )}
 
