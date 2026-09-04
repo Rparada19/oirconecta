@@ -75,6 +75,22 @@ const CONTACT_TYPE_LABELS = {
   OTROS: 'Otros',
 };
 
+
+/**
+ * Pinta el texto como lo ve el paciente en WhatsApp: *negrita*, _itálica_,
+ * ~tachado~. Sin esto, revisar el trato del bot desde el CRM engaña — se leen
+ * asteriscos donde el paciente ve palabras resaltadas.
+ */
+function conFormatoWhatsApp(texto) {
+  const partes = String(texto ?? '').split(/(\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~)/g);
+  return partes.map((p, i) => {
+    if (/^\*[^*\n]+\*$/.test(p)) return <strong key={i}>{p.slice(1, -1)}</strong>;
+    if (/^_[^_\n]+_$/.test(p)) return <em key={i}>{p.slice(1, -1)}</em>;
+    if (/^~[^~\n]+~$/.test(p)) return <s key={i}>{p.slice(1, -1)}</s>;
+    return p;
+  });
+}
+
 /**
  * Bandeja de WhatsApp corporativo. Reutilizable entre CRM y Admin.
  * Props:
@@ -731,7 +747,7 @@ export default function WhatsAppInboxPage({
                       <Typography sx={{
                         fontSize: '0.9rem', color: '#111827', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                       }}>
-                        {m.body || `[${m.type}]`}
+                        {m.body ? conFormatoWhatsApp(m.body) : `[${m.type}]`}
                       </Typography>
                       <Stack direction="row" spacing={0.75} justifyContent="flex-end" alignItems="center" sx={{ mt: 0.25 }}>
                         {outbound && m.sentByUser && (
@@ -1125,7 +1141,7 @@ export default function WhatsAppInboxPage({
                   border: `1px solid ${BORDER}`, whiteSpace: 'pre-wrap',
                   fontSize: '0.84rem', color: '#0f172a',
                 }}>
-                  {m.content}
+                  {conFormatoWhatsApp(m.content)}
                   {m.escala && (
                     <Chip size="small" label="escala a humano" sx={{
                       ml: 1, height: 16, fontSize: '0.6rem', fontWeight: 700, bgcolor: '#fee2e2', color: '#b91c1c',

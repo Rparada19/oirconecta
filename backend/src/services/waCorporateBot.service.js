@@ -595,6 +595,11 @@ En tu PRIMERA respuesta, solo tres cosas y en este orden:
 3. Haz UNA sola pregunta, la que abre todo: "¿Es para ti o para un familiar?" — o, si ya sabes para quién, "¿qué has notado?".
 
 En ese primer mensaje NO propongas horarios, NO mandes links y NO enumeres servicios.
+Y en particular, NADA de esto:
+· Describir la empresa ("nos especializamos en…", "ofrecemos soluciones auditivas personalizadas"). Es un folleto y nadie lo pidió. Quien escribe quiere saber si le podemos resolver, no qué vendemos.
+· Prometer que le apartas o le guardas un cupo. No apartamos nada hasta que hay cita creada, así que decirlo es mentir.
+· Dar la dirección del consultorio. Eso va cuando ya hay cita, no en el saludo.
+Tres líneas cortas como máximo. Si te sobra una línea, quítala.
 Desde tu segunda respuesta en adelante aplicas todo lo que sigue.
 
 EXCEPCIÓN: si en su primer mensaje ya pide cita ("quiero agendar", "necesito una cita", "¿tienen cupo mañana?"), no lo interrogues. Propón horarios de una: ya te dijo lo que necesitaba.
@@ -603,7 +608,7 @@ EXCEPCIÓN: si en su primer mensaje ya pide cita ("quiero agendar", "necesito un
 - NUNCA preguntes "¿cuándo te queda bien?" en abierto. Ofrece SIEMPRE 2-3 horarios reales y concretos.
 - Usa cierre asumido: "Te agendo el *martes 3 a las 10:00 a.m.*, ¿te sirve?" — no "¿te gustaría agendar?".
 - Si dice que no le sirven, ofrece dos más de otro día. Hasta 3 rondas antes de cambiar de estrategia.
-- Si dice que después mira, propón tú: "Te aparto el cupo del jueves y si no puedes lo movemos, sin problema. ¿Mañana o tarde?".
+- Si dice que después mira, no lo sueltes en seco: muéstrale qué hay libre esta semana y deja que elija. Nunca digas que le "apartas" o le "guardas" un cupo: eso no existe hasta que la cita está creada.
 
 ═══ REGLAS DE NEGOCIO ═══
 - No vendes audífonos por chat. Vendes la valoración auditiva: es el paso que resuelve todo lo demás.
@@ -620,13 +625,13 @@ Cuando preguntan el precio están interesados. Tu trabajo es persuadir, no cotiz
 
 ═══ OBJECIONES: RECONOCE → REENCUADRA → PROPÓN HORARIO ═══
 Nunca discutas. Nunca repitas el mismo argumento dos veces. Siempre cierras con horarios.
-- "Lo voy a pensar" → "Claro. Mientras lo piensas te aparto un cupo, y si cambias de idea lo cancelas con un mensaje. ¿Jueves o viernes?"
+- "Lo voy a pensar" → "Claro, tómate tu tiempo. Lo único: la agenda de esta semana se llena rápido. ¿Te muestro qué hay disponible para que decidas con los horarios a la vista?"
 - "Es para mi mamá/papá" → habla del familiar, no del aparato: cómo lo nota (sube el volumen, pide que repitan, se aísla). Luego: "Traerla a la valoración es el paso más fácil, no compromete a nada. ¿Qué día pueden venir?"
 - "No tengo tiempo" → la valoración toma poco y hay horarios temprano; ofrece el primero de la mañana.
 - "Queda lejos" → confirma la dirección exacta y ofrece el horario que menos tráfico implique.
 - "Ya tengo audífonos" → ofrece control y revisión de adaptación; muchos vienen porque no les funcionan bien.
 - "Estoy consultando varios lados" → no critiques a nadie; ofrece la valoración como la forma de comparar con datos propios.
-- "Después te escribo" → "Perfecto. ¿Te dejo apartado el martes 10:00 mientras tanto? Si no puedes, lo movemos."
+- "Después te escribo" → "Vale. Te dejo dos horarios que hay libres por si te sirve decidir ahora: *martes 10:00* o *jueves 3:00*. Si prefieres escribirme después, aquí estoy."
 
 ═══ AGENDAMIENTO CON TOOLS ═══
 Tienes 3 tools para agendar sin que salga de WhatsApp:
@@ -1103,6 +1108,35 @@ Con gusto te agendo tu *valoración auditiva* — dura cerca de una hora y sales
  * prompt que corre en producción — si se copia, se desincroniza y ensayar deja
  * de servir.
  */
+/**
+ * WhatsApp usa UN asterisco para negrita. El modelo, entrenado en Markdown, a
+ * veces manda ** y entonces el paciente ve los asteriscos en pantalla. Se
+ * corrige aquí y no solo en el prompt: una instrucción se desobedece, esto no.
+ */
+function formatoWhatsApp(texto) {
+  return String(texto || '')
+    .replace(/\*\*\*(.+?)\*\*\*/gs, '*$1*')   // ***negrita cursiva***
+    .replace(/\*\*(.+?)\*\*/gs, '*$1*')         // **negrita**
+    .replace(/^#{1,6}\s+/gm, '')                 // ## títulos
+    .replace(/^[ \t]*[-•]\s+/gm, '· ')           // viñetas de Markdown
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '$1: $2'); // [texto](url)
+}
+
+/**
+ * Cuánto esperar antes de contestar.
+ *
+ * Contestar en medio segundo delata a la máquina y, peor, atropella: la
+ * persona todavía está leyendo lo que escribió. Se simula el tiempo de alguien
+ * que lee y responde — un poco por lo que le dijeron y un poco por lo que va a
+ * escribir, con un techo para no dejar a nadie esperando.
+ */
+function pausaHumana(entrante, respuesta) {
+  const leer = Math.min(2500, String(entrante || '').length * 25);
+  const escribir = Math.min(6000, String(respuesta || '').length * 22);
+  const ruido = 400 + Math.random() * 900;
+  return Math.round(Math.min(9000, 1200 + leer + escribir + ruido));
+}
+
 async function construirPrompt(conv) {
   // Antes, un contactType sin prompt dejaba al bot mudo sin dejar rastro:
   // pasaba con PACIENTE_EXISTENTE y ALIADO_PROVEEDOR, que tienen plantillas
@@ -1161,11 +1195,10 @@ Tocó este anuncio en Facebook/Instagram hace poco:
 · Titular: ${conv.adHeadline || '(sin titular)'}
 ${conv.adBody ? `· Texto: ${String(conv.adBody).slice(0, 400)}` : ''}
 
-Cómo usarlo, en este orden:
-1. Reconoce por qué vino, con las palabras del anuncio, en tu primera frase. Una sola vez — después no lo vuelvas a mencionar.
-2. Responde lo que preguntó.
-3. Propón la valoración con día y hora concretos.
-NO prometas nada que el anuncio no diga, y NO inventes descuentos, promociones ni precios. Si el anuncio ofrece algo puntual, respétalo tal cual está escrito arriba.
+Cómo usarlo:
+· El anuncio es contexto TUYO, no algo que le recuerdas a él. NUNCA escribas "vi que tocaste nuestro anuncio", "veo que vienes por", "noté que hiciste clic" ni nada que suene a que lo estabas mirando. Incomoda.
+· Lo que haces es dar por sentado el tema: si el anuncio hablaba de audiometría, hablas de audiometría, sin explicar cómo lo sabes.
+· NO prometas nada que el anuncio no diga, y NO inventes descuentos, promociones ni precios. Si el anuncio ofrece algo puntual, respétalo tal cual está escrito arriba.
 ═══════════════════════════════════`;
   }
 
@@ -1282,7 +1315,7 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
 
   const escala = texto.includes(ESCALATE_TAG);
   return {
-    texto: texto.split(ESCALATE_TAG).join('').trim(),
+    texto: formatoWhatsApp(texto.split(ESCALATE_TAG).join('')).trim(),
     escala,
     trazas,
     promptChars: systemPrompt.length,
@@ -1398,9 +1431,12 @@ async function handleTextForBot({ conversationId, incomingText }) {
 
   // Detecta tag de escalada
   const shouldEscalate = reply.includes(ESCALATE_TAG);
-  const cleanReply = reply.replace(ESCALATE_TAG, '').trim();
+  const cleanReply = formatoWhatsApp(reply.replace(ESCALATE_TAG, '')).trim();
 
   try {
+    // El webhook ya respondió 200 hace rato: esperar aquí no le cuesta nada a
+    // Meta y hace que del otro lado se sienta una persona, no un autoresponder.
+    await new Promise((r) => setTimeout(r, pausaHumana(incomingText, cleanReply)));
     const result = await sendWhatsAppText({ to: conv.phone, text: cleanReply });
     await prisma.whatsAppMessage.create({
       data: {
