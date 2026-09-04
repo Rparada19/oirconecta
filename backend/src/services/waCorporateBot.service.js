@@ -299,13 +299,40 @@ function firstName(fullName) {
 }
 
 /**
- * Envía el handshake inicial con 3 botones de intención.
- * Solo se dispara si:
+ * ¿El primer mensaje es solo un saludo, o ya trae intención?
+ *
+ * Importa porque decide si mandamos el menú. Alguien que escribe "quiero más
+ * información" ya dijo a qué viene; devolverle "¿en qué te ayudamos?" es
+ * hacerle repetir lo que acaba de escribir, y así arranca frío.
+ */
+function esSoloSaludo(texto) {
+  const t = String(texto || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // tildes
+    .replace(/[^a-z\s]/g, ' ')                          // emojis y puntuación
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!t) return true;                                   // sin texto → menú
+  const SALUDOS = [
+    'hola', 'holi', 'buenas', 'buenos', 'dias', 'tardes', 'noches', 'dia',
+    'hey', 'hi', 'hello', 'saludos', 'que', 'tal', 'como', 'estan', 'esta',
+    'señor', 'senores', 'senor', 'senora', 'alo', 'buen',
+  ];
+  const palabras = t.split(' ');
+  if (palabras.length > 5) return false;
+  return palabras.every((w) => SALUDOS.includes(w));
+}
+
+/**
+ * Envía el handshake inicial con botones de intención — pero solo cuando hace
+ * falta. Si el primer mensaje ya dice a qué viene, se responde a eso.
+ *
+ * Se dispara si:
  *   - Es el primer mensaje INBOUND de la conversación (sin mensajes OUTBOUND previos).
  *   - La conversación aún no tiene contactType.
  *   - El bot está habilitado por env.
  */
-async function maybeSendHandshake(conversationId) {
+async function maybeSendHandshake(conversationId, incomingText = null) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
 
   const conv = await prisma.whatsAppConversation.findUnique({
@@ -324,6 +351,20 @@ async function maybeSendHandshake(conversationId) {
     where: { conversationId, direction: 'OUTBOUND' },
   });
   if (prevOutbound > 0) return { skipped: 'already-answered' };
+
+  // Ya dijo a qué viene → nada de menú: se le contesta.
+  // Esta línea es del consultorio, así que quien escribe es paciente mientras
+  // no diga lo contrario; el prompt de PACIENTE_BOGOTA ya sabe reencaminar al
+  // profesional o al proveedor que se cuele.
+  if (!esSoloSaludo(incomingText)) {
+    const tipo = conv.patientId ? 'PACIENTE_EXISTENTE' : 'PACIENTE_BOGOTA';
+    await prisma.whatsAppConversation.update({
+      where: { id: conversationId },
+      data: { contactType: tipo, businessLine: 'CRM', status: 'BOT' },
+    });
+    console.log('[wa-bot] primer mensaje con intención — sin menú, contesto como', tipo);
+    return handleTextForBot({ conversationId, incomingText });
+  }
 
   // El nombre de la historia clínica manda sobre el del perfil de WhatsApp,
   // que puede ser un apodo o estar vacío.
@@ -543,6 +584,20 @@ Una conversación amable que termina sin cita es una conversación perdida. Info
 REGLA DE ORO: ningún mensaje tuyo termina sin un paso concreto hacia la cita.
 Nunca cierres con "cualquier cosa me avisas", "quedo atento" o "cuando gustes".
 Cierra siempre con una pregunta que se responda con un día, una hora o un sí.
+(La única excepción es tu primer mensaje — ver abajo. Ahí el paso hacia la cita es entender para quién es.)
+
+═══ TU PRIMER MENSAJE NO AGENDA ═══
+Antes de proponer un horario tienes que saber para quién es. Quien escribe a un centro auditivo casi nunca escribe por sí mismo: escribe por su mamá, por su papá, por su pareja. Empujar agenda sin preguntarlo es hablarle a la persona equivocada.
+
+En tu PRIMERA respuesta, solo tres cosas y en este orden:
+1. Saluda por su nombre si lo tienes.
+2. Contesta en UNA línea lo que preguntó. Si no preguntó nada concreto, di en una línea qué hacemos.
+3. Haz UNA sola pregunta, la que abre todo: "¿Es para ti o para un familiar?" — o, si ya sabes para quién, "¿qué has notado?".
+
+En ese primer mensaje NO propongas horarios, NO mandes links y NO enumeres servicios.
+Desde tu segunda respuesta en adelante aplicas todo lo que sigue.
+
+EXCEPCIÓN: si en su primer mensaje ya pide cita ("quiero agendar", "necesito una cita", "¿tienen cupo mañana?"), no lo interrogues. Propón horarios de una: ya te dijo lo que necesitaba.
 
 ═══ CÓMO PROPONES (esto decide si cierras o no) ═══
 - NUNCA preguntes "¿cuándo te queda bien?" en abierto. Ofrece SIEMPRE 2-3 horarios reales y concretos.
@@ -1042,23 +1097,13 @@ Con gusto te agendo tu *valoración auditiva* — dura cerca de una hora y sales
   }
 }
 
-async function handleTextForBot({ conversationId, incomingText }) {
-  if (!botEnabled()) return { skipped: 'bot-disabled' };
-  if (!process.env.ANTHROPIC_API_KEY) return { skipped: 'no-anthropic-key' };
-
-  const conv = await prisma.whatsAppConversation.findUnique({
-    where: { id: conversationId },
-    select: {
-      id: true, phone: true, contactType: true, status: true, contactName: true,
-      patientId: true, botSummary: true, partnerId: true,
-      adSourceId: true, adHeadline: true, adBody: true, adSeenAt: true,
-    },
-  });
-  if (!conv) return { skipped: 'conv-not-found' };
-  if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
-  // Sin tipo asignado tampoco se queda callado: pregunta y se tipifica solo.
-  if (!conv.contactType) conv.contactType = 'OTROS';
-
+/**
+ * Arma el prompt del sistema para una conversación. Vive aparte de
+ * handleTextForBot para que el ensayo del CRM pueda ver exactamente el mismo
+ * prompt que corre en producción — si se copia, se desincroniza y ensayar deja
+ * de servir.
+ */
+async function construirPrompt(conv) {
   // Antes, un contactType sin prompt dejaba al bot mudo sin dejar rastro:
   // pasaba con PACIENTE_EXISTENTE y ALIADO_PROVEEDOR, que tienen plantillas
   // activas. Ahora cualquier tipo desconocido cae en OTROS, que pregunta.
@@ -1145,6 +1190,123 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
       console.error('[wa-bot] no pude cargar la educación del centro:', e.message);
     }
   }
+
+  return { systemPrompt, adVigente };
+}
+
+/**
+ * Ensayo: conversar con el bot sin gastar un mensaje de WhatsApp ni tocar la
+ * bandeja. Corre el MISMO prompt, las MISMAS tools y el mismo modelo que
+ * producción — la única diferencia es que crear la cita se simula, porque
+ * ensayar no puede ocupar un cupo real de la agenda.
+ *
+ * @param {object} p
+ * @param {string} p.contactType   rama a ensayar
+ * @param {Array}  p.messages      [{role:'user'|'assistant', content:'…'}]
+ * @param {string} [p.contactName] nombre del supuesto paciente
+ * @param {string} [p.adHeadline]  titular del anuncio, para ensayar campañas
+ * @param {string} [p.adBody]
+ */
+async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contactName = null, adHeadline = null, adBody = null }) {
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error('Falta ANTHROPIC_API_KEY');
+  if (!messages.length) throw new Error('Sin mensajes');
+
+  // Conversación de mentira, con la misma forma que la real. patientId va en
+  // null a propósito: la ficha clínica de alguien no se mete en un ensayo.
+  const conv = {
+    id: 'ensayo', phone: '573000000000', contactType, contactName,
+    patientId: null, botSummary: null, partnerId: null,
+    adSourceId: adHeadline ? 'ensayo' : null,
+    adHeadline, adBody, adSeenAt: adHeadline ? new Date() : null,
+  };
+
+  const { systemPrompt } = await construirPrompt(conv);
+
+  let agendaProfileId = null;
+  if (['PACIENTE_BOGOTA', 'REFERIDO_ALIADO'].includes(contactType)) {
+    agendaProfileId = await retailProfileId();
+  } else if (contactType === 'PROFESIONAL_DIRECTORIO') {
+    agendaProfileId = await comercialService.getComercialProfileId();
+  }
+  const tools = toolsFor(contactType);
+  const useBookingTools = !!agendaProfileId || contactType === 'REFERIDO_ALIADO';
+
+  // Las tools que LEEN son las de verdad (tipos de consulta y disponibilidad
+  // real): un ensayo con horarios inventados no prueba nada. Las que ESCRIBEN
+  // se simulan.
+  const impls = {
+    ...bookingToolImpls,
+    async create_appointment(ctx, input) {
+      return {
+        id: 'ensayo', simulado: true,
+        mensaje: `[ENSAYO] Aquí se habría creado la cita: ${input.scheduledAt}`,
+      };
+    },
+    async registrar_referido_otra_ciudad(ctx, input) {
+      return { leadId: 'ensayo', simulado: true, mensaje: `[ENSAYO] Lead registrado en ${input.ciudad}` };
+    },
+  };
+
+  const client = new Anthropic();
+  const ctx = { conversationId: null, waPhone: conv.phone, contactName, profileId: agendaProfileId };
+  const trazas = [];
+  const working = [...messages];
+  let texto = '';
+
+  for (let iter = 0; iter < (useBookingTools ? 5 : 1); iter++) {
+    const resp = await client.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 1024,
+      system: systemPrompt,
+      ...(useBookingTools ? { tools } : {}),
+      messages: working,
+    });
+    texto = resp.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+    const toolUses = resp.content.filter((b) => b.type === 'tool_use');
+    if (!toolUses.length) break;
+
+    working.push({ role: 'assistant', content: resp.content });
+    const results = [];
+    for (const tu of toolUses) {
+      let output;
+      try {
+        output = impls[tu.name] ? await impls[tu.name](ctx, tu.input) : { error: `Tool ${tu.name} no existe` };
+      } catch (e) {
+        output = { error: e.message };
+      }
+      trazas.push({ tool: tu.name, input: tu.input, output });
+      results.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(output) });
+    }
+    working.push({ role: 'user', content: results });
+  }
+
+  const escala = texto.includes(ESCALATE_TAG);
+  return {
+    texto: texto.split(ESCALATE_TAG).join('').trim(),
+    escala,
+    trazas,
+    promptChars: systemPrompt.length,
+  };
+}
+
+async function handleTextForBot({ conversationId, incomingText }) {
+  if (!botEnabled()) return { skipped: 'bot-disabled' };
+  if (!process.env.ANTHROPIC_API_KEY) return { skipped: 'no-anthropic-key' };
+
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: {
+      id: true, phone: true, contactType: true, status: true, contactName: true,
+      patientId: true, botSummary: true, partnerId: true,
+      adSourceId: true, adHeadline: true, adBody: true, adSeenAt: true,
+    },
+  });
+  if (!conv) return { skipped: 'conv-not-found' };
+  if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
+  // Sin tipo asignado tampoco se queda callado: pregunta y se tipifica solo.
+  if (!conv.contactType) conv.contactType = 'OTROS';
+
+  const { systemPrompt, adVigente } = await construirPrompt(conv);
 
   // ¿Habilitar tools de booking? La agenda depende de la rama:
   //  · PACIENTE_BOGOTA     → agenda del centro (retail)
@@ -1317,6 +1479,7 @@ module.exports = {
   maybeSendHandshake,
   iniciarFlujoAliado,
   iniciarFlujoAnuncio,
+  ensayar,
   actualizarResumen,
   handleButtonReply,
   handleTextForBot,

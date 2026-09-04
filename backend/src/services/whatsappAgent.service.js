@@ -357,7 +357,7 @@ async function processIncomingEvent(body) {
                 });
               } else if (r.isNew) {
                 // Primer mensaje entrante en la conversación → handshake con botones
-                await bot.maybeSendHandshake(r.conversationId);
+                await bot.maybeSendHandshake(r.conversationId, textBody);
               } else if (textBody) {
                 // Si la conversación estaba CLOSED (humano cerró o timeout) y
                 // llega un mensaje nuevo del paciente, reabrimos a BOT para que

@@ -151,6 +151,23 @@ router.get('/conversations/summary', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Ensayo del bot ────────────────────────────────────────
+// Conversar con el bot sin gastar un mensaje de WhatsApp. Mismo prompt, mismas
+// tools y mismo modelo que producción; solo se simula crear la cita.
+router.post('/ensayo', async (req, res, next) => {
+  try {
+    const { contactType, messages, contactName, adHeadline, adBody } = req.body || {};
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ success: false, error: 'messages es obligatorio' });
+    }
+    const bot = require('../services/waCorporateBot.service');
+    const out = await bot.ensayar({ contactType, messages, contactName, adHeadline, adBody });
+    res.json({ success: true, data: out });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // ─── Campañas: qué anuncio trajo qué ───────────────────────
 // Una fila por anuncio de click-to-WhatsApp, con lo único que importa para
 // decidir dónde poner el presupuesto: cuántos escribieron y cuántos agendaron.

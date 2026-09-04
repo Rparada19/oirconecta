@@ -71,6 +71,7 @@ const CONTACT_TYPE_LABELS = {
   PROFESIONAL_DIRECTORIO: 'Profesional directorio',
   INFO_GENERAL: 'Info general',
   ALIADO_PROVEEDOR: 'Aliado / proveedor',
+  REFERIDO_ALIADO: 'Referido de aliado',
   OTROS: 'Otros',
 };
 
@@ -102,6 +103,46 @@ export default function WhatsAppInboxPage({
 
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
+
+  // Ensayo del bot — conversar sin gastar un mensaje real
+  const [ensOpen, setEnsOpen] = useState(false);
+  const [ensTipo, setEnsTipo] = useState('PACIENTE_BOGOTA');
+  const [ensNombre, setEnsNombre] = useState('');
+  const [ensAnuncio, setEnsAnuncio] = useState('');
+  const [ensMsgs, setEnsMsgs] = useState([]);
+  const [ensTexto, setEnsTexto] = useState('');
+  const [ensLoading, setEnsLoading] = useState(false);
+  const [ensError, setEnsError] = useState(null);
+  const [ensTrazas, setEnsTrazas] = useState([]);
+
+  const enviarEnsayo = async () => {
+    const txt = ensTexto.trim();
+    if (!txt || ensLoading) return;
+    const nuevos = [...ensMsgs, { role: 'user', content: txt }];
+    setEnsMsgs(nuevos);
+    setEnsTexto('');
+    setEnsLoading(true);
+    setEnsError(null);
+    try {
+      const r = await api.post('/api/wa/ensayo', {
+        contactType: ensTipo,
+        contactName: ensNombre || null,
+        adHeadline: ensAnuncio || null,
+        messages: nuevos,
+      });
+      if (r?.data?.success) {
+        const d = r.data.data;
+        setEnsMsgs([...nuevos, { role: 'assistant', content: d.texto, escala: d.escala }]);
+        setEnsTrazas(d.trazas || []);
+      } else {
+        setEnsError(r?.data?.error || 'El bot no respondió');
+      }
+    } catch (e) {
+      setEnsError(e?.response?.data?.error || e.message);
+    } finally { setEnsLoading(false); }
+  };
+
+  const reiniciarEnsayo = () => { setEnsMsgs([]); setEnsTrazas([]); setEnsError(null); setEnsTexto(''); };
 
   // Campañas (anuncios click-to-WhatsApp)
   const [campOpen, setCampOpen] = useState(false);
@@ -433,6 +474,12 @@ export default function WhatsAppInboxPage({
               <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>{subtitle}</Typography>
             </Box>
             <Stack direction="row" spacing={0.5} alignItems="center">
+            <Tooltip title="Ensayar el bot (no gasta mensajes)">
+              <IconButton onClick={() => setEnsOpen(true)}
+                sx={{ bgcolor: '#eff6ff', color: '#0369a1', width: 36, height: 36, '&:hover': { bgcolor: '#dbeafe' } }}>
+                <SmartToyOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Rendimiento de las campañas">
               <IconButton onClick={openCampanas}
                 sx={{ bgcolor: '#fef3c7', color: '#92400e', width: 36, height: 36, '&:hover': { bgcolor: '#fde68a' } }}>
@@ -1030,6 +1077,93 @@ export default function WhatsAppInboxPage({
               '&:hover': { bgcolor: '#1fb85a' } }}>
             {reactLoading ? 'Enviando…' : 'Enviar plantilla'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ─── Ensayo: conversar con el bot sin gastar un mensaje ─── */}
+      <Dialog open={ensOpen} onClose={() => setEnsOpen(false)} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { borderRadius: '14px', height: '82vh' } }}>
+        <DialogTitle sx={{ ...SERIF, fontWeight: 700, color: NAVY, pb: 1 }}>
+          🤖 Ensayo del bot
+          <Typography sx={{ fontSize: '0.78rem', color: MUTED, fontWeight: 400 }}>
+            Mismo prompt y misma agenda que producción. La cita no se crea de verdad.
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, bgcolor: '#f7f5f0' }}>
+          <Stack direction="row" spacing={1}>
+            <FormControl size="small" sx={{ minWidth: 170, bgcolor: '#fff' }}>
+              <InputLabel sx={{ fontSize: '0.8rem' }}>Rama</InputLabel>
+              <Select label="Rama" value={ensTipo}
+                onChange={(e) => { setEnsTipo(e.target.value); reiniciarEnsayo(); }}
+                sx={{ fontSize: '0.82rem' }}>
+                {['PACIENTE_BOGOTA', 'PACIENTE_EXISTENTE', 'INFO_GENERAL', 'REFERIDO_ALIADO', 'OTROS', 'ALIADO_PROVEEDOR', 'PROFESIONAL_DIRECTORIO'].map((t) => (
+                  <MenuItem key={t} value={t} sx={{ fontSize: '0.82rem' }}>{CONTACT_TYPE_LABELS[t] || t}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField size="small" label="Nombre" value={ensNombre}
+              onChange={(e) => setEnsNombre(e.target.value)}
+              sx={{ bgcolor: '#fff', flex: 1 }} InputProps={{ sx: { fontSize: '0.82rem' } }}
+              InputLabelProps={{ sx: { fontSize: '0.8rem' } }} />
+          </Stack>
+          <TextField size="small" label="Titular del anuncio (opcional)" value={ensAnuncio}
+            onChange={(e) => setEnsAnuncio(e.target.value)} placeholder="Audiometría sin costo esta semana"
+            sx={{ bgcolor: '#fff' }} InputProps={{ sx: { fontSize: '0.82rem' } }}
+            InputLabelProps={{ sx: { fontSize: '0.8rem' } }} />
+
+          <Box sx={{ flex: 1, overflowY: 'auto', py: 1 }}>
+            {ensMsgs.length === 0 && (
+              <Typography sx={{ color: MUTED, fontSize: '0.8rem', textAlign: 'center', mt: 3 }}>
+                Escribe como escribiría un paciente y mira qué contesta.
+              </Typography>
+            )}
+            {ensMsgs.map((m, i) => (
+              <Box key={i} sx={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-start' : 'flex-end', mb: 1 }}>
+                <Box sx={{
+                  maxWidth: '82%', px: 1.5, py: 1, borderRadius: '12px',
+                  bgcolor: m.role === 'user' ? '#fff' : '#dcf8c6',
+                  border: `1px solid ${BORDER}`, whiteSpace: 'pre-wrap',
+                  fontSize: '0.84rem', color: '#0f172a',
+                }}>
+                  {m.content}
+                  {m.escala && (
+                    <Chip size="small" label="escala a humano" sx={{
+                      ml: 1, height: 16, fontSize: '0.6rem', fontWeight: 700, bgcolor: '#fee2e2', color: '#b91c1c',
+                    }} />
+                  )}
+                </Box>
+              </Box>
+            ))}
+            {ensLoading && <Box sx={{ textAlign: 'right' }}><CircularProgress size={16} sx={{ color: ACCENT }} /></Box>}
+            {ensError && <Alert severity="error" sx={{ fontSize: '0.78rem', mt: 1 }}>{ensError}</Alert>}
+            {ensTrazas.length > 0 && (
+              <Box sx={{ mt: 1, p: 1, bgcolor: '#0f172a', borderRadius: '8px' }}>
+                <Typography sx={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: 800, mb: 0.5 }}>
+                  QUÉ CONSULTÓ EN LA AGENDA
+                </Typography>
+                {ensTrazas.map((t, i) => (
+                  <Typography key={i} sx={{ fontSize: '0.65rem', color: '#e2e8f0', fontFamily: 'monospace' }}>
+                    {t.tool}({JSON.stringify(t.input)}) → {JSON.stringify(t.output).slice(0, 160)}
+                  </Typography>
+                ))}
+              </Box>
+            )}
+          </Box>
+
+          <Stack direction="row" spacing={1}>
+            <TextField fullWidth size="small" placeholder="Escribe como el paciente…"
+              value={ensTexto} onChange={(e) => setEnsTexto(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarEnsayo(); } }}
+              sx={{ bgcolor: '#fff' }} InputProps={{ sx: { fontSize: '0.85rem', borderRadius: '10px' } }} />
+            <IconButton onClick={enviarEnsayo} disabled={ensLoading || !ensTexto.trim()}
+              sx={{ bgcolor: WA_GREEN, color: '#fff', '&:hover': { bgcolor: '#1fb85a' } }}>
+              <SendRoundedIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={reiniciarEnsayo} sx={{ textTransform: 'none' }}>Empezar de nuevo</Button>
+          <Button onClick={() => setEnsOpen(false)} sx={{ textTransform: 'none' }}>Cerrar</Button>
         </DialogActions>
       </Dialog>
 
