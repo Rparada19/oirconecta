@@ -608,8 +608,11 @@ function AppointmentsTab({ appointments, setAppointments, showSnack }) {
 
   const filtered = items.filter((a) => {
     const d = String(a.fecha).slice(0, 10);
-    if (filter === 'TODAY') return d === todayStr && a.estado !== 'CANCELLED';
-    if (filter === 'UPCOMING') return d >= todayStr && a.estado !== 'CANCELLED';
+    // RESCHEDULED = la cita que se movió. Sigue guardada, pero no es una cita
+    // de la agenda: mostrarla ponía al mismo paciente dos veces, con la fecha
+    // vieja y con la nueva, las dos como "Confirmada". Se ve en "Todas".
+    if (filter === 'TODAY') return d === todayStr && !['CANCELLED', 'RESCHEDULED'].includes(a.estado);
+    if (filter === 'UPCOMING') return d >= todayStr && !['CANCELLED', 'RESCHEDULED'].includes(a.estado);
     return true;
   });
 
@@ -675,10 +678,13 @@ function AppointmentsTab({ appointments, setAppointments, showSnack }) {
                       isCancel ? 'Cancelada' :
                       a.estado === 'COMPLETED' ? 'Completada' :
                       a.estado === 'NO_SHOW' ? 'No asistió' :
+                      a.estado === 'RESCHEDULED' ? 'Se movió' :
                       isPast ? 'Pasada' : 'Confirmada'}
                       sx={{ fontWeight: 700, fontSize: '0.7rem',
-                        bgcolor: isCancel ? '#fee2e2' : a.estado === 'COMPLETED' ? '#dcfce7' : isPast ? '#f1f5f9' : '#e0f2fe',
-                        color: isCancel ? '#b91c1c' : a.estado === 'COMPLETED' ? '#15803d' : isPast ? '#64748b' : '#0369a1' }} />
+                        bgcolor: isCancel ? '#fee2e2' : a.estado === 'COMPLETED' ? '#dcfce7'
+                          : a.estado === 'RESCHEDULED' ? '#f3e5f5' : isPast ? '#f1f5f9' : '#e0f2fe',
+                        color: isCancel ? '#b91c1c' : a.estado === 'COMPLETED' ? '#15803d'
+                          : a.estado === 'RESCHEDULED' ? '#7b1fa2' : isPast ? '#64748b' : '#0369a1' }} />
                   </TableCell>
                   <TableCell>
                     {!isCancel && !isPast && (

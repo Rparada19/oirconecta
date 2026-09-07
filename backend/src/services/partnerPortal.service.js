@@ -38,7 +38,7 @@ function estadoDePaciente(p) {
   if (p.quotes.length > 0) return 'COTIZADO';
   const ahora = new Date();
   if (p.appointments.some((a) => a.estado === 'COMPLETED')) return 'VALORADO';
-  if (p.appointments.some((a) => a.fecha >= ahora && ['CONFIRMED', 'RESCHEDULED'].includes(a.estado))) return 'AGENDADO';
+  if (p.appointments.some((a) => a.fecha >= ahora && a.estado === 'CONFIRMED')) return 'AGENDADO';
   return 'REFERIDO';
 }
 
@@ -201,7 +201,7 @@ async function listarReferidosParaCrm(partnerId) {
   return pacientes.map((p) => {
     const ventasAudifono = p.sales.filter((v) => v.categoria === 'HEARING_AID');
     const proxima = p.appointments
-      .filter((a) => a.fecha >= ahora && ['CONFIRMED', 'RESCHEDULED'].includes(a.estado))
+      .filter((a) => a.fecha >= ahora && a.estado === 'CONFIRMED')
       .sort((a, b) => a.fecha - b.fecha)[0] || null;
     const ultima = p.appointments.find((a) => a.estado === 'COMPLETED') || null;
 

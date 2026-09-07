@@ -316,8 +316,10 @@ async function listAppointments(profileId, { from, to, status, limit = 200 } = {
     },
   });
 
-  // Stats rápidos para badge en UI (CONFIRMED + RESCHEDULED cuentan como próximas)
-  const upcoming = items.filter((a) => ['CONFIRMED', 'RESCHEDULED'].includes(a.estado) && new Date(a.fecha) >= today).length;
+  // Una cita en RESCHEDULED ya fue reemplazada por otra: no es una cita
+  // próxima, es el registro de la que se movió. Contarla mostraba dos citas
+  // donde el paciente solo tiene una.
+  const upcoming = items.filter((a) => a.estado === 'CONFIRMED' && new Date(a.fecha) >= today).length;
   return { items, upcoming, total: items.length };
 }
 

@@ -590,7 +590,13 @@ const rescheduleByToken = async (token, newFecha, newHora) => {
     data: {
       fecha,
       hora: newHora,
-      estado: 'RESCHEDULED',
+      // Sigue CONFIRMED a propósito. RESCHEDULED significa "esta cita fue
+      // reemplazada por otra" —lo que hace el reagendar del CRM, que crea una
+      // nueva—. Aquí la cita es la misma con otra fecha: sigue viva. Usar el
+      // mismo estado para las dos cosas hacía que una cita reagendada por el
+      // paciente contara como próxima y la reemplazada también, y el mismo
+      // paciente aparecía dos veces en la agenda.
+      estado: 'CONFIRMED',
       rescheduleToken: generateRescheduleToken(), // nuevo token tras reagendar
       reminder5dSentAt: null,
       reminder1dSentAt: null,
@@ -730,7 +736,9 @@ const processReminders = async () => {
 
   const upcoming = await prisma.appointment.findMany({
     where: {
-      estado: { in: ['CONFIRMED', 'RESCHEDULED'] },
+      // Solo las vivas: una cita en RESCHEDULED fue reemplazada, y recordarle
+      // al paciente una cita que ya no existe es peor que no recordarle nada.
+      estado: 'CONFIRMED',
       fecha: { gte: new Date(now.getTime() - 60 * 60 * 1000) }, // desde hace 1h
     },
   });
