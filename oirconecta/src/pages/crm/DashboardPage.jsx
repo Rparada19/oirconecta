@@ -25,6 +25,7 @@ import {
   Tabs,
   Tab,
   Paper,
+  TextField,
 } from '@mui/material';
 import {
   CalendarToday,
@@ -57,10 +58,25 @@ import PageHeader from '../../components/crm/ui/PageHeader';
 import KpiCard from '../../components/crm/ui/KpiCard';
 import InsightCard from '../../components/crm/ui/InsightCard';
 
-/** Rango [desde, hasta] del período seleccionado. Cubre el mes/año COMPLETO. */
-const rangoDePeriodo = (periodo) => {
+/**
+ * Rango [desde, hasta] del período seleccionado. Cubre el mes/año COMPLETO.
+ *
+ * `mes` ("2026-08") y `custom` ({desde, hasta} en YYYY-MM-DD) permiten mirar
+ * un mes cerrado o un rango cualquiera: sin eso solo se podía ver el mes en
+ * curso, y comparar agosto con septiembre era imposible.
+ */
+const rangoDePeriodo = (periodo, extra = {}) => {
   const now = new Date();
   const hoy = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (periodo === 'mes' && extra.mes) {
+    const [y, m] = String(extra.mes).split('-').map(Number);
+    if (y && m) return { desde: new Date(y, m - 1, 1), hasta: new Date(y, m, 0) };
+  }
+  if (periodo === 'custom' && extra.desde && extra.hasta) {
+    const [y1, m1, d1] = String(extra.desde).split('-').map(Number);
+    const [y2, m2, d2] = String(extra.hasta).split('-').map(Number);
+    return { desde: new Date(y1, m1 - 1, d1), hasta: new Date(y2, m2 - 1, d2, 23, 59, 59) };
+  }
   if (periodo === 'day') return { desde: hoy, hasta: hoy };
   if (periodo === 'week') {
     const d = new Date(hoy); d.setDate(hoy.getDate() - 6);
@@ -94,6 +110,10 @@ const DashboardPage = () => {
   const [leads, setLeads] = useState([]);
   const [products, setProducts] = useState({}); // Todos los productos de todos los pacientes
   const [citasPeriodo, setCitasPeriodo] = useState('month');
+  const hoyISO = new Date().toISOString().slice(0, 10);
+  const [mesElegido, setMesElegido] = useState(hoyISO.slice(0, 7));
+  const [rangoCustom, setRangoCustom] = useState({ desde: hoyISO, hasta: hoyISO });
+  const extraPeriodo = { mes: mesElegido, ...rangoCustom };
   const [funnelProcedencia, setFunnelProcedencia] = useState(null);
   const [pacientesFiltro, setPacientesFiltro] = useState('todos');
   const [ventasTab, setVentasTab] = useState(0);
@@ -104,11 +124,11 @@ const DashboardPage = () => {
   const [overdueFollowUps, setOverdueFollowUps] = useState([]);
 
   useEffect(() => {
-    const { desde, hasta } = rangoDePeriodo(citasPeriodo);
+    const { desde, hasta } = rangoDePeriodo(citasPeriodo, extraPeriodo);
     getFunnelPorProcedencia(
       citasPeriodo === 'all' ? {} : { desde: desde.toISOString(), hasta: hasta.toISOString() }
     ).then(setFunnelProcedencia).catch(() => setFunnelProcedencia(null));
-  }, [citasPeriodo]);
+  }, [citasPeriodo, mesElegido, rangoCustom.desde, rangoCustom.hasta]);
 
   const loadAllData = async ({ showSpinner = true } = {}) => {
     setLoadError(null);
@@ -247,6 +267,14 @@ const DashboardPage = () => {
   const getCitasByPeriodo = () => {
     const now = new Date();
     let startDate = new Date();
+
+    if (citasPeriodo === 'mes' || citasPeriodo === 'custom') {
+      const { desde, hasta } = rangoDePeriodo(citasPeriodo, extraPeriodo);
+      return appointments.filter((apt) => {
+        const d = new Date(apt.date + 'T00:00:00');
+        return d >= desde && d <= hasta;
+      });
+    }
 
     switch (citasPeriodo) {
       case 'day':
@@ -516,7 +544,9 @@ const DashboardPage = () => {
             <MenuItem value="day">Hoy</MenuItem>
             <MenuItem value="week">Esta Semana</MenuItem>
             <MenuItem value="month">Este Mes</MenuItem>
+            <MenuItem value="mes">Un mes…</MenuItem>
             <MenuItem value="year">Este Año</MenuItem>
+            <MenuItem value="custom">Personalizado…</MenuItem>
           </Select>
         </FormControl>
       ),
@@ -1257,10 +1287,36 @@ const DashboardPage = () => {
                     <MenuItem value="day">Hoy</MenuItem>
                     <MenuItem value="week">Esta Semana</MenuItem>
                     <MenuItem value="month">Este Mes</MenuItem>
+                    <MenuItem value="mes">Un mes…</MenuItem>
                     <MenuItem value="year">Este Año</MenuItem>
+                    <MenuItem value="custom">Personalizado…</MenuItem>
                     <MenuItem value="all">Histórico</MenuItem>
                   </Select>
                 </FormControl>
+                {citasPeriodo === 'mes' && (
+                  <TextField
+                    size="small" type="month" label="Mes" value={mesElegido}
+                    onChange={(e) => setMesElegido(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ minWidth: 150, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                  />
+                )}
+                {citasPeriodo === 'custom' && (
+                  <>
+                    <TextField
+                      size="small" type="date" label="Desde" value={rangoCustom.desde}
+                      onChange={(e) => setRangoCustom((r) => ({ ...r, desde: e.target.value }))}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{ minWidth: 150, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                    />
+                    <TextField
+                      size="small" type="date" label="Hasta" value={rangoCustom.hasta}
+                      onChange={(e) => setRangoCustom((r) => ({ ...r, hasta: e.target.value }))}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{ minWidth: 150, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                    />
+                  </>
+                )}
               </Box>
             </Box>
 
@@ -1268,7 +1324,7 @@ const DashboardPage = () => {
               const now = new Date();
               // El rango cubre el período COMPLETO, no solo hasta hoy: las citas
               // futuras dentro del mes deben verse como "Por realizar".
-              const { desde, hasta } = rangoDePeriodo(citasPeriodo);
+              const { desde, hasta } = rangoDePeriodo(citasPeriodo, extraPeriodo);
 
               const parseFecha = (apt) => {
                 if (!apt.date) return null;
