@@ -747,6 +747,14 @@ export default function WhatsAppInboxPage({
                       <Typography sx={{
                         fontSize: '0.9rem', color: '#111827', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                       }}>
+                        {m.type === 'audio' && (
+                          <Typography component="div" sx={{
+                            fontSize: '0.65rem', fontWeight: 800, opacity: 0.6,
+                            letterSpacing: '0.04em', mb: 0.4,
+                          }}>
+                            🎤 NOTA DE VOZ · TRANSCRITA
+                          </Typography>
+                        )}
                         {m.body ? conFormatoWhatsApp(m.body) : `[${m.type}]`}
                       </Typography>
                       <Stack direction="row" spacing={0.75} justifyContent="flex-end" alignItems="center" sx={{ mt: 0.25 }}>

@@ -210,6 +210,7 @@ async function processIncomingEvent(body) {
             let btnPayload = null;
             let mediaId = null;
             let mediaMime = null;
+            let esAudio = false;
             if (msg.type === 'text') {
               textBody = msg.text?.body || null;
             } else if (msg.type === 'interactive') {
@@ -226,6 +227,13 @@ async function processIncomingEvent(body) {
               mediaId = media.id || null;
               mediaMime = media.mime_type || null;
               textBody = media.caption || (msg.type === 'image' ? '[imagen]' : `[documento] ${media.filename || ''}`.trim());
+            } else if (msg.type === 'audio' || msg.type === 'voice') {
+              // Nota de voz. El texto sale de la transcripción, más abajo:
+              // aquí solo se recoge el id para poder bajarla.
+              const media = msg[msg.type] || {};
+              mediaId = media.id || null;
+              mediaMime = media.mime_type || null;
+              esAudio = true;
             } else if (msg.type === 'request_welcome') {
               // Meta avisa que alguien abrió el chat desde el anuncio sin
               // escribir todavía. No hay texto: el saludo lo damos nosotros.
@@ -236,6 +244,21 @@ async function processIncomingEvent(body) {
               btnPayload = msg.button?.payload
                 ? { id: msg.button.payload, title: msg.button?.text || '' }
                 : null;
+            }
+
+            // La nota de voz se transcribe antes de guardarla: lo que queda en
+            // la bandeja es el texto, y del audio solo el id de Meta.
+            let transcripcion = null;
+            if (esAudio && mediaId) {
+              try {
+                const archivo = await require('./waMedia.service').descargar(mediaId);
+                transcripcion = archivo
+                  ? await require('./waAudio.service').transcribir(archivo)
+                  : null;
+              } catch (ae) {
+                console.error('[wa-audio] no pude procesar la nota de voz:', ae.message);
+              }
+              textBody = transcripcion || '[nota de voz que no se pudo entender]';
             }
 
             const r = await corp.persistIncomingMessage({
@@ -292,7 +315,7 @@ async function processIncomingEvent(body) {
             }
 
             // Adjunto: se descarga, se lee y se responde orientando a la cita.
-            if (mediaId && corp.botHabilitado()) {
+            if (mediaId && !esAudio && corp.botHabilitado()) {
               try {
                 const waMedia = require('./waMedia.service');
                 const archivo = await waMedia.descargar(mediaId);
@@ -316,6 +339,21 @@ async function processIncomingEvent(body) {
               } catch (me) {
                 console.error('[wa-examen] falló:', me.message);
               }
+            }
+
+            // No se entendió la nota. Decirlo es mejor que contestar cualquier
+            // cosa: la persona repite el audio o escribe, y nadie queda colgado.
+            if (esAudio && !transcripcion) {
+              try {
+                await corp.sendTextToConversation({
+                  conversationId: r.conversationId,
+                  text: 'Me llegó tu nota de voz pero no logré escucharla bien 🙈 ¿Me la puedes repetir, o escribirme lo que necesitas?',
+                  sentByBot: true,
+                });
+              } catch (te) {
+                console.error('[wa-audio] aviso de audio ilegible falló:', te.message);
+              }
+              continue;
             }
 
             // QR de tarjeta de aliado: el mensaje prellenado trae el código.
@@ -369,6 +407,7 @@ async function processIncomingEvent(body) {
                 await bot.handleTextForBot({
                   conversationId: r.conversationId,
                   incomingText: textBody,
+                  desdeAudio: esAudio,
                 });
                 // Memoria larga: se refresca aparte para no demorar la respuesta
                 // al paciente. Solo trabaja cada N mensajes nuevos.

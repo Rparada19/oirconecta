@@ -1419,7 +1419,7 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
   };
 }
 
-async function handleTextForBot({ conversationId, incomingText }) {
+async function handleTextForBot({ conversationId, incomingText, desdeAudio = false }) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
   if (!process.env.ANTHROPIC_API_KEY) return { skipped: 'no-anthropic-key' };
 
@@ -1436,7 +1436,14 @@ async function handleTextForBot({ conversationId, incomingText }) {
   // Sin tipo asignado tampoco se queda callado: pregunta y se tipifica solo.
   if (!conv.contactType) conv.contactType = 'OTROS';
 
-  const { systemPrompt, adVigente } = await construirPrompt(conv, incomingText);
+  let { systemPrompt, adVigente } = await construirPrompt(conv, incomingText);
+
+  // Lo que vas a leer lo dijo hablando, no escribiendo.
+  if (desdeAudio) {
+    systemPrompt += `\n\nEste último mensaje llegó como NOTA DE VOZ y lo que lees es la transcripción.
+Reconócelo una sola vez, al principio y en pocas palabras ("escuché tu nota"), para que sepa que sí llegó — si no, la gente repite el audio creyendo que se perdió.
+La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar por sentado. Y no le pidas que escriba: si le queda más cómodo hablar, que hable.`;
+  }
 
   // ¿Habilitar tools de booking? La agenda depende de la rama:
   //  · PACIENTE_BOGOTA     → agenda del centro (retail)
