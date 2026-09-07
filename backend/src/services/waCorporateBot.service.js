@@ -101,6 +101,16 @@ function toolsFor(contactType) {
 // Delegado a retail.service (misma resolución que /api/public/retail-config).
 const retailProfileId = retailService.getRetailProfileId;
 
+/** "jueves 10 de septiembre de 2026" — para que nadie tenga que deducirlo. */
+function fechaLegible(valor) {
+  const d = valor instanceof Date ? valor : new Date(valor);
+  if (Number.isNaN(d.getTime())) return String(valor || '');
+  return new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  }).format(d);
+}
+
 const bookingToolImpls = {
   async list_appointment_types(ctx) {
     const profileId = ctx?.profileId || await retailProfileId();
@@ -113,7 +123,10 @@ const bookingToolImpls = {
     const profileId = ctx?.profileId || await retailProfileId();
     if (!profileId) return { error: 'Agenda interna no encontrada (falta seed o env).' };
     const out = await booking.computeSlotsForDay(profileId, date, { appointmentTypeId });
-    return out;
+    // El día de la semana lo pone la herramienta. Cuando lo deducía el bot
+    // ofrecía "el martes" y agendaba un jueves: le confirmó a un paciente
+    // "martes 10 de septiembre" cuando el 10 era jueves.
+    return { ...out, fechaLegible: fechaLegible(`${date}T12:00:00`) };
   },
 
   async create_appointment(ctx, input) {
@@ -197,10 +210,12 @@ const bookingToolImpls = {
     return {
       id: res.id,
       fecha: res.fecha,
+      // Esto es lo que debe copiar el bot al confirmar, tal cual.
+      fechaLegible: fechaLegible(res.fecha),
       hora: res.hora,
       durationMinutes: res.durationMinutes,
       rescheduleToken: res.rescheduleToken,
-      mensaje: `Cita confirmada. Recibirás email con detalles y enlace para reagendar.`,
+      mensaje: 'Cita creada. Al confirmarle al paciente, usa fechaLegible tal como viene: no la reescribas ni le pongas otro día de la semana.',
     };
   },
 
@@ -590,6 +605,10 @@ Antes de proponer nada, tienes que saber qué le está pasando. No es un trámit
 - Cuando te cuente algo, reconócelo antes de seguir. "Eso que me cuentas es de lo más común, y tiene solución" vale más que cualquier lista de servicios.
 - Si es por un familiar, habla del familiar: cómo lo nota, desde cuándo, qué le preocupa a él.
 - Responde de verdad lo que te pregunten. Informar SÍ es tu trabajo. Alguien que se va sabiendo algo que no sabía vuelve; alguien a quien le esquivaron la pregunta no.
+
+EXCEPCIÓN, Y ES ABSOLUTA: si ya pidió cita —"quiero agendar", "necesito una cita", "¿qué días hay?"— NO le hagas ninguna pregunta previa. Ni una. Vas derecho a los horarios.
+Está PROHIBIDO responderle con "pero antes necesito saber…", "antes de buscar el horario…" o cualquier peaje parecido. Pedir cita ES la respuesta a lo que ibas a preguntarle; volvérselo a preguntar es no haberlo escuchado.
+Si te falta el tipo de consulta, escoge tú el más común —la valoración auditiva— y dilo mientras propones horarios. No lo pongas a él a elegir de una lista. Lo que necesitas saber de su caso lo vas sabiendo mientras conversan, no antes de dejarlo agendar.
 
 ═══ NUNCA HAGAS ESTO ═══
 Son las cosas que vuelven frío un chat, y todas suenan a empresa hablando de sí misma:
@@ -1207,7 +1226,28 @@ async function construirPrompt(conv, consulta = null) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     timeZone: 'America/Bogota',
   });
-  systemPrompt = systemPrompt.replace('{HOY_PLACEHOLDER}', hoyLocal);
+  systemPrompt = systemPrompt.split('{HOY_PLACEHOLDER}').join(hoyLocal);
+
+  // Los próximos catorce días, con nombre y número. Pedirle a un modelo que
+  // calcule "el martes" es pedirle que se equivoque: ya le confirmó a un
+  // paciente "martes 10 de septiembre" cuando el 10 era jueves, y la cita
+  // quedó el día equivocado.
+  const dias = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(Date.now() + i * 86400000);
+    const iso = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(d);
+    const nombre = new Intl.DateTimeFormat('es-CO', {
+      timeZone: 'America/Bogota', weekday: 'long', day: 'numeric', month: 'long',
+    }).format(d);
+    dias.push(`${iso} = ${nombre}${i === 0 ? ' (HOY)' : i === 1 ? ' (mañana)' : ''}`);
+  }
+  systemPrompt += `\n\n═══ CALENDARIO ═══
+No calcules fechas: están aquí. Cuando alguien diga "el martes" o "esta semana", busca el día en esta lista y usa esa fecha exacta con las herramientas.
+${dias.join('\n')}
+Si el día que pide no aparece o no tiene cupo, DÍSELO —"el martes no tengo nada"— antes de ofrecerle otro. Cambiarle el día sin avisarle es como no agendarlo.
+═══════════════════`;
 
   // Rama del QR: el nombre del aliado se nombra varias veces en el prompt.
   let partner = null;
