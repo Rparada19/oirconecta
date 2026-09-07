@@ -165,6 +165,26 @@ export default function WhatsAppInboxPage({
   const [camp, setCamp] = useState({ data: [], total: null });
   const [campLoading, setCampLoading] = useState(false);
 
+  // Reatribución: corrige lo que ya está guardado con la procedencia vieja.
+  const [reatribuyendo, setReatribuyendo] = useState(false);
+  const [reatribucion, setReatribucion] = useState(null);
+
+  const reatribuir = async () => {
+    setReatribuyendo(true);
+    setReatribucion(null);
+    try {
+      const r = await api.post('/api/admin/maintenance/reatribuir-whatsapp', {});
+      if (r?.data?.success) {
+        setReatribucion({ ok: true, ...r.data.data });
+        openCampanas();
+      } else {
+        setReatribucion({ ok: false, error: r?.data?.error || 'No se pudo' });
+      }
+    } catch (e) {
+      setReatribucion({ ok: false, error: e?.response?.data?.error || e.message });
+    } finally { setReatribuyendo(false); }
+  };
+
   const openCampanas = async () => {
     setCampOpen(true);
     setCampLoading(true);
@@ -1274,7 +1294,24 @@ export default function WhatsAppInboxPage({
             </>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
+          <Box>
+            <Button onClick={reatribuir} disabled={reatribuyendo}
+              sx={{ textTransform: 'none', color: ACCENT, fontWeight: 700 }}>
+              {reatribuyendo ? 'Corrigiendo…' : 'Corregir atribución de lo ya guardado'}
+            </Button>
+            {reatribucion?.ok && (
+              <Typography sx={{ fontSize: '0.72rem', color: '#15803d', ml: 1 }}>
+                {reatribucion.pacientesCorregidos} pacientes y {reatribucion.citasCorregidas} citas
+                reatribuidas · {reatribucion.leadsCreados} leads creados
+              </Typography>
+            )}
+            {reatribucion && !reatribucion.ok && (
+              <Typography sx={{ fontSize: '0.72rem', color: '#b91c1c', ml: 1 }}>
+                {reatribucion.error}
+              </Typography>
+            )}
+          </Box>
           <Button onClick={() => setCampOpen(false)} sx={{ textTransform: 'none' }}>Cerrar</Button>
         </DialogActions>
       </Dialog>
