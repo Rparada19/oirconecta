@@ -277,7 +277,7 @@ function normEmail(e) {
  * sino por email (si viene), sino crea uno nuevo. Idempotente para evitar
  * que el mismo paciente reservando 2 veces aparezca duplicado.
  */
-async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, numeroDocumento, referredByCode = null, ownerProfileId = null }) {
+async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, numeroDocumento, referredByCode = null, ownerProfileId = null, procedencia = 'directorio-publico' }) {
   if (!nombre || !telefono) throw new BookingError('nombre y telefono requeridos');
   const emailNorm = normEmail(email);
   const tel = normPhone(telefono);
@@ -316,7 +316,7 @@ async function findOrCreatePatient({ nombre, telefono, email, tipoDocumento, num
       email: emailNorm,
       tipoDocumento: tipoDocumento || null,
       numeroDocumento: numeroDocumento || null,
-      procedencia: 'directorio-publico',
+      procedencia,
       referredByCode: referredByNormalized,
       // Dueño: el profesional en cuya ficha se agendó.
       ownerProfileId,
@@ -350,7 +350,11 @@ async function ensureRelation(patientId, profileId) {
  */
 async function createPublicAppointment(profileId, payload) {
   const ctx = await loadContext(profileId);
-  const { appointmentTypeId, scheduledAt, notas, patient, referredByCode } = payload || {};
+  // De dónde viene esta persona. Sin esto todo lo que agenda el bot entraba
+  // como 'directorio-publico', que el embudo no reconoce y manda al cajón de
+  // "visita médica" — le atribuía al trabajo comercial lo que trajo la pauta.
+  const { appointmentTypeId, scheduledAt, notas, patient, referredByCode, procedencia } = payload || {};
+  const proc = procedencia || 'directorio-publico';
   if (!appointmentTypeId) throw new BookingError('appointmentTypeId requerido');
   if (!scheduledAt) throw new BookingError('scheduledAt requerido (ISO local o "YYYY-MM-DD HH:MM")');
 
@@ -374,7 +378,9 @@ async function createPublicAppointment(profileId, payload) {
   }
 
   // Find-or-create patient + relación
-  const patientRow = await findOrCreatePatient({ ...(patient || {}), referredByCode, ownerProfileId: profileId });
+  const patientRow = await findOrCreatePatient({
+    ...(patient || {}), referredByCode, ownerProfileId: profileId, procedencia: proc,
+  });
   await ensureRelation(patientRow.id, profileId);
 
   // Delegamos en appointments.service.create para reutilizar email/notifications/token.
@@ -383,7 +389,7 @@ async function createPublicAppointment(profileId, payload) {
     fecha: dateStr,           // service hace setHours(0,0,0,0)
     hora: timeStr,
     motivo: notas || `Reserva pública: ${type.nombre}`,
-    procedencia: 'directorio-publico',
+    procedencia: proc,
     tipoConsulta: type.nombre,
     durationMinutes: type.durationMinutes,
     directoryProfileId: profileId,

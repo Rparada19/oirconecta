@@ -681,7 +681,74 @@ function botHabilitado() {
   return process.env.WA_BOT_ENABLED === 'true';
 }
 
+
+/**
+ * Todo el que escribe por WhatsApp buscando atención es un lead — y hasta hoy
+ * no existía como tal.
+ *
+ * Solo se creaban leads desde el formulario web y desde el QR de aliado fuera
+ * de Bogotá. Quien tocaba un anuncio y escribía vivía únicamente en la bandeja:
+ * no salía en Leads, no salía en el embudo, y las campañas parecían no traer a
+ * nadie. Ese es el clic que ya se pagó.
+ *
+ * El correo va vacío a propósito: por WhatsApp no lo pedimos. El nurture por
+ * correo filtra por email no vacío, así que estos leads no reciben nada — el
+ * seguimiento de ellos es por WhatsApp, que es donde están.
+ */
+async function asegurarLead(conversationId) {
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: {
+      id: true, phone: true, contactName: true, patientId: true,
+      adSourceId: true, adHeadline: true, partnerId: true, contactType: true,
+    },
+  });
+  if (!conv) return null;
+
+  // Un paciente que ya es nuestro no es un lead nuevo: ya entró al embudo.
+  if (conv.patientId) return null;
+
+  const last10 = String(conv.phone || '').replace(/\D/g, '').slice(-10);
+  if (!last10) return null;
+
+  const yaEsPaciente = await prisma.patient.findFirst({
+    where: { telefono: { contains: last10 } }, select: { id: true },
+  });
+  if (yaEsPaciente) return null;
+
+  const existente = await prisma.lead.findFirst({
+    where: { telefono: { contains: last10 }, archivedAt: null },
+    select: { id: true },
+  });
+  if (existente) return existente;
+
+  const procedencia = conv.partnerId ? 'recomendacion'
+    : conv.adSourceId ? 'leads-marketing-digital'
+    : 'sitio-web';
+
+  const notas = [
+    'Entró por WhatsApp al número del centro.',
+    conv.adHeadline ? `Anuncio: "${conv.adHeadline}".` : null,
+  ].filter(Boolean).join(' ');
+
+  const lead = await prisma.lead.create({
+    data: {
+      nombre: conv.contactName || `WhatsApp +${conv.phone}`,
+      email: '',
+      telefono: conv.phone,
+      procedencia,
+      interes: 'Valoración auditiva',
+      estado: 'NUEVO',
+      partnerId: conv.partnerId || null,
+      notas,
+    },
+  });
+  console.log('[wa-lead] lead creado', lead.id, 'procedencia', procedencia, 'de', conv.phone);
+  return lead;
+}
+
 module.exports = {
+  asegurarLead,
   botHabilitado,
   isCorporatePhoneNumberId,
   findOrCreateConversation,

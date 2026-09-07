@@ -101,6 +101,25 @@ function toolsFor(contactType) {
 // Delegado a retail.service (misma resolución que /api/public/retail-config).
 const retailProfileId = retailService.getRetailProfileId;
 
+/**
+ * De dónde viene quien escribe, en el vocabulario del embudo.
+ *
+ * Si tocó un anuncio es marketing digital, y punto: esa cita la pagó la pauta.
+ * Sin anuncio, lo más honesto es "sitio web" — es el canal digital propio.
+ * Lo que NO puede ser es "visita médica", que es donde caía todo por defecto:
+ * le regalaba al trabajo comercial las citas que trajo la publicidad.
+ */
+async function procedenciaDeConversacion(conversationId) {
+  if (!conversationId || conversationId === 'ensayo') return 'sitio-web';
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: { adSourceId: true, partnerId: true },
+  }).catch(() => null);
+  if (conv?.partnerId) return 'recomendacion';   // lo trajo un aliado
+  if (conv?.adSourceId) return 'leads-marketing-digital';
+  return 'sitio-web';
+}
+
 /** "jueves 10 de septiembre de 2026" — para que nadie tenga que deducirlo. */
 function fechaLegible(valor) {
   const d = valor instanceof Date ? valor : new Date(valor);
@@ -138,6 +157,7 @@ const bookingToolImpls = {
     const res = await booking.createPublicAppointment(profileId, {
       appointmentTypeId: input.appointmentTypeId,
       scheduledAt: input.scheduledAt,
+      procedencia: await procedenciaDeConversacion(conversationId),
       notas: input.notas || 'Agendado por WhatsApp (bot corporativo)',
       patient: {
         nombre: input.patientName || contactName || 'Paciente WhatsApp',
@@ -145,6 +165,22 @@ const bookingToolImpls = {
         email: input.patientEmail || null,
       },
     });
+
+    // El lead pasa a AGENDADO. Sin esto quedaría "NUEVO" para siempre y el
+    // equipo lo llamaría para ofrecerle una cita que ya tiene.
+    if (conversationId) {
+      try {
+        const last10 = String(waPhone || '').replace(/\D/g, '').slice(-10);
+        if (last10) {
+          await prisma.lead.updateMany({
+            where: { telefono: { contains: last10 }, archivedAt: null, appointmentId: null },
+            data: { estado: 'AGENDADO', appointmentId: res.id },
+          });
+        }
+      } catch (e) {
+        console.warn('[wa-lead] no pude marcar el lead como agendado:', e.message);
+      }
+    }
 
     // Cierra el loop del nudge A1: marca booked para que no envíe follow-up.
     if (conversationId) {
@@ -378,6 +414,8 @@ async function maybeSendHandshake(conversationId, incomingText = null) {
       data: { contactType: tipo, businessLine: 'CRM', status: 'BOT' },
     });
     console.log('[wa-bot] primer mensaje con intención — sin menú, contesto como', tipo);
+    require('./waCorporate.service').asegurarLead(conversationId)
+      .catch((e) => console.warn('[wa-lead] intención:', e.message));
     return handleTextForBot({ conversationId, incomingText });
   }
 
@@ -480,6 +518,12 @@ async function handleButtonReply({ conversationId, buttonId, buttonTitle }) {
       ...(nextStatus === 'ESCALATED' ? { unreadCount: { increment: 1 } } : {}),
     },
   });
+
+  // Tocó un botón de paciente: ya es un lead del embudo.
+  if (['PACIENTE_BOGOTA', 'INFO_GENERAL'].includes(conv.contactType || contactType)) {
+    require('./waCorporate.service').asegurarLead(conversationId)
+      .catch((e) => console.warn('[wa-lead] botón:', e.message));
+  }
 
   // Mensaje puente según rama
   const bridge = {
@@ -1080,6 +1124,10 @@ async function iniciarFlujoAnuncio(conversationId, incomingText) {
       status: 'BOT',
     },
   });
+
+  // Vino de una campaña: existe como lead desde el primer mensaje.
+  require('./waCorporate.service').asegurarLead(conversationId)
+    .catch((e) => console.warn('[wa-lead] anuncio:', e.message));
 
   // Con texto, contesta lo que preguntó (el prompt ya sabe de qué anuncio
   // viene). Sin texto —abrió el chat desde el anuncio y no escribió— el saludo

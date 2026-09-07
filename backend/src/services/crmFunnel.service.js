@@ -37,7 +37,16 @@ const normalizar = (v) => {
     // "Agendamiento manual" era canal de registro, no procedencia.
     'agendamiento-manual': 'recomendacion',
     'agendamiento manual': 'recomendacion',
+    // Lo que agendaba el bot y la reserva pública quedaba con estos valores,
+    // que no estaban en la lista y caían al cajón por defecto: "visita médica".
+    // Le atribuía al trabajo comercial las citas que trajo el canal digital.
+    'directorio-publico': 'sitio-web',
+    'whatsapp-ia': 'sitio-web',
+    'whatsapp': 'sitio-web',
   };
+  // Atribución de anuncio: la venta la trajo la pauta, sin importar la
+  // campaña puntual (`anuncio-wa:<id>`).
+  if (s.startsWith('anuncio-wa')) return 'leads-marketing-digital';
   const n = mapa[s] || s;
   return PROCEDENCIAS.includes(n) ? n : 'visita-medica';
 };
