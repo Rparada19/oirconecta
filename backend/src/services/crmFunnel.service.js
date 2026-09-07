@@ -113,6 +113,10 @@ const getFunnelPorProcedencia = async ({ desde, hasta } = {}) => {
   leads.forEach((l) => { get(l.procedencia).leads += 1; });
 
   citas.forEach((c) => {
+    // Una cita reagendada ya fue reemplazada por otra: contarla sería contar
+    // dos veces al mismo paciente. Antes caía en el cajón de "por realizar" y
+    // el embudo mostraba dos citas pendientes donde solo había una.
+    if (c.estado === 'RESCHEDULED') return;
     const g = get(c.procedencia);
     g.agendados += 1;
     // Una cita cancelada es un cupo perdido: cuenta como "no asistió".
