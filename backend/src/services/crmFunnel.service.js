@@ -87,14 +87,19 @@ const getFunnelPorProcedencia = async ({ desde, hasta } = {}) => {
       where: { archivedAt: null },
       select: { id: true, procedencia: true, tienePerdidaAuditiva: true, createdViaBooking: true },
     }),
-    prisma.consultation.findMany({ select: { patientId: true } }),
+    // Las consultas del período, no las de siempre: el embudo responde por un
+    // rango de fechas y una evaluación de hace un año no es de este mes.
+    prisma.consultation.findMany({
+      where: rangoFecha('fecha'),
+      select: { patientId: true, perdidaAuditiva: true },
+    }),
     prisma.quote.findMany({
       where: rangoFecha('createdAt'),
       select: { patientId: true },
     }),
     prisma.sale.findMany({
       where: rangoFecha('fechaVenta'),
-      select: { patientId: true, valorTotal: true },
+      select: { patientId: true, valorTotal: true, categoria: true },
     }),
   ]);
 
@@ -107,13 +112,6 @@ const getFunnelPorProcedencia = async ({ desde, hasta } = {}) => {
 
   leads.forEach((l) => { get(l.procedencia).leads += 1; });
 
-  // Pacientes que ya asistieron alguna vez (los auto-creados al agendar que
-  // aún no asisten no cuentan como pacientes reales).
-  const asistioAlguna = new Set(
-    citas.filter((c) => c.estado === 'COMPLETED' || c.estado === 'PATIENT')
-      .map((c) => c.patientId).filter(Boolean)
-  );
-
   citas.forEach((c) => {
     const g = get(c.procedencia);
     g.agendados += 1;
@@ -125,19 +123,39 @@ const getFunnelPorProcedencia = async ({ desde, hasta } = {}) => {
     } else g.porRealizar += 1;
   });
 
-  // El diagnóstico solo cuenta si el paciente FUE EVALUADO (tiene consulta).
-  // `tienePerdidaAuditiva` es false por defecto: sin consulta, "audición normal"
-  // sería una conclusión inventada.
+  // El diagnóstico solo cuenta si el paciente FUE EVALUADO.
+  // `tienePerdidaAuditiva` es false por defecto: sin evidencia, "audición
+  // normal" sería una conclusión inventada.
   const evaluados = new Set(consultas.map((c) => c.patientId).filter(Boolean));
+
+  // A nadie se le venden audífonos con la audición normal. Cuando hay venta de
+  // audífonos, hubo evaluación y hubo pérdida — aunque el equipo no haya
+  // alcanzado a evolucionar la consulta en el CRM. Antes esos pacientes
+  // desaparecían de las columnas de diagnóstico justo después de comprar, que
+  // es cuando más se les debería ver.
+  const conAudifonos = new Set(
+    ventas.filter((v) => v.categoria === 'HEARING_AID').map((v) => v.patientId).filter(Boolean)
+  );
+  // Y el que la consulta marcó con pérdida, aunque la ficha diga otra cosa.
+  const perdidaEnConsulta = new Set(
+    consultas.filter((c) => c.perdidaAuditiva).map((c) => c.patientId).filter(Boolean)
+  );
 
   const procDePaciente = {};
   pacientes.forEach((p) => {
     procDePaciente[p.id] = normalizar(p.procedencia);
-    if (!evaluados.has(p.id) || !asistioAlguna.has(p.id)) return;
+    // Antes se exigía además una cita asistida DENTRO DEL RANGO. Con eso, un
+    // paciente evaluado en agosto se caía del embudo de septiembre aunque su
+    // consulta estuviera ahí: la consulta ya es prueba de que asistió.
+    const evaluado = evaluados.has(p.id) || conAudifonos.has(p.id);
+    if (!evaluado) return;
     const g = get(p.procedencia);
     g.evaluados += 1;
-    if (p.tienePerdidaAuditiva) g.conPerdidaAuditiva += 1;
-    else g.audicionNormal += 1;
+    if (p.tienePerdidaAuditiva || perdidaEnConsulta.has(p.id) || conAudifonos.has(p.id)) {
+      g.conPerdidaAuditiva += 1;
+    } else {
+      g.audicionNormal += 1;
+    }
   });
 
   // Cotizados / vendidos: pacientes únicos, no número de documentos.
