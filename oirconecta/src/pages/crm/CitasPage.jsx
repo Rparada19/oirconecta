@@ -224,6 +224,14 @@ const CitasPage = () => {
   useEffect(() => {
     let filtered = appointments;
 
+    // Una cita reagendada ya fue reemplazada: es historial, no una cita. Antes
+    // el mismo paciente salía dos veces en la agenda —con la fecha vieja y con
+    // la nueva— y parecía tener dos citas. Se ve pidiéndola expresamente por
+    // el filtro de estado, y desde la cita que la reemplazó.
+    if (filterStatus !== 'rescheduled') {
+      filtered = filtered.filter((apt) => apt.status !== 'rescheduled');
+    }
+
     // Filtrar por búsqueda
     if (searchTerm) {
       filtered = filtered.filter(
@@ -910,6 +918,12 @@ const CitasPage = () => {
 
   // Métricas: lógica unificada para que Total = Agendadas + Asistidas + No Asistidas + Canceladas.
   // Agendadas incluye confirmed y rescheduled; Asistidas incluye completed y patient.
+  // Para contar la historia en la cita que reemplazó a otra.
+  const citaPorId = React.useMemo(
+    () => Object.fromEntries(appointments.map((a) => [a.id, a])),
+    [appointments],
+  );
+
   const agendadasCount = appointments.filter((a) => a.status === 'confirmed' || a.status === 'rescheduled').length;
   const asistidasCount = appointments.filter((a) => a.status === 'completed' || a.status === 'patient').length;
   const noAsistidasCount = appointments.filter((a) => a.status === 'no-show').length;
@@ -1191,6 +1205,12 @@ const CitasPage = () => {
                               {appointment.rescheduledToId && (
                                 <Typography variant="caption" sx={{ color: '#86899C', fontStyle: 'italic' }}>
                                   Re-agendada
+                                </Typography>
+                              )}
+                              {appointment.rescheduledFromId && citaPorId[appointment.rescheduledFromId] && (
+                                <Typography variant="caption" sx={{ color: '#86899C', fontStyle: 'italic' }}>
+                                  ↻ movida desde {formatDate(citaPorId[appointment.rescheduledFromId].date)}
+                                  {' · '}{citaPorId[appointment.rescheduledFromId].time}
                                 </Typography>
                               )}
                             </Box>

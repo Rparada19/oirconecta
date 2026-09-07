@@ -295,6 +295,8 @@ const create = async (data, createdById) => {
       patientEmail: data.patientEmail ? data.patientEmail.toLowerCase() : null,
       patientPhone: data.patientPhone,
       createdById,
+      // Enlace con la cita que reemplaza, cuando esto es un reagendamiento.
+      rescheduledFromId: data.rescheduledFromId || null,
       rescheduleToken: generateRescheduleToken(),
     },
     include: {

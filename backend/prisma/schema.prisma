@@ -823,6 +823,11 @@ model Appointment {
   /// Correo del profesional para notificar agendamiento desde perfil público
   professionalNotifyEmail String?
 
+  /// De qué cita salió esta, cuando se reagendó. Reagendar crea una cita nueva
+  /// y deja la vieja en RESCHEDULED; sin este enlace las dos aparecían como
+  /// citas distintas del mismo paciente y no había forma de contar la historia.
+  rescheduledFromId String?
+
   // Creado por
   createdById String?
   createdBy   User?   @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
