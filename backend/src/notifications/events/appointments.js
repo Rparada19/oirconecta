@@ -167,7 +167,14 @@ async function onAppointmentCreated(appointment) {
  * Por simplicidad en F1: cancela todos los Reminder PENDING de esta cita y
  * vuelve a encolar 24h/2h. El "cita_agendada" no se reenvía; va `reprogramacion`.
  */
-async function onAppointmentRescheduled(appointment, prisma) {
+/**
+ * @param {boolean} [silencioso] — mover la cita sin decírselo al paciente.
+ *   Se salta el aviso de reprogramación, pero NO los recordatorios: el
+ *   paciente sigue recibiendo el de 24h y el de 2h con la fecha nueva. Un
+ *   recordatorio no delata el cambio, y callarlo dejaría a alguien esperando
+ *   el día equivocado.
+ */
+async function onAppointmentRescheduled(appointment, prisma, { silencioso = false } = {}) {
   if (!appointment?.patientId) return { skipped: 'sin patientId' };
 
   // Cancelar pendientes anteriores
@@ -187,13 +194,15 @@ async function onAppointmentRescheduled(appointment, prisma) {
   const targetId = appointment.id;
   const patientId = appointment.patientId;
 
-  for (const channel of ['WHATSAPP', 'EMAIL']) {
-    await scheduleReminder({
-      patientId, eventCode: 'REPROGRAMACION', channel,
-      templateCode: pickTemplate('reprogramacion', appointment),
-      targetType, targetId, payload: vars,
-      scheduledFor: now,
-    });
+  if (!silencioso) {
+    for (const channel of ['WHATSAPP', 'EMAIL']) {
+      await scheduleReminder({
+        patientId, eventCode: 'REPROGRAMACION', channel,
+        templateCode: pickTemplate('reprogramacion', appointment),
+        targetType, targetId, payload: vars,
+        scheduledFor: now,
+      });
+    }
   }
   const t24 = subMinutes(start, 24 * 60);
   if (t24.getTime() > now.getTime()) {

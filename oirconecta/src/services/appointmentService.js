@@ -268,7 +268,7 @@ export async function getAppointmentsByDate(date) {
  * @param {string} [professionalId] - Profesional para la nueva cita
  * @returns {Promise<{ success: boolean, newAppointment?: Object, error?: string }>}
  */
-export async function rescheduleAppointment(appointmentId, newDate, newTime, professionalId = null) {
+export async function rescheduleAppointment(appointmentId, newDate, newTime, professionalId = null, { silencioso = false } = {}) {
   const original = await getAppointmentById(appointmentId);
   if (!original) return { success: false, newAppointment: null, error: 'Cita no encontrada' };
   const slots = await getAvailableTimeSlots(newDate, '07:00', '18:00', professionalId);
@@ -285,6 +285,9 @@ export async function rescheduleAppointment(appointmentId, newDate, newTime, pro
     procedencia: original.procedencia,
     appointmentType: original.appointmentType,
     professionalId: professionalId || original.professionalId || undefined,
+    // Reagendar es crear una cita nueva: la confirmación que sale es la de la
+    // cita, no un aviso de "reprogramación".
+    silencioso,
   });
   if (!createResult.success) return { success: false, newAppointment: null, error: createResult.error };
   await updateAppointmentStatus(appointmentId, 'rescheduled');

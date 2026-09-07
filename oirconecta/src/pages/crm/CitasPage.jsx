@@ -155,6 +155,9 @@ const CitasPage = () => {
   const [noShowContactNotes, setNoShowContactNotes] = useState('');
   const [newComment, setNewComment] = useState({ title: '', description: '', type: 'note' });
   const [rescheduleData, setRescheduleData] = useState({ date: '', time: '', reason: '', professionalId: '' });
+  // Mover la cita sin avisarle: sirve cuando se corrige un error nuestro y el
+  // paciente ya tiene en la cabeza la fecha correcta.
+  const [reagendarSilencioso, setReagendarSilencioso] = useState(false);
   const [activityTab, setActivityTab] = useState(0);
   const [rescheduleAvailableSlots, setRescheduleAvailableSlots] = useState([]);
   // Agendar cita nueva (paciente desde cero)
@@ -517,7 +520,9 @@ const CitasPage = () => {
     }
     await updateAppointmentStatus(selectedAppointment.id, 'no-show');
     const profId = rescheduleData.professionalId || selectedAppointment.professionalId || null;
-    const rescheduleResult = await rescheduleAppointment(selectedAppointment.id, newDate, newTime, profId);
+    const rescheduleResult = await rescheduleAppointment(
+      selectedAppointment.id, newDate, newTime, profId, { silencioso: reagendarSilencioso },
+    );
     if (rescheduleResult.success) {
       recordNoShow(
         selectedAppointment.patientEmail,
@@ -656,7 +661,8 @@ const CitasPage = () => {
         selectedAppointment.id,
         rescheduleData.date,
         rescheduleData.time,
-        profId
+        profId,
+        { silencioso: reagendarSilencioso }
       );
       if (rescheduleResult.success) {
         // Registrar re-agendamiento
@@ -2265,6 +2271,7 @@ const CitasPage = () => {
           setNoShowReason('');
           setNoShowContactNotes('');
           setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
+          setReagendarSilencioso(false);
         }}
         maxWidth="lg"
         fullWidth
@@ -2443,6 +2450,7 @@ const CitasPage = () => {
               setNoShowReason('');
               setNoShowContactNotes('');
               setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
+          setReagendarSilencioso(false);
               setSelectedAppointment(null);
             }} 
             variant="outlined"
@@ -2477,6 +2485,7 @@ const CitasPage = () => {
           setCancelDialogOpen(false);
           setCancellationReason('');
           setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
+          setReagendarSilencioso(false);
           setSelectedAppointment(null);
         }}
         maxWidth="lg"
@@ -2634,6 +2643,7 @@ const CitasPage = () => {
               setCancelDialogOpen(false);
               setCancellationReason('');
               setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
+          setReagendarSilencioso(false);
               setSelectedAppointment(null);
             }}
             variant="outlined"
@@ -2780,6 +2790,7 @@ const CitasPage = () => {
         onClose={() => {
           setRescheduleDialogOpen(false);
           setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
+          setReagendarSilencioso(false);
         }}
         maxWidth="lg"
         fullWidth
@@ -2916,11 +2927,26 @@ const CitasPage = () => {
             </Box>
           )}
         </DialogContent>
+        <Box sx={{ px: 3, pt: 1 }}>
+          <FormControlLabel
+            control={
+              <Checkbox checked={reagendarSilencioso}
+                onChange={(e) => setReagendarSilencioso(e.target.checked)} />
+            }
+            label="No avisarle al paciente"
+          />
+          <Typography variant="caption" sx={{ display: 'block', color: '#86899C', mt: -0.5, ml: 4 }}>
+            {reagendarSilencioso
+              ? 'La cita se mueve en silencio. Seguirá recibiendo el recordatorio de 24h con la fecha nueva.'
+              : 'Recibirá la confirmación con la nueva fecha y hora.'}
+          </Typography>
+        </Box>
         <DialogActions sx={{ p: 2 }}>
           <Button
           onClick={() => {
             setRescheduleDialogOpen(false);
             setRescheduleData({ date: '', time: '', reason: '', professionalId: '' });
+          setReagendarSilencioso(false);
             setSelectedAppointment(null);
           }}
             variant="outlined"

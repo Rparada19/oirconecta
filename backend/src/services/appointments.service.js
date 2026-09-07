@@ -381,6 +381,9 @@ const create = async (data, createdById) => {
  */
 const update = async (id, data) => {
   const updateData = { ...data };
+  // Banderas de comportamiento, no columnas: Prisma revienta si le llegan.
+  delete updateData.silencioso;
+  delete updateData.notificarPaciente;
 
   if (data.fecha) {
     const fecha = new Date(data.fecha);
@@ -405,7 +408,11 @@ const update = async (id, data) => {
   if (appointment.patientId && (fechaCambio || horaCambio)) {
     try {
       const { onAppointmentRescheduled } = require('../notifications/events/appointments');
-      onAppointmentRescheduled(appointment, prisma).catch((e) => {
+      // Mover una cita a veces es corregir un error nuestro, no cambiarle el
+      // plan al paciente. Ahí avisarle de una "reprogramación" confunde más
+      // de lo que aclara.
+      const calladito = data.silencioso === true || data.notificarPaciente === false;
+      onAppointmentRescheduled(appointment, prisma, { silencioso: calladito }).catch((e) => {
         console.error('[appointments.update] notifications:', e.message);
       });
     } catch (e) {
