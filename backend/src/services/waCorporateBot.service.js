@@ -171,6 +171,34 @@ async function cuposDelBeneficio() {
   return { total, usados, quedan: Math.max(0, total - usados), ciclo };
 }
 
+/**
+ * El horario real del centro, leído de la agenda.
+ *
+ * Estaba escrito a mano en el prompt —"lunes a viernes de 8:00 a 6:00"— y no
+ * coincidía con la agenda: a un paciente el bot le dijo "de 7:30 a 5:00". Un
+ * horario en dos sitios se desincroniza siempre, y el que manda es el de la
+ * agenda, que es con el que se dan los cupos.
+ */
+async function horarioDelCentro(profileId) {
+  if (!profileId) return null;
+  const filas = await prisma.professionalAvailability.findMany({
+    where: { profileId, active: true },
+    orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+    select: { dayOfWeek: true, startTime: true, endTime: true },
+  }).catch(() => []);
+  if (filas.length === 0) return null;
+
+  const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const porDia = {};
+  filas.forEach((f) => {
+    (porDia[f.dayOfWeek] = porDia[f.dayOfWeek] || []).push(`${f.startTime} a ${f.endTime}`);
+  });
+  return Object.keys(porDia)
+    .map(Number).sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b))
+    .map((d) => `${DIAS[d]}: ${porDia[d].join(' y ')}`)
+    .join(' · ');
+}
+
 /** "jueves 10 de septiembre de 2026" — para que nadie tenga que deducirlo. */
 function fechaLegible(valor) {
   const d = valor instanceof Date ? valor : new Date(valor);
@@ -731,7 +759,7 @@ Ojo con la trampa contraria: escuchar no es quedarse en el aire. Si ya entendist
 
 ═══ REGLAS DE NEGOCIO ═══
 - Por chat no se venden audífonos ni se elige aparato. Lo único que se define aquí es cuándo lo vemos.
-- Horario del centro: lunes a viernes, 8:00 a.m. a 6:00 p.m.
+- El horario del centro te lo dan más abajo, leído de la agenda. No lo digas de memoria.
 - El teléfono ya lo tienes (WhatsApp). NO se lo pidas.
 
 ═══ CUANDO PREGUNTAN EL PRECIO ═══
@@ -1458,6 +1486,18 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
       }
     } catch (e) {
       console.error('[wa-bot] no pude cargar la educación del centro:', e.message);
+    }
+  }
+
+  // El horario real, no el que alguien escribió una vez.
+  if (['PACIENTE_BOGOTA', 'PACIENTE_EXISTENTE', 'INFO_GENERAL', 'REFERIDO_ALIADO', 'OTROS'].includes(conv.contactType)) {
+    try {
+      const horario = await horarioDelCentro(await retailProfileId());
+      if (horario) {
+        systemPrompt += `\n\n═══ HORARIO DE ATENCIÓN ═══\n${horario}\nEs el horario real de la agenda. Si te preguntan, di esto y nada más — los cupos concretos los da get_availability.\n═══════════════════`;
+      }
+    } catch (e) {
+      console.warn('[wa-bot] no pude leer el horario:', e.message);
     }
   }
 

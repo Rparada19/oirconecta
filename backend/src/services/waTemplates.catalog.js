@@ -64,6 +64,25 @@ const CONTACT_TYPES = [
 // Cada plantilla especifica el contactType al que aplica.
 const CATALOG = [
   {
+    // Para volver a quien escribió hace más de 24h: pasada esa ventana Meta no
+    // deja texto libre, y sin esta plantilla esas conversaciones se pierden
+    // aunque la persona siga interesada. Es el caso de casi todos los que
+    // llegaron por los anuncios y recibieron el precio antes que la oferta.
+    key: 'cupo_sin_costo',
+    metaName: 'cupo_sin_costo',
+    locale: 'es_CO',
+    category: 'MARKETING',
+    label: 'Cupo de valoración sin costo',
+    description: 'Retomar una conversación fuera de la ventana de 24h con el beneficio de la semana.',
+    contactType: 'PACIENTE_BOGOTA',
+    variables: [
+      { key: 'nombre', label: 'Nombre del paciente', placeholder: 'Ej. Hellen' },
+      { key: 'cupos', label: 'Cupos que quedan esta semana', placeholder: 'Ej. 38' },
+    ],
+    preview:
+      'Hola {{1}}, te escribo de OírConecta. Esta semana nos quedan {{2}} cupos de valoración auditiva sin costo. Si dejas tu cita agendada hoy tomas uno, y la programas para el día que te sirva. ¿Te busco un horario?',
+  },
+  {
     key: 'saludo_paciente_bogota',
     metaName: 'saludo_paciente_bogota',
     locale: 'es_CO',
