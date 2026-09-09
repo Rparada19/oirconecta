@@ -102,7 +102,7 @@ async function trackEvent(payload, req) {
     eventType, eventName,
     sessionId, visitorId, userId,
     path, pageType, referrer,
-    utmSource, utmMedium, utmCampaign, utmContent, utmTerm,
+    utmSource, utmMedium, utmCampaign, utmContent, utmTerm, gclid,
     campaignId, entityType, entityId,
     screenWidth, screenHeight, language,
     properties,
@@ -129,6 +129,7 @@ async function trackEvent(payload, req) {
       path: path || null, pageType: pageType || null, referrer: referrer || null,
       utmSource: utmSource || null, utmMedium: utmMedium || null,
       utmCampaign: utmCampaign || null, utmContent: utmContent || null, utmTerm: utmTerm || null,
+      gclid: gclid || null,
       campaignId: campaignId || null,
       entityType: entityType || null, entityId: entityId || null,
       ipMasked, city: geo.city, region: geo.region, country: geo.country,
@@ -160,6 +161,7 @@ async function trackEvent(payload, req) {
       id: sessionId, visitorId, userId: userId || null,
       entryPath: path || null, exitPath: path || null,
       utmSource: utmSource || null, utmMedium: utmMedium || null, utmCampaign: utmCampaign || null,
+      gclid: gclid || null,
       ipMasked, city: geo.city, region: geo.region, country: geo.country,
       device, os, browser,
       pageCount: isPageView ? 1 : 0,
@@ -172,6 +174,9 @@ async function trackEvent(payload, req) {
     },
     update: {
       exitPath: path || undefined,
+      // Sólo lo rellena si aún no lo tenía: el gclid llega en el primer evento
+      // de la sesión, pero puede perderse si ese evento falló.
+      gclid: gclid || undefined,
       pageCount: isPageView ? { increment: 1 } : undefined,
       eventCount: { increment: 1 },
       endedAt: new Date(),

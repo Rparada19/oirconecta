@@ -14,6 +14,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { trackEvent } from '../utils/analytics';
 import { fbqTrack } from '../utils/metaPixel';
+import { adsConversion, getGclid } from '../utils/googleAds';
 import {
   PageHero, SectionEyebrow, SectionTitle, C,
 } from '../components/editorial/EditorialKit';
@@ -66,7 +67,7 @@ const ContactoPage = () => {
         res = await fetch(`${API}/api/public/contact`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ ...formData, gclid: getGclid() }),
         });
       }
       if (!res.ok) throw new Error('error');
@@ -82,6 +83,7 @@ const ContactoPage = () => {
         marca: marca || null,
       });
       fbqTrack('Lead', { content_name: marca ? `contacto_${marca}` : 'contacto_general' });
+      adsConversion('contacto');
       setFormData({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
     } catch (err) {
       setSnackbar({

@@ -17,6 +17,7 @@ import {
   IcAudifonos, IcPlay, IcSlider, IcCompartir,
 } from '../components/simulator/SimulatorIcons';
 import { fbqTrack, trackCustomEvent, generateEventId } from '../utils/metaPixel';
+import { adsConversion, getGclid } from '../utils/googleAds';
 
 const C = {
   navy: '#272F50',
@@ -234,11 +235,13 @@ export default function PonteEnSusOidosPage() {
           mensaje: `${form.mensaje}\n\n— Ciudad: ${form.ciudad || 'No especificada'}\n— Origen: /ponte-en-sus-oidos`,
           metaEvent: 'Lead',
           metaEventId: eventId,
+          gclid: getGclid(),
         }),
       });
       const data = await res.json();
       if (data.success) {
         fbqTrack('Lead', { content_name: 'lead_simulador_oirasi' }, eventId);
+        adsConversion('lead_simulador', { transaction_id: eventId });
         setFormState({ loading: false, ok: true, error: null });
         setForm({ nombre: '', email: '', telefono: '', ciudad: '', mensaje: '' });
       } else {

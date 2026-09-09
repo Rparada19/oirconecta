@@ -53,7 +53,7 @@ router.post('/contact',
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
-    const { nombre, email, telefono, asunto, mensaje, metaEvent, metaEventId } = req.body;
+    const { nombre, email, telefono, asunto, mensaje, metaEvent, metaEventId, gclid } = req.body;
 
     // 1) Persistir SIEMPRE en BD antes de enviar email
     let message;
@@ -68,6 +68,8 @@ router.post('/contact',
           metadata: {
             userAgent: req.get('user-agent') || null,
             ip: req.ip || req.headers['x-forwarded-for'] || null,
+            // Click de Google Ads con el que llegó, si vino de campaña.
+            gclid: gclid || null,
           },
         },
       });

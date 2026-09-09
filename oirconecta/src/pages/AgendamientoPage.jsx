@@ -28,6 +28,7 @@ import Footer from '../components/Footer';
 import PreviewSlot from '../components/marketing/PreviewSlot';
 import { isNonWorkingDay, isColombianHoliday, getHolidaysForYear } from '../utils/colombiaHolidays';
 import { fbqTrack, generateEventId } from '../utils/metaPixel';
+import { adsConversion, getGclid } from '../utils/googleAds';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
@@ -292,6 +293,10 @@ export default function AgendamientoPage() {
           scheduledAt: `${selectedDate}T${selectedTime}`,
           notas: form.motivo || 'Valoración auditiva',
           metaEventId: eventId,
+          // Click de Google Ads que trajo a esta persona (si vino de ahí).
+          // Queda guardado en la cita para poder subir después la conversión
+          // offline cuando la valoración termine en venta.
+          gclid: getGclid(),
           patient: {
             nombre: form.name,
             email: form.email,
@@ -305,6 +310,7 @@ export default function AgendamientoPage() {
         content_name: 'agendamiento_valoracion',
         content_category: 'audiologia',
       }, eventId);
+      adsConversion('agendamiento', { transaction_id: eventId });
       setAppointment(data.data || data.appointment || data);
       setStep(3);
     } catch(e) {

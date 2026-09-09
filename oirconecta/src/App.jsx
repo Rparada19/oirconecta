@@ -2,7 +2,8 @@ import React, { lazy, Suspense, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'react-router-dom';
 import { initAnalytics, trackPageView } from './utils/analytics';
-import { initConsent } from './utils/cookieConsent';
+import { initConsent, onConsentChange } from './utils/cookieConsent';
+import { captureClickIds } from './utils/googleAds';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -193,7 +194,14 @@ function PageLoader() {
 // para tener acceso a useLocation().
 function AnalyticsRouteTracker() {
   const location = useLocation();
-  useEffect(() => { initConsent(); initAnalytics(); }, []);
+  useEffect(() => {
+    initConsent();
+    initAnalytics();
+    // gclid/gbraid/wbraid de Google Ads: se capturan al aterrizar y se vuelven
+    // a guardar cuando el visitante acepta cookies (ver utils/googleAds.js).
+    captureClickIds();
+    return onConsentChange(() => captureClickIds());
+  }, []);
   useEffect(() => {
     trackPageView(location.pathname + location.search);
     if (typeof window !== 'undefined' && typeof window.fbq === 'function') {

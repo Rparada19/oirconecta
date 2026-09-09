@@ -353,7 +353,10 @@ async function createPublicAppointment(profileId, payload) {
   // De dónde viene esta persona. Sin esto todo lo que agenda el bot entraba
   // como 'directorio-publico', que el embudo no reconoce y manda al cajón de
   // "visita médica" — le atribuía al trabajo comercial lo que trajo la pauta.
-  const { appointmentTypeId, scheduledAt, notas, patient, referredByCode, procedencia, canalRegistro } = payload || {};
+  const {
+    appointmentTypeId, scheduledAt, notas, patient, referredByCode, procedencia, canalRegistro,
+    gclid, utmSource, utmMedium, utmCampaign,
+  } = payload || {};
   const proc = procedencia || 'directorio-publico';
   if (!appointmentTypeId) throw new BookingError('appointmentTypeId requerido');
   if (!scheduledAt) throw new BookingError('scheduledAt requerido (ISO local o "YYYY-MM-DD HH:MM")');
@@ -401,6 +404,12 @@ async function createPublicAppointment(profileId, payload) {
     patientEmail: patientRow.email,
     patientPhone: patientRow.telefono,
     notas: notas || null,
+    // Campaña de origen: se guarda en la cita para poder subir la conversión
+    // a Google Ads cuando la valoración termine en venta.
+    gclid: gclid || null,
+    utmSource: utmSource || null,
+    utmMedium: utmMedium || null,
+    utmCampaign: utmCampaign || null,
   }, null);
 
   return {

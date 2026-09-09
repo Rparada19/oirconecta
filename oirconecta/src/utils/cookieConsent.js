@@ -30,10 +30,18 @@ function applyToMetaPixel(value) {
   try { window.fbq('consent', value === 'accepted' ? 'grant' : 'revoke'); } catch {}
 }
 
-function applyToGA4(value) {
+function applyToGoogle(value) {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+  const state = value === 'accepted' ? 'granted' : 'denied';
   try {
-    window.gtag('consent', 'update', { analytics_storage: value === 'accepted' ? 'granted' : 'denied' });
+    // analytics_storage manda a GA4; los ad_* mandan a Google Ads (conversiones
+    // y remarketing de las campañas). Sin ellos el tag AW- no mide nada.
+    window.gtag('consent', 'update', {
+      analytics_storage: state,
+      ad_storage: state,
+      ad_user_data: state,
+      ad_personalization: state,
+    });
   } catch {}
 }
 
@@ -41,22 +49,22 @@ export function setConsent(value) {
   if (value !== 'accepted' && value !== 'rejected') return;
   try { localStorage.setItem(LS_KEY, value); } catch {}
   applyToMetaPixel(value);
-  applyToGA4(value);
+  applyToGoogle(value);
   try { window.dispatchEvent(new CustomEvent(EVT, { detail: { value } })); } catch {}
 }
 
 export function clearConsent() {
   try { localStorage.removeItem(LS_KEY); } catch {}
   applyToMetaPixel('rejected');
-  applyToGA4('rejected');
+  applyToGoogle('rejected');
   try { window.dispatchEvent(new CustomEvent(EVT, { detail: { value: null } })); } catch {}
 }
 
-/** Al montar la app: re-aplica el estado guardado al pixel y a GA4 (por si el
+/** Al montar la app: re-aplica el estado guardado al pixel y a Google (por si el
  *  snippet de index.html se cargó antes de tiempo). */
 export function initConsent() {
   const v = getConsent();
-  if (v === 'accepted') { applyToMetaPixel('accepted'); applyToGA4('accepted'); }
+  if (v === 'accepted') { applyToMetaPixel('accepted'); applyToGoogle('accepted'); }
 }
 
 /** Suscribirse a cambios (para reaccionar desde React sin re-render manual). */

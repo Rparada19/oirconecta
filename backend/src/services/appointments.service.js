@@ -295,6 +295,11 @@ const create = async (data, createdById) => {
       patientEmail: data.patientEmail ? data.patientEmail.toLowerCase() : null,
       patientPhone: data.patientPhone,
       createdById,
+      // Atribución de la campaña que trajo a esta persona (web pública).
+      gclid: data.gclid || null,
+      utmSource: data.utmSource || null,
+      utmMedium: data.utmMedium || null,
+      utmCampaign: data.utmCampaign || null,
       // Enlace con la cita que reemplaza, cuando esto es un reagendamiento.
       rescheduledFromId: data.rescheduledFromId || null,
       rescheduleToken: generateRescheduleToken(),

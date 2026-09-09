@@ -8,6 +8,7 @@ import { Box } from '@mui/material';
 import { WhatsApp } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
 import { getWhatsAppHref } from '../config/publicSite';
+import { adsConversion } from '../utils/googleAds';
 
 const HIDDEN_PREFIXES = ['/portal-', '/admin', '/crm-login', '/admin-login', '/login-'];
 
@@ -30,6 +31,7 @@ export default function FloatingWhatsApp() {
       href={getWhatsAppHref()}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => adsConversion('whatsapp_click')}
       aria-label="Contactar por WhatsApp"
       sx={{
         position: 'fixed', zIndex: 1200,
