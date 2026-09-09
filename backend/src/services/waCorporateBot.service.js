@@ -123,30 +123,52 @@ async function procedenciaDeConversacion(conversationId) {
 /**
  * Cuántos cupos quedan del beneficio de valoración sin costo.
  *
- * La cifra se cuenta, no se inventa: cada cita que agenda el bot consume uno.
- * Decir "quedan 50" para siempre es la clase de escasez falsa que espanta —y
- * que le prohibimos al bot ayer—. Un número que baja de verdad es información,
- * y se puede defender delante de un paciente.
+ * Son 50 por semana y se reinician cada lunes. Esa es la parte importante: un
+ * contador que se reinicia a escondidas convierte el número en mentira —quien
+ * vio "quedan 3" y al otro día ve "quedan 50" no vuelve a creer nada nuestro,
+ * y basta una captura para quemarlo—. Un cupo semanal es verdad, se sostiene
+ * si el paciente pregunta, y cuando se agota deja un cierre honesto: la
+ * semana entrante entran otros.
  *
- * PROMO_CUPOS_TOTAL y PROMO_CUPOS_DESDE se cambian en Render sin desplegar.
+ * La cifra se cuenta, no se inventa: cada cita que agenda el bot consume uno.
+ *
+ * PROMO_CUPOS_TOTAL y PROMO_CUPOS_CICLO (semana | mes | siempre) se cambian en
+ * Render sin desplegar.
  */
+function inicioDelCiclo(ciclo) {
+  // En hora de Bogotá: el lunes empieza el lunes de allá, no el de UTC.
+  const ahora = new Date();
+  const bogota = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+  if (ciclo === 'mes') {
+    return new Date(Date.UTC(bogota.getFullYear(), bogota.getMonth(), 1, 5, 0, 0));
+  }
+  if (ciclo === 'siempre') {
+    const desde = process.env.PROMO_CUPOS_DESDE || '2026-09-08';
+    const d = new Date(`${desde}T00:00:00.000Z`);
+    return Number.isNaN(d.getTime()) ? new Date('2026-09-08T00:00:00.000Z') : d;
+  }
+  // Semana: desde el lunes 00:00 de Bogotá (05:00 UTC).
+  const dia = bogota.getDay();                 // 0 domingo … 6 sábado
+  const alLunes = dia === 0 ? 6 : dia - 1;
+  const lunes = new Date(bogota);
+  lunes.setDate(bogota.getDate() - alLunes);
+  return new Date(Date.UTC(lunes.getFullYear(), lunes.getMonth(), lunes.getDate(), 5, 0, 0));
+}
+
 async function cuposDelBeneficio() {
   const total = parseInt(process.env.PROMO_CUPOS_TOTAL || '50', 10);
   if (!total || total < 1) return null;
-  const desde = process.env.PROMO_CUPOS_DESDE
-    ? new Date(`${process.env.PROMO_CUPOS_DESDE}T00:00:00.000Z`)
-    : new Date('2026-09-08T00:00:00.000Z');
-  if (Number.isNaN(desde.getTime())) return null;
+  const ciclo = (process.env.PROMO_CUPOS_CICLO || 'semana').toLowerCase();
 
   const usados = await prisma.appointment.count({
     where: {
       canalRegistro: 'bot-whatsapp',
-      createdAt: { gte: desde },
+      createdAt: { gte: inicioDelCiclo(ciclo) },
       estado: { notIn: ['CANCELLED'] },
     },
   }).catch(() => 0);
 
-  return { total, usados, quedan: Math.max(0, total - usados) };
+  return { total, usados, quedan: Math.max(0, total - usados), ciclo };
 }
 
 /** "jueves 10 de septiembre de 2026" — para que nadie tenga que deducirlo. */
@@ -1444,9 +1466,19 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
   // que lee es lo que más pesa.
   if (['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS'].includes(conv.contactType)) {
     const cupos = await cuposDelBeneficio().catch(() => null);
-    if (cupos && cupos.quedan > 0) {
+    const periodo = cupos?.ciclo === 'mes' ? 'este mes'
+      : cupos?.ciclo === 'siempre' ? '' : 'esta semana';
+
+    if (cupos && cupos.quedan === 0) {
+      // Se agotaron. Decirlo es mejor que callarlo: es verdad, y el que entren
+      // otros la semana entrante es una razón real para volver.
+      systemPrompt += `\n\n═══ EL BENEFICIO SE AGOTÓ ═══
+Los cupos de valoración sin costo ${periodo} ya se tomaron todos. NO los ofrezcas: prometer algo que no puedes cumplir es la peor forma de perder a alguien.
+Si te preguntan por el beneficio, dilo de frente —"${periodo} ya se agotaron"— y ofrécele que le avises cuando entren los nuevos${cupos.ciclo === 'semana' ? ' el lunes' : ''}. El precio normal se dice sin rodeos.
+═══════════════════════════════════`;
+    } else if (cupos && cupos.quedan > 0) {
       systemPrompt += `\n\n═══ EL BENEFICIO (esto manda sobre cualquier precio) ═══
-Hay *${cupos.quedan} cupos* de valoración auditiva SIN COSTO, de ${cupos.total}. El que deja su cita agendada hoy toma uno.
+Quedan *${cupos.quedan} cupos* de valoración auditiva SIN COSTO de los ${cupos.total} de ${periodo || 'la temporada'}. El que deja su cita agendada hoy toma uno.
 
 Cómo se cuenta:
 · La cita puede ser para el día que quiera —mañana, la otra semana—. Lo que hay que hacer hoy es AGENDARLA. Dilo siempre así: si no, la gente cree que le toca venir corriendo hoy y se echa para atrás.
@@ -1456,7 +1488,8 @@ Cuándo lo dices:
 1. En cuanto pregunten por el precio o por el costo. ANTES de cualquier cifra. Está PROHIBIDO abrir la respuesta con "la valoración cuesta $…": quien oye primero el número se va antes de enterarse de que hoy no lo necesita. Si insiste en saber el valor normal, ahí sí se lo dices completo.
 2. Cuando duden ("lo voy a pensar", "después te escribo"). Una segunda vez, no una tercera.
 
-El número de cupos es real y baja cada vez que alguien agenda: puedes decirlo con tranquilidad porque es verdad. No lo infles, no lo repitas en cada mensaje y no lo uses como amenaza. Si quedan pocos, dilo sin dramatizar.
+El número es real y baja cada vez que alguien agenda: dilo con tranquilidad porque es verdad. No lo infles, no lo repitas en cada mensaje y no lo uses como amenaza. Si quedan pocos, dilo sin dramatizar.
+${cupos.ciclo === 'semana' ? 'Son cupos semanales: si alguien pregunta, se dice tal cual — el lunes entran otros. Nunca digas que es la última oportunidad de su vida, porque no lo es.' : ''}
 ═══════════════════════════════════`;
     }
   }
