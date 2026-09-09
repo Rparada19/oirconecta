@@ -19,6 +19,7 @@
 
 import { getApiBaseUrl } from './apiBaseUrl';
 import { hasConsent } from './cookieConsent';
+import { getGclid } from './googleAds';
 
 const API = getApiBaseUrl().replace(/\/$/, '');
 const TRACK_URL = `${API}/api/analytics/track`;
@@ -181,6 +182,7 @@ function _basePayload(overrides = {}) {
     utmCampaign: utms.utmCampaign || null,
     utmContent: utms.utmContent || null,
     utmTerm: utms.utmTerm || null,
+    gclid: getGclid(),
     screenWidth: typeof window !== 'undefined' ? window.innerWidth : null,
     screenHeight: typeof window !== 'undefined' ? window.innerHeight : null,
     language: typeof navigator !== 'undefined' ? (navigator.language || null) : null,

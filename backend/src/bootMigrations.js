@@ -839,6 +839,7 @@ async function runBootMigrations(prisma) {
   await ensureAppointmentCancellationColumns(prisma);
   await ensureGoogleCalendarSchema(prisma);
   await ensureAnalyticsSchema(prisma);
+  await ensureGoogleAdsAttribution(prisma);
   await seedPlanDefaults(prisma);
 }
 
@@ -1152,6 +1153,30 @@ async function ensureAppointmentCancellationColumns(prisma) {
     console.log('[boot-migrate] appointment + review + nurture + birthday + referrals + notification_templates + follow_ups + whatsapp_conversations + ia_agent_documents OK');
   } catch (e) {
     console.warn('[boot-migrate] ensureAppointmentCancellationColumns falló (no bloqueante):', e.message);
+  }
+}
+
+/**
+ * Google Ads — columnas de atribución del click (gclid).
+ *
+ * El gclid llega en la URL de aterrizaje, viaja con el visitante y se guarda
+ * en la cita. Sin él no hay forma de subirle a Google la venta que salió de
+ * una campaña cuando esa venta se cierra semanas después, fuera del navegador.
+ */
+async function ensureGoogleAdsAttribution(prisma) {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "analytics_events" ADD COLUMN IF NOT EXISTS "gclid" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "analytics_sessions" ADD COLUMN IF NOT EXISTS "gclid" TEXT`);
+
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "gclid" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "utmSource" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "utmMedium" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "utmCampaign" TEXT`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "appointments_gclid_idx" ON "appointments" ("gclid")`);
+
+    console.log('[boot-migrate] google ads attribution (gclid) OK');
+  } catch (e) {
+    console.warn('[boot-migrate] ensureGoogleAdsAttribution falló (no bloqueante):', e.message);
   }
 }
 

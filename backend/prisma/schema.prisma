@@ -849,6 +849,14 @@ model Appointment {
   followUpDoneAt       DateTime? // cuándo el profesional marcó "ya contacté"
   followUpNotes        String? // qué pasó en la llamada de seguimiento
 
+  /// Atribución de campaña con la que llegó quien agendó desde la web.
+  /// El gclid es el click de Google Ads: se guarda aquí para poder subir la
+  /// conversión offline cuando la valoración termine en venta, días después.
+  gclid       String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+
   // Sincronización con Google Calendar del profesional (C9)
   googleEventId String? // id del evento espejo en Google Calendar
 
@@ -871,6 +879,7 @@ model Appointment {
   @@index([reviewToken])
   @@index([sedeId])
   @@index([needsAssignment])
+  @@index([gclid])
   @@map("appointments")
 }
 
@@ -3180,6 +3189,10 @@ model AnalyticsEvent {
   utmContent  String?
   utmTerm     String?
 
+  /// Click id de Google Ads (gclid). Es lo que permite devolverle a Google la
+  /// conversión que ocurrió semanas después, fuera del navegador.
+  gclid String?
+
   // Campaña interna (si es impresión/click de ad OírConecta)
   campaignId String?
 
@@ -3235,6 +3248,7 @@ model AnalyticsSession {
   utmSource   String?
   utmMedium   String?
   utmCampaign String?
+  gclid       String?
 
   ipMasked String?
   city     String?
