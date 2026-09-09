@@ -189,11 +189,15 @@ export default function WhatsAppInboxPage({
   const [recuperando, setRecuperando] = useState(false);
   const [recuperacion, setRecuperacion] = useState(null);
 
-  const recuperar = async (dryRun) => {
+  const [conPlantilla, setConPlantilla] = useState(false);
+
+  const recuperar = async (dryRun, usarPlantilla = conPlantilla) => {
     setRecuperando(true);
     if (!dryRun) setRecuperacion(null);
     try {
-      const r = await api.post(`/api/wa/recuperar${dryRun ? '?dryRun=true' : ''}`, {});
+      const qs = [dryRun ? 'dryRun=true' : null, usarPlantilla ? 'conPlantilla=true' : null]
+        .filter(Boolean).join('&');
+      const r = await api.post(`/api/wa/recuperar${qs ? `?${qs}` : ''}`, {});
       if (r?.data?.success) setRecuperacion({ ok: true, dryRun, ...r.data.data });
       else setRecuperacion({ ok: false, error: r?.data?.error || 'No se pudo' });
     } catch (e) {
@@ -1322,20 +1326,36 @@ export default function WhatsAppInboxPage({
                   Les llegaría a {recuperacion.enviados} personas.
                 </Typography>
                 <Typography sx={{ fontSize: '0.7rem', color: MUTED }}>
-                  {recuperacion.fueraDeVentana} quedaron fuera de las 24h de Meta y no se
-                  les puede escribir · {recuperacion.yaTenianCita} ya tienen cita.
+                  {conPlantilla
+                    ? `${recuperacion.porPlantilla || 0} irían con la plantilla cupo_sin_costo (fuera de las 24h)`
+                    : `${recuperacion.fueraDeVentana} quedaron fuera de las 24h de Meta`}
+                  {' · '}{recuperacion.yaTenianCita} ya tienen cita.
                 </Typography>
+                <FormControlLabel
+                  sx={{ mt: 0.5 }}
+                  control={
+                    <Checkbox size="small" checked={conPlantilla}
+                      onChange={(e) => { setConPlantilla(e.target.checked); recuperar(true, e.target.checked); }} />
+                  }
+                  label={
+                    <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>
+                      Incluir a los de más de 24h con la plantilla aprobada
+                    </Typography>
+                  }
+                />
                 <Button size="small" variant="contained" onClick={() => recuperar(false)}
-                  disabled={recuperando || recuperacion.enviados === 0}
+                  disabled={recuperando || ((recuperacion.enviados || 0) + (recuperacion.porPlantilla || 0)) === 0}
                   sx={{ mt: 0.5, bgcolor: WA_GREEN, textTransform: 'none', fontWeight: 700,
                     '&:hover': { bgcolor: '#1fb85a' } }}>
-                  Enviar a {recuperacion.enviados}
+                  Enviar a {(recuperacion.enviados || 0) + (recuperacion.porPlantilla || 0)}
                 </Button>
               </Box>
             )}
             {recuperacion?.ok && !recuperacion.dryRun && (
               <Typography sx={{ fontSize: '0.72rem', color: '#15803d', ml: 1 }}>
-                Enviados {recuperacion.enviados} · {recuperacion.fueraDeVentana} fuera de ventana
+                Enviados {recuperacion.enviados} por chat
+                {recuperacion.porPlantilla ? ` · ${recuperacion.porPlantilla} con plantilla` : ''}
+                {recuperacion.fueraDeVentana ? ` · ${recuperacion.fueraDeVentana} fuera de ventana` : ''}
                 {recuperacion.fallidos ? ` · ${recuperacion.fallidos} fallaron` : ''}
               </Typography>
             )}

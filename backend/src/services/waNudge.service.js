@@ -408,9 +408,13 @@ ${cuantos} Si dejas tu cita agendada hoy, tomas uno — y la programas para el d
 }
 
 /**
- * @param {{ dryRun?: boolean }} opts — con dryRun solo cuenta, no envía.
+ * @param {object} opts
+ * @param {boolean} [opts.dryRun] — solo cuenta, no envía.
+ * @param {boolean} [opts.conPlantilla] — a los que quedaron fuera de la ventana
+ *   de 24h, escribirles con la plantilla `cupo_sin_costo`. Requiere que Meta ya
+ *   la haya aprobado; si no, el envío falla y se cuenta como fallido.
  */
-async function recuperarConversaciones({ dryRun = false } = {}) {
+async function recuperarConversaciones({ dryRun = false, conPlantilla = false } = {}) {
   const ahora = new Date();
   const abiertas = await prisma.whatsAppConversation.findMany({
     where: {
@@ -428,14 +432,17 @@ async function recuperarConversaciones({ dryRun = false } = {}) {
     take: 200,
   });
 
-  let enviados = 0, fueraDeVentana = 0, yaTenianCita = 0, fallidos = 0;
+  let enviados = 0, fueraDeVentana = 0, yaTenianCita = 0, fallidos = 0, porPlantilla = 0;
   const bot = require('./waCorporateBot.service');
   const cupos = await bot.cuposDelBeneficio?.().catch(() => null);
 
+  const corp = require('./waCorporate.service');
+
   for (const conv of abiertas) {
-    // Fuera de la ventana de 24h no se puede mandar texto libre. No es una
-    // decisión nuestra: Meta lo rechaza.
-    if (!conv.windowExpiresAt || conv.windowExpiresAt <= ahora) { fueraDeVentana++; continue; }
+    // Fuera de la ventana de 24h Meta no acepta texto libre: solo plantilla
+    // aprobada. `cupo_sin_costo` existe justo para esto.
+    const dentroDeVentana = conv.windowExpiresAt && conv.windowExpiresAt > ahora;
+    if (!dentroDeVentana && !conPlantilla) { fueraDeVentana++; continue; }
 
     // Si ya tiene cita, esto sobra y molesta.
     const last10 = String(conv.phone || '').replace(/\D/g, '').slice(-10);
@@ -450,7 +457,38 @@ async function recuperarConversaciones({ dryRun = false } = {}) {
       if (cita) { yaTenianCita++; continue; }
     }
 
-    if (dryRun) { enviados++; continue; }
+    if (dryRun) {
+      if (dentroDeVentana) enviados++; else porPlantilla++;
+      continue;
+    }
+
+    // Fuera de ventana: plantilla. La conversación no se "reabre" hasta que la
+    // persona conteste, así que aquí no hay texto libre posible.
+    if (!dentroDeVentana) {
+      const claimP = await prisma.whatsAppConversation.updateMany({
+        where: { id: conv.id, recuperadoAt: null },
+        data: { recuperadoAt: ahora },
+      });
+      if (claimP.count === 0) continue;
+      try {
+        await corp.sendTemplateToExistingConversation({
+          conversationId: conv.id,
+          templateKey: 'cupo_sin_costo',
+          variables: {
+            nombre: (conv.contactName || 'hola').split(/\s+/)[0],
+            cupos: String(cupos?.quedan ?? ''),
+          },
+        });
+        porPlantilla++;
+      } catch (e) {
+        console.error('[wa-recuperar] plantilla falló a', conv.phone, e.message);
+        await prisma.whatsAppConversation.updateMany({
+          where: { id: conv.id }, data: { recuperadoAt: null },
+        });
+        fallidos++;
+      }
+      continue;
+    }
 
     const texto = textoRecuperacion(conv.contactName, cupos);
     const claim = await prisma.whatsAppConversation.updateMany({
@@ -490,7 +528,7 @@ async function recuperarConversaciones({ dryRun = false } = {}) {
     }
   }
 
-  return { revisadas: abiertas.length, enviados, fueraDeVentana, yaTenianCita, fallidos };
+  return { revisadas: abiertas.length, enviados, porPlantilla, fueraDeVentana, yaTenianCita, fallidos };
 }
 
 module.exports = {

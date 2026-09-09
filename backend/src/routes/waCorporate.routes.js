@@ -175,6 +175,7 @@ router.post('/recuperar', async (req, res) => {
     const waNudge = require('../services/waNudge.service');
     const out = await waNudge.recuperarConversaciones({
       dryRun: req.query.dryRun === 'true' || req.body?.dryRun === true,
+      conPlantilla: req.query.conPlantilla === 'true' || req.body?.conPlantilla === true,
     });
     res.json({ success: true, data: out });
   } catch (e) {
