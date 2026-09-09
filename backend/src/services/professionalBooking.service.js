@@ -353,7 +353,7 @@ async function createPublicAppointment(profileId, payload) {
   // De dónde viene esta persona. Sin esto todo lo que agenda el bot entraba
   // como 'directorio-publico', que el embudo no reconoce y manda al cajón de
   // "visita médica" — le atribuía al trabajo comercial lo que trajo la pauta.
-  const { appointmentTypeId, scheduledAt, notas, patient, referredByCode, procedencia } = payload || {};
+  const { appointmentTypeId, scheduledAt, notas, patient, referredByCode, procedencia, canalRegistro } = payload || {};
   const proc = procedencia || 'directorio-publico';
   if (!appointmentTypeId) throw new BookingError('appointmentTypeId requerido');
   if (!scheduledAt) throw new BookingError('scheduledAt requerido (ISO local o "YYYY-MM-DD HH:MM")');
@@ -390,6 +390,7 @@ async function createPublicAppointment(profileId, payload) {
     hora: timeStr,
     motivo: notas || `Reserva pública: ${type.nombre}`,
     procedencia: proc,
+    canalRegistro: canalRegistro || undefined,
     tipoConsulta: type.nombre,
     durationMinutes: type.durationMinutes,
     directoryProfileId: profileId,

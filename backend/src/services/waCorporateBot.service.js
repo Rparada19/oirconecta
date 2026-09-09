@@ -120,6 +120,35 @@ async function procedenciaDeConversacion(conversationId) {
   return 'sitio-web';
 }
 
+/**
+ * Cuántos cupos quedan del beneficio de valoración sin costo.
+ *
+ * La cifra se cuenta, no se inventa: cada cita que agenda el bot consume uno.
+ * Decir "quedan 50" para siempre es la clase de escasez falsa que espanta —y
+ * que le prohibimos al bot ayer—. Un número que baja de verdad es información,
+ * y se puede defender delante de un paciente.
+ *
+ * PROMO_CUPOS_TOTAL y PROMO_CUPOS_DESDE se cambian en Render sin desplegar.
+ */
+async function cuposDelBeneficio() {
+  const total = parseInt(process.env.PROMO_CUPOS_TOTAL || '50', 10);
+  if (!total || total < 1) return null;
+  const desde = process.env.PROMO_CUPOS_DESDE
+    ? new Date(`${process.env.PROMO_CUPOS_DESDE}T00:00:00.000Z`)
+    : new Date('2026-09-08T00:00:00.000Z');
+  if (Number.isNaN(desde.getTime())) return null;
+
+  const usados = await prisma.appointment.count({
+    where: {
+      canalRegistro: 'bot-whatsapp',
+      createdAt: { gte: desde },
+      estado: { notIn: ['CANCELLED'] },
+    },
+  }).catch(() => 0);
+
+  return { total, usados, quedan: Math.max(0, total - usados) };
+}
+
 /** "jueves 10 de septiembre de 2026" — para que nadie tenga que deducirlo. */
 function fechaLegible(valor) {
   const d = valor instanceof Date ? valor : new Date(valor);
@@ -158,6 +187,9 @@ const bookingToolImpls = {
       appointmentTypeId: input.appointmentTypeId,
       scheduledAt: input.scheduledAt,
       procedencia: await procedenciaDeConversacion(conversationId),
+      // Quién agendó, no de dónde viene. Es lo que permite contar los cupos
+      // del beneficio sin adivinar.
+      canalRegistro: 'bot-whatsapp',
       notas: input.notas || 'Agendado por WhatsApp (bot corporativo)',
       patient: {
         nombre: input.patientName || contactName || 'Paciente WhatsApp',
@@ -1407,6 +1439,28 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
       }
     } catch (e) {
       console.error('[wa-bot] no pude cargar la educación del centro:', e.message);
+    }
+  }
+
+  // Va de últimas a propósito. El nodo de PRECIOS del cerebro dice cuánto
+  // cuesta, y cuando esto iba antes el bot abría con la cifra igual. Lo último
+  // que lee es lo que más pesa.
+  if (['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS'].includes(conv.contactType)) {
+    const cupos = await cuposDelBeneficio().catch(() => null);
+    if (cupos && cupos.quedan > 0) {
+      systemPrompt += `\n\n═══ EL BENEFICIO (esto manda sobre cualquier precio) ═══
+Hay *${cupos.quedan} cupos* de valoración auditiva SIN COSTO, de ${cupos.total}. El que deja su cita agendada hoy toma uno.
+
+Cómo se cuenta:
+· La cita puede ser para el día que quiera —mañana, la otra semana—. Lo que hay que hacer hoy es AGENDARLA. Dilo siempre así: si no, la gente cree que le toca venir corriendo hoy y se echa para atrás.
+· Si después necesita moverla, se mueve. El beneficio no se pierde.
+
+Cuándo lo dices:
+1. En cuanto pregunten por el precio o por el costo. ANTES de cualquier cifra. Está PROHIBIDO abrir la respuesta con "la valoración cuesta $…": quien oye primero el número se va antes de enterarse de que hoy no lo necesita. Si insiste en saber el valor normal, ahí sí se lo dices completo.
+2. Cuando duden ("lo voy a pensar", "después te escribo"). Una segunda vez, no una tercera.
+
+El número de cupos es real y baja cada vez que alguien agenda: puedes decirlo con tranquilidad porque es verdad. No lo infles, no lo repitas en cada mensaje y no lo uses como amenaza. Si quedan pocos, dilo sin dramatizar.
+═══════════════════════════════════`;
     }
   }
 
