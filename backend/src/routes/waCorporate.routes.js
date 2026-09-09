@@ -168,6 +168,20 @@ router.post('/ensayo', async (req, res, next) => {
   }
 });
 
+// ─── Recuperar los chats abiertos con la oferta ────────────
+// Con ?dryRun=true solo cuenta a cuántos les llegaría, sin mandar nada.
+router.post('/recuperar', async (req, res) => {
+  try {
+    const waNudge = require('../services/waNudge.service');
+    const out = await waNudge.recuperarConversaciones({
+      dryRun: req.query.dryRun === 'true' || req.body?.dryRun === true,
+    });
+    res.json({ success: true, data: out });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // ─── Campañas: qué anuncio trajo qué ───────────────────────
 // Una fila por anuncio de click-to-WhatsApp, con lo único que importa para
 // decidir dónde poner el presupuesto: cuántos escribieron y cuántos agendaron.

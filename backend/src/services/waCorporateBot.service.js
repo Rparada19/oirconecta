@@ -1796,6 +1796,7 @@ module.exports = {
   maybeSendHandshake,
   iniciarFlujoAliado,
   iniciarFlujoAnuncio,
+  cuposDelBeneficio,
   ensayar,
   actualizarResumen,
   handleButtonReply,

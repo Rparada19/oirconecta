@@ -185,6 +185,22 @@ export default function WhatsAppInboxPage({
     } finally { setReatribuyendo(false); }
   };
 
+  // Recuperación: mandarle la oferta a los chats abiertos que no agendaron.
+  const [recuperando, setRecuperando] = useState(false);
+  const [recuperacion, setRecuperacion] = useState(null);
+
+  const recuperar = async (dryRun) => {
+    setRecuperando(true);
+    if (!dryRun) setRecuperacion(null);
+    try {
+      const r = await api.post(`/api/wa/recuperar${dryRun ? '?dryRun=true' : ''}`, {});
+      if (r?.data?.success) setRecuperacion({ ok: true, dryRun, ...r.data.data });
+      else setRecuperacion({ ok: false, error: r?.data?.error || 'No se pudo' });
+    } catch (e) {
+      setRecuperacion({ ok: false, error: e?.response?.data?.error || e.message });
+    } finally { setRecuperando(false); }
+  };
+
   const openCampanas = async () => {
     setCampOpen(true);
     setCampLoading(true);
@@ -1296,6 +1312,38 @@ export default function WhatsAppInboxPage({
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
           <Box>
+            <Button onClick={() => recuperar(true)} disabled={recuperando}
+              sx={{ textTransform: 'none', color: WA_GREEN, fontWeight: 700 }}>
+              {recuperando ? 'Revisando…' : 'Recuperar chats sin cita'}
+            </Button>
+            {recuperacion?.ok && recuperacion.dryRun && (
+              <Box sx={{ mt: 0.5, mb: 1 }}>
+                <Typography sx={{ fontSize: '0.75rem', color: NAVY, fontWeight: 700 }}>
+                  Les llegaría a {recuperacion.enviados} personas.
+                </Typography>
+                <Typography sx={{ fontSize: '0.7rem', color: MUTED }}>
+                  {recuperacion.fueraDeVentana} quedaron fuera de las 24h de Meta y no se
+                  les puede escribir · {recuperacion.yaTenianCita} ya tienen cita.
+                </Typography>
+                <Button size="small" variant="contained" onClick={() => recuperar(false)}
+                  disabled={recuperando || recuperacion.enviados === 0}
+                  sx={{ mt: 0.5, bgcolor: WA_GREEN, textTransform: 'none', fontWeight: 700,
+                    '&:hover': { bgcolor: '#1fb85a' } }}>
+                  Enviar a {recuperacion.enviados}
+                </Button>
+              </Box>
+            )}
+            {recuperacion?.ok && !recuperacion.dryRun && (
+              <Typography sx={{ fontSize: '0.72rem', color: '#15803d', ml: 1 }}>
+                Enviados {recuperacion.enviados} · {recuperacion.fueraDeVentana} fuera de ventana
+                {recuperacion.fallidos ? ` · ${recuperacion.fallidos} fallaron` : ''}
+              </Typography>
+            )}
+            {recuperacion && !recuperacion.ok && (
+              <Typography sx={{ fontSize: '0.72rem', color: '#b91c1c', ml: 1 }}>
+                {recuperacion.error}
+              </Typography>
+            )}
             <Button onClick={reatribuir} disabled={reatribuyendo}
               sx={{ textTransform: 'none', color: ACCENT, fontWeight: 700 }}>
               {reatribuyendo ? 'Corrigiendo…' : 'Corregir atribución de lo ya guardado'}

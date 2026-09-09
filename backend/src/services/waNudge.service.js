@@ -380,8 +380,122 @@ async function processSilencios() {
   return { retomas, despedidas, revisadas: candidatas.length };
 }
 
+
+// ─── Recuperar los chats abiertos con la oferta ──────────────
+//
+// Diecisiete personas llegaron por los anuncios y una sola agendó. A la
+// mayoría el bot les abrió con "cuesta $150.000" antes de contarles que
+// agendando hoy no cuesta nada. Esto les lleva esa información.
+//
+// El texto NO lo escribe la IA: es un mensaje de una sola frase con un dato
+// concreto, y ya aprendimos que pedirle originalidad a un mensaje así es
+// pedirle que invente. Aquí además llevaría un número —los cupos— que no puede
+// equivocarse.
+//
+// Solo se manda UNA vez por conversación, y solo dentro de la ventana de 24h
+// de Meta: fuera de ella haría falta una plantilla aprobada, que no existe.
+
+function textoRecuperacion(nombre, cupos) {
+  const saludo = nombre ? `Hola, ${String(nombre).split(/\s+/)[0]}` : 'Hola';
+  const cuantos = cupos?.quedan
+    ? `Nos quedan *${cupos.quedan} cupos* de valoración auditiva sin costo esta semana.`
+    : 'Tenemos cupos de valoración auditiva sin costo esta semana.';
+  return `${saludo} 👋 Te escribo por algo que no te alcancé a contar.
+
+${cuantos} Si dejas tu cita agendada hoy, tomas uno — y la programas para el día que te sirva, no tienes que venir hoy.
+
+¿Te busco un horario?`;
+}
+
+/**
+ * @param {{ dryRun?: boolean }} opts — con dryRun solo cuenta, no envía.
+ */
+async function recuperarConversaciones({ dryRun = false } = {}) {
+  const ahora = new Date();
+  const abiertas = await prisma.whatsAppConversation.findMany({
+    where: {
+      businessLine: 'CRM',
+      status: { not: 'CLOSED' },
+      recuperadoAt: null,
+      agendarBookedAt: null,
+      contactType: { in: ['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS'] },
+    },
+    select: {
+      id: true, phone: true, contactName: true, patientId: true,
+      windowExpiresAt: true,
+    },
+    orderBy: { lastMessageAt: 'desc' },
+    take: 200,
+  });
+
+  let enviados = 0, fueraDeVentana = 0, yaTenianCita = 0, fallidos = 0;
+  const bot = require('./waCorporateBot.service');
+  const cupos = await bot.cuposDelBeneficio?.().catch(() => null);
+
+  for (const conv of abiertas) {
+    // Fuera de la ventana de 24h no se puede mandar texto libre. No es una
+    // decisión nuestra: Meta lo rechaza.
+    if (!conv.windowExpiresAt || conv.windowExpiresAt <= ahora) { fueraDeVentana++; continue; }
+
+    // Si ya tiene cita, esto sobra y molesta.
+    const last10 = String(conv.phone || '').replace(/\D/g, '').slice(-10);
+    if (last10) {
+      const cita = await prisma.appointment.findFirst({
+        where: {
+          patientPhone: { contains: last10 },
+          estado: { in: ['CONFIRMED', 'COMPLETED', 'PATIENT'] },
+        },
+        select: { id: true },
+      }).catch(() => null);
+      if (cita) { yaTenianCita++; continue; }
+    }
+
+    if (dryRun) { enviados++; continue; }
+
+    const texto = textoRecuperacion(conv.contactName, cupos);
+    const claim = await prisma.whatsAppConversation.updateMany({
+      where: { id: conv.id, recuperadoAt: null },
+      data: { recuperadoAt: ahora },
+    });
+    if (claim.count === 0) continue;
+    try {
+      const result = await sendWhatsAppText({ to: conv.phone, text: texto });
+      await prisma.whatsAppMessage.create({
+        data: {
+          conversationId: conv.id,
+          wamid: result?.providerMessageId || null,
+          direction: 'OUTBOUND',
+          type: 'text',
+          body: texto,
+          sentByBot: true,
+          deliveryStatus: 'sent',
+          timestamp: new Date(),
+        },
+      });
+      await prisma.whatsAppConversation.update({
+        where: { id: conv.id },
+        data: {
+          lastMessageAt: new Date(),
+          lastMessagePreview: 'Bot: recuperación — cupos sin costo',
+          status: 'BOT',
+        },
+      });
+      enviados++;
+    } catch (e) {
+      console.error('[wa-recuperar] envío falló a', conv.phone, e.message);
+      await prisma.whatsAppConversation.updateMany({
+        where: { id: conv.id }, data: { recuperadoAt: null },
+      });
+      fallidos++;
+    }
+  }
+
+  return { revisadas: abiertas.length, enviados, fueraDeVentana, yaTenianCita, fallidos };
+}
+
 module.exports = {
   processWaAgendarNudges,
+  recuperarConversaciones,
   processSilencios,
   processNudges,
   processEscalations,

@@ -3062,6 +3062,10 @@ model WhatsAppConversation {
   silencio1At DateTime?
   silencio2At DateTime?
 
+  /// Cuándo se le mandó el mensaje de recuperación con la oferta. Una sola vez
+  /// por conversación: insistir con lo mismo dos veces es spam.
+  recuperadoAt DateTime?
+
   /// Memoria larga del bot: resumen rodante de lo ya conversado. El prompt solo
   /// carga los últimos 12 mensajes, así que sin esto un paciente que vuelve a
   /// los seis meses arranca de cero.
