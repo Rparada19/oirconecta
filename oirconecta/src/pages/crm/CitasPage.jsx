@@ -232,13 +232,18 @@ const CitasPage = () => {
       filtered = filtered.filter((apt) => apt.status !== 'rescheduled');
     }
 
-    // Filtrar por búsqueda
+    // Filtrar por búsqueda.
+    // Las citas del bot de WhatsApp llegan muchas veces sin correo —nadie
+    // obliga a un paciente a darlo— y buscar por nombre reventaba la lista
+    // entera al llamar .toLowerCase() sobre null: la agenda se quedaba en
+    // blanco y parecía que la cita no existía.
     if (searchTerm) {
+      const q = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (apt) =>
-          apt.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          apt.patientEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          apt.patientPhone.includes(searchTerm)
+          (apt.patientName || '').toLowerCase().includes(q) ||
+          (apt.patientEmail || '').toLowerCase().includes(q) ||
+          (apt.patientPhone || '').includes(searchTerm)
       );
     }
 
@@ -1139,7 +1144,7 @@ const CitasPage = () => {
                                   fontSize: '1rem',
                                 }}
                               >
-                                {appointment.patientName.charAt(0).toUpperCase()}
+                                {(appointment.patientName || '?').charAt(0).toUpperCase()}
                               </Avatar>
                               <Box>
                                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -1543,7 +1548,7 @@ const CitasPage = () => {
                         fontWeight: 700,
                       }}
                     >
-                      {selectedAppointment.patientName.charAt(0).toUpperCase()}
+                      {(selectedAppointment.patientName || '?').charAt(0).toUpperCase()}
                     </Avatar>
                     <Box sx={{ flex: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
