@@ -26,15 +26,31 @@ import { hasConsent } from './cookieConsent';
 export const GOOGLE_ADS_ID = 'AW-18441131676';
 
 /**
- * Etiquetas de conversión por evento de negocio. Rellenar con el label que da
- * Google Ads al crear cada acción de conversión.
+ * Etiquetas de conversión por evento de negocio.
+ *
+ * El label lo da Google Ads al crear la acción de conversión:
+ * Objetivos → Conversiones → la acción → "Configurar la etiqueta". El send_to
+ * se ve como 'AW-18441131676/AbC-D_efGh' y el label es lo que va DESPUÉS de la
+ * barra. Sin label, la conversión no se dispara y la cuenta reporta cero —
+ * que es exactamente lo que Google avisa en "el seguimiento de conversiones
+ * está incompleto".
+ *
+ * Se pueden poner por variable de entorno en Render (sin tocar código) o aquí
+ * mismo. Lo que esté en el entorno manda.
  */
 const CONVERSION_LABELS = {
-  agendamiento: '',    // cita agendada en /agendar
-  lead_simulador: '',  // dejó datos en /ponte-en-sus-oidos
-  whatsapp_click: '',  // abrió WhatsApp desde un CTA
-  contacto: '',        // formulario de /contacto
+  agendamiento: import.meta.env.VITE_ADS_LABEL_AGENDAMIENTO || '',    // cita agendada en /agendar
+  lead_simulador: import.meta.env.VITE_ADS_LABEL_SIMULADOR || '',     // dejó datos en /ponte-en-sus-oidos
+  whatsapp_click: import.meta.env.VITE_ADS_LABEL_WHATSAPP || '',      // abrió WhatsApp desde un CTA
+  contacto: import.meta.env.VITE_ADS_LABEL_CONTACTO || '',            // formulario de /contacto
 };
+
+/** Qué acciones están listas y cuáles siguen sin etiqueta. Para diagnosticar. */
+export function estadoDeConversiones() {
+  return Object.fromEntries(
+    Object.entries(CONVERSION_LABELS).map(([k, v]) => [k, v ? 'lista' : 'SIN ETIQUETA']),
+  );
+}
 
 const LS_CLICK_IDS = 'oc_google_click_ids';
 const TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 días, la ventana de Google Ads
@@ -102,7 +118,15 @@ export function getGclid() {
  */
 export function adsConversion(key, params = {}) {
   const label = CONVERSION_LABELS[key];
-  if (!label) return false; // acción aún sin etiqueta en la cuenta de Ads
+  if (!label) {
+    // Silencioso durante meses: la conversión ocurría, nadie la mandaba, y en
+    // Ads la campaña aparecía sin datos. Que al menos quede dicho.
+    console.warn(
+      `[ads] "${key}" ocurrió pero no se envió a Google Ads: esa acción no tiene etiqueta.`,
+      'Google Ads → Objetivos → Conversiones → la acción → Configurar la etiqueta.',
+    );
+    return false;
+  }
   try {
     if (typeof window === 'undefined' || typeof window.gtag !== 'function') return false;
     window.gtag('event', 'conversion', {
