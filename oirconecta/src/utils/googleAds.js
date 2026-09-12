@@ -38,11 +38,27 @@ export const GOOGLE_ADS_ID = 'AW-18441131676';
  * Se pueden poner por variable de entorno en Render (sin tocar código) o aquí
  * mismo. Lo que esté en el entorno manda.
  */
+/**
+ * "Enviar formulario de clientes potenciales" — hoy, la única acción de sitio
+ * web que existe en la cuenta. Las tres cosas que la disparan son, de verdad,
+ * dejar los datos en un formulario: agendar, el simulador y contacto.
+ *
+ * Agendar merece su propia acción ("Cita agendada"): es la que le enseña a
+ * Google a quién buscar. Mientras no exista, mandar las tres aquí es mejor que
+ * no mandar nada — sin una sola conversión, "maximiza las conversiones" no
+ * tiene con qué optimizar y Google frena la campaña. Cuando se cree, se cambia
+ * la línea de `agendamiento` y ya.
+ */
+const LABEL_FORMULARIO_LEAD = 'YwR2CO_xw_IcEJyttdlE';
+
 const CONVERSION_LABELS = {
-  agendamiento: import.meta.env.VITE_ADS_LABEL_AGENDAMIENTO || '',    // cita agendada en /agendar
-  lead_simulador: import.meta.env.VITE_ADS_LABEL_SIMULADOR || '',     // dejó datos en /ponte-en-sus-oidos
-  whatsapp_click: import.meta.env.VITE_ADS_LABEL_WHATSAPP || '',      // abrió WhatsApp desde un CTA
-  contacto: import.meta.env.VITE_ADS_LABEL_CONTACTO || '',            // formulario de /contacto
+  agendamiento: import.meta.env.VITE_ADS_LABEL_AGENDAMIENTO || LABEL_FORMULARIO_LEAD,
+  lead_simulador: import.meta.env.VITE_ADS_LABEL_SIMULADOR || LABEL_FORMULARIO_LEAD,
+  contacto: import.meta.env.VITE_ADS_LABEL_CONTACTO || LABEL_FORMULARIO_LEAD,
+  // Abrir WhatsApp NO es dejar los datos. Contarlo como lo mismo le enseñaría
+  // a Google a buscar gente que escribe en vez de gente que agenda, que es
+  // justo lo que sobra en la bandeja. Espera su propia acción.
+  whatsapp_click: import.meta.env.VITE_ADS_LABEL_WHATSAPP || '',
 };
 
 /** Qué acciones están listas y cuáles siguen sin etiqueta. Para diagnosticar. */
@@ -51,6 +67,8 @@ export function estadoDeConversiones() {
     Object.entries(CONVERSION_LABELS).map(([k, v]) => [k, v ? 'lista' : 'SIN ETIQUETA']),
   );
 }
+
+const avisadas = new Set();
 
 const LS_CLICK_IDS = 'oc_google_click_ids';
 const TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 días, la ventana de Google Ads
@@ -120,7 +138,10 @@ export function adsConversion(key, params = {}) {
   const label = CONVERSION_LABELS[key];
   if (!label) {
     // Silencioso durante meses: la conversión ocurría, nadie la mandaba, y en
-    // Ads la campaña aparecía sin datos. Que al menos quede dicho.
+    // Ads la campaña aparecía sin datos. Que al menos quede dicho — una sola
+    // vez, que hay acciones que se repiten mucho.
+    if (avisadas.has(key)) return false;
+    avisadas.add(key);
     console.warn(
       `[ads] "${key}" ocurrió pero no se envió a Google Ads: esa acción no tiene etiqueta.`,
       'Google Ads → Objetivos → Conversiones → la acción → Configurar la etiqueta.',
