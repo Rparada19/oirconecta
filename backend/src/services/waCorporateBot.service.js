@@ -731,6 +731,9 @@ Antes de proponer nada, tienes que saber qué le está pasando. No es un trámit
 - Cuando te cuente algo, reconócelo antes de seguir. "Eso que me cuentas es de lo más común, y tiene solución" vale más que cualquier lista de servicios.
 - Si es por un familiar, habla del familiar: cómo lo nota, desde cuándo, qué le preocupa a él.
 - Responde de verdad lo que te pregunten. Informar SÍ es tu trabajo. Alguien que se va sabiendo algo que no sabía vuelve; alguien a quien le esquivaron la pregunta no.
+- Cada mensaje tuyo tiene que dejarle algo: una respuesta, una orientación, un dato que no tenía. Un mensaje que solo pregunta es un mensaje que solo te sirve a ti. Dale algo y pregunta después.
+- Dos preguntas seguidas ya son un interrogatorio. Si llevas dos y todavía no le has dado nada, dale algo antes de la tercera.
+- Si se despide o te da las gracias, despídete y para. No le metas una pregunta más ni "cualquier cosa me escribes y seguimos": ya terminó, y perseguir a alguien que cerró la conversación es la forma más rápida de que no vuelva.
 
 EXCEPCIÓN, Y ES ABSOLUTA: si ya pidió cita —"quiero agendar", "necesito una cita", "¿qué días hay?"— NO le hagas ninguna pregunta previa. Ni una. Vas derecho a los horarios.
 Cuenta igual cuando el texto viene precargado por el anuncio ("¡Hola! Quiero agendar una cita con ustedes"): esa persona tocó un botón que decía agendar. Que no lo haya tecleado ella no lo vuelve menos cierto. Le confirmas que con gusto, llamas get_availability y le pones horarios en el primer mensaje.
@@ -1271,6 +1274,30 @@ Con eso te oriento mejor.`;
  * corrige aquí y no solo en el prompt: una instrucción se desobedece, esto no.
  */
 /**
+ * Frases con las que el bot da una cita por hecha.
+ *
+ * Solo las de "ya está", nunca las de proponer: "te agendo el martes a las
+ * 10, ¿te sirve?" es una propuesta y no debe disparar nada. Las dos últimas
+ * —llegar 10 minutos antes, traer la cédula— son las más confiables: el
+ * prompt las pide justo después de crear la cita, y no aparecen antes.
+ */
+const PROMESA_DE_CITA = /nos vemos el |qued(aste|ó|o) agendad|ya qued(ó|o) (tu |la )?cita|tu cita qued|te (esper[aá]bamos|esperamos) el |llega(r)? 10 minutos antes|trae tu c[ée]dula/i;
+
+/** ¿Esta persona ya tiene una cita viva en la agenda? Se compara por teléfono. */
+async function tieneCitaVigente(telefono) {
+  const last10 = String(telefono || '').replace(/\D/g, '').slice(-10);
+  if (!last10) return false;
+  const cita = await prisma.appointment.findFirst({
+    where: {
+      patientPhone: { contains: last10 },
+      estado: { in: ['CONFIRMED', 'COMPLETED', 'PATIENT'] },
+    },
+    select: { id: true },
+  }).catch(() => null);
+  return Boolean(cita);
+}
+
+/**
  * El voseo no llega hasta el paciente.
  *
  * El prompt ya lo prohíbe, pero una instrucción se desobedece: a un lead le
@@ -1753,6 +1780,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   const messages = history.length > 0 ? history : [{ role: 'user', content: incomingText }];
 
   let reply = '';
+  let citaCreadaEnEsteTurno = false;
   try {
     const client = new Anthropic();
     const toolCtx = {
@@ -1767,6 +1795,8 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     if (useBookingTools) {
       // Tool loop: hasta 5 iteraciones.
       let finalText = '';
+      // Si el modelo termina confirmando una cita, esto tiene que ser true.
+      // Cuando no lo es, la cita solo existe en el chat del paciente.
       const workingMessages = [...messages];
       for (let iter = 0; iter < 5; iter++) {
         const resp = await client.messages.create({
@@ -1790,6 +1820,9 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
             const impl = bookingToolImpls[tu.name];
             if (!impl) throw new Error(`Tool desconocida: ${tu.name}`);
             output = await impl(toolCtx, tu.input || {});
+            if (tu.name === 'create_appointment' && output && !output.error) {
+              citaCreadaEnEsteTurno = true;
+            }
           } catch (e) {
             console.error('[wa-bot] tool', tu.name, 'falló:', e.message);
             output = { error: e.message };
@@ -1823,8 +1856,29 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
 
   if (!reply) return { skipped: 'empty-reply' };
 
-  // Detecta tag de escalada
-  const shouldEscalate = reply.includes(ESCALATE_TAG);
+  // ─── Que no confirme una cita que no creó ───
+  //
+  // A Hellen le escribió "Listo, Hellen. Valoración auditiva, viernes 11 de
+  // septiembre a las 2:00 p.m., Carrera 10 #96-25. Llega 10 minutos antes y
+  // trae tu cédula. ¡Nos vemos el viernes!" — y nunca llamó create_appointment.
+  // Ella llegó el viernes a una cita que en el CRM no existía, y nadie se
+  // enteró hasta que la buscamos. El modelo puede fallar en esto; lo que no
+  // puede es fallar en silencio.
+  const prometioCita = PROMESA_DE_CITA.test(reply);
+  let citaFantasma = false;
+  if (prometioCita && !citaCreadaEnEsteTurno) {
+    citaFantasma = !(await tieneCitaVigente(conv.phone));
+    if (citaFantasma) {
+      console.error(
+        '[wa-bot] CITA FANTASMA — el bot confirmó cita sin crearla.',
+        'conversación:', conversationId, 'teléfono:', conv.phone,
+      );
+    }
+  }
+
+  // Detecta tag de escalada. Una cita prometida y no creada escala igual:
+  // hay que llamar a esa persona antes de que se presente.
+  const shouldEscalate = reply.includes(ESCALATE_TAG) || citaFantasma;
   const cleanReply = formatoWhatsApp(reply.replace(ESCALATE_TAG, '')).trim();
 
   try {
@@ -1855,7 +1909,9 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
       where: { id: conversationId },
       data: {
         lastMessageAt: new Date(),
-        lastMessagePreview: `Bot: ${cleanReply.slice(0, 140)}`,
+        lastMessagePreview: citaFantasma
+          ? `⚠️ Prometió cita sin crearla — ${cleanReply.slice(0, 110)}`
+          : `Bot: ${cleanReply.slice(0, 140)}`,
         status: shouldEscalate ? 'ESCALATED' : 'BOT',
         unreadCount: shouldEscalate ? { increment: 1 } : undefined,
         // Solo marca si no está ya armado (primera vez que menciona el link).
@@ -1866,13 +1922,17 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     // no le avisamos al teléfono.
     if (shouldEscalate) {
       require('./alertaEquipo.service').avisar({
-        titulo: 'El bot escaló — necesita una persona',
+        titulo: citaFantasma
+          ? 'CITA PROMETIDA Y NO CREADA — agéndala a mano y llama'
+          : 'El bot escaló — necesita una persona',
         quien: conv.contactName || 'Paciente',
         telefono: conv.phone,
-        texto: incomingText,
+        texto: citaFantasma
+          ? `El bot le confirmó una cita a esta persona pero no quedó en la agenda.\n\nLo que le escribió:\n${cleanReply}`
+          : incomingText,
       }).catch(() => {});
     }
-    return { sent: true, escalated: shouldEscalate };
+    return { sent: true, escalated: shouldEscalate, citaFantasma };
   } catch (e) {
     console.error('[wa-bot] envío texto falló:', e.message);
     return { error: e.message };

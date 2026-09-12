@@ -281,6 +281,46 @@ function armarRetoma(conv, ultimoTextoBot) {
   return `Quedé pendiente de ti${nombre} 🙂\n\nCuéntame en qué te puedo ayudar y seguimos.`;
 }
 
+/**
+ * ¿Esta conversación ya se cerró bien?
+ *
+ * Jhonjairo escribió "ok mil gracias", el bot le contestó "un placer, acá estoy
+ * cuando me necesites" — y tres horas después le volvió a escribir "quedé
+ * pendiente de ti, cuéntame en qué te puedo ayudar y seguimos". No quedó nada
+ * pendiente: se despidieron. Insistirle a alguien que ya se despidió no es
+ * hacer seguimiento, es no haber leído la conversación.
+ *
+ * Se mira por los dos lados, porque cerrar lo puede hacer cualquiera de los
+ * dos: él dando las gracias, o nosotros despidiéndonos.
+ */
+const CIERRE_DEL_PACIENTE = /^(ok(ay)?|oki|listo|dale|bueno|perfecto|va|dgracias)?[\s,.!]*((muchas|mil|much[ií]simas)\s+)?gracias|^(ok(ay)?|listo|dale|perfecto|de una)[\s,.!]*$|hasta luego|nos vemos|que est[eé]s bien|buen d[ií]a$/i;
+
+const CIERRE_NUESTRO = /ac[áa] estoy cuando|aqu[ií] estoy cuando|cuando est[eé]s listo|un placer|que te vaya bien|escr[ií]beme cuando quieras|quedo atento|con gusto.{0,20}cuando (quieras|necesites)/i;
+
+async function conversacionYaSeDespidio(conversationId) {
+  const ultimos = await prisma.whatsAppMessage.findMany({
+    where: { conversationId },
+    orderBy: { timestamp: 'desc' },
+    take: 4,
+    select: { direction: true, body: true },
+  });
+
+  const ultimoDelPaciente = ultimos.find((m) => m.direction === 'INBOUND');
+  const ultimoNuestro = ultimos.find((m) => m.direction === 'OUTBOUND');
+
+  // "Gracias" con una pregunta detrás no es una despedida: es alguien
+  // esperando respuesta. Y lo que se despide se despide corto.
+  const suyo = String(ultimoDelPaciente?.body || '').trim();
+  const seDespidioEl = Boolean(ultimoDelPaciente)
+    && !/[?¿]/.test(suyo)
+    && suyo.length <= 60
+    && CIERRE_DEL_PACIENTE.test(suyo);
+  const nosDespedimos = ultimoNuestro
+    && CIERRE_NUESTRO.test(String(ultimoNuestro.body || ''));
+
+  return Boolean(seDespidioEl || nosDespedimos);
+}
+
 async function enviarYGuardar(conv, texto, campo) {
   // Claim optimista: se marca antes de enviar y se revierte si falla.
   const claim = await prisma.whatsAppConversation.updateMany({
@@ -324,7 +364,7 @@ async function enviarYGuardar(conv, texto, campo) {
 async function processSilencios() {
   if (process.env.WA_BOT_ENABLED !== 'true') return { skipped: 'bot-disabled' };
   const ahora = new Date();
-  let retomas = 0, despedidas = 0;
+  let retomas = 0, despedidas = 0, cerradas = 0;
 
   const candidatas = await prisma.whatsAppConversation.findMany({
     where: {
@@ -354,6 +394,11 @@ async function processSilencios() {
       });
       if (ultimo?.direction !== 'OUTBOUND') continue;
 
+      // Se despidieron: aquí no hay silencio que retomar. Ni retoma ni
+      // despedida — la despedida solo sale después de una retoma, así que
+      // saltarse esta conversación la deja en paz de verdad.
+      if (await conversacionYaSeDespidio(conv.id)) { cerradas++; continue; }
+
       const horas = (ahora - new Date(conv.lastMessageAt)) / 3600000;
 
       if (!conv.silencio1At) {
@@ -374,10 +419,10 @@ async function processSilencios() {
     }
   }
 
-  if (retomas || despedidas) {
-    console.log('[wa-silencio] retomas:', retomas, 'despedidas:', despedidas);
+  if (retomas || despedidas || cerradas) {
+    console.log('[wa-silencio] retomas:', retomas, 'despedidas:', despedidas, 'ya cerradas:', cerradas);
   }
-  return { retomas, despedidas, revisadas: candidatas.length };
+  return { retomas, despedidas, cerradas, revisadas: candidatas.length };
 }
 
 
@@ -422,6 +467,10 @@ async function recuperarConversaciones({ dryRun = false, conPlantilla = false } 
       status: { not: 'CLOSED' },
       recuperadoAt: null,
       agendarBookedAt: null,
+      // A quien ya le dijimos "no quiero ser inoportuno, te escribo por
+      // última vez" no se le vuelve a escribir. Lo prometimos por escrito, y
+      // una campaña encima de esa frase la convierte en mentira.
+      silencio2At: null,
       contactType: { in: ['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS'] },
     },
     select: {
