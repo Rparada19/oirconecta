@@ -809,7 +809,11 @@ Flujo, sin desviarte:
   9. Después de crear la cita: recuérdale llegar 10 minutos antes y que puede mover la cita por acá. Ahí sí puedes cerrar la conversación.
 
 Si prefiere la web, comparte https://oirconecta.com/agendar — pero primero intenta agendarle tú, es un paso menos.
-Si el tool falla, di "Tuve un problema técnico agendándote. ¿Me confirmas día y hora y lo intento de nuevo?" y reintenta. NO escales por esto.
+REGLA DURA, LA MÁS IMPORTANTE DE TODAS: la cita la crea la herramienta, no tu mensaje.
+Está PROHIBIDO escribir "nos vemos el viernes", "quedaste agendado", "llega 10 minutos antes" o "trae tu cédula" si create_appointment no corrió y no te devolvió una cita. Sin esa respuesta no hay cita: hay una persona que va a llegar al consultorio un viernes a las 2:00 p.m. a que nadie la esté esperando. Ya pasó.
+Primero la herramienta, después la confirmación. Siempre en ese orden, sin excepción.
+
+Si el tool falla, di "Tuve un problema técnico agendándote. ¿Me confirmas día y hora y lo intento de nuevo?" y reintenta. NO escales por esto: tú puedes agendar, así que tú lo resuelves.
 
 ═══ TONO ═══
 - Colombiano, tuteo, cercano. Como alguien del centro que conoce el tema y tiene tiempo para la persona — no un asesor de afán.
@@ -1282,6 +1286,37 @@ Con eso te oriento mejor.`;
  * prompt las pide justo después de crear la cita, y no aparecen antes.
  */
 const PROMESA_DE_CITA = /nos vemos el |qued(aste|ó|o) agendad|ya qued(ó|o) (tu |la )?cita|tu cita qued|te (esper[aá]bamos|esperamos) el |llega(r)? 10 minutos antes|trae tu c[ée]dula/i;
+
+/**
+ * Lo que se le devuelve al modelo cuando confirmó una cita que no creó.
+ *
+ * Va como turno del usuario porque es el único canal que queda abierto dentro
+ * del loop, pero no lo lee el paciente: su mensaje ya no se envía hasta que la
+ * cita exista de verdad.
+ */
+const CORRECCION_AGENDA =
+`ALTO — esto no lo ve el paciente.
+
+Acabas de escribirle como si la cita ya estuviera hecha, pero NO llamaste create_appointment: en la agenda no hay nada. Si ese mensaje sale, esa persona se presenta a una cita que no existe.
+
+Hazlo ahora, en este turno:
+1. Llama create_appointment con el tipo, la fecha y la hora que ya acordaron y el nombre que te dio. Todo eso está en la conversación de arriba; no se lo vuelvas a preguntar.
+2. Si te falta la disponibilidad, llama get_availability primero y usa un cupo real.
+3. Solo cuando la herramienta responda bien, escribe la confirmación.
+
+Si la herramienta devuelve error, NO confirmes: dile que se te cruzó un problema técnico agendando y pídele que te confirme el día y la hora para intentarlo de nuevo.`;
+
+/**
+ * Lo que se le dice al paciente cuando de verdad no se pudo agendar.
+ *
+ * Es la verdad y deja la puerta abierta: la persona vuelve a decir el día y el
+ * bot lo intenta otra vez. Mejor eso que una confirmación de una cita que no
+ * existe — y mucho mejor que dejarla sin respuesta.
+ */
+const FALLO_AGENDANDO =
+`Se me cruzó un problema técnico justo al dejar tu cita registrada 😕
+
+¿Me confirmas otra vez el día y la hora que quieres y lo intento de una?`;
 
 /** ¿Esta persona ya tiene una cita viva en la agenda? Se compara por teléfono. */
 async function tieneCitaVigente(telefono) {
@@ -1793,12 +1828,12 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     };
 
     if (useBookingTools) {
-      // Tool loop: hasta 5 iteraciones.
+      // Tool loop. Las iteraciones de más son para que se corrija solo
+      // cuando da una cita por hecha sin haberla creado.
       let finalText = '';
-      // Si el modelo termina confirmando una cita, esto tiene que ser true.
-      // Cuando no lo es, la cita solo existe en el chat del paciente.
+      let correcciones = 0;
       const workingMessages = [...messages];
-      for (let iter = 0; iter < 5; iter++) {
+      for (let iter = 0; iter < 8; iter++) {
         const resp = await client.messages.create({
           model: CLAUDE_MODEL,
           max_tokens: 1024,
@@ -1810,7 +1845,27 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
         const textBlocks = resp.content.filter((b) => b.type === 'text');
         finalText = textBlocks.map((b) => b.text).join('\n').trim();
 
-        if (toolUses.length === 0) break;
+        if (toolUses.length === 0) {
+          // Escribió la confirmación sin haber creado la cita. No se le manda:
+          // se le devuelve al modelo para que llame la herramienta y agende de
+          // verdad. Es el bot el que tiene que cerrar esto, no una persona.
+          if (
+            PROMESA_DE_CITA.test(finalText)
+            && !citaCreadaEnEsteTurno
+            && correcciones < 2
+            && !(await tieneCitaVigente(conv.phone))
+          ) {
+            correcciones++;
+            console.warn(
+              '[wa-bot] confirmó cita sin crearla — lo devuelvo a agendar.',
+              'conversación:', conversationId, 'intento:', correcciones,
+            );
+            workingMessages.push({ role: 'assistant', content: resp.content });
+            workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_AGENDA }] });
+            continue;
+          }
+          break;
+        }
 
         workingMessages.push({ role: 'assistant', content: resp.content });
         const toolResults = [];
@@ -1856,29 +1911,32 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
 
   if (!reply) return { skipped: 'empty-reply' };
 
-  // ─── Que no confirme una cita que no creó ───
+  // ─── Última malla: la confirmación falsa no sale ───
   //
-  // A Hellen le escribió "Listo, Hellen. Valoración auditiva, viernes 11 de
-  // septiembre a las 2:00 p.m., Carrera 10 #96-25. Llega 10 minutos antes y
-  // trae tu cédula. ¡Nos vemos el viernes!" — y nunca llamó create_appointment.
-  // Ella llegó el viernes a una cita que en el CRM no existía, y nadie se
-  // enteró hasta que la buscamos. El modelo puede fallar en esto; lo que no
-  // puede es fallar en silencio.
-  const prometioCita = PROMESA_DE_CITA.test(reply);
+  // A Hellen le escribió "valoración auditiva, viernes 11 a las 2:00 p.m.,
+  // llega 10 minutos antes y trae tu cédula, ¡nos vemos el viernes!" sin haber
+  // llamado create_appointment. Llegó el viernes a una cita que no existía.
+  //
+  // Arriba el bot ya tuvo dos oportunidades de corregirse y agendar él mismo.
+  // Si aun así el mensaje da la cita por hecha y en la agenda no hay nada, lo
+  // que NO puede pasar es que salga: se cambia por la verdad, que además deja
+  // la conversación donde el bot puede retomarla.
   let citaFantasma = false;
-  if (prometioCita && !citaCreadaEnEsteTurno) {
+  if (PROMESA_DE_CITA.test(reply) && !citaCreadaEnEsteTurno) {
     citaFantasma = !(await tieneCitaVigente(conv.phone));
     if (citaFantasma) {
       console.error(
-        '[wa-bot] CITA FANTASMA — el bot confirmó cita sin crearla.',
+        '[wa-bot] CITA FANTASMA — confirmó sin crear y no se corrigió.',
         'conversación:', conversationId, 'teléfono:', conv.phone,
+        '— mensaje bloqueado:', reply.slice(0, 200),
       );
+      reply = FALLO_AGENDANDO;
     }
   }
 
-  // Detecta tag de escalada. Una cita prometida y no creada escala igual:
-  // hay que llamar a esa persona antes de que se presente.
-  const shouldEscalate = reply.includes(ESCALATE_TAG) || citaFantasma;
+  // Detecta tag de escalada. Una cita que no se pudo crear NO escala: el bot
+  // se queda a cargo y la reintenta con la persona.
+  const shouldEscalate = reply.includes(ESCALATE_TAG);
   const cleanReply = formatoWhatsApp(reply.replace(ESCALATE_TAG, '')).trim();
 
   try {
@@ -1910,7 +1968,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
       data: {
         lastMessageAt: new Date(),
         lastMessagePreview: citaFantasma
-          ? `⚠️ Prometió cita sin crearla — ${cleanReply.slice(0, 110)}`
+          ? `⚠️ No pudo agendar — ${cleanReply.slice(0, 110)}`
           : `Bot: ${cleanReply.slice(0, 140)}`,
         status: shouldEscalate ? 'ESCALATED' : 'BOT',
         unreadCount: shouldEscalate ? { increment: 1 } : undefined,
@@ -1922,14 +1980,21 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     // no le avisamos al teléfono.
     if (shouldEscalate) {
       require('./alertaEquipo.service').avisar({
-        titulo: citaFantasma
-          ? 'CITA PROMETIDA Y NO CREADA — agéndala a mano y llama'
-          : 'El bot escaló — necesita una persona',
+        titulo: 'El bot escaló — necesita una persona',
         quien: conv.contactName || 'Paciente',
         telefono: conv.phone,
-        texto: citaFantasma
-          ? `El bot le confirmó una cita a esta persona pero no quedó en la agenda.\n\nLo que le escribió:\n${cleanReply}`
-          : incomingText,
+        texto: incomingText,
+      }).catch(() => {});
+    }
+    // Nadie tiene que atender esto: el bot sigue a cargo y lo reintenta con la
+    // persona. El aviso es para saber que la herramienta está fallando, no
+    // para que alguien entre a la conversación.
+    if (citaFantasma) {
+      require('./alertaEquipo.service').avisar({
+        titulo: 'El bot no logró crear una cita (la sigue intentando él)',
+        quien: conv.contactName || 'Paciente',
+        telefono: conv.phone,
+        texto: 'create_appointment no corrió pese a dos correcciones. Revisar cupos y tipos de consulta de la agenda.',
       }).catch(() => {});
     }
     return { sent: true, escalated: shouldEscalate, citaFantasma };
