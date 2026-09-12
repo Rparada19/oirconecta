@@ -1269,6 +1269,10 @@ Con eso te oriento mejor.`;
  */
 function formatoWhatsApp(texto) {
   return String(texto || '')
+    // El modelo a veces envuelve la respuesta en etiquetas del andamiaje
+    // (<response>…</response>) y al paciente le llegaba el cierre escrito en
+    // el chat, debajo de la confirmación de su cita. Se quitan aquí.
+    .replace(/<\/?(response|answer|respuesta|mensaje|message|output)>/gi, '')
     .replace(/\*\*\*(.+?)\*\*\*/gs, '*$1*')   // ***negrita cursiva***
     .replace(/\*\*(.+?)\*\*/gs, '*$1*')         // **negrita**
     .replace(/^#{1,6}\s+/gm, '')                 // ## títulos

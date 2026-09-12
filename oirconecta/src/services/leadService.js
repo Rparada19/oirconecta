@@ -59,7 +59,7 @@ function mapAptToLead(apt, estadoLead, idPrefix = 'lead_from_apt_') {
  * @returns {Promise<Array>}
  */
 export async function getLeadsFromAppointments() {
-  const { data, error } = await api.get('/api/appointments?limit=100');
+  const { data, error } = await api.get('/api/appointments?limit=500');
   if (error) return [];
   const appointments = data?.data?.appointments ?? [];
   const filtered = appointments.filter(
@@ -83,7 +83,7 @@ export async function getLeadsFromAppointments() {
  * @returns {Promise<Array>}
  */
 export async function getPatientsFromAppointments() {
-  const { data, error } = await api.get('/api/appointments?limit=100');
+  const { data, error } = await api.get('/api/appointments?limit=500');
   if (error) return [];
   const appointments = data?.data?.appointments ?? [];
   const patientApts = appointments.filter((apt) => apt.estado === 'PATIENT');
@@ -91,7 +91,7 @@ export async function getPatientsFromAppointments() {
 }
 
 async function fetchLeadsAndPatientsFromAppointments() {
-  const { data, error } = await api.get('/api/appointments?limit=100');
+  const { data, error } = await api.get('/api/appointments?limit=500');
   if (error) return { leads: [], patients: [] };
   const appointments = data?.data?.appointments ?? [];
   const status = (s) => (s || '').toLowerCase();

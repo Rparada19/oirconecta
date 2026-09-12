@@ -34,6 +34,11 @@ function generateRescheduleToken() {
 const getAll = async ({ fecha, estado, patientEmail, patientId, page = 1, limit = 50 }) => {
   const where = {};
 
+  // Un ?limit= o ?page= mal formado llegaba como NaN y Prisma devolvía cero
+  // citas: la agenda se veía vacía sin un solo error en pantalla.
+  const take = Math.min(Math.max(Number.parseInt(limit, 10) || 50, 1), 1000);
+  const pageNum = Math.max(Number.parseInt(page, 10) || 1, 1);
+
   if (patientId) {
     where.patientId = patientId;
   } else if (patientEmail) {
@@ -62,9 +67,17 @@ const getAll = async ({ fecha, estado, patientEmail, patientId, page = 1, limit 
       include: {
         patient: true,
       },
-      orderBy: [{ fecha: 'asc' }, { hora: 'asc' }],
-      skip: (page - 1) * limit,
-      take: limit,
+      // Sin filtro de día, la página 1 tiene que traer lo ÚLTIMO, no lo primero
+      // que se agendó. Con orden ascendente y limit, las citas nuevas —las del
+      // bot de WhatsApp, entre otras— caían fuera de la página y en el CRM
+      // sencillamente no aparecían: la cita existía, la lista no la alcanzaba.
+      // Cuando se pide un día concreto sí manda la hora de menor a mayor,
+      // que es como se lee una agenda.
+      orderBy: fecha
+        ? [{ fecha: 'asc' }, { hora: 'asc' }]
+        : [{ fecha: 'desc' }, { hora: 'desc' }],
+      skip: (pageNum - 1) * take,
+      take,
     }),
     prisma.appointment.count({ where }),
   ]);
@@ -72,10 +85,10 @@ const getAll = async ({ fecha, estado, patientEmail, patientId, page = 1, limit 
   return {
     appointments,
     pagination: {
-      page,
-      limit,
+      page: pageNum,
+      limit: take,
       total,
-      pages: Math.ceil(total / limit),
+      pages: Math.ceil(total / take),
     },
   };
 };
