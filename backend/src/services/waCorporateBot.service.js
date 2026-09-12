@@ -733,6 +733,7 @@ Antes de proponer nada, tienes que saber qué le está pasando. No es un trámit
 - Responde de verdad lo que te pregunten. Informar SÍ es tu trabajo. Alguien que se va sabiendo algo que no sabía vuelve; alguien a quien le esquivaron la pregunta no.
 
 EXCEPCIÓN, Y ES ABSOLUTA: si ya pidió cita —"quiero agendar", "necesito una cita", "¿qué días hay?"— NO le hagas ninguna pregunta previa. Ni una. Vas derecho a los horarios.
+Cuenta igual cuando el texto viene precargado por el anuncio ("¡Hola! Quiero agendar una cita con ustedes"): esa persona tocó un botón que decía agendar. Que no lo haya tecleado ella no lo vuelve menos cierto. Le confirmas que con gusto, llamas get_availability y le pones horarios en el primer mensaje.
 Está PROHIBIDO responderle con "pero antes necesito saber…", "antes de buscar el horario…" o cualquier peaje parecido. Pedir cita ES la respuesta a lo que ibas a preguntarle; volvérselo a preguntar es no haberlo escuchado.
 Si te falta el tipo de consulta, escoge tú el más común —la valoración auditiva— y dilo mientras propones horarios. No lo pongas a él a elegir de una lista. Lo que necesitas saber de su caso lo vas sabiendo mientras conversan, no antes de dejarlo agendar.
 
@@ -740,7 +741,9 @@ Si te falta el tipo de consulta, escoge tú el más común —la valoración aud
 Son las cosas que vuelven frío un chat, y todas suenan a empresa hablando de sí misma:
 · Describir lo que ofrecemos. "Hacemos valoraciones auditivas y adaptación de audífonos" no se lo preguntó nadie.
 · Frases de aviso publicitario: "te ayudamos a que vuelvas a escuchar bien", "soluciones auditivas personalizadas", "tu bienestar auditivo".
-· Preguntas de formulario. "¿Es para ti o para un familiar?" te sirve a ti para clasificarlo, no a él para sentirse escuchado. Si necesitas saberlo, pregúntalo como lo preguntaría una persona: "¿es algo que vienes notando tú, o preguntas por alguien de tu casa?".
+· Preguntas de formulario. "¿Es para ti o para un familiar?" te sirve a ti para clasificarlo, no a él para sentirse escuchado. Si necesitas saberlo, pregúntalo como lo preguntaría una persona, con las palabras que pida ese chat.
+· Abrir siempre igual. Si tus primeros mensajes a dos personas distintas se parecen, ya no estás conversando: estás repartiendo un volante. Cada quien escribió una cosa distinta — respóndele a ESO, no a la categoría en la que cae. Ninguna frase de estas instrucciones es un libreto para copiar: son ejemplos de cómo suena una persona, y se dicen con tus palabras.
+· Volver a preguntar lo que ya preguntaste. Si no te contestó, no lo repitas: sigue con lo que sí te dio. Repetir la misma pregunta dos mensajes seguidos es lo que hace un formulario atascado, no alguien que escucha.
 · Empujar la cita en todos los mensajes. Insistir espanta y, sobre todo, delata que solo querías eso.
 · Urgencia inventada, culpa o miedo. La pérdida auditiva sí avanza, pero eso se dice una vez y con respeto, nunca como amenaza.
 · Hablar de precios de audífonos sin haber entendido el caso.
@@ -1267,8 +1270,62 @@ Con eso te oriento mejor.`;
  * veces manda ** y entonces el paciente ve los asteriscos en pantalla. Se
  * corrige aquí y no solo en el prompt: una instrucción se desobedece, esto no.
  */
+/**
+ * El voseo no llega hasta el paciente.
+ *
+ * El prompt ya lo prohíbe, pero una instrucción se desobedece: a un lead le
+ * salió "¿es algo que vos venís notando con tu audición?" — voseo caleño
+ * firmado por un centro de Bogotá, en el primer mensaje. Cuando el registro
+ * cambia de un mensaje a otro, quien lee no piensa "qué raro": piensa que del
+ * otro lado no hay nadie.
+ *
+ * La lista es corta y cerrada a propósito: solo formas que en español no son
+ * otra cosa. Las que se escriben igual en tuteo —estás, vas, das— no se tocan.
+ */
+const VOSEO = [
+  ['vos', 'tú'],
+  ['venís', 'vienes'],
+  ['tenés', 'tienes'],
+  ['querés', 'quieres'],
+  ['podés', 'puedes'],
+  ['sabés', 'sabes'],
+  ['hacés', 'haces'],
+  ['decís', 'dices'],
+  ['necesitás', 'necesitas'],
+  ['esperás', 'esperas'],
+  ['contame', 'cuéntame'],
+  ['decime', 'dime'],
+  ['mirá', 'mira'],
+  ['vení', 'ven'],
+  ['escribime', 'escríbeme'],
+].map(([voseo, tuteo]) => [reglaDePalabra(voseo, 'gi'), tuteo]);
+
+// 'sos' solo es voseo en minúscula; SOS en mayúscula es otra cosa y se respeta.
+VOSEO.push([reglaDePalabra('sos', 'g'), 'eres']);
+
+/**
+ * \b no sirve con tildes: es ASCII, así que en "mirá los horarios" no ve
+ * frontera entre la á y el espacio y la palabra se escapaba entera. El corte
+ * lo hacemos contra las letras del español, acentos incluidos.
+ */
+function reglaDePalabra(palabra, flags) {
+  return new RegExp(`(?<![\\wáéíóúüñÁÉÍÓÚÜÑ])${palabra}(?![\\wáéíóúüñÁÉÍÓÚÜÑ])`, flags);
+}
+
+/** Mantiene la mayúscula inicial: "Contame" no puede volver "cuéntame". */
+function tuteoBogotano(texto) {
+  return VOSEO.reduce(
+    (acc, [patron, reemplazo]) => acc.replace(patron, (match) => (
+      match[0] === match[0].toUpperCase()
+        ? reemplazo[0].toUpperCase() + reemplazo.slice(1)
+        : reemplazo
+    )),
+    String(texto || ''),
+  );
+}
+
 function formatoWhatsApp(texto) {
-  return String(texto || '')
+  return tuteoBogotano(texto)
     // El modelo a veces envuelve la respuesta en etiquetas del andamiaje
     // (<response>…</response>) y al paciente le llegaba el cierre escrito en
     // el chat, debajo de la confirmación de su cita. Se quitan aquí.
@@ -1356,6 +1413,18 @@ async function construirPrompt(conv, consulta = null) {
     console.warn('[wa-bot] sin prompt para contactType', conv.contactType, '— uso OTROS');
     systemPrompt = SYSTEM_PROMPTS.OTROS;
   }
+
+  // Cómo se trata a la persona. Va en TODAS las ramas y no como una línea de
+  // tono más, porque el tono se desobedece y esto no puede desobedecerse: el
+  // bot le escribió a un lead "¿es algo que vos venís notando?" — voseo caleño
+  // saliendo de un centro de Bogotá. Cada mensaje de esa conversación lo firma
+  // una persona distinta, y ahí se acabó la confianza.
+  systemPrompt += `\n\n═══ CÓMO LO TRATAS (no negociable) ═══
+Tuteo bogotano, el mismo de la primera línea a la última. Tú, tienes, quieres, vienes, estás, cuéntame.
+PROHIBIDO el voseo: vos, venís, tenés, querés, sos, podés, decime, contame, mirá. Ni una vez, ni "para sonar cercano".
+PROHIBIDO el "usted" y el "ustedes" para dirigirte a la persona. Si ella te habla de usted, tú sigues en tú: es lo cálido, no lo distante.
+Colombiano neutro de Bogotá. Nada de regionalismos de otra parte —ni caleños, ni paisas, ni costeños— ni de españolismos (vale, venga, estupendo, ¿de acuerdo?).
+═══════════════════════════════════`;
 
   // Rellena la fecha de hoy en el prompt (solo aplica al de PACIENTE_BOGOTA).
   const hoyLocal = new Date().toLocaleString('es-CO', {
