@@ -306,13 +306,21 @@ export default function AgendamientoPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Error al agendar');
-      fbqTrack('Schedule', {
-        content_name: 'agendamiento_valoracion',
-        content_category: 'audiologia',
-      }, eventId);
-      adsConversion('agendamiento', { transaction_id: eventId });
+      // Primero la confirmación. La cita YA existe en la agenda: si una
+      // medición se cayera aquí, el catch le mostraría "Error al agendar" a
+      // alguien que sí quedó agendado — y esa persona vuelve a agendar, o se
+      // va creyendo que no tiene cita. La medición nunca puede costar eso.
       setAppointment(data.data || data.appointment || data);
       setStep(3);
+      try {
+        adsConversion('agendamiento', { transaction_id: eventId });
+        fbqTrack('Schedule', {
+          content_name: 'agendamiento_valoracion',
+          content_category: 'audiologia',
+        }, eventId);
+      } catch (e) {
+        console.warn('[agendar] la medición falló, la cita sí quedó:', e);
+      }
     } catch(e) {
       setError(e.message);
     } finally {
