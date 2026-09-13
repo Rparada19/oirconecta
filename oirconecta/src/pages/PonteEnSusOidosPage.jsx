@@ -240,10 +240,17 @@ export default function PonteEnSusOidosPage() {
       });
       const data = await res.json();
       if (data.success) {
-        fbqTrack('Lead', { content_name: 'lead_simulador_oirasi' }, eventId);
-        adsConversion('lead_simulador', { transaction_id: eventId });
+        // La confirmación primero: el mensaje ya llegó. Si una medición se
+        // cayera aquí, el catch de abajo le diría "hubo un problema de
+        // conexión" a alguien que sí nos escribió.
         setFormState({ loading: false, ok: true, error: null });
         setForm({ nombre: '', email: '', telefono: '', ciudad: '', mensaje: '' });
+        try {
+          adsConversion('lead_simulador', { transaction_id: eventId });
+          fbqTrack('Lead', { content_name: 'lead_simulador_oirasi' }, eventId);
+        } catch (e) {
+          console.warn('[simulador] la medición falló, el mensaje sí se envió:', e);
+        }
       } else {
         setFormState({ loading: false, ok: false, error: data.error || 'No se pudo enviar tu mensaje.' });
       }
