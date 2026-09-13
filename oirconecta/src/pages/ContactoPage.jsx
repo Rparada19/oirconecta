@@ -78,12 +78,20 @@ const ContactoPage = () => {
           : 'Mensaje enviado. Te responderemos en menos de 24 horas.',
         severity: 'success',
       });
-      trackEvent('contact_form_submitted', marca ? 'comparador_marca' : 'general', {
-        asunto: formData.asunto || null,
-        marca: marca || null,
-      });
-      fbqTrack('Lead', { content_name: marca ? `contacto_${marca}` : 'contacto_general' });
-      adsConversion('contacto');
+      // El mensaje YA se envió: de aquí en adelante nada puede fallar hacia el
+      // usuario. Si una de estas mediciones se cae —un bloqueador de anuncios
+      // basta— antes se iba al catch y le mostraba "Error al enviar" a alguien
+      // cuyo mensaje sí llegó, y de paso se saltaba la conversión de Ads.
+      try {
+        adsConversion('contacto');
+        trackEvent('contact_form_submitted', marca ? 'comparador_marca' : 'general', {
+          asunto: formData.asunto || null,
+          marca: marca || null,
+        });
+        fbqTrack('Lead', { content_name: marca ? `contacto_${marca}` : 'contacto_general' });
+      } catch (e) {
+        console.warn('[contacto] la medición falló, el mensaje sí se envió:', e);
+      }
       setFormData({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
     } catch (err) {
       setSnackbar({
