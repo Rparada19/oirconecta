@@ -736,7 +736,14 @@ Antes de proponer nada, tienes que saber qué le está pasando. No es un trámit
 - Si se despide o te da las gracias, despídete y para. No le metas una pregunta más ni "cualquier cosa me escribes y seguimos": ya terminó, y perseguir a alguien que cerró la conversación es la forma más rápida de que no vuelva.
 
 EXCEPCIÓN, Y ES ABSOLUTA: si ya pidió cita —"quiero agendar", "necesito una cita", "¿qué días hay?"— NO le hagas ninguna pregunta previa. Ni una. Vas derecho a los horarios.
-Cuenta igual cuando el texto viene precargado por el anuncio ("¡Hola! Quiero agendar una cita con ustedes"): esa persona tocó un botón que decía agendar. Que no lo haya tecleado ella no lo vuelve menos cierto. Le confirmas que con gusto, llamas get_availability y le pones horarios en el primer mensaje.
+Cuenta igual cuando el texto viene precargado por el anuncio ("¡Hola! Quiero agendar una cita con ustedes"): esa persona tocó un botón que decía agendar. Que no lo haya tecleado ella no lo vuelve menos cierto.
+
+IR DERECHO A LOS HORARIOS NO ES SALTARSE EL SALUDO. Esa persona te acaba de decir "hola". Le contestas el hola, por su nombre, y sigues. Abrir con "Perfecto." o soltarle "¿mañana lunes te viene bien?" a alguien que apenas saludó es un portazo, aunque sea eficiente. Primero se saluda. Siempre. Cuesta media línea.
+
+Y HORARIOS SIGNIFICA HORAS, NO DÍAS. "¿Te gustaría mañana, o algún día de esta semana?" es exactamente la pregunta abierta que tienes prohibida: le devuelve el trabajo a él. Antes de hablar de fechas llamas get_availability y le pones 2-3 horas concretas encima de la mesa. Si no has llamado la herramienta, no tienes nada que ofrecerle todavía.
+
+Así se ve bien (con Ana de ejemplo): "¡Hola, Ana! 👋 Claro que sí, te agendo la *valoración auditiva* — dura 45 minutos y no tiene costo.\n\nPara mañana martes tengo:\n  1️⃣ 9:00 a.m.\n  2️⃣ 11:30 a.m.\n  3️⃣ 3:00 p.m.\n\n¿Cuál te sirve? Si prefieres otro día, dime cuál y lo miro."
+
 Está PROHIBIDO responderle con "pero antes necesito saber…", "antes de buscar el horario…" o cualquier peaje parecido. Pedir cita ES la respuesta a lo que ibas a preguntarle; volvérselo a preguntar es no haberlo escuchado.
 Si te falta el tipo de consulta, escoge tú el más común —la valoración auditiva— y dilo mientras propones horarios. No lo pongas a él a elegir de una lista. Lo que necesitas saber de su caso lo vas sabiendo mientras conversan, no antes de dejarlo agendar.
 
@@ -818,6 +825,7 @@ Si el tool falla, di "Tuve un problema técnico agendándote. ¿Me confirmas dí
 ═══ TONO ═══
 - Colombiano, tuteo, cercano. Como alguien del centro que conoce el tema y tiene tiempo para la persona — no un asesor de afán.
 - Llámalo por su primer nombre cuando lo sepas. Empezar con un "¡Hola!" pelado cuando tienes el nombre delante es la primera señal de que hay una máquina.
+- Tu PRIMER mensaje de la conversación siempre saluda. Sin excepción, ni siquiera cuando la persona va derecho al grano. Contestarle a un "hola" con una pregunta seca es una grosería, y así lo lee quien está del otro lado.
 - Frases cortas, habladas. Nada de guiones largos ni de frases que suenen escritas por un departamento de mercadeo.
 - Máximo 3-4 líneas por mensaje. En WhatsApp los bloques largos no se leen.
 - Nunca presiones con culpa ni con miedo. La pérdida auditiva sí avanza y sí aísla, pero eso se dice una vez, cuando viene al caso, y nunca como amenaza.
@@ -1318,6 +1326,35 @@ const FALLO_AGENDANDO =
 
 ¿Me confirmas otra vez el día y la hora que quieres y lo intento de una?`;
 
+/**
+ * ¿Está preguntando "¿qué día?" en vez de ofrecer horas?
+ *
+ * A Edilma y a Edgar, que escribieron "quiero agendar una cita", el bot les
+ * contestó "¿te gustaría mañana, o algún día de esta semana?". Eso es
+ * devolverle el trabajo al paciente: el prompt pide horarios REALES, sacados
+ * de la agenda. Se dispara solo si además NO hay ninguna hora en el mensaje —
+ * "si prefieres otro día, dime cuál" después de ofrecer tres horas está bien.
+ */
+// Frases que solo se dicen cuando se está proponiendo un día. No se exige que
+// el mensaje diga "cita": a Edgar le escribió "¿Mañana lunes te viene bien, o
+// prefieres otro día?" — ni una palabra de agenda, y es justo el caso.
+const PROPONE_UN_DIA = /te viene bien|qu[ée] d[íi]a|prefieres otro d[íi]a|alg[úu]n d[íi]a|cu[áa]ndo te (sirve|queda|viene)|te gustar[íi]a (ma[ñn]ana|el |alguno)/i;
+const TIENE_UNA_HORA = /\b\d{1,2}:\d{2}\b|\b\d{1,2}\s?[ap]\.?\s?m\.?/i;
+
+function preguntaElDiaSinOfrecerHoras(texto) {
+  const t = String(texto || '');
+  return t.includes('?') && PROPONE_UN_DIA.test(t) && !TIENE_UNA_HORA.test(t);
+}
+
+const CORRECCION_HORARIOS =
+`ALTO — esto no lo ve el paciente.
+
+Le estás preguntando qué día le sirve en vez de ofrecerle horas. Eso le devuelve a él un trabajo que es tuyo: tú tienes la agenda, él no.
+
+Llama get_availability ahora y vuelve a escribir el mensaje con 2-3 HORAS concretas de un día concreto. Si ese día no tiene cupo, díselo y ofrécele el siguiente que sí tenga. Puedes cerrar con "si prefieres otro día, dime cuál y lo miro" — pero después de poner las horas, nunca en lugar de ellas.
+
+Y si es tu primer mensaje de la conversación, salúdalo por su nombre antes. Le acaba de escribir a un centro de salud, no a una máquina expendedora.`;
+
 /** ¿Esta persona ya tiene una cita viva en la agenda? Se compara por teléfono. */
 async function tieneCitaVigente(telefono) {
   const last10 = String(telefono || '').replace(/\D/g, '').slice(-10);
@@ -1816,6 +1853,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
 
   let reply = '';
   let citaCreadaEnEsteTurno = false;
+  let disponibilidadConsultada = false;
   try {
     const client = new Anthropic();
     const toolCtx = {
@@ -1864,6 +1902,23 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
             workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_AGENDA }] });
             continue;
           }
+          // Preguntó "¿qué día?" sin haber mirado la agenda. Se le devuelve
+          // para que consulte los cupos y ofrezca horas de verdad.
+          if (
+            !disponibilidadConsultada
+            && preguntaElDiaSinOfrecerHoras(finalText)
+            && correcciones < 2
+          ) {
+            correcciones++;
+            console.warn(
+              '[wa-bot] preguntó el día sin ofrecer horarios — lo devuelvo a la agenda.',
+              'conversación:', conversationId,
+            );
+            workingMessages.push({ role: 'assistant', content: resp.content });
+            workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_HORARIOS }] });
+            continue;
+          }
+
           break;
         }
 
@@ -1878,6 +1933,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
             if (tu.name === 'create_appointment' && output && !output.error) {
               citaCreadaEnEsteTurno = true;
             }
+            if (tu.name === 'get_availability') disponibilidadConsultada = true;
           } catch (e) {
             console.error('[wa-bot] tool', tu.name, 'falló:', e.message);
             output = { error: e.message };
