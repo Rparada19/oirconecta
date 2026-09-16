@@ -265,10 +265,19 @@ const bookingToolImpls = {
     }
 
     // Cierra el loop del nudge A1: marca booked para que no envíe follow-up.
+    // Y ata la conversación al paciente que se acaba de crear: sin ese vínculo
+    // el bot no tenía cómo saber después que esta persona ya tiene cita, y se
+    // la volvía a ofrecer al día siguiente como si nada.
     if (conversationId) {
+      const appt = await prisma.appointment.findUnique({
+        where: { id: res.id }, select: { patientId: true },
+      }).catch(() => null);
       await prisma.whatsAppConversation.update({
         where: { id: conversationId },
-        data: { agendarBookedAt: new Date() },
+        data: {
+          agendarBookedAt: new Date(),
+          ...(appt?.patientId ? { patientId: appt.patientId } : {}),
+        },
       }).catch(() => {});
     }
 
@@ -943,7 +952,7 @@ Reglas:
 - Solo escalás a humano [ESCALAR_HUMANO] si: (a) piden explícitamente hablar con una persona, (b) urgencia médica, (c) tema fuera de tu alcance.
 - No cierres en el aire con "quedo atento" ni "cualquier cosa me avisas": deja siempre algo útil, una respuesta o un siguiente paso concreto.
 - Cuando ofrezcas la cita no preguntes en abierto "¿cuándo te sirve?": propón 2-3 horarios concretos y deja que elija.
-- Si preguntan el precio de la consulta, lo PRIMERO es contarles que si dejan la cita agendada hoy la valoración no tiene costo (la cita puede ser otro día). Si aun así quieren saber el valor normal, díselo de una. Para audífonos, la respuesta honesta es que depende de lo que necesite su oído y eso se sabe midiéndolo. Nunca inventes cifras.
+- Si preguntan el precio de la consulta, lo PRIMERO es contarles que si dejan la cita agendada hoy la valoración no tiene costo (la cita puede ser otro día). Si aun así quieren saber el valor normal, díselo de una. Para audífonos, la respuesta honesta es que el valor depende de tres cosas —cuánta pérdida hay, en qué entornos necesita oír y qué necesita hacer con su audición— y eso se sabe midiéndolo. Explica eso ANTES de cualquier número. Solo si insiste después de esa explicación: van desde $800.000 hasta $12.000.000. Nunca inventes cifras ni des el valor de un plan.
 - No describas lo que ofrecemos ni uses frases de aviso publicitario. Habla de lo que le pasa a la persona, no de nosotros.
 - Tono: cálido, empático, colombiano neutro, tuteo. Máximo 3 párrafos cortos.
 - No inventes precios exactos. No des diagnósticos.
@@ -1103,6 +1112,37 @@ async function fichaTienda(phone) {
   return `Ha comprado en nuestra tienda en línea (a nombre de ${cliente.nombre}). Últimos pedidos:\n`
     + cliente.orders.map((o) => `· Pedido #${o.numero} del ${fmt(o.createdAt)} — ${ESTADO[o.estado] || o.estado}`).join('\n')
     + '\nSi pregunta por su pedido, responde con esto. No prometas fechas de entrega que no tengas.';
+}
+
+/**
+ * La cita próxima de quien escribe, si la hay.
+ *
+ * Se busca por paciente vinculado y, si no lo hay, por teléfono: la cita pudo
+ * crearse desde la web o desde el CRM, sin pasar por esta conversación.
+ */
+async function citaVigenteDeConversacion(conv) {
+  const desde = new Date(); desde.setHours(0, 0, 0, 0);
+  const last10 = String(conv?.phone || '').replace(/\D/g, '').slice(-10);
+  if (!conv?.patientId && !last10) return null;
+
+  const cita = await prisma.appointment.findFirst({
+    where: {
+      fecha: { gte: desde },
+      estado: { notIn: ['CANCELLED', 'NO_SHOW'] },
+      ...(conv.patientId
+        ? { patientId: conv.patientId }
+        : { patient: { telefono: { contains: last10 } } }),
+    },
+    orderBy: { fecha: 'asc' },
+    select: { fecha: true, tipoConsulta: true, estado: true },
+  }).catch(() => null);
+  if (!cita) return null;
+
+  const cuando = new Date(cita.fecha).toLocaleString('es-CO', {
+    weekday: 'long', day: 'numeric', month: 'long',
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  });
+  return `Tiene cita el ${cuando}${cita.tipoConsulta ? ` — ${cita.tipoConsulta}` : ''}.`;
 }
 
 async function fichaPaciente(patientId) {
@@ -1477,7 +1517,7 @@ async function catalogoDePlanes() {
     where: { activo: true },
     orderBy: [{ orden: 'asc' }, { precioCOP: 'asc' }],
     select: {
-      nombre: true, linea: true, precioCOP: true, audifonosIncluidos: true,
+      nombre: true, linea: true, audifonosIncluidos: true,
       controlesAdaptacion: true, audiometrias: true, mantenimientos: true,
       anosGarantia: true, terapias: true, satisfaccionDias: true,
       seguroPerdidaMeses: true, seguroRoturaMeses: true, videoconsulta: true,
@@ -1485,7 +1525,6 @@ async function catalogoDePlanes() {
   }).catch(() => []);
   if (planes.length === 0) return '';
 
-  const cop = (n) => `$${Number(n || 0).toLocaleString('es-CO')}`;
   const filas = planes.map((p) => {
     const incluye = [
       `${p.audifonosIncluidos} audífonos`,
@@ -1499,7 +1538,7 @@ async function catalogoDePlanes() {
       p.satisfaccionDias ? `${p.satisfaccionDias} días de satisfacción garantizada` : null,
       p.videoconsulta ? 'videoconsulta' : null,
     ].filter(Boolean).join(', ');
-    return `· *${p.nombre}* (${p.linea}) — ${cop(p.precioCOP)}: ${incluye}.`;
+    return `· *${p.nombre}* (${p.linea}): ${incluye}.`;
   }).join('\n');
 
   return `\n\n═══ LO QUE OFRECEMOS SON PLANES DE ADAPTACIÓN ═══
@@ -1507,8 +1546,9 @@ ${filas}
 
 Cómo hablar de esto:
 · NUNCA digas "los audífonos cuestan X". Se adapta un plan, y el plan incluye el equipo más el acompañamiento de años. Un audífono suelto, sin controles ni seguimiento, es plata botada — y eso es exactamente lo que no hacemos.
-· Estos precios son por el plan completo, para los dos oídos. Dilo así.
-· No recomiendes un plan concreto antes de la valoración: cuál sirve depende de lo que se encuentre. Puedes decir desde cuánto empiezan, para que sepa a qué atenerse.
+· Los valores de cada plan NO se dicen por WhatsApp. No los tienes y no los inventes: un número suelto, antes de medir el oído, sirve para comparar y para nada más.
+· Cuál plan sirve depende de TRES cosas, y esto sí se explica siempre que pregunten por precio: cuánta pérdida auditiva hay, en qué entornos necesita oír la persona (casa tranquila no es lo mismo que reuniones, restaurantes o trabajo con ruido) y qué necesita hacer con su audición en el día a día. Por eso el precio se define después de la valoración y no antes.
+· SOLO si la persona insiste en un número después de que le expliques lo anterior: los audífonos van desde $800.000 hasta $12.000.000, y dónde cae el suyo se sabe midiendo. No des el rango de entrada ni lo ofrezcas por tu cuenta.
 · NUNCA menciones la marca ni el nivel de tecnología del equipo. Eso se define en la valoración.
 ═══════════════════════════════════`;
 }
@@ -1585,6 +1625,19 @@ Si el día que pide no aparece o no tiene cupo, DÍSELO —"el martes no tengo n
   // saludar sin nombre es la mitad de la frialdad.
   if (conv.contactName && !conv.patientId) {
     systemPrompt += `\n\nSe llama ${conv.contactName}. Llámalo por su primer nombre desde el saludo, con naturalidad.`;
+  }
+
+  // Si ya hay cita, el prompt tiene que decirlo con fecha y hora. Antes esto
+  // solo vivía en el historial del chat: cuando el resumen lo comía, el bot
+  // volvía a proponer horarios a quien ya estaba agendado.
+  const citaVigente = await citaVigenteDeConversacion(conv).catch(() => null);
+  if (citaVigente) {
+    systemPrompt += `\n\n═══ ESTA PERSONA YA TIENE CITA ═══
+${citaVigente}
+· NO le ofrezcas agendar, NO le propongas horarios y NO llames create_appointment otra vez.
+· Si escribe por otra cosa, respóndele eso y ya. La cita solo se menciona si él la menciona.
+· Si quiere cambiarla o cancelarla, dilo claro y escala con [ESCALAR_HUMANO]: mover una cita no lo haces tú.
+═══════════════════════════════`;
   }
 
   const [ficha, tienda] = await Promise.all([
