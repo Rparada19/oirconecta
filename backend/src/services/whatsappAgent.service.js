@@ -404,15 +404,25 @@ async function processIncomingEvent(body) {
                 await bot.reopenIfClosed(r.conversationId);
                 // Mensaje siguiente (después del handshake) → Claude Haiku responde
                 // según la rama (contactType). Solo actúa si status=BOT.
-                await bot.handleTextForBot({
-                  conversationId: r.conversationId,
-                  incomingText: textBody,
-                  desdeAudio: esAudio,
-                });
-                // Memoria larga: se refresca aparte para no demorar la respuesta
-                // al paciente. Solo trabaja cada N mensajes nuevos.
-                bot.actualizarResumen(r.conversationId)
-                  .catch((e) => console.warn('[wa-bot] resumen:', e.message));
+                // No se responde de una: se acumula. Quien escribe en tres
+                // renglones seguidos recibía tres respuestas en paralelo, cada
+                // una ciega a las otras. Ver waTurno.service.
+                require('./waTurno.service').encolar(
+                  r.conversationId,
+                  textBody,
+                  { desdeAudio: esAudio },
+                  async (textoJunto, opts) => {
+                    await bot.handleTextForBot({
+                      conversationId: r.conversationId,
+                      incomingText: textoJunto,
+                      desdeAudio: opts.desdeAudio,
+                    });
+                    // Memoria larga: se refresca aparte para no demorar la
+                    // respuesta al paciente. Solo trabaja cada N mensajes.
+                    bot.actualizarResumen(r.conversationId)
+                      .catch((e) => console.warn('[wa-bot] resumen:', e.message));
+                  },
+                );
               }
             } catch (be) {
               console.error('[wa-bot] dispatcher falló:', be.message);
