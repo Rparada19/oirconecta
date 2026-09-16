@@ -54,7 +54,7 @@ function SignalRow({ s, delay }) {
     >
       <Typography className="oc-num" sx={{
         gridRow: { xs: '1 / span 2', md: 'auto' },
-        fontFamily: '"Playfair Display", Georgia, serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: { xs: '1.5rem', md: '2.25rem' }, fontWeight: 600,
         color: `${C.navy}66`, lineHeight: 1,
         transition: 'color 0.3s ease',
@@ -72,7 +72,7 @@ function SignalRow({ s, delay }) {
       </Box>
       <Box>
         <Typography component="h3" sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 500,
           color: C.navy, lineHeight: 1.2, mb: 1,
           letterSpacing: '-0.01em',
@@ -80,7 +80,7 @@ function SignalRow({ s, delay }) {
           {s.title}
         </Typography>
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: { xs: '0.95rem', md: '1.05rem' },
           color: C.gris, lineHeight: 1.55, maxWidth: 560,
         }}>
@@ -90,7 +90,7 @@ function SignalRow({ s, delay }) {
       {/* Marca de continuidad editorial — solo en desktop */}
       <Typography sx={{
         display: { xs: 'none', md: 'block' },
-        fontFamily: '"Playfair Display", Georgia, serif',
+        fontFamily: '"Gotham", sans-serif',
         fontStyle: 'italic', fontSize: '0.85rem', color: `${C.navy}55`,
         whiteSpace: 'nowrap',
       }}>
@@ -125,7 +125,7 @@ export default function AuditionGuideSection() {
             <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
               <Box sx={{ width: 32, height: 2, bgcolor: C.oro }} />
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                 textTransform: 'uppercase', color: C.navy,
               }}>
@@ -133,7 +133,7 @@ export default function AuditionGuideSection() {
               </Typography>
             </Stack>
             <Typography component="h2" sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '2.25rem', md: '3.5rem', lg: '4rem' }, fontWeight: 500,
               color: C.navy, lineHeight: 1, letterSpacing: '-0.025em',
             }}>
@@ -146,7 +146,7 @@ export default function AuditionGuideSection() {
           </Box>
           <Box sx={{ pb: { md: 1.5 } }}>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.2rem' }, lineHeight: 1.55,
               color: C.gris, maxWidth: 540,
             }}>
@@ -174,7 +174,7 @@ export default function AuditionGuideSection() {
           transition: 'all 0.9s cubic-bezier(0.2,0.7,0.2,1)',
         }}>
           <Typography sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.25rem', md: '1.5rem' }, fontStyle: 'italic',
             color: C.navy, lineHeight: 1.35, maxWidth: 520,
           }}>
@@ -185,7 +185,7 @@ export default function AuditionGuideSection() {
             to="/contacto"
             sx={{
               display: 'inline-flex', alignItems: 'center', gap: 1.25,
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.9rem', fontWeight: 700, color: '#fff',
               textDecoration: 'none', whiteSpace: 'nowrap',
               bgcolor: C.navy, px: 3.25, py: 1.65, borderRadius: '6px',

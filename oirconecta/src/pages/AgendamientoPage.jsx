@@ -367,7 +367,7 @@ export default function AgendamientoPage() {
               <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
                 <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: '#272F50',
                 }}>
@@ -376,7 +376,7 @@ export default function AgendamientoPage() {
               </Stack>
 
               <Typography component="h1" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
                 fontWeight: 500, lineHeight: 0.98, letterSpacing: '-0.025em',
                 color: '#272F50', mb: { xs: 2.5, md: 3 },
@@ -403,7 +403,7 @@ export default function AgendamientoPage() {
 
             <Box sx={{ pb: { md: 1.5 } }}>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
                 color: '#6B7280', lineHeight: 1.55, maxWidth: 460, mb: 3,
               }}>
@@ -423,7 +423,7 @@ export default function AgendamientoPage() {
                   }}>
                     <Box sx={{ color: '#272F50', display: 'flex' }}>{c.icon}</Box>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.8rem',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.8rem',
                       color: '#272F50', fontWeight: 600,
                     }}>{c.text}</Typography>
                   </Box>
@@ -440,7 +440,7 @@ export default function AgendamientoPage() {
           <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
             <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
               textTransform: 'uppercase', color: '#272F50',
             }}>
@@ -448,7 +448,7 @@ export default function AgendamientoPage() {
             </Typography>
           </Stack>
           <Typography component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
             color: '#272F50', letterSpacing: '-0.02em', mb: 5, maxWidth: 720,
           }}>
@@ -488,7 +488,7 @@ export default function AgendamientoPage() {
           <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
             <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
               textTransform: 'uppercase', color: '#272F50',
             }}>
@@ -496,7 +496,7 @@ export default function AgendamientoPage() {
             </Typography>
           </Stack>
           <Typography component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
             color: '#272F50', letterSpacing: '-0.02em', mb: 5, maxWidth: 720,
           }}>
@@ -512,7 +512,7 @@ export default function AgendamientoPage() {
                 <Box sx={{ p: 3.5, borderRadius: '16px', bgcolor: '#fff', height: '100%',
                   border: '1px solid rgba(39,47,80,0.06)', boxShadow: '0 2px 12px rgba(39,47,80,0.04)' }}>
                   <Typography sx={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: '2.5rem', fontWeight: 500, color: '#C9A86A',
                     lineHeight: 1, letterSpacing: '-0.02em', mb: 1.5,
                   }}>
@@ -804,7 +804,7 @@ export default function AgendamientoPage() {
           <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
             <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
               textTransform: 'uppercase', color: '#272F50',
             }}>
@@ -812,7 +812,7 @@ export default function AgendamientoPage() {
             </Typography>
           </Stack>
           <Typography component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
             color: '#272F50', letterSpacing: '-0.02em', mb: 5, maxWidth: 720,
           }}>
@@ -854,7 +854,7 @@ export default function AgendamientoPage() {
           <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
             <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
               textTransform: 'uppercase', color: '#272F50',
             }}>
@@ -862,7 +862,7 @@ export default function AgendamientoPage() {
             </Typography>
           </Stack>
           <Typography component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
             color: '#272F50', letterSpacing: '-0.02em', mb: 4,
           }}>
@@ -901,14 +901,14 @@ export default function AgendamientoPage() {
       <Box sx={{ bgcolor: '#272F50', py: { xs: 6, md: 8 } }}>
         <Container maxWidth="md" sx={{ textAlign: 'center' }}>
           <Typography component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 500,
             color: '#fff', letterSpacing: '-0.02em', mb: 2,
           }}>
             No pospongas más tu audición.
           </Typography>
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: { xs: '1rem', md: '1.125rem' },
             color: 'rgba(255,255,255,0.75)', mb: 4, maxWidth: 560, mx: 'auto',
           }}>

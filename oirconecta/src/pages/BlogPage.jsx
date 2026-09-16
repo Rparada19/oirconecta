@@ -444,7 +444,7 @@ export default function BlogPage() {
               <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
                 <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: '#272F50',
                 }}>
@@ -452,7 +452,7 @@ export default function BlogPage() {
                 </Typography>
               </Stack>
               <Typography component="h1" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
                 fontWeight: 500,
                 letterSpacing: '-0.025em',
@@ -468,7 +468,7 @@ export default function BlogPage() {
                 en un solo lugar.
               </Typography>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
                 color: '#6B7280',
                 lineHeight: 1.55,
@@ -480,14 +480,14 @@ export default function BlogPage() {
               <Stack direction="row" spacing={4} sx={{ mb: 1 }}>
                 <Box>
                   <Typography sx={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: { xs: '2rem', md: '2.75rem' }, fontWeight: 600,
                     color: '#272F50', lineHeight: 1, letterSpacing: '-0.025em',
                   }}>
                     {totalPosts || posts.length}
                   </Typography>
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.7rem', color: '#6B7280', fontWeight: 700, mt: 1,
                     letterSpacing: '0.18em', textTransform: 'uppercase',
                   }}>
@@ -561,14 +561,14 @@ export default function BlogPage() {
                     </Box>
                     <Box>
                       <Typography sx={{
-                        fontFamily: '"DM Sans", sans-serif',
+                        fontFamily: '"Gotham", "DM Sans", sans-serif',
                         fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.22em',
                         textTransform: 'uppercase', color: '#C9A86A', mb: 1.5,
                       }}>
                         {metaFor(featured.categoria).label}
                       </Typography>
                       <Typography sx={{
-                        fontFamily: '"Playfair Display", Georgia, serif',
+                        fontFamily: '"Gotham", sans-serif',
                         fontSize: { xs: '1.5rem', md: '1.875rem' },
                         fontWeight: 500,
                         color: '#fff', lineHeight: 1.2,

@@ -52,7 +52,7 @@ export default function HomeSearchSection() {
             <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
               <Box sx={{ width: 32, height: 2, bgcolor: C.oro }} />
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                 textTransform: 'uppercase', color: C.navy,
               }}>
@@ -60,7 +60,7 @@ export default function HomeSearchSection() {
               </Typography>
             </Stack>
             <Typography component="h2" sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '2.25rem', md: '3.4rem', lg: '3.85rem' }, fontWeight: 500,
               color: C.navy, lineHeight: 1, letterSpacing: '-0.025em',
             }}>
@@ -72,7 +72,7 @@ export default function HomeSearchSection() {
           </Box>
           <Box sx={{ pb: { md: 1 } }}>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.15rem' }, lineHeight: 1.6,
               color: C.gris, maxWidth: 480,
             }}>

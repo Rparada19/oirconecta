@@ -84,13 +84,13 @@ function ServicioRow({ s, reverse, delay }) {
       }}>
         <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2.5 }}>
           <Typography sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontStyle: 'italic', fontSize: '1.5rem', color: C.oro, fontWeight: 600,
           }}>
             №{s.n}
           </Typography>
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.22em',
             textTransform: 'uppercase', color: C.navy,
           }}>
@@ -98,14 +98,14 @@ function ServicioRow({ s, reverse, delay }) {
           </Typography>
         </Stack>
         <Typography component="h2" sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: { xs: '2rem', md: '3rem' }, fontWeight: 500,
           color: C.navy, lineHeight: 1.05, letterSpacing: '-0.025em', mb: 2.5,
         }}>
           {s.titulo}
         </Typography>
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: { xs: '1rem', md: '1.15rem' }, lineHeight: 1.6,
           color: C.gris, mb: 4, maxWidth: 540,
         }}>
@@ -197,7 +197,7 @@ export default function ServiciosPage() {
             sx={{ textAlign: 'center', mb: 3 }}
           />
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: '1.05rem', color: C.gris, mb: 4, maxWidth: 560, mx: 'auto',
           }}>
             Encuentra a un profesional cerca de ti, filtra por especialidad o cobertura, y agenda directamente.
@@ -207,7 +207,7 @@ export default function ServiciosPage() {
             to="/directorio/listado"
             sx={{
               display: 'inline-flex', alignItems: 'center', gap: 1.25,
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.95rem', fontWeight: 700,
               bgcolor: C.navy, color: '#fff',
               px: 4, py: 1.85, borderRadius: '6px',

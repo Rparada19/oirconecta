@@ -95,7 +95,7 @@ const Footer = () => (
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontWeight: 600,
               fontSize: { xs: '1.375rem', md: '1.625rem' },
               color: '#fff', mb: 0.5,
@@ -104,7 +104,7 @@ const Footer = () => (
               Suscríbete a nuestro boletín
             </Typography>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               color: 'rgba(255,255,255,0.65)',
               fontSize: '0.9375rem',
             }}>
@@ -130,7 +130,7 @@ const Footer = () => (
               <img src="/logo-oirconecta-blanco.png" alt="OírConecta" style={{ height: 44 }} />
             </Box>
             <Typography sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontStyle: 'italic',
               fontSize: '1rem',
               color: '#C9A86A',
@@ -141,7 +141,7 @@ const Footer = () => (
               Escucha. Conecta. Vive mejor.
             </Typography>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               color: 'rgba(255,255,255,0.65)',
               lineHeight: 1.7,
               fontSize: '0.9375rem',
@@ -188,7 +188,7 @@ const Footer = () => (
             <Grid item xs={6} sm={4} md={2} key={s.title}>
               <Typography
                 sx={{
-                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
                   textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)',
                   mb: 2.5,
                 }}
@@ -222,7 +222,7 @@ const Footer = () => (
           <Grid item xs={12} sm={6} md={2}>
             <Typography
               sx={{
-                fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
+                fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
                 textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)',
                 mb: 2.5,
               }}

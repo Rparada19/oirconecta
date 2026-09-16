@@ -168,7 +168,7 @@ function buildHtml(data) {
     </div>`).join('');
 
   return `
-<div style="font-family:'Helvetica Neue',Arial,sans-serif;color:#0F2A4A">
+<div style="font-family:'Gotham','Helvetica Neue',Arial,sans-serif;color:#0F2A4A">
   <!-- PORTADA -->
   <div style="page-break-after:always;padding:60px 40px;background:linear-gradient(135deg,#15803d,#065f46);color:#fff;min-height:920px;position:relative">
     <div style="font-size:14px;letter-spacing:0.3em;opacity:0.8">OÍRCONECTA</div>
@@ -330,7 +330,7 @@ export async function downloadCampaignPdf(data) {
 <style>
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  html, body { margin: 0; padding: 0; background: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; color: #0F2A4A; }
+  html, body { margin: 0; padding: 0; background: #fff; font-family: 'Gotham', 'Helvetica Neue', Arial, sans-serif; color: #0F2A4A; }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .no-print { display: none !important; }

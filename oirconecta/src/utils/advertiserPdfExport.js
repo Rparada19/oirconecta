@@ -306,7 +306,7 @@ function buildHtml(data) {
     : `<div style="font-size:32px;font-weight:900;letter-spacing:-0.02em;margin-bottom:16px">${advertiser.nombre}</div>`;
 
   return `
-<div style="font-family:'Helvetica Neue',Arial,sans-serif;color:#0F2A4A">
+<div style="font-family:'Gotham','Helvetica Neue',Arial,sans-serif;color:#0F2A4A">
   <!-- ═══════ PORTADA ═══════ -->
   <div style="page-break-after:always;padding:60px 40px;background:linear-gradient(135deg,#15803d,#065f46);color:#fff;min-height:920px;position:relative">
     <div style="font-size:14px;letter-spacing:0.3em;opacity:0.8">OÍRCONECTA</div>
@@ -488,7 +488,7 @@ export async function downloadAdvertiserPdf(data) {
 <style>
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  html, body { margin: 0; padding: 0; background: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; color: #0F2A4A; }
+  html, body { margin: 0; padding: 0; background: #fff; font-family: 'Gotham', 'Helvetica Neue', Arial, sans-serif; color: #0F2A4A; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } }
   .no-print {
     position: fixed; top: 12px; right: 12px; z-index: 9999;

@@ -44,7 +44,7 @@ const CRM_ACCENT = '#6d28d9';
 const CRM_MUTED = '#64748b';
 const CRM_NAV_ACTIVE_BG = '#faf5ff';
 const CRM_NAV_HOVER_BG = '#f8fafc';
-const CRM_SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+const CRM_SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 
 const NAV_ITEMS = [
   { key: MENU_KEYS.ACCIONES_DIA, label: 'Acciones del día', icon: FlashOn,

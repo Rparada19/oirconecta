@@ -37,7 +37,7 @@ const MUTED = '#64748b';
 const BORDER = '#eef0f3';
 const CREAM = '#fefdfb';
 const WA_GREEN = '#25D366';
-const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 
 function fmtTime(iso) {
   if (!iso) return '';

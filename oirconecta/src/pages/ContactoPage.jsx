@@ -169,7 +169,7 @@ const ContactoPage = () => {
               <SectionTitle before="Cuatro formas de" accent="encontrarnos." size="md" />
             </Box>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: { xs: '1rem', md: '1.1rem' }, color: C.gris,
               lineHeight: 1.6, maxWidth: 540,
             }}>
@@ -206,7 +206,7 @@ const ContactoPage = () => {
             sx={{ color: '#fff', mb: 3 }}
           />
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4, maxWidth: 540, mx: 'auto',
           }}>
             Escríbenos por WhatsApp y te atendemos directo, en horario de oficina.
@@ -219,7 +219,7 @@ const ContactoPage = () => {
             sx={{
               display: 'inline-flex', alignItems: 'center', gap: 1.25,
               bgcolor: '#25D366', color: '#fff',
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.95rem', fontWeight: 700,
               px: 4, py: 1.85, borderRadius: '6px',
               textDecoration: 'none', letterSpacing: '0.02em',
@@ -278,7 +278,7 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
               sx={{ mb: 3 }}
             />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '1rem', color: C.gris, lineHeight: 1.65,
             }}>
               Si llegaste desde una página de marca, tu mensaje irá al equipo correspondiente.
@@ -288,13 +288,13 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
             <Stack spacing={1.5} sx={{ mt: 4 }}>
               <Stack direction="row" spacing={1.5} alignItems="center">
                 <LockOutlined sx={{ fontSize: 18, color: C.verde }} />
-                <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.85rem', color: C.gris }}>
+                <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.85rem', color: C.gris }}>
                   Datos protegidos · No los compartimos
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1.5} alignItems="center">
                 <BoltOutlined sx={{ fontSize: 18, color: C.verde }} />
-                <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.85rem', color: C.gris }}>
+                <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.85rem', color: C.gris }}>
                   Respuesta en menos de 24h
                 </Typography>
               </Stack>
@@ -311,7 +311,7 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth required name="nombre" label="Nombre completo"
                   value={formData.nombre} onChange={handleChange}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"Gotham", "DM Sans", sans-serif' } }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -319,7 +319,7 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
                   value={formData.email} onChange={handleChange}
                   error={!!errorDeContacto('email', formData.email)}
                   helperText={errorDeContacto('email', formData.email) || ' '}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"Gotham", "DM Sans", sans-serif' } }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -329,7 +329,7 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
                   value={formData.telefono} onChange={handleChange}
                   error={!!errorDeContacto('telefono', formData.telefono)}
                   helperText={errorDeContacto('telefono', formData.telefono) || ' '}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"Gotham", "DM Sans", sans-serif' } }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -337,14 +337,14 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
                   <TextField fullWidth required name="asunto" label="Asunto"
                     value={formData.asunto} onChange={handleChange}
                     helperText="Prellenado según la marca que estabas viendo"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"Gotham", "DM Sans", sans-serif' } }}
                   />
                 ) : (
                   <FormControl fullWidth required>
-                    <InputLabel sx={{ fontFamily: '"DM Sans", sans-serif' }}>Asunto</InputLabel>
+                    <InputLabel sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif' }}>Asunto</InputLabel>
                     <Select
                       name="asunto" value={formData.asunto} onChange={handleChange} label="Asunto"
-                      sx={{ borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' }}
+                      sx={{ borderRadius: '6px', fontFamily: '"Gotham", "DM Sans", sans-serif' }}
                     >
                       <MenuItem value="consulta-general">Consulta general</MenuItem>
                       <MenuItem value="audifonos">Audífonos</MenuItem>
@@ -360,7 +360,7 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
                 <TextField fullWidth required multiline rows={5}
                   name="mensaje" label="Tu mensaje"
                   value={formData.mensaje} onChange={handleChange}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"DM Sans", sans-serif' } }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontFamily: '"Gotham", "DM Sans", sans-serif' } }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -371,7 +371,7 @@ function FormBlock({ formData, handleChange, handleSubmit, submitting, asuntoFro
                   disabled={submitting}
                   endIcon={<Send />}
                   sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     background: `${C.navy} !important`, color: '#fff !important',
                     fontWeight: 700, fontSize: '0.9375rem',
                     py: 1.85, borderRadius: '6px',
@@ -419,7 +419,7 @@ function InfoRow({ info, delay }) {
       }}
     >
       <Typography sx={{
-        fontFamily: '"Playfair Display", Georgia, serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: { xs: '1.5rem', md: '2.25rem' }, fontWeight: 600,
         color: `${C.navy}55`, lineHeight: 1,
       }}>
@@ -436,21 +436,21 @@ function InfoRow({ info, delay }) {
       </Box>
       <Box>
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.2em',
           textTransform: 'uppercase', color: C.gris, mb: 0.75,
         }}>
           {info.title}
         </Typography>
         <Typography sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: { xs: '1.15rem', md: '1.5rem' }, fontWeight: 500,
           color: C.navy, lineHeight: 1.2, mb: 0.5,
         }}>
           {info.value}
         </Typography>
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: '0.85rem', color: C.gris,
         }}>
           {info.sub}

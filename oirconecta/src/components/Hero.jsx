@@ -70,14 +70,14 @@ export default function Hero() {
             {/* Número de capítulo editorial */}
             <Stack direction="row" spacing={2} alignItems="baseline" sx={{ mb: 4 }}>
               <Typography sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.95rem', fontWeight: 600, color: C.oro,
                 fontStyle: 'italic',
               }}>
                 — Edición №01
               </Typography>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.7rem', letterSpacing: '0.28em', fontWeight: 700,
                 textTransform: 'uppercase', color: C.navy,
               }}>
@@ -87,7 +87,7 @@ export default function Hero() {
 
             {/* Headline gigante */}
             <Typography component="h1" sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '3rem', sm: '3.75rem', md: '4.75rem', lg: '5.75rem' },
               fontWeight: 500, lineHeight: 0.98,
               letterSpacing: '-0.025em',
@@ -115,7 +115,7 @@ export default function Hero() {
             </Typography>
 
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: { xs: '1.125rem', md: '1.3125rem' }, lineHeight: 1.55,
               color: C.gris, mb: { xs: 4, md: 5 }, maxWidth: 580, fontWeight: 400,
             }}>
@@ -129,7 +129,7 @@ export default function Hero() {
                 component={RouterLink}
                 to="/directorio/listado"
                 sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '1.05rem', fontWeight: 700,
                   color: C.navy, textDecoration: 'none',
                   display: 'inline-flex', alignItems: 'center', gap: 1.25,
@@ -146,7 +146,7 @@ export default function Hero() {
                 component={RouterLink}
                 to="/ponte-en-sus-oidos"
                 sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.95rem', fontWeight: 600,
                   color: C.gris, textDecoration: 'none',
                   display: 'inline-flex', alignItems: 'center', gap: 1,
@@ -165,7 +165,7 @@ export default function Hero() {
                 <Stack key={label} direction="row" spacing={1.25} alignItems="center">
                   <Icon sx={{ fontSize: 18, color: C.verde }} />
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.825rem', fontWeight: 600, color: C.navy,
                   }}>
                     {label}
@@ -216,7 +216,7 @@ export default function Hero() {
             }}>
               <Stack direction="row" spacing={2.5} alignItems="center">
                 <Typography sx={{
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: { xs: '2.25rem', md: '3rem' }, fontWeight: 700,
                   color: C.navy, lineHeight: 1,
                 }}>
@@ -224,13 +224,13 @@ export default function Hero() {
                 </Typography>
                 <Box>
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.85rem', fontWeight: 700, color: C.navy, lineHeight: 1.25,
                   }}>
                     de quienes adaptan audífonos mejoran su calidad de vida
                   </Typography>
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.65rem', color: C.gris, mt: 0.5, letterSpacing: '0.1em', textTransform: 'uppercase',
                   }}>
                     Lancet Commission, 2024
@@ -244,7 +244,7 @@ export default function Hero() {
               position: 'absolute', top: { xs: 16, md: 32 }, right: { xs: 16, md: 32 },
               bgcolor: 'rgba(255,255,255,0.92)', color: C.navy,
               px: 2, py: 0.75, borderRadius: '4px',
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
             }}>
               Historia real

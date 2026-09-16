@@ -50,7 +50,7 @@ export default function BannerSidebar() {
           px: 0.75, py: 0.25, borderRadius: '4px',
           bgcolor: 'rgba(0,0,0,0.55)', color: '#fff',
           fontSize: '0.6rem', letterSpacing: '0.08em', textTransform: 'uppercase',
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
         }}>
           Publicidad
         </Box>

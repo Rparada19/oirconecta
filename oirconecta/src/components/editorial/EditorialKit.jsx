@@ -39,7 +39,7 @@ export function SectionEyebrow({ children, color = C.navy, dash = C.oro, sx }) {
     <Stack direction="row" alignItems="center" spacing={1.75} sx={sx}>
       <Box sx={{ width: 32, height: 2, bgcolor: dash }} />
       <Typography sx={{
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
         textTransform: 'uppercase', color,
       }}>
@@ -60,7 +60,7 @@ export function SectionTitle({ before, accent, after, accentColor = C.verde, siz
   };
   return (
     <Typography component={component} sx={{
-      fontFamily: '"Playfair Display", Georgia, serif',
+      fontFamily: '"Gotham", sans-serif',
       fontSize: sizes[size], fontWeight: 500,
       color: C.navy, lineHeight: 1.02, letterSpacing: '-0.025em',
       ...sx,
@@ -141,7 +141,7 @@ export function PageHero({
               />
               {intro && (
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: { xs: '1.125rem', md: '1.3125rem' }, lineHeight: 1.55,
                   color: C.gris, mb: { xs: 4, md: 5 }, maxWidth: 580,
                 }}>
@@ -186,7 +186,7 @@ export function PageHero({
                   <Box sx={{
                     position: 'absolute', left: { xs: 16, md: 32 }, right: { xs: 16, md: 32 },
                     bottom: { xs: 16, md: 32 }, color: '#fff',
-                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontStyle: 'italic', fontSize: '1rem', lineHeight: 1.4,
                     textShadow: '0 2px 12px rgba(0,0,0,0.5)',
                   }}>
@@ -198,7 +198,7 @@ export function PageHero({
                     position: 'absolute', top: { xs: 16, md: 32 }, right: { xs: 16, md: 32 },
                     bgcolor: 'rgba(255,255,255,0.92)', color: C.navy,
                     px: 2, py: 0.75, borderRadius: '4px',
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
                   }}>
                     {imageTag}
@@ -230,7 +230,7 @@ export function PageHero({
             />
             {intro && (
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: { xs: '1.125rem', md: '1.3rem' }, lineHeight: 1.55,
                 color: C.gris, mb: 4, maxWidth: 640,
               }}>
@@ -277,7 +277,7 @@ export function CTAArrowLink({ to, label, primary, onClick }) {
         onClick={onClick}
         type={onClick ? 'button' : undefined}
         sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: '1.05rem', fontWeight: 700,
           color: C.navy, textDecoration: 'none', border: 'none', background: 'none',
           cursor: 'pointer',
@@ -300,7 +300,7 @@ export function CTAArrowLink({ to, label, primary, onClick }) {
       onClick={onClick}
       type={onClick ? 'button' : undefined}
       sx={{
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.95rem', fontWeight: 600,
         color: C.gris, textDecoration: 'none', border: 'none', background: 'none',
         cursor: 'pointer',
@@ -319,12 +319,12 @@ export function CTAArrowLink({ to, label, primary, onClick }) {
 export function EditorialIntro({ children, dropCap, color = C.navy }) {
   return (
     <Typography sx={{
-      fontFamily: '"DM Sans", sans-serif',
+      fontFamily: '"Gotham", "DM Sans", sans-serif',
       fontSize: { xs: '1.05rem', md: '1.15rem' }, lineHeight: 1.65,
       color,
       ...(dropCap && {
         '&::first-letter': {
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '4rem', fontWeight: 700, color: C.verde,
           float: 'left', lineHeight: 0.85, mr: 1.5, mt: 0.5,
         },
@@ -351,7 +351,7 @@ export function PullQuote({ children, author, bgcolor = C.cremaCalida }) {
       </Box>
       <Box sx={{ position: 'relative', maxWidth: 720, mx: 'auto', textAlign: 'center' }}>
         <Typography component="blockquote" sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontStyle: 'italic', fontWeight: 400,
           fontSize: { xs: '1.5rem', md: '2.1rem' }, lineHeight: 1.25,
           color: C.navy, m: 0,
@@ -360,7 +360,7 @@ export function PullQuote({ children, author, bgcolor = C.cremaCalida }) {
         </Typography>
         {author && (
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.2em',
             textTransform: 'uppercase', color: C.gris, mt: 3,
           }}>
@@ -377,7 +377,7 @@ export function PullQuote({ children, author, bgcolor = C.cremaCalida }) {
 export function SignatureMark({ children, color = C.oro, sx }) {
   return (
     <Typography sx={{
-      fontFamily: '"Playfair Display", Georgia, serif',
+      fontFamily: '"Gotham", sans-serif',
       fontStyle: 'italic', fontSize: '0.95rem', color, ...sx,
     }}>
       {children}

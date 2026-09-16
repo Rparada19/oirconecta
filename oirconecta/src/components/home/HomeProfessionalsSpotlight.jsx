@@ -29,7 +29,7 @@ export default function HomeProfessionalsSpotlight() {
           Personas, no listas
         </Typography>
         <Typography id="heading-profesionales" component="h2" sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: { xs: '2rem', md: '2.875rem' },
           fontWeight: 600,
           color: '#272F50',

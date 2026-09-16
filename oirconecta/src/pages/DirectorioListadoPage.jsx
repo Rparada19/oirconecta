@@ -207,13 +207,13 @@ export default function DirectorioListadoPage() {
           <Breadcrumbs separator={<NavigateNext fontSize="small" sx={{ color: '#A1A7B1' }} />} sx={{ mb: 3.5, '& .MuiBreadcrumbs-separator': { mx: 0.5 } }}>
             <Button component={RouterLink} to="/directorio" sx={{
               textTransform: 'none', fontWeight: 600, color: '#6B7280',
-              fontFamily: '"DM Sans", sans-serif', minWidth: 0, p: 0,
+              fontFamily: '"Gotham", "DM Sans", sans-serif', minWidth: 0, p: 0,
               '&:hover': { color: '#272F50', bgcolor: 'transparent' },
             }}>
               Directorio
             </Button>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif', fontWeight: 700, color: '#272F50',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontWeight: 700, color: '#272F50',
             }}>Listado</Typography>
           </Breadcrumbs>
 
@@ -225,7 +225,7 @@ export default function DirectorioListadoPage() {
               <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
                 <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.7rem',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.7rem',
                   fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: '#272F50',
                 }}>
@@ -234,7 +234,7 @@ export default function DirectorioListadoPage() {
               </Stack>
 
               <Typography component="h1" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
                 fontWeight: 500, letterSpacing: '-0.025em', lineHeight: 0.98,
                 color: '#272F50', mb: { xs: 2.5, md: 3 },
@@ -248,7 +248,7 @@ export default function DirectorioListadoPage() {
 
             <Box sx={{ pb: { md: 1.5 } }}>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
                 color: '#6B7280', lineHeight: 1.55, maxWidth: 480,
               }}>

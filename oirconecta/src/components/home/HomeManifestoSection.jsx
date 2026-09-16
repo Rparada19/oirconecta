@@ -38,7 +38,7 @@ export default function HomeManifestoSection() {
       <Box aria-hidden sx={{
         position: 'absolute', top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
-        fontFamily: '"Playfair Display", Georgia, serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: { xs: '20rem', md: '36rem' },
         fontWeight: 700, color: `${C.navy}05`,
         lineHeight: 0.85, pointerEvents: 'none',
@@ -49,7 +49,7 @@ export default function HomeManifestoSection() {
 
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.28em',
           textTransform: 'uppercase', color: C.oro, mb: { xs: 5, md: 8 },
           opacity: visible ? 1 : 0, transition: 'opacity 0.8s ease',
@@ -58,7 +58,7 @@ export default function HomeManifestoSection() {
         </Typography>
 
         <Box component="h2" sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontWeight: 500, m: 0,
           fontSize: { xs: '2.5rem', sm: '3.5rem', md: '5rem', lg: '6.25rem' },
           lineHeight: 1.02, letterSpacing: '-0.03em',
@@ -92,7 +92,7 @@ export default function HomeManifestoSection() {
         }}>
           <Box sx={{ width: 32, height: 2, bgcolor: C.navy, mb: 2.5 }} />
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: { xs: '1rem', md: '1.125rem' }, lineHeight: 1.6,
             color: C.gris,
           }}>
@@ -101,7 +101,7 @@ export default function HomeManifestoSection() {
             es cuidar el vínculo con los demás.
           </Typography>
           <Typography sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontStyle: 'italic', fontSize: '1.1rem', color: C.navy, mt: 2.5,
           }}>
             — Equipo OírConecta

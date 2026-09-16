@@ -102,7 +102,7 @@ export default function TestimonialsSection() {
           <Stack direction="row" alignItems="center" spacing={2}>
             <Box sx={{ width: 32, height: 2, bgcolor: C.oro }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.22em',
               textTransform: 'uppercase', color: C.oro,
             }}>
@@ -110,7 +110,7 @@ export default function TestimonialsSection() {
             </Typography>
           </Stack>
           <Typography sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: '0.9rem', fontStyle: 'italic', color: '#ffffff77',
           }}>
             №{String(idx + 1).padStart(2, '0')} / {TESTIMONIOS.length}
@@ -150,7 +150,7 @@ export default function TestimonialsSection() {
               key={t.quote}
               component="blockquote"
               sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1.6rem', sm: '2rem', md: '2.85rem', lg: '3.4rem' },
                 fontWeight: 400, fontStyle: 'italic',
                 lineHeight: 1.18, letterSpacing: '-0.015em',
@@ -184,11 +184,11 @@ export default function TestimonialsSection() {
               </Box>
               <Box sx={{ textAlign: { xs: 'left', md: 'center' } }}>
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem',
                   fontWeight: 700, color: '#fff',
                 }}>{t.nombre}</Typography>
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.78rem',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.78rem',
                   color: '#ffffff99', mt: 0.25,
                 }}>{t.rol}</Typography>
               </Box>
@@ -228,7 +228,7 @@ export default function TestimonialsSection() {
         </Stack>
 
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: '0.7rem', color: '#ffffff66', mt: 3, textAlign: 'center',
           letterSpacing: '0.12em', textTransform: 'uppercase',
         }}>

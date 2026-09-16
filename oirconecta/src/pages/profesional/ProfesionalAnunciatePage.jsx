@@ -18,7 +18,7 @@ import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageH
 const ACCENT = '#6d28d9';
 const NAVY = '#0F2A4A';
 const MUTED = '#64748b';
-const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.01em' };
+const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.01em' };
 
 const fmtCOP = (n) => `$${(n || 0).toLocaleString('es-CO')}`;
 const fmtNum = (n) => (n || 0).toLocaleString('es-CO');

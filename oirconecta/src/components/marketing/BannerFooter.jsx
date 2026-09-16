@@ -54,7 +54,7 @@ export default function BannerFooter() {
           px: 0.75, py: 0.125, borderRadius: '3px',
           bgcolor: 'rgba(0,0,0,0.55)', color: '#fff',
           fontSize: '0.55rem', letterSpacing: '0.08em', textTransform: 'uppercase',
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
         }}>
           Publicidad
         </Box>

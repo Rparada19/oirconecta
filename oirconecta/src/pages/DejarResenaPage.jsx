@@ -20,7 +20,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { request } from '../services/apiClient';
 
-const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 const NAVY = '#0F2A4A';
 const ACCENT = '#6d28d9';
 const MUTED = '#64748b';

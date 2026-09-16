@@ -38,7 +38,7 @@ import {
 import { DEMO_PROFILE_MAP } from '../data/directoryDemoData';
 
 // ─── Design tokens ────────────────────────────────────────────
-const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 const NAVY = '#0F2A4A';
 const ACCENT = '#6d28d9';
 const MUTED = '#64748b';
@@ -530,7 +530,7 @@ function MarcasSection({ marcas }) {
                 width: 44, height: 44, borderRadius: '10px',
                 bgcolor: brand.bg, color: brand.ink,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: '"Playfair Display", serif', fontSize: '1.1rem', fontWeight: 600,
+                fontFamily: '"Gotham", sans-serif', fontSize: '1.1rem', fontWeight: 600,
               }}>
                 {marca[0]}
               </Box>

@@ -122,13 +122,13 @@ function MegaAudifonos({ navigate, onClose }) {
       gridTemplateColumns: { md: '5fr 7fr 4fr' }, gap: 6,
     }}>
       <Box>
-        <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
+        <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
           Por tipo
         </Typography>
         <Stack spacing={1.25}>
           {['Retroauricular (RIC / BTE)', 'Intracanal (ITC / ITE)', 'Invisibles (CIC / IIC)', 'Recargables', 'Resistentes al agua'].map((t) => (
             <Box key={t} component={RouterLink} to="/audifonos" onClick={onClose} sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem',
               color: C.navy, textDecoration: 'none',
               transition: 'color 0.2s', '&:hover': { color: C.verde },
             }}>
@@ -137,12 +137,12 @@ function MegaAudifonos({ navigate, onClose }) {
           ))}
         </Stack>
         <Box sx={{ mt: 3, pt: 2, borderTop: `1px solid ${C.border}` }}>
-          <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 1.5 }}>
+          <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 1.5 }}>
             Tienda
           </Typography>
           <Box component={RouterLink} to="/ecommerce" onClick={onClose} sx={{
             display: 'inline-flex', alignItems: 'center', gap: 1,
-            fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem', fontWeight: 700,
+            fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem', fontWeight: 700,
             color: C.navy, textDecoration: 'none',
             '&:hover': { gap: 1.5, color: C.verde },
             transition: 'all 0.25s ease',
@@ -155,7 +155,7 @@ function MegaAudifonos({ navigate, onClose }) {
       </Box>
 
       <Box>
-        <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
+        <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
           Marcas disponibles en Colombia
         </Typography>
         <Box sx={{
@@ -171,7 +171,7 @@ function MegaAudifonos({ navigate, onClose }) {
               sx={{
                 display: 'flex', alignItems: 'center',
                 px: 1.75, py: 1.25, borderRadius: '8px',
-                fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem',
+                fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem',
                 fontWeight: 700, color: C.navy, textDecoration: 'none',
                 border: `1px solid ${C.border}`,
                 position: 'relative', overflow: 'hidden',
@@ -191,7 +191,7 @@ function MegaAudifonos({ navigate, onClose }) {
       </Box>
 
       <Box>
-        <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
+        <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
           Te recomendamos
         </Typography>
         <Box
@@ -212,10 +212,10 @@ function MegaAudifonos({ navigate, onClose }) {
                 transition: 'transform 0.6s ease' }} />
           </Box>
           <Box sx={{ p: 2 }}>
-            <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.verde, mb: 0.5 }}>
+            <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.verde, mb: 0.5 }}>
               Guía
             </Typography>
-            <Typography sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.25, color: C.navy }}>
+            <Typography sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.25, color: C.navy }}>
               Cómo elegir tu primer audífono sin que te vendan humo.
             </Typography>
           </Box>
@@ -244,10 +244,10 @@ function MegaImplantes({ navigate, onClose }) {
           }}
         >
           <Box sx={{ width: 4, height: 28, bgcolor: b.color, borderRadius: '999px', mb: 2 }} />
-          <Typography sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.5rem', fontWeight: 600, color: C.navy, mb: 0.5 }}>
+          <Typography sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.5rem', fontWeight: 600, color: C.navy, mb: 0.5 }}>
             {b.name}
           </Typography>
-          <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8rem', color: C.gris, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.8rem', color: C.gris, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             Ver soluciones implantables
           </Typography>
         </Box>
@@ -262,13 +262,13 @@ function MegaDirectorio({ navigate, onClose }) {
       display: 'grid', gridTemplateColumns: { md: '4fr 4fr 5fr' }, gap: 6,
     }}>
       <Box>
-        <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
+        <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
           Por especialidad
         </Typography>
         <Stack spacing={1.25}>
           {PROFESIONES_MENU.map((p) => (
             <Box key={p.to} component={RouterLink} to={p.to} onClick={onClose} sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem',
               color: C.navy, textDecoration: 'none',
               transition: 'color 0.2s', '&:hover': { color: C.verde },
             }}>
@@ -279,13 +279,13 @@ function MegaDirectorio({ navigate, onClose }) {
       </Box>
 
       <Box>
-        <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
+        <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
           Ciudades principales
         </Typography>
         <Stack spacing={1.25}>
           {CIUDADES_TOP.map((c) => (
             <Box key={c.slug} component={RouterLink} to={`/directorio/ciudad/${c.slug}`} onClick={onClose} sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem',
               color: C.navy, textDecoration: 'none',
               transition: 'color 0.2s', '&:hover': { color: C.verde },
             }}>
@@ -293,7 +293,7 @@ function MegaDirectorio({ navigate, onClose }) {
             </Box>
           ))}
           <Box component={RouterLink} to="/directorio" onClick={onClose} sx={{
-            fontFamily: '"DM Sans", sans-serif', fontSize: '0.85rem', fontWeight: 700,
+            fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.85rem', fontWeight: 700,
             color: C.verde, textDecoration: 'none', mt: 1,
             display: 'inline-flex', alignItems: 'center', gap: 0.75,
             '&:hover': { gap: 1.25 }, transition: 'gap 0.25s ease',
@@ -322,13 +322,13 @@ function MegaDirectorio({ navigate, onClose }) {
           background: `linear-gradient(180deg, ${C.navy}99 0%, ${C.navy} 100%)`,
         }} />
         <Box sx={{ position: 'relative', p: 3, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minHeight: 220 }}>
-          <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 1 }}>
+          <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 1 }}>
             Red verificada
           </Typography>
-          <Typography sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.4rem', fontWeight: 600, lineHeight: 1.2, mb: 1.5 }}>
+          <Typography sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.4rem', fontWeight: 600, lineHeight: 1.2, mb: 1.5 }}>
             Profesionales auditivos en toda Colombia.
           </Typography>
-          <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.85rem', fontWeight: 700, color: C.oro, display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+          <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.85rem', fontWeight: 700, color: C.oro, display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
             Explorar el directorio <ArrowForward sx={{ fontSize: 14 }} />
           </Typography>
         </Box>
@@ -343,13 +343,13 @@ function MegaBlog({ navigate, onClose }) {
       display: 'grid', gridTemplateColumns: { md: '4fr 5fr 5fr' }, gap: 6,
     }}>
       <Box>
-        <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
+        <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
           Categorías
         </Typography>
         <Stack spacing={1.25}>
           {BLOG_CATEGORIAS.map((c) => (
             <Box key={c.to} component={RouterLink} to={c.to} onClick={onClose} sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem',
               color: C.navy, textDecoration: 'none',
               transition: 'color 0.2s', '&:hover': { color: C.verde },
             }}>
@@ -357,7 +357,7 @@ function MegaBlog({ navigate, onClose }) {
             </Box>
           ))}
           <Box component={RouterLink} to="/blog" onClick={onClose} sx={{
-            fontFamily: '"DM Sans", sans-serif', fontSize: '0.85rem', fontWeight: 700,
+            fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.85rem', fontWeight: 700,
             color: C.verde, textDecoration: 'none', mt: 1,
             display: 'inline-flex', alignItems: 'center', gap: 0.75,
             '&:hover': { gap: 1.25 }, transition: 'gap 0.25s ease',
@@ -368,7 +368,7 @@ function MegaBlog({ navigate, onClose }) {
       </Box>
 
       <Box>
-        <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
+        <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.oro, mb: 2 }}>
           Los más leídos
         </Typography>
         <Stack spacing={2.25}>
@@ -393,7 +393,7 @@ function MegaBlog({ navigate, onClose }) {
                   sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </Box>
               <Typography className="oc-blog-title" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif', fontSize: '0.95rem',
+                fontFamily: '"Gotham", sans-serif', fontSize: '0.95rem',
                 fontWeight: 600, color: C.navy, lineHeight: 1.3,
                 transition: 'color 0.2s',
               }}>
@@ -422,13 +422,13 @@ function MegaBlog({ navigate, onClose }) {
               transition: 'transform 0.6s ease' }} />
         </Box>
         <Box sx={{ p: 2.5 }}>
-          <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.oro, mb: 0.75 }}>
+          <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.oro, mb: 0.75 }}>
             Último publicado
           </Typography>
-          <Typography sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.25, color: C.navy, mb: 1 }}>
+          <Typography sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.25, color: C.navy, mb: 1 }}>
             Menopausia y audición: lo que está pasando en tus oídos.
           </Typography>
-          <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8rem', fontWeight: 700, color: C.verde, display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+          <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.8rem', fontWeight: 700, color: C.verde, display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
             Leer artículo <ArrowForward sx={{ fontSize: 14 }} />
           </Typography>
         </Box>
@@ -507,7 +507,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
               display: 'flex', alignItems: 'center', gap: 1.25,
               bgcolor: `${C.arena}55`, borderRadius: '8px',
               px: 1.5, py: 1.25, minHeight: 44,
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: C.gris,
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.875rem', color: C.gris,
             }}
           >
             <SearchIcon sx={{ fontSize: 18 }} /> Buscar…
@@ -534,7 +534,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
         px: 2.5, py: 3,
       }}>
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700,
+          fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700,
           letterSpacing: '0.24em', textTransform: 'uppercase', color: C.gris, mb: 1.5,
         }}>
           Navegar
@@ -558,7 +558,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
                   }}
                 >
                   <Typography sx={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: { xs: '1.625rem', sm: '1.875rem' }, fontWeight: 500,
                     color: C.navy,
                     fontStyle: s.key === 'simulador' ? 'italic' : 'normal',
@@ -567,7 +567,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
                     {s.label}
                     {s.key === 'simulador' && (
                       <Box component="span" sx={{
-                        fontFamily: '"DM Sans", sans-serif', fontSize: '0.55rem',
+                        fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.55rem',
                         fontWeight: 700, letterSpacing: '0.15em',
                         bgcolor: C.oro, color: C.navy, px: 0.85, py: 0.3, borderRadius: '4px',
                         verticalAlign: 'middle', lineHeight: 1,
@@ -595,7 +595,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
                     {s.children.map((c) => (
                       <Box key={c.to} onClick={() => go(c.to)} sx={{
                         py: 1.25, cursor: 'pointer', minHeight: 40,
-                        fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem',
+                        fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem',
                         color: C.gris,
                         '&:active': { color: C.verde, transform: 'translateX(2px)' },
                         transition: 'all 0.15s ease',
@@ -618,7 +618,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
           ].map((u) => (
             <Box key={u.to} onClick={() => go(u.to)} sx={{
               py: 1.25, cursor: 'pointer', minHeight: 40,
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.875rem',
               color: C.gris,
             }}>
               → {u.label}
@@ -627,7 +627,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
         </Stack>
 
         <Typography sx={{
-          fontFamily: '"Playfair Display", Georgia, serif', fontStyle: 'italic',
+          fontFamily: '"Gotham", sans-serif', fontStyle: 'italic',
           fontSize: '0.95rem', color: `${C.navy}66`, mt: 4, mb: 12, textAlign: 'center',
         }}>
           Escucha. Conecta. Vive mejor.
@@ -651,7 +651,7 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.25,
             bgcolor: C.navy, color: '#fff', borderRadius: '8px',
             px: 3, py: 1.85, textDecoration: 'none',
-            fontFamily: '"DM Sans", sans-serif', fontSize: '0.95rem', fontWeight: 700,
+            fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem', fontWeight: 700,
             letterSpacing: '0.02em',
             boxShadow: `0 8px 20px ${C.navy}22`,
           }}
@@ -727,7 +727,7 @@ function SearchOverlay({ open, onClose }) {
             placeholder="Buscar audiólogo, marca, ciudad o artículo…"
             sx={{
               flex: 1,
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.2rem', md: '1.5rem' }, fontStyle: 'italic',
               color: C.navy,
             }}
@@ -739,7 +739,7 @@ function SearchOverlay({ open, onClose }) {
 
         <Box sx={{ mt: 3, color: '#fff' }}>
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700,
+            fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.65rem', fontWeight: 700,
             letterSpacing: '0.24em', textTransform: 'uppercase', color: C.oro, mb: 1.5,
           }}>
             Sugerencias
@@ -751,7 +751,7 @@ function SearchOverlay({ open, onClose }) {
                 onClick={() => { navigate(s.to); onClose(); }}
                 sx={{
                   cursor: 'pointer',
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: { xs: '1.1rem', md: '1.35rem' }, fontStyle: 'italic',
                   color: 'rgba(255,255,255,0.85)',
                   '&:hover': { color: '#fff' },
@@ -766,7 +766,7 @@ function SearchOverlay({ open, onClose }) {
         </Box>
 
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif', fontSize: '0.7rem',
+          fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.7rem',
           color: 'rgba(255,255,255,0.55)', mt: 4, letterSpacing: '0.12em', textTransform: 'uppercase',
         }}>
           ESC para cerrar · Enter para buscar
@@ -819,7 +819,7 @@ export default function Header() {
       {/* Pre-header strip — en móvil solo deja el WhatsApp corto a la derecha */}
       <Box sx={{
         bgcolor: C.navy, color: '#fff',
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.72rem', py: 0.75,
         pt: 'calc(env(safe-area-inset-top, 0px) + 6px)',
       }}>
@@ -828,7 +828,7 @@ export default function Header() {
           gap: 2,
         }}>
           <Typography sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontStyle: 'italic', fontSize: '0.78rem', color: C.oro,
             display: { xs: 'none', sm: 'block' },
           }}>
@@ -911,7 +911,7 @@ export default function Header() {
                       to={n.to}
                       sx={{
                         display: 'inline-flex', alignItems: 'center', gap: 1,
-                        fontFamily: '"DM Sans", sans-serif',
+                        fontFamily: '"Gotham", "DM Sans", sans-serif',
                         fontSize: '0.92rem', fontWeight: 600,
                         color: C.navy, textDecoration: 'none',
                         px: 2, py: 1.5,
@@ -931,7 +931,7 @@ export default function Header() {
                       {n.label}
                       {n.badge && (
                         <Box component="span" sx={{
-                          fontFamily: '"DM Sans", sans-serif', fontSize: '0.55rem',
+                          fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.55rem',
                           fontWeight: 700, letterSpacing: '0.15em',
                           bgcolor: C.oro, color: C.navy,
                           px: 0.75, py: 0.25, borderRadius: '4px',
@@ -965,7 +965,7 @@ export default function Header() {
                   display: { xs: 'none', md: 'inline-flex' },
                   alignItems: 'center', gap: 1,
                   bgcolor: C.navy, color: '#fff',
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.875rem', fontWeight: 700,
                   px: 2.5, py: 1.25, borderRadius: '6px',
                   textDecoration: 'none', letterSpacing: '0.02em',

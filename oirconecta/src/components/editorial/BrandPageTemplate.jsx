@@ -73,17 +73,17 @@ function BrandHero({ brand, productosCount }) {
             }}>
               <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
                 <Box component={RouterLink} to="/" sx={{
-                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.78rem', color: C.gris,
+                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.78rem', color: C.gris,
                   textDecoration: 'none', '&:hover': { color: C.navy },
                 }}>Inicio</Box>
                 <Typography sx={{ color: C.grisClaro, fontSize: '0.78rem' }}>/</Typography>
                 <Box component={RouterLink} to="/audifonos" sx={{
-                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.78rem', color: C.gris,
+                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.78rem', color: C.gris,
                   textDecoration: 'none', '&:hover': { color: C.navy },
                 }}>Audífonos</Box>
                 <Typography sx={{ color: C.grisClaro, fontSize: '0.78rem' }}>/</Typography>
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif', fontSize: '0.78rem',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.78rem',
                   fontWeight: 700, color: C.navy,
                 }}>{brand.nombre}</Typography>
               </Stack>
@@ -91,7 +91,7 @@ function BrandHero({ brand, productosCount }) {
               <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 4 }}>
                 <Box sx={{ width: 32, height: 2, bgcolor: brand.color }} />
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: brand.color,
                 }}>
@@ -100,7 +100,7 @@ function BrandHero({ brand, productosCount }) {
               </Stack>
 
               <Typography component="h1" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '2.75rem', sm: '3.5rem', md: '5rem', lg: '5.75rem' },
                 fontWeight: 500, lineHeight: 0.98,
                 letterSpacing: '-0.025em',
@@ -109,7 +109,7 @@ function BrandHero({ brand, productosCount }) {
                 {brand.nombre}
                 <Box component="span" sx={{
                   display: 'block',
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontStyle: 'italic', color: brand.color,
                   fontSize: { xs: '1.5rem', md: '2.5rem' }, fontWeight: 500,
                   lineHeight: 1, mt: 2, letterSpacing: '-0.015em',
@@ -119,7 +119,7 @@ function BrandHero({ brand, productosCount }) {
               </Typography>
 
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
                 color: C.gris, lineHeight: 1.6, mb: 4.5, maxWidth: 600,
               }}>
@@ -132,7 +132,7 @@ function BrandHero({ brand, productosCount }) {
                   to={`/contacto?asunto=${encodeURIComponent(`Solicitud de información - ${brand.nombre}`)}`}
                   sx={{
                     display: 'inline-flex', alignItems: 'center', gap: 1.25,
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.95rem', fontWeight: 700,
                     bgcolor: C.navy, color: '#fff',
                     px: 3.5, py: 1.85, borderRadius: '6px',
@@ -198,7 +198,7 @@ function BrandHero({ brand, productosCount }) {
                         textAlign: 'center',
                       }}>
                         <Typography sx={{
-                          fontFamily: '"Playfair Display", Georgia, serif',
+                          fontFamily: '"Gotham", sans-serif',
                           fontSize: '1.5rem', fontWeight: 600,
                           color: C.navy, lineHeight: 1, mb: 0.5,
                           letterSpacing: '-0.02em',
@@ -206,7 +206,7 @@ function BrandHero({ brand, productosCount }) {
                           {s.value}
                         </Typography>
                         <Typography sx={{
-                          fontFamily: '"DM Sans", sans-serif',
+                          fontFamily: '"Gotham", "DM Sans", sans-serif',
                           fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em',
                           textTransform: 'uppercase', color: C.gris,
                         }}>
@@ -248,7 +248,7 @@ function ProductoCard({ producto, brand, n, delay }) {
         <Box sx={{
           position: 'absolute', top: 16, right: 16,
           bgcolor: brand.color, color: '#fff',
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em',
           textTransform: 'uppercase', px: 1.25, py: 0.5, borderRadius: '4px',
         }}>
@@ -258,14 +258,14 @@ function ProductoCard({ producto, brand, n, delay }) {
 
       <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
         <Typography sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontStyle: 'italic', fontSize: '1.5rem', color: brand.color, fontWeight: 600,
         }}>
           №{String(n).padStart(2, '0')}
         </Typography>
         {producto.categoria && (
           <Box sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em',
             textTransform: 'uppercase', color: C.gris,
             border: `1px solid ${C.border}`, px: 1.25, py: 0.4, borderRadius: '4px',
@@ -276,7 +276,7 @@ function ProductoCard({ producto, brand, n, delay }) {
       </Stack>
 
       <Typography component="h3" sx={{
-        fontFamily: '"Playfair Display", Georgia, serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: { xs: '1.5rem', md: '1.75rem' }, fontWeight: 500,
         color: C.navy, lineHeight: 1.15, mb: 1.5, letterSpacing: '-0.01em',
       }}>
@@ -284,7 +284,7 @@ function ProductoCard({ producto, brand, n, delay }) {
       </Typography>
 
       <Typography sx={{
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.95rem', color: C.gris, lineHeight: 1.55, mb: 3,
       }}>
         {producto.descripcion}
@@ -295,7 +295,7 @@ function ProductoCard({ producto, brand, n, delay }) {
           <Stack key={c} direction="row" spacing={1.25} alignItems="flex-start" sx={{ mb: 0.85 }}>
             <CheckCircleOutline sx={{ fontSize: 15, color: brand.color, mt: 0.4, flexShrink: 0 }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.85rem', color: C.navy, lineHeight: 1.45,
             }}>
               {c}
@@ -332,14 +332,14 @@ function TecnologiaCard({ t, brand, delay }) {
         {t.Icon && <t.Icon sx={{ fontSize: 26 }} />}
       </Box>
       <Typography component="h3" sx={{
-        fontFamily: '"Playfair Display", Georgia, serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: '1.25rem', fontWeight: 600,
         color: C.navy, mb: 1.25, lineHeight: 1.2, letterSpacing: '-0.01em',
       }}>
         {t.titulo}
       </Typography>
       <Typography sx={{
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.92rem', color: C.gris, lineHeight: 1.55,
       }}>
         {t.descripcion}
@@ -379,7 +379,7 @@ function BrandEditorialBody({ md, accent }) {
         if (b.type === 'h') return (
           <Box key={i} sx={{ mt: i ? 5 : 0, mb: 2, breakInside: 'avoid' }}>
             <Box sx={{ width: 40, height: 3, bgcolor: accent, borderRadius: 2, mb: 1.5 }} />
-            <Typography component="h2" sx={{ fontFamily: '"Playfair Display", serif', fontSize: { xs: '1.45rem', md: '1.75rem' }, fontWeight: 600, color: C.navy, lineHeight: 1.2 }}>{b.text}</Typography>
+            <Typography component="h2" sx={{ fontFamily: '"Gotham", sans-serif', fontSize: { xs: '1.45rem', md: '1.75rem' }, fontWeight: 600, color: C.navy, lineHeight: 1.2 }}>{b.text}</Typography>
           </Box>
         );
         if (b.type === 'ul') return (
@@ -387,13 +387,13 @@ function BrandEditorialBody({ md, accent }) {
             {b.items.map((it, j) => (
               <Box key={j} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 1.5 }}>
                 <CheckCircleOutline sx={{ fontSize: 20, color: accent, mt: 0.3, flexShrink: 0 }} />
-                <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1.05rem', color: C.gris, lineHeight: 1.7 }}>{renderInline(it)}</Typography>
+                <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '1.05rem', color: C.gris, lineHeight: 1.7 }}>{renderInline(it)}</Typography>
               </Box>
             ))}
           </Box>
         );
         return (
-          <Typography key={i} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1.1rem', color: C.gris, lineHeight: 1.85, mb: 2.5, textAlign: 'justify', hyphens: 'auto' }}>{renderInline(b.text)}</Typography>
+          <Typography key={i} sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '1.1rem', color: C.gris, lineHeight: 1.85, mb: 2.5, textAlign: 'justify', hyphens: 'auto' }}>{renderInline(b.text)}</Typography>
         );
       })}
     </Box>
@@ -448,7 +448,7 @@ export default function BrandPageTemplate({
                 <SectionTitle before={`${productos.length} modelos de`} accent={brand.nombre} size="md" accentColor={brand.color} />
               </Box>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: { xs: '1.05rem', md: '1.15rem' }, color: C.gris,
                 lineHeight: 1.6, maxWidth: 540, pb: { md: 1.5 },
               }}>
@@ -534,7 +534,7 @@ export default function BrandPageTemplate({
             sx={{ color: '#fff', mb: 3 }}
           />
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4, maxWidth: 580, mx: 'auto',
           }}>
             Un audiólogo verificado de OírConecta te orienta sobre los modelos {brand.nombre} que mejor se adaptan a tu caso.
@@ -546,7 +546,7 @@ export default function BrandPageTemplate({
               sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 1.25,
                 bgcolor: C.oro, color: C.navy,
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.95rem', fontWeight: 700,
                 px: 4, py: 1.85, borderRadius: '6px',
                 textDecoration: 'none', letterSpacing: '0.02em',

@@ -20,7 +20,7 @@ const ACCENT = C.signal;
 const NAVY = C.bone;
 const MUTED = C.mute;
 const BORDER = C.line;
-const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.01em' };
+const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.01em' };
 
 const STATUS_META = {
   PENDING:    { label: 'En cola',      color: '#a16207', bg: '#fef3c7' },

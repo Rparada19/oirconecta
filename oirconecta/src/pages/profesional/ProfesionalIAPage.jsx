@@ -33,7 +33,7 @@ import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import InputAdornment from '@mui/material/InputAdornment';
 
-const EDU_SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.01em' };
+const EDU_SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.01em' };
 import { directoryApi, getDirectoryToken } from '../../services/directoryAccountApi';
 import BrainEducation from '../../components/profesional/BrainEducation';
 import AssistantChat from '../../components/profesional/AssistantChat';

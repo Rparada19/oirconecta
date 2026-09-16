@@ -62,7 +62,7 @@ export default function HomePonteEnSusOidosSection() {
             <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
               <Box sx={{ width: 36, height: 2, bgcolor: C.oro }} />
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                 textTransform: 'uppercase', color: C.oro,
               }}>
@@ -71,7 +71,7 @@ export default function HomePonteEnSusOidosSection() {
             </Stack>
 
             <Typography component="h2" sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '2.4rem', sm: '3rem', md: '4rem', lg: '4.4rem' },
               fontWeight: 500, lineHeight: 1, letterSpacing: '-0.025em',
               mb: 3,
@@ -85,7 +85,7 @@ export default function HomePonteEnSusOidosSection() {
             </Typography>
 
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.2rem' }, lineHeight: 1.55,
               color: '#ffffffb3', mb: 4.5, maxWidth: 540,
             }}>
@@ -99,7 +99,7 @@ export default function HomePonteEnSusOidosSection() {
               to="/ponte-en-sus-oidos"
               sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 1.25,
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '1rem', fontWeight: 700, color: '#fff',
                 textDecoration: 'none', pb: 0.5,
                 borderBottom: `2px solid ${C.oro}`,
@@ -128,14 +128,14 @@ export default function HomePonteEnSusOidosSection() {
               boxShadow: `0 24px 60px ${C.navy}66`,
             }}>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.22em',
                 textTransform: 'uppercase', color: '#ffffff66', mb: 1,
               }}>
                 Escena actual
               </Typography>
               <Typography sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '1.4rem', fontWeight: 600, color: '#fff', mb: 2.5,
               }}>
                 Cena con la familia
@@ -181,7 +181,7 @@ export default function HomePonteEnSusOidosSection() {
 
               {/* Niveles seleccionables */}
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.22em',
                 textTransform: 'uppercase', color: '#ffffff66', mb: 1.25,
               }}>
@@ -204,11 +204,11 @@ export default function HomePonteEnSusOidosSection() {
                       }}
                     >
                       <Typography sx={{
-                        fontFamily: '"DM Sans", sans-serif',
+                        fontFamily: '"Gotham", "DM Sans", sans-serif',
                         fontSize: '0.92rem', fontWeight: 700,
                       }}>{l.label}</Typography>
                       <Typography sx={{
-                        fontFamily: '"DM Sans", sans-serif',
+                        fontFamily: '"Gotham", "DM Sans", sans-serif',
                         fontSize: '0.75rem', opacity: active ? 0.7 : 0.55,
                       }}>{l.range}</Typography>
                     </Stack>
@@ -222,7 +222,7 @@ export default function HomePonteEnSusOidosSection() {
               position: 'absolute', top: -16, right: -16,
               bgcolor: C.oro, color: C.navy,
               px: 2, py: 0.75, borderRadius: '4px',
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
               boxShadow: `0 12px 24px ${C.navy}99`,
               transform: 'rotate(2deg)',

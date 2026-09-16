@@ -45,7 +45,7 @@ export default function RecommendationOfMonthSection() {
                 </Box>
 
                 <Typography component="h2" sx={{
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: { xs: '1.75rem', md: '2.5rem' },
                   fontWeight: 600,
                   color: '#272F50',

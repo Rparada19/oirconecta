@@ -68,7 +68,7 @@ export default function AdminLoginPage() {
           <AdminPanelSettings sx={{ color: '#fff', fontSize: 34 }} />
         </Box>
 
-        <Typography sx={{ fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2rem', color: '#fff',
+        <Typography sx={{ fontFamily: '"Gotham", sans-serif', fontWeight: 700, fontSize: '2rem', color: '#fff',
           textAlign: 'center', letterSpacing: '-0.02em', mb: 0.5 }}>
           Portal Admin
         </Typography>

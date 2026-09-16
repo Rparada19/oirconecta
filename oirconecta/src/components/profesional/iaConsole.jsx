@@ -31,7 +31,7 @@ export const C = {
 };
 
 export const MONO = 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace';
-export const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+export const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 
 /** Tema MUI oscuro, solo para esta sección. Evita repintar cada componente a mano. */
 export const consoleTheme = createTheme({

@@ -100,12 +100,11 @@
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:image" content="https://oirconecta.com/logo-oirconecta.png" />
     
-    <!-- Preconnect para fuentes -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Fuentes sin bloquear el render: carga async y aplica al terminar -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" /></noscript>
+    <!-- Gotham (fuente de marca, self-hosted) -->
+    <link rel="preload" as="font" type="font/woff2" href="/font/Gotham-Book.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/font/Gotham-Medium.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/font/Gotham-Bold.woff2" crossorigin />
+
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -166,7 +165,7 @@
     <div id="root"></div>
     <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1056565756928195&ev=PageView&noscript=1" alt="" /></noscript>
     <noscript>
-      <div style="padding:2rem;font-family:system-ui,sans-serif;color:#272F50;max-width:36rem;margin:0 auto;">
+      <div style="padding:2rem;font-family:Gotham,system-ui,sans-serif;color:#272F50;max-width:36rem;margin:0 auto;">
         <p>Activa JavaScript para usar OírConecta.</p>
       </div>
     </noscript>

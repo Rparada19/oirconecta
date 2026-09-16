@@ -43,7 +43,7 @@ export default function CookieConsentBanner() {
     >
       <Container disableGutters>
         <Typography sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: { xs: '1.15rem', md: '1.35rem' },
           fontWeight: 500, color: '#272F50', mb: 1,
         }}>

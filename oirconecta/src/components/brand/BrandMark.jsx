@@ -84,7 +84,7 @@ function wavePath(w, h, amp, freq, phase) {
 export function BigQuote({ color = '#C9A86A', size = 180, ...rest }) {
   return (
     <svg width={size} viewBox="0 0 200 160" aria-hidden {...rest}>
-      <text x="0" y="160" fontFamily='"Playfair Display", Georgia, serif'
+      <text x="0" y="160" fontFamily='"Gotham", sans-serif'
         fontSize="280" fontWeight="700" fill={color} opacity="0.9">“</text>
     </svg>
   );

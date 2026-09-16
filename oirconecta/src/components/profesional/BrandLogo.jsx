@@ -101,7 +101,7 @@ export function BrandMark({ brand, size = 'md', height, title }) {
         x="50%" y="50%"
         dy={m * 0.04}
         textAnchor="middle" dominantBaseline="middle"
-        fontFamily="-apple-system, system-ui, 'Helvetica Neue', Arial, sans-serif"
+        fontFamily="-apple-system, system-ui, 'Gotham', 'Helvetica Neue', Arial, sans-serif"
         fontWeight="800" fontSize={s.font}
         fill="#ffffff"
         letterSpacing={meta.initial.length > 1 ? '-1' : '0'}
@@ -122,7 +122,7 @@ export function BrandWordmark({ brand, size = 'md', height }) {
   if (!meta) return <span style={{ color: '#6b7280', fontWeight: 700 }}>{brand}</span>;
   return (
     <span style={{
-      fontFamily: '-apple-system, system-ui, "Helvetica Neue", Arial, sans-serif',
+      fontFamily: '"Gotham", -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif',
       fontWeight: 800,
       fontSize: s.wordmark,
       color: meta.color,
@@ -156,7 +156,7 @@ export default function BrandLogo({
 
   const wordEl = showName ? (
     <span style={{
-      fontFamily: '-apple-system, system-ui, "Helvetica Neue", Arial, sans-serif',
+      fontFamily: '"Gotham", -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif',
       fontWeight: 800,
       fontSize: s.wordmark,
       color: meta.color,

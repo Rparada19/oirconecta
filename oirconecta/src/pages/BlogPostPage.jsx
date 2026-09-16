@@ -92,10 +92,10 @@ function formatDate(iso) {
 }
 
 const MD_COMPONENTS = {
-  h1: ({ children }) => <Typography component="h1" sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: { xs: '2rem', md: '2.625rem' }, fontWeight: 600, color: '#272F50', mt: 6, mb: 2.5, letterSpacing: '-0.02em', lineHeight: 1.1 }}>{children}</Typography>,
+  h1: ({ children }) => <Typography component="h1" sx={{ fontFamily: '"Gotham", sans-serif', fontSize: { xs: '2rem', md: '2.625rem' }, fontWeight: 600, color: '#272F50', mt: 6, mb: 2.5, letterSpacing: '-0.02em', lineHeight: 1.1 }}>{children}</Typography>,
   h2: ({ children }) => (
     <Typography component="h2" sx={{
-      fontFamily: '"Playfair Display", Georgia, serif',
+      fontFamily: '"Gotham", sans-serif',
       fontSize: { xs: '1.75rem', md: '2.25rem' },
       fontWeight: 600,
       color: '#272F50',
@@ -111,9 +111,9 @@ const MD_COMPONENTS = {
       {children}
     </Typography>
   ),
-  h3: ({ children }) => <Typography component="h3" sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: { xs: '1.25rem', md: '1.5rem' }, fontWeight: 600, color: '#272F50', mt: 5, mb: 1.75, letterSpacing: '-0.01em' }}>{children}</Typography>,
-  h4: ({ children }) => <Typography component="h4" sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.15rem', fontWeight: 600, color: '#272F50', mt: 3.5, mb: 1.25 }}>{children}</Typography>,
-  p: ({ children }) => <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: { xs: '1.0625rem', md: '1.15rem' }, color: '#272F50', lineHeight: 1.75, mb: 3, letterSpacing: '0.003em' }}>{children}</Typography>,
+  h3: ({ children }) => <Typography component="h3" sx={{ fontFamily: '"Gotham", sans-serif', fontSize: { xs: '1.25rem', md: '1.5rem' }, fontWeight: 600, color: '#272F50', mt: 5, mb: 1.75, letterSpacing: '-0.01em' }}>{children}</Typography>,
+  h4: ({ children }) => <Typography component="h4" sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.15rem', fontWeight: 600, color: '#272F50', mt: 3.5, mb: 1.25 }}>{children}</Typography>,
+  p: ({ children }) => <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: { xs: '1.0625rem', md: '1.15rem' }, color: '#272F50', lineHeight: 1.75, mb: 3, letterSpacing: '0.003em' }}>{children}</Typography>,
   ul: ({ children }) => (
     <Box component="ul" sx={{
       pl: 0,
@@ -491,7 +491,7 @@ export default function BlogPostPage() {
               <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
                 <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: '#C9A86A',
                 }}>
@@ -499,7 +499,7 @@ export default function BlogPostPage() {
                 </Typography>
               </Stack>
               <Typography component="h1" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '2.25rem', sm: '2.75rem', md: '4rem', lg: '4.5rem' },
                 fontWeight: 500,
                 letterSpacing: '-0.025em',
@@ -513,7 +513,7 @@ export default function BlogPostPage() {
               </Typography>
               {post.resumen && (
                 <Typography sx={{
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontStyle: 'italic',
                   fontSize: { xs: '1.1rem', md: '1.4rem' },
                   color: 'rgba(255,255,255,0.92)',

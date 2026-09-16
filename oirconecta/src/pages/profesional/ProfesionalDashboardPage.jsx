@@ -37,7 +37,7 @@ const NAVY = '#0F2A4A';
 const ACCENT = '#6d28d9';
 const MUTED = '#64748b';
 const BORDER = '#eef0f3';
-const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 
 const editorialCard = {
   background: '#fff',

@@ -76,7 +76,7 @@ const dirContentSx = {
 /** Escala editorial ficha pública (px ≈ rem×16). */
 const dirType = {
   h1: {
-    fontFamily: '"Playfair Display", Georgia, serif',
+    fontFamily: '"Gotham", sans-serif',
     fontWeight: 500,
     letterSpacing: '-0.025em',
     lineHeight: 1.02,
@@ -84,7 +84,7 @@ const dirType = {
     color: '#272F50',
   },
   h2: {
-    fontFamily: '"Playfair Display", Georgia, serif',
+    fontFamily: '"Gotham", sans-serif',
     fontWeight: 600,
     letterSpacing: '-0.015em',
     color: '#272F50',
@@ -93,7 +93,7 @@ const dirType = {
     mb: 1.5,
   },
   h3: {
-    fontFamily: '"Playfair Display", Georgia, serif',
+    fontFamily: '"Gotham", sans-serif',
     fontWeight: 600,
     letterSpacing: '-0.01em',
     color: '#272F50',

@@ -68,7 +68,7 @@ function MarcaCard({ m, delay }) {
         transition: 'width 0.4s cubic-bezier(0.2,0.7,0.2,1)',
       }} />
       <Typography className="oc-brand-name" sx={{
-        fontFamily: '"Playfair Display", Georgia, serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: { xs: '1.625rem', md: '2rem' }, fontWeight: 600,
         color: C.navy, lineHeight: 1.1, mb: 0.75,
         letterSpacing: '-0.01em',
@@ -77,14 +77,14 @@ function MarcaCard({ m, delay }) {
         {m.nombre}
       </Typography>
       <Typography sx={{
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.18em',
         textTransform: 'uppercase', color: m.color, mb: 1.75,
       }}>
         {m.tag}
       </Typography>
       <Typography sx={{
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.92rem', color: C.gris, lineHeight: 1.55, mb: 2.5,
         minHeight: 64,
       }}>
@@ -92,7 +92,7 @@ function MarcaCard({ m, delay }) {
       </Typography>
       <Box className="oc-brand-arrow" sx={{
         display: 'inline-flex', alignItems: 'center', gap: 1,
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.8rem', fontWeight: 700, color: C.navy,
         letterSpacing: '0.08em', textTransform: 'uppercase',
         transition: 'gap 0.3s ease, color 0.3s ease',
@@ -117,7 +117,7 @@ function TipoRow({ t, delay }) {
       transition: `all 0.8s cubic-bezier(0.2,0.7,0.2,1) ${delay}s`,
     }}>
       <Typography sx={{
-        fontFamily: '"Playfair Display", Georgia, serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 700,
         color: C.oro, fontStyle: 'italic', lineHeight: 1,
         letterSpacing: '-0.01em',
@@ -126,14 +126,14 @@ function TipoRow({ t, delay }) {
       </Typography>
       <Box>
         <Typography component="h3" sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: { xs: '1.25rem', md: '1.625rem' }, fontWeight: 500,
           color: C.navy, lineHeight: 1.2, mb: 0.75, letterSpacing: '-0.01em',
         }}>
           {t.nombre}
         </Typography>
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: { xs: '0.95rem', md: '1.05rem' }, lineHeight: 1.55,
           color: C.gris, maxWidth: 620,
         }}>
@@ -142,7 +142,7 @@ function TipoRow({ t, delay }) {
       </Box>
       <Box sx={{
         display: { xs: 'none', md: 'inline-flex' }, alignItems: 'center', gap: 1,
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.78rem', fontWeight: 700, color: `${C.navy}66`,
         letterSpacing: '0.12em', textTransform: 'uppercase',
         whiteSpace: 'nowrap',
@@ -195,7 +195,7 @@ export default function AudifonosPage() {
               <SectionTitle before="Primero," accent="el formato." size="lg" />
             </Box>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.15rem' }, color: C.gris,
               lineHeight: 1.6, maxWidth: 540, pb: { md: 1.5 },
             }}>
@@ -233,7 +233,7 @@ export default function AudifonosPage() {
               <SectionTitle before="Las trece" accent="marcas" after="disponibles." size="lg" />
             </Box>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.15rem' }, color: C.gris,
               lineHeight: 1.6, maxWidth: 540, pb: { md: 1.5 },
             }}>
@@ -275,7 +275,7 @@ export default function AudifonosPage() {
             sx={{ color: '#fff', mb: 3 }}
           />
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4, maxWidth: 580, mx: 'auto',
           }}>
             Un audiólogo verificado interpreta tu audiometría, te explica qué tipo de pérdida tienes
@@ -288,7 +288,7 @@ export default function AudifonosPage() {
               sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 1.25,
                 bgcolor: C.oro, color: C.navy,
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.95rem', fontWeight: 700,
                 px: 4, py: 1.85, borderRadius: '6px',
                 textDecoration: 'none', letterSpacing: '0.02em',

@@ -703,7 +703,7 @@ const DashboardPage = () => {
           <Box sx={{ mb: 3, p: 3, borderRadius: '16px', bgcolor: '#fff', border: '1px solid #eef0f3' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
               <Box>
-                <Typography sx={{ fontFamily: '"Playfair Display",Georgia,serif', letterSpacing: '-0.02em', fontWeight: 600, color: '#0F2A4A', fontSize: '1.4rem' }}>
+                <Typography sx={{ fontFamily: '"Gotham",sans-serif', letterSpacing: '-0.02em', fontWeight: 600, color: '#0F2A4A', fontSize: '1.4rem' }}>
                   Controles de adaptación
                 </Typography>
                 <Typography sx={{ fontSize: '0.85rem', color: '#64748b' }}>

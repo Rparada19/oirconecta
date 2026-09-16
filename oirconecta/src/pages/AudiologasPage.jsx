@@ -188,7 +188,7 @@ const AudiologasPage = () => {
               <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
                 <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: '#272F50',
                 }}>
@@ -196,7 +196,7 @@ const AudiologasPage = () => {
                 </Typography>
               </Stack>
               <Typography component="h1" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '2.5rem', sm: '3.25rem', md: '4.5rem', lg: '5rem' },
                 fontWeight: 500, lineHeight: 0.98, letterSpacing: '-0.025em',
                 color: '#272F50', mb: 3,
@@ -209,7 +209,7 @@ const AudiologasPage = () => {
             </Box>
             <Box sx={{ pb: { md: 1.5 } }}>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
                 color: '#6B7280', lineHeight: 1.55, maxWidth: 460, mb: 3,
               }}>
@@ -223,14 +223,14 @@ const AudiologasPage = () => {
                 ].map((s) => (
                   <Box key={s.label}>
                     <Typography sx={{
-                      fontFamily: '"Playfair Display", Georgia, serif',
+                      fontFamily: '"Gotham", sans-serif',
                       fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 600,
                       color: '#272F50', lineHeight: 1, letterSpacing: '-0.02em',
                     }}>
                       {s.num}
                     </Typography>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.7rem',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.7rem',
                       fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase',
                       color: '#6B7280', mt: 0.75,
                     }}>

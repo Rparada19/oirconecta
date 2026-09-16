@@ -26,7 +26,7 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { adminFetch as defaultAdminFetch } from './adminAuth';
 
-const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 const NAVY = '#0F2A4A';
 const ACCENT = '#6d28d9';
 const MUTED = '#64748b';

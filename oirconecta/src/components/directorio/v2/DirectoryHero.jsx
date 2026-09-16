@@ -83,7 +83,7 @@ export default function DirectoryHero({
           <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25}>
             <Box sx={{ width: 28, height: 2, bgcolor: '#085946' }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.75rem',
               fontWeight: 600, letterSpacing: '0.18em',
               textTransform: 'uppercase', color: '#085946',
             }}>Directorio verificado · Colombia</Typography>
@@ -91,7 +91,7 @@ export default function DirectoryHero({
           </Stack>
 
           <Typography component="h1" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontWeight: 600,
             fontSize: { xs: '2.25rem', sm: '3rem', md: '4rem' },
             lineHeight: 1.05, letterSpacing: '-0.018em',
@@ -109,7 +109,7 @@ export default function DirectoryHero({
           </Typography>
 
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             color: '#6B7280', maxWidth: 640,
             fontSize: { xs: '1rem', md: '1.1875rem' }, lineHeight: 1.6,
           }}>

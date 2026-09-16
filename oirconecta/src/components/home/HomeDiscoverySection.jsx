@@ -48,13 +48,13 @@ export default function HomeDiscoverySection() {
           <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25} sx={{ mb: 2.5 }}>
             <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.75rem',
               fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.verde,
             }}>Explorar</Typography>
             <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
           </Stack>
           <Typography id="heading-explorar" component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '2rem', md: '2.875rem' }, fontWeight: 600,
             letterSpacing: '-0.018em', lineHeight: 1.1, color: C.navy, mb: 2,
           }}>
@@ -64,7 +64,7 @@ export default function HomeDiscoverySection() {
             </Box>
           </Typography>
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif', fontSize: '1.0625rem',
+            fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '1.0625rem',
             color: C.gris, lineHeight: 1.6,
           }}>
             Información clara para que decidas con calma, no por presión comercial.
@@ -116,7 +116,7 @@ export default function HomeDiscoverySection() {
                     boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
                   }}>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem',
                       fontWeight: 700, color: C.verde, letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                     }}>{t.kicker}</Typography>
@@ -130,23 +130,23 @@ export default function HomeDiscoverySection() {
                     textAlign: 'center',
                   }}>
                     <Typography sx={{
-                      fontFamily: '"Playfair Display", serif', fontStyle: 'italic',
+                      fontFamily: '"Gotham", sans-serif', fontStyle: 'italic',
                       fontSize: '1.5rem', fontWeight: 700, color: C.navy, lineHeight: 1,
                     }}>{t.stat}</Typography>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem',
                       color: C.gris, fontWeight: 600, mt: 0.25,
                     }}>{t.statLabel}</Typography>
                   </Box>
                 </Box>
                 <Box sx={{ p: { xs: 3, md: 3.5 }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                   <Typography component="h3" sx={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: { xs: '1.25rem', md: '1.375rem' }, fontWeight: 600,
                     color: C.navy, letterSpacing: '-0.01em', lineHeight: 1.2, mb: 1.5,
                   }}>{t.title}</Typography>
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.9375rem',
                     color: C.gris, lineHeight: 1.6, mb: 2.5, flexGrow: 1,
                   }}>{t.text}</Typography>
                   <Box sx={{
@@ -154,7 +154,7 @@ export default function HomeDiscoverySection() {
                     color: C.navy, fontWeight: 700,
                   }}>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.875rem',
                       fontWeight: 700, color: 'inherit',
                     }}>Explorar</Typography>
                     <ArrowOutwardRoundedIcon

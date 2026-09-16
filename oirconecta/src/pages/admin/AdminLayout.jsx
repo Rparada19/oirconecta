@@ -45,7 +45,7 @@ const ACCENT = '#6d28d9';
 const MUTED = '#64748b';
 const NAV_ACTIVE_BG = '#faf5ff';
 const NAV_HOVER_BG = '#f8fafc';
-const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 
 function NavSection({ title, items, isActive }) {
   return (

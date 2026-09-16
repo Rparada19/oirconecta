@@ -280,7 +280,7 @@ function buildReportHtml({ range, overview, series, byCity, byDevice, sources, t
     </div>`).join('');
 
   return `
-<div style="font-family:'Helvetica Neue',Arial,sans-serif;color:#0F2A4A;padding:0">
+<div style="font-family:'Gotham','Helvetica Neue',Arial,sans-serif;color:#0F2A4A;padding:0">
   <!-- ═══════════════ PORTADA ═══════════════ -->
   <div style="page-break-after:always;padding:60px 40px;background:linear-gradient(135deg,#15803d,#065f46);color:#fff;min-height:920px;position:relative">
     <div style="font-size:14px;letter-spacing:0.3em;opacity:0.8">OÍRCONECTA</div>
@@ -324,7 +324,7 @@ function buildReportHtml({ range, overview, series, byCity, byDevice, sources, t
     </table>
 
     <div style="font-size:14px;font-weight:800;color:#0F2A4A;margin:24px 0 12px">Tendencia últimos días</div>
-    <table style="width:100%;border-collapse:collapse;font-family:Arial">
+    <table style="width:100%;border-collapse:collapse;font-family:Gotham,Arial">
       <thead>
         <tr style="background:#f8fafc">
           <th style="padding:8px;font-size:10px;text-align:left;color:#475569;text-transform:uppercase">Día</th>
@@ -498,7 +498,7 @@ export async function downloadInsightsPdf(data) {
 <style>
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  html, body { margin: 0; padding: 0; background: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; color: #0F2A4A; }
+  html, body { margin: 0; padding: 0; background: #fff; font-family: 'Gotham', 'Helvetica Neue', Arial, sans-serif; color: #0F2A4A; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } }
   .no-print {
     position: fixed; top: 12px; right: 12px; z-index: 9999;

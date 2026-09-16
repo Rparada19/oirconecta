@@ -15,7 +15,7 @@ import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded';
 
-const SERIF = { fontFamily: '"Playfair Display", Georgia, serif', letterSpacing: '-0.02em' };
+const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 const NAVY = '#0F2A4A';
 const ACCENT = '#6d28d9';
 
@@ -149,7 +149,7 @@ export default function ProfilePreviewBanner({ profile }) {
               width: 40, height: 40, borderRadius: '50%',
               bgcolor: '#fff', border: '3px solid #fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: ACCENT, fontFamily: '"Playfair Display", serif', fontSize: 15, fontWeight: 500,
+              color: ACCENT, fontFamily: '"Gotham", sans-serif', fontSize: 15, fontWeight: 500,
               boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             }}>{(nombre[0] || 'P')}</Box>
           </Box>

@@ -2,8 +2,8 @@
  * OirConecta — Design System 2025
  * Bold & Contemporary · Glassmorphism · Colored shadows
  */
-const SERIF = '"Playfair Display", "Cormorant Garamond", Georgia, serif';
-const SANS  = '"DM Sans", "Inter", "Helvetica", "Arial", sans-serif';
+const SERIF = '"Gotham", "Helvetica", "Arial", sans-serif';
+const SANS  = '"Gotham", "DM Sans", "Inter", "Helvetica", "Arial", sans-serif';
 
 // Paleta oficial OírConecta 2026
 export const OC_COLORS = {

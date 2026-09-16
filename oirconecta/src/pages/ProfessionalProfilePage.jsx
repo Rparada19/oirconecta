@@ -437,7 +437,7 @@ const ProfessionalProfilePage = () => {
               }}>
                 <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: '#272F50',
                 }}>
@@ -446,7 +446,7 @@ const ProfessionalProfilePage = () => {
               </Box>
 
               <Typography component="h1" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '2.5rem', sm: '3rem', md: '3.75rem' },
                 fontWeight: 500, lineHeight: 1.02, letterSpacing: '-0.025em',
                 color: '#272F50', mb: 2.5,
@@ -455,7 +455,7 @@ const ProfessionalProfilePage = () => {
               </Typography>
 
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: { xs: '1rem', md: '1.125rem' },
                 color: '#6B7280', lineHeight: 1.6, mb: 3, maxWidth: 600,
                 mx: { xs: 'auto', md: 0 },
@@ -470,7 +470,7 @@ const ProfessionalProfilePage = () => {
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Rating value={professional.rating} precision={0.1} readOnly size="small" />
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.85rem', fontWeight: 700, color: '#272F50',
                   }}>
                     {professional.rating} · {professional.reviews} reseñas

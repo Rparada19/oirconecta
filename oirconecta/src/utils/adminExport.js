@@ -16,7 +16,7 @@ export function exportRowsToExcel(rows, filename, sheetName = 'Datos') {
 export function exportRowsToPdf(rows, filename, title) {
   const cols = rows.length ? Object.keys(rows[0]) : [];
   const el = document.createElement('div');
-  el.style.cssText = 'padding:16px;font-family:Arial,Helvetica,sans-serif;color:#1f2937';
+  el.style.cssText = 'padding:16px;font-family:Gotham,Arial,Helvetica,sans-serif;color:#1f2937';
   el.innerHTML = `
     <h2 style="color:#085946;margin:0 0 4px">${title || ''}</h2>
     <p style="color:#6b7280;font-size:12px;margin:0 0 12px">Generado ${new Date().toLocaleString('es-CO')} · ${rows.length} registros</p>

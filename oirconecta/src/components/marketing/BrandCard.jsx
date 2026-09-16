@@ -96,7 +96,7 @@ export default function BrandCard({ campaign }) {
       {/* Contenido */}
       <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: '0.7rem', fontWeight: 700,
           letterSpacing: '0.1em', textTransform: 'uppercase',
           color: GOLD, mb: 0.5,
@@ -104,7 +104,7 @@ export default function BrandCard({ campaign }) {
           {campaign.advertiser?.nombre || 'Marca aliada'}
         </Typography>
         <Typography sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '1.0625rem', fontWeight: 600, color: NAVY,
           lineHeight: 1.2, letterSpacing: '-0.01em', mb: 1,
         }}>

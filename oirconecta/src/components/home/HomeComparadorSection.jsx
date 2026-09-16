@@ -41,7 +41,7 @@ export default function HomeComparadorSection() {
                 <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 3 }}>
                   <Box sx={{ width: 28, height: 2, bgcolor: C.oro }} />
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.7rem', fontWeight: 700,
                     letterSpacing: '0.18em', textTransform: 'uppercase', color: C.oro,
                   }}>
@@ -49,7 +49,7 @@ export default function HomeComparadorSection() {
                   </Typography>
                 </Stack>
                 <Typography component="h2" sx={{
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: { xs: '2rem', md: '2.875rem' },
                   fontWeight: 600, lineHeight: 1.1, color: '#fff',
                   letterSpacing: '-0.018em', mb: 2.5,
@@ -60,7 +60,7 @@ export default function HomeComparadorSection() {
                   </Box>?
                 </Typography>
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: { xs: '1rem', md: '1.125rem' },
                   color: 'rgba(255,255,255,0.80)', lineHeight: 1.6,
                   mb: 3.5, maxWidth: 560,
@@ -72,7 +72,7 @@ export default function HomeComparadorSection() {
                     <Box key={b} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <CheckCircleOutlineIcon sx={{ fontSize: 20, color: C.oro }} />
                       <Typography sx={{
-                        fontFamily: '"DM Sans", sans-serif',
+                        fontFamily: '"Gotham", "DM Sans", sans-serif',
                         fontSize: '0.9375rem', color: 'rgba(255,255,255,0.90)',
                       }}>{b}</Typography>
                     </Box>
@@ -83,7 +83,7 @@ export default function HomeComparadorSection() {
                   startIcon={<CompareArrowsIcon />}
                   onClick={() => navigate('/comparador')}
                   sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     background: '#C9A86A !important', color: '#272F50 !important', fontWeight: 700, fontSize: '0.9375rem',
                     px: 3.5, py: 1.75, borderRadius: '6px', letterSpacing: '0.01em',
                     boxShadow: `0 8px 24px ${C.oro}55`, transition: 'all 0.3s ease',
@@ -112,12 +112,12 @@ export default function HomeComparadorSection() {
                   <AutoAwesomeIcon sx={{ fontSize: 28, color: C.oro }} />
                   <Box>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem',
                       color: C.gris, letterSpacing: '0.06em',
                       textTransform: 'uppercase', fontWeight: 600,
                     }}>IA Comparador</Typography>
                     <Typography sx={{
-                      fontFamily: '"Playfair Display", serif',
+                      fontFamily: '"Gotham", sans-serif',
                       fontSize: '0.9375rem', color: C.navy, fontWeight: 700, lineHeight: 1.2,
                     }}>3 marcas en 1 minuto</Typography>
                   </Box>

@@ -137,7 +137,7 @@ export default function PreciosPage() {
       <Container maxWidth="lg" sx={{ pt: { xs: 6, md: 10 }, pb: { xs: 4, md: 6 }, textAlign: 'center' }}>
         <Typography
           sx={{
-            fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700,
+            fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700,
             letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, mb: 2,
           }}
         >
@@ -146,7 +146,7 @@ export default function PreciosPage() {
         <Typography
           component="h1"
           sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '2.25rem', md: '3.5rem' }, fontWeight: 600, color: NAVY,
             lineHeight: 1.08, letterSpacing: '-0.02em', mb: 2.5,
           }}
@@ -253,7 +253,7 @@ export default function PreciosPage() {
 
                     <Typography
                       sx={{
-                        fontFamily: '"Playfair Display", Georgia, serif',
+                        fontFamily: '"Gotham", sans-serif',
                         fontSize: '1.75rem', fontWeight: 600, color: NAVY, mb: 0.5,
                       }}
                     >
@@ -322,7 +322,7 @@ export default function PreciosPage() {
         <Container maxWidth="md" sx={{ pb: 10 }}>
           <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(8,89,70,0.12)', borderRadius: '16px', p: { xs: 3, md: 5 } }}>
             <Typography
-              sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.875rem', fontWeight: 600, color: NAVY, mb: 1.5 }}
+              sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.875rem', fontWeight: 600, color: NAVY, mb: 1.5 }}
             >
               Una organización, una factura
             </Typography>
@@ -334,7 +334,7 @@ export default function PreciosPage() {
 
             <Typography
               sx={{
-                fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700,
+                fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700,
                 letterSpacing: '0.16em', textTransform: 'uppercase', color: MUTED, mb: 1.5,
               }}
             >
@@ -390,7 +390,7 @@ export default function PreciosPage() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.75rem', md: '2.25rem' }, fontWeight: 600, color: NAVY,
               textAlign: 'center', mb: 5,
             }}
@@ -414,7 +414,7 @@ export default function PreciosPage() {
 
       {/* Solicitud de demostración → Captación comercial */}
       <Dialog open={demoAbierto} onClose={() => setDemoAbierto(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.5rem', fontWeight: 600, color: NAVY }}>
+        <DialogTitle sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.5rem', fontWeight: 600, color: NAVY }}>
           {demoOk ? 'Recibimos tu solicitud' : 'Solicitar una demostración'}
         </DialogTitle>
         <DialogContent>

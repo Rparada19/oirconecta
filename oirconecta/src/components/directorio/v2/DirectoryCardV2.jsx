@@ -105,7 +105,7 @@ const DirectoryCardV2 = memo(function DirectoryCardV2({ profile }) {
               <PersonOutlineRoundedIcon sx={{ fontSize: 30, color: C.verde }} />
             </Box>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.6875rem', fontWeight: 600,
               color: C.gris, letterSpacing: '0.1em', textTransform: 'uppercase',
             }}>
@@ -182,7 +182,7 @@ const DirectoryCardV2 = memo(function DirectoryCardV2({ profile }) {
 
       <Box sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography sx={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontWeight: 600, fontSize: '1.0625rem',
           color: C.navy, lineHeight: 1.25, letterSpacing: '-0.005em',
           display: '-webkit-box',
@@ -193,7 +193,7 @@ const DirectoryCardV2 = memo(function DirectoryCardV2({ profile }) {
         </Typography>
 
         <Typography sx={{
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: '0.8125rem', fontWeight: 600,
           color: C.verde, letterSpacing: '0.02em',
           textTransform: 'uppercase',

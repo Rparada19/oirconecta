@@ -91,7 +91,7 @@ export default function AdminContactosPage() {
       <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'flex-end' }} spacing={2} sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontWeight: 600, color: '#6d28d9', letterSpacing: '-0.01em',
           }}>
             Buzón de contacto
@@ -215,7 +215,7 @@ export default function AdminContactosPage() {
           <Box>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
               <Typography sx={{
-                fontFamily: '"Playfair Display", serif', fontWeight: 600, fontSize: 22, color: '#6d28d9',
+                fontFamily: '"Gotham", sans-serif', fontWeight: 600, fontSize: 22, color: '#6d28d9',
               }}>
                 Mensaje recibido
               </Typography>

@@ -82,12 +82,12 @@ function Audiogram({ level, compact = false }) {
         {[0, 20, 40, 60, 80, 100].map((db) => (
           <g key={db}>
             <line x1={PAD_L} y1={yFor(db)} x2={W - PAD_R} y2={yFor(db)} stroke={C.border} strokeWidth="1" strokeDasharray={db === 0 ? '0' : '3 4'} />
-            <text x={PAD_L - 8} y={yFor(db) + 4} textAnchor="end" fontSize="11" fill={C.gris} fontFamily='"DM Sans", sans-serif'>{db} dB</text>
+            <text x={PAD_L - 8} y={yFor(db) + 4} textAnchor="end" fontSize="11" fill={C.gris} fontFamily='"Gotham", "DM Sans", sans-serif'>{db} dB</text>
           </g>
         ))}
         {/* Banda de habla (20-60 dB, 500-4000 Hz) */}
         <rect x={xFor(1)} y={yFor(20)} width={xFor(5) - xFor(1)} height={yFor(60) - yFor(20)} fill={`${C.oro}1a`} stroke={`${C.oro}55`} strokeDasharray="2 3" />
-        <text x={xFor(3)} y={yFor(20) - 6} textAnchor="middle" fontSize="10" fill={C.gris} fontFamily='"DM Sans", sans-serif' fontWeight="600" letterSpacing="0.1em">ZONA DEL HABLA</text>
+        <text x={xFor(3)} y={yFor(20) - 6} textAnchor="middle" fontSize="10" fill={C.gris} fontFamily='"Gotham", "DM Sans", sans-serif' fontWeight="600" letterSpacing="0.1em">ZONA DEL HABLA</text>
         {/* Línea fantasma del normal para referencia */}
         <polyline fill="none" stroke={`${C.gris}55`} strokeWidth="1.5" strokeDasharray="4 4" points={AUDIOGRAM.normal.map((db, i) => `${xFor(i)},${yFor(db)}`).join(' ')} />
         {/* Línea activa */}
@@ -98,14 +98,14 @@ function Audiogram({ level, compact = false }) {
         ))}
         {/* Ejes X */}
         {FREQS.map((f, i) => (
-          <text key={f} x={xFor(i)} y={H - PAD_B + 18} textAnchor="middle" fontSize="11" fill={C.gris} fontFamily='"DM Sans", sans-serif'>
+          <text key={f} x={xFor(i)} y={H - PAD_B + 18} textAnchor="middle" fontSize="11" fill={C.gris} fontFamily='"Gotham", "DM Sans", sans-serif'>
             {f >= 1000 ? `${f / 1000}k` : f}
           </text>
         ))}
       </Box>
       <Box sx={{
         textAlign: 'center', mt: 0.5,
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.65rem', color: C.gris, letterSpacing: '0.12em',
       }}>
         FRECUENCIA (Hz)
@@ -296,7 +296,7 @@ export default function PonteEnSusOidosPage() {
               <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
                 <Box sx={{ width: 32, height: 2, bgcolor: C.verde }} />
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.18em',
                   textTransform: 'uppercase', color: C.verde,
                 }}>
@@ -304,7 +304,7 @@ export default function PonteEnSusOidosPage() {
                 </Typography>
               </Stack>
               <Typography component="h1" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '2.25rem', sm: '2.75rem', md: '3.5rem', lg: '3.9rem' },
                 fontWeight: 600, lineHeight: 1.05, color: C.navy,
                 letterSpacing: '-0.02em', mb: 3,
@@ -315,7 +315,7 @@ export default function PonteEnSusOidosPage() {
                 </Box>
               </Typography>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' }, lineHeight: 1.6,
                 color: C.gris, fontWeight: 400, maxWidth: 540, mb: 4,
               }}>
@@ -329,7 +329,7 @@ export default function PonteEnSusOidosPage() {
                   endIcon={<ArrowForward />}
                   onClick={() => document.getElementById('escenas')?.scrollIntoView({ behavior: 'smooth' })}
                   sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     background: `${C.navy} !important`, color: '#fff !important',
                     fontWeight: 700, fontSize: '0.9375rem',
                     px: 3.5, py: 1.75, borderRadius: '6px',
@@ -349,7 +349,7 @@ export default function PonteEnSusOidosPage() {
                   size="large"
                   onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' })}
                   sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     color: C.navy, fontWeight: 600, fontSize: '0.9375rem',
                     px: 2, py: 1.75, textTransform: 'none',
                   }}
@@ -384,7 +384,7 @@ export default function PonteEnSusOidosPage() {
                 <Box sx={{
                   position: 'absolute', left: 20, right: 20, bottom: 20,
                   color: '#fff',
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontStyle: 'italic', fontSize: '1.1rem', lineHeight: 1.4,
                   textShadow: '0 2px 12px rgba(0,0,0,0.5)',
                 }}>
@@ -401,14 +401,14 @@ export default function PonteEnSusOidosPage() {
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 5 }}>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.18em',
               textTransform: 'uppercase', color: C.navy, mb: 1.5,
             }}>
               Cómo funciona
             </Typography>
             <Typography component="h2" sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.85rem', md: '2.5rem' }, fontWeight: 600,
               color: C.navy, letterSpacing: '-0.015em',
             }}>
@@ -428,7 +428,7 @@ export default function PonteEnSusOidosPage() {
                     width: 36, height: 36, borderRadius: '50%',
                     bgcolor: C.navy, color: C.oro,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontWeight: 700, fontSize: '1.05rem',
                     boxShadow: `0 4px 12px ${C.navy}55`,
                   }}>
@@ -444,13 +444,13 @@ export default function PonteEnSusOidosPage() {
                     <p.Icon width={26} height={26} />
                   </Box>
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontWeight: 700, fontSize: '1.05rem', color: C.navy, mb: 0.75,
                   }}>
                     {p.titulo}
                   </Typography>
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.9rem', color: C.gris, lineHeight: 1.55,
                   }}>
                     {p.desc}
@@ -467,21 +467,21 @@ export default function PonteEnSusOidosPage() {
         <Container maxWidth="lg">
           <Box sx={{ mb: 4 }}>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.18em',
               textTransform: 'uppercase', color: C.navy, mb: 1.5,
             }}>
               Paso 1 · Elige una escena
             </Typography>
             <Typography component="h2" sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.85rem', md: '2.5rem' }, fontWeight: 600,
               color: C.navy, mb: 1, letterSpacing: '-0.015em',
             }}>
               ¿Cuál momento del día a día quieres oír?
             </Typography>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: '1rem', color: C.gris, maxWidth: 600,
             }}>
               Toca una tarjeta. El reproductor aparecerá abajo con esa escena lista.
@@ -499,7 +499,7 @@ export default function PonteEnSusOidosPage() {
                     aria-pressed={isActive}
                     sx={{
                       width: '100%', textAlign: 'left', cursor: 'pointer',
-                      fontFamily: '"DM Sans", sans-serif',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif',
                       bgcolor: isActive ? C.navy : '#fff',
                       color: isActive ? '#fff' : C.navy,
                       border: `1.5px solid ${isActive ? C.navy : C.border}`,
@@ -551,7 +551,7 @@ export default function PonteEnSusOidosPage() {
           {!activeScene ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <Typography sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1.5rem', md: '2rem' }, fontStyle: 'italic',
                 color: '#ffffffcc',
               }}>
@@ -563,7 +563,7 @@ export default function PonteEnSusOidosPage() {
               {/* Player */}
               <Grid item xs={12} md={5}>
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.2em',
                   textTransform: 'uppercase', color: C.arena, mb: 1.25,
                 }}>
@@ -579,7 +579,7 @@ export default function PonteEnSusOidosPage() {
                     <activeScene.Icon width={24} height={24} />
                   </Box>
                   <Typography component="h2" sx={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: { xs: '1.6rem', md: '2rem' }, fontWeight: 600,
                     lineHeight: 1.15,
                   }}>
@@ -587,7 +587,7 @@ export default function PonteEnSusOidosPage() {
                   </Typography>
                 </Stack>
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.95rem', color: '#D9CDBFcc', mb: 3, lineHeight: 1.55,
                 }}>
                   {activeScene.desc}
@@ -628,7 +628,7 @@ export default function PonteEnSusOidosPage() {
               {/* Niveles + tagline */}
               <Grid item xs={12} md={7}>
                 <Typography sx={{
-                  fontFamily: '"DM Sans", sans-serif',
+                  fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.2em',
                   textTransform: 'uppercase', color: C.arena, mb: 1.25,
                 }}>
@@ -642,7 +642,7 @@ export default function PonteEnSusOidosPage() {
                         key={l.id}
                         onClick={() => setLevel(l.id)}
                         sx={{
-                          fontFamily: '"DM Sans", sans-serif',
+                          fontFamily: '"Gotham", "DM Sans", sans-serif',
                           bgcolor: isActive ? C.oro : 'transparent',
                           border: `1.5px solid ${isActive ? C.oro : '#ffffff33'}`,
                           color: isActive ? C.navy : '#fff',
@@ -664,7 +664,7 @@ export default function PonteEnSusOidosPage() {
                   borderRadius: '10px', p: 2, mb: 2,
                 }}>
                   <Typography sx={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: '1.05rem', fontStyle: 'italic', color: '#fff', lineHeight: 1.4,
                   }}>
                     "{activeLevel.tagline}"
@@ -677,7 +677,7 @@ export default function PonteEnSusOidosPage() {
                 }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif',
                       fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em',
                       textTransform: 'uppercase', color: C.navy,
                     }}>
@@ -691,7 +691,7 @@ export default function PonteEnSusOidosPage() {
                   </Stack>
                   <Audiogram level={level} compact />
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.7rem', color: C.gris, textAlign: 'center', mt: 0.5,
                   }}>
                     Punteada = audición sana · Banda verde = zona del habla
@@ -707,7 +707,7 @@ export default function PonteEnSusOidosPage() {
       <Box component="section" sx={{ bgcolor: C.arenaPale, py: { xs: 6, md: 8 } }}>
         <Container maxWidth="lg">
           <Typography component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.75rem', md: '2.25rem' }, fontWeight: 600,
             color: C.navy, mb: 4, textAlign: 'center', letterSpacing: '-0.015em',
           }}>
@@ -719,20 +719,20 @@ export default function PonteEnSusOidosPage() {
                 <Box sx={{ bgcolor: '#fff', borderRadius: '12px', p: 3, border: `1px solid ${C.border}`, height: '100%' }}>
                   <Box sx={{ borderTop: `3px solid ${C.oro}`, width: 36, mb: 2 }} />
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em',
                     textTransform: 'uppercase', color: C.navy, mb: 0.75,
                   }}>
                     {l.shortDb}
                   </Typography>
                   <Typography component="h3" sx={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: '1.4rem', fontWeight: 600, color: C.navy, mb: 1,
                   }}>
                     {l.label}
                   </Typography>
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif',
                     fontSize: '0.92rem', color: C.gris, lineHeight: 1.55,
                   }}>
                     {l.tagline}
@@ -750,14 +750,14 @@ export default function PonteEnSusOidosPage() {
           <Grid container spacing={5} alignItems="center">
             <Grid item xs={12} md={5}>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.18em',
                 textTransform: 'uppercase', color: C.navy, mb: 1.5,
               }}>
                 ¿Necesitas orientación?
               </Typography>
               <Typography component="h2" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1.85rem', md: '2.4rem' }, fontWeight: 600,
                 color: C.navy, lineHeight: 1.1, mb: 2,
               }}>
@@ -765,7 +765,7 @@ export default function PonteEnSusOidosPage() {
                 <Box component="span" sx={{ fontStyle: 'italic', color: C.oro }}>información.</Box>
               </Typography>
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '1rem', color: C.gris, lineHeight: 1.6,
               }}>
                 Déjanos tus datos y un profesional del equipo OírConecta te contacta para resolver tus dudas sobre pérdida auditiva, opciones de audífonos o cómo agendar una valoración.
@@ -780,7 +780,7 @@ export default function PonteEnSusOidosPage() {
                   <Alert
                     icon={<CheckCircleOutline />}
                     severity="success"
-                    sx={{ bgcolor: `${C.verde}15`, color: C.verde, fontFamily: '"DM Sans", sans-serif' }}
+                    sx={{ bgcolor: `${C.verde}15`, color: C.verde, fontFamily: '"Gotham", "DM Sans", sans-serif' }}
                   >
                     ¡Gracias! Recibimos tu mensaje. Te contactaremos pronto.
                   </Alert>
@@ -809,7 +809,7 @@ export default function PonteEnSusOidosPage() {
                       onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
                     />
                     {formState.error && (
-                      <Alert severity="error" sx={{ fontFamily: '"DM Sans", sans-serif' }}>{formState.error}</Alert>
+                      <Alert severity="error" sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif' }}>{formState.error}</Alert>
                     )}
                     <Button
                       type="submit"
@@ -818,7 +818,7 @@ export default function PonteEnSusOidosPage() {
                       disabled={formState.loading}
                       endIcon={formState.loading ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : <ArrowForward />}
                       sx={{
-                        fontFamily: '"DM Sans", sans-serif',
+                        fontFamily: '"Gotham", "DM Sans", sans-serif',
                         background: `${C.navy} !important`, color: '#fff !important',
                         fontWeight: 700, fontSize: '0.95rem',
                         px: 4, py: 1.5, borderRadius: '6px',
@@ -830,7 +830,7 @@ export default function PonteEnSusOidosPage() {
                       {formState.loading ? 'Enviando…' : 'Solicitar información'}
                     </Button>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif',
                       fontSize: '0.78rem', color: C.gris,
                     }}>
                       Tus datos se usan únicamente para responder tu solicitud. No compartimos información con terceros.
@@ -856,14 +856,14 @@ export default function PonteEnSusOidosPage() {
         }} />
         <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.18em',
             textTransform: 'uppercase', color: C.oro, mb: 1.5,
           }}>
             Directorio nacional
           </Typography>
           <Typography component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.85rem', md: '2.5rem' }, fontWeight: 600,
             lineHeight: 1.15, mb: 2.5,
           }}>
@@ -873,7 +873,7 @@ export default function PonteEnSusOidosPage() {
             </Box>
           </Typography>
           <Typography sx={{
-            fontFamily: '"DM Sans", sans-serif',
+            fontFamily: '"Gotham", "DM Sans", sans-serif',
             fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4, maxWidth: 600, mx: 'auto',
           }}>
             Audiólogos, fonoaudiólogos y otorrinolaringólogos verificados en toda Colombia. Filtra por ciudad y especialidad, agenda directo.
@@ -886,7 +886,7 @@ export default function PonteEnSusOidosPage() {
               size="large"
               endIcon={<ArrowForward />}
               sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 background: `${C.oro} !important`, color: `${C.navy} !important`,
                 fontWeight: 700, fontSize: '0.95rem',
                 px: 4, py: 1.75, borderRadius: '6px',
@@ -903,7 +903,7 @@ export default function PonteEnSusOidosPage() {
               size="large"
               startIcon={<ShareOutlined />}
               sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 color: '#fff', borderColor: '#ffffff66', borderWidth: '1.5px',
                 fontWeight: 600, px: 4, py: 1.75, borderRadius: '6px',
                 '&:hover': { borderColor: '#fff', bgcolor: '#ffffff10' },

@@ -211,7 +211,7 @@ export default function DirectorioProfesionPage() {
             component={RouterLink} to="/directorio"
             startIcon={<ArrowBackRoundedIcon />}
             sx={{
-              fontFamily: '"DM Sans", sans-serif', textTransform: 'none',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', textTransform: 'none',
               fontWeight: 600, color: C.gris, mb: 3, p: 0,
               '&:hover': { color: C.navy, bgcolor: 'transparent' },
             }}
@@ -220,14 +220,14 @@ export default function DirectorioProfesionPage() {
           <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 2.5 }}>
             <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.75rem',
               fontWeight: 600, letterSpacing: '0.18em',
               textTransform: 'uppercase', color: C.verde,
             }}>Directorio · {profession?.nombre || 'Profesionales'}</Typography>
           </Stack>
 
           <Typography component="h1" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '2.25rem', md: '3.5rem' }, fontWeight: 600,
             lineHeight: 1.08, color: C.navy, letterSpacing: '-0.018em', mb: 2.5,
           }}>
@@ -239,7 +239,7 @@ export default function DirectorioProfesionPage() {
 
           {profession?.descripcion && (
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: { xs: '1.0625rem', md: '1.1875rem' },
               color: C.gris, lineHeight: 1.6, maxWidth: 720, mb: 2,
             }}>
@@ -254,7 +254,7 @@ export default function DirectorioProfesionPage() {
           }}>
             <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: C.verde }} />
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem',
+              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.875rem',
               fontWeight: 600, color: C.verdeProfundo,
             }}>
               {total} profesional{total === 1 ? '' : 'es'} disponible{total === 1 ? '' : 's'}
@@ -302,7 +302,7 @@ export default function DirectorioProfesionPage() {
                       return <Icon sx={{ fontSize: 20, color: C.verde }} />;
                     })()}
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.75rem',
                       fontWeight: 700, color: C.navy, letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                     }}>
@@ -315,12 +315,12 @@ export default function DirectorioProfesionPage() {
                 <Grid item xs={12} md={7}>
                   <Box sx={{ p: { xs: 3.5, md: 5 } }}>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.75rem',
                       fontWeight: 600, letterSpacing: '0.18em',
                       textTransform: 'uppercase', color: C.verde, mb: 1.5,
                     }}>¿Qué hacen?</Typography>
                     <Typography sx={{
-                      fontFamily: '"DM Sans", sans-serif',
+                      fontFamily: '"Gotham", "DM Sans", sans-serif',
                       fontSize: { xs: '1rem', md: '1.0625rem' },
                       color: C.gris, lineHeight: 1.65, mb: 3.5,
                     }}>
@@ -330,7 +330,7 @@ export default function DirectorioProfesionPage() {
                     <Grid container spacing={3}>
                       <Grid item xs={12} sm={6}>
                         <Typography sx={{
-                          fontFamily: '"Playfair Display", Georgia, serif',
+                          fontFamily: '"Gotham", sans-serif',
                           fontSize: '1.0625rem', fontWeight: 600,
                           color: C.navy, mb: 1.5,
                         }}>Qué hacen</Typography>
@@ -339,7 +339,7 @@ export default function DirectorioProfesionPage() {
                             <Box key={q} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                               <CheckCircleOutlineIcon sx={{ fontSize: 16, color: C.verde, mt: '3px', flexShrink: 0 }} />
                               <Typography sx={{
-                                fontFamily: '"DM Sans", sans-serif',
+                                fontFamily: '"Gotham", "DM Sans", sans-serif',
                                 fontSize: '0.875rem', color: C.navy, lineHeight: 1.5,
                               }}>{q}</Typography>
                             </Box>
@@ -348,7 +348,7 @@ export default function DirectorioProfesionPage() {
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <Typography sx={{
-                          fontFamily: '"Playfair Display", Georgia, serif',
+                          fontFamily: '"Gotham", sans-serif',
                           fontSize: '1.0625rem', fontWeight: 600,
                           color: C.navy, mb: 1.5,
                         }}>Cuándo consultar</Typography>
@@ -360,7 +360,7 @@ export default function DirectorioProfesionPage() {
                                 bgcolor: C.oro, mt: '7px', flexShrink: 0,
                               }} />
                               <Typography sx={{
-                                fontFamily: '"DM Sans", sans-serif',
+                                fontFamily: '"Gotham", "DM Sans", sans-serif',
                                 fontSize: '0.875rem', color: C.navy, lineHeight: 1.5,
                               }}>{c}</Typography>
                             </Box>
@@ -381,7 +381,7 @@ export default function DirectorioProfesionPage() {
           {featured.length > 0 && (
             <Box sx={{ mb: 6 }}>
               <Typography component="h2" sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1.5rem', md: '1.875rem' }, fontWeight: 600,
                 color: C.navy, letterSpacing: '-0.01em', mb: 3,
               }}>
@@ -401,7 +401,7 @@ export default function DirectorioProfesionPage() {
           )}
 
           <Typography component="h2" sx={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.5rem', md: '1.875rem' }, fontWeight: 600,
             color: C.navy, letterSpacing: '-0.01em', mb: 2.5,
           }}>
@@ -426,7 +426,7 @@ export default function DirectorioProfesionPage() {
                         <SearchRoundedIcon sx={{ fontSize: 20, color: C.gris }} />
                       </InputAdornment>
                     ),
-                    sx: { borderRadius: '8px', fontFamily: '"DM Sans", sans-serif' },
+                    sx: { borderRadius: '8px', fontFamily: '"Gotham", "DM Sans", sans-serif' },
                   }}
                 />
               </Grid>
@@ -434,10 +434,10 @@ export default function DirectorioProfesionPage() {
                 <TextField
                   select fullWidth size="small" value={ciudad}
                   onChange={(e) => setCiudad(e.target.value)}
-                  InputProps={{ sx: { borderRadius: '8px', fontFamily: '"DM Sans", sans-serif' } }}
+                  InputProps={{ sx: { borderRadius: '8px', fontFamily: '"Gotham", "DM Sans", sans-serif' } }}
                 >
                   {CIUDADES.map((c) => (
-                    <MenuItem key={c} value={c} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>
+                    <MenuItem key={c} value={c} sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.9rem' }}>
                       {c}
                     </MenuItem>
                   ))}
@@ -447,13 +447,13 @@ export default function DirectorioProfesionPage() {
                 <TextField
                   select fullWidth size="small" value={poliza}
                   onChange={(e) => setPoliza(e.target.value)}
-                  InputProps={{ sx: { borderRadius: '8px', fontFamily: '"DM Sans", sans-serif' } }}
+                  InputProps={{ sx: { borderRadius: '8px', fontFamily: '"Gotham", "DM Sans", sans-serif' } }}
                 >
-                  <MenuItem value={POLIZA_LABEL_TODAS} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>
+                  <MenuItem value={POLIZA_LABEL_TODAS} sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.9rem' }}>
                     {POLIZA_LABEL_TODAS}
                   </MenuItem>
                   {POLIZAS_COLOMBIA.map((p) => (
-                    <MenuItem key={p} value={p} sx={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>
+                    <MenuItem key={p} value={p} sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.9rem' }}>
                       {p}
                     </MenuItem>
                   ))}
@@ -471,7 +471,7 @@ export default function DirectorioProfesionPage() {
             </Grid>
             {hasFilters && !loading && (
               <Typography sx={{
-                mt: 1.5, fontFamily: '"DM Sans", sans-serif',
+                mt: 1.5, fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.8125rem', color: C.gris,
               }}>
                 {total} resultado{total === 1 ? '' : 's'} con filtros aplicados

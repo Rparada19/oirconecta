@@ -101,14 +101,14 @@ function PathCard({ p, navigate, delay }) {
         <Box sx={{
           position: 'absolute', top: 16, left: 16,
           bgcolor: 'rgba(255,255,255,0.92)', color: C.navy,
-          fontFamily: '"DM Sans", sans-serif',
+          fontFamily: '"Gotham", "DM Sans", sans-serif',
           fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em',
           textTransform: 'uppercase', px: 1.25, py: 0.5, borderRadius: '4px',
         }}>{p.tag}</Box>
         {/* Número editorial */}
         <Box sx={{
           position: 'absolute', bottom: 12, right: 14,
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '4rem', fontWeight: 700, color: '#fff',
           opacity: 0.85, lineHeight: 1,
           textShadow: '0 2px 12px rgba(0,0,0,0.4)',
@@ -117,7 +117,7 @@ function PathCard({ p, navigate, delay }) {
 
       {/* Texto */}
       <Typography component="h3" className="oc-title" sx={{
-        fontFamily: '"Playfair Display", Georgia, serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: { xs: '1.4rem', md: '1.625rem' }, fontWeight: 600,
         color: C.navy, mb: 1.25, lineHeight: 1.15,
         transition: 'color 0.3s ease',
@@ -125,7 +125,7 @@ function PathCard({ p, navigate, delay }) {
         {p.titulo}
       </Typography>
       <Typography sx={{
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.95rem', color: C.gris, lineHeight: 1.55, mb: 2.25,
       }}>
         {p.bajada}
@@ -134,7 +134,7 @@ function PathCard({ p, navigate, delay }) {
       {/* Arrow CTA editorial */}
       <Box className="oc-arrow" sx={{
         display: 'inline-flex', alignItems: 'center', gap: 1.25,
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: '"Gotham", "DM Sans", sans-serif',
         fontSize: '0.825rem', fontWeight: 700,
         color: C.navy, letterSpacing: '0.08em', textTransform: 'uppercase',
         pb: 0.5, mt: 'auto',
@@ -177,7 +177,7 @@ export default function HomeUserPathsSection() {
             <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
               <Box sx={{ width: 32, height: 2, bgcolor: C.oro }} />
               <Typography sx={{
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Gotham", "DM Sans", sans-serif',
                 fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                 textTransform: 'uppercase', color: C.navy,
               }}>
@@ -185,7 +185,7 @@ export default function HomeUserPathsSection() {
               </Typography>
             </Stack>
             <Typography component="h2" sx={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '2.25rem', md: '3.5rem', lg: '4rem' }, fontWeight: 500,
               color: C.navy, lineHeight: 1, letterSpacing: '-0.025em',
             }}>
@@ -197,7 +197,7 @@ export default function HomeUserPathsSection() {
           </Box>
           <Box sx={{ pb: { md: 2 } }}>
             <Typography sx={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Gotham", "DM Sans", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.2rem' }, lineHeight: 1.6,
               color: C.gris, maxWidth: 560,
             }}>
