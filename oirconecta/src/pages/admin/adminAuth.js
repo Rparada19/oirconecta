@@ -36,6 +36,11 @@ export async function adminFetch(path, options = {}) {
       ...(options.headers || {}),
     },
   });
+  // Token vencido o inválido: sin esto las pantallas quedan vacías sin avisar.
+  if (res.status === 401 && token) {
+    clearAdminToken();
+    window.location.replace('/admin-login');
+  }
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
   return { ok: res.ok, status: res.status, data };
