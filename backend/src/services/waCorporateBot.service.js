@@ -2078,6 +2078,27 @@ async function sinFirmaRepetida(texto, firma, conversationId) {
  * @param {string} [p.adHeadline]  titular del anuncio, para ensayar campañas
  * @param {string} [p.adBody]
  */
+/**
+ * El último recurso cuando el modelo gastó todas las vueltas llamando
+ * herramientas y no escribió nada. Sin esto el paciente ve dos palomitas y
+ * ninguna respuesta —"es para un familiar" y silencio—, que es peor que
+ * cualquier respuesta imperfecta.
+ */
+async function respuestaSinTools(client, systemPrompt, messages) {
+  try {
+    const resp = await client.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 800,
+      system: `${systemPrompt}\n\nESCRIBE AHORA el mensaje para el paciente, con lo que ya sabes. No tienes herramientas en este turno: si te faltaba mirar la agenda, dile que ya le confirmas los horarios y pregúntale qué día le sirve.`,
+      messages,
+    });
+    return (resp.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+  } catch (e) {
+    console.error('[wa-bot] respuesta sin tools falló:', e.message);
+    return '';
+  }
+}
+
 async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contactName = null, adHeadline = null, adBody = null }) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('Falta ANTHROPIC_API_KEY');
   if (!messages.length) throw new Error('Sin mensajes');
@@ -2163,6 +2184,10 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
     }
     working.push({ role: 'user', content: results });
   }
+
+  // Se quedó en herramientas y nunca escribió. Le pedimos el mensaje sin
+  // herramientas: quedarse callado es la peor respuesta posible.
+  if (!texto.trim()) texto = await respuestaSinTools(client, systemPrompt, working);
 
   const escala = texto.includes(ESCALATE_TAG);
   return {
@@ -2317,7 +2342,8 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
         }
         workingMessages.push({ role: 'user', content: toolResults });
       }
-      reply = finalText;
+      // Gastó las vueltas en herramientas y no escribió: no lo dejamos mudo.
+      reply = finalText || await respuestaSinTools(client, systemPrompt, workingMessages);
     } else {
       // Path simple sin tools (INFO_GENERAL, PROFESIONAL_DIRECTORIO, etc.)
       const resp = await client.messages.create({

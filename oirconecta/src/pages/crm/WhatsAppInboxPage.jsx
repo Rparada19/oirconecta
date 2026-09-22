@@ -183,7 +183,9 @@ export default function WhatsAppInboxPage({
         setEnsMsgs([...nuevos, { role: 'assistant', content: d.texto, escala: d.escala }]);
         setEnsTrazas(d.trazas || []);
       } else {
-        setEnsError(r?.data?.error || 'El bot no respondió');
+        // El cliente devuelve el mensaje del servidor en r.error; leyendo solo
+        // r.data.error se veía "El bot no respondió" y se perdía la causa.
+        setEnsError(r?.error || r?.data?.error || 'El bot no respondió');
       }
     } catch (e) {
       setEnsError(e?.response?.data?.error || e.message);
