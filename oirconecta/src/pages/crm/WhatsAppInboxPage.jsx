@@ -29,6 +29,8 @@ import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import LaunchIcon from '@mui/icons-material/Launch';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
+import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
+import BotAprendizajeDialog from './BotAprendizajeDialog';
 import { api } from '../../services/apiClient';
 
 const NAVY = '#0F2A4A';
@@ -119,6 +121,9 @@ export default function WhatsAppInboxPage({
 
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
+
+  // 🧠 Lo que el bot propone aprender
+  const [aprOpen, setAprOpen] = useState(false);
 
   // Ensayo del bot — conversar sin gastar un mensaje real
   const [ensOpen, setEnsOpen] = useState(false);
@@ -534,6 +539,12 @@ export default function WhatsAppInboxPage({
               <IconButton onClick={() => setEnsOpen(true)}
                 sx={{ bgcolor: '#eff6ff', color: '#0369a1', width: 36, height: 36, '&:hover': { bgcolor: '#dbeafe' } }}>
                 <SmartToyOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Lo que el bot está aprendiendo">
+              <IconButton onClick={() => setAprOpen(true)}
+                sx={{ bgcolor: '#f5f3ff', color: '#6d28d9', width: 36, height: 36, '&:hover': { bgcolor: '#ede9fe' } }}>
+                <PsychologyOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Rendimiento de las campañas">
@@ -1145,6 +1156,8 @@ export default function WhatsAppInboxPage({
       </Dialog>
 
       {/* ─── Ensayo: conversar con el bot sin gastar un mensaje ─── */}
+      <BotAprendizajeDialog open={aprOpen} onClose={() => setAprOpen(false)} onVerChat={loadDetail} />
+
       <Dialog open={ensOpen} onClose={() => setEnsOpen(false)} maxWidth="sm" fullWidth
         PaperProps={{ sx: { borderRadius: '14px', height: '82vh' } }}>
         <DialogTitle sx={{ ...SERIF, fontWeight: 700, color: NAVY, pb: 1 }}>

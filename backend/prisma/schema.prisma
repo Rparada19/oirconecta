@@ -3390,3 +3390,48 @@ model FinanceAsset {
 
   @@map("finance_assets")
 }
+
+/// Lo que el bot de WhatsApp propone aprender. La revisión nocturna lee los
+/// chats del día —en qué mensaje se fue la gente, qué respondió el equipo
+/// cuando el bot no supo— y deja propuestas. Nada llega a un paciente hasta
+/// que alguien la aprueba: una FAQ aprobada entra al cerebro, una LECCION
+/// aprobada entra al prompt del bot.
+model BotAprendizaje {
+  id         String   @id @default(uuid())
+  /// FAQ | LECCION | ERROR
+  tipo       String
+  /// PENDIENTE | APROBADA | DESCARTADA
+  estado     String   @default("PENDIENTE")
+  titulo     String
+  /// FAQ: la pregunta tal como la hacen los pacientes.
+  pregunta   String?  @db.Text
+  /// FAQ: la respuesta. LECCION: la regla que el bot debe seguir. ERROR: qué corregir.
+  respuesta  String   @db.Text
+  /// Por qué: lo que se vio en los chats, con cifras.
+  evidencia  String   @db.Text
+  casos      Int      @default(1)
+  /// Conversaciones de donde salió, para poder abrirlas.
+  conversationIds String[] @default([])
+  /// FAQ creada al aprobar.
+  faqId      String?
+  revisadoAt DateTime?
+  revisadoPor String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([estado, tipo])
+  @@map("bot_aprendizajes")
+}
+
+/// Una fila por noche revisada: las cifras del día y cuántas propuestas dejó.
+/// También evita correr la revisión dos veces el mismo día.
+model BotRevision {
+  id        String   @id @default(uuid())
+  /// YYYY-MM-DD en hora de Bogotá.
+  dia       String   @unique
+  metricas  Json
+  propuestas Int     @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("bot_revisiones")
+}

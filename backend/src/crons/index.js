@@ -611,6 +611,12 @@ async function tick() {
     });
 
     // 9) Refresco editorial de marcas (día 1 del mes 8-9am CO si BRAND_AUTO_ENABLED=true)
+    // De madrugada, una vez: lee los chats de ayer y deja lo que el bot
+    // debería aprender para que alguien lo apruebe.
+    const aprendizajeResult = await runJob('botAprendizaje', async () => (
+      require('../services/botAprendizaje.service').revisionNocturna()
+    ));
+
     const brandResult = await runJob('brandInfoRefresh', async () => {
       const brandInfo = require('../services/brandInfo.service');
       return brandInfo.refreshStaleOne();

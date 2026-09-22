@@ -1991,6 +1991,12 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
     }
   }
 
+  // Lo que el equipo aprobó en 🧠 Aprendizaje, sacado de cómo terminaron
+  // chats reales. Va antes del beneficio, que tiene que seguir siendo lo último.
+  if (['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS', 'PACIENTE_EXISTENTE'].includes(conv.contactType)) {
+    systemPrompt += await require('./botAprendizaje.service').leccionesParaElPrompt();
+  }
+
   // Va de últimas a propósito. El nodo de PRECIOS del cerebro dice cuánto
   // cuesta, y cuando esto iba antes el bot abría con la cifra igual. Lo último
   // que lee es lo que más pesa.

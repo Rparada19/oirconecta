@@ -168,6 +168,46 @@ router.post('/ensayo', async (req, res, next) => {
   }
 });
 
+// ─── 🧠 Aprendizaje del bot ────────────────────────────────
+// Lo que la revisión nocturna propone aprender. Nada llega a un paciente hasta
+// que se aprueba aquí. Forzar una revisión no crea duplicados de lo pendiente:
+// el modelo recibe la lista y no la repite.
+router.get('/aprendizaje', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await require('../services/botAprendizaje.service').listar() });
+  } catch (e) { next(e); }
+});
+
+router.post('/aprendizaje/revisar', async (req, res) => {
+  try {
+    const out = await require('../services/botAprendizaje.service').revisarDia({
+      dia: req.body?.dia || undefined, forzar: true,
+    });
+    res.json({ success: true, data: out });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+router.post('/aprendizaje/:id/aprobar', async (req, res) => {
+  try {
+    const { titulo, pregunta, respuesta } = req.body || {};
+    const out = await require('../services/botAprendizaje.service').aprobar(
+      req.params.id, { titulo, pregunta, respuesta }, req.user?.id || null,
+    );
+    res.json({ success: true, data: out });
+  } catch (e) {
+    res.status(e.statusCode || e.status || 400).json({ success: false, error: e.message });
+  }
+});
+
+router.post('/aprendizaje/:id/descartar', async (req, res, next) => {
+  try {
+    const out = await require('../services/botAprendizaje.service').descartar(req.params.id, req.user?.id || null);
+    res.json({ success: true, data: out });
+  } catch (e) { next(e); }
+});
+
 // ─── Recuperar los chats abiertos con la oferta ────────────
 // Con ?dryRun=true solo cuenta a cuántos les llegaría, sin mandar nada.
 router.post('/recuperar', async (req, res) => {
