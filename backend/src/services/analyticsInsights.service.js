@@ -183,6 +183,7 @@ async function getTrafficSources(range) {
       CASE
         WHEN LOWER(COALESCE("utmSource", '')) IN ('meta', 'facebook', 'ig', 'instagram') THEN 'Meta Ads'
         WHEN LOWER(COALESCE("utmSource", '')) IN ('google', 'gads', 'adwords')            THEN 'Google Ads'
+        WHEN COALESCE("gclid", '') <> ''                                                  THEN 'Google Ads'
         WHEN COALESCE("utmSource", '') = 'oirconecta'                                     THEN 'Campaña interna'
         WHEN COALESCE("utmSource", '') <> ''                                              THEN CONCAT('Otro UTM: ', "utmSource")
         WHEN LOWER(COALESCE("referrer", '')) LIKE '%google.%'                             THEN 'Orgánico Google'
