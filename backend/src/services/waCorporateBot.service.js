@@ -71,6 +71,39 @@ const BOOKING_TOOLS = [
       required: ['appointmentTypeId', 'scheduledAt', 'patientName'],
     },
   },
+  {
+    name: 'reprogramar_cita',
+    description: 'Mueve a otra fecha/hora la cita vigente de quien escribe (la que tiene este mismo WhatsApp). Antes: get_availability para el día nuevo y confirmar con él el día y la hora.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        date: { type: 'string', description: 'Fecha nueva YYYY-MM-DD.' },
+        time: { type: 'string', description: 'Hora nueva HH:MM, tal cual viene en get_availability.' },
+      },
+      required: ['date', 'time'],
+    },
+  },
+  {
+    name: 'cancelar_cita',
+    description: 'Cancela la cita vigente de quien escribe. Solo si él pidió cancelar y no quiso moverla a otro día.',
+    input_schema: {
+      type: 'object',
+      properties: { motivo: { type: 'string', description: 'Lo que dijo, en pocas palabras.' } },
+    },
+  },
+  {
+    name: 'registrar_paciente_otra_ciudad',
+    description: 'Pasa al equipo a alguien que vive fuera de Bogotá para que le busquen un profesional en su ciudad. Solo si aceptó que el equipo le escriba.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ciudad: { type: 'string' },
+        nombre: { type: 'string', description: 'Si ya lo dijo.' },
+        motivo: { type: 'string', description: 'Qué le pasa, en sus palabras y en una línea.' },
+      },
+      required: ['ciudad'],
+    },
+  },
 ];
 
 // Solo para la rama REFERIDO_ALIADO: fuera de Bogotá no hay agenda propia, así
@@ -94,7 +127,10 @@ const REFERIDO_TOOLS = [
 
 /** Qué herramientas ve el modelo según la rama de la conversación. */
 function toolsFor(contactType) {
-  if (contactType === 'REFERIDO_ALIADO') return [...BOOKING_TOOLS, ...REFERIDO_TOOLS];
+  // El aliado tiene su propio registro de otras ciudades, con el acuerdo comercial.
+  if (contactType === 'REFERIDO_ALIADO') {
+    return [...BOOKING_TOOLS.filter((t) => t.name !== 'registrar_paciente_otra_ciudad'), ...REFERIDO_TOOLS];
+  }
   return BOOKING_TOOLS;
 }
 
@@ -346,6 +382,74 @@ const bookingToolImpls = {
     };
   },
 
+  // Luis pidió pasar su cita de 9:50 a 2:00; el bot le dijo "sí, te la muevo"
+  // y luego lo mandó a llamar. Edilfredo pidió cancelar: "yo no puedo hacerlo
+  // por acá". Si el bot promete "si necesitas moverla, me escribes por acá", lo
+  // tiene que poder cumplir.
+  async reprogramar_cita(ctx, { date, time }) {
+    const cita = await citaVigentePorTelefono(ctx?.waPhone);
+    if (!cita) return { error: 'No encontré una cita vigente con este WhatsApp. Pídele el día que tenía agendado y pásalo al equipo con [ESCALAR_HUMANO].' };
+    if (!cita.rescheduleToken) return { error: 'Esta cita no se puede mover desde el chat. Dile que el equipo se la mueve y agrega [ESCALAR_HUMANO].' };
+
+    const profileId = ctx?.profileId || await retailProfileId();
+    const { slots } = await booking.computeSlotsForDay(profileId, date, {});
+    if (!(slots || []).some((s) => s.time === time)) {
+      return { error: `Las ${time} del ${fechaLegible(`${date}T12:00:00`)} no están libres. Llama get_availability y ofrécele otras.` };
+    }
+
+    const antes = `${fechaLegible(cita.fecha)} a las ${cita.hora}`;
+    const updated = await require('./appointments.service').rescheduleByToken(cita.rescheduleToken, date, time);
+    await prisma.appointment.update({
+      where: { id: cita.id },
+      data: { notas: `${cita.notas ? `${cita.notas}\n` : ''}Movida por WhatsApp (bot): antes ${antes}.` },
+    }).catch(() => {});
+    return {
+      id: updated.id,
+      fechaLegible: fechaLegible(`${date}T12:00:00`),
+      hora: time,
+      antes,
+      mensaje: 'Cita movida. Confírmale usando fechaLegible y hora tal como vienen.',
+    };
+  },
+
+  async cancelar_cita(ctx, { motivo } = {}) {
+    const cita = await citaVigentePorTelefono(ctx?.waPhone);
+    if (!cita) return { error: 'No encontré una cita vigente con este WhatsApp.' };
+    if (!cita.rescheduleToken) return { error: 'Esta cita no se puede cancelar desde el chat. Dile que el equipo la cancela y agrega [ESCALAR_HUMANO].' };
+    await require('./appointments.service').cancelByToken(cita.rescheduleToken, motivo || 'Cancelada por WhatsApp');
+    return {
+      cancelada: `${fechaLegible(cita.fecha)} a las ${cita.hora}`,
+      mensaje: 'Cita cancelada. Díselo y ofrécele, una sola vez y sin insistir, agendar otro día.',
+    };
+  },
+
+  // Fuera de Bogotá no hay a dónde mandarlo todavía: el directorio no tiene
+  // profesionales en otras ciudades. Lo que funcionó fue lo que hizo el equipo a
+  // mano —"conseguí una audióloga amiga en Manizales", "te agendo en Aural El
+  // Poblado"—, así que el bot le pasa el caso al equipo en vez de insistirle
+  // con un viaje que ya dijo que no puede hacer.
+  async registrar_paciente_otra_ciudad(ctx, { ciudad, nombre, motivo }) {
+    const quien = nombre || ctx?.contactName || 'Paciente WhatsApp';
+    await prisma.task.create({
+      data: {
+        type: 'CALL',
+        title: `Buscar profesional en ${ciudad} — ${quien}`,
+        description: `Escribió al WhatsApp y vive en ${ciudad}, no puede venir a Bogotá.\nTeléfono: ${ctx?.waPhone || ''}\nQué le pasa: ${motivo || '(no lo dijo)'}\nSe le dijo que el equipo le escribe por el mismo chat.`,
+        priority: 'HIGH',
+        dueAt: siguienteDiaHabil(),
+        createdBy: 'system',
+        sourceEventCode: 'WA_PACIENTE_OTRA_CIUDAD',
+      },
+    });
+    require('./alertaEquipo.service').avisar({
+      titulo: `Paciente en ${ciudad} — buscarle profesional allá`,
+      quien,
+      telefono: ctx?.waPhone,
+      texto: motivo || '',
+    }).catch(() => {});
+    return { mensaje: 'Pasado al equipo. Dile que le escriben por este mismo chat; no prometas nombre ni fecha.' };
+  },
+
   async registrar_referido_otra_ciudad(ctx, input) {
     const { conversationId, waPhone, partnerId } = ctx || {};
     const ciudad = String(input.ciudad || '').trim();
@@ -411,6 +515,28 @@ const bookingToolImpls = {
   },
 };
 
+/**
+ * La próxima cita viva de quien escribe, por teléfono. Solo de hoy en adelante:
+ * una cita de la semana pasada no se mueve ni se cancela.
+ */
+async function citaVigentePorTelefono(telefono) {
+  const last10 = String(telefono || '').replace(/\D/g, '').slice(-10);
+  if (!last10) return null;
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
+  return prisma.appointment.findFirst({
+    where: {
+      estado: 'CONFIRMED',
+      fecha: { gte: new Date(`${hoy}T00:00:00.000Z`) },
+      OR: [
+        { patientPhone: { contains: last10 } },
+        { patient: { is: { telefono: { contains: last10 } } } },
+      ],
+    },
+    orderBy: [{ fecha: 'asc' }, { hora: 'asc' }],
+    select: { id: true, fecha: true, hora: true, notas: true, rescheduleToken: true },
+  });
+}
+
 /** Siguiente día hábil a las 9:00 (hora Bogotá, guardada en UTC). */
 function siguienteDiaHabil() {
   const d = new Date();
@@ -433,6 +559,23 @@ const BUTTON_IDS = {
 
 function botEnabled() {
   return process.env.WA_BOT_ENABLED === 'true';
+}
+
+/**
+ * El nombre del perfil de WhatsApp, solo si parece un nombre de persona.
+ *
+ * El perfil es lo que cada quien escribió ahí: "hectordiaz1748",
+ * "luvianarenas1952@", "Casa Lote Umbita", "Mis Hijos Mi Fortaleza". Saludar
+ * con "Quedé pendiente de ti, Casa 🙂" delata a la máquina peor que no decir
+ * nombre. Devuelve '' cuando no sirve.
+ */
+const NO_SON_NOMBRES = new Set(['casa', 'mis', 'mi', 'solo', 'doña', 'don', 'dr', 'dra', 'el', 'la', 'los', 'las', 'tienda', 'hola', 'amor', 'familia', 'ing']);
+
+function nombreParaSaludo(perfil) {
+  const primero = String(perfil || '').trim().split(/\s+/)[0] || '';
+  if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{2,20}$/.test(primero)) return '';
+  if (NO_SON_NOMBRES.has(primero.toLowerCase())) return '';
+  return primero[0].toUpperCase() + primero.slice(1).toLowerCase();
 }
 
 /** Formatea el nombre corto para el saludo. */
@@ -737,33 +880,27 @@ Quien escribe a un centro auditivo casi nunca escribe tranquilo. Lleva meses —
 Antes de proponer nada, tienes que saber qué le está pasando. No es un trámite para llegar a la cita: es el trabajo.
 
 - Pregunta y escucha. Una pregunta por mensaje, la que de verdad quieras saber.
-- Cuando te cuente algo, reconócelo antes de seguir. "Eso que me cuentas es de lo más común, y tiene solución" vale más que cualquier lista de servicios.
+- Cuando te cuente algo, reconócelo antes de seguir, con lo que ÉL dijo ("dos años pidiendo que te repitan cansa"), no con una frase de cajón. "Eso es de lo más común y tiene solución" se lo decía el bot a todo el mundo —al niño con autismo, a la señora de 92 años con oxígeno— y quien lo lee siente que no lo leyeron.
 - Si es por un familiar, habla del familiar: cómo lo nota, desde cuándo, qué le preocupa a él.
 - Responde de verdad lo que te pregunten. Informar SÍ es tu trabajo. Alguien que se va sabiendo algo que no sabía vuelve; alguien a quien le esquivaron la pregunta no.
 - Cada mensaje tuyo tiene que dejarle algo: una respuesta, una orientación, un dato que no tenía. Un mensaje que solo pregunta es un mensaje que solo te sirve a ti. Dale algo y pregunta después.
 - Dos preguntas seguidas ya son un interrogatorio. Si llevas dos y todavía no le has dado nada, dale algo antes de la tercera.
 - Si se despide o te da las gracias, despídete y para. No le metas una pregunta más ni "cualquier cosa me escribes y seguimos": ya terminó, y perseguir a alguien que cerró la conversación es la forma más rápida de que no vuelva.
 
-CUANDO YA PIDIÓ CITA, PRIMERO ESCÚCHALO — PERO SIN PONERLE PEAJE.
+CUANDO YA PIDIÓ CITA, LE DAS LA CITA. EN EL PRIMER MENSAJE.
 
-Quien le escribe a un centro auditivo pidiendo cita casi nunca viene por un trámite. Lleva meses, a veces años, notando que algo pasa. Y lo más probable —esto es lo que más importa de todo el prompt— es que ya haya pasado por alguien que no lo atendió bien: le dijeron que era normal por la edad, le vendieron un aparato sin medirle nada, o simplemente no lo escucharon. Si lo mandas derecho a escoger una hora, eres uno más de esos.
+Esto se aprendió con datos, no con teoría: de 80 conversaciones, unas 22 murieron en el primer mensaje. La persona escribió "Quiero agendar una cita" y el bot le contestó "¿qué es lo que vienes notando con tu audición?". Nadie contestó. En cambio, a quien le pusieron tres horas de una vez, agendó.
 
-Así que tu primer mensaje hace tres cosas, en este orden y en pocas líneas:
+Pidió una cita: la cita es la respuesta. Tu primer mensaje, en pocas líneas:
   1. Lo saludas por su nombre.
-  2. Le confirmas que sí, que con gusto le agendas. Sin condiciones. La cita NO está en duda y no depende de que te conteste nada.
-  3. Le haces UNA pregunta de verdad sobre qué lo trae. Una. Con tus palabras, las que pida ese chat.
+  2. Llamas get_availability y le ofreces 3 horarios reales del día hábil más cercano con cupo.
+  3. Si quieres, UNA línea opcional que no condiciona nada: "Y si quieres, cuéntame qué vienes notando, así la audióloga ya llega enterada."
 
-Ejemplo de la forma, no de las palabras: "¡Hola, Ana! 👋 Claro que sí, con gusto te agendo. Cuéntame una cosa antes de buscarte el horario: ¿qué es lo que vienes notando?"
+Ejemplo de la forma, no de las palabras: "¡Hola, Ana! 👋 Claro que sí. Mañana, miércoles 23, tengo:\n1️⃣ 8:00 a.m.\n2️⃣ 9:50 a.m.\n3️⃣ 2:00 p.m.\n¿Cuál te sirve? Y si quieres, cuéntame qué vienes notando."
 
-Cómo NO se hace:
-· Con peaje: "antes de agendar necesito saber…", "para poder buscarte el horario, primero dime…". La cita ya se la prometiste; condicionarla es una trampa y se nota.
-· Con formulario: "¿es para ti o para un familiar?", "¿qué edad tiene?", "¿hace cuánto?" en fila. Eso es una admisión, no una conversación.
-· Con la misma frase de siempre. Si le preguntas igual a dos personas distintas, no estás preguntando: estás llenando un campo.
-· Dos preguntas. Una, y esperas.
+Lo que pregunte en ese mismo primer mensaje (dónde quedan, cuánto vale) se responde ahí mismo, antes de los horarios. Si no dijo nada más que "quiero agendar", no le preguntes nada antes de darle horas.
 
-Qué haces con lo que te conteste: lo reconoces en una línea —de verdad, no con "entiendo"— y AHÍ SÍ llamas get_availability y le ofreces horas concretas. Ya tienes lo que necesitas; no le preguntes nada más.
-
-Y si no quiere contarte —si te repite que solo quiere una hora, si contesta "solo quiero agendar", o si simplemente no responde la pregunta— lo sueltas de inmediato y le pones los horarios. Nadie está obligado a contarte su historia para que lo atiendan. Insistir después de esa señal sí es no haberlo escuchado.
+CUANDO PIDE "MÁS INFORMACIÓN" (texto que trae el anuncio): no le devuelvas una pregunta pelada. Dale algo primero —en dos líneas: que la valoración mide cómo está oyendo y sale sabiendo qué pasa, y el beneficio de esta semana— y después UNA pregunta.
 
 ═══ NUNCA HAGAS ESTO ═══
 Son las cosas que vuelven frío un chat, y todas suenan a empresa hablando de sí misma:
@@ -788,6 +925,21 @@ Y ahí sí, concreto:
 
 Ojo con la trampa contraria: escuchar no es quedarse en el aire. Si ya entendiste qué le pasa y no le propones nada, lo dejaste peor que como llegó. Escuchar primero, proponer después — las dos cosas.
 
+═══ SI VIVE FUERA DE BOGOTÁ ═══
+Uno de cada seis que escribe vive en otra ciudad: Villavicencio, Cúcuta, Manizales, Pereira, Medellín, Neiva, Duitama, Chaparral. El consultorio está solo en Bogotá (y la Sabana: Chía, Cajicá, Soacha, Cota, Mosquera, Funza, La Calera, Facatativá, Zipaquirá cuentan como cerca).
+· En cuanto diga que vive en otra ciudad, deja de ofrecerle horarios en Bogotá. Una sola vez puedes decirle que si viaja, con gusto lo atendemos. No más: ofrecerle Bogotá después de que dijo "no puedo viajar" es no haberlo leído.
+· Lo que sí haces: le ofreces que el equipo le busque un profesional de confianza en su ciudad. Si dice que sí, llama registrar_paciente_otra_ciudad (con su nombre si lo sabes, la ciudad y lo que le pasa) y dile que el equipo le escribe por este mismo chat. No le prometas nombre, fecha ni hora: eso lo resuelve el equipo.
+· NUNCA digas que "atendemos a todo el país", que "tenemos convenio con las EPS", que "trabajamos con todas las EPS" ni que "los controles se hacen por videoconsulta". Nada de eso es cierto para esta persona.
+· Tampoco le mandes a oirconecta.com/directorio: todavía no tiene profesionales en otras ciudades y sería mandarlo a una página vacía.
+
+═══ CUANDO NO ES PARA NOSOTROS SINO PARA UN MÉDICO ═══
+Dolor, secreción o sangre por el oído, "una parte blanca" o algo raro que se ve en el oído, mareo fuerte, pérdida de audición de un día para otro, o un zumbido que empezó de golpe: eso lo tiene que ver un otorrino, y se le dice con claridad y sin asustar. Puedes ofrecer la valoración además, pero no en lugar del médico.
+Con niños, discapacidad o personas mayores muy frágiles no uses frases de cajón: responde a lo que contaron.
+Si la persona NO PUEDE SALIR de la casa (accidente, oxígeno, cama, cuidadora que no puede dejarla): no le insistas con el consultorio. Dile que le pasas el caso al equipo para ver cómo atenderla y agrega [ESCALAR_HUMANO]. La visita a domicilio la ofrece el equipo, no tú.
+
+═══ NO INVENTES ═══
+Si un dato no está en estas instrucciones, en el conocimiento del centro o en lo que devuelve una herramienta, no lo digas: ni convenios, ni EPS, ni sedes, ni servicios a domicilio, ni tiempos, ni precios. "Eso te lo confirma el equipo" es una respuesta honesta; un dato inventado es una mentira que después alguien tiene que desmentir.
+
 ═══ REGLAS DE NEGOCIO ═══
 - Por chat no se venden audífonos ni se elige aparato. Lo único que se define aquí es cuándo lo vemos.
 - El horario del centro te lo dan más abajo, leído de la agenda. No lo digas de memoria.
@@ -803,6 +955,7 @@ Antes de responder, BUSCA el dato en lo que sabes: el conocimiento del centro, l
 - Si aun así quiere saber el valor normal, díselo de una. Sin rodeos. Esquivar el precio de una consulta es lo que más desconfianza genera.
 - Lo demás se responde en PLANES DE ADAPTACIÓN, nunca en audífonos sueltos. "¿Cuánto vale un audífono?" se contesta explicando qué es un plan y desde cuánto empieza — no con la cifra de un aparato, que sin acompañamiento no le sirve a nadie.
 - Cuál plan le conviene depende de lo que se encuentre en la valoración, y eso se dice sin sonar a evasiva: no es que no queramos decirlo, es que sin medir el oído sería inventarlo.
+- La explicación de por qué depende de la valoración se da UNA vez y en dos líneas, no en un párrafo con tres razones numeradas. Si vuelve a preguntar el valor, o dice que no quiere perder el tiempo, le das el rango de los planes de una, en la primera línea. Esquivar dos veces es lo que hizo que un paciente escribiera "parece que se aprovechan de la necesidad del paciente".
 - NUNCA inventes cifras.
 - Después de responder puedes proponer la cita, pero primero responde. Contestar con un horario a quien preguntó un precio es no contestarle.
 
@@ -811,7 +964,7 @@ Reconoce lo que te dicen. No discutas, no insistas dos veces con el mismo argume
 - "Lo voy a pensar" → "Claro, tómate el tiempo que necesites. Solo para que lo tengas en cuenta: si dejas la cita agendada hoy, la valoración no te cuesta — y la programas para el día que te sirva, o la mueves después si te cambia el plan." Y quedas disponible de verdad.
 - "Es para mi mamá/papá" → habla del familiar, no del aparato: cómo lo nota, desde cuándo, si él mismo lo reconoce. Muchas veces el problema no es el oído sino convencerlo — ahí es donde puedes ayudar de verdad.
 - "No tengo tiempo" → dile cuánto toma en realidad y qué horarios hay temprano.
-- "Queda lejos" → dirección exacta y el horario con menos tráfico.
+- "Queda lejos" (dentro de Bogotá o la Sabana) → dirección exacta y el horario con menos tráfico. Si vive en OTRA ciudad, ver "SI VIVE FUERA DE BOGOTÁ".
 - "Ya tengo audífonos" → pregúntale cómo le va con ellos. Mucha gente vive años con audífonos mal adaptados creyendo que así es la cosa.
 - "Estoy consultando varios lados" → bien hecho, y díselo. No critiques a nadie. Ofrece resolverle dudas aunque termine en otro lado.
 - "Después te escribo" → "Listo, aquí estoy cuando quieras." Sin insistir. Quien se siente perseguido no vuelve.
@@ -823,7 +976,7 @@ Tienes 3 tools para agendar sin que salga de WhatsApp:
   3. create_appointment — crea la cita confirmada.
 
 Flujo, sin desviarte:
-  0. ANTES de todo esto: saluda, confirma que le agendas y hazle la única pregunta sobre qué lo trae (ver "CUANDO YA PIDIÓ CITA"). Los pasos de abajo empiezan cuando ya te contestó — o cuando te dio a entender que no quiere contar nada.
+  0. Si pidió cita, estos pasos empiezan en tu PRIMER mensaje (ver "CUANDO YA PIDIÓ CITA"). No hay pregunta previa obligatoria.
   1. Si no conoces los tipos, llama list_appointment_types.
   2. Si no dijo qué necesita, elige por él el más común (valoración auditiva). No lo hagas escoger de una lista larga.
   3. Interpreta hoy = {HOY_PLACEHOLDER}. Si dijo "esta semana" o "el próximo martes", resuélvelo tú.
@@ -858,7 +1011,7 @@ FORMATO WHATSAPP (obligatorio):
 
 ═══ ESCALACIÓN (muy restrictiva) ═══
 - NO escales solo porque pida "hablar con alguien". Responde "Con gusto te ayudo por acá, soy parte del equipo" y sigue agendando.
-- SOLO agrega [ESCALAR_HUMANO] si: (a) urgencia médica clara (dolor fuerte, sangrado, pérdida súbita de audición), (b) insiste 3+ veces en hablar con una persona después de que le explicaste que puedes agendarle, (c) reclamo o queja de un paciente existente.
+- SOLO agrega [ESCALAR_HUMANO] si: (a) urgencia médica clara (dolor fuerte, sangrado, pérdida súbita de audición), (b) insiste 3+ veces en hablar con una persona después de que le explicaste que puedes agendarle, (c) reclamo o queja de un paciente existente, (d) no puede salir de la casa.
 
 SI QUIEN ESCRIBE ES UN PROFESIONAL (o te ofrece productos/servicios):
 - Señales: dice que es audiólogo/otorrino/fonoaudiólogo, que quiere "hacer parte del directorio", "registrar mi consultorio", "pautar", "ser aliado", "venderles" o "una alianza".
@@ -952,7 +1105,7 @@ Reglas:
 - Solo escalás a humano [ESCALAR_HUMANO] si: (a) piden explícitamente hablar con una persona, (b) urgencia médica, (c) tema fuera de tu alcance.
 - No cierres en el aire con "quedo atento" ni "cualquier cosa me avisas": deja siempre algo útil, una respuesta o un siguiente paso concreto.
 - Cuando ofrezcas la cita no preguntes en abierto "¿cuándo te sirve?": propón 2-3 horarios concretos y deja que elija.
-- Si preguntan el precio de la consulta, lo PRIMERO es contarles que si dejan la cita agendada hoy la valoración no tiene costo (la cita puede ser otro día). Si aun así quieren saber el valor normal, díselo de una. Para audífonos, la respuesta honesta es que el valor depende de tres cosas —cuánta pérdida hay, en qué entornos necesita oír y qué necesita hacer con su audición— y eso se sabe midiéndolo. Explica eso ANTES de cualquier número. Solo si insiste después de esa explicación: van desde $800.000 hasta $12.000.000. Nunca inventes cifras ni des el valor de un plan.
+- Si preguntan el precio de la consulta, lo PRIMERO es contarles que si dejan la cita agendada hoy la valoración no tiene costo (la cita puede ser otro día). Si aun así quieren saber el valor normal, díselo de una. Para audífonos, la respuesta honesta es que el valor depende de tres cosas —cuánta pérdida hay, en qué entornos necesita oír y qué necesita hacer con su audición— y eso se sabe midiéndolo. Explícalo una vez y corto. Si insiste, dale el rango real que aparece en el catálogo de planes, de una. Nunca inventes cifras ni des el valor de un plan.
 - No describas lo que ofrecemos ni uses frases de aviso publicitario. Habla de lo que le pasa a la persona, no de nosotros.
 - Tono: cálido, empático, colombiano neutro, tuteo. Máximo 3 párrafos cortos.
 - No inventes precios exactos. No des diagnósticos.
@@ -1343,7 +1496,14 @@ Con eso te oriento mejor.`;
  * —llegar 10 minutos antes, traer la cédula— son las más confiables: el
  * prompt las pide justo después de crear la cita, y no aparecen antes.
  */
-const PROMESA_DE_CITA = /nos vemos el |qued(aste|ó|o) agendad|ya qued(ó|o) (tu |la )?cita|tu cita qued|te (esper[aá]bamos|esperamos) el |llega(r)? 10 minutos antes|trae tu c[ée]dula/i;
+/**
+ * Después de una corrección el modelo contestaba "Perfecto. Ahora voy con el
+ * mensaje correcto: ---" y eso le llegaba al paciente, 12 veces en un mes.
+ */
+const SOLO_EL_MENSAJE =
+`Escribe SOLO el mensaje para el paciente, como si fuera el primero. Sin "ahora sí", sin "respondo bien", sin "mensaje correcto", sin separadores "---" y sin comentar esta corrección: él no sabe que existió.`;
+
+const PROMESA_DE_CITA =/nos vemos el |qued(aste|ó|o) agendad|ya qued(ó|o) (tu |la )?cita|tu cita qued|te (esper[aá]bamos|esperamos) el |llega(r)? 10 minutos antes|trae tu c[ée]dula/i;
 
 /**
  * Lo que se le devuelve al modelo cuando confirmó una cita que no creó.
@@ -1362,7 +1522,9 @@ Hazlo ahora, en este turno:
 2. Si te falta la disponibilidad, llama get_availability primero y usa un cupo real.
 3. Solo cuando la herramienta responda bien, escribe la confirmación.
 
-Si la herramienta devuelve error, NO confirmes: dile que se te cruzó un problema técnico agendando y pídele que te confirme el día y la hora para intentarlo de nuevo.`;
+Si la herramienta devuelve error, NO confirmes: dile que se te cruzó un problema técnico agendando y pídele que te confirme el día y la hora para intentarlo de nuevo.
+
+${SOLO_EL_MENSAJE}`;
 
 /**
  * Lo que se le dice al paciente cuando de verdad no se pudo agendar.
@@ -1403,7 +1565,9 @@ Le estás preguntando qué día le sirve en vez de ofrecerle horas. Eso le devue
 
 Llama get_availability ahora y vuelve a escribir el mensaje con 2-3 HORAS concretas de un día concreto. Si ese día no tiene cupo, díselo y ofrécele el siguiente que sí tenga. Puedes cerrar con "si prefieres otro día, dime cuál y lo miro" — pero después de poner las horas, nunca en lugar de ellas.
 
-Y si es tu primer mensaje de la conversación, salúdalo por su nombre antes. Le acaba de escribir a un centro de salud, no a una máquina expendedora.`;
+Y si es tu primer mensaje de la conversación, salúdalo por su nombre antes. Le acaba de escribir a un centro de salud, no a una máquina expendedora.
+
+${SOLO_EL_MENSAJE}`;
 
 /** ¿Esta persona ya tiene una cita viva en la agenda? Se compara por teléfono. */
 async function tieneCitaVigente(telefono) {
@@ -1447,6 +1611,23 @@ const VOSEO = [
   ['mirá', 'mira'],
   ['vení', 'ven'],
   ['escribime', 'escríbeme'],
+  // Lo que se coló en septiembre: voseo que faltaba, regionalismos de otros
+  // países ("te late", "al tiro") y palabras sin tilde o mal escritas.
+  ['salís', 'sales'],
+  ['notás', 'notas'],
+  ['evitás', 'evitas'],
+  ['recibís', 'recibes'],
+  ['llegás', 'llegas'],
+  ['avísas', 'avisas'],
+  ['dejame', 'déjame'],
+  ['confirmame', 'confírmame'],
+  ['escribeme', 'escríbeme'],
+  ['viens', 'vienes'],
+  ['resolvertelo', 'resolvértelo'],
+  ['deja confirmo', 'déjame confirmar'],
+  ['de metemos', 'de meternos'],
+  ['te late', 'te parece'],
+  ['al tiro', 'de una'],
 ].map(([voseo, tuteo]) => [reglaDePalabra(voseo, 'gi'), tuteo]);
 
 // 'sos' solo es voseo en minúscula; SOS en mayúscula es otra cosa y se respeta.
@@ -1473,8 +1654,65 @@ function tuteoBogotano(texto) {
   );
 }
 
+/**
+ * El preámbulo que el modelo le escribe a quien lo corrigió, no al paciente:
+ * "Perfecto. Ahora voy con el mensaje correcto: ---". Casi siempre viene
+ * separado por "---"; si no, por una frase de ese estilo al arranque.
+ */
+const PREAMBULO_INTERNO = /^(perfecto|listo|ok|bueno|tienes raz[oó]n)?[.,!]?\s*(ahora|voy a|te escribo|le escribo)[^\n]{0,80}(bien|correcto|como debe ser|concretas|concretos|reales)[.:!]?\s*\n+/i;
+
+function sinPreambulo(texto) {
+  let t = String(texto || '');
+  const corte = t.match(/^([\s\S]{0,200}?)\n\s*[-—_]{3,}\s*\n/);
+  if (corte) t = t.slice(corte[0].length);
+  return t.replace(PREAMBULO_INTERNO, '');
+}
+
+/**
+ * El día de la semana lo pone el calendario, no el modelo. Con la lista de
+ * catorce días en el prompt igual le escribió a Zulay "miércoles 24 de
+ * septiembre" (era jueves) y a Adriana "jueves 24" cuando su cita era el
+ * viernes 25. Si el mensaje trae "<día> <número> de <mes>", el día se corrige.
+ */
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const FECHA_CON_DIA = new RegExp(
+  `(?<![\\wáéíóúñ])(lunes|martes|mi[ée]rcoles|jueves|viernes|s[áa]bado|domingo)(,?\\s+)(\\d{1,2})(\\s+de\\s+)(${MESES.join('|')})(\\s+de\\s+(\\d{4}))?`,
+  'gi',
+);
+
+function diaDeSemanaCorrecto(texto, hoy = new Date()) {
+  const hoyBogota = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(hoy);
+  const [anioHoy, mesHoy] = hoyBogota.split('-').map(Number);
+  return String(texto || '').replace(FECHA_CON_DIA, (todo, dia, sep, num, de, mes, conAnio, anio) => {
+    const m = MESES.indexOf(mes.toLowerCase());
+    // Sin año: el de hoy, salvo que el mes ya haya quedado muy atrás (en
+    // diciembre se agenda para enero).
+    const y = anio ? Number(anio) : (m + 1 < mesHoy - 2 ? anioHoy + 1 : anioHoy);
+    const d = new Date(Date.UTC(y, m, Number(num)));
+    if (d.getUTCMonth() !== m) return todo; // 31 de septiembre: mejor no tocar
+    let real = DIAS_SEMANA[d.getUTCDay()];
+    if (dia[0] === dia[0].toUpperCase()) real = real[0].toUpperCase() + real.slice(1);
+    return `${real}${sep}${num}${de}${mes}${conAnio || ''}`;
+  });
+}
+
+/**
+ * A Adriana la agenda la dejó el viernes 25 y el mensaje le dijo "jueves 24".
+ * Cuando la herramienta acaba de crear o mover la cita, la fecha que manda es
+ * la suya: si la confirmación trae una sola fecha y no es esa, se reemplaza.
+ */
+function conFechaDeLaAgenda(texto, fechaLegibleReal) {
+  const real = String(fechaLegibleReal || '').match(/(\d{1,2}) de ([a-záéíóú]+)/i);
+  if (!real) return texto;
+  const patron = new RegExp(`(\\d{1,2}) de (${MESES.join('|')})`, 'gi');
+  const fechas = String(texto || '').match(patron) || [];
+  if (fechas.length !== 1) return texto;
+  return texto.replace(patron, `${real[1]} de ${real[2]}`);
+}
+
 function formatoWhatsApp(texto) {
-  return tuteoBogotano(texto)
+  return diaDeSemanaCorrecto(tuteoBogotano(sinPreambulo(texto)))
     // El modelo a veces envuelve la respuesta en etiquetas del andamiaje
     // (<response>…</response>) y al paciente le llegaba el cierre escrito en
     // el chat, debajo de la confirmación de su cita. Se quitan aquí.
@@ -1521,9 +1759,19 @@ async function catalogoDePlanes() {
       controlesAdaptacion: true, audiometrias: true, mantenimientos: true,
       anosGarantia: true, terapias: true, satisfaccionDias: true,
       seguroPerdidaMeses: true, seguroRoturaMeses: true, videoconsulta: true,
+      precioCOP: true,
     },
   }).catch(() => []);
   if (planes.length === 0) return '';
+
+  // El rango sale del catálogo, no de un número escrito a mano: el prompt decía
+  // "$800.000 a $12.000.000" mientras el cerebro decía "$5.000.000 a
+  // $27.500.000", y a cada paciente le tocaba uno distinto.
+  const precios = planes.map((p) => Number(p.precioCOP)).filter((n) => n > 0);
+  const cop = (n) => `$${n.toLocaleString('es-CO')}`;
+  const rango = precios.length
+    ? `desde ${cop(Math.min(...precios))} hasta ${cop(Math.max(...precios))} por los dos audífonos con todo el acompañamiento incluido`
+    : null;
 
   const filas = planes.map((p) => {
     const incluye = [
@@ -1547,13 +1795,14 @@ ${filas}
 Cómo hablar de esto:
 · NUNCA digas "los audífonos cuestan X". Se adapta un plan, y el plan incluye el equipo más el acompañamiento de años. Un audífono suelto, sin controles ni seguimiento, es plata botada — y eso es exactamente lo que no hacemos.
 · Los valores de cada plan NO se dicen por WhatsApp. No los tienes y no los inventes: un número suelto, antes de medir el oído, sirve para comparar y para nada más.
-· Cuál plan sirve depende de TRES cosas, y esto sí se explica siempre que pregunten por precio: cuánta pérdida auditiva hay, en qué entornos necesita oír la persona (casa tranquila no es lo mismo que reuniones, restaurantes o trabajo con ruido) y qué necesita hacer con su audición en el día a día. Por eso el precio se define después de la valoración y no antes.
-· SOLO si la persona insiste en un número después de que le expliques lo anterior: los audífonos van desde $800.000 hasta $12.000.000, y dónde cae el suyo se sabe midiendo. No des el rango de entrada ni lo ofrezcas por tu cuenta.
+· Cuál plan sirve depende de cuánta pérdida hay y de en qué entornos necesita oír la persona. Eso se dice UNA vez y corto, no como lección.
+${rango ? `· El rango real: los planes van ${rango}. Si vuelve a preguntar el valor, o dice que no quiere perder el tiempo, se lo das de una, en la primera línea. Nunca adivines en cuál plan cae él ni des otro rango que no sea este.` : '· Si insiste en un número, dile que el equipo se lo confirma: no tienes el rango cargado y no lo vas a inventar.'}
 · NUNCA menciones la marca ni el nivel de tecnología del equipo. Eso se define en la valoración.
 ═══════════════════════════════════`;
 }
 
 async function construirPrompt(conv, consulta = null) {
+  let firma = null;
   // Antes, un contactType sin prompt dejaba al bot mudo sin dejar rastro:
   // pasaba con PACIENTE_EXISTENTE y ALIADO_PROVEEDOR, que tienen plantillas
   // activas. Ahora cualquier tipo desconocido cae en OTROS, que pregunta.
@@ -1624,7 +1873,10 @@ Si el día que pide no aparece o no tiene cupo, DÍSELO —"el martes no tengo n
   // anuncio. Meta nos lo da desde el primer mensaje y lo estábamos botando:
   // saludar sin nombre es la mitad de la frialdad.
   if (conv.contactName && !conv.patientId) {
-    systemPrompt += `\n\nSe llama ${conv.contactName}. Llámalo por su primer nombre desde el saludo, con naturalidad.`;
+    const nombre = nombreParaSaludo(conv.contactName);
+    systemPrompt += nombre
+      ? `\n\nSe llama ${nombre}. Llámalo así desde el saludo, con naturalidad.`
+      : `\n\nSu perfil de WhatsApp dice "${conv.contactName}", pero eso no es un nombre de persona. NO lo uses para llamarlo: saluda sin nombre hasta que te lo diga.`;
   }
 
   // Si ya hay cita, el prompt tiene que decirlo con fecha y hora. Antes esto
@@ -1636,7 +1888,9 @@ Si el día que pide no aparece o no tiene cupo, DÍSELO —"el martes no tengo n
 ${citaVigente}
 · NO le ofrezcas agendar, NO le propongas horarios y NO llames create_appointment otra vez.
 · Si escribe por otra cosa, respóndele eso y ya. La cita solo se menciona si él la menciona.
-· Si quiere cambiarla o cancelarla, dilo claro y escala con [ESCALAR_HUMANO]: mover una cita no lo haces tú.
+· Si quiere cambiarla, la mueves TÚ: get_availability del día que pide, le ofreces horas, y con su sí llamas reprogramar_cita. Nunca le digas "sí, te la muevo" sin haber llamado la herramienta, ni lo mandes a llamar.
+· Si quiere cancelarla, pregúntale una vez si prefiere moverla a otro día. Si dice que no, cancelar_cita.
+· Si la herramienta devuelve error, dile la verdad y agrega [ESCALAR_HUMANO].
 ═══════════════════════════════`;
   }
 
@@ -1693,6 +1947,7 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
         const iaConfig = require('./iaAgentConfig.service');
         const education = await iaConfig.getEducationForPrompt(retailId);
         systemPrompt += iaConfig.buildEducationSection(education, 'OírConecta');
+        firma = education?.signature || null;
 
         // Los documentos que se le cargaron al agente. El bot del consultorio
         // los ignoraba: se entrenaba el cerebro en /portal-profesional/ia y
@@ -1769,7 +2024,24 @@ ${cupos.ciclo === 'semana' ? 'Son cupos semanales: si alguien pregunta, se dice 
     }
   }
 
-  return { systemPrompt, adVigente };
+  return { systemPrompt, adVigente, firma };
+}
+
+/**
+ * La frase de cierre del centro ("Recuerda que hablaste con Aura…") se dice
+ * una vez por conversación. Salía en cada despedida —13 veces en un mes, dos
+ * seguidas en el mismo chat— y una firma repetida suena a plantilla.
+ */
+async function sinFirmaRepetida(texto, firma, conversationId) {
+  const inicio = String(firma || '').trim().slice(0, 25);
+  if (inicio.length < 10) return texto;
+  const patron = new RegExp(`${inicio.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^.!\\n]*[.!]?`, 'i');
+  if (!patron.test(texto)) return texto;
+  const yaDicha = await prisma.whatsAppMessage.findFirst({
+    where: { conversationId, direction: 'OUTBOUND', body: { contains: inicio, mode: 'insensitive' } },
+    select: { id: true },
+  }).catch(() => null);
+  return yaDicha ? texto.replace(patron, '').replace(/\n{3,}/g, '\n\n').trim() : texto;
 }
 
 /**
@@ -1826,6 +2098,15 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
     },
     async registrar_referido_otra_ciudad(ctx, input) {
       return { leadId: 'ensayo', simulado: true, mensaje: `[ENSAYO] Lead registrado en ${input.ciudad}` };
+    },
+    async reprogramar_cita(ctx, input) {
+      return { simulado: true, fechaLegible: fechaLegible(`${input.date}T12:00:00`), hora: input.time, mensaje: '[ENSAYO] Aquí se habría movido la cita.' };
+    },
+    async cancelar_cita() {
+      return { simulado: true, mensaje: '[ENSAYO] Aquí se habría cancelado la cita.' };
+    },
+    async registrar_paciente_otra_ciudad(ctx, input) {
+      return { simulado: true, mensaje: `[ENSAYO] Caso pasado al equipo (${input.ciudad}).` };
     },
   };
 
@@ -1888,7 +2169,7 @@ async function handleTextForBot({ conversationId, incomingText, desdeAudio = fal
   // Sin tipo asignado tampoco se queda callado: pregunta y se tipifica solo.
   if (!conv.contactType) conv.contactType = 'OTROS';
 
-  let { systemPrompt, adVigente } = await construirPrompt(conv, incomingText);
+  let { systemPrompt, adVigente, firma } = await construirPrompt(conv, incomingText);
 
   // Lo que vas a leer lo dijo hablando, no escribiendo.
   if (desdeAudio) {
@@ -1917,6 +2198,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   let reply = '';
   let citaCreadaEnEsteTurno = false;
   let disponibilidadConsultada = false;
+  let fechaDeLaCita = null;
   try {
     const client = new Anthropic();
     const toolCtx = {
@@ -1996,6 +2278,9 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
             if (tu.name === 'create_appointment' && output && !output.error) {
               citaCreadaEnEsteTurno = true;
             }
+            if (['create_appointment', 'reprogramar_cita'].includes(tu.name) && output?.fechaLegible) {
+              fechaDeLaCita = output.fechaLegible;
+            }
             if (tu.name === 'get_availability') disponibilidadConsultada = true;
           } catch (e) {
             console.error('[wa-bot] tool', tu.name, 'falló:', e.message);
@@ -2056,7 +2341,10 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   // Detecta tag de escalada. Una cita que no se pudo crear NO escala: el bot
   // se queda a cargo y la reintenta con la persona.
   const shouldEscalate = reply.includes(ESCALATE_TAG);
-  const cleanReply = formatoWhatsApp(reply.replace(ESCALATE_TAG, '')).trim();
+  const cleanReply = await sinFirmaRepetida(
+    formatoWhatsApp(conFechaDeLaAgenda(reply.replace(ESCALATE_TAG, ''), fechaDeLaCita)).trim(),
+    firma, conversationId,
+  );
 
   try {
     // El webhook ya respondió 200 hace rato: esperar aquí no le cuesta nada a
@@ -2154,6 +2442,7 @@ module.exports = {
   iniciarFlujoAliado,
   iniciarFlujoAnuncio,
   cuposDelBeneficio,
+  nombreParaSaludo,
   ensayar,
   actualizarResumen,
   handleButtonReply,

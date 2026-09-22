@@ -246,7 +246,7 @@ const SILENCIO_1_HORAS = 3;
 const SILENCIO_2_HORAS = 20;
 
 const DESPEDIDA =
-`No quiero ser inoportuno, así que te escribo por última vez. 🙂
+`No quiero incomodarte, así que te escribo por última vez. 🙂
 
 Si en algún momento quieres resolver una duda sobre tu audición —o la de alguien de tu casa— aquí estoy. Escríbeme cuando quieras, sin compromiso.`;
 
@@ -264,7 +264,8 @@ Si en algún momento quieres resolver una duda sobre tu audición —o la de alg
  * imposible que invente, y además es lo que haría una persona.
  */
 function armarRetoma(conv, ultimoTextoBot) {
-  const nombre = conv.contactName ? `, ${String(conv.contactName).split(/\s+/)[0]}` : '';
+  const limpio = require('./waCorporateBot.service').nombreParaSaludo(conv.contactName);
+  const nombre = limpio ? `, ${limpio}` : '';
 
   // La última pregunta del bot: se corta el mensaje en frases y se toma la
   // última que termine en "?". Sirve igual con un saludo de cinco párrafos que
@@ -295,7 +296,12 @@ function armarRetoma(conv, ultimoTextoBot) {
  */
 const CIERRE_DEL_PACIENTE = /^(ok(ay)?|oki|listo|dale|bueno|perfecto|va|dgracias)?[\s,.!]*((muchas|mil|much[ií]simas)\s+)?gracias|^(ok(ay)?|listo|dale|perfecto|de una)[\s,.!]*$|hasta luego|nos vemos|que est[eé]s bien|buen d[ií]a$/i;
 
-const CIERRE_NUESTRO = /ac[áa] estoy cuando|aqu[ií] estoy cuando|cuando est[eé]s listo|un placer|que te vaya bien|escr[ií]beme cuando quieras|quedo atento|con gusto.{0,20}cuando (quieras|necesites)/i;
+const CIERRE_NUESTRO = /ac[áa] estoy cuando|aqu[ií] estoy cuando|cuando est[eé]s listo|un placer|que te vaya bien|escr[ií]beme cuando quieras|quedo atento|aqu[ií] quedo|ac[áa] quedo|con gusto.{0,20}cuando (quieras|necesites)/i;
+
+// "Te aviso", "lo voy a pensar", "no gracias": también es cerrar, aunque venga
+// en un mensaje largo. A José le escribimos "quedé pendiente de ti" tres horas
+// después de que dijo "voy a analizar el tema y luego les comento".
+const APLAZA_EL_PACIENTE = /\b(te|le|les) (aviso|comento|confirmo)\b|lo (voy a|vamos a) (pensar|consultar|analizar|mirar)|voy a (analizar|consultar|pensar|mirar)|(te|le|les) escribo (luego|despu[eé]s|cuando)|estar[eé] en contacto|por ahora no|no,? gracias|ya resolv[ií]/i;
 
 async function conversacionYaSeDespidio(conversationId) {
   const ultimos = await prisma.whatsAppMessage.findMany({
@@ -317,8 +323,9 @@ async function conversacionYaSeDespidio(conversationId) {
     && CIERRE_DEL_PACIENTE.test(suyo);
   const nosDespedimos = ultimoNuestro
     && CIERRE_NUESTRO.test(String(ultimoNuestro.body || ''));
+  const aplazo = APLAZA_EL_PACIENTE.test(suyo);
 
-  return Boolean(seDespidioEl || nosDespedimos);
+  return Boolean(seDespidioEl || nosDespedimos || aplazo);
 }
 
 async function enviarYGuardar(conv, texto, campo) {
@@ -399,6 +406,25 @@ async function processSilencios() {
       // saltarse esta conversación la deja en paz de verdad.
       if (await conversacionYaSeDespidio(conv.id)) { cerradas++; continue; }
 
+      // Ya tiene cita: a Hellen le llegó "no quiero ser inoportuno, te escribo
+      // por última vez" al día siguiente de agendar. agendarBookedAt no se
+      // marca cuando la cita la crea el equipo o la web.
+      const cita = await findMatchingAppointment({
+        waPhone: conv.phone, sinceDate: new Date(ahora.getTime() - 30 * 86400000),
+      });
+      if (cita) { cerradas++; continue; }
+
+      // Una persona del equipo ya entró a la conversación: el recordatorio
+      // automático encima de ella la atropella.
+      const humano = await prisma.whatsAppMessage.findFirst({
+        where: {
+          conversationId: conv.id, direction: 'OUTBOUND', sentByBot: false, type: 'text',
+          timestamp: { gte: new Date(ahora.getTime() - 48 * 3600000) },
+        },
+        select: { id: true },
+      });
+      if (humano) { cerradas++; continue; }
+
       const horas = (ahora - new Date(conv.lastMessageAt)) / 3600000;
 
       if (!conv.silencio1At) {
@@ -407,6 +433,9 @@ async function processSilencios() {
           orderBy: { timestamp: 'desc' },
           select: { body: true },
         });
+        // Si lo último fue "no pude escuchar tu nota de voz", repetírselo tres
+        // horas después no retoma nada.
+        if (String(previo?.body || '').startsWith('Me llegó tu nota de voz')) { cerradas++; continue; }
         const texto = armarRetoma(conv, previo?.body);
         if (await enviarYGuardar(conv, texto, 'silencio1At')) retomas++;
       } else if (horas >= SILENCIO_2_HORAS - SILENCIO_1_HORAS) {

@@ -343,11 +343,47 @@ async function processIncomingEvent(body) {
 
             // No se entendió la nota. Decirlo es mejor que contestar cualquier
             // cosa: la persona repite el audio o escribe, y nadie queda colgado.
+            // Una sola vez. A Yasmin y a Lilia les llegó el mismo aviso tres y
+            // cuatro veces seguidas: la que manda audios suele ser una persona
+            // mayor que no escribe, y pedirle que "lo repita" no la ayuda. Al
+            // segundo audio perdido lo escucha una persona.
             if (esAudio && !transcripcion) {
               try {
+                const AVISO_AUDIO = 'Me llegó tu nota de voz pero no logré escucharla bien 🙈';
+                const yaAvisado = await prisma.whatsAppMessage.findFirst({
+                  where: {
+                    conversationId: r.conversationId,
+                    direction: 'OUTBOUND',
+                    body: { startsWith: AVISO_AUDIO },
+                    timestamp: { gte: new Date(Date.now() - 24 * 3600 * 1000) },
+                  },
+                  select: { id: true },
+                });
+                if (yaAvisado) {
+                  const conv = await prisma.whatsAppConversation.findUnique({
+                    where: { id: r.conversationId }, select: { status: true },
+                  });
+                  if (conv?.status === 'ESCALATED') continue; // ya está con una persona
+                  await corp.sendTextToConversation({
+                    conversationId: r.conversationId,
+                    text: 'Ya le paso tus notas de voz a una persona del equipo para que las escuche y te responda por acá 🙏',
+                    sentByBot: true,
+                  });
+                  await prisma.whatsAppConversation.update({
+                    where: { id: r.conversationId },
+                    data: { status: 'ESCALATED', unreadCount: { increment: 1 } },
+                  });
+                  require('./alertaEquipo.service').avisar({
+                    titulo: 'Notas de voz sin escuchar — el bot no las pudo transcribir',
+                    quien: contactByWaId[msg.from] || 'Paciente',
+                    telefono: msg.from,
+                    texto: 'Escúchalas en WhatsApp y respóndele por la bandeja.',
+                  }).catch(() => {});
+                  continue;
+                }
                 await corp.sendTextToConversation({
                   conversationId: r.conversationId,
-                  text: 'Me llegó tu nota de voz pero no logré escucharla bien 🙈 ¿Me la puedes repetir, o escribirme lo que necesitas?',
+                  text: `${AVISO_AUDIO} ¿Me la puedes repetir, o escribirme lo que necesitas?`,
                   sentByBot: true,
                 });
               } catch (te) {
