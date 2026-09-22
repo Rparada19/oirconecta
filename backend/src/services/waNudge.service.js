@@ -511,14 +511,20 @@ async function responderPendientes() {
       windowExpiresAt: { gt: ahora },
       lastMessageAt: { lt: new Date(ahora.getTime() - ESPERA_ANTES_DE_RESCATAR_MIN * 60000) },
     },
-    select: { id: true, phone: true },
-    orderBy: { lastMessageAt: 'asc' },
-    take: 10,
+    select: { id: true, phone: true, lastMessagePreview: true },
+    // De la más reciente a la más vieja: al revés, las diez conversaciones
+    // antiguas y ya contestadas se comían el cupo y la que esperaba respuesta
+    // —la última— nunca se miraba.
+    orderBy: { lastMessageAt: 'desc' },
+    take: 50,
   });
 
   let rescatados = 0;
   for (const conv of candidatas) {
     try {
+      // Atajo barato: si lo último lo escribimos nosotros, no hay nada que
+      // rescatar y nos ahorramos la consulta de mensajes.
+      if (/^(Bot|Tú):/.test(String(conv.lastMessagePreview || ''))) continue;
       const ultimo = await prisma.whatsAppMessage.findFirst({
         where: { conversationId: conv.id },
         orderBy: { timestamp: 'desc' },
