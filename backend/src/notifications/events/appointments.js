@@ -54,12 +54,13 @@ function subMinutes(dateLike, mins) {
 }
 
 function citaStartDate(appointment) {
-  // appointment.fecha es DateTime con hora 00; hora es "HH:mm"
-  const f = new Date(appointment.fecha);
+  // appointment.fecha es el DÍA (00:00 UTC) y hora es "HH:mm" en hora de
+  // Bogotá. Antes se hacía setHours sobre el servidor, que corre en UTC: una
+  // cita de 2:00 p.m. quedaba a las 9:00 a.m. y el recordatorio "de 2 horas"
+  // de una cita de 9:50 salía a las 2:50 de la madrugada.
+  const dia = new Date(appointment.fecha).toISOString().slice(0, 10);
   const [h, m] = (appointment.hora || '00:00').split(':').map(Number);
-  const local = new Date(f);
-  local.setHours(h, m, 0, 0);
-  return local;
+  return new Date(`${dia}T${String(h).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}:00-05:00`);
 }
 
 function buildVars(appointment) {

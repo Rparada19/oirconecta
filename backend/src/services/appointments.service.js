@@ -623,6 +623,15 @@ const rescheduleByToken = async (token, newFecha, newHora) => {
     },
   });
 
+  // Los recordatorios ya encolados llevan la fecha vieja. Sin esto, a quien
+  // movió su cita le llegaba el recordatorio de la hora que ya no tiene.
+  try {
+    const { onAppointmentRescheduled } = require('../notifications/events/appointments');
+    onAppointmentRescheduled(updated, prisma).catch((e) => console.error('[reschedule] notif:', e?.message));
+  } catch (e) {
+    console.warn('[reschedule] no se pudo enganchar notifications:', e.message);
+  }
+
   // Notificar profesional dueño (multi-tenant → cuenta directorio; retail → email fijo config) + admin
   const emailService = require('./email.service');
   const config = require('../config');
@@ -764,9 +773,9 @@ const processReminders = async () => {
   for (const apt of upcoming) {
     if (!apt.patientEmail) continue;
 
-    const aptDateTime = new Date(apt.fecha);
+    // La hora es de Bogotá; el servidor corre en UTC (ver citaStartDate).
     const [h, min] = (apt.hora || '00:00').split(':').map(Number);
-    aptDateTime.setHours(h, min, 0, 0);
+    const aptDateTime = new Date(`${apt.fecha.toISOString().slice(0, 10)}T${String(h).padStart(2, '0')}:${String(min || 0).padStart(2, '0')}:00-05:00`);
 
     const diffMs = aptDateTime.getTime() - now.getTime();
     const diffH = diffMs / (1000 * 60 * 60);
