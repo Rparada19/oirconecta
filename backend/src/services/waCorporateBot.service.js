@@ -1991,6 +1991,17 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
     }
   }
 
+  // Campaña viva: a esta gente le acabamos de ofrecer algo. Si el bot no lo
+  // sabe, contesta con el catálogo de siempre y desmiente la oferta que le
+  // acaba de llegar por el mismo chat. Se apaga borrando PROMO_ACTIVA en Render.
+  if (process.env.PROMO_ACTIVA && ['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS'].includes(conv.contactType)) {
+    systemPrompt += `\n\n═══ PROMOCIÓN QUE LES ACABAMOS DE ENVIAR ═══
+${process.env.PROMO_ACTIVA}
+· Si preguntan por ella, confírmala con naturalidad: es real y se la enviamos nosotros.
+· Los detalles que NO están escritos arriba —sobre qué planes aplica, hasta cuándo va, qué incluye exactamente— no los tienes. Dilo así: "esos detalles te los confirma el equipo en la valoración", y ofrece el horario. NO los inventes y NO digas que solo vendemos planes: esta promoción existe.
+═══════════════════════════════════`;
+  }
+
   // Lo que el equipo aprobó en 🧠 Aprendizaje, sacado de cómo terminaron
   // chats reales. Va antes del beneficio, que tiene que seguir siendo lo último.
   if (['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS', 'PACIENTE_EXISTENTE'].includes(conv.contactType)) {
