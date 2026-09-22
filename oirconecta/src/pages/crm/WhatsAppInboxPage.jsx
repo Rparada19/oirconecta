@@ -125,6 +125,33 @@ export default function WhatsAppInboxPage({
   // 🧠 Lo que el bot propone aprender
   const [aprOpen, setAprOpen] = useState(false);
 
+  // Envío masivo de una oferta a los chats abiertos (dentro de las 24h).
+  const [masivoTexto, setMasivoTexto] = useState('');
+  const [masivoPrevio, setMasivoPrevio] = useState(null);
+  const [masivoResultado, setMasivoResultado] = useState(null);
+  const [masivoLoading, setMasivoLoading] = useState(false);
+
+  const enviarMasivo = async (soloContar) => {
+    setMasivoLoading(true); setMasivoResultado(null);
+    try {
+      const r = await api.post(`/api/wa/campana-texto?dryRun=${soloContar}`, { texto: masivoTexto });
+      const d = r?.data?.data;
+      if (!r?.data?.success) {
+        setMasivoResultado(r?.data?.error || 'No se pudo');
+      } else if (soloContar) {
+        setMasivoPrevio(d);
+        setMasivoResultado(`Le llega a ${d.destinatarios}. Por fuera: ${d.descartados.conCita} con cita, ${d.descartados.otraCiudad} de otra ciudad, ${d.descartados.pidioQueNo} que no quieren, ${d.descartados.yaRecibio} que ya lo recibieron.`);
+      } else {
+        setMasivoPrevio(null);
+        setMasivoResultado(`Enviados: ${d.enviados} de ${d.destinatarios}.${d.fallidos?.length ? ` Fallaron ${d.fallidos.length}.` : ''}`);
+      }
+    } catch (e) {
+      setMasivoResultado(e.message);
+    } finally {
+      setMasivoLoading(false);
+    }
+  };
+
   // Ensayo del bot — conversar sin gastar un mensaje real
   const [ensOpen, setEnsOpen] = useState(false);
   const [ensTipo, setEnsTipo] = useState('PACIENTE_BOGOTA');
@@ -1254,6 +1281,37 @@ export default function WhatsAppInboxPage({
           </Typography>
         </DialogTitle>
         <DialogContent dividers>
+          {/* Oferta puntual a los chats abiertos. Solo alcanza a quien escribió
+              en las últimas 24h; al resto hay que llegarles con plantilla. */}
+          <Box sx={{ mb: 2, p: 1.5, border: `1px solid ${BORDER}`, borderRadius: 2, bgcolor: CREAM }}>
+            <Typography sx={{ fontWeight: 700, color: NAVY, fontSize: '0.85rem', mb: 0.5 }}>
+              Enviar una oferta a los chats abiertos
+            </Typography>
+            <Typography sx={{ fontSize: '0.72rem', color: MUTED, mb: 1 }}>
+              Llega solo a quien escribió en las últimas 24 horas. No les llega a los que ya tienen cita,
+              a los que dijeron que viven en otra ciudad, a los que pidieron que no les escribiéramos,
+              ni a quien ya recibió este mismo mensaje. Escribe {'{{nombre}}'} donde quieras el nombre.
+            </Typography>
+            <TextField multiline minRows={3} fullWidth size="small" value={masivoTexto}
+              onChange={(e) => { setMasivoTexto(e.target.value); setMasivoPrevio(null); }}
+              placeholder="Hola{{nombre}}, te cuento…" />
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1, flexWrap: 'wrap', rowGap: 1 }}>
+              <Button size="small" variant="outlined" disabled={masivoLoading || masivoTexto.trim().length < 20}
+                onClick={() => enviarMasivo(true)}>
+                Ver a cuántos les llega
+              </Button>
+              <Button size="small" variant="contained" color="success"
+                disabled={masivoLoading || !masivoPrevio?.destinatarios}
+                onClick={() => enviarMasivo(false)}>
+                {masivoPrevio?.destinatarios ? `Enviar a ${masivoPrevio.destinatarios}` : 'Enviar'}
+              </Button>
+              {masivoLoading && <CircularProgress size={16} />}
+              {masivoResultado && (
+                <Typography sx={{ fontSize: '0.75rem', color: NAVY }}>{masivoResultado}</Typography>
+              )}
+            </Stack>
+          </Box>
+
           {campLoading ? (
             <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={24} sx={{ color: ACCENT }} /></Box>
           ) : camp.data.length === 0 ? (

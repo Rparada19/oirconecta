@@ -488,6 +488,74 @@ ${cuantos} Si dejas tu cita agendada hoy, tomas uno — y la programas para el d
  *   de 24h, escribirles con la plantilla `cupo_sin_costo`. Requiere que Meta ya
  *   la haya aprobado; si no, el envío falla y se cuenta como fallido.
  */
+/**
+ * Envío masivo de texto libre a los chats abiertos — para una oferta puntual.
+ *
+ * Solo llega a quien escribió en las últimas 24h: fuera de esa ventana Meta
+ * exige plantilla aprobada, y mandarlo igual quema el número.
+ *
+ * Quedan por fuera, sin que haya que acordarse: los que ya tienen cita, los
+ * que dijeron que viven en otra ciudad, los que pidieron que no les
+ * escribiéramos, y los que ya recibieron este mismo mensaje.
+ */
+const VIVE_EN_OTRA_CIUDAD = /villavicencio|c[úu]cuta|manizales|pereira|medell[íi]n|neiva|duitama|chaparral|popay[áa]n|cartagena|barranquilla|\bcali\b|ibagu[ée]|bucaramanga|santa marta|monter[íi]a|pasto|tunja|armenia|villavo|yopal|valledupar|sincelejo|facatativ[áa]|chaparral|no puedo viajar/i;
+const PIDIO_QUE_NO = /no,? gracias|no me interesa|ya resolv[ií]|no vuelvan|no escriban|d[ée]jenme|no quiero/i;
+
+async function envioMasivoTexto({ texto, dryRun = true } = {}) {
+  const cuerpo = String(texto || '').trim();
+  if (cuerpo.length < 20) throw new Error('El texto está muy corto.');
+  const ahora = new Date();
+  const huella = cuerpo.slice(0, 40);
+
+  const convs = await prisma.whatsAppConversation.findMany({
+    where: {
+      businessLine: 'CRM',
+      agendarBookedAt: null,
+      windowExpiresAt: { gt: ahora },   // dentro de las 24h de Meta
+    },
+    select: { id: true, phone: true, contactName: true },
+  });
+
+  const destinatarios = [];
+  const descartados = { conCita: 0, otraCiudad: 0, pidioQueNo: 0, yaRecibio: 0 };
+  for (const conv of convs) {
+    const suyos = await prisma.whatsAppMessage.findMany({
+      where: { conversationId: conv.id, direction: 'INBOUND' },
+      select: { body: true },
+    });
+    const dicho = suyos.map((m) => m.body || '').join(' ');
+    if (VIVE_EN_OTRA_CIUDAD.test(dicho)) { descartados.otraCiudad++; continue; }
+    if (PIDIO_QUE_NO.test(dicho)) { descartados.pidioQueNo++; continue; }
+    if (await findMatchingAppointment({ waPhone: conv.phone, sinceDate: new Date(ahora.getTime() - 120 * 86400000) })) {
+      descartados.conCita++; continue;
+    }
+    const repetido = await prisma.whatsAppMessage.findFirst({
+      where: { conversationId: conv.id, direction: 'OUTBOUND', body: { startsWith: huella } },
+      select: { id: true },
+    });
+    if (repetido) { descartados.yaRecibio++; continue; }
+    destinatarios.push(conv);
+  }
+
+  if (dryRun) return { dryRun: true, destinatarios: destinatarios.length, descartados };
+
+  const bot = require('./waCorporateBot.service');
+  const corp = require('./waCorporate.service');
+  let enviados = 0; const fallidos = [];
+  for (const conv of destinatarios) {
+    const nombre = bot.nombreParaSaludo(conv.contactName);
+    const personal = cuerpo.replace(/\{\{nombre\}\}/g, nombre ? `, ${nombre}` : '');
+    try {
+      await corp.sendTextToConversation({ conversationId: conv.id, text: personal, sentByBot: true });
+      enviados++;
+    } catch (e) {
+      fallidos.push({ phone: conv.phone, error: e.message });
+    }
+  }
+  console.log('[wa-masivo] enviados', enviados, 'de', destinatarios.length);
+  return { enviados, destinatarios: destinatarios.length, fallidos, descartados };
+}
+
 async function recuperarConversaciones({ dryRun = false, conPlantilla = false } = {}) {
   const ahora = new Date();
   const abiertas = await prisma.whatsAppConversation.findMany({
@@ -612,6 +680,7 @@ async function recuperarConversaciones({ dryRun = false, conPlantilla = false } 
 module.exports = {
   processWaAgendarNudges,
   recuperarConversaciones,
+  envioMasivoTexto,
   processSilencios,
   processNudges,
   processEscalations,

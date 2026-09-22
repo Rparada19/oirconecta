@@ -208,6 +208,21 @@ router.post('/aprendizaje/:id/descartar', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Envío masivo de una oferta a los chats abiertos ───────
+// Con ?dryRun=true solo cuenta. Solo alcanza a quien escribió en las últimas
+// 24h: fuera de esa ventana Meta exige plantilla aprobada.
+router.post('/campana-texto', async (req, res) => {
+  try {
+    const out = await require('../services/waNudge.service').envioMasivoTexto({
+      texto: req.body?.texto,
+      dryRun: req.query.dryRun === 'true' || req.body?.dryRun === true,
+    });
+    res.json({ success: true, data: out });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
 // ─── Recuperar los chats abiertos con la oferta ────────────
 // Con ?dryRun=true solo cuenta a cuántos les llegaría, sin mandar nada.
 router.post('/recuperar', async (req, res) => {
