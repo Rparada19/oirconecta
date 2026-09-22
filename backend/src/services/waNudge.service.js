@@ -489,6 +489,58 @@ ${cuantos} Si dejas tu cita agendada hoy, tomas uno — y la programas para el d
  *   la haya aprobado; si no, el envío falla y se cuenta como fallido.
  */
 /**
+ * Mensajes que quedaron sin respuesta.
+ *
+ * Antes de contestar, el bot junta lo que llega dentro de 9 segundos (para no
+ * responder tres veces a quien escribe en tres renglones). Esa cola vive en la
+ * memoria del proceso: si Render reinicia —un despliegue, o el plan free que
+ * se duerme— el mensaje se pierde y nadie lo contesta jamás. Le pasó al aliado
+ * que escribió "Vengo de Plug-e" un minuto antes de un deploy.
+ *
+ * Esto lo recoge: si el último mensaje de la conversación es del paciente y
+ * lleva más de dos minutos sin respuesta, se contesta.
+ */
+const ESPERA_ANTES_DE_RESCATAR_MIN = 2;
+
+async function responderPendientes() {
+  if (process.env.WA_BOT_ENABLED !== 'true') return { skipped: 'bot-disabled' };
+  const ahora = new Date();
+  const candidatas = await prisma.whatsAppConversation.findMany({
+    where: {
+      status: 'BOT',
+      windowExpiresAt: { gt: ahora },
+      lastMessageAt: { lt: new Date(ahora.getTime() - ESPERA_ANTES_DE_RESCATAR_MIN * 60000) },
+    },
+    select: { id: true, phone: true },
+    orderBy: { lastMessageAt: 'asc' },
+    take: 10,
+  });
+
+  let rescatados = 0;
+  for (const conv of candidatas) {
+    try {
+      const ultimo = await prisma.whatsAppMessage.findFirst({
+        where: { conversationId: conv.id },
+        orderBy: { timestamp: 'desc' },
+        select: { direction: true, body: true, type: true },
+      });
+      if (!ultimo || ultimo.direction !== 'INBOUND' || !ultimo.body) continue;
+      console.warn('[wa-rescate] sin responder desde hace rato:', conv.phone);
+      await require('./waCorporateBot.service').handleTextForBot({
+        conversationId: conv.id,
+        incomingText: ultimo.body,
+        desdeAudio: ultimo.type === 'audio',
+      });
+      rescatados++;
+    } catch (e) {
+      console.error('[wa-rescate] conversación', conv.id, 'falló:', e.message);
+    }
+  }
+  if (rescatados) console.log('[wa-rescate] contestados', rescatados);
+  return { rescatados, revisadas: candidatas.length };
+}
+
+/**
  * Envío masivo de texto libre a los chats abiertos — para una oferta puntual.
  *
  * Solo llega a quien escribió en las últimas 24h: fuera de esa ventana Meta
@@ -681,6 +733,7 @@ module.exports = {
   processWaAgendarNudges,
   recuperarConversaciones,
   envioMasivoTexto,
+  responderPendientes,
   processSilencios,
   processNudges,
   processEscalations,

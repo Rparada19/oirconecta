@@ -611,6 +611,12 @@ async function tick() {
     });
 
     // 9) Refresco editorial de marcas (día 1 del mes 8-9am CO si BRAND_AUTO_ENABLED=true)
+    // Mensajes que quedaron sin respuesta porque el proceso se reinició
+    // mientras la cola de 9 segundos esperaba. Sin esto, silencio para siempre.
+    const rescateResult = await runJob('waSinResponder', async () => (
+      require('../services/waNudge.service').responderPendientes()
+    ));
+
     // De madrugada, una vez: lee los chats de ayer y deja lo que el bot
     // debería aprender para que alguien lo apruebe.
     const aprendizajeResult = await runJob('botAprendizaje', async () => (
@@ -630,6 +636,7 @@ async function tick() {
       (remindersResult?.sent || 0) > 0 ||
       (remindersResult?.failed || 0) > 0 ||
       (nurtureResult?.sent || 0) > 0 ||
+      (rescateResult?.rescatados || 0) > 0 ||
       (silencioResult?.retomas || 0) > 0 ||
       (silencioResult?.despedidas || 0) > 0 ||
       (nurtureResult?.failed || 0) > 0 ||
