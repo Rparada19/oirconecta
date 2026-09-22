@@ -1622,6 +1622,13 @@ const VOSEO = [
   // Lo que se coló en septiembre: voseo que faltaba, regionalismos de otros
   // países ("te late", "al tiro") y palabras sin tilde o mal escritas.
   ['salís', 'sales'],
+  ['vivís', 'vives'],
+  ['sentís', 'sientes'],
+  ['escribís', 'escribes'],
+  ['seguís', 'sigues'],
+  ['preferís', 'prefieres'],
+  ['pedís', 'pides'],
+  ['o[íi]s', 'oyes'],
   ['notás', 'notas'],
   ['evitás', 'evitas'],
   ['recibís', 'recibes'],
