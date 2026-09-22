@@ -16,7 +16,7 @@ const QRCode = require('qrcode');
 const WA_NUMBER = (process.env.CENTRO_WHATSAPP || '573171503944').replace(/\D/g, '');
 
 function enlaceQr(nombreAliado) {
-  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Vengo de ${nombreAliado}`)}`;
+  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hola, quiero agendar mi chequeo auditivo ${nombreAliado}.`)}`;
 }
 
 /** Nombre de archivo amable para la descarga: qr-plug-e.svg */

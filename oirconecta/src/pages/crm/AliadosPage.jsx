@@ -144,7 +144,7 @@ function DialogoFicha({ abierto, aliado, onCerrar, onGuardado }) {
           <Seccion>Identificación</Seccion>
           <Grid item xs={12} sm={6}>
             <TextField label="Nombre" value={f.nombre} onChange={set('nombre')} size="small" fullWidth required
-              helperText={editando ? 'Cambiarlo cambia el texto del QR: las tarjetas ya impresas siguen sirviendo por el código.' : 'Aparece en el mensaje del QR: “Vengo de …”'} />
+              helperText={editando ? 'Cambiarlo cambia el texto del QR: las tarjetas ya impresas siguen sirviendo por el código.' : 'Aparece en el mensaje del QR: “…mi chequeo auditivo …”'} />
           </Grid>
           <Grid item xs={12} sm={3}>
             <TextField select label="Tipo" value={f.tipo} onChange={set('tipo')} size="small" fullWidth>

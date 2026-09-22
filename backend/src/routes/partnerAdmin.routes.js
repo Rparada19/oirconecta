@@ -87,7 +87,7 @@ async function sincronizarNewsletter(aliado) {
 
 /** El enlace exacto que debe llevar el QR de las tarjetas del aliado. */
 function enlaceQr(nombre) {
-  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Vengo de ${nombre}`)}`;
+  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hola, quiero agendar mi chequeo auditivo ${nombre}.`)}`;
 }
 
 router.get('/', async (req, res) => {
