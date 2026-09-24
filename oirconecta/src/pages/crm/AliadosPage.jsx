@@ -21,13 +21,85 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBackIosNew';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import AddIcon from '@mui/icons-material/Add';
-import { api } from '../../services/apiClient';
+import { api, getToken } from '../../services/apiClient';
+import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 
 const NAVY = '#0F2A4A';
 const ACCENT = '#6d28d9';
 const MUTED = '#64748b';
 const BORDER = '#eef0f3';
 const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
+
+/**
+ * El QR listo para la imprenta.
+ *
+ * Se pide al backend, que lo dibuja a partir del enlace del aliado: así el
+ * código y el mensaje prellenado no se pueden desincronizar. La descarga va
+ * por fetch porque la ruta pide sesión de administrador — un <a href> pelado
+ * devolvería un 401 en vez del archivo.
+ */
+function QrDelAliado({ aliado }) {
+  const [preview, setPreview] = useState(null);
+  const [error, setError] = useState(null);
+
+  const urlQr = useCallback((formato) => {
+    const base = getApiBaseUrl()
+      || (typeof window !== 'undefined' && window.location.hostname.endsWith('oirconecta.com')
+        ? 'https://oirconecta-api.onrender.com' : '');
+    return `${base}/api/aliados-admin/${aliado.id}/qr?formato=${formato}${formato === 'png' ? '&size=1024' : ''}`;
+  }, [aliado.id]);
+
+  const pedir = useCallback(async (formato) => {
+    const res = await fetch(urlQr(formato), { headers: { Authorization: `Bearer ${getToken()}` } });
+    if (!res.ok) throw new Error(`No se pudo generar el QR (${res.status})`);
+    return res.blob();
+  }, [urlQr]);
+
+  useEffect(() => {
+    let vivo = true; let url = null;
+    pedir('svg')
+      .then((blob) => { if (!vivo) return; url = URL.createObjectURL(blob); setPreview(url); })
+      .catch((e) => vivo && setError(e.message));
+    return () => { vivo = false; if (url) URL.revokeObjectURL(url); };
+  }, [pedir]);
+
+  const descargar = async (formato) => {
+    try {
+      const blob = await pedir(formato);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `qr-${String(aliado.nombre || 'aliado').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.${formato}`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  return (
+    <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 1.5 }}>
+      <Box sx={{ width: 120, height: 120, border: `1px solid ${BORDER}`, borderRadius: 1, p: 1, bgcolor: '#fff' }}>
+        {preview
+          ? <Box component="img" src={preview} alt={`QR de ${aliado.nombre}`} sx={{ width: '100%', height: '100%' }} />
+          : <Stack alignItems="center" justifyContent="center" sx={{ height: '100%' }}><CircularProgress size={18} /></Stack>}
+      </Box>
+      <Stack spacing={1}>
+        <Typography sx={{ color: MUTED, fontSize: 12 }}>
+          Este es el QR de las tarjetas. El SVG es el que se manda a la imprenta: no se pixela por grande que se imprima.
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <Button size="small" variant="contained" onClick={() => descargar('svg')}
+            sx={{ bgcolor: ACCENT, '&:hover': { bgcolor: '#5b21b6' } }}>
+            Descargar SVG
+          </Button>
+          <Button size="small" variant="outlined" onClick={() => descargar('png')}>Descargar PNG</Button>
+        </Stack>
+        {error && <Typography sx={{ color: '#b91c1c', fontSize: 12 }}>{error}</Typography>}
+      </Stack>
+    </Stack>
+  );
+}
 
 const ESTADO_META = {
   REFERIDO: { label: 'Referido', color: '#64748b', bg: '#f1f5f9' },
@@ -453,6 +525,7 @@ function Detalle({ aliado, onVolver, onCambio, onEditar }) {
               El QR de la tarjeta debe apuntar exactamente aquí. El texto prellenado es lo que
               nos deja saber que el paciente viene de {aliado.nombre}.
             </Typography>
+            <QrDelAliado aliado={aliado} />
           </Box>
 
           <Divider />
