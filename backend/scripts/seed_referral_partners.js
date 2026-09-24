@@ -2,7 +2,7 @@
  * Aliados referidores. Idempotente: upsert por `code`.
  *
  * El `code` es lo que viaja en el mensaje prellenado del QR de la tarjeta:
- *   https://wa.me/<numero>?text=Vengo%20de%20Plug-e
+ *   https://wa.me/<numero>?text=Hola,%20quiero%20agendar%20mi%20chequeo%20auditivo%20PLÜG-E.
  * Se compara sin tildes ni signos, así que "Plug-e", "plug e" y "PLUGE" valen.
  */
 
@@ -20,7 +20,7 @@ function nuevoCodigoRegistro(code) {
 const ALIADOS = [
   {
     code: 'PLUG-E',
-    nombre: 'Plug-e',
+    nombre: 'PLÜG-E',
     comisionPct: 10,
     notas: 'Acuerdo 2026-09-02. Tarjeta con QR en cada venta de protectores auditivos. 10% sobre el valor facturado de la venta de audífonos. Atribución sin caducidad.',
   },
