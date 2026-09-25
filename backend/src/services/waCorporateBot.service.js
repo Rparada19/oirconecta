@@ -235,14 +235,28 @@ async function horarioDelCentro(profileId) {
     .join(' · ');
 }
 
-/** "jueves 10 de septiembre de 2026" — para que nadie tenga que deducirlo. */
+/**
+ * "jueves 10 de septiembre de 2026" — para que nadie tenga que deducirlo.
+ *
+ * Recibe un día de calendario, no un instante: `Appointment.fecha` se guarda
+ * como la medianoche UTC del día de la cita. Convertirla a hora de Bogotá la
+ * corría al día anterior: el paciente pidió el martes 29, la cita quedó el
+ * martes 29 y el bot le confirmó "lunes, 28 de septiembre".
+ */
 function fechaLegible(valor) {
-  const d = valor instanceof Date ? valor : new Date(valor);
-  if (Number.isNaN(d.getTime())) return String(valor || '');
+  let y; let m; let dia;
+  const iso = typeof valor === 'string' && valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    [y, m, dia] = [Number(iso[1]), Number(iso[2]) - 1, Number(iso[3])];
+  } else {
+    const d = valor instanceof Date ? valor : new Date(valor);
+    if (Number.isNaN(d.getTime())) return String(valor || '');
+    [y, m, dia] = [d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()];
+  }
   return new Intl.DateTimeFormat('es-CO', {
-    timeZone: 'America/Bogota',
+    timeZone: 'UTC',
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  }).format(d);
+  }).format(new Date(Date.UTC(y, m, dia, 12)));
 }
 
 const bookingToolImpls = {
@@ -1296,14 +1310,12 @@ async function citaVigenteDeConversacion(conv) {
         : { patient: { telefono: { contains: last10 } } }),
     },
     orderBy: { fecha: 'asc' },
-    select: { fecha: true, tipoConsulta: true, estado: true },
+    select: { fecha: true, hora: true, tipoConsulta: true, estado: true },
   }).catch(() => null);
   if (!cita) return null;
 
-  const cuando = new Date(cita.fecha).toLocaleString('es-CO', {
-    weekday: 'long', day: 'numeric', month: 'long',
-    hour: 'numeric', minute: '2-digit', hour12: true,
-  });
+  // La hora vive en `hora`; `fecha` es solo el día.
+  const cuando = `${fechaLegible(cita.fecha)}${cita.hora ? ` a las ${cita.hora}` : ''}`;
   return `Tiene cita el ${cuando}${cita.tipoConsulta ? ` — ${cita.tipoConsulta}` : ''}.`;
 }
 
