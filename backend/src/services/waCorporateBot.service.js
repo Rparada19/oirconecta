@@ -1879,6 +1879,8 @@ Si el día que pide no aparece o no tiene cupo, DÍSELO —"el martes no tengo n
     }).catch(() => null);
   }
   systemPrompt = systemPrompt.split('{ALIADO}').join(partner?.nombre || 'nuestro aliado');
+  // Hasta aquí el prompt es igual para toda la rama durante el día: se cachea.
+  const corte = systemPrompt.length;
 
   // La rama de profesional ya no argumenta ni capta por WhatsApp: solo manda
   // al formulario de /precios, que cae en Captación comercial → Leads. Por eso
@@ -2059,7 +2061,21 @@ ${cupos.ciclo === 'semana' ? 'Son cupos semanales: si alguien pregunta, se dice 
     }
   }
 
-  return { systemPrompt, adVigente, firma };
+  return { systemPrompt, adVigente, firma, corte };
+}
+
+/**
+ * Prompt caching: el tramo fijo (rama + trato + calendario) y el prompt
+ * completo quedan en caché 5 min. Las vueltas del tool loop y los mensajes
+ * seguidos del mismo paciente pagan esa parte al 10%.
+ */
+function bloquesSystem(texto, corte) {
+  const cache = { type: 'ephemeral' };
+  if (!corte || corte >= texto.length) return [{ type: 'text', text: texto, cache_control: cache }];
+  return [
+    { type: 'text', text: texto.slice(0, corte), cache_control: cache },
+    { type: 'text', text: texto.slice(corte), cache_control: cache },
+  ];
 }
 
 /**
@@ -2098,12 +2114,12 @@ async function sinFirmaRepetida(texto, firma, conversationId) {
  * ninguna respuesta —"es para un familiar" y silencio—, que es peor que
  * cualquier respuesta imperfecta.
  */
-async function respuestaSinTools(client, systemPrompt, messages) {
+async function respuestaSinTools(client, systemPrompt, messages, corte) {
   try {
     const resp = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 800,
-      system: `${systemPrompt}\n\nESCRIBE AHORA el mensaje para el paciente, con lo que ya sabes. No tienes herramientas en este turno: si te faltaba mirar la agenda, dile que ya le confirmas los horarios y pregúntale qué día le sirve.`,
+      system: [...bloquesSystem(systemPrompt, corte), { type: 'text', text: `ESCRIBE AHORA el mensaje para el paciente, con lo que ya sabes. No tienes herramientas en este turno: si te faltaba mirar la agenda, dile que ya le confirmas los horarios y pregúntale qué día le sirve.` }],
       messages,
     });
     return (resp.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
@@ -2127,7 +2143,7 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
   };
 
   const ultima = [...messages].reverse().find((m) => m.role === 'user');
-  const { systemPrompt } = await construirPrompt(
+  const { systemPrompt, corte } = await construirPrompt(
     conv,
     typeof ultima?.content === 'string' ? ultima.content : null,
   );
@@ -2176,7 +2192,7 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
     const resp = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
-      system: systemPrompt,
+      system: bloquesSystem(systemPrompt, corte),
       ...(useBookingTools ? { tools } : {}),
       messages: working,
     });
@@ -2201,7 +2217,7 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
 
   // Se quedó en herramientas y nunca escribió. Le pedimos el mensaje sin
   // herramientas: quedarse callado es la peor respuesta posible.
-  if (!texto.trim()) texto = await respuestaSinTools(client, systemPrompt, working);
+  if (!texto.trim()) texto = await respuestaSinTools(client, systemPrompt, working, corte);
 
   const escala = texto.includes(ESCALATE_TAG);
   return {
@@ -2229,7 +2245,7 @@ async function handleTextForBot({ conversationId, incomingText, desdeAudio = fal
   // Sin tipo asignado tampoco se queda callado: pregunta y se tipifica solo.
   if (!conv.contactType) conv.contactType = 'OTROS';
 
-  let { systemPrompt, adVigente, firma } = await construirPrompt(conv, incomingText);
+  let { systemPrompt, adVigente, firma, corte } = await construirPrompt(conv, incomingText);
 
   // Lo que vas a leer lo dijo hablando, no escribiendo.
   if (desdeAudio) {
@@ -2280,7 +2296,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
         const resp = await client.messages.create({
           model: CLAUDE_MODEL,
           max_tokens: 1024,
-          system: systemPrompt,
+          system: bloquesSystem(systemPrompt, corte),
           tools,
           messages: workingMessages,
         });
@@ -2357,13 +2373,13 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
         workingMessages.push({ role: 'user', content: toolResults });
       }
       // Gastó las vueltas en herramientas y no escribió: no lo dejamos mudo.
-      reply = finalText || await respuestaSinTools(client, systemPrompt, workingMessages);
+      reply = finalText || await respuestaSinTools(client, systemPrompt, workingMessages, corte);
     } else {
       // Path simple sin tools (INFO_GENERAL, PROFESIONAL_DIRECTORIO, etc.)
       const resp = await client.messages.create({
         model: CLAUDE_MODEL,
         max_tokens: 800,
-        system: systemPrompt,
+        system: bloquesSystem(systemPrompt, corte),
         messages,
       });
       const block = (resp.content || []).find((b) => b.type === 'text');
