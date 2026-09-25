@@ -1132,7 +1132,7 @@ const ESCALATE_TAG = '[ESCALAR_HUMANO]';
 /** Carga historial reciente de la conversación en formato Anthropic. */
 async function loadHistory(conversationId) {
   const rows = await prisma.whatsAppMessage.findMany({
-    where: { conversationId, type: { in: ['text', 'interactive'] } },
+    where: { conversationId, type: { in: ['text', 'interactive', 'audio'] } },
     orderBy: { timestamp: 'desc' },
     take: MAX_HISTORY_MESSAGES,
     select: { direction: true, body: true, sentByBot: true, sentByUserId: true, type: true },
@@ -1196,7 +1196,7 @@ async function actualizarResumen(conversationId) {
 
   // Solo lo que aún no está resumido, en orden.
   const nuevos = await prisma.whatsAppMessage.findMany({
-    where: { conversationId, type: { in: ['text', 'interactive'] } },
+    where: { conversationId, type: { in: ['text', 'interactive', 'audio'] } },
     orderBy: { timestamp: 'asc' },
     skip: conv.botSummaryCount || 0,
     select: { direction: true, body: true },
@@ -2269,7 +2269,11 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   const useBookingTools = !!agendaProfileId || conv.contactType === 'REFERIDO_ALIADO';
 
   const history = await loadHistory(conversationId);
-  const messages = history.length > 0 ? history : [{ role: 'user', content: incomingText }];
+  // Las notas de voz van transcritas en body. Antes el historial las dejaba
+  // por fuera y terminaba en el saludo del bot: Claude no tenía qué contestar
+  // y el paciente quedaba sin respuesta.
+  let messages = history.length > 0 ? history : [{ role: 'user', content: incomingText }];
+  if (messages[messages.length - 1].role !== 'user') messages = [...messages, { role: 'user', content: incomingText }];
 
   let reply = '';
   let citaCreadaEnEsteTurno = false;
