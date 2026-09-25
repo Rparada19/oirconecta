@@ -502,6 +502,11 @@ ${cuantos} Si dejas tu cita agendada hoy, tomas uno — y la programas para el d
  */
 const ESPERA_ANTES_DE_RESCATAR_MIN = 2;
 
+// Cada mensaje se rescata UNA vez. Si el bot devuelve vacío o falla, el
+// mensaje sigue de último y, sin esto, el cron lo re-procesaba cada minuto
+// durante 24h: ~6M tokens diarios de Haiku con 27 mensajes reales.
+const yaRescatados = new Set();
+
 async function responderPendientes() {
   if (process.env.WA_BOT_ENABLED !== 'true') return { skipped: 'bot-disabled' };
   const ahora = new Date();
@@ -528,9 +533,11 @@ async function responderPendientes() {
       const ultimo = await prisma.whatsAppMessage.findFirst({
         where: { conversationId: conv.id },
         orderBy: { timestamp: 'desc' },
-        select: { direction: true, body: true, type: true },
+        select: { id: true, direction: true, body: true, type: true },
       });
       if (!ultimo || ultimo.direction !== 'INBOUND' || !ultimo.body) continue;
+      if (yaRescatados.has(ultimo.id)) continue;
+      yaRescatados.add(ultimo.id);
       console.warn('[wa-rescate] sin responder desde hace rato:', conv.phone);
       await require('./waCorporateBot.service').handleTextForBot({
         conversationId: conv.id,
