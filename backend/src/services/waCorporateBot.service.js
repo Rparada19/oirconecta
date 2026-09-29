@@ -1646,6 +1646,30 @@ const FALLO_AGENDANDO =
 ¿Me confirmas otra vez el día y la hora que quieres y lo intento de una?`;
 
 /**
+ * "Te la moví para el miércoles" sin haber llamado reprogramar_cita.
+ *
+ * A Olmes le pasó: pidió pasar su cita del martes al miércoles, el chat le
+ * dijo que sí y en la agenda la cita seguía el martes. El control de la
+ * confirmación falsa no lo vio porque solo miraba si la persona tenía alguna
+ * cita, y Olmes tenía una: la vieja.
+ */
+const PROMESA_DE_MOVER = /(te la|la|tu cita) (mov[ií]|cambi[eé]|pas[eé]|reagend[eé])|(qued[oó]|queda) (movida|reagendada|cambiada)|ya (la )?(mov[ií]|cambi[eé]|reagend[eé])|reagendad[ao] para|(ahora|nueva fecha)[^.\n]{0,20}(es|queda|qued[oó]) (el|para)/i;
+
+const CORRECCION_REPROGRAMAR =
+`ALTO — esto no lo ve el paciente.
+
+Acabas de decirle que su cita quedó movida, pero NO llamaste reprogramar_cita: en la agenda la cita sigue en la fecha vieja. Si ese mensaje sale, esa persona llega el día que no es.
+
+Hazlo ahora, en este turno:
+1. Si te falta la disponibilidad del día nuevo, llama get_availability y usa un cupo real.
+2. Llama reprogramar_cita con la fecha y la hora que ya acordaron. Están en la conversación de arriba; no se las vuelvas a preguntar.
+3. Solo cuando la herramienta responda bien, escribe la confirmación con la fecha y la hora que devuelve.
+
+Si la herramienta devuelve error, NO confirmes: dile que no alcanzaste a moverla, que sigue en la fecha vieja, y pregúntale si intentas con otro horario.
+
+${SOLO_EL_MENSAJE}`;
+
+/**
  * ¿Está preguntando "¿qué día?" en vez de ofrecer horas?
  *
  * A Edilma y a Edgar, que escribieron "quiero agendar una cita", el bot les
@@ -1677,6 +1701,21 @@ Y si es tu primer mensaje de la conversación, salúdalo por su nombre antes. Le
 ${SOLO_EL_MENSAJE}`;
 
 /** ¿Esta persona ya tiene una cita viva en la agenda? Se compara por teléfono. */
+/**
+ * ¿El mensaje nombra el día en que YA está la cita vigente? Entonces decir
+ * "quedó para el miércoles 30" es cierto aunque no se haya movido en este
+ * turno (se movió antes).
+ */
+async function citaYaEstaEnLaFechaDicha(telefono, texto) {
+  const vigente = await citaVigentePorTelefono(telefono);
+  if (!vigente) return { vigente: null, coincide: false };
+  const dia = (fechaLegible(vigente.fecha).match(/(\d{1,2}) de/) || [])[1];
+  const nombrados = [
+    ...String(texto || '').matchAll(/(?:lunes|martes|mi[ée]rcoles|jueves|viernes|s[áa]bado|domingo)\s+(\d{1,2})|(\d{1,2}) de (?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/gi),
+  ].map((m) => m[1] || m[2]);
+  return { vigente, coincide: Boolean(dia) && nombrados.includes(dia) };
+}
+
 async function tieneCitaVigente(telefono) {
   const last10 = String(telefono || '').replace(/\D/g, '').slice(-10);
   if (!last10) return false;
@@ -2365,6 +2404,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
 
   let reply = '';
   let citaCreadaEnEsteTurno = false;
+  let citaMovidaEnEsteTurno = false;
   let disponibilidadConsultada = false;
   let fechaDeLaCita = null;
   try {
@@ -2415,6 +2455,24 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
             workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_AGENDA }] });
             continue;
           }
+          // Dijo que movió la cita sin llamar reprogramar_cita. Se le devuelve
+          // para que la mueva de verdad antes de confirmar.
+          if (
+            PROMESA_DE_MOVER.test(finalText)
+            && !citaMovidaEnEsteTurno
+            && !citaCreadaEnEsteTurno
+            && correcciones < 2
+            && !(await citaYaEstaEnLaFechaDicha(conv.phone, finalText)).coincide
+          ) {
+            correcciones++;
+            console.warn(
+              '[wa-bot] dijo que movió la cita sin moverla — lo devuelvo a reprogramar.',
+              'conversación:', conversationId, 'intento:', correcciones,
+            );
+            workingMessages.push({ role: 'assistant', content: resp.content });
+            workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_REPROGRAMAR }] });
+            continue;
+          }
           // Preguntó "¿qué día?" sin haber mirado la agenda. Se le devuelve
           // para que consulte los cupos y ofrezca horas de verdad.
           if (
@@ -2445,6 +2503,9 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
             output = await impl(toolCtx, tu.input || {});
             if (tu.name === 'create_appointment' && output && !output.error) {
               citaCreadaEnEsteTurno = true;
+            }
+            if (tu.name === 'reprogramar_cita' && output && !output.error) {
+              citaMovidaEnEsteTurno = true;
             }
             if (['create_appointment', 'reprogramar_cita'].includes(tu.name) && output?.fechaLegible) {
               fechaDeLaCita = output.fechaLegible;
@@ -2507,6 +2568,30 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     }
   }
 
+  // Lo mismo con una cita movida: si el mensaje dice que quedó en otra fecha
+  // y la agenda la tiene en la vieja, no sale. Se le dice la verdad.
+  let citaNoMovida = false;
+  if (PROMESA_DE_MOVER.test(reply) && !citaMovidaEnEsteTurno && !citaCreadaEnEsteTurno) {
+    const { vigente, coincide } = await citaYaEstaEnLaFechaDicha(conv.phone, reply);
+    if (vigente && !coincide) {
+      citaNoMovida = true;
+      console.error(
+        '[wa-bot] CITA NO MOVIDA — dijo que la movió y sigue en la fecha vieja.',
+        'conversación:', conversationId, 'teléfono:', conv.phone,
+        '— mensaje bloqueado:', reply.slice(0, 200),
+      );
+      reply = `Perdón, no alcancé a mover tu cita: sigue el ${fechaLegible(vigente.fecha)} a las ${vigente.hora}.
+
+¿Me confirmas a qué día y hora la quieres pasar y la muevo ya mismo?`;
+      require('./alertaEquipo.service').avisar({
+        titulo: 'El bot no logró mover una cita (la sigue intentando él)',
+        quien: conv.contactName || 'Paciente',
+        telefono: conv.phone,
+        texto: 'Dijo que la movía y reprogramar_cita no corrió. Revisar la cita en la agenda.',
+      }).catch(() => {});
+    }
+  }
+
   // Detecta tag de escalada. Una cita que no se pudo crear NO escala: el bot
   // se queda a cargo y la reintenta con la persona.
   const shouldEscalate = reply.includes(ESCALATE_TAG);
@@ -2546,8 +2631,8 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
       where: { id: conversationId },
       data: {
         lastMessageAt: new Date(),
-        lastMessagePreview: citaFantasma
-          ? `⚠️ No pudo agendar — ${cleanReply.slice(0, 110)}`
+        lastMessagePreview: citaFantasma || citaNoMovida
+          ? `⚠️ No pudo ${citaNoMovida ? 'mover la cita' : 'agendar'} — ${cleanReply.slice(0, 100)}`
           : `Bot: ${cleanReply.slice(0, 140)}`,
         status: shouldEscalate ? 'ESCALATED' : 'BOT',
         unreadCount: shouldEscalate ? { increment: 1 } : undefined,
