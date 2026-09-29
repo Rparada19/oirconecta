@@ -41,6 +41,11 @@ const CREAM = '#fefdfb';
 const WA_GREEN = '#25D366';
 const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 
+// Oferta de cierre de mes. El texto va por chat a quien escribió en las últimas
+// 24h; a los demás les llega la plantilla, que dice lo mismo.
+const PLANTILLA_OFERTA = 'oferta_cierre_mes';
+const TEXTO_OFERTA_CIERRE = 'Hola{{nombre}} 👋 Te escribe Aura, de OírConecta. Hace unos días nos escribiste y no quería dejar la conversación a medias.\n\nTe cuento que hasta fin de mes tenemos audífonos desde *$800.000 cada uno*, con opción de financiarlos y de asegurarlos contra pérdida y robo.\n\nSi te sirve, te ayudo a buscar un horario para la valoración. Y si ya lo resolviste, me dices y no te escribo más.';
+
 function fmtTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -130,20 +135,29 @@ export default function WhatsAppInboxPage({
   const [masivoPrevio, setMasivoPrevio] = useState(null);
   const [masivoResultado, setMasivoResultado] = useState(null);
   const [masivoLoading, setMasivoLoading] = useState(false);
+  // A los de más de 24h solo se les puede escribir con plantilla aprobada.
+  const [masivoConPlantilla, setMasivoConPlantilla] = useState(false);
 
   const enviarMasivo = async (soloContar) => {
     setMasivoLoading(true); setMasivoResultado(null);
     try {
-      const r = await api.post(`/api/wa/campana-texto?dryRun=${soloContar}`, { texto: masivoTexto });
+      const r = await api.post(`/api/wa/campana-texto?dryRun=${soloContar}`, {
+        texto: masivoTexto,
+        plantilla: masivoConPlantilla ? PLANTILLA_OFERTA : null,
+        dias: 30,
+      });
       const d = r?.data?.data;
       if (!r?.data?.success) {
         setMasivoResultado(r?.data?.error || 'No se pudo');
       } else if (soloContar) {
         setMasivoPrevio(d);
-        setMasivoResultado(`Le llega a ${d.destinatarios}. Por fuera: ${d.descartados.conCita} con cita, ${d.descartados.otraCiudad} de otra ciudad, ${d.descartados.pidioQueNo} que no quieren, ${d.descartados.yaRecibio} que ya lo recibieron.`);
+        const como = masivoConPlantilla
+          ? ` (${d.porTexto} por chat, ${d.porPlantilla} con la plantilla ${PLANTILLA_OFERTA})`
+          : '';
+        setMasivoResultado(`Le llega a ${d.destinatarios}${como}. Por fuera: ${d.descartados.conCita} con cita, ${d.descartados.otraCiudad} de otra ciudad, ${d.descartados.pidioQueNo} que no quieren, ${d.descartados.yaRecibio} que ya lo recibieron.`);
       } else {
         setMasivoPrevio(null);
-        setMasivoResultado(`Enviados: ${d.enviados} de ${d.destinatarios}.${d.fallidos?.length ? ` Fallaron ${d.fallidos.length}.` : ''}`);
+        setMasivoResultado(`Enviados: ${d.enviados} por chat${d.enviadosPlantilla ? ` y ${d.enviadosPlantilla} con plantilla` : ''}, de ${d.destinatarios}.${d.fallidos?.length ? ` Fallaron ${d.fallidos.length}.` : ''}`);
       }
     } catch (e) {
       setMasivoResultado(e.message);
@@ -1297,6 +1311,23 @@ export default function WhatsAppInboxPage({
             <TextField multiline minRows={3} fullWidth size="small" value={masivoTexto}
               onChange={(e) => { setMasivoTexto(e.target.value); setMasivoPrevio(null); }}
               placeholder="Hola{{nombre}}, te cuento…" />
+            <Button size="small" sx={{ textTransform: 'none', mt: 0.5, px: 0, fontSize: '0.72rem' }}
+              onClick={() => { setMasivoTexto(TEXTO_OFERTA_CIERRE); setMasivoPrevio(null); setMasivoResultado(null); }}>
+              Usar el texto de la oferta de cierre de mes
+            </Button>
+            <FormControlLabel
+              sx={{ display: 'flex', mt: 0.5 }}
+              control={
+                <Checkbox size="small" checked={masivoConPlantilla}
+                  onChange={(e) => { setMasivoConPlantilla(e.target.checked); setMasivoPrevio(null); setMasivoResultado(null); }} />
+              }
+              label={
+                <Typography sx={{ fontSize: '0.72rem', color: MUTED }}>
+                  Incluir a los que escribieron en los últimos 30 días (más de 24h) con la plantilla {PLANTILLA_OFERTA}.
+                  Tiene que estar aprobada en Meta.
+                </Typography>
+              }
+            />
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1, flexWrap: 'wrap', rowGap: 1 }}>
               <Button size="small" variant="outlined" disabled={masivoLoading || masivoTexto.trim().length < 20}
                 onClick={() => enviarMasivo(true)}>

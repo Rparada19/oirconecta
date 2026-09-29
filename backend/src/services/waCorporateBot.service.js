@@ -235,14 +235,28 @@ async function horarioDelCentro(profileId) {
     .join(' · ');
 }
 
-/** "jueves 10 de septiembre de 2026" — para que nadie tenga que deducirlo. */
+/**
+ * "jueves 10 de septiembre de 2026" — para que nadie tenga que deducirlo.
+ *
+ * Recibe un día de calendario, no un instante: `Appointment.fecha` se guarda
+ * como la medianoche UTC del día de la cita. Convertirla a hora de Bogotá la
+ * corría al día anterior: el paciente pidió el martes 29, la cita quedó el
+ * martes 29 y el bot le confirmó "lunes, 28 de septiembre".
+ */
 function fechaLegible(valor) {
-  const d = valor instanceof Date ? valor : new Date(valor);
-  if (Number.isNaN(d.getTime())) return String(valor || '');
+  let y; let m; let dia;
+  const iso = typeof valor === 'string' && valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    [y, m, dia] = [Number(iso[1]), Number(iso[2]) - 1, Number(iso[3])];
+  } else {
+    const d = valor instanceof Date ? valor : new Date(valor);
+    if (Number.isNaN(d.getTime())) return String(valor || '');
+    [y, m, dia] = [d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()];
+  }
   return new Intl.DateTimeFormat('es-CO', {
-    timeZone: 'America/Bogota',
+    timeZone: 'UTC',
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  }).format(d);
+  }).format(new Date(Date.UTC(y, m, dia, 12)));
 }
 
 const bookingToolImpls = {
@@ -859,7 +873,7 @@ Reglas de la toma de datos:
 
 ═══ LÍMITES ═══
 - No des diagnósticos ni interpretes síntomas. Si describe molestias, valida en una línea y encadena con la cita.
-- No des precios de audífonos. El plan se define después de la valoración.
+- No des precios de audífonos. Qué audífono necesita se define después de la valoración.
 - Si pregunta por sus protectores auditivos o quiere un reclamo del producto de {ALIADO}, aclara que eso lo maneja {ALIADO} directamente y vuelve a la valoración.
 - Solo agregas [ESCALAR_HUMANO] si hay urgencia médica clara (dolor fuerte, sangrado, pérdida súbita de audición) o si insiste 3+ veces en hablar con una persona.
 
@@ -895,10 +909,10 @@ Esto se aprendió con datos, no con teoría: de 80 conversaciones, unas 22 murie
 
 Pidió una cita: la cita es la respuesta. Tu primer mensaje, en pocas líneas:
   1. Lo saludas por su nombre.
-  2. Llamas get_availability y le ofreces 3 horarios reales del día hábil más cercano con cupo.
+  2. Llamas get_availability y le ofreces 3 horarios reales del día hábil más cercano con cupo. Di "mañana" SOLO si esa fecha es la que el CALENDARIO marca como (mañana). Si mañana no hay cupo, dilo en una línea ("mañana ya no tengo espacio") y ofrece el día que sí, con su nombre: "El miércoles 30 tengo…".
   3. Si quieres, UNA línea opcional que no condiciona nada: "Y si quieres, cuéntame qué vienes notando, así la audióloga ya llega enterada."
 
-Ejemplo de la forma, no de las palabras: "¡Hola, Ana! 👋 Claro que sí. Mañana, miércoles 23, tengo:\n1️⃣ 8:00 a.m.\n2️⃣ 9:50 a.m.\n3️⃣ 2:00 p.m.\n¿Cuál te sirve? Y si quieres, cuéntame qué vienes notando."
+Ejemplo de la forma, no de las palabras: "¡Hola, Ana! 👋 Claro que sí. El jueves 23 tengo:\n1️⃣ 8:00 a.m.\n2️⃣ 9:50 a.m.\n3️⃣ 2:00 p.m.\n¿Cuál te sirve? Y si quieres, cuéntame qué vienes notando."
 
 Lo que pregunte en ese mismo primer mensaje (dónde quedan, cuánto vale) se responde ahí mismo, antes de los horarios. Si no dijo nada más que "quiero agendar", no le preguntes nada antes de darle horas.
 
@@ -956,20 +970,39 @@ Si un dato no está en estas instrucciones, en el conocimiento del centro o en l
 ═══ CUANDO PREGUNTAN EL PRECIO ═══
 Preguntar el precio no es una objeción que haya que sortear: es una pregunta legítima, y casi siempre la hace quien tiene miedo de que esto no le alcance. Trátala con respeto.
 
-Antes de responder, BUSCA el dato en lo que sabes: el conocimiento del centro, las preguntas frecuentes verificadas, el material del centro y el catálogo de planes que tienes más abajo. Ahí está lo que se puede decir. Solo si de verdad no aparece, dilo con honestidad: "ese valor te lo confirman en el centro, no quiero darte un número equivocado".
+Antes de responder, BUSCA el dato en lo que sabes: el conocimiento del centro, las preguntas frecuentes verificadas, y el material del centro. Ahí está lo que se puede decir. Solo si de verdad no aparece, dilo con honestidad: "ese valor te lo confirman en el centro, no quiero darte un número equivocado".
 
-▸ Antes de dar cualquier cifra, mira el bloque EL BENEFICIO que está al final de estas instrucciones. Ahí está lo que se dice primero, y manda sobre todo lo demás.
+▸ Antes de dar el precio de la valoración, mira el bloque EL BENEFICIO que está al final de estas instrucciones: ahí está lo que se dice primero. Si preguntan por el precio de un audífono, no: primero la cifra (ver CUANDO PREGUNTAN CUÁNTO VALE UN AUDÍFONO).
 
 - Si aun así quiere saber el valor normal, díselo de una. Sin rodeos. Esquivar el precio de una consulta es lo que más desconfianza genera.
-- "¿Cuánto vale un audífono?" se contesta con los dos puntos de entrada: planes de audición desde $5.000.000 y audífonos desde $800.000 cada uno (ver el bloque de PLANES DE ADAPTACIÓN más abajo). Sin rodeos y sin esperar a que insista.
-- Cuál plan le conviene depende de lo que se encuentre en la valoración, y eso se dice sin sonar a evasiva: no es que no queramos decirlo, es que sin conocer el grado de pérdida sería inventarlo.
-- La explicación de por qué depende de la valoración se da UNA vez y en dos líneas, no en un párrafo con tres razones numeradas. Si vuelve a preguntar el valor, o dice que no quiere perder el tiempo, le das el rango de los planes de una, en la primera línea. Esquivar dos veces es lo que hizo que un paciente escribiera "parece que se aprovechan de la necesidad del paciente".
+- Contesta el precio de LO QUE PREGUNTÓ. Si preguntó por la valoración, el precio de la valoración; si preguntó por un audífono, el del audífono. No le cambies la pregunta por otra.
+- NO hables de planes: ni "planes de audición", ni "planes de adaptación", ni "el plan incluye". No los ofrecemos. Aunque la palabra aparezca en el material del centro, no la uses.
 - NUNCA inventes cifras.
 - Después de responder puedes proponer la cita, pero primero responde. Contestar con un horario a quien preguntó un precio es no contestarle.
 
+═══ CUANDO PREGUNTAN CUÁNTO VALE UN AUDÍFONO ═══
+Es la pregunta que más llega. La respuesta lleva estas cuatro ideas, en este orden:
+
+1. EL PRECIO, EN LA PRIMERA LÍNEA: tenemos audífonos desde *$800.000 cada uno*. Nada antes: ni el beneficio, ni preguntas, ni "depende".
+2. QUÉ HACE QUE SUBA: la tecnología del audífono, no la pérdida auditiva. La tecnología es qué tan bien le ayuda a entender cuando hay ruido, en una reunión, en un restaurante o en la calle. Qué tan fuerte sea la pérdida NO sube el precio: un audífono de $800.000 sirve para pérdidas leves y hasta moderadas.
+3. ES POR CADA OÍDO: si oye mal de los dos lados, son dos audífonos. Dilo sin que tenga que preguntarlo, para que nadie llegue creyendo que con esa cifra se lleva el par.
+4. EL SIGUIENTE PASO: en la valoración se mide su audición y se mira en qué momentos del día le cuesta más oír. Con eso se sabe qué tecnología necesita y cuánto le va a costar. Aquí, y no antes, va el beneficio de la valoración si hay cupos.
+
+Así suena (es un ejemplo: dilo con tus palabras y adáptalo a lo que te contó):
+"Tenemos audífonos desde *$800.000 cada uno*. Lo que hace que el valor suba es la tecnología del audífono —qué tan bien te ayuda a entender cuando hay ruido, en una reunión o en la calle—, no qué tan fuerte sea la pérdida auditiva. Ten en cuenta que es por oído: si es en los dos, son dos audífonos.
+Para saber cuál te sirve, lo primero es la valoración: medimos tu audición y miramos en qué momentos te cuesta más oír."
+
+Reglas:
+· Si ya te contó cómo lo nota ("en las reuniones no entiendo", "le subo al televisor"), úsalo en el punto 2: dile qué tecnología le ayudaría con ESO. Un precio explicado con su propio caso se entiende; uno genérico suena a volante.
+· Si pregunta "¿y el más caro cuánto vale?" o "¿hasta cuánto llega?": no tienes ese dato y no lo inventes. Dile que depende de la tecnología que elija, que en la valoración se la muestran con el valor exacto, y que puede quedarse en el de $800.000 si le sirve.
+· Si pregunta si su pérdida es "muy fuerte" para el de $800.000: no le adivines el grado por chat. Dile que eso lo mide la audióloga, y que lo que mueve el precio es la tecnología, no la pérdida.
+· Si vuelve a preguntar el precio, le repites "desde $800.000 cada uno" en la primera línea, sin volver a explicar todo.
+· NO menciones marcas ni modelos: eso se define en la valoración.
+· Máximo dos párrafos cortos. Las cuatro ideas caben ahí.
+
 ═══ CUANDO DUDAN ═══
 Reconoce lo que te dicen. No discutas, no insistas dos veces con el mismo argumento y no lo dejes sin algo útil.
-- "Lo voy a pensar" → "Claro, tómate el tiempo que necesites. Solo para que lo tengas en cuenta: si dejas la cita agendada hoy, la valoración no te cuesta — y la programas para el día que te sirva, o la mueves después si te cambia el plan." Y quedas disponible de verdad.
+- "Lo voy a pensar" → "Claro, tómate el tiempo que necesites. Solo para que lo tengas en cuenta: si dejas la cita agendada hoy, la valoración no te cuesta — y la programas para el día que te sirva, o la mueves después si se te cruza algo." Y quedas disponible de verdad.
 - "Es para mi mamá/papá" → habla del familiar, no del aparato: cómo lo nota, desde cuándo, si él mismo lo reconoce. Muchas veces el problema no es el oído sino convencerlo — ahí es donde puedes ayudar de verdad.
 - "No tengo tiempo" → dile cuánto toma en realidad y qué horarios hay temprano.
 - "Queda lejos" (dentro de Bogotá o la Sabana) → dirección exacta y el horario con menos tráfico. Si vive en OTRA ciudad, ver "SI VIVE FUERA DE BOGOTÁ".
@@ -1114,7 +1147,7 @@ Reglas:
 - Solo escalás a humano [ESCALAR_HUMANO] si: (a) piden explícitamente hablar con una persona, (b) urgencia médica, (c) tema fuera de tu alcance.
 - No cierres en el aire con "quedo atento" ni "cualquier cosa me avisas": deja siempre algo útil, una respuesta o un siguiente paso concreto.
 - Cuando ofrezcas la cita no preguntes en abierto "¿cuándo te sirve?": propón 2-3 horarios concretos y deja que elija.
-- Si preguntan el precio de la consulta, lo PRIMERO es contarles que si dejan la cita agendada hoy la valoración no tiene costo (la cita puede ser otro día). Si aun así quieren saber el valor normal, díselo de una. Para audífonos, da los dos puntos de entrada de una: planes de audición desde $5.000.000 (equipos más años de controles, mantenimientos y garantía) y audífonos desde $800.000 cada uno. Si preguntan si el precio depende del grado de pérdida: no — uno de $800.000 sirve para pérdidas leves y hasta moderadas; lo que cambia el precio es la tecnología que quiera el paciente. Nunca inventes cifras ni des el valor de un plan por dentro.
+- Si preguntan el precio de la consulta, lo PRIMERO es contarles que si dejan la cita agendada hoy la valoración no tiene costo (la cita puede ser otro día). Si aun así quieren saber el valor normal, díselo de una. Si preguntan cuánto vale un audífono, la primera línea es "tenemos audífonos desde *$800.000 cada uno*", y después: lo que hace subir el valor es la tecnología del audífono (qué tan bien ayuda a entender en ruido, en reuniones, en la calle), no la pérdida auditiva; un audífono de $800.000 sirve para pérdidas leves y hasta moderadas; es por oído, así que si es en los dos son dos. Cierra con la valoración como siguiente paso: ahí se mide la audición y se ve qué tecnología necesita. Nunca inventes cifras ni menciones marcas. No hables de planes: no los ofrecemos.
 - No describas lo que ofrecemos ni uses frases de aviso publicitario. Habla de lo que le pasa a la persona, no de nosotros.
 - Tono: cálido, empático, colombiano neutro, tuteo. Máximo 3 párrafos cortos.
 - No inventes precios exactos. No des diagnósticos.
@@ -1296,14 +1329,12 @@ async function citaVigenteDeConversacion(conv) {
         : { patient: { telefono: { contains: last10 } } }),
     },
     orderBy: { fecha: 'asc' },
-    select: { fecha: true, tipoConsulta: true, estado: true },
+    select: { fecha: true, hora: true, tipoConsulta: true, estado: true },
   }).catch(() => null);
   if (!cita) return null;
 
-  const cuando = new Date(cita.fecha).toLocaleString('es-CO', {
-    weekday: 'long', day: 'numeric', month: 'long',
-    hour: 'numeric', minute: '2-digit', hour12: true,
-  });
+  // La hora vive en `hora`; `fecha` es solo el día.
+  const cuando = `${fechaLegible(cita.fecha)}${cita.hora ? ` a las ${cita.hora}` : ''}`;
   return `Tiene cita el ${cuando}${cita.tipoConsulta ? ` — ${cita.tipoConsulta}` : ''}.`;
 }
 
@@ -1714,6 +1745,41 @@ function diaDeSemanaCorrecto(texto, hoy = new Date()) {
 }
 
 /**
+ * "Mañana, miércoles 30" escrito un lunes 28. El día y el número estaban bien
+ * (la agenda no tenía cupo el martes y ofreció el miércoles), pero el
+ * "mañana" lo puso el modelo copiando la forma del ejemplo, y la persona lee
+ * "mañana" antes que el número. Se busca la fecha en los próximos 14 días y,
+ * si el hoy/mañana/pasado mañana no le corresponde, se cambia por el que sí o
+ * se quita ("El miércoles 30").
+ */
+const RELATIVO_CON_DIA = new RegExp(
+  '(?<![\\wáéíóúñ])(pasado\\s+ma[ñn]ana|ma[ñn]ana|hoy)(,?\\s+(?:el\\s+)?)(lunes|martes|mi[ée]rcoles|jueves|viernes|s[áa]bado|domingo)(\\s+)(\\d{1,2})(?!\\d)',
+  'gi',
+);
+
+function relativoCorrecto(texto, hoy = new Date()) {
+  const proximos = [];
+  for (let i = 0; i < 15; i++) {
+    const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' })
+      .format(new Date(hoy.getTime() + i * 86400000));
+    proximos.push(Number(iso.slice(8, 10)));
+  }
+  const PALABRA = ['hoy', 'mañana', 'pasado mañana'];
+  return String(texto || '').replace(RELATIVO_CON_DIA, (todo, rel, sep, dia, esp, num) => {
+    const offset = proximos.indexOf(Number(num));
+    if (offset === -1) return todo; // fecha lejana o rara: mejor no tocar
+    const dicho = rel.toLowerCase().replace(/\s+/g, ' ').replace('manana', 'mañana');
+    if (dicho === PALABRA[offset]) return todo;
+    // Al corregir solo se usa hoy o mañana; más allá, el nombre del día se entiende mejor.
+    const correcto = offset <= 1 ? PALABRA[offset] : null;
+    const mayus = rel[0] === rel[0].toUpperCase();
+    if (!correcto) return `${mayus ? 'El' : 'el'} ${dia}${esp}${num}`;
+    const palabra = mayus ? correcto[0].toUpperCase() + correcto.slice(1) : correcto;
+    return `${palabra}${sep}${dia}${esp}${num}`;
+  });
+}
+
+/**
  * A Adriana la agenda la dejó el viernes 25 y el mensaje le dijo "jueves 24".
  * Cuando la herramienta acaba de crear o mover la cita, la fecha que manda es
  * la suya: si la confirmación trae una sola fecha y no es esa, se reemplaza.
@@ -1728,7 +1794,7 @@ function conFechaDeLaAgenda(texto, fechaLegibleReal) {
 }
 
 function formatoWhatsApp(texto) {
-  return diaDeSemanaCorrecto(tuteoBogotano(sinPreambulo(texto)))
+  return relativoCorrecto(diaDeSemanaCorrecto(tuteoBogotano(sinPreambulo(texto))))
     // El modelo a veces envuelve la respuesta en etiquetas del andamiaje
     // (<response>…</response>) y al paciente le llegaba el cierre escrito en
     // el chat, debajo de la confirmación de su cita. Se quitan aquí.
@@ -1753,70 +1819,6 @@ function pausaHumana(entrante, respuesta) {
   const escribir = Math.min(6000, String(respuesta || '').length * 22);
   const ruido = 400 + Math.random() * 900;
   return Math.round(Math.min(9000, 1200 + leer + escribir + ruido));
-}
-
-/**
- * El catálogo de planes, tal como se le puede contar a un paciente.
- *
- * Lo que se vende no es un audífono: es un plan de adaptación —el equipo más
- * los controles, las audiometrías, los mantenimientos y las coberturas que lo
- * acompañan durante años. Hablar de "audífonos" reduce todo eso a un aparato
- * con precio, que es justo la conversación que no queremos tener.
- *
- * La marca y el nivel de tecnología NO van: son datos internos de inventario
- * y garantía con el fabricante (ver el nodo de conocimiento interno).
- */
-async function catalogoDePlanes() {
-  const planes = await prisma.hearingPlan.findMany({
-    where: { activo: true },
-    orderBy: [{ orden: 'asc' }, { precioCOP: 'asc' }],
-    select: {
-      nombre: true, linea: true, audifonosIncluidos: true,
-      controlesAdaptacion: true, audiometrias: true, mantenimientos: true,
-      anosGarantia: true, terapias: true, satisfaccionDias: true,
-      seguroPerdidaMeses: true, seguroRoturaMeses: true, videoconsulta: true,
-      precioCOP: true,
-    },
-  }).catch(() => []);
-  if (planes.length === 0) return '';
-
-  // El rango sale del catálogo, no de un número escrito a mano: el prompt decía
-  // "$800.000 a $12.000.000" mientras el cerebro decía "$5.000.000 a
-  // $27.500.000", y a cada paciente le tocaba uno distinto.
-  const precios = planes.map((p) => Number(p.precioCOP)).filter((n) => n > 0);
-  const cop = (n) => `$${n.toLocaleString('es-CO')}`;
-  const rango = precios.length
-    ? `desde ${cop(Math.min(...precios))} hasta ${cop(Math.max(...precios))} por los dos audífonos con todo el acompañamiento incluido`
-    : null;
-
-  const filas = planes.map((p) => {
-    const incluye = [
-      `${p.audifonosIncluidos} audífonos`,
-      p.controlesAdaptacion ? `${p.controlesAdaptacion} controles de adaptación` : null,
-      p.audiometrias ? `${p.audiometrias} audiometrías de seguimiento` : null,
-      p.mantenimientos ? `${p.mantenimientos} mantenimientos` : null,
-      p.terapias ? `${p.terapias} terapias de entrenamiento auditivo` : null,
-      p.anosGarantia ? `${p.anosGarantia} años de garantía` : null,
-      p.seguroPerdidaMeses ? `seguro de pérdida ${p.seguroPerdidaMeses} meses` : null,
-      p.seguroRoturaMeses ? `seguro de rotura ${p.seguroRoturaMeses} meses` : null,
-      p.satisfaccionDias ? `${p.satisfaccionDias} días de satisfacción garantizada` : null,
-      p.videoconsulta ? 'videoconsulta' : null,
-    ].filter(Boolean).join(', ');
-    return `· *${p.nombre}* (${p.linea}): ${incluye}.`;
-  }).join('\n');
-
-  return `\n\n═══ LO QUE OFRECEMOS SON PLANES DE ADAPTACIÓN ═══
-${filas}
-
-Cómo hablar de esto:
-· Cuando pregunten por precio, dales los dos puntos de entrada, en una línea y sin rodeos: *planes de audición desde $5.000.000* y *audífonos para pérdida auditiva desde $800.000 cada uno*. Empezar por los 5 millones a secas espanta a quien sí podía comprar.
-· La diferencia entre uno y otro es el acompañamiento: el plan incluye los dos equipos más los controles, los mantenimientos, las audiometrías de seguimiento y la garantía durante años. El audífono suelto es el equipo.
-· Los $800.000 son POR UNIDAD. Si la pérdida es en los dos oídos, dilo sin que tengan que preguntarlo, para que nadie llegue al consultorio creyendo que con esa cifra se lleva el par.
-· Los valores de cada plan por dentro NO se dicen por WhatsApp. No los tienes y no los inventes.
-· SI PREGUNTAN SI EL PRECIO DEPENDE DEL GRADO DE PÉRDIDA, la respuesta es NO, y se dice claro: un audífono de $800.000 sirve para pérdidas leves y hasta moderadas. Lo que cambia el precio es la TECNOLOGÍA que el paciente quiera —cuánto ayuda en ruido, en reuniones, en la calle—, no qué tan sorda esté la persona.
-${rango ? `· El rango completo de los planes: ${rango}. Si pregunta hasta dónde llegan, se lo dices. Nunca adivines en cuál plan cae él.` : ''}
-· NUNCA menciones la marca ni el nivel de tecnología del equipo. Eso se define en la valoración.
-═══════════════════════════════════`;
 }
 
 async function construirPrompt(conv, consulta = null) {
@@ -1955,7 +1957,7 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
   // El número es del consultorio: tanto la rama de paciente como la de dudas
   // generales deben saber lo mismo que el widget de la ficha (marcas,
   // servicios, horarios).
-  // El cerebro (nodos, FAQs verificadas, documentos y catálogo de planes) va a
+  // El cerebro (nodos, FAQs verificadas y documentos) va a
   // TODA rama que hable con un paciente. Faltaban dos, y una de ellas es la
   // peor de olvidar: el paciente que ya es nuestro preguntaba por la
   // diferencia entre exámenes y valoración y el bot improvisaba, mientras que
@@ -1991,8 +1993,6 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
             console.warn('[wa-bot] retrieval de documentos falló:', e.message);
           }
         }
-
-        systemPrompt += await catalogoDePlanes();
       }
     } catch (e) {
       console.error('[wa-bot] no pude cargar la educación del centro:', e.message);
@@ -2018,7 +2018,7 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
     systemPrompt += `\n\n═══ PROMOCIÓN QUE LES ACABAMOS DE ENVIAR ═══
 ${process.env.PROMO_ACTIVA}
 · Si preguntan por ella, confírmala con naturalidad: es real y se la enviamos nosotros.
-· Los detalles que NO están escritos arriba —sobre qué planes aplica, hasta cuándo va, qué incluye exactamente— no los tienes. Dilo así: "esos detalles te los confirma el equipo en la valoración", y ofrece el horario. NO los inventes y NO digas que solo vendemos planes: esta promoción existe.
+· Los detalles que NO están escritos arriba —a qué aplica, hasta cuándo va, qué incluye exactamente— no los tienes. Dilo así: "esos detalles te los confirma el equipo en la valoración", y ofrece el horario. NO los inventes: esta promoción existe.
 ═══════════════════════════════════`;
   }
 
@@ -2052,7 +2052,8 @@ Cómo se cuenta:
 · Si después necesita moverla, se mueve. El beneficio no se pierde.
 
 Cuándo lo dices:
-1. En cuanto pregunten por el precio o por el costo. ANTES de cualquier cifra. Está PROHIBIDO abrir la respuesta con "la valoración cuesta $…": quien oye primero el número se va antes de enterarse de que hoy no lo necesita. Si insiste en saber el valor normal, ahí sí se lo dices completo.
+1. En cuanto pregunten por el precio de la valoración o de la consulta. ANTES de cualquier cifra. Está PROHIBIDO abrir la respuesta con "la valoración cuesta $…": quien oye primero el número se va antes de enterarse de que hoy no lo necesita. Si insiste en saber el valor normal, ahí sí se lo dices completo.
+   Si lo que preguntó es cuánto vale un AUDÍFONO, al revés: primero "desde $800.000 cada uno" y el beneficio va después, como el siguiente paso (ver CUANDO PREGUNTAN CUÁNTO VALE UN AUDÍFONO).
 2. Cuando duden ("lo voy a pensar", "después te escribo"). Una segunda vez, no una tercera.
 
 El número es real y baja cada vez que alguien agenda: dilo con tranquilidad porque es verdad. No lo infles, no lo repitas en cada mensaje y no lo uses como amenaza. Si quedan pocos, dilo sin dramatizar.
