@@ -83,6 +83,24 @@ const CATALOG = [
       'Hola {{1}}, te escribo de OírConecta. Esta semana nos quedan {{2}} cupos de valoración auditiva sin costo. Si dejas tu cita agendada hoy tomas uno, y la programas para el día que te sirva. ¿Te busco un horario?',
   },
   {
+    // Oferta de cierre de mes para los que escribieron y se fueron sin agendar.
+    // Tiene que crearse en Meta (WhatsApp Manager → Plantillas) con este mismo
+    // nombre, categoría Marketing, idioma es_CO y exactamente este texto; hasta
+    // que Meta la apruebe, el envío a los de más de 24h falla.
+    key: 'oferta_cierre_mes',
+    metaName: 'oferta_cierre_mes',
+    locale: 'es_CO',
+    category: 'MARKETING',
+    label: 'Oferta cierre de mes · audífonos desde $800.000',
+    description: 'Retomar a quien escribió y no agendó, fuera de la ventana de 24h, con la oferta de cierre de mes.',
+    contactType: 'PACIENTE_BOGOTA',
+    variables: [
+      { key: 'nombre', label: 'Nombre del paciente', placeholder: 'Ej. María' },
+    ],
+    preview:
+      'Hola {{1}}, te escribo de OírConecta. Por cierre de mes tenemos audífonos desde $800.000 cada uno, con opción de financiación y seguro por pérdida y robo. Si quieres, te agendo una valoración para ver cuál te sirve. ¿Te busco un horario?',
+  },
+  {
     key: 'saludo_paciente_bogota',
     metaName: 'saludo_paciente_bogota',
     locale: 'es_CO',

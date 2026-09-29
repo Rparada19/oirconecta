@@ -554,31 +554,61 @@ async function responderPendientes() {
 }
 
 /**
- * Envío masivo de texto libre a los chats abiertos — para una oferta puntual.
+ * Envío masivo de una oferta a quienes escribieron y no agendaron.
  *
- * Solo llega a quien escribió en las últimas 24h: fuera de esa ventana Meta
- * exige plantilla aprobada, y mandarlo igual quema el número.
+ * A quien escribió en las últimas 24h le llega el texto libre. Al resto solo se
+ * le puede escribir con una plantilla aprobada por Meta: si se pasa
+ * `plantilla`, también les llega a los que escribieron en los últimos `dias`
+ * días, con esa plantilla. Mandar texto libre fuera de la ventana quema el
+ * número, por eso sin plantilla quedan por fuera.
  *
  * Quedan por fuera, sin que haya que acordarse: los que ya tienen cita, los
  * que dijeron que viven en otra ciudad, los que pidieron que no les
- * escribiéramos, y los que ya recibieron este mismo mensaje.
+ * escribiéramos, a los que el bot ya les dijo "te escribo por última vez", los
+ * chats que el equipo cerró, y los que ya recibieron este mismo mensaje.
  */
 const VIVE_EN_OTRA_CIUDAD = /villavicencio|c[úu]cuta|manizales|pereira|medell[íi]n|neiva|duitama|chaparral|popay[áa]n|cartagena|barranquilla|\bcali\b|ibagu[ée]|bucaramanga|santa marta|monter[íi]a|pasto|tunja|armenia|villavo|yopal|valledupar|sincelejo|facatativ[áa]|chaparral|no puedo viajar/i;
 const PIDIO_QUE_NO = /no,? gracias|no me interesa|ya resolv[ií]|no vuelvan|no escriban|d[ée]jenme|no quiero/i;
+const TIPOS_PACIENTE = ['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS'];
 
-async function envioMasivoTexto({ texto, dryRun = true } = {}) {
+/** El trozo fijo más largo de la plantilla: sirve para saber si ya se la mandamos. */
+function marcaDePlantilla(template) {
+  const trozos = String(template?.preview || '').split(/\{\{\d+\}\}/).map((t) => t.trim());
+  const largo = trozos.sort((a, b) => b.length - a.length)[0] || '';
+  return largo.slice(0, 60);
+}
+
+async function envioMasivoTexto({ texto, dryRun = true, plantilla = null, dias = 30 } = {}) {
   const cuerpo = String(texto || '').trim();
   if (cuerpo.length < 20) throw new Error('El texto está muy corto.');
   const ahora = new Date();
   const huella = cuerpo.slice(0, 40);
 
+  let template = null;
+  if (plantilla) {
+    template = require('./waTemplates.catalog').getByKey(plantilla);
+    if (!template) throw new Error(`La plantilla "${plantilla}" no está en el catálogo.`);
+  }
+  const marca = template ? marcaDePlantilla(template) : null;
+  const desde = new Date(ahora.getTime() - Math.max(1, Math.min(Number(dias) || 30, 90)) * 86400000);
+
   const convs = await prisma.whatsAppConversation.findMany({
     where: {
       businessLine: 'CRM',
       agendarBookedAt: null,
-      windowExpiresAt: { gt: ahora },   // dentro de las 24h de Meta
+      // Ya le prometimos por escrito que no le volvíamos a escribir.
+      silencio2At: null,
+      status: { not: 'CLOSED' },
+      OR: [
+        { windowExpiresAt: { gt: ahora } },   // dentro de las 24h de Meta: texto libre
+        ...(template ? [{                       // fuera: solo con plantilla
+          lastMessageAt: { gte: desde },
+          contactType: { in: TIPOS_PACIENTE },
+        }] : []),
+      ],
     },
-    select: { id: true, phone: true, contactName: true },
+    select: { id: true, phone: true, contactName: true, windowExpiresAt: true },
+    orderBy: { lastMessageAt: 'desc' },
   });
 
   const destinatarios = [];
@@ -595,30 +625,55 @@ async function envioMasivoTexto({ texto, dryRun = true } = {}) {
       descartados.conCita++; continue;
     }
     const repetido = await prisma.whatsAppMessage.findFirst({
-      where: { conversationId: conv.id, direction: 'OUTBOUND', body: { startsWith: huella } },
+      where: {
+        conversationId: conv.id,
+        direction: 'OUTBOUND',
+        OR: [
+          { body: { startsWith: huella } },
+          ...(marca ? [{ body: { contains: marca } }] : []),
+        ],
+      },
       select: { id: true },
     });
     if (repetido) { descartados.yaRecibio++; continue; }
-    destinatarios.push(conv);
+    const dentro = Boolean(conv.windowExpiresAt && conv.windowExpiresAt > ahora);
+    destinatarios.push({ ...conv, dentro });
   }
 
-  if (dryRun) return { dryRun: true, destinatarios: destinatarios.length, descartados };
+  const porTexto = destinatarios.filter((c) => c.dentro).length;
+  const porPlantilla = destinatarios.length - porTexto;
+  if (dryRun) {
+    return { dryRun: true, destinatarios: destinatarios.length, porTexto, porPlantilla, descartados };
+  }
 
   const bot = require('./waCorporateBot.service');
   const corp = require('./waCorporate.service');
-  let enviados = 0; const fallidos = [];
+  let enviados = 0; let enviadosPlantilla = 0; const fallidos = [];
   for (const conv of destinatarios) {
     const nombre = bot.nombreParaSaludo(conv.contactName);
-    const personal = cuerpo.replace(/\{\{nombre\}\}/g, nombre ? `, ${nombre}` : '');
     try {
-      await corp.sendTextToConversation({ conversationId: conv.id, text: personal, sentByBot: true });
-      enviados++;
+      if (conv.dentro) {
+        const personal = cuerpo.replace(/\{\{nombre\}\}/g, nombre ? `, ${nombre}` : '');
+        await corp.sendTextToConversation({ conversationId: conv.id, text: personal, sentByBot: true });
+        enviados++;
+      } else {
+        await corp.sendTemplateToExistingConversation({
+          conversationId: conv.id,
+          templateKey: template.key,
+          variables: { nombre: nombre || 'hola' },
+        });
+        enviadosPlantilla++;
+      }
     } catch (e) {
       fallidos.push({ phone: conv.phone, error: e.message });
     }
+    // Meta tolera ráfagas, pero cientos seguidos sin pausa es buscar un bloqueo.
+    await new Promise((r) => setTimeout(r, 250));
   }
-  console.log('[wa-masivo] enviados', enviados, 'de', destinatarios.length);
-  return { enviados, destinatarios: destinatarios.length, fallidos, descartados };
+  console.log('[wa-masivo] texto', enviados, '· plantilla', enviadosPlantilla, 'de', destinatarios.length);
+  return {
+    enviados, enviadosPlantilla, destinatarios: destinatarios.length, porTexto, porPlantilla, fallidos, descartados,
+  };
 }
 
 async function recuperarConversaciones({ dryRun = false, conPlantilla = false } = {}) {
