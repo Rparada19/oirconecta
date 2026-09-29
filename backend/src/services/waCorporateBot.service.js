@@ -979,7 +979,7 @@ Pidió una cita: la cita es la respuesta. Tu primer mensaje, en pocas líneas:
   2. Llamas get_availability y le ofreces 3 horarios reales del día hábil más cercano con cupo. Di "mañana" SOLO si esa fecha es la que el CALENDARIO marca como (mañana). Si mañana no hay cupo, dilo en una línea ("mañana ya no tengo espacio") y ofrece el día que sí, con su nombre: "El miércoles 30 tengo…".
   3. Si quieres, UNA línea opcional que no condiciona nada: "Y si quieres, cuéntame qué vienes notando, así la audióloga ya llega enterada."
 
-Ejemplo de la forma, no de las palabras: "¡Hola, Ana! 👋 Claro que sí. El jueves 23 tengo:\n1️⃣ 8:00 a.m.\n2️⃣ 9:50 a.m.\n3️⃣ 2:00 p.m.\n¿Cuál te sirve? Y si quieres, cuéntame qué vienes notando."
+Ejemplo de la forma, no de las palabras: "¡Hola, Ana! 👋 Claro que sí. El jueves 23 tengo:\n1️⃣ 8:00 a.m.\n2️⃣ 9:50 a.m.\n3️⃣ 2:00 p.m.\n¿Cuál te sirve? Si ninguno te funciona, dime qué día te queda bien y te busco espacio."
 
 Lo que pregunte en ese mismo primer mensaje (dónde quedan, cuánto vale) se responde ahí mismo, antes de los horarios. Si no dijo nada más que "quiero agendar", no le preguntes nada antes de darle horas.
 
@@ -1001,7 +1001,7 @@ La valoración auditiva no se vende: se recomienda, como la recomienda alguien q
   "Por lo que me cuentas —que te toca subirle al televisor y en las reuniones se te pierde la conversación— lo que sigue es una valoración para establecer tu grado de pérdida auditiva. Es una hora, y sales sabiendo exactamente qué pasa y qué sigue."
 
 Y ahí sí, concreto:
-- Ofrece 2-3 horarios REALES de la agenda, nunca "¿cuándo te queda bien?" en abierto.
+- Ofrece 2-3 horarios REALES de la agenda, nunca "¿cuándo te queda bien?" en abierto. Y cierra dejando la puerta abierta: "Si ninguno te funciona, dime qué día te queda bien y te busco espacio."
 - Una sola propuesta por mensaje. Si no le sirven, ofreces otros dos de otro día.
 - Si dice que lo va a pensar, respétalo: "Claro. Aquí quedo, escríbeme cuando quieras." Y le dejas algo útil de verdad, no una despedida vacía.
 - NUNCA prometas que le apartas o le guardas un cupo: no apartamos nada hasta que la cita está creada.
@@ -1213,7 +1213,7 @@ Reglas:
 - Si están en OTRA ciudad (no Bogotá) → sugiere https://oirconecta.com/directorio para encontrar profesionales verificados cercanos.
 - Solo escalás a humano [ESCALAR_HUMANO] si: (a) piden explícitamente hablar con una persona, (b) urgencia médica, (c) tema fuera de tu alcance.
 - No cierres en el aire con "quedo atento" ni "cualquier cosa me avisas": deja siempre algo útil, una respuesta o un siguiente paso concreto.
-- Cuando ofrezcas la cita no preguntes en abierto "¿cuándo te sirve?": propón 2-3 horarios concretos y deja que elija.
+- Cuando ofrezcas la cita no preguntes en abierto "¿cuándo te sirve?": propón 2-3 horarios concretos y deja que elija. Cierra con: "Si ninguno te funciona, dime qué día te queda bien y te busco espacio."
 - Si preguntan el precio de la consulta, lo PRIMERO es contarles que si dejan la cita agendada hoy la valoración no tiene costo (la cita puede ser otro día). Si aun así quieren saber el valor normal, díselo de una. Si preguntan cuánto vale un audífono, la primera línea es "tenemos audífonos desde *$800.000 cada uno*", y después: lo que hace subir el valor es la tecnología del audífono (qué tan bien ayuda a entender en ruido, en reuniones, en la calle), no la pérdida auditiva; un audífono de $800.000 sirve para pérdidas leves y hasta moderadas; es por oído, así que si es en los dos son dos. Cierra con la valoración como siguiente paso: ahí se mide la audición y se ve qué tecnología necesita. Nunca inventes cifras ni menciones marcas. No hables de planes: no los ofrecemos.
 - No describas lo que ofrecemos ni uses frases de aviso publicitario. Habla de lo que le pasa a la persona, no de nosotros.
 - Tono: cálido, empático, colombiano neutro, tuteo. Máximo 3 párrafos cortos.
@@ -1646,6 +1646,30 @@ const FALLO_AGENDANDO =
 ¿Me confirmas otra vez el día y la hora que quieres y lo intento de una?`;
 
 /**
+ * "Te la moví para el miércoles" sin haber llamado reprogramar_cita.
+ *
+ * A Olmes le pasó: pidió pasar su cita del martes al miércoles, el chat le
+ * dijo que sí y en la agenda la cita seguía el martes. El control de la
+ * confirmación falsa no lo vio porque solo miraba si la persona tenía alguna
+ * cita, y Olmes tenía una: la vieja.
+ */
+const PROMESA_DE_MOVER = /(te la|la|tu cita) (mov[ií]|cambi[eé]|pas[eé]|reagend[eé])|(qued[oó]|queda) (movida|reagendada|cambiada)|ya (la )?(mov[ií]|cambi[eé]|reagend[eé])|reagendad[ao] para|(ahora|nueva fecha)[^.\n]{0,20}(es|queda|qued[oó]) (el|para)/i;
+
+const CORRECCION_REPROGRAMAR =
+`ALTO — esto no lo ve el paciente.
+
+Acabas de decirle que su cita quedó movida, pero NO llamaste reprogramar_cita: en la agenda la cita sigue en la fecha vieja. Si ese mensaje sale, esa persona llega el día que no es.
+
+Hazlo ahora, en este turno:
+1. Si te falta la disponibilidad del día nuevo, llama get_availability y usa un cupo real.
+2. Llama reprogramar_cita con la fecha y la hora que ya acordaron. Están en la conversación de arriba; no se las vuelvas a preguntar.
+3. Solo cuando la herramienta responda bien, escribe la confirmación con la fecha y la hora que devuelve.
+
+Si la herramienta devuelve error, NO confirmes: dile que no alcanzaste a moverla, que sigue en la fecha vieja, y pregúntale si intentas con otro horario.
+
+${SOLO_EL_MENSAJE}`;
+
+/**
  * ¿Está preguntando "¿qué día?" en vez de ofrecer horas?
  *
  * A Edilma y a Edgar, que escribieron "quiero agendar una cita", el bot les
@@ -1677,6 +1701,21 @@ Y si es tu primer mensaje de la conversación, salúdalo por su nombre antes. Le
 ${SOLO_EL_MENSAJE}`;
 
 /** ¿Esta persona ya tiene una cita viva en la agenda? Se compara por teléfono. */
+/**
+ * ¿El mensaje nombra el día en que YA está la cita vigente? Entonces decir
+ * "quedó para el miércoles 30" es cierto aunque no se haya movido en este
+ * turno (se movió antes).
+ */
+async function citaYaEstaEnLaFechaDicha(telefono, texto) {
+  const vigente = await citaVigentePorTelefono(telefono);
+  if (!vigente) return { vigente: null, coincide: false };
+  const dia = (fechaLegible(vigente.fecha).match(/(\d{1,2}) de/) || [])[1];
+  const nombrados = [
+    ...String(texto || '').matchAll(/(?:lunes|martes|mi[ée]rcoles|jueves|viernes|s[áa]bado|domingo)\s+(\d{1,2})|(\d{1,2}) de (?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/gi),
+  ].map((m) => m[1] || m[2]);
+  return { vigente, coincide: Boolean(dia) && nombrados.includes(dia) };
+}
+
 async function tieneCitaVigente(telefono) {
   const last10 = String(telefono || '').replace(/\D/g, '').slice(-10);
   if (!last10) return false;
@@ -1844,6 +1883,26 @@ function relativoCorrecto(texto, hoy = new Date()) {
     const palabra = mayus ? correcto[0].toUpperCase() + correcto.slice(1) : correcto;
     return `${palabra}${sep}${dia}${esp}${num}`;
   });
+}
+
+/**
+ * Cuando se le ofrecen días u horas a alguien, siempre se le deja la salida
+ * de pedir otro día: "¿miércoles 30 o jueves 1°?" a quien trabaja esos dos
+ * días es un callejón, y la persona no contesta en vez de decir "ninguno".
+ * El prompt lo pide; esto lo garantiza cuando el modelo lo olvida.
+ */
+const HORA_OFRECIDA = /\b\d{1,2}:\d{2}\s?[ap]\.?\s?m\.?|\b\d{1,2}\s?[ap]\.\s?m\./gi;
+const DIA_OFRECIDO = /(?<![\wáéíóúñ])(lunes|martes|mi[ée]rcoles|jueves|viernes|s[áa]bado)\s+\d{1,2}/gi;
+const YA_DEJA_OTRO_DIA = /otro d[ií]a|otra fecha|otro horario|otra hora|qu[ée] d[ií]a te (queda|sirve|funciona|viene)|ninguno te (sirve|funciona|queda)/i;
+const OTRO_DIA = 'Si ninguno te funciona, dime qué día te queda bien y te busco espacio.';
+
+function conPuertaAOtroDia(texto) {
+  const t = String(texto || '');
+  if (!t.includes('?') || YA_DEJA_OTRO_DIA.test(t)) return t;
+  const horas = (t.match(HORA_OFRECIDA) || []).length;
+  const dias = new Set((t.match(DIA_OFRECIDO) || []).map((d) => d.toLowerCase())).size;
+  if (horas < 2 && dias < 2) return t;
+  return `${t.trimEnd()}\n\n${OTRO_DIA}`;
 }
 
 /**
@@ -2345,6 +2404,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
 
   let reply = '';
   let citaCreadaEnEsteTurno = false;
+  let citaMovidaEnEsteTurno = false;
   let disponibilidadConsultada = false;
   let fechaDeLaCita = null;
   try {
@@ -2395,6 +2455,24 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
             workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_AGENDA }] });
             continue;
           }
+          // Dijo que movió la cita sin llamar reprogramar_cita. Se le devuelve
+          // para que la mueva de verdad antes de confirmar.
+          if (
+            PROMESA_DE_MOVER.test(finalText)
+            && !citaMovidaEnEsteTurno
+            && !citaCreadaEnEsteTurno
+            && correcciones < 2
+            && !(await citaYaEstaEnLaFechaDicha(conv.phone, finalText)).coincide
+          ) {
+            correcciones++;
+            console.warn(
+              '[wa-bot] dijo que movió la cita sin moverla — lo devuelvo a reprogramar.',
+              'conversación:', conversationId, 'intento:', correcciones,
+            );
+            workingMessages.push({ role: 'assistant', content: resp.content });
+            workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_REPROGRAMAR }] });
+            continue;
+          }
           // Preguntó "¿qué día?" sin haber mirado la agenda. Se le devuelve
           // para que consulte los cupos y ofrezca horas de verdad.
           if (
@@ -2425,6 +2503,9 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
             output = await impl(toolCtx, tu.input || {});
             if (tu.name === 'create_appointment' && output && !output.error) {
               citaCreadaEnEsteTurno = true;
+            }
+            if (tu.name === 'reprogramar_cita' && output && !output.error) {
+              citaMovidaEnEsteTurno = true;
             }
             if (['create_appointment', 'reprogramar_cita'].includes(tu.name) && output?.fechaLegible) {
               fechaDeLaCita = output.fechaLegible;
@@ -2487,11 +2568,38 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     }
   }
 
+  // Lo mismo con una cita movida: si el mensaje dice que quedó en otra fecha
+  // y la agenda la tiene en la vieja, no sale. Se le dice la verdad.
+  let citaNoMovida = false;
+  if (PROMESA_DE_MOVER.test(reply) && !citaMovidaEnEsteTurno && !citaCreadaEnEsteTurno) {
+    const { vigente, coincide } = await citaYaEstaEnLaFechaDicha(conv.phone, reply);
+    if (vigente && !coincide) {
+      citaNoMovida = true;
+      console.error(
+        '[wa-bot] CITA NO MOVIDA — dijo que la movió y sigue en la fecha vieja.',
+        'conversación:', conversationId, 'teléfono:', conv.phone,
+        '— mensaje bloqueado:', reply.slice(0, 200),
+      );
+      reply = `Perdón, no alcancé a mover tu cita: sigue el ${fechaLegible(vigente.fecha)} a las ${vigente.hora}.
+
+¿Me confirmas a qué día y hora la quieres pasar y la muevo ya mismo?`;
+      require('./alertaEquipo.service').avisar({
+        titulo: 'El bot no logró mover una cita (la sigue intentando él)',
+        quien: conv.contactName || 'Paciente',
+        telefono: conv.phone,
+        texto: 'Dijo que la movía y reprogramar_cita no corrió. Revisar la cita en la agenda.',
+      }).catch(() => {});
+    }
+  }
+
   // Detecta tag de escalada. Una cita que no se pudo crear NO escala: el bot
   // se queda a cargo y la reintenta con la persona.
   const shouldEscalate = reply.includes(ESCALATE_TAG);
   const cleanReply = await sinFirmaRepetida(
-    formatoWhatsApp(conFechaDeLaAgenda(reply.replace(ESCALATE_TAG, ''), fechaDeLaCita)).trim(),
+    // Si en este turno se creó o movió la cita, el mensaje es una confirmación: no se ofrece otro día.
+    (fechaDeLaCita ? (x) => x : conPuertaAOtroDia)(
+      formatoWhatsApp(conFechaDeLaAgenda(reply.replace(ESCALATE_TAG, ''), fechaDeLaCita)),
+    ).trim(),
     firma, conversationId,
   );
 
@@ -2523,8 +2631,8 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
       where: { id: conversationId },
       data: {
         lastMessageAt: new Date(),
-        lastMessagePreview: citaFantasma
-          ? `⚠️ No pudo agendar — ${cleanReply.slice(0, 110)}`
+        lastMessagePreview: citaFantasma || citaNoMovida
+          ? `⚠️ No pudo ${citaNoMovida ? 'mover la cita' : 'agendar'} — ${cleanReply.slice(0, 100)}`
           : `Bot: ${cleanReply.slice(0, 140)}`,
         status: shouldEscalate ? 'ESCALATED' : 'BOT',
         unreadCount: shouldEscalate ? { increment: 1 } : undefined,
