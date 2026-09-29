@@ -87,8 +87,11 @@ const CATALOG = [
     // Tiene que crearse en Meta (WhatsApp Manager → Plantillas) con este mismo
     // nombre, categoría Marketing, idioma es_CO y exactamente este texto; hasta
     // que Meta la apruebe, el envío a los de más de 24h falla.
+    // En Meta se llama oferta_cierre_mes_es: la primera, oferta_cierre_mes,
+    // quedó creada en inglés y Meta no deja cambiarle el idioma. Se envía por
+    // nombre + idioma, así que en inglés rechazaba cada envío con es_CO.
     key: 'oferta_cierre_mes',
-    metaName: 'oferta_cierre_mes',
+    metaName: 'oferta_cierre_mes_es',
     locale: 'es_CO',
     category: 'MARKETING',
     label: 'Oferta cierre de mes · audífonos desde $800.000',
