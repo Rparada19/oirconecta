@@ -44,7 +44,7 @@ const SERIF = { fontFamily: '"Gotham", sans-serif', letterSpacing: '-0.02em' };
 // Oferta de cierre de mes. El texto va por chat a quien escribió en las últimas
 // 24h; a los demás les llega la plantilla, que dice lo mismo.
 const PLANTILLA_OFERTA = 'oferta_cierre_mes';
-const TEXTO_OFERTA_CIERRE = 'Hola{{nombre}} 👋 Te escribo de OírConecta. Por cierre de mes tenemos audífonos desde *$800.000 cada uno*, con opción de financiación y seguro por pérdida y robo.\n\nSi quieres, te agendo una valoración para ver cuál te sirve. ¿Te busco un horario?';
+const TEXTO_OFERTA_CIERRE = 'Hola{{nombre}} 👋 Te escribe Aura, de OírConecta. Hace unos días nos escribiste y no quería dejar la conversación a medias.\n\nTe cuento que hasta fin de mes tenemos audífonos desde *$800.000 cada uno*, con opción de financiarlos y de asegurarlos contra pérdida y robo.\n\nSi te sirve, te ayudo a buscar un horario para la valoración. Y si ya lo resolviste, me dices y no te escribo más.';
 
 function fmtTime(iso) {
   if (!iso) return '';

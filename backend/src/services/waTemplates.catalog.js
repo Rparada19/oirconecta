@@ -98,7 +98,7 @@ const CATALOG = [
       { key: 'nombre', label: 'Nombre del paciente', placeholder: 'Ej. María' },
     ],
     preview:
-      'Hola {{1}}, te escribo de OírConecta. Por cierre de mes tenemos audífonos desde $800.000 cada uno, con opción de financiación y seguro por pérdida y robo. Si quieres, te agendo una valoración para ver cuál te sirve. ¿Te busco un horario?',
+      'Hola {{1}}, te escribe Aura, de OírConecta. Hace unos días nos escribiste y no quería dejar la conversación a medias. Te cuento que hasta fin de mes tenemos audífonos desde $800.000 cada uno, con opción de financiarlos y de asegurarlos contra pérdida y robo. Si te sirve, te ayudo a buscar un horario para la valoración. Y si ya lo resolviste, me dices y no te escribo más.',
   },
   {
     key: 'saludo_paciente_bogota',

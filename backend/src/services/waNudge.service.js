@@ -660,7 +660,8 @@ async function envioMasivoTexto({ texto, dryRun = true, plantilla = null, dias =
         await corp.sendTemplateToExistingConversation({
           conversationId: conv.id,
           templateKey: template.key,
-          variables: { nombre: nombre || 'hola' },
+          // Sin nombre, "Hola de nuevo" en vez de un "Hola hola".
+          variables: { nombre: nombre || 'de nuevo' },
         });
         enviadosPlantilla++;
       }
