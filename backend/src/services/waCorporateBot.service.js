@@ -909,10 +909,10 @@ Esto se aprendió con datos, no con teoría: de 80 conversaciones, unas 22 murie
 
 Pidió una cita: la cita es la respuesta. Tu primer mensaje, en pocas líneas:
   1. Lo saludas por su nombre.
-  2. Llamas get_availability y le ofreces 3 horarios reales del día hábil más cercano con cupo.
+  2. Llamas get_availability y le ofreces 3 horarios reales del día hábil más cercano con cupo. Di "mañana" SOLO si esa fecha es la que el CALENDARIO marca como (mañana). Si mañana no hay cupo, dilo en una línea ("mañana ya no tengo espacio") y ofrece el día que sí, con su nombre: "El miércoles 30 tengo…".
   3. Si quieres, UNA línea opcional que no condiciona nada: "Y si quieres, cuéntame qué vienes notando, así la audióloga ya llega enterada."
 
-Ejemplo de la forma, no de las palabras: "¡Hola, Ana! 👋 Claro que sí. Mañana, miércoles 23, tengo:\n1️⃣ 8:00 a.m.\n2️⃣ 9:50 a.m.\n3️⃣ 2:00 p.m.\n¿Cuál te sirve? Y si quieres, cuéntame qué vienes notando."
+Ejemplo de la forma, no de las palabras: "¡Hola, Ana! 👋 Claro que sí. El jueves 23 tengo:\n1️⃣ 8:00 a.m.\n2️⃣ 9:50 a.m.\n3️⃣ 2:00 p.m.\n¿Cuál te sirve? Y si quieres, cuéntame qué vienes notando."
 
 Lo que pregunte en ese mismo primer mensaje (dónde quedan, cuánto vale) se responde ahí mismo, antes de los horarios. Si no dijo nada más que "quiero agendar", no le preguntes nada antes de darle horas.
 
@@ -1745,6 +1745,41 @@ function diaDeSemanaCorrecto(texto, hoy = new Date()) {
 }
 
 /**
+ * "Mañana, miércoles 30" escrito un lunes 28. El día y el número estaban bien
+ * (la agenda no tenía cupo el martes y ofreció el miércoles), pero el
+ * "mañana" lo puso el modelo copiando la forma del ejemplo, y la persona lee
+ * "mañana" antes que el número. Se busca la fecha en los próximos 14 días y,
+ * si el hoy/mañana/pasado mañana no le corresponde, se cambia por el que sí o
+ * se quita ("El miércoles 30").
+ */
+const RELATIVO_CON_DIA = new RegExp(
+  '(?<![\\wáéíóúñ])(pasado\\s+ma[ñn]ana|ma[ñn]ana|hoy)(,?\\s+(?:el\\s+)?)(lunes|martes|mi[ée]rcoles|jueves|viernes|s[áa]bado|domingo)(\\s+)(\\d{1,2})(?!\\d)',
+  'gi',
+);
+
+function relativoCorrecto(texto, hoy = new Date()) {
+  const proximos = [];
+  for (let i = 0; i < 15; i++) {
+    const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' })
+      .format(new Date(hoy.getTime() + i * 86400000));
+    proximos.push(Number(iso.slice(8, 10)));
+  }
+  const PALABRA = ['hoy', 'mañana', 'pasado mañana'];
+  return String(texto || '').replace(RELATIVO_CON_DIA, (todo, rel, sep, dia, esp, num) => {
+    const offset = proximos.indexOf(Number(num));
+    if (offset === -1) return todo; // fecha lejana o rara: mejor no tocar
+    const dicho = rel.toLowerCase().replace(/\s+/g, ' ').replace('manana', 'mañana');
+    if (dicho === PALABRA[offset]) return todo;
+    // Al corregir solo se usa hoy o mañana; más allá, el nombre del día se entiende mejor.
+    const correcto = offset <= 1 ? PALABRA[offset] : null;
+    const mayus = rel[0] === rel[0].toUpperCase();
+    if (!correcto) return `${mayus ? 'El' : 'el'} ${dia}${esp}${num}`;
+    const palabra = mayus ? correcto[0].toUpperCase() + correcto.slice(1) : correcto;
+    return `${palabra}${sep}${dia}${esp}${num}`;
+  });
+}
+
+/**
  * A Adriana la agenda la dejó el viernes 25 y el mensaje le dijo "jueves 24".
  * Cuando la herramienta acaba de crear o mover la cita, la fecha que manda es
  * la suya: si la confirmación trae una sola fecha y no es esa, se reemplaza.
@@ -1759,7 +1794,7 @@ function conFechaDeLaAgenda(texto, fechaLegibleReal) {
 }
 
 function formatoWhatsApp(texto) {
-  return diaDeSemanaCorrecto(tuteoBogotano(sinPreambulo(texto)))
+  return relativoCorrecto(diaDeSemanaCorrecto(tuteoBogotano(sinPreambulo(texto))))
     // El modelo a veces envuelve la respuesta en etiquetas del andamiaje
     // (<response>…</response>) y al paciente le llegaba el cierre escrito en
     // el chat, debajo de la confirmación de su cita. Se quitan aquí.
