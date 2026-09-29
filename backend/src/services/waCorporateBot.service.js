@@ -623,6 +623,51 @@ function esSoloSaludo(texto) {
 }
 
 /**
+ * "¡Hola! Quiero más información" es el texto prellenado del anuncio: entra
+ * así casi todo el mundo y la mayoría se iba después de la primera respuesta.
+ * Esa respuesta es fija y la eligió el centro: formal, con quiénes somos, qué
+ * hacemos y dónde estamos. Dejarla al modelo daba un mensaje distinto cada vez,
+ * y a veces uno que abría con "los 49 cupos que quedan se agendan hoy".
+ *
+ * Solo aplica si el mensaje pide información y nada más: quien ya pregunta
+ * por el precio o por una cita recibe respuesta a eso.
+ */
+function soloPideInformacion(texto) {
+  const t = String(texto || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!/\binformacion\b|\binfo\b/.test(t)) return false;
+  if (t.split(' ').length > 8) return false;
+  return !/precio|cuanto|cuesta|valor|costo|cita|agendar|audifono|examen|audiometria|valoracion|donde|direccion|eps/.test(t);
+}
+
+function saludoPorHora(fecha = new Date()) {
+  const h = Number(new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota', hour: 'numeric', hourCycle: 'h23',
+  }).format(fecha));
+  if (h >= 5 && h < 12) return 'Buenos días';
+  if (h >= 12 && h < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function bienvenidaInformacion(fecha = new Date()) {
+  return `${saludoPorHora(fecha)}, gracias por comunicarte con OírConecta, centro auditivo en Bogotá. Mi nombre es Aura.
+
+Para saber cómo está tu audición realizamos una valoración completa con audióloga, que incluye 4 exámenes:
+· *Otoscopia*: revisión del conducto auditivo y el tímpano.
+· *Audiometría*: mide cuánto oyes en cada oído.
+· *Logoaudiometría*: mide qué tan bien entiendes las palabras.
+· *Impedanciometría*: evalúa el estado del oído medio.
+
+También hacemos adaptación de audífonos. Estamos en la Cra. 10 #96-25, consultorio 320.
+
+¿En qué te podemos ayudar?`;
+}
+
+/**
  * Envía el handshake inicial con botones de intención — pero solo cuando hace
  * falta. Si el primer mensaje ya dice a qué viene, se responde a eso.
  *
@@ -664,6 +709,17 @@ async function maybeSendHandshake(conversationId, incomingText = null) {
     console.log('[wa-bot] primer mensaje con intención — sin menú, contesto como', tipo);
     require('./waCorporate.service').asegurarLead(conversationId)
       .catch((e) => console.warn('[wa-lead] intención:', e.message));
+    if (tipo === 'PACIENTE_BOGOTA' && soloPideInformacion(incomingText)) {
+      const texto = bienvenidaInformacion();
+      await require('./waCorporate.service').sendTextToConversation({
+        conversationId, text: texto, sentByBot: true,
+      });
+      await prisma.whatsAppConversation.update({
+        where: { id: conversationId },
+        data: { lastMessagePreview: `Bot: ${texto.slice(0, 140)}` },
+      });
+      return { sent: true, bienvenida: true };
+    }
     return handleTextForBot({ conversationId, incomingText });
   }
 
@@ -903,26 +959,16 @@ Antes de proponer nada, tienes que saber qué le está pasando. No es un trámit
 - Dos preguntas seguidas ya son un interrogatorio. Si llevas dos y todavía no le has dado nada, dale algo antes de la tercera.
 - Si se despide o te da las gracias, despídete y para. No le metas una pregunta más ni "cualquier cosa me escribes y seguimos": ya terminó, y perseguir a alguien que cerró la conversación es la forma más rápida de que no vuelva.
 
-CUANDO EL PRIMER MENSAJE ES "QUIERO MÁS INFORMACIÓN" (o parecido).
-Es el texto que trae el anuncio, y es por donde entra casi todo el mundo. La mayoría se va después de nuestra primera respuesta, así que ese mensaje tiene que sonar a un centro de salud serio, no a un vendedor: ordenado, corto y útil.
+SI YA TE PRESENTASTE CON LA BIENVENIDA.
+A quien escribe "Quiero más información", el sistema ya le mandó un saludo fijo: se presenta como Aura, cuenta que la valoración incluye 4 exámenes (otoscopia, audiometría, logoaudiometría e impedanciometría), que también adaptamos audífonos, da la dirección (Cra. 10 #96-25, consultorio 320) y pregunta "¿En qué te podemos ayudar?". Si lo ves en la conversación, ya te presentaste: no te vuelvas a presentar ni repitas la lista de exámenes ni la dirección. Contesta directo lo que te escribió.
 
-Tu primer mensaje lleva, en este orden y en tres bloques cortos separados por una línea en blanco:
-  1. Saludo y presentación, en una línea: "Hola, [nombre] 👋 Soy Aura, de servicio al cliente de OírConecta, centro auditivo en Bogotá." (sin nombre: "Hola 👋 Soy Aura…").
-  2. La información que pidió, en dos líneas: qué hacemos: valoración auditiva con audióloga (dura una hora y sales con tu resultado) y adaptación de audífonos desde $800.000 cada uno. Si hay cupos del beneficio, agrega que esta semana la valoración es sin costo si la deja agendada. Si el anuncio ofrecía algo puntual, eso va aquí.
-  3. UNA pregunta fácil de contestar, para seguir: "¿La información es para ti o para alguien de tu familia?".
+LA VALORACIÓN AUDITIVA son 4 exámenes, con audióloga. Cuando pregunten qué incluye o en qué consiste, dilo así:
+· Otoscopia: revisión del conducto auditivo y el tímpano.
+· Audiometría: mide cuánto oye en cada oído.
+· Logoaudiometría: mide qué tan bien entiende las palabras.
+· Impedanciometría: evalúa el estado del oído medio.
 
-Así suena:
-"Hola 👋 Soy Aura, de servicio al cliente de OírConecta, centro auditivo en Bogotá.
-
-Con gusto te cuento. Hacemos valoraciones auditivas con audióloga: duran una hora y sales con tu resultado. También adaptamos audífonos, desde *$800.000* cada uno. Esta semana la valoración es sin costo si la dejas agendada.
-
-¿La información es para ti o para alguien de tu familia?"
-
-En ese primer mensaje NO:
-· Digas cuántos cupos quedan ni que "se agendan hoy". El número va cuando pregunte por el precio o dude, no para abrir.
-· Uses frases de folleto como "sales sabiendo exactamente qué pasa y qué sigue" o "con gusto te ayudo" dos veces.
-· Hagas dos preguntas en la misma frase ("¿es para ti o hay algo que vienes notando?"): una sola.
-· Metas guiones largos para encadenar ideas en una sola oración larga. Frases cortas.
+Mismo tono en toda la conversación: cordial y claro, de centro de salud. Frases cortas, sin frases de folleto ("sales sabiendo exactamente qué pasa y qué sigue"), sin dos preguntas en la misma frase, y sin abrir con el número de cupos.
 
 CUANDO YA PIDIÓ CITA, LE DAS LA CITA. EN EL PRIMER MENSAJE.
 
