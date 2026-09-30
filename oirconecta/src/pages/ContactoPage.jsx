@@ -125,7 +125,7 @@ const ContactoPage = () => {
       <Helmet>
         <title>Contacto — OírConecta · Hablemos de tu salud auditiva</title>
         <meta name="description" content="Escríbenos, llámanos o agenda una conversación con el equipo de OírConecta. Respondemos en menos de 24 horas, sin presión comercial." />
-        <link rel="canonical" href="https://oirconecta.com/contacto" />
+        <link rel="canonical" href="https://oirconecta.com/contacto/" />
         <meta property="og:title" content="Contacto — OírConecta" />
         <meta property="og:url" content="https://oirconecta.com/contacto" />
         <meta property="og:image" content="https://oirconecta.com/img/audiologa-consulta-paciente.jpg" />

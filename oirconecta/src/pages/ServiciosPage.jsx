@@ -146,7 +146,7 @@ export default function ServiciosPage() {
       <Helmet>
         <title>Servicios — OírConecta · Salud auditiva en Colombia</title>
         <meta name="description" content="Servicios auditivos que ofrecen los profesionales verificados de OírConecta: evaluación, adaptación de audífonos, implantes cocleares, rehabilitación y más." />
-        <link rel="canonical" href="https://oirconecta.com/servicios" />
+        <link rel="canonical" href="https://oirconecta.com/servicios/" />
         <meta property="og:title" content="Servicios — OírConecta" />
         <meta property="og:url" content="https://oirconecta.com/servicios" />
         <meta property="og:image" content="https://oirconecta.com/img/audiologo-prueba-audicion.jpg" />

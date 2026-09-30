@@ -195,6 +195,7 @@ export default function DirectorioProfesionPage() {
       <Helmet>
         <title>{`${tituloPlural} en Colombia | OírConecta`}</title>
         <meta name="description" content={`Encuentra ${tituloPlural.toLowerCase()} verificados en Colombia. Compara reseñas, ciudad y modalidad.`} />
+        <link rel="canonical" href={`https://oirconecta.com/directorio/profesion/${slug}/`} />
       </Helmet>
       <Header />
 

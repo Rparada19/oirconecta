@@ -40,7 +40,7 @@ export default function UnetePage() {
       <Helmet>
         <title>Únete a OírConecta — Guía de registro para profesionales</title>
         <meta name="description" content="Regístrate, activa tu perfil y capta pacientes en el directorio líder de salud auditiva en Colombia. 7 pasos, 90 días gratis y planes desde $25.000/mes." />
-        <link rel="canonical" href="https://oirconecta.com/unete" />
+        <link rel="canonical" href="https://oirconecta.com/unete/" />
       </Helmet>
       <Header />
 

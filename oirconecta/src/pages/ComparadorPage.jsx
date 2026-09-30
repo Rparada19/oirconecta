@@ -177,7 +177,7 @@ export default function ComparadorPage() {
       <Helmet>
         <title>Comparador de audífonos con IA | OírConecta</title>
         <meta name="description" content="Compara hasta 3 audífonos por marca, tecnología y plataforma. Fortalezas, debilidades, precios reales en Colombia y un consejo según tu pérdida auditiva." />
-        <link rel="canonical" href="https://oirconecta.com/comparador" />
+        <link rel="canonical" href="https://oirconecta.com/comparador/" />
       </Helmet>
 
       <Box component="main" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#FBFAF8' }}>

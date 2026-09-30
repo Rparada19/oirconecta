@@ -265,7 +265,7 @@ export default function PonteEnSusOidosPage() {
       <Helmet>
         <title>Ponte en sus oídos · Simulador de pérdida auditiva | OírConecta</title>
         <meta name="description" content="Simulador gratuito de pérdida auditiva en español. Escucha cómo oyen las personas con hipoacusia leve, moderada y severa en situaciones del día a día." />
-        <link rel="canonical" href="https://oirconecta.com/ponte-en-sus-oidos" />
+        <link rel="canonical" href="https://oirconecta.com/ponte-en-sus-oidos/" />
         <meta property="og:title" content="Ponte en sus oídos · Simulador de pérdida auditiva" />
         <meta property="og:description" content="Escucha cómo escucha tu familiar con pérdida auditiva. Una experiencia sonora para entender lo que ellos viven." />
         <meta property="og:type" content="website" />

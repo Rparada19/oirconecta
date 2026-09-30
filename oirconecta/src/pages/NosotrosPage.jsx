@@ -113,7 +113,7 @@ export default function NosotrosPage() {
       <Helmet>
         <title>Nosotros — OírConecta · Salud auditiva sin presión</title>
         <meta name="description" content="Conoce el equipo y la misión de OírConecta: conectar a cada persona con profesionales auditivos verificados en Colombia, sin presión comercial." />
-        <link rel="canonical" href="https://oirconecta.com/nosotros" />
+        <link rel="canonical" href="https://oirconecta.com/nosotros/" />
         <meta property="og:title" content="Nosotros — OírConecta" />
         <meta property="og:url" content="https://oirconecta.com/nosotros" />
         <meta property="og:image" content="https://oirconecta.com/img/clinica-auditiva-equipo-profesional.jpg" />

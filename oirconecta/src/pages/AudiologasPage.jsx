@@ -160,7 +160,7 @@ const AudiologasPage = () => {
       <Helmet>
         <title>Audiólogas en Colombia | Directorio OírConecta</title>
         <meta name="description" content="Encuentra audiólogas y fonoaudiólogas certificadas en Colombia. Filtra por ciudad y especialidad. Perfiles verificados con reseñas y datos de contacto." />
-        <link rel="canonical" href="https://oirconecta.com/profesionales/audiologos" />
+        <link rel="canonical" href="https://oirconecta.com/profesionales/audiologos/" />
         <meta property="og:title" content="Audiólogas en Colombia | Directorio OírConecta" />
         <meta property="og:description" content="Encuentra audiólogas certificadas en Colombia. Filtra por ciudad y especialidad." />
         <meta property="og:url" content="https://oirconecta.com/profesionales/audiologos" />

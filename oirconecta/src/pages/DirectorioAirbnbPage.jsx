@@ -182,6 +182,7 @@ export default function DirectorioAirbnbPage() {
           name="description"
           content="Encuentra audiólogos, fonoaudiólogos y otorrinos verificados en Colombia. Compara experiencia, reseñas y modalidad presencial o virtual."
         />
+        <link rel="canonical" href="https://oirconecta.com/directorio/" />
       </Helmet>
       <Header />
 

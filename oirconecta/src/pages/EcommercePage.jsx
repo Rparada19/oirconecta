@@ -154,7 +154,7 @@ const EcommercePage = () => {
         <title>Tienda OírConecta | Baterías, filtros, olivas y accesorios auditivos</title>
         <meta name="description" content="Tienda de accesorios para audífonos: baterías de todas las marcas, filtros, olivas y accesorios de conectividad. Envíos en Colombia." />
         <meta name="keywords" content="baterías audífonos, filtros, olivas, accesorios auditivos, conectividad, Colombia" />
-        <link rel="canonical" href="https://oirconecta.com/ecommerce" />
+        <link rel="canonical" href="https://oirconecta.com/ecommerce/" />
         <script type="application/ld+json">{JSON.stringify(catalogJsonLd)}</script>
       </Helmet>
 

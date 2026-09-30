@@ -339,7 +339,7 @@ export default function AgendamientoPage() {
       <Helmet>
         <title>Agenda tu cita auditiva | OírConecta</title>
         <meta name="description" content="Agenda online tu valoración auditiva con profesionales certificados de la red OírConecta. Disponibilidad en tiempo real y confirmación inmediata." />
-        <link rel="canonical" href="https://oirconecta.com/agendar" />
+        <link rel="canonical" href="https://oirconecta.com/agendar/" />
         <meta property="og:title" content="Agenda tu cita auditiva | OírConecta" />
         <meta property="og:description" content="Agenda online tu valoración auditiva con profesionales certificados." />
         <meta property="og:url" content="https://oirconecta.com/agendar" />

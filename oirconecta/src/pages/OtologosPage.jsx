@@ -166,7 +166,7 @@ const OtologosPage = () => {
       <Helmet>
         <title>Otorrinolaringólogos en Colombia | Directorio OírConecta</title>
         <meta name="description" content="Encuentra otorrinolaringólogos (otólogos) certificados en Colombia. Filtra por ciudad y subespecialidad. Perfiles verificados con datos de contacto." />
-        <link rel="canonical" href="https://oirconecta.com/profesionales/otologos" />
+        <link rel="canonical" href="https://oirconecta.com/profesionales/otologos/" />
         <meta property="og:title" content="Otorrinolaringólogos en Colombia | Directorio OírConecta" />
         <meta property="og:description" content="Encuentra otólogos certificados en Colombia. Filtra por ciudad y subespecialidad." />
         <meta property="og:url" content="https://oirconecta.com/profesionales/otologos" />
