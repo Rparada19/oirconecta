@@ -196,7 +196,7 @@ export default function RescheduleAppointmentPage() {
               <ErrorOutlineIcon sx={{ fontSize: 72, color: '#f87171', mb: 2 }} />
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>Enlace no válido</Typography>
               <Typography color="text.secondary" sx={{ mb: 3 }}>{errMsg}</Typography>
-              <Button variant="outlined" component={RouterLink} to="/agendar"
+              <Button variant="outlined" component={RouterLink} to="/agendar/"
                 sx={{ borderColor: '#6ee7c8', color: '#6ee7c8', borderRadius: 2 }}>
                 Agendar nueva cita
               </Button>

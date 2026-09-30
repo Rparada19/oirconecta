@@ -65,7 +65,7 @@ export default function ConfirmAppointmentPage() {
               <Typography color="text.secondary" sx={{ mb: 3 }}>
                 {msg || 'El enlace puede haber expirado o ya fue usado.'}
               </Typography>
-              <Button variant="outlined" component={RouterLink} to="/agendar"
+              <Button variant="outlined" component={RouterLink} to="/agendar/"
                 sx={{ borderColor: '#6ee7c8', color: '#6ee7c8', borderRadius: 2 }}>
                 Agendar nueva cita
               </Button>

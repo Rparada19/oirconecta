@@ -209,7 +209,7 @@ export default function DirectorioProfesionPage() {
         }} />
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Button
-            component={RouterLink} to="/directorio"
+            component={RouterLink} to="/directorio/"
             startIcon={<ArrowBackRoundedIcon />}
             sx={{
               fontFamily: '"Gotham", "DM Sans", sans-serif', textTransform: 'none',
@@ -527,7 +527,7 @@ export default function DirectorioProfesionPage() {
                   Limpiar filtros
                 </Button>
               ) : (
-                <Button component={RouterLink} to="/directorio" variant="contained"
+                <Button component={RouterLink} to="/directorio/" variant="contained"
                   sx={{ mt: 2, borderRadius: '8px', textTransform: 'none', fontWeight: 700 }}>
                   Ver todo el directorio
                 </Button>

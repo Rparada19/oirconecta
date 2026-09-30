@@ -166,7 +166,7 @@ export default function DirectorySearchResultsPanel({
                 Quitar búsqueda
               </Button>
             ) : null}
-            <Button variant="contained" component={RouterLink} to="/directorio" sx={{ borderRadius: 2 }}>
+            <Button variant="contained" component={RouterLink} to="/directorio/" sx={{ borderRadius: 2 }}>
               Directorio principal
             </Button>
           </Stack>

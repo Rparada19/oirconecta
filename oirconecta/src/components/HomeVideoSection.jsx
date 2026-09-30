@@ -45,7 +45,7 @@ export default function HomeVideoSection() {
             }}>
               Conversación, pruebas sencillas y espacio para preguntar. Nada de tecnicismos innecesarios: solo personas cuidando personas.
             </Typography>
-            <Button component={RouterLink} to="/agendar" variant="contained" size="large"
+            <Button component={RouterLink} to="/agendar/" variant="contained" size="large"
               startIcon={<CalendarMonthIcon />}
               sx={{
                 fontFamily: '"Gotham", "DM Sans", sans-serif', background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #00382B 100%) !important', color: '#fff !important',

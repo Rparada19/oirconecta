@@ -182,7 +182,7 @@ export default function AuditionGuideSection() {
           </Typography>
           <Box
             component={RouterLink}
-            to="/contacto"
+            to="/contacto/"
             sx={{
               display: 'inline-flex', alignItems: 'center', gap: 1.25,
               fontFamily: '"Gotham", "DM Sans", sans-serif',

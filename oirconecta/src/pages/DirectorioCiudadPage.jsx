@@ -65,7 +65,7 @@ export default function DirectorioCiudadPage() {
         <Container maxWidth="lg">
           <Button
             component={RouterLink}
-            to="/directorio"
+            to="/directorio/"
             startIcon={<ArrowBackRoundedIcon />}
             sx={{ mb: 2, textTransform: 'none', fontWeight: 700, color: 'text.secondary' }}
           >
@@ -129,7 +129,7 @@ export default function DirectorioCiudadPage() {
               </Typography>
               <Button
                 component={RouterLink}
-                to="/directorio"
+                to="/directorio/"
                 variant="contained"
                 sx={{ mt: 2, borderRadius: 8, textTransform: 'none', fontWeight: 700 }}
               >

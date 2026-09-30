@@ -15,7 +15,7 @@ export default function DirectorioProfesionSlugPage() {
   const { slug } = useParams();
   const profesion = directoryProfesionFromSlug(slug || '');
   if (!profesion) {
-    return <Navigate to="/directorio" replace />;
+    return <Navigate to="/directorio/" replace />;
   }
   const qs = directoryFiltersToSearchParams({ q: '', ciudad: '', poliza: POLIZA_LABEL_TODAS, profesion }, LABELS).toString();
   return <Navigate to={`${DIRECTORY_LISTADO_PATH}?${qs}`} replace />;

@@ -614,7 +614,7 @@ export default function DirectorioProfesionalPage() {
         <Box sx={dirContentSx}>
           <Button
             component={RouterLink}
-            to="/directorio"
+            to="/directorio/"
             startIcon={<ChevronLeft />}
             sx={{ mb: 2, textTransform: 'none', fontWeight: 600, color: 'text.secondary' }}
           >

@@ -228,7 +228,7 @@ export default function DirectoryRecommendedBrands() {
         </Typography>
         <Button
           component={RouterLink}
-          to="/audifonos"
+          to="/audifonos/"
           variant="text"
           size="small"
           sx={{ textTransform: 'none', fontWeight: 700, color: 'text.secondary' }}

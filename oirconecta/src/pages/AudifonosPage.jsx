@@ -303,7 +303,7 @@ export default function AudifonosPage() {
               Buscar audiólogo cerca
               <ArrowForward sx={{ fontSize: 18 }} />
             </Box>
-            <CTAArrowLink to="/ponte-en-sus-oidos" label="Probar el simulador" />
+            <CTAArrowLink to="/ponte-en-sus-oidos/" label="Probar el simulador" />
           </Stack>
         </Container>
       </Box>

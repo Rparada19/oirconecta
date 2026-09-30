@@ -205,7 +205,7 @@ export default function DirectorioListadoPage() {
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, px: { xs: 2, sm: 3 } }}>
           <Breadcrumbs separator={<NavigateNext fontSize="small" sx={{ color: '#A1A7B1' }} />} sx={{ mb: 3.5, '& .MuiBreadcrumbs-separator': { mx: 0.5 } }}>
-            <Button component={RouterLink} to="/directorio" sx={{
+            <Button component={RouterLink} to="/directorio/" sx={{
               textTransform: 'none', fontWeight: 600, color: '#6B7280',
               fontFamily: '"Gotham", "DM Sans", sans-serif', minWidth: 0, p: 0,
               '&:hover': { color: '#272F50', bgcolor: 'transparent' },

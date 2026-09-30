@@ -318,7 +318,7 @@ export default function DirectoryProfessionalCard({
           ) : (
             <Button
               component={RouterLink}
-              to="/agendar"
+              to="/agendar/"
               variant="text"
               size="medium"
               fullWidth

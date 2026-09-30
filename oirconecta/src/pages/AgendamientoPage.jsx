@@ -789,7 +789,7 @@ export default function AgendamientoPage() {
                 background:'linear-gradient(135deg,#085946,#0d7a5f)', boxShadow:'0 6px 20px rgba(8,89,70,0.25)' }}>
                 Agendar otra cita
               </Button>
-              <Button variant="outlined" component={RouterLink} to="/blog"
+              <Button variant="outlined" component={RouterLink} to="/blog/"
                 sx={{ borderRadius:'14px', fontWeight:600, py:1.5, borderColor:'#085946', color:'#085946' }}>
                 Leer artículos de salud auditiva
               </Button>

@@ -144,7 +144,7 @@ export default function Hero() {
               </Box>
               <Box
                 component={RouterLink}
-                to="/ponte-en-sus-oidos"
+                to="/ponte-en-sus-oidos/"
                 sx={{
                   fontFamily: '"Gotham", "DM Sans", sans-serif',
                   fontSize: '0.95rem', fontWeight: 600,

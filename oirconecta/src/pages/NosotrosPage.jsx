@@ -281,7 +281,7 @@ export default function NosotrosPage() {
             >
               Buscar profesional →
             </Box>
-            <CTAArrowLink to="/ponte-en-sus-oidos" label="Probar el simulador" />
+            <CTAArrowLink to="/ponte-en-sus-oidos/" label="Probar el simulador" />
           </Stack>
         </Container>
       </Box>

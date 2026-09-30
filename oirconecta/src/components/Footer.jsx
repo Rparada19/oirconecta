@@ -12,11 +12,11 @@ const SECTIONS = [
     title: 'OírConecta',
     links: [
       { name: 'Inicio',        to: '/' },
-      { name: 'Nosotros',      to: '/nosotros' },
-      { name: 'Servicios',     to: '/servicios' },
-      { name: 'Contacto',      to: '/contacto' },
-      { name: 'Agendar cita',  to: '/agendar' },
-      { name: 'Precios',       to: '/precios' },
+      { name: 'Nosotros',      to: '/nosotros/' },
+      { name: 'Servicios',     to: '/servicios/' },
+      { name: 'Contacto',      to: '/contacto/' },
+      { name: 'Agendar cita',  to: '/agendar/' },
+      { name: 'Precios',       to: '/precios/' },
     ],
   },
   {

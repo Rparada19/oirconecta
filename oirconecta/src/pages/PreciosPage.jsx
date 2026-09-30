@@ -209,7 +209,7 @@ export default function PreciosPage() {
           ) : visibles.length === 0 ? (
             <Typography sx={{ textAlign: 'center', color: MUTED, py: 6 }}>
               No pudimos cargar los planes en este momento.{' '}
-              <Box component={RouterLink} to="/contacto" sx={{ color: GREEN, fontWeight: 600 }}>
+              <Box component={RouterLink} to="/contacto/" sx={{ color: GREEN, fontWeight: 600 }}>
                 Escríbenos
               </Box>{' '}
               y te los contamos.

@@ -77,7 +77,7 @@ function BrandHero({ brand, productosCount }) {
                   textDecoration: 'none', '&:hover': { color: C.navy },
                 }}>Inicio</Box>
                 <Typography sx={{ color: C.grisClaro, fontSize: '0.78rem' }}>/</Typography>
-                <Box component={RouterLink} to="/audifonos" sx={{
+                <Box component={RouterLink} to="/audifonos/" sx={{
                   fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.78rem', color: C.gris,
                   textDecoration: 'none', '&:hover': { color: C.navy },
                 }}>Audífonos</Box>

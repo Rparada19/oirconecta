@@ -96,7 +96,7 @@ export default function HomePonteEnSusOidosSection() {
             {/* CTA editorial */}
             <Box
               component={RouterLink}
-              to="/ponte-en-sus-oidos"
+              to="/ponte-en-sus-oidos/"
               sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 1.25,
                 fontFamily: '"Gotham", "DM Sans", sans-serif',

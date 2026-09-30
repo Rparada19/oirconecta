@@ -431,7 +431,7 @@ export default function BlogPostPage() {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             {notFound ? 'Artículo no encontrado' : 'No pudimos cargar el artículo. Intenta de nuevo.'}
           </Typography>
-          <Button component={RouterLink} to="/blog" startIcon={<ArrowBackIcon />} variant="contained" sx={{ borderRadius: '12px', bgcolor: '#085946' }}>
+          <Button component={RouterLink} to="/blog/" startIcon={<ArrowBackIcon />} variant="contained" sx={{ borderRadius: '12px', bgcolor: '#085946' }}>
             Volver al blog
           </Button>
         </Container>
@@ -480,7 +480,7 @@ export default function BlogPostPage() {
               pointerEvents: 'none',
             }} />
             <Container maxWidth="md" sx={{ position: 'relative', zIndex: 2, width: '100%' }}>
-              <Button component={RouterLink} to="/blog" startIcon={<ArrowBackIcon />}
+              <Button component={RouterLink} to="/blog/" startIcon={<ArrowBackIcon />}
                 sx={{
                   color: 'rgba(255,255,255,0.90)', mb: 4, fontWeight: 600, p: 0,
                   textTransform: 'none', fontSize: '0.875rem',
@@ -740,7 +740,7 @@ export default function BlogPostPage() {
             )}
 
             <Divider sx={{ mt: 6, mb: 4 }} />
-            <Button component={RouterLink} to="/blog" startIcon={<ArrowBackIcon />}
+            <Button component={RouterLink} to="/blog/" startIcon={<ArrowBackIcon />}
               variant="outlined" sx={{ borderRadius: '12px', borderColor: '#085946', color: '#085946', fontWeight: 600 }}>
               Volver al blog
             </Button>

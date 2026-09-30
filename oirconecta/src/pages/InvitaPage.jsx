@@ -65,7 +65,7 @@ export default function InvitaPage() {
           <Typography sx={{ color: MUTED, mb: 3 }}>
             El código de invitación no existe o expiró. Puedes explorar OírConecta desde el sitio principal.
           </Typography>
-          <Button variant="outlined" component={RouterLink} to="/directorio"
+          <Button variant="outlined" component={RouterLink} to="/directorio/"
             sx={{ borderColor: NAVY, color: NAVY, textTransform: 'none', fontWeight: 600, borderRadius: '10px' }}>
             Ir al directorio
           </Button>
@@ -139,7 +139,7 @@ export default function InvitaPage() {
 
         <Button
           component={RouterLink}
-          to="/directorio"
+          to="/directorio/"
           variant="contained"
           endIcon={<ArrowForwardRoundedIcon />}
           sx={{
