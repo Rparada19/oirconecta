@@ -10,4 +10,19 @@ Disallow: /crm-login
 Disallow: /login-directorio
 Disallow: /mi-directorio
 
+# Basura del WordPress hackeado: ya responde 410; se bloquea para que
+# Google deje de gastar rastreo en ella (era el 86% de las solicitudes).
+Disallow: /items/
+Disallow: /shop/
+Disallow: /wp-content/
+Disallow: /wp-includes/
+Disallow: /wp-admin/
+Disallow: /wp-json/
+Disallow: /category/
+Disallow: /tag/
+Disallow: /author/
+Disallow: /feed/
+Disallow: /doctors/
+Disallow: /health-forum/
+
 Sitemap: https://oirconecta.com/sitemap.xml
