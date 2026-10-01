@@ -137,6 +137,7 @@ export async function createAppointment(appointmentData) {
     directoryProfileId,
     allowManualTime,
     silencioso,
+    partnerId,
   } = appointmentData;
   if (!date || !time || !patientName || !patientPhone) {
     return { success: false, appointment: null, error: 'Nombre, teléfono, fecha y hora son obligatorios' };
@@ -165,6 +166,7 @@ export async function createAppointment(appointmentData) {
     directoryProfileId: directoryProfileId || undefined,
     // Registro interno: la cita queda, pero al paciente no le llega nada.
     silencioso: silencioso === true ? true : undefined,
+    partnerId: partnerId || undefined,
   };
   const { data, error } = await api.post('/api/appointments', payload);
   if (error) return { success: false, appointment: null, error };

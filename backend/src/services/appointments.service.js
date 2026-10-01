@@ -286,6 +286,21 @@ const create = async (data, createdById) => {
     }
   }
 
+  // Aliado referidor elegido al agendar a mano desde el CRM. No pisa uno que el
+  // paciente ya tenga: la atribución no caduca y es del primer aliado.
+  if (createdById && patientId && data.partnerId) {
+    try {
+      const p = await prisma.patient.findUnique({ where: { id: patientId }, select: { partnerId: true, createdAt: true } });
+      const aliado = await prisma.referralPartner.findUnique({ where: { id: data.partnerId }, select: { id: true } });
+      if (p && !p.partnerId && aliado) {
+        await prisma.patient.update({ where: { id: patientId }, data: { partnerId: aliado.id } });
+        await require('./referralPartners.service').programarAudiometrias(patientId, p.createdAt);
+      }
+    } catch (e) {
+      console.warn('[appointments.create] asignar aliado:', e.message);
+    }
+  }
+
   const appointment = await prisma.appointment.create({
     data: {
       fecha,

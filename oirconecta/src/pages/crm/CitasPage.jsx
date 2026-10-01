@@ -165,9 +165,15 @@ const CitasPage = () => {
   const [creating, setCreating] = useState(false);
   const [createAvailableSlots, setCreateAvailableSlots] = useState([]);
   const [motivoTypes, setMotivoTypes] = useState([]); // AppointmentType creados
-  const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono', silencioso: false });
+  const [createData, setCreateData] = useState({ patientName: '', patientEmail: '', patientPhone: '', reason: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono', partnerId: '', silencioso: false });
   const profesionales = (getConfig().profesionales || []).filter((p) => p.activo);
   const [rescheduledToAppointment, setRescheduledToAppointment] = useState(null);
+  const [aliados, setAliados] = useState([]);
+
+  useEffect(() => {
+    if (!createDialogOpen || aliados.length) return;
+    api.get('/api/patients/meta/aliados').then(({ data }) => setAliados(data?.data || []));
+  }, [createDialogOpen, aliados.length]);
 
   useEffect(() => {
     if (!selectedAppointment?.rescheduledToId) {
@@ -773,7 +779,7 @@ const CitasPage = () => {
   };
 
   const openCreateDialog = () => {
-    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', motivoOtra: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono', silencioso: false });
+    setCreateData({ patientName: '', patientEmail: '', patientPhone: '', reason: '', motivoOtra: '', date: '', time: '', professionalId: '', procedencia: '', canalRegistro: 'manual-telefono', partnerId: '', silencioso: false });
     setCreateDialogOpen(true);
     api.get('/api/crm/retail-agenda/types')
       .then((r) => { if (Array.isArray(r.data?.data)) setMotivoTypes(r.data.data.filter((t) => t.activo !== false)); })
@@ -811,6 +817,7 @@ const CitasPage = () => {
         professionalNotifyEmail: prof?.email || undefined,
         allowManualTime: true,
         silencioso: createData.silencioso === true,
+        partnerId: createData.partnerId || undefined,
       });
       if (result.success) {
         setCreateDialogOpen(false);
@@ -2742,6 +2749,18 @@ const CitasPage = () => {
                     .map((o) => (
                       <SelectMenuItem key={o.value} value={o.value}>{o.label}</SelectMenuItem>
                     ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <InputLabel>Referido por (aliado)</InputLabel>
+                <Select label="Referido por (aliado)" value={createData.partnerId}
+                  onChange={(e) => setCreateData({ ...createData, partnerId: e.target.value })}>
+                  <SelectMenuItem value="">Ninguno</SelectMenuItem>
+                  {aliados.map((a) => (
+                    <SelectMenuItem key={a.id} value={a.id}>{a.nombre}</SelectMenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
