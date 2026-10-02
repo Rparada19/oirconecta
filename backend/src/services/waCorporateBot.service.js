@@ -2148,6 +2148,22 @@ ${process.env.PROMO_ACTIVA}
 ═══════════════════════════════════`;
   }
 
+  // Promoción del mes (decisión del dueño, 2-oct-2026). Se apaga sola el 1-nov:
+  // una promo vencida que el bot sigue ofreciendo es una promesa que alguien
+  // tiene que desmentir en el consultorio.
+  const hoyPromo = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
+  if (hoyPromo <= '2026-10-31' && ['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS', 'PACIENTE_EXISTENTE'].includes(conv.contactType)) {
+    systemPrompt += `\n\n═══ PROMOCIÓN DE OCTUBRE ═══
+Todo octubre: *audífonos recargables desde $1.800.000 cada uno*. Recargable = sin pilas: se cargan de noche, como el celular.
+Cuándo la dices:
+· Cuando pregunten cuánto vale un audífono: después de "desde $800.000 cada uno", en una sola frase: "y este mes tenemos audífonos recargables desde $1.800.000 cada uno". No reemplaza la cifra de $800.000, se suma.
+· Cuando pregunten por promociones, descuentos, audífonos recargables o pilas.
+· NO la uses para abrir la conversación ni la repitas en cada mensaje: es un dato, no un volante.
+· Es por oído, igual que el otro precio.
+· Lo que no está aquí —marcas, modelos, qué incluye, si aplica con financiación— no lo tienes: "esos detalles te los muestran en la valoración".
+═══════════════════════════════════`;
+  }
+
   // Lo que el equipo aprobó en 🧠 Aprendizaje, sacado de cómo terminaron
   // chats reales. Va antes del beneficio, que tiene que seguir siendo lo último.
   if (['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS', 'PACIENTE_EXISTENTE'].includes(conv.contactType)) {
