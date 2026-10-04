@@ -246,9 +246,9 @@ const SILENCIO_1_HORAS = 3;
 const SILENCIO_2_HORAS = 20;
 
 const DESPEDIDA =
-`No quiero incomodarte, así que te escribo por última vez. 🙂
+`No quiero incomodarte, así que no insisto más. 🙂
 
-Si en algún momento quieres resolver una duda sobre tu audición —o la de alguien de tu casa— aquí estoy. Escríbeme cuando quieras, sin compromiso.`;
+Cuando quieras agendar tu valoración auditiva —no tiene costo— o resolver una duda, escríbeme por acá.`;
 
 /**
  * Arma el mensaje para retomar.
@@ -263,9 +263,21 @@ Si en algún momento quieres resolver una duda sobre tu audición —o la de alg
  * Lo que hace ahora: repite la última pregunta que quedó sin respuesta. Es
  * imposible que invente, y además es lo que haría una persona.
  */
-function armarRetoma(conv, ultimoTextoBot) {
-  const limpio = require('./waCorporateBot.service').nombreParaSaludo(conv.contactName);
+async function armarRetoma(conv, ultimoTextoBot, dichoPorElPaciente = '') {
+  const bot = require('./waCorporateBot.service');
+  const limpio = bot.nombreParaSaludo(conv.contactName);
   const nombre = limpio ? `, ${limpio}` : '';
+
+  // Al paciente de Bogotá se le retoma con horas reales delante. Repetirle la
+  // pregunta que ya dejó sin contestar no le da ninguna razón nueva para
+  // responder: de 156 retomas así, contestaron 30. Las horas salen de la
+  // agenda, no del modelo, así que aquí tampoco hay nada que inventar.
+  if (TIPOS_PACIENTE.includes(conv.contactType) && !VIVE_EN_OTRA_CIUDAD.test(dichoPorElPaciente)) {
+    const h = await bot.proximosHorarios().catch(() => null);
+    if (h) {
+      return `Hola${nombre}, quedé pendiente de ti 🙂\n\nLa valoración auditiva no tiene costo. ${bot.listaHorarios(h)}\n\n¿Cuál te sirve? Si prefieres otro día, dime cuál.`;
+    }
+  }
 
   // La última pregunta del bot: se corta el mensaje en frases y se toma la
   // última que termine en "?". Sirve igual con un saludo de cinco párrafos que
@@ -296,12 +308,12 @@ function armarRetoma(conv, ultimoTextoBot) {
  */
 const CIERRE_DEL_PACIENTE = /^(ok(ay)?|oki|listo|dale|bueno|perfecto|va|dgracias)?[\s,.!]*((muchas|mil|much[ií]simas)\s+)?gracias|^(ok(ay)?|listo|dale|perfecto|de una)[\s,.!]*$|hasta luego|nos vemos|que est[eé]s bien|buen d[ií]a$/i;
 
-const CIERRE_NUESTRO = /ac[áa] estoy cuando|aqu[ií] estoy cuando|cuando est[eé]s listo|un placer|que te vaya bien|escr[ií]beme cuando quieras|quedo atento|aqu[ií] quedo|ac[áa] quedo|con gusto.{0,20}cuando (quieras|necesites)/i;
+const CIERRE_NUESTRO = /ac[áa] estoy cuando|aqu[ií] estoy cuando|cuando est[eé]s listo|un placer|que te vaya bien|escr[ií]beme cuando quieras|quedo atento|aqu[ií] quedo|ac[áa] quedo|con gusto.{0,20}cuando (quieras|necesites)|queda abierta la puerta|que est[eé]s bien|cu[ií]date|buen viaje|feliz (d[ií]a|tarde|noche)|que descanses|cuando (quieras|decidas) agendar|me escribes y (agendamos|listo)|equipo te (va a )?(escrib|contact|busc)|caso al equipo|en buenas manos/i;
 
 // "Te aviso", "lo voy a pensar", "no gracias": también es cerrar, aunque venga
 // en un mensaje largo. A José le escribimos "quedé pendiente de ti" tres horas
 // después de que dijo "voy a analizar el tema y luego les comento".
-const APLAZA_EL_PACIENTE = /\b(te|le|les) (aviso|comento|confirmo)\b|lo (voy a|vamos a) (pensar|consultar|analizar|mirar)|voy a (analizar|consultar|pensar|mirar)|(te|le|les) escribo (luego|despu[eé]s|cuando)|estar[eé] en contacto|por ahora no|no,? gracias|ya resolv[ií]/i;
+const APLAZA_EL_PACIENTE = /\b(te|le|les) (aviso|comento|confirmo)\b|lo (voy a|vamos a) (pensar|consultar|analizar|mirar)|voy a (analizar|consultar|pensar|mirar)|(te|le|les) escribo (luego|despu[eé]s|cuando)|estar[eé] en contacto|por ahora no|no,? gracias|ya resolv[ií]|voy a hablar con|me comunico|estar[eé] pendiente|quedo en contacto|los contacto|m[aá]s adelante|(te|le|les) llamo|dejemos (las cosas )?as[ií]|no me interesa|no me (da|alcanza)|otra oportunidad|cuando (regrese|vuelva)/i;
 
 async function conversacionYaSeDespidio(conversationId) {
   const ultimos = await prisma.whatsAppMessage.findMany({
@@ -371,6 +383,13 @@ async function enviarYGuardar(conv, texto, campo) {
 async function processSilencios() {
   if (process.env.WA_BOT_ENABLED !== 'true') return { skipped: 'bot-disabled' };
   const ahora = new Date();
+  // Solo de 8 a.m. a 8 p.m. de Bogotá. De 156 retomas, 66 salieron entre las
+  // 9 p.m. y las 7 a.m.: el reloj contaba tres horas desde el último mensaje,
+  // fuera la hora que fuera. Lo que caiga de noche sale a la mañana siguiente.
+  const hora = Number(new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Bogota', hour: 'numeric', hourCycle: 'h23',
+  }).format(ahora));
+  if (hora < 8 || hora >= 20) return { skipped: 'fuera-de-horario' };
   let retomas = 0, despedidas = 0, cerradas = 0;
 
   const candidatas = await prisma.whatsAppConversation.findMany({
@@ -425,6 +444,24 @@ async function processSilencios() {
       });
       if (humano) { cerradas++; continue; }
 
+      // Se le dijo que el equipo le escribe. Una retoma del bot encima de esa
+      // promesa, y después una despedida, es justo lo contrario: le pasó a
+      // quien contestó "espero" y recibió "quedé pendiente de ti" a medianoche.
+      const traspaso = await prisma.whatsAppMessage.findFirst({
+        where: {
+          conversationId: conv.id,
+          direction: 'OUTBOUND',
+          sentByBot: true,
+          OR: [
+            { body: { contains: 'caso al equipo', mode: 'insensitive' } },
+            { body: { contains: 'equipo te escrib', mode: 'insensitive' } },
+            { body: { contains: 'equipo te va a', mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true },
+      });
+      if (traspaso) { cerradas++; continue; }
+
       const horas = (ahora - new Date(conv.lastMessageAt)) / 3600000;
 
       if (!conv.silencio1At) {
@@ -436,7 +473,11 @@ async function processSilencios() {
         // Si lo último fue "no pude escuchar tu nota de voz", repetírselo tres
         // horas después no retoma nada.
         if (String(previo?.body || '').startsWith('Me llegó tu nota de voz')) { cerradas++; continue; }
-        const texto = armarRetoma(conv, previo?.body);
+        const suyos = await prisma.whatsAppMessage.findMany({
+          where: { conversationId: conv.id, direction: 'INBOUND' },
+          select: { body: true },
+        });
+        const texto = await armarRetoma(conv, previo?.body, suyos.map((m) => m.body || '').join(' '));
         if (await enviarYGuardar(conv, texto, 'silencio1At')) retomas++;
       } else if (horas >= SILENCIO_2_HORAS - SILENCIO_1_HORAS) {
         // La segunda se mide desde la primera retoma, no desde el silencio
@@ -471,12 +512,10 @@ async function processSilencios() {
 
 function textoRecuperacion(nombre, cupos) {
   const saludo = nombre ? `Hola, ${String(nombre).split(/\s+/)[0]}` : 'Hola';
-  const cuantos = cupos?.quedan
-    ? `Nos quedan *${cupos.quedan} cupos* de valoración auditiva sin costo esta semana.`
-    : 'Tenemos cupos de valoración auditiva sin costo esta semana.';
+  // Sin cupos ni "si agendas hoy": la valoración no cuesta nunca.
   return `${saludo} 👋 Te escribo por algo que no te alcancé a contar.
 
-${cuantos} Si dejas tu cita agendada hoy, tomas uno — y la programas para el día que te sirva, no tienes que venir hoy.
+La valoración auditiva no tiene costo, y la programas para el día que te sirva.
 
 ¿Te busco un horario?`;
 }
@@ -539,7 +578,7 @@ async function responderPendientes() {
       if (yaRescatados.has(ultimo.id)) continue;
       yaRescatados.add(ultimo.id);
       console.warn('[wa-rescate] sin responder desde hace rato:', conv.phone);
-      await require('./waCorporateBot.service').handleTextForBot({
+      await require('./waCorporateBot.service').responder({
         conversationId: conv.id,
         incomingText: ultimo.body,
         desdeAudio: ultimo.type === 'audio',
@@ -567,7 +606,7 @@ async function responderPendientes() {
  * escribiéramos, a los que el bot ya les dijo "te escribo por última vez", los
  * chats que el equipo cerró, y los que ya recibieron este mismo mensaje.
  */
-const VIVE_EN_OTRA_CIUDAD = /villavicencio|c[úu]cuta|manizales|pereira|medell[íi]n|neiva|duitama|chaparral|popay[áa]n|cartagena|barranquilla|\bcali\b|ibagu[ée]|bucaramanga|santa marta|monter[íi]a|pasto|tunja|armenia|villavo|yopal|valledupar|sincelejo|facatativ[áa]|chaparral|no puedo viajar/i;
+const VIVE_EN_OTRA_CIUDAD = /villavicencio|c[úu]cuta|manizales|pereira|medell[íi]n|neiva|duitama|chaparral|popay[áa]n|cartagena|barranquilla|\bcali\b|ibagu[ée]|bucaramanga|santa marta|monter[íi]a|pasto|tunja|armenia|villavo|yopal|valledupar|sincelejo|facatativ[áa]|chaparral|arauca|casanare|huila|tolima|boyac[áa]|fusagasug[áa]|fuera de bogot[áa]|no estoy en bogot[áa]|vivo (muy )?lejos|no puedo viajar/i;
 const PIDIO_QUE_NO = /no,? gracias|no me interesa|ya resolv[ií]|no vuelvan|no escriban|d[ée]jenme|no quiero/i;
 const TIPOS_PACIENTE = ['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS'];
 
