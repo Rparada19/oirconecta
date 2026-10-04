@@ -448,7 +448,7 @@ async function processIncomingEvent(body) {
                   textBody,
                   { desdeAudio: esAudio },
                   async (textoJunto, opts) => {
-                    await bot.handleTextForBot({
+                    await bot.responder({
                       conversationId: r.conversationId,
                       incomingText: textoJunto,
                       desdeAudio: opts.desdeAudio,
