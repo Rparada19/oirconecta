@@ -30,7 +30,8 @@ const config = require('../config');
 
 const prisma = new PrismaClient();
 
-const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
+// Se cambia en Render (WA_BOT_MODEL) sin tocar código.
+const CLAUDE_MODEL = process.env.WA_BOT_MODEL || 'claude-haiku-4-5-20251001';
 const MAX_HISTORY_MESSAGES = 12; // últimos 12 turnos para contexto
 
 // ─── C1 — Tools para que el bot agende en WhatsApp sin salir del chat ───
@@ -1587,12 +1588,16 @@ ${SOLO_EL_MENSAJE}`;
 // Frases que solo se dicen cuando se está proponiendo un día. No se exige que
 // el mensaje diga "cita": a Edgar le escribió "¿Mañana lunes te viene bien, o
 // prefieres otro día?" — ni una palabra de agenda, y es justo el caso.
-const PROPONE_UN_DIA = /te viene bien|qu[ée] d[íi]a|prefieres otro d[íi]a|alg[úu]n d[íi]a|cu[áa]ndo te (sirve|queda|viene)|te gustar[íi]a (ma[ñn]ana|el |alguno)/i;
+const PROPONE_UN_DIA = /te viene bien|qu[ée] d[íi]a|prefieres otro d[íi]a|alg[úu]n d[íi]a|cu[áa]ndo te (sirve|queda|viene|gustar[íi]a)|cu[áa]ndo (quieres|puedes|podr[íi]as) venir|te gustar[íi]a (ma[ñn]ana|el |alguno)|quieres que te (muestre|busque|comparta|pase)|te (busco|muestro) (un |los |unos )?horarios?/i;
+// Anunciar los horarios en vez de ponerlos: "déjame traerte los horarios",
+// "veo los horarios exactos para ti". Con el Ensayo del 4-oct salió dos veces.
+const PROMETE_HORARIOS = /(veo|reviso|miro|busco|traigo|muestro|consulto)\s+(los |tus |unos |el |la )?(horarios?|cupos?|agenda|disponibilidad)|d[ée]jame (traerte|mostrarte|revisar|consultar|mirar|buscarte)|cu[áa]l de los (dos |tres )?(s[áa]bados|d[íi]as)/i;
 const TIENE_UNA_HORA = /\b\d{1,2}:\d{2}\b|\b\d{1,2}\s?[ap]\.?\s?m\.?/i;
 
 function preguntaElDiaSinOfrecerHoras(texto) {
   const t = String(texto || '');
-  return t.includes('?') && PROPONE_UN_DIA.test(t) && !TIENE_UNA_HORA.test(t);
+  if (TIENE_UNA_HORA.test(t)) return false;
+  return (t.includes('?') && PROPONE_UN_DIA.test(t)) || PROMETE_HORARIOS.test(t);
 }
 
 const CORRECCION_HORARIOS =
@@ -2170,10 +2175,10 @@ async function sinFirmaRepetida(texto, firma, conversationId) {
  * ninguna respuesta —"es para un familiar" y silencio—, que es peor que
  * cualquier respuesta imperfecta.
  */
-async function respuestaSinTools(client, systemPrompt, messages, corte) {
+async function respuestaSinTools(client, systemPrompt, messages, corte, model = CLAUDE_MODEL) {
   try {
     const resp = await client.messages.create({
-      model: CLAUDE_MODEL,
+      model,
       max_tokens: 800,
       system: [...bloquesSystem(systemPrompt, corte), { type: 'text', text: `ESCRIBE AHORA el mensaje para el paciente, con lo que ya sabes. No tienes herramientas en este turno: si te faltaba mirar la agenda, dile que ya le confirmas los horarios y pregúntale qué día le sirve.` }],
       messages,
@@ -2185,7 +2190,121 @@ async function respuestaSinTools(client, systemPrompt, messages, corte) {
   }
 }
 
-async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contactName = null, adHeadline = null, adBody = null }) {
+/**
+ * Un turno del bot: el modelo, sus herramientas y las correcciones. Lo usan el
+ * chat real y el Ensayo. Antes el Ensayo tenía su propio ciclo, sin las
+ * correcciones: mostraba respuestas que al paciente nunca le llegaban así, y
+ * lo que se probaba ahí no era lo que salía por WhatsApp.
+ */
+async function turnoConHerramientas({
+  client, model = CLAUDE_MODEL, systemPrompt, corte, tools, messages, impls, toolCtx, telefono, etiqueta,
+}) {
+  const r = {
+    texto: '', citaCreada: false, citaMovida: false, fechaDeLaCita: null,
+    // Las horas que la agenda devolvió en este turno: las únicas que se pueden ofrecer.
+    horasDeAgenda: new Set(), trazas: [], workingMessages: [...messages],
+  };
+  let disponibilidadConsultada = false;
+  let correcciones = 0;
+  const corregir = (resp, texto) => {
+    correcciones++;
+    r.workingMessages.push({ role: 'assistant', content: resp.content });
+    r.workingMessages.push({ role: 'user', content: [{ type: 'text', text: texto }] });
+  };
+
+  // Las iteraciones de más son para que se corrija solo.
+  for (let iter = 0; iter < 8; iter++) {
+    const resp = await client.messages.create({
+      model,
+      max_tokens: 1024,
+      system: bloquesSystem(systemPrompt, corte),
+      tools,
+      messages: r.workingMessages,
+    });
+    const toolUses = resp.content.filter((b) => b.type === 'tool_use');
+    r.texto = resp.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+
+    if (toolUses.length === 0) {
+      const puede = correcciones < 2;
+      // Escribió la confirmación sin haber creado la cita. No se le manda:
+      // se le devuelve para que llame la herramienta y agende de verdad.
+      if (puede && PROMESA_DE_CITA.test(r.texto) && !r.citaCreada && !(await tieneCitaVigente(telefono))) {
+        console.warn('[wa-bot] confirmó cita sin crearla — lo devuelvo a agendar.', etiqueta);
+        corregir(resp, CORRECCION_AGENDA);
+        continue;
+      }
+      // Dijo que movió la cita sin llamar reprogramar_cita.
+      if (
+        puede && PROMESA_DE_MOVER.test(r.texto) && !r.citaMovida && !r.citaCreada
+        && !(await citaYaEstaEnLaFechaDicha(telefono, r.texto)).coincide
+      ) {
+        console.warn('[wa-bot] dijo que movió la cita sin moverla — lo devuelvo a reprogramar.', etiqueta);
+        corregir(resp, CORRECCION_REPROGRAMAR);
+        continue;
+      }
+      // Preguntó "¿qué día?" o prometió horarios sin haber mirado la agenda.
+      if (puede && !disponibilidadConsultada && preguntaElDiaSinOfrecerHoras(r.texto)) {
+        console.warn('[wa-bot] preguntó el día sin ofrecer horarios — lo devuelvo a la agenda.', etiqueta);
+        corregir(resp, CORRECCION_HORARIOS);
+        continue;
+      }
+      // Ofreció horas que la agenda no le dio.
+      const inventadas = horasOfrecidas(r.texto).filter((h) => !r.horasDeAgenda.has(h));
+      if (puede && inventadas.length) {
+        console.warn('[wa-bot] ofreció horas que no salieron de la agenda:', inventadas.join(', '), etiqueta);
+        corregir(resp, CORRECCION_HORAS_INVENTADAS);
+        continue;
+      }
+      break;
+    }
+
+    r.workingMessages.push({ role: 'assistant', content: resp.content });
+    const toolResults = [];
+    for (const tu of toolUses) {
+      let output, isError = false;
+      try {
+        const impl = impls[tu.name];
+        if (!impl) throw new Error(`Tool desconocida: ${tu.name}`);
+        output = await impl(toolCtx, tu.input || {});
+        if (tu.name === 'create_appointment' && output && !output.error) r.citaCreada = true;
+        if (tu.name === 'reprogramar_cita' && output && !output.error) r.citaMovida = true;
+        if (['create_appointment', 'reprogramar_cita'].includes(tu.name) && output?.fechaLegible) {
+          r.fechaDeLaCita = output.fechaLegible;
+        }
+        if (tu.name === 'get_availability') {
+          disponibilidadConsultada = true;
+          (output?.slots || []).forEach((s) => r.horasDeAgenda.add(s.time));
+        }
+      } catch (e) {
+        console.error('[wa-bot] tool', tu.name, 'falló:', e.message);
+        output = { error: e.message };
+        isError = true;
+      }
+      r.trazas.push({ tool: tu.name, input: tu.input, output });
+      toolResults.push({
+        type: 'tool_result',
+        tool_use_id: tu.id,
+        content: typeof output === 'string' ? output : JSON.stringify(output),
+        is_error: isError,
+      });
+    }
+    r.workingMessages.push({ role: 'user', content: toolResults });
+  }
+  // Gastó las vueltas en herramientas y no escribió: no lo dejamos mudo.
+  if (!r.texto) r.texto = await respuestaSinTools(client, systemPrompt, r.workingMessages, corte, model);
+  return r;
+}
+
+/** Última malla: una hora que no está en la agenda no sale. */
+async function soloHorasDeAgenda(reply, horasDeAgenda, agendaProfileId) {
+  if (!horasOfrecidas(reply).some((h) => !horasDeAgenda.has(h))) return reply;
+  const reales = await proximosHorarios(agendaProfileId).catch(() => null);
+  return reales
+    ? `${listaHorarios(reales)}\n\n¿Cuál te sirve? Si prefieres otro día, dime cuál y lo reviso.`
+    : `En este momento no veo cupos en la agenda para los próximos días. Le paso tu caso al equipo para que te confirme un horario. ${ESCALATE_TAG}`;
+}
+
+async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contactName = null, adHeadline = null, adBody = null, model = null }) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('Falta ANTHROPIC_API_KEY');
   if (!messages.length) throw new Error('Sin mensajes');
 
@@ -2240,47 +2359,34 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
 
   const client = new Anthropic();
   const ctx = { conversationId: null, waPhone: conv.phone, contactName, profileId: agendaProfileId };
-  const trazas = [];
-  const working = [...messages];
+  const modelo = /^claude-[a-z0-9-]+$/.test(String(model || '')) ? model : CLAUDE_MODEL;
   let texto = '';
+  let trazas = [];
+  let fechaDeLaCita = null;
 
-  for (let iter = 0; iter < (useBookingTools ? 5 : 1); iter++) {
+  if (useBookingTools) {
+    const t = await turnoConHerramientas({
+      client, model: modelo, systemPrompt, corte, tools, messages, impls,
+      toolCtx: ctx, telefono: conv.phone, etiqueta: 'ensayo',
+    });
+    ({ trazas, fechaDeLaCita } = t);
+    texto = await soloHorasDeAgenda(t.texto, t.horasDeAgenda, agendaProfileId);
+  } else {
     const resp = await client.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 1024,
-      system: bloquesSystem(systemPrompt, corte),
-      ...(useBookingTools ? { tools } : {}),
-      messages: working,
+      model: modelo, max_tokens: 800, system: bloquesSystem(systemPrompt, corte), messages,
     });
     texto = resp.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
-    const toolUses = resp.content.filter((b) => b.type === 'tool_use');
-    if (!toolUses.length) break;
-
-    working.push({ role: 'assistant', content: resp.content });
-    const results = [];
-    for (const tu of toolUses) {
-      let output;
-      try {
-        output = impls[tu.name] ? await impls[tu.name](ctx, tu.input) : { error: `Tool ${tu.name} no existe` };
-      } catch (e) {
-        output = { error: e.message };
-      }
-      trazas.push({ tool: tu.name, input: tu.input, output });
-      results.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(output) });
-    }
-    working.push({ role: 'user', content: results });
   }
-
-  // Se quedó en herramientas y nunca escribió. Le pedimos el mensaje sin
-  // herramientas: quedarse callado es la peor respuesta posible.
-  if (!texto.trim()) texto = await respuestaSinTools(client, systemPrompt, working, corte);
 
   const escala = texto.includes(ESCALATE_TAG);
   return {
-    texto: formatoWhatsApp(texto.split(ESCALATE_TAG).join('')).trim(),
+    texto: (fechaDeLaCita ? (x) => x : conPuertaAOtroDia)(
+      formatoWhatsApp(conFechaDeLaAgenda(texto.split(ESCALATE_TAG).join(''), fechaDeLaCita)),
+    ).trim(),
     escala,
     trazas,
     promptChars: systemPrompt.length,
+    model: modelo,
   };
 }
 
@@ -2334,10 +2440,8 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   let reply = '';
   let citaCreadaEnEsteTurno = false;
   let citaMovidaEnEsteTurno = false;
-  let disponibilidadConsultada = false;
   let fechaDeLaCita = null;
-  // Las horas que la agenda devolvió en este turno: las únicas que se pueden ofrecer.
-  const horasDeAgenda = new Set();
+  let horasDeAgenda = new Set();
   try {
     const client = new Anthropic();
     const toolCtx = {
@@ -2350,130 +2454,14 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     };
 
     if (useBookingTools) {
-      // Tool loop. Las iteraciones de más son para que se corrija solo
-      // cuando da una cita por hecha sin haberla creado.
-      let finalText = '';
-      let correcciones = 0;
-      const workingMessages = [...messages];
-      for (let iter = 0; iter < 8; iter++) {
-        const resp = await client.messages.create({
-          model: CLAUDE_MODEL,
-          max_tokens: 1024,
-          system: bloquesSystem(systemPrompt, corte),
-          tools,
-          messages: workingMessages,
-        });
-        const toolUses = resp.content.filter((b) => b.type === 'tool_use');
-        const textBlocks = resp.content.filter((b) => b.type === 'text');
-        finalText = textBlocks.map((b) => b.text).join('\n').trim();
-
-        if (toolUses.length === 0) {
-          // Escribió la confirmación sin haber creado la cita. No se le manda:
-          // se le devuelve al modelo para que llame la herramienta y agende de
-          // verdad. Es el bot el que tiene que cerrar esto, no una persona.
-          if (
-            PROMESA_DE_CITA.test(finalText)
-            && !citaCreadaEnEsteTurno
-            && correcciones < 2
-            && !(await tieneCitaVigente(conv.phone))
-          ) {
-            correcciones++;
-            console.warn(
-              '[wa-bot] confirmó cita sin crearla — lo devuelvo a agendar.',
-              'conversación:', conversationId, 'intento:', correcciones,
-            );
-            workingMessages.push({ role: 'assistant', content: resp.content });
-            workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_AGENDA }] });
-            continue;
-          }
-          // Dijo que movió la cita sin llamar reprogramar_cita. Se le devuelve
-          // para que la mueva de verdad antes de confirmar.
-          if (
-            PROMESA_DE_MOVER.test(finalText)
-            && !citaMovidaEnEsteTurno
-            && !citaCreadaEnEsteTurno
-            && correcciones < 2
-            && !(await citaYaEstaEnLaFechaDicha(conv.phone, finalText)).coincide
-          ) {
-            correcciones++;
-            console.warn(
-              '[wa-bot] dijo que movió la cita sin moverla — lo devuelvo a reprogramar.',
-              'conversación:', conversationId, 'intento:', correcciones,
-            );
-            workingMessages.push({ role: 'assistant', content: resp.content });
-            workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_REPROGRAMAR }] });
-            continue;
-          }
-          // Preguntó "¿qué día?" sin haber mirado la agenda. Se le devuelve
-          // para que consulte los cupos y ofrezca horas de verdad.
-          if (
-            !disponibilidadConsultada
-            && preguntaElDiaSinOfrecerHoras(finalText)
-            && correcciones < 2
-          ) {
-            correcciones++;
-            console.warn(
-              '[wa-bot] preguntó el día sin ofrecer horarios — lo devuelvo a la agenda.',
-              'conversación:', conversationId,
-            );
-            workingMessages.push({ role: 'assistant', content: resp.content });
-            workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_HORARIOS }] });
-            continue;
-          }
-          // Ofreció horas que la agenda no le dio. Se le devuelve para que
-          // consulte y ofrezca solo las que existen.
-          const inventadas = horasOfrecidas(finalText).filter((h) => !horasDeAgenda.has(h));
-          if (inventadas.length && correcciones < 2) {
-            correcciones++;
-            console.warn(
-              '[wa-bot] ofreció horas que no salieron de la agenda:', inventadas.join(', '),
-              'conversación:', conversationId,
-            );
-            workingMessages.push({ role: 'assistant', content: resp.content });
-            workingMessages.push({ role: 'user', content: [{ type: 'text', text: CORRECCION_HORAS_INVENTADAS }] });
-            continue;
-          }
-
-          break;
-        }
-
-        workingMessages.push({ role: 'assistant', content: resp.content });
-        const toolResults = [];
-        for (const tu of toolUses) {
-          let output, isError = false;
-          try {
-            const impl = bookingToolImpls[tu.name];
-            if (!impl) throw new Error(`Tool desconocida: ${tu.name}`);
-            output = await impl(toolCtx, tu.input || {});
-            if (tu.name === 'create_appointment' && output && !output.error) {
-              citaCreadaEnEsteTurno = true;
-            }
-            if (tu.name === 'reprogramar_cita' && output && !output.error) {
-              citaMovidaEnEsteTurno = true;
-            }
-            if (['create_appointment', 'reprogramar_cita'].includes(tu.name) && output?.fechaLegible) {
-              fechaDeLaCita = output.fechaLegible;
-            }
-            if (tu.name === 'get_availability') {
-              disponibilidadConsultada = true;
-              (output?.slots || []).forEach((s) => horasDeAgenda.add(s.time));
-            }
-          } catch (e) {
-            console.error('[wa-bot] tool', tu.name, 'falló:', e.message);
-            output = { error: e.message };
-            isError = true;
-          }
-          toolResults.push({
-            type: 'tool_result',
-            tool_use_id: tu.id,
-            content: typeof output === 'string' ? output : JSON.stringify(output),
-            is_error: isError,
-          });
-        }
-        workingMessages.push({ role: 'user', content: toolResults });
-      }
-      // Gastó las vueltas en herramientas y no escribió: no lo dejamos mudo.
-      reply = finalText || await respuestaSinTools(client, systemPrompt, workingMessages, corte);
+      const t = await turnoConHerramientas({
+        client, systemPrompt, corte, tools, messages, impls: bookingToolImpls,
+        toolCtx, telefono: conv.phone, etiqueta: `conversación: ${conversationId}`,
+      });
+      reply = t.texto;
+      citaCreadaEnEsteTurno = t.citaCreada;
+      citaMovidaEnEsteTurno = t.citaMovida;
+      ({ fechaDeLaCita, horasDeAgenda } = t);
     } else {
       // Path simple sin tools (INFO_GENERAL, PROFESIONAL_DIRECTORIO, etc.)
       const resp = await client.messages.create({
@@ -2493,12 +2481,10 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   if (!reply) return { skipped: 'empty-reply' };
 
   // ─── Última malla: una hora que no está en la agenda no sale ───
-  if (useBookingTools && horasOfrecidas(reply).some((h) => !horasDeAgenda.has(h))) {
-    console.error('[wa-bot] HORAS INVENTADAS — se cambian por las de la agenda. conversación:', conversationId);
-    const reales = await proximosHorarios(agendaProfileId).catch(() => null);
-    reply = reales
-      ? `${listaHorarios(reales)}\n\n¿Cuál te sirve? Si prefieres otro día, dime cuál y lo reviso.`
-      : `En este momento no veo cupos en la agenda para los próximos días. Le paso tu caso al equipo para que te confirme un horario. ${ESCALATE_TAG}`;
+  if (useBookingTools) {
+    const revisado = await soloHorasDeAgenda(reply, horasDeAgenda, agendaProfileId);
+    if (revisado !== reply) console.error('[wa-bot] HORAS INVENTADAS — se cambian por las de la agenda. conversación:', conversationId);
+    reply = revisado;
   }
 
   // ─── Última malla: la confirmación falsa no sale ───
@@ -2697,4 +2683,5 @@ module.exports = {
   proximosHorarios,
   listaHorarios,
   reopenIfClosed,
+  instruccionesVigentes: () => SYSTEM_PROMPTS.PACIENTE_BOGOTA,
 };
