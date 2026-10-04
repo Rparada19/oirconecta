@@ -722,16 +722,37 @@ function listaHorarios(h) {
  * que la valoración no cuesta y pone tres horas reales delante. Quien llega
  * por un anuncio de audífonos recibe primero el precio, que es a lo que vino.
  */
+/**
+ * Lo que el anuncio prometió, dicho con sus propias palabras. A quien llegó por
+ * "todos los audífonos de promoción incluyen seguro por pérdida, robo y
+ * rotura" se le contestaba "las condiciones te las explican en la valoración":
+ * vino por algo concreto y recibió una evasiva. Solo se afirma lo que el
+ * anuncio dice; lo que no dice, no se inventa.
+ */
+function promesaDelAnuncio(anuncio) {
+  const a = String(anuncio || '');
+  const extras = [
+    /garant[ií]a (por|de) 3 a[ñn]os/i.test(a) && 'garantía de 3 años',
+    /seguro/i.test(a) && 'seguro por pérdida, robo y rotura',
+  ].filter(Boolean).join(' y ');
+  if (/2x1/i.test(a)) {
+    const que = /widex/i.test(a) ? 'audífonos Widex recargables' : 'audífonos';
+    return `Este mes tenemos *2x1 en ${que}*${extras ? `, con ${extras}` : ''}.`;
+  }
+  if (/seguro/i.test(a)) return 'Los audífonos de promoción incluyen *seguro por pérdida, robo y rotura*.';
+  return '';
+}
+
 async function bienvenida(conv, fecha = new Date(), preguntaPrecio = '') {
   const anuncio = `${conv?.adHeadline || ''} ${conv?.adBody || ''}`;
   const deAudifonos = /aud[ií]fono|recargable|2x1/i.test(`${anuncio} ${preguntaPrecio}`);
-  const conPromo = /2x1|promoci[oó]n/i.test(anuncio);
+  const promesa = promesaDelAnuncio(anuncio);
   const recargables = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(fecha) <= '2026-10-31';
   const nombre = nombreParaSaludo(conv?.contactName);
 
   const saludo = `${saludoPorHora(fecha)}${nombre ? `, ${nombre}` : ''}. Soy Aura, de OírConecta, centro auditivo en *Bogotá* (Cra. 10 #96-25, consultorio 320).`;
   const cuerpo = deAudifonos
-    ? `Tenemos audífonos desde *$800.000 cada uno*${recargables ? ', y este mes recargables desde *$1.800.000 cada uno*' : ''}.${conPromo ? ' Las condiciones de la promoción del anuncio te las explican en la valoración.' : ''} Cuál te sirve se define en la valoración auditiva, que *no tiene costo*: una hora con audióloga y 4 exámenes.`
+    ? `${promesa ? `${promesa} ` : ''}Tenemos audífonos desde *$800.000 cada uno*${recargables ? ', y este mes recargables desde *$1.800.000 cada uno*' : ''}. Cuál te sirve se define en la valoración auditiva, que *no tiene costo*: una hora con audióloga y 4 exámenes.`
     : preguntaPrecio
       // Preguntó el precio sin decir de qué: van los dos.
       ? `La valoración auditiva *no tiene costo*; solo se pagan $150.000 si quieres llevarte los exámenes impresos. Los audífonos van desde *$800.000 cada uno*${recargables ? ', y este mes hay recargables desde *$1.800.000 cada uno*' : ''}: cuál te sirve se define en la valoración.`
@@ -2033,7 +2054,7 @@ Cómo usarlo:
 · Lo que haces es dar por sentado el tema: si el anuncio hablaba de audiometría, hablas de audiometría, sin explicar cómo lo sabes.
 · NO prometas nada que el anuncio no diga, y NO inventes descuentos, promociones ni precios. Si el anuncio ofrece algo puntual, respétalo tal cual está escrito arriba.
 · Si el anuncio habla de audífonos (precio, recargables, 2x1) y la persona pregunta "precio" o pide información, habla primero de los audífonos y de su precio; después, de la valoración.
-· Si el anuncio ofrece una promoción, confírmala como está escrita arriba y dile que las condiciones exactas se las explican en la valoración.
+· Si el anuncio ofrece una promoción, dila completa y con sus datos, tal como está escrita arriba (qué incluye, marca, garantía, seguro). No contestes "las condiciones te las explican en la valoración" a algo que el anuncio ya dice: eso es una evasiva. Solo lo que el anuncio NO dice se confirma en la valoración, y lo dices únicamente si te lo preguntan.
 ═══════════════════════════════════`;
   }
 
