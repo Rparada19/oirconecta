@@ -152,6 +152,11 @@ async function persistIncomingMessage({
         unreadCount: { increment: 1 },
         windowExpiresAt: new Date(Date.now() + WINDOW_MS),
         contactName: conversation.contactName || contactName || undefined,
+        // Volvió a escribir: el ciclo de seguimiento empieza de cero. Antes la
+        // marca de "ya nos despedimos" quedaba para siempre y lo sacaba de
+        // cualquier campaña futura aunque hubiera respondido.
+        silencio1At: null,
+        silencio2At: null,
         ...reabrir,
         ...vincular,
         ...atribucion,
@@ -228,6 +233,9 @@ async function sendTextToConversation({ conversationId, text, sentByUserId = nul
     data: {
       lastMessageAt: msg.timestamp,
       lastMessagePreview: `Tú: ${preview}`,
+      // Escribió una persona del equipo: el bot se calla hasta que alguien lo
+      // devuelva con el botón de la bandeja. Antes seguía contestando encima.
+      ...(sentByUserId && !sentByBot ? { status: 'HUMAN' } : {}),
     },
   });
 
