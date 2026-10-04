@@ -1,5 +1,5 @@
 /**
- * El bot aprende — pero con alguien que apruebe.
+ * El bot aprende cada día.
  *
  * Cada noche se leen los chats del día anterior y se miran dos cosas que el
  * bot no puede ver por sí mismo, porque cada conversación la contesta desde
@@ -11,9 +11,18 @@
  *   2. Qué contestó el equipo cuando el bot no supo. Eso es una FAQ que ya
  *      existe, solo que nadie la ha escrito.
  *
- * De ahí salen propuestas (FAQ, LECCION, ERROR). Ninguna toca a un paciente
- * hasta que alguien la aprueba en la bandeja: una FAQ aprobada entra al
- * cerebro, una lección aprobada entra al prompt del bot.
+ * De ahí salen propuestas (FAQ, LECCION, ERROR). Todo esperaba una aprobación
+ * en la bandeja y esa aprobación no llegaba: el 4 de octubre había 54
+ * propuestas pendientes y la última aprobada era del 22 de septiembre. El bot
+ * llevaba doce días sin aprender nada.
+ *
+ * Ahora:
+ *   · Una LECCION que solo habla de cómo conversar puede entrar sola al prompt
+ *     (APRENDIZAJE_AUTO). Se retira desde la bandeja con un clic.
+ *   · Lo que afirma un hecho —precios, horas, convenios, salud— sigue
+ *     esperando a una persona: FAQ siempre, y la lección que traiga cifras.
+ *   · Cada mañana sale un reporte al celular con las cifras de ayer, lo que el
+ *     bot aprendió y lo que espera una decisión.
  */
 
 const { PrismaClient } = require('@prisma/client');
@@ -26,6 +35,23 @@ const prisma = new PrismaClient();
 const MODELO = 'claude-opus-5';
 const TZ = 'America/Bogota';
 const HORAS_PARA_DARLO_POR_IDO = 6;
+
+// Con esto en 'true', las lecciones seguras entran al bot sin pasar por la bandeja.
+const auto = () => process.env.APRENDIZAJE_AUTO === 'true';
+
+// Una lección entra sola únicamente si habla de CÓMO conversar. Si afirma un
+// hecho (plata, horas, convenios, salud, enlaces), cambia quién es el bot o
+// toca cuándo se pasa el caso a una persona, la aprueba alguien del equipo.
+const NO_ENTRA_SOLA = /\$|\d{3}|\d{1,2}:\d{2}|\d\s?[ap]\.?\s?m\b|https?:|www\.|\.com\b|\beps\b|prepagad|convenio|asegurador|p[óo]liza|gratis|gratuit|descuento|promoci[óo]n|2x1|garant[íi]a|financia|cuotas|domicilio|diagn[óo]stic|medicament|\bmarcas?\b|inteligencia artificial|asistente virtual|robot|persona real|escal|urgenc/i;
+const LARGO_MAXIMO_DE_LECCION = 400;
+
+function entraSola(p) {
+  const regla = String(p.respuesta || '');
+  return p.tipo === 'LECCION'
+    && (p.casos || 0) >= 2
+    && regla.length <= LARGO_MAXIMO_DE_LECCION
+    && !NO_ENTRA_SOLA.test(regla);
+}
 
 const hoyBogota = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(d);
 
@@ -191,23 +217,29 @@ const ESQUEMA = {
   },
 };
 
-const INSTRUCCIONES = `Revisas las conversaciones de WhatsApp de OírConecta, un centro auditivo en Bogotá (Cr 10 #96-25, consultorio 320). Un bot atiende a los pacientes y agenda valoraciones auditivas. El bot NO ve cómo terminaron sus conversaciones anteriores: tú sí. Tu trabajo es encontrar qué debería cambiar para que más gente llegue a la cita, y proponerlo. Una persona del equipo aprueba o descarta cada propuesta; nada llega a un paciente sin eso.
+const INSTRUCCIONES = `Revisas las conversaciones de WhatsApp de OírConecta, un centro auditivo en Bogotá (Cra. 10 #96-25, consultorio 320). Las atiende Aura, un bot con un solo objetivo: que cada persona de Bogotá o la Sabana termine la conversación con su valoración auditiva agendada, diciendo la verdad y sin presionar. Aura NO ve cómo terminaron sus conversaciones anteriores: tú sí. Tu trabajo es que mañana agende más que hoy: encontrar después de qué respuestas se fue la gente, qué tuvieron en común los chats que sí terminaron en cita, y convertirlo en reglas.
+
+Lo que hoy es cierto. No lo contradigas ni lo propongas como novedad:
+- La valoración auditiva no tiene costo. Solo se pagan $150.000 si el paciente quiere llevarse los exámenes impresos.
+- No existen "cupos de la semana" ni condiciones de "agendar hoy".
+- Las horas que Aura ofrece salen de la agenda. Los seguimientos automáticos solo salen entre las 8 a.m. y las 8 p.m.
+- Más abajo van las INSTRUCCIONES VIGENTES de Aura. Si lo que viste ya está escrito ahí y Aura no lo cumplió, es un ERROR ("no está cumpliendo la regla X"), no una lección nueva.
 
 Hay tres tipos de propuesta:
 
-FAQ — un dato que el bot no supo o inventó, y que alguien del EQUIPO sí contestó en el chat. La respuesta sale de lo que dijo el equipo, no de tu cabeza. "pregunta" es cómo lo preguntan los pacientes (máx 200 caracteres); "respuesta" es lo que el bot debe contestar, en tuteo bogotano (máx 1000). Si el equipo no lo contestó, no es FAQ: no inventes precios, horarios, convenios ni servicios.
+FAQ — un dato que Aura no supo o inventó, y que alguien del EQUIPO sí contestó en el chat. La respuesta sale de lo que dijo el equipo, no de tu cabeza. "pregunta" es cómo lo preguntan los pacientes (máx 200 caracteres); "respuesta" es lo que Aura debe contestar, en tuteo (máx 1000). Si el equipo no lo contestó, no es FAQ: no inventes precios, horarios, convenios ni servicios. Una FAQ la aprueba una persona.
 
-LECCION — una forma de responder que hace que la gente se vaya, y cómo hacerlo distinto. Se saca comparando: después de qué respuestas del bot el paciente dejó de escribir, y qué pasó en los chats que sí terminaron en cita. "respuesta" es la regla para el bot, escrita como instrucción corta y concreta ("Cuando pregunten X, haz Y en vez de Z"). Nada de reglas genéricas tipo "sé más empático": si no puedes decir exactamente qué cambia en el mensaje, no la propongas.
+LECCION — una forma de responder que hace que la gente se vaya, y cómo hacerlo distinto. Se saca comparando: después de qué respuestas el paciente dejó de escribir, y qué pasó en los chats que sí terminaron en cita. "respuesta" es la regla para Aura: una instrucción corta y concreta, de máximo 300 caracteres ("Cuando pregunten X, haz Y en vez de Z"). Una lección habla solo de CÓMO conversar: qué va primero, qué no preguntar, cuándo ofrecer horarios, cómo contestar una objeción. NO lleva cifras, precios, horas de ejemplo, fechas, enlaces, nombres de EPS ni promesas de servicio: eso es un dato y va como FAQ. Las lecciones que cumplen esto pueden entrar al bot al día siguiente sin que nadie las revise, así que escribe solo las que firmarías. Nada de reglas genéricas tipo "sé más empático": si no puedes decir exactamente qué cambia en el mensaje, no la propongas.
 
-ERROR — algo que el bot hizo mal y que no se arregla con una regla de conversación: prometió algo que no podía hacer, dio una fecha o un dato equivocado, se le escapó texto interno, respondió dos veces, falló una herramienta. "respuesta" dice qué corregir.
+ERROR — algo que Aura hizo mal y que no se arregla con una regla de conversación: prometió algo que no podía hacer, dio una fecha o un dato equivocado, se le escapó texto interno, respondió dos veces, falló una herramienta, o no cumplió una instrucción que ya tiene. "respuesta" dice qué corregir. Los errores los arregla un programador.
 
 Reglas:
 - "casos" es cuántas conversaciones distintas respaldan la propuesta. Cuenta de verdad, usando también la lista de la semana. Con un solo caso solo propón ERROR o FAQ; una LECCION necesita al menos 2 casos.
 - "chats" son las etiquetas (C1, C2…) de las conversaciones de hoy que la respaldan.
-- "evidencia" dice lo que viste, con cifras y citando frases cortas reales: "En 4 de 6 chats que preguntaron el precio, el bot contestó con la explicación de las tres razones y el paciente no volvió a escribir".
-- No repitas lo que ya está en las FAQs, en las lecciones aprobadas ni en las propuestas pendientes. Si un patrón ya propuesto volvió a pasar, no lo propongas otra vez.
+- "evidencia" dice lo que viste, con cifras y citando frases cortas reales: "En 4 de 6 chats que preguntaron el precio, Aura contestó con la explicación larga y el paciente no volvió a escribir".
+- No repitas lo que ya está en las instrucciones vigentes, en las FAQs, en las lecciones activas ni en las propuestas pendientes. Si un patrón ya propuesto volvió a pasar, no lo propongas otra vez.
 - Menos es más: 0 a 5 propuestas. Un día sin nada que proponer es una respuesta válida.
-- "resumen": dos o tres frases sobre cómo fue el día, para el dueño del centro. Sin tecnicismos.
+- "resumen": tres frases para el dueño del centro, sin tecnicismos: cómo fue el día, la razón principal por la que se fue la gente y qué hicieron distinto los chats que sí agendaron. Si una lección activa no se está cumpliendo, o está espantando gente, dilo aquí citándola.
 - Escribe en español de Colombia.`;
 
 async function contexto() {
@@ -218,6 +250,7 @@ async function contexto() {
     prisma.botAprendizaje.findMany({ where: { estado: 'PENDIENTE' }, select: { tipo: true, titulo: true } }),
   ]);
   return {
+    instrucciones: require('./waCorporateBot.service').instruccionesVigentes(),
     faqs: (faqs || []).filter((f) => f.isActive !== false).map((f) => `- ${f.question}`).join('\n') || '(ninguna)',
     lecciones: lecciones.map((l) => `- ${l.respuesta}`).join('\n') || '(ninguna)',
     pendientes: pendientes.map((p) => `- [${p.tipo}] ${p.titulo}`).join('\n') || '(ninguna)',
@@ -238,10 +271,15 @@ async function pedirPropuestas(datos) {
   const contenido = `Día revisado: ${datos.dia}
 Cifras del día: ${JSON.stringify(datos.metricas)}
 
-FAQs que el bot ya tiene:
+INSTRUCCIONES VIGENTES DE AURA:
+"""
+${ctx.instrucciones}
+"""
+
+FAQs que Aura ya tiene:
 ${ctx.faqs}
 
-Lecciones ya aprobadas:
+Lecciones activas (Aura las lee en cada conversación):
 ${ctx.lecciones}
 
 Propuestas pendientes de revisar (no repetir):
@@ -301,6 +339,7 @@ async function revisarDia({ dia = ayerBogota(), forzar = false } = {}) {
       const out = await pedirPropuestas(datos);
       resumen = out.resumen;
       for (const p of out.propuestas) {
+        const sola = auto() && entraSola(p);
         creadas.push(await prisma.botAprendizaje.create({
           data: {
             tipo: p.tipo,
@@ -310,6 +349,7 @@ async function revisarDia({ dia = ayerBogota(), forzar = false } = {}) {
             evidencia: p.evidencia,
             casos: Math.max(1, p.casos || 1),
             conversationIds: p.conversationIds,
+            ...(sola ? { estado: 'APROBADA', revisadoAt: new Date(), revisadoPor: 'AUTO' } : {}),
           },
         }));
       }
@@ -320,13 +360,14 @@ async function revisarDia({ dia = ayerBogota(), forzar = false } = {}) {
       data: { metricas: { ...datos.metricas, resumen }, propuestas: creadas.length },
     });
 
-    if (creadas.length > 0) {
-      require('./alertaEquipo.service').avisar({
-        titulo: `El bot tiene ${creadas.length} ${creadas.length === 1 ? 'propuesta' : 'propuestas'} para aprender`,
-        quien: 'Revisión nocturna',
-        texto: `${resumen}\n\nRevísalas en la bandeja de WhatsApp → 🧠 Aprendizaje.`,
-      }).catch(() => {});
-    }
+    // El reporte sale todos los días, haya o no propuestas: es la forma de ver
+    // cada mañana si el bot está agendando más o menos que la semana pasada.
+    require('./alertaEquipo.service').avisar({
+      titulo: `Aura, ${diaLegible(dia)}: ${datos.metricas.chats} ${datos.metricas.chats === 1 ? 'chat' : 'chats'}, ${datos.metricas.citas} ${datos.metricas.citas === 1 ? 'cita' : 'citas'}`,
+      quien: 'Revisión de cada mañana',
+      texto: await reporte(resumen, creadas).catch(() => resumen),
+      largo: true,
+    }).catch(() => {});
     return { dia, metricas: datos.metricas, resumen, propuestas: creadas.length };
   } catch (e) {
     // El día queda marcado con el error y NO se reintenta solo: el cron pasa
@@ -337,6 +378,45 @@ async function revisarDia({ dia = ayerBogota(), forzar = false } = {}) {
     }).catch(() => {});
     throw e;
   }
+}
+
+const diaLegible = (dia) => new Date(`${dia}T12:00:00-05:00`)
+  .toLocaleDateString('es-CO', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long' });
+
+/** Citas por cada 100 chats en una tanda de noches revisadas. */
+function tasa(revisiones) {
+  const chats = revisiones.reduce((n, r) => n + (r.metricas?.chats || 0), 0);
+  const citas = revisiones.reduce((n, r) => n + (r.metricas?.citas || 0), 0);
+  return chats ? { chats, citas, porCien: Math.round((citas / chats) * 100) } : null;
+}
+
+/** Lo que el dueño lee cada mañana: cómo fue ayer, qué aprendió y qué lo espera. */
+async function reporte(resumen, creadas) {
+  const [revisiones, pendientes] = await Promise.all([
+    prisma.botRevision.findMany({ orderBy: { dia: 'desc' }, take: 14 }),
+    prisma.botAprendizaje.groupBy({ by: ['tipo'], where: { estado: 'PENDIENTE' }, _count: { _all: true } }),
+  ]);
+  const semana = tasa(revisiones.slice(0, 7));
+  const anterior = tasa(revisiones.slice(7, 14));
+  const lineas = [resumen];
+
+  if (semana) {
+    lineas.push(`Últimos 7 días: ${semana.citas} citas en ${semana.chats} chats (${semana.porCien} de cada 100)`
+      + (anterior ? `. Los 7 anteriores: ${anterior.porCien} de cada 100.` : '.'));
+  }
+
+  const solas = creadas.filter((c) => c.revisadoPor === 'AUTO');
+  if (solas.length) lineas.push(`Aprendió hoy:\n${solas.map((c) => `• ${c.titulo}`).join('\n')}`);
+
+  const cuantas = (tipo) => pendientes.find((p) => p.tipo === tipo)?._count?._all || 0;
+  const espera = [
+    cuantas('FAQ') && `${cuantas('FAQ')} respuestas por aprobar`,
+    cuantas('LECCION') && `${cuantas('LECCION')} lecciones por aprobar`,
+    cuantas('ERROR') && `${cuantas('ERROR')} errores por corregir`,
+  ].filter(Boolean);
+  if (espera.length) lineas.push(`Te esperan en WhatsApp → 🧠 Aprendizaje: ${espera.join(', ')}.`);
+
+  return lineas.join('\n\n');
 }
 
 /**
@@ -407,7 +487,7 @@ async function leccionesParaElPrompt() {
   }).catch(() => []);
   if (lecciones.length === 0) return '';
   return `\n\n═══ LO QUE APRENDIMOS DE CONVERSACIONES REALES ═══
-Estas reglas salieron de ver cómo terminaron chats anteriores y las aprobó el equipo. Mandan sobre los ejemplos de arriba.
+Estas reglas salieron de ver cómo terminaron chats anteriores. Son sobre cómo conversar: si alguna contradice un precio, un horario o un dato de arriba, vale el dato de arriba.
 ${lecciones.map((l) => `· ${l.respuesta}`).join('\n')}
 ═══════════════════════════════════`;
 }
@@ -420,4 +500,5 @@ module.exports = {
   aprobar,
   descartar,
   leccionesParaElPrompt,
+  entraSola,
 };

@@ -39,7 +39,7 @@ function diagnostico(token, chatId) {
   };
 }
 
-async function porTelegram({ titulo, quien, telefono, texto }) {
+async function porTelegram({ titulo, quien, telefono, texto, largo }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return { skipped: 'sin-telegram' };
@@ -50,7 +50,8 @@ async function porTelegram({ titulo, quien, telefono, texto }) {
     '',
     `👤 ${esc(quien)}`,
     telefono ? `📱 <a href="https://wa.me/${wa}">+${esc(telefono)}</a>` : null,
-    texto ? `\n💬 <i>${esc(String(texto).slice(0, 300))}</i>` : null,
+    // El reporte de cada mañana va entero; un aviso de lead, recortado.
+    texto ? (largo ? `\n${esc(String(texto).slice(0, 3000))}` : `\n💬 <i>${esc(String(texto).slice(0, 300))}</i>`) : null,
     `\n<a href="${SITE}/portal-crm/whatsapp">Abrir en el CRM</a>`,
   ].filter(Boolean).join('\n');
 
@@ -80,13 +81,13 @@ async function porTelegram({ titulo, quien, telefono, texto }) {
   }
 }
 
-async function porCorreo({ titulo, quien, telefono, texto }) {
+async function porCorreo({ titulo, quien, telefono, texto, largo }) {
   const to = process.env.ALERTAS_EMAIL || process.env.ADMIN_EMAIL;
   if (!to) return { skipped: 'sin-correo' };
   try {
     const email = require('./email.service');
     if (typeof email.sendAlertaEquipo !== 'function') return { skipped: 'sin-plantilla' };
-    await email.sendAlertaEquipo({ to, titulo, quien, telefono, texto });
+    await email.sendAlertaEquipo({ to, titulo, quien, telefono, texto, largo });
     return { sent: true };
   } catch (e) {
     console.warn('[alerta] correo falló:', e.message);
@@ -95,7 +96,7 @@ async function porCorreo({ titulo, quien, telefono, texto }) {
 }
 
 /**
- * @param {{titulo:string, quien:string, telefono?:string, texto?:string}} datos
+ * @param {{titulo:string, quien:string, telefono?:string, texto?:string, largo?:boolean}} datos
  */
 async function avisar(datos) {
   const [tg, mail] = await Promise.all([porTelegram(datos), porCorreo(datos)]);
