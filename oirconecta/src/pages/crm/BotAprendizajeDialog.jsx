@@ -39,6 +39,7 @@ function Propuesta({ p, onAprobar, onDescartar, onVerChat, ocupado }) {
       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', rowGap: 0.5 }}>
         <Chip size="small" label={meta.label} sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 600 }} />
         <Chip size="small" variant="outlined" label={`${p.casos} ${p.casos === 1 ? 'chat' : 'chats'}`} />
+        {p.revisadoPor === 'AUTO' && <Chip size="small" variant="outlined" color="success" label="Entró sola" />}
         <Typography sx={{ fontWeight: 600, color: NAVY, fontSize: '0.95rem' }}>{p.titulo}</Typography>
       </Stack>
 

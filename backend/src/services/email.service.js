@@ -1316,14 +1316,16 @@ async function sendControlReminder({ stage, to, patientName, controlLabel, diasD
  * Aviso interno al equipo: entró un lead por WhatsApp o el bot escaló.
  * Sobrio a propósito — es una alerta operativa, no una pieza de marketing.
  */
-async function sendAlertaEquipo({ to, titulo, quien, telefono, texto }) {
+async function sendAlertaEquipo({ to, titulo, quien, telefono, texto, largo }) {
   const wa = String(telefono || '').replace(/\D/g, '');
   const html = baseTemplate({
     title: titulo,
     bodyHtml: `
       ${h1(titulo)}
       ${p(`<strong>${quien}</strong>${telefono ? ` · <a href="https://wa.me/${wa}" style="color:#085946;">+${telefono}</a>` : ''}`)}
-      ${texto ? p(`<span style="color:#4b5563;font-style:italic;">"${String(texto).slice(0, 300)}"</span>`) : ''}
+      ${texto ? p(largo
+    ? String(texto).slice(0, 3000).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')
+    : `<span style="color:#4b5563;font-style:italic;">"${String(texto).slice(0, 300)}"</span>`) : ''}
       ${btn(`${SITE_URL}/portal-crm/whatsapp`, 'Abrir la conversación')}
     `,
   });
