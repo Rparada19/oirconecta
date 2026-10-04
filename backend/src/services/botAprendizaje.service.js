@@ -16,11 +16,12 @@
  * propuestas pendientes y la última aprobada era del 22 de septiembre. El bot
  * llevaba doce días sin aprender nada.
  *
- * Ahora:
- *   · Una LECCION que solo habla de cómo conversar puede entrar sola al prompt
- *     (APRENDIZAJE_AUTO). Se retira desde la bandeja con un clic.
- *   · Lo que afirma un hecho —precios, horas, convenios, salud— sigue
- *     esperando a una persona: FAQ siempre, y la lección que traiga cifras.
+ * Ahora (decisión del dueño, 4-oct-2026: todo automático):
+ *   · Una LECCION que solo habla de cómo conversar entra sola al prompt.
+ *   · Una FAQ (lo que contestó el equipo) entra sola al cerebro, salvo que
+ *     traiga horas de cita de ejemplo.
+ *   · Lo que no pasa el filtro queda en la bandeja; los ERROR son tareas de
+ *     código. Todo lo que entró solo se retira desde la bandeja con un clic.
  *   · Cada mañana sale un reporte al celular con las cifras de ayer, lo que el
  *     bot aprendió y lo que espera una decisión.
  */
@@ -36,8 +37,9 @@ const MODELO = 'claude-opus-5';
 const TZ = 'America/Bogota';
 const HORAS_PARA_DARLO_POR_IDO = 6;
 
-// Con esto en 'true', las lecciones seguras entran al bot sin pasar por la bandeja.
-const auto = () => process.env.APRENDIZAJE_AUTO === 'true';
+// Lo que el revisor propone entra al bot sin pasar por la bandeja (decisión del
+// dueño, 4-oct-2026). Se apaga con APRENDIZAJE_AUTO=false en Render.
+const auto = () => process.env.APRENDIZAJE_AUTO !== 'false';
 
 // Una lección entra sola únicamente si habla de CÓMO conversar. Si afirma un
 // hecho (plata, horas, convenios, salud, enlaces), cambia quién es el bot o
@@ -47,6 +49,9 @@ const LARGO_MAXIMO_DE_LECCION = 400;
 
 function entraSola(p) {
   const regla = String(p.respuesta || '');
+  // Una respuesta que dio el equipo entra tal cual, salvo que traiga horas de
+  // ejemplo: el bot las copiaría como si fueran de la agenda.
+  if (p.tipo === 'FAQ') return !/\d{1,2}:\d{2}|\d\s?[ap]\.\s?m\b/i.test(regla);
   return p.tipo === 'LECCION'
     && (p.casos || 0) >= 2
     && regla.length <= LARGO_MAXIMO_DE_LECCION
@@ -227,7 +232,7 @@ Lo que hoy es cierto. No lo contradigas ni lo propongas como novedad:
 
 Hay tres tipos de propuesta:
 
-FAQ — un dato que Aura no supo o inventó, y que alguien del EQUIPO sí contestó en el chat. La respuesta sale de lo que dijo el equipo, no de tu cabeza. "pregunta" es cómo lo preguntan los pacientes (máx 200 caracteres); "respuesta" es lo que Aura debe contestar, en tuteo (máx 1000). Si el equipo no lo contestó, no es FAQ: no inventes precios, horarios, convenios ni servicios. Una FAQ la aprueba una persona.
+FAQ — un dato que Aura no supo o inventó, y que alguien del EQUIPO sí contestó en el chat. La respuesta sale de lo que dijo el equipo, no de tu cabeza. "pregunta" es cómo lo preguntan los pacientes (máx 200 caracteres); "respuesta" es lo que Aura debe contestar, en tuteo (máx 1000). Si el equipo no lo contestó, no es FAQ: no inventes precios, horarios, convenios ni servicios. La respuesta no lleva horas de cita de ejemplo ("1️⃣ 8:00 a.m."): las horas las pone la agenda. Una FAQ sin horas entra al bot al día siguiente sin que nadie la revise.
 
 LECCION — una forma de responder que hace que la gente se vaya, y cómo hacerlo distinto. Se saca comparando: después de qué respuestas el paciente dejó de escribir, y qué pasó en los chats que sí terminaron en cita. "respuesta" es la regla para Aura: una instrucción corta y concreta, de máximo 300 caracteres ("Cuando pregunten X, haz Y en vez de Z"). Una lección habla solo de CÓMO conversar: qué va primero, qué no preguntar, cuándo ofrecer horarios, cómo contestar una objeción. NO lleva cifras, precios, horas de ejemplo, fechas, enlaces, nombres de EPS ni promesas de servicio: eso es un dato y va como FAQ. Las lecciones que cumplen esto pueden entrar al bot al día siguiente sin que nadie las revise, así que escribe solo las que firmarías. Nada de reglas genéricas tipo "sé más empático": si no puedes decir exactamente qué cambia en el mensaje, no la propongas.
 
@@ -340,7 +345,7 @@ async function revisarDia({ dia = ayerBogota(), forzar = false } = {}) {
       resumen = out.resumen;
       for (const p of out.propuestas) {
         const sola = auto() && entraSola(p);
-        creadas.push(await prisma.botAprendizaje.create({
+        const creada = await prisma.botAprendizaje.create({
           data: {
             tipo: p.tipo,
             titulo: recorte(p.titulo, 180),
@@ -349,9 +354,11 @@ async function revisarDia({ dia = ayerBogota(), forzar = false } = {}) {
             evidencia: p.evidencia,
             casos: Math.max(1, p.casos || 1),
             conversationIds: p.conversationIds,
-            ...(sola ? { estado: 'APROBADA', revisadoAt: new Date(), revisadoPor: 'AUTO' } : {}),
+            ...(sola && p.tipo === 'LECCION' ? { estado: 'APROBADA', revisadoAt: new Date(), revisadoPor: 'AUTO' } : {}),
           },
-        }));
+        });
+        // La FAQ además se escribe en el cerebro, igual que al aprobarla a mano.
+        creadas.push(sola && p.tipo === 'FAQ' ? await aprobar(creada.id, {}, 'AUTO').catch(() => creada) : creada);
       }
     }
 
@@ -427,7 +434,8 @@ async function reporte(resumen, creadas) {
 let enCurso = false;
 function revisionNocturna() {
   const hora = Number(new Date().toLocaleString('en-US', { timeZone: TZ, hour: 'numeric', hour12: false }));
-  if (hora < 3 || hora > 6 || enCurso) return { skipped: 'fuera-de-hora-o-en-curso' };
+  // De 6 a 9: el reporte le llega al dueño al empezar el día, no a las 3 a.m.
+  if (hora < 6 || hora > 9 || enCurso) return { skipped: 'fuera-de-hora-o-en-curso' };
   enCurso = true;
   revisarDia()
     .then((r) => { if (!r?.skipped) console.log('[aprendizaje] revisión', r.dia, '·', r.propuestas, 'propuestas'); })

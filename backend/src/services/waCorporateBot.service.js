@@ -31,7 +31,7 @@ const config = require('../config');
 const prisma = new PrismaClient();
 
 // Se cambia en Render (WA_BOT_MODEL) sin tocar código.
-const CLAUDE_MODEL = process.env.WA_BOT_MODEL || 'claude-haiku-4-5-20251001';
+const CLAUDE_MODEL = process.env.WA_BOT_MODEL || 'claude-sonnet-5-5';
 const MAX_HISTORY_MESSAGES = 12; // últimos 12 turnos para contexto
 
 // ─── C1 — Tools para que el bot agende en WhatsApp sin salir del chat ───
@@ -1030,6 +1030,7 @@ Lo logras diciendo la verdad: respondes lo que preguntan, quitas las dudas y pon
 · Por chat no se elige ni se cotiza un audífono específico. No hables de "planes". De marcas, solo lo que diga el conocimiento del centro.
 · Si ya tiene exámenes o audífonos de otro lugar: que los traiga a la valoración; la audióloga los revisa y le dice qué le conviene.
 · Los sábados también atendemos cuando la agenda tiene cupos ese día: consúltala antes de ofrecer un sábado o de decir que no hay.
+· *EPS y prepagadas*: atendemos a pacientes de todas las EPS y prepagadas de Colombia, y no necesitan traer carné ni autorización. Si preguntan, di que sí y ofrece la cita. Lo que NO sabes es qué le cubre o le paga cada EPS: no lo prometas; eso se lo confirma el equipo en la valoración.
 
 ═══ CUANDO PREGUNTAN EL PRECIO ═══
 La cifra va en la primera línea. Siempre.
@@ -1081,7 +1082,7 @@ Con niños, personas muy mayores o casos médicos complejos no opines sobre el d
 
 ═══ NO INVENTES ═══
 Si un dato no está en estas instrucciones, en el conocimiento del centro o en lo que devuelve una herramienta, no lo digas. "Eso te lo confirma el equipo" es una respuesta válida.
-· No tienes información de convenios con EPS, prepagadas ni seguros. Nunca digas que atendemos con EPS, con todas las aseguradoras ni en todo el país.
+· Sobre EPS y prepagadas solo sabes lo que dice LO QUE OFRECEMOS. No digas que la EPS paga los audífonos ni los exámenes, no pidas carné ni autorización, y no digas que atendemos en todo el país.
 · No describas la zona ni cómo llegar más allá de la dirección: no digas barrio, estaciones ni rutas.
 · No abras enlaces ni digas que los viste. No digas "vi que tocaste el anuncio".
 · No adivines el grado de pérdida ni interpretes exámenes o síntomas por chat.
@@ -1089,6 +1090,7 @@ Si un dato no está en estas instrucciones, en el conocimiento del centro o en l
 ═══ CÓMO ESCRIBES ═══
 · En tu primer mensaje saludas por el nombre y te presentas una sola vez: "Hola, soy Aura, de servicio al cliente de OírConecta". Si en la conversación ya hay una bienvenida tuya, no te vuelvas a presentar ni repitas lo que ya dijo.
 · Máximo 4 líneas por mensaje, sin contar la lista de horarios. Frases cortas, de persona que habla, no de folleto.
+· Que se note una persona: usa las palabras de quien te escribe, cambia la forma de abrir y de cerrar de un mensaje a otro, y no repitas una frase que ya dijiste en la conversación. Nada de "¡Perfecto!" ni "¡Excelente!" al empezar cada mensaje.
 · Español correcto, sin errores de ortografía. Tuteo cercano.
 · Negrita con UN asterisco: *así*. Nunca dos. Sin Markdown. Máximo 2 emojis por mensaje.
 · Eres Aura. No digas que eres una inteligencia artificial; si te preguntan directamente si eres un bot, no lo niegues: di que eres la asistente virtual de OírConecta y sigue ayudando.
@@ -1854,9 +1856,9 @@ function relativoCorrecto(texto, hoy = new Date()) {
 const YA_DEJA_OTRO_DIA = /otro d[ií]a|otra fecha|otro horario|otra hora|qu[ée] d[ií]a te (queda|sirve|funciona|viene)|ninguno te (sirve|funciona|queda)/i;
 const OTRO_DIA = 'Si ninguno te funciona, dime qué día te queda bien y te busco espacio.';
 
-function conPuertaAOtroDia(texto) {
+function conPuertaAOtroDia(texto, yaDicha = false) {
   const t = String(texto || '');
-  if (!t.includes('?') || YA_DEJA_OTRO_DIA.test(t)) return t;
+  if (yaDicha || !t.includes('?') || YA_DEJA_OTRO_DIA.test(t)) return t;
   // Solo cuando hay una lista de horarios de verdad. Contando cualquier hora o
   // día del texto, la frase se pegaba al horario de atención ("de 7:30 a.m. a
   // 5:00 p.m.") y a mensajes que no ofrecían nada.
@@ -2139,6 +2141,7 @@ Cuándo la dices:
     systemPrompt += `\n\n═══ PRECIO DE LA VALORACIÓN (esto manda sobre cualquier otra cifra de arriba) ═══
 La valoración auditiva no tiene costo. Lo único que se paga es si el paciente quiere llevarse los exámenes impresos: $150.000.
 No existe ninguna oferta de "cupos sin costo de la semana" ni condición de "agendar hoy": no las menciones. Si el conocimiento del centro o una lección dicen otra cosa sobre el precio de la valoración, ignóralo.
+Los audífonos sí se venden por unidad, desde $800.000 cada uno, aunque el conocimiento del centro diga que solo van dentro de un plan.
 ═══════════════════════════════════`;
   }
 
@@ -2424,7 +2427,7 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
 
   const escala = texto.includes(ESCALATE_TAG);
   return {
-    texto: (fechaDeLaCita ? (x) => x : conPuertaAOtroDia)(
+    texto: (fechaDeLaCita ? (x) => x : (x) => conPuertaAOtroDia(x, messages.some((m) => m.role === 'assistant' && String(m.content).includes(OTRO_DIA))))(
       formatoWhatsApp(conFechaDeLaAgenda(texto.split(ESCALATE_TAG).join(''), fechaDeLaCita)),
     ).trim(),
     escala,
@@ -2583,7 +2586,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   const shouldEscalate = reply.includes(ESCALATE_TAG);
   const cleanReply = await sinFirmaRepetida(
     // Si en este turno se creó o movió la cita, el mensaje es una confirmación: no se ofrece otro día.
-    (fechaDeLaCita ? (x) => x : conPuertaAOtroDia)(
+    (fechaDeLaCita ? (x) => x : (x) => conPuertaAOtroDia(x, history.some((m) => m.role === 'assistant' && String(m.content).includes(OTRO_DIA))))(
       formatoWhatsApp(conFechaDeLaAgenda(reply.replace(ESCALATE_TAG, ''), fechaDeLaCita)),
     ).trim(),
     firma, conversationId,
