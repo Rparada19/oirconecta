@@ -650,6 +650,24 @@ function soloPideInformacion(texto) {
   return !/precio|cuanto|cuesta|valor|costo|cita|agendar|audifono|examen|audiometria|valoracion|donde|direccion|eps/.test(t);
 }
 
+/**
+ * El primer mensaje solo pregunta el precio ("Precio", "¿cuánto cuesta?",
+ * "info y precio"). Es la pregunta más repetida y la que más se respondía mal:
+ * de 90, 38 se quedaron sin cifra. Se contesta con la bienvenida fija, que
+ * lleva las cifras y los horarios de la agenda.
+ */
+function soloPidePrecio(texto) {
+  const t = String(texto || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!/precio|cuanto (cuesta|vale|valen|cuestan|sale|es)|que valor|\bvalor\b|\bcostos?\b/.test(t)) return false;
+  if (t.split(' ').length > 10) return false;
+  return !/cita|agendar|examen|audiometria|donde|direccion|eps|pila|repara|limpieza|lavado|molde|plan|domicilio|vivo|ciudad/.test(t);
+}
+
 function saludoPorHora(fecha = new Date()) {
   const h = Number(new Intl.DateTimeFormat('es-CO', {
     timeZone: 'America/Bogota', hour: 'numeric', hourCycle: 'h23',
@@ -704,9 +722,9 @@ function listaHorarios(h) {
  * que la valoración no cuesta y pone tres horas reales delante. Quien llega
  * por un anuncio de audífonos recibe primero el precio, que es a lo que vino.
  */
-async function bienvenida(conv, fecha = new Date()) {
+async function bienvenida(conv, fecha = new Date(), preguntaPrecio = '') {
   const anuncio = `${conv?.adHeadline || ''} ${conv?.adBody || ''}`;
-  const deAudifonos = /aud[ií]fono|recargable|2x1/i.test(anuncio);
+  const deAudifonos = /aud[ií]fono|recargable|2x1/i.test(`${anuncio} ${preguntaPrecio}`);
   const conPromo = /2x1|promoci[oó]n/i.test(anuncio);
   const recargables = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(fecha) <= '2026-10-31';
   const nombre = nombreParaSaludo(conv?.contactName);
@@ -714,7 +732,10 @@ async function bienvenida(conv, fecha = new Date()) {
   const saludo = `${saludoPorHora(fecha)}${nombre ? `, ${nombre}` : ''}. Soy Aura, de OírConecta, centro auditivo en *Bogotá* (Cra. 10 #96-25, consultorio 320).`;
   const cuerpo = deAudifonos
     ? `Tenemos audífonos desde *$800.000 cada uno*${recargables ? ', y este mes recargables desde *$1.800.000 cada uno*' : ''}.${conPromo ? ' Las condiciones de la promoción del anuncio te las explican en la valoración.' : ''} Cuál te sirve se define en la valoración auditiva, que *no tiene costo*: una hora con audióloga y 4 exámenes.`
-    : 'La valoración auditiva *no tiene costo*: es una hora con audióloga e incluye 4 exámenes para establecer tu grado de pérdida auditiva y qué te conviene.';
+    : preguntaPrecio
+      // Preguntó el precio sin decir de qué: van los dos.
+      ? `La valoración auditiva *no tiene costo*; solo se pagan $150.000 si quieres llevarte los exámenes impresos. Los audífonos van desde *$800.000 cada uno*${recargables ? ', y este mes hay recargables desde *$1.800.000 cada uno*' : ''}: cuál te sirve se define en la valoración.`
+      : 'La valoración auditiva *no tiene costo*: es una hora con audióloga e incluye 4 exámenes para establecer tu grado de pérdida auditiva y qué te conviene.';
   const h = await proximosHorarios().catch(() => null);
   const cierre = h
     ? `${listaHorarios(h)}\n\n¿Cuál te sirve? Si prefieres otro día o tienes una pregunta antes, cuéntame.`
@@ -1588,15 +1609,14 @@ ${SOLO_EL_MENSAJE}`;
 // Frases que solo se dicen cuando se está proponiendo un día. No se exige que
 // el mensaje diga "cita": a Edgar le escribió "¿Mañana lunes te viene bien, o
 // prefieres otro día?" — ni una palabra de agenda, y es justo el caso.
-const PROPONE_UN_DIA = /te viene bien|qu[ée] d[íi]a|prefieres otro d[íi]a|alg[úu]n d[íi]a|cu[áa]ndo te (sirve|queda|viene|gustar[íi]a)|cu[áa]ndo (quieres|puedes|podr[íi]as) venir|te gustar[íi]a (ma[ñn]ana|el |alguno)|quieres que te (muestre|busque|comparta|pase)|te (busco|muestro) (un |los |unos )?horarios?/i;
+const PROPONE_UN_DIA = /te vienen? bien|que te muestre|qu[ée] d[íi]a|prefieres otro d[íi]a|alg[úu]n d[íi]a|cu[áa]ndo te (sirve|queda|viene|gustar[íi]a)|cu[áa]ndo (quieres|puedes|podr[íi]as) venir|te gustar[íi]a (ma[ñn]ana|el |alguno)|quieres que te (muestre|busque|comparta|pase)|te (busco|muestro) (un |los |unos )?horarios?/i;
 // Anunciar los horarios en vez de ponerlos: "déjame traerte los horarios",
 // "veo los horarios exactos para ti". Con el Ensayo del 4-oct salió dos veces.
 const PROMETE_HORARIOS = /(veo|reviso|miro|busco|traigo|muestro|consulto)\s+(los |tus |unos |el |la )?(horarios?|cupos?|agenda|disponibilidad)|d[ée]jame (traerte|mostrarte|revisar|consultar|mirar|buscarte)|cu[áa]l de los (dos |tres )?(s[áa]bados|d[íi]as)/i;
-const TIENE_UNA_HORA = /\b\d{1,2}:\d{2}\b|\b\d{1,2}\s?[ap]\.?\s?m\.?/i;
 
 function preguntaElDiaSinOfrecerHoras(texto) {
   const t = String(texto || '');
-  if (TIENE_UNA_HORA.test(t)) return false;
+  if (horasOfrecidas(t).length) return false;
   return (t.includes('?') && PROPONE_UN_DIA.test(t)) || PROMETE_HORARIOS.test(t);
 }
 
@@ -2190,6 +2210,9 @@ async function respuestaSinTools(client, systemPrompt, messages, corte, model = 
   }
 }
 
+// Con esto arranca cuando vuelve de la agenda sin repetir lo que ya había dicho.
+const MULETILLA = /^(perfecto|listo|ahora s[íi]|ahora|claro|entendido|muy bien|bien|excelente)[.,!:]?\s+/i;
+
 /**
  * Un turno del bot: el modelo, sus herramientas y las correcciones. Lo usan el
  * chat real y el Ensayo. Antes el Ensayo tenía su propio ciclo, sin las
@@ -2206,6 +2229,11 @@ async function turnoConHerramientas({
   };
   let disponibilidadConsultada = false;
   let correcciones = 0;
+  // Lo que ya le había contestado al paciente (el precio, la dirección) antes
+  // de ir a la agenda. Al volver con los horarios el modelo rápido arranca con
+  // "Perfecto. Mañana tengo…" y bota esa parte: así se quedaron sin cifra
+  // preguntas de precio que sí se habían respondido.
+  let respuestaPrevia = '';
   const corregir = (resp, texto) => {
     correcciones++;
     r.workingMessages.push({ role: 'assistant', content: resp.content });
@@ -2245,6 +2273,8 @@ async function turnoConHerramientas({
       // Preguntó "¿qué día?" o prometió horarios sin haber mirado la agenda.
       if (puede && !disponibilidadConsultada && preguntaElDiaSinOfrecerHoras(r.texto)) {
         console.warn('[wa-bot] preguntó el día sin ofrecer horarios — lo devuelvo a la agenda.', etiqueta);
+        respuestaPrevia = r.texto.split(/\n{2,}/)
+          .filter((p) => !PROPONE_UN_DIA.test(p) && !PROMETE_HORARIOS.test(p)).join('\n\n').trim();
         corregir(resp, CORRECCION_HORARIOS);
         continue;
       }
@@ -2258,6 +2288,7 @@ async function turnoConHerramientas({
       break;
     }
 
+    if (r.texto.length > 80 && !PROMETE_HORARIOS.test(r.texto)) respuestaPrevia = r.texto;
     r.workingMessages.push({ role: 'assistant', content: resp.content });
     const toolResults = [];
     for (const tu of toolUses) {
@@ -2292,6 +2323,10 @@ async function turnoConHerramientas({
   }
   // Gastó las vueltas en herramientas y no escribió: no lo dejamos mudo.
   if (!r.texto) r.texto = await respuestaSinTools(client, systemPrompt, r.workingMessages, corte, model);
+  if (respuestaPrevia && MULETILLA.test(r.texto) && horasOfrecidas(r.texto).length) {
+    const resto = r.texto.replace(MULETILLA, '');
+    r.texto = `${respuestaPrevia}\n\n${resto.charAt(0).toUpperCase()}${resto.slice(1)}`;
+  }
   return r;
 }
 
@@ -2318,6 +2353,15 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
   };
 
   const ultima = [...messages].reverse().find((m) => m.role === 'user');
+  // Igual que en el chat: el primer mensaje que solo pide información o precio
+  // recibe la bienvenida fija, sin pasar por el modelo.
+  const primero = messages.length === 1 && typeof messages[0].content === 'string' ? messages[0].content : '';
+  if (contactType === 'PACIENTE_BOGOTA' && primero && (soloPidePrecio(primero) || soloPideInformacion(primero))) {
+    return {
+      texto: await bienvenida(conv, new Date(), soloPidePrecio(primero) ? primero : ''),
+      escala: false, trazas: [], promptChars: 0, model: 'bienvenida fija',
+    };
+  }
   const { systemPrompt, corte } = await construirPrompt(
     conv,
     typeof ultima?.content === 'string' ? ultima.content : null,
@@ -2620,7 +2664,8 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
  */
 async function responder({ conversationId, incomingText, desdeAudio = false }) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
-  if (!desdeAudio && soloPideInformacion(incomingText)) {
+  const pidePrecio = soloPidePrecio(incomingText);
+  if (!desdeAudio && (pidePrecio || soloPideInformacion(incomingText))) {
     const [conv, yaRespondimos] = await Promise.all([
       prisma.whatsAppConversation.findUnique({
         where: { id: conversationId },
@@ -2629,7 +2674,7 @@ async function responder({ conversationId, incomingText, desdeAudio = false }) {
       prisma.whatsAppMessage.count({ where: { conversationId, direction: 'OUTBOUND' } }),
     ]);
     if (conv?.status === 'BOT' && conv.contactType === 'PACIENTE_BOGOTA' && yaRespondimos === 0) {
-      const texto = await bienvenida(conv);
+      const texto = await bienvenida(conv, new Date(), pidePrecio ? incomingText : '');
       await require('./waCorporate.service').sendTextToConversation({
         conversationId, text: texto, sentByBot: true,
       });
