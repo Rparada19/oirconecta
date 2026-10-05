@@ -722,6 +722,8 @@ function listaHorarios(h) {
  * que la valoración no cuesta y pone tres horas reales delante. Quien llega
  * por un anuncio de audífonos recibe primero el precio, que es a lo que vino.
  */
+const SOLO_ENLACES = /^(\s*https?:\/\/\S+\s*)+$/i;
+
 /**
  * Lo que el anuncio prometió, dicho con sus propias palabras. A quien llegó por
  * "todos los audífonos de promoción incluyen seguro por pérdida, robo y
@@ -2356,6 +2358,8 @@ async function turnoConHerramientas({
   return r;
 }
 
+const HERRAMIENTAS_QUE_ESCRIBEN = ['create_appointment', 'reprogramar_cita', 'cancelar_cita', 'registrar_paciente_otra_ciudad', 'registrar_referido_otra_ciudad'];
+
 /** Última malla: una hora que no está en la agenda no sale. */
 async function soloHorasDeAgenda(reply, horasDeAgenda, agendaProfileId) {
   if (!horasOfrecidas(reply).some((h) => !horasDeAgenda.has(h))) return reply;
@@ -2512,6 +2516,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   let citaMovidaEnEsteTurno = false;
   let fechaDeLaCita = null;
   let horasDeAgenda = new Set();
+  let huboEscritura = false;
   try {
     const client = new Anthropic();
     const toolCtx = {
@@ -2532,6 +2537,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
       citaCreadaEnEsteTurno = t.citaCreada;
       citaMovidaEnEsteTurno = t.citaMovida;
       ({ fechaDeLaCita, horasDeAgenda } = t);
+      huboEscritura = t.trazas.some((x) => HERRAMIENTAS_QUE_ESCRIBEN.includes(x.tool) && !x.output?.error);
     } else {
       // Path simple sin tools (INFO_GENERAL, PROFESIONAL_DIRECTORIO, etc.)
       const resp = await client.messages.create({
@@ -2619,6 +2625,15 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     // El webhook ya respondió 200 hace rato: esperar aquí no le cuesta nada a
     // Meta y hace que del otro lado se sienta una persona, no un autoresponder.
     await new Promise((r) => setTimeout(r, pausaHumana(incomingText, cleanReply)));
+    // Mientras se escribía esto, la persona mandó otro mensaje ("No vivo en
+    // Bogotá", y a los segundos "Gracias"). Si se envía, recibe dos respuestas
+    // seguidas y la segunda vuelve a saludar. No se envía: la tanda que viene
+    // contesta todo junto, con el historial completo. Salvo que este turno ya
+    // haya hecho algo (cita, registro, escalada): eso sí hay que contarlo.
+    if (!huboEscritura && !shouldEscalate && require('./waTurno.service').hayPendientes(conversationId)) {
+      console.log('[wa-bot] llegó otro mensaje mientras respondía: se contesta todo en la siguiente tanda.', conversationId);
+      return { skipped: 'llego-otro-mensaje' };
+    }
     const result = await sendWhatsAppText({ to: conv.phone, text: cleanReply });
     await prisma.whatsAppMessage.create({
       data: {
@@ -2690,6 +2705,16 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
  */
 async function responder({ conversationId, incomingText, desdeAudio = false }) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
+  // Tres mensajes seguidos que son solo enlaces: ya se le dijo dos veces que
+  // por acá no se abren. A Isidro se le contestó nueve veces lo mismo, con
+  // nueve listas de horarios. Se espera a que escriba algo.
+  if (SOLO_ENLACES.test(String(incomingText || ''))) {
+    const ultimos = await prisma.whatsAppMessage.findMany({
+      where: { conversationId, direction: 'INBOUND' },
+      orderBy: { timestamp: 'desc' }, take: 3, select: { body: true },
+    });
+    if (ultimos.length === 3 && ultimos.every((m) => SOLO_ENLACES.test(m.body || ''))) return { skipped: 'solo-enlaces' };
+  }
   const pidePrecio = soloPidePrecio(incomingText);
   if (!desdeAudio && (pidePrecio || soloPideInformacion(incomingText))) {
     const [conv, yaRespondimos] = await Promise.all([

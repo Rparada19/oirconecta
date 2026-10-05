@@ -69,4 +69,9 @@ async function disparar(id) {
   }
 }
 
-module.exports = { encolar, ESPERA_MS };
+/** ¿Llegó otro mensaje de esta conversación mientras se preparaba la respuesta? */
+function hayPendientes(conversationId) {
+  return (turnos.get(String(conversationId))?.textos.length || 0) > 0;
+}
+
+module.exports = { encolar, hayPendientes, ESPERA_MS };
