@@ -178,6 +178,72 @@ async function persistIncomingMessage({
  * @param {string} [p.sentByUserId] - null si lo manda el bot
  * @param {boolean} [p.sentByBot=false]
  */
+/**
+ * Una foto o un PDF que manda una persona del equipo desde la bandeja. Misma
+ * ventana de 24h que el texto. Queda en el historial como un mensaje más, con
+ * el nombre del archivo, para que quien abra el chat (y el bot) sepa qué se envió.
+ */
+async function sendMediaToConversation({ conversationId, buffer, mime, filename, caption = '', sentByUserId = null }) {
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: { id: true, phone: true, windowExpiresAt: true },
+  });
+  if (!conv) throw new Error('Conversación no encontrada');
+  if (conv.windowExpiresAt && conv.windowExpiresAt < new Date()) {
+    const err = new Error('Ventana 24h cerrada — usa plantilla HSM');
+    err.code = 'WINDOW_CLOSED';
+    throw err;
+  }
+
+  const esFoto = String(mime).startsWith('image/');
+  let providerId = null, mediaId = null, deliveryStatus = 'sent', errorMessage = null;
+  try {
+    const { sendWhatsAppMedia } = require('../notifications/channels/whatsapp');
+    const r = await sendWhatsAppMedia({
+      to: conv.phone, buffer, mime, filename, caption,
+      phoneNumberId: process.env.META_CORPORATE_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID,
+    });
+    providerId = r.providerMessageId;
+    mediaId = r.mediaId;
+  } catch (e) {
+    deliveryStatus = 'failed';
+    errorMessage = (e.message || 'Error desconocido').slice(0, 500);
+    console.error('[wa-corp] sendMedia falló:', e.message);
+  }
+
+  const etiqueta = `${esFoto ? '📷 Foto' : '📄 PDF'}: ${filename || 'archivo'}`;
+  const msg = await prisma.whatsAppMessage.create({
+    data: {
+      conversationId: conv.id,
+      wamid: providerId,
+      direction: 'OUTBOUND',
+      type: esFoto ? 'image' : 'document',
+      body: caption ? `${etiqueta}\n${caption}` : etiqueta,
+      mediaUrl: mediaId,
+      mediaMimeType: mime,
+      sentByUserId: sentByUserId || null,
+      deliveryStatus,
+      errorMessage,
+      timestamp: new Date(),
+    },
+  });
+  await prisma.whatsAppConversation.update({
+    where: { id: conv.id },
+    data: {
+      lastMessageAt: msg.timestamp,
+      lastMessagePreview: `Tú: ${etiqueta}`.slice(0, 140),
+      // Igual que con el texto: si escribe el equipo, el bot se calla.
+      ...(sentByUserId ? { status: 'HUMAN' } : {}),
+    },
+  });
+  if (deliveryStatus === 'failed') {
+    const err = new Error(errorMessage);
+    err.code = 'SEND_FAILED';
+    throw err;
+  }
+  return msg;
+}
+
 async function sendTextToConversation({ conversationId, text, sentByUserId = null, sentByBot = false }) {
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
@@ -762,6 +828,7 @@ module.exports = {
   findOrCreateConversation,
   persistIncomingMessage,
   sendTextToConversation,
+  sendMediaToConversation,
   startNewConversation,
   sendTemplateToExistingConversation,
   convertToSalesLead,

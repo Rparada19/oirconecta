@@ -245,4 +245,58 @@ async function sendWhatsAppInteractiveButtons({
   return { providerMessageId: data?.messages?.[0]?.id || null, raw: data };
 }
 
-module.exports = { sendWhatsAppTemplate, sendWhatsAppText, sendWhatsAppInteractiveButtons };
+/**
+ * Envía una foto o un documento. Solo válido DENTRO de la ventana de 24h.
+ * Primero se sube el archivo a Meta (devuelve un id) y luego se manda el
+ * mensaje con ese id: así no hace falta tener el archivo en una URL pública.
+ *
+ * @param {object} p
+ * @param {string} p.to
+ * @param {Buffer} p.buffer
+ * @param {string} p.mime       image/jpeg | image/png | application/pdf
+ * @param {string} [p.filename] nombre que ve el paciente (documentos)
+ * @param {string} [p.caption]  texto que acompaña al archivo
+ * @param {string} [p.phoneNumberId]
+ */
+async function sendWhatsAppMedia({ to, buffer, mime, filename, caption, phoneNumberId }) {
+  const phoneId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
+  const tipo = String(mime).startsWith('image/') ? 'image' : 'document';
+
+  if (!phoneId || !token) {
+    console.warn('[whatsapp] credenciales no configuradas, simulando archivo a', to, ':', filename);
+    return { providerMessageId: null, mediaId: null, tipo, raw: { simulated: true } };
+  }
+
+  const fallo = (res, data) => {
+    const err = new Error(`whatsapp ${res.status}: ${data?.error?.message || JSON.stringify(data)}`);
+    err.code = data?.error?.code ? `META_${data.error.code}` : `HTTP_${res.status}`;
+    err.raw = data;
+    return err;
+  };
+
+  const form = new FormData();
+  form.append('messaging_product', 'whatsapp');
+  form.append('type', mime);
+  form.append('file', new Blob([buffer], { type: mime }), filename || 'archivo');
+  const subida = await fetch(`https://graph.facebook.com/${version}/${phoneId}/media`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
+  });
+  const subidaData = await subida.json().catch(() => ({}));
+  if (!subida.ok || !subidaData.id) throw fallo(subida, subidaData);
+
+  const media = { id: subidaData.id };
+  if (caption) media.caption = String(caption).slice(0, 1024);
+  if (tipo === 'document') media.filename = filename || 'documento.pdf';
+  const res = await fetch(`https://graph.facebook.com/${version}/${phoneId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messaging_product: 'whatsapp', to: normalizePhone(to), type: tipo, [tipo]: media }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw fallo(res, data);
+  return { providerMessageId: data?.messages?.[0]?.id || null, mediaId: subidaData.id, tipo, raw: data };
+}
+
+module.exports = { sendWhatsAppTemplate, sendWhatsAppText, sendWhatsAppInteractiveButtons, sendWhatsAppMedia };

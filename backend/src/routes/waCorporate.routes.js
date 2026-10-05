@@ -364,6 +364,51 @@ router.post('/conversations/:id/messages', async (req, res, next) => {
   }
 });
 
+// ─── Enviar una foto o un PDF ──────────────────────────────
+// Meta acepta fotos JPG/PNG de hasta 5 MB; al PDF le ponemos un tope de 16 MB
+// porque el archivo pasa por la memoria de este servidor.
+const TIPOS_DE_ARCHIVO = { 'image/jpeg': 5, 'image/png': 5, 'application/pdf': 16 };
+const subirArchivo = require('multer')({
+  storage: require('multer').memoryStorage(),
+  limits: { fileSize: 16 * 1024 * 1024, files: 1 },
+}).single('file');
+
+router.post('/conversations/:id/media', (req, res, next) => {
+  subirArchivo(req, res, async (errSubida) => {
+    try {
+      if (errSubida) {
+        const pesado = errSubida.code === 'LIMIT_FILE_SIZE';
+        return res.status(pesado ? 413 : 400).json({ success: false, error: pesado ? 'El archivo pesa más de 16 MB.' : errSubida.message });
+      }
+      const f = req.file;
+      if (!f) return res.status(400).json({ success: false, error: 'Falta el archivo' });
+      const tope = TIPOS_DE_ARCHIVO[f.mimetype];
+      if (!tope) return res.status(400).json({ success: false, error: 'Solo se pueden enviar fotos (JPG o PNG) y PDF.' });
+      if (f.size > tope * 1024 * 1024) {
+        return res.status(413).json({ success: false, error: `Ese archivo pesa más de ${tope} MB, que es lo máximo que recibe WhatsApp.` });
+      }
+      const msg = await corp.sendMediaToConversation({
+        conversationId: req.params.id,
+        buffer: f.buffer,
+        mime: f.mimetype,
+        // multer entrega el nombre en latin1: sin esto "cotización.pdf" llega dañado.
+        filename: Buffer.from(f.originalname || 'archivo', 'latin1').toString('utf8'),
+        caption: String(req.body?.caption || '').trim(),
+        sentByUserId: req.user?.id || null,
+      });
+      res.status(201).json({ success: true, data: msg });
+    } catch (e) {
+      if (e.code === 'WINDOW_CLOSED') {
+        return res.status(409).json({ success: false, error: 'Pasaron más de 24 horas desde su último mensaje: WhatsApp solo deja enviar una plantilla.', code: 'WINDOW_CLOSED' });
+      }
+      if (e.code === 'SEND_FAILED') {
+        return res.status(502).json({ success: false, error: `WhatsApp no recibió el archivo: ${e.message}`, code: 'SEND_FAILED' });
+      }
+      next(e);
+    }
+  });
+});
+
 // ─── Marcar como leído ─────────────────────────────────────
 router.post('/conversations/:id/read', async (req, res, next) => {
   try {

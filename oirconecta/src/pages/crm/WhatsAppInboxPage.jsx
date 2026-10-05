@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -105,6 +106,26 @@ function conFormatoWhatsApp(texto) {
  *   - businessLine: 'CRM' | 'DIRECTORIO' (default 'CRM')
  *   - title, subtitle: encabezado personalizable
  */
+/**
+ * Las fotos del celular pesan más de los 5 MB que recibe WhatsApp. Se reducen
+ * a 2000 px de lado antes de subirlas; un examen o un audífono se ven igual.
+ */
+async function reducirFoto(file) {
+  if (!file.type.startsWith('image/') || file.size < 1.5 * 1024 * 1024) return file;
+  try {
+    const img = await createImageBitmap(file);
+    const escala = Math.min(1, 2000 / Math.max(img.width, img.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * escala);
+    canvas.height = Math.round(img.height * escala);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', 0.85));
+    return blob ? new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file;
+  } catch {
+    return file;
+  }
+}
+
 export default function WhatsAppInboxPage({
   businessLine = 'CRM',
   title = 'WhatsApp',
@@ -127,6 +148,8 @@ export default function WhatsAppInboxPage({
   const [sendText, setSendText] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(null);
+  const [adjunto, setAdjunto] = useState(null);
+  const archivoRef = useRef(null);
 
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
@@ -413,9 +436,28 @@ export default function WhatsAppInboxPage({
 
   const volverALaLista = () => { abiertaRef.current = null; setSelected(null); setMessages([]); };
 
+  // El archivo elegido es para ESTE chat: al cambiar de conversación se suelta,
+  // para que una audiometría no termine en el chat de otra persona.
+  useEffect(() => { setAdjunto(null); }, [selected?.id]);
+
   const handleSend = async () => {
-    if (!sendText.trim() || !selected?.id) return;
+    if ((!sendText.trim() && !adjunto) || !selected?.id) return;
     setSending(true); setSendError(null);
+    // Con archivo: el texto escrito viaja como pie de la foto o del PDF.
+    if (adjunto) {
+      const form = new FormData();
+      form.append('file', await reducirFoto(adjunto));
+      form.append('caption', sendText.trim());
+      const res = await api.upload(`/api/wa/conversations/${selected.id}/media`, form);
+      if (res?.data?.success) {
+        setSendText(''); setAdjunto(null);
+        await loadDetail(selected.id);
+      } else {
+        setSendError(res?.error || 'No se pudo enviar el archivo');
+      }
+      setSending(false);
+      return;
+    }
     try {
       const res = await api.post(`/api/wa/conversations/${selected.id}/messages`, { text: sendText.trim() });
       if (res?.data?.success) {
@@ -908,9 +950,25 @@ export default function WhatsAppInboxPage({
               ) : (
                 <>
                   {sendError && <Alert severity="error" sx={{ mb: 1, borderRadius: '10px', fontSize: '0.8rem' }}>{sendError}</Alert>}
+                  {adjunto && (
+                    <Chip
+                      icon={<AttachFileIcon />} onDelete={() => setAdjunto(null)}
+                      label={`${adjunto.name} · ${(adjunto.size / 1024 / 1024).toFixed(1)} MB`}
+                      sx={{ mb: 1, maxWidth: '100%' }}
+                    />
+                  )}
                   <Stack direction="row" spacing={1} alignItems="flex-end">
+                    <input
+                      ref={archivoRef} type="file" hidden accept="image/jpeg,image/png,application/pdf"
+                      onChange={(e) => { setAdjunto(e.target.files?.[0] || null); setSendError(null); e.target.value = ''; }}
+                    />
+                    <Tooltip title="Adjuntar foto o PDF">
+                      <IconButton onClick={() => archivoRef.current?.click()} disabled={sending} sx={{ width: 44, height: 44 }}>
+                        <AttachFileIcon />
+                      </IconButton>
+                    </Tooltip>
                     <TextField
-                      fullWidth multiline maxRows={4} placeholder="Escribe un mensaje..."
+                      fullWidth multiline maxRows={4} placeholder={adjunto ? 'Agrega un texto (opcional)...' : 'Escribe un mensaje...'}
                       value={sendText}
                       onChange={(e) => setSendText(e.target.value)}
                       onKeyDown={(e) => {
@@ -920,7 +978,7 @@ export default function WhatsAppInboxPage({
                     />
                     <IconButton
                       onClick={handleSend}
-                      disabled={sending || !sendText.trim()}
+                      disabled={sending || (!sendText.trim() && !adjunto)}
                       sx={{
                         bgcolor: WA_GREEN, color: '#fff', width: 44, height: 44,
                         '&:hover': { bgcolor: '#1fb85a' },

@@ -1182,7 +1182,9 @@ const ESCALATE_TAG = '[ESCALAR_HUMANO]';
 /** Carga historial reciente de la conversación en formato Anthropic. */
 async function loadHistory(conversationId) {
   const rows = await prisma.whatsAppMessage.findMany({
-    where: { conversationId, type: { in: ['text', 'interactive', 'audio'] } },
+    // Fotos y PDF van por su texto ("📄 PDF: cotización.pdf"): el bot debe
+    // saber que el equipo ya envió algo, aunque no vea el archivo.
+    where: { conversationId, type: { in: ['text', 'interactive', 'audio', 'image', 'document'] } },
     orderBy: { timestamp: 'desc' },
     take: MAX_HISTORY_MESSAGES,
     select: { direction: true, body: true, sentByBot: true, sentByUserId: true, type: true },
