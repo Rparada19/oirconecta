@@ -70,8 +70,9 @@ export async function request(path, options = {}) {
   const { skipAuth = false, ...fetchOptions } = options;
   const base = resolveBase();
   const url = path.startsWith('http') ? path : `${base.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+  // Con un archivo (FormData) el navegador pone el Content-Type con su boundary.
   const headers = {
-    'Content-Type': 'application/json',
+    ...(fetchOptions.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
     ...(fetchOptions.headers || {}),
   };
   const token = getToken();
@@ -118,6 +119,7 @@ export const api = {
   put: (path, body, opts) => request(path, { ...opts, method: 'PUT', body: body != null ? JSON.stringify(body) : undefined }),
   patch: (path, body, opts) => request(path, { ...opts, method: 'PATCH', body: body != null ? JSON.stringify(body) : undefined }),
   delete: (path, opts) => request(path, { ...opts, method: 'DELETE' }),
+  upload: (path, formData, opts) => request(path, { ...opts, method: 'POST', body: formData }),
 };
 
 export default api;
