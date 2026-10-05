@@ -15,9 +15,10 @@ import {
   CircularProgress, Alert, Tooltip, Divider, InputAdornment, Badge,
   MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle,
   DialogContent, DialogActions, RadioGroup, FormControlLabel, Radio, Checkbox, Tabs, Tab,
-  List, ListItem, ListItemButton, ListItemText,
+  List, ListItem, ListItemButton, ListItemText, useMediaQuery,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -112,6 +113,9 @@ export default function WhatsAppInboxPage({
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState([]);
   const [selected, setSelected] = useState(null);
+  // En el celular se ve una cosa a la vez: la lista o el chat.
+  const isMobile = useMediaQuery('(max-width:900px)');
+  const abiertaRef = useRef(null);
   const [messages, setMessages] = useState([]);
   const [windowOpen, setWindowOpen] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -372,9 +376,12 @@ export default function WhatsAppInboxPage({
 
   const loadDetail = useCallback(async (id) => {
     if (!id) return;
+    abiertaRef.current = id;
     setDetailLoading(true);
     try {
       const res = await api.get(`/api/wa/conversations/${id}?limit=300`);
+      // Volvió a la lista mientras cargaba: no se le reabre el chat.
+      if (abiertaRef.current !== id) return;
       if (res?.data?.success) {
         setSelected(res.data.data.conversation);
         setMessages(res.data.data.messages || []);
@@ -404,6 +411,8 @@ export default function WhatsAppInboxPage({
     return () => clearInterval(pollRef.current);
   }, [load, loadDetail, selected?.id]);
 
+  const volverALaLista = () => { abiertaRef.current = null; setSelected(null); setMessages([]); };
+
   const handleSend = async () => {
     if (!sendText.trim() || !selected?.id) return;
     setSending(true); setSendError(null);
@@ -430,7 +439,7 @@ export default function WhatsAppInboxPage({
     if (!selected?.id) return;
     if (!window.confirm('¿Marcar esta conversación como cerrada?')) return;
     await api.post(`/api/wa/conversations/${selected.id}/status`, { status: 'CLOSED' });
-    setSelected(null); setMessages([]);
+    volverALaLista();
     load();
   };
 
@@ -562,11 +571,11 @@ export default function WhatsAppInboxPage({
   const shortName = (c) => c.contactName || `+${c.phone}`;
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', bgcolor: '#fafbfc' }}>
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', '@supports (height: 100dvh)': { height: 'calc(100dvh - 64px)' }, bgcolor: '#fafbfc' }}>
       {/* ─── Lista lateral ─── */}
       <Box sx={{
-        width: 340, flexShrink: 0, borderRight: `1px solid ${BORDER}`,
-        bgcolor: CREAM, display: 'flex', flexDirection: 'column',
+        width: isMobile ? '100%' : 340, flexShrink: 0, borderRight: `1px solid ${BORDER}`,
+        bgcolor: CREAM, display: isMobile && selected ? 'none' : 'flex', flexDirection: 'column',
       }}>
         <Box sx={{ p: 2, borderBottom: `1px solid ${BORDER}` }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -721,22 +730,27 @@ export default function WhatsAppInboxPage({
       </Box>
 
       {/* ─── Chat centro ─── */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <Box sx={{ flex: 1, display: isMobile && !selected ? 'none' : 'flex', flexDirection: 'column', minWidth: 0 }}>
         {selected ? (
           <>
             {/* Header */}
             <Box sx={{
-              px: 3, py: 2, borderBottom: `1px solid ${BORDER}`, bgcolor: '#fff',
-              display: 'flex', alignItems: 'center', gap: 2,
+              px: { xs: 1, md: 3 }, py: { xs: 1, md: 2 }, borderBottom: `1px solid ${BORDER}`, bgcolor: '#fff',
+              display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 2 },
             }}>
-              <Avatar sx={{ bgcolor: WA_GREEN, width: 40, height: 40 }}>
+              {isMobile && (
+                <IconButton onClick={volverALaLista} aria-label="Volver a la lista">
+                  <ArrowBackIcon />
+                </IconButton>
+              )}
+              <Avatar sx={{ bgcolor: WA_GREEN, width: 40, height: 40, display: { xs: 'none', md: 'flex' } }}>
                 {(selected.contactName || selected.phone || '?').charAt(0).toUpperCase()}
               </Avatar>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, color: NAVY, fontSize: '1rem' }}>
+                <Typography noWrap sx={{ fontWeight: 700, color: NAVY, fontSize: '1rem' }}>
                   {shortName(selected)}
                 </Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: MUTED }}>
+                <Typography noWrap sx={{ fontSize: '0.75rem', color: MUTED }}>
                   +{selected.phone}
                   {selected.contactType ? ` · ${CONTACT_TYPE_LABELS[selected.contactType] || selected.contactType}` : ` · ${INTENT_LABELS[selected.intent]}`}
                   {selected.assignedTo ? ` · asignado a ${selected.assignedTo.nombre}` : ' · sin asignar'}
@@ -795,7 +809,7 @@ export default function WhatsAppInboxPage({
                 necesita ver la promesa que esta persona ya leyó. */}
             {selected.adSourceId && (
               <Box sx={{
-                px: 3, py: 1, bgcolor: '#fffbeb', borderBottom: `1px solid #fde68a`,
+                px: { xs: 1.5, md: 3 }, py: 1, bgcolor: '#fffbeb', borderBottom: `1px solid #fde68a`,
                 display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap',
               }}>
                 <Typography sx={{ fontSize: '0.72rem', color: '#92400e', fontWeight: 800 }}>
@@ -817,7 +831,7 @@ export default function WhatsAppInboxPage({
 
             {/* Mensajes */}
             <Box sx={{
-              flex: 1, overflowY: 'auto', px: 3, py: 2,
+              flex: 1, overflowY: 'auto', px: { xs: 1.5, md: 3 }, py: 2,
               bgcolor: '#f7f5f0',
               backgroundImage: 'linear-gradient(#f7f5f0, #f7f5f0)',
             }}>
@@ -833,7 +847,7 @@ export default function WhatsAppInboxPage({
                     mb: 0.75,
                   }}>
                     <Box sx={{
-                      maxWidth: '65%', px: 1.75, py: 1,
+                      maxWidth: { xs: '86%', md: '65%' }, px: 1.75, py: 1,
                       borderRadius: outbound ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
                       bgcolor: outbound ? '#dcf8c6' : '#fff',
                       boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
@@ -900,7 +914,7 @@ export default function WhatsAppInboxPage({
                       value={sendText}
                       onChange={(e) => setSendText(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+                        if (e.key === 'Enter' && !e.shiftKey && !isMobile) { e.preventDefault(); handleSend(); }
                       }}
                       InputProps={{ sx: { borderRadius: '12px', fontSize: '0.9rem' } }}
                     />
