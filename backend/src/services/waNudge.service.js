@@ -275,7 +275,7 @@ async function armarRetoma(conv, ultimoTextoBot, dichoPorElPaciente = '') {
   if (TIPOS_PACIENTE.includes(conv.contactType) && !VIVE_EN_OTRA_CIUDAD.test(dichoPorElPaciente)) {
     const h = await bot.proximosHorarios().catch(() => null);
     if (h) {
-      return `Hola${nombre}, quedé pendiente de ti 🙂\n\nLa valoración auditiva no tiene costo. ${bot.listaHorarios(h)}\n\n¿Cuál te sirve? Si prefieres otro día, dime cuál.`;
+      return `Hola${nombre} 🙂 ¿Te agendo la valoración? No tiene costo.\n\n${bot.listaHorarios(h)}\n\n¿Cuál te sirve?`;
     }
   }
 

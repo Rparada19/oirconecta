@@ -714,7 +714,7 @@ async function proximosHorarios(profileId = null) {
 
 function listaHorarios(h) {
   const n = ['1️⃣', '2️⃣', '3️⃣'];
-  return `Tengo estos horarios el ${h.dia}:\n${h.horas.map((x, i) => `${n[i]} ${hora12(x)}`).join('\n')}`;
+  return `El ${h.dia} tengo:\n${h.horas.map((x, i) => `${n[i]} ${hora12(x)}`).join('\n')}`;
 }
 
 /**
@@ -752,16 +752,16 @@ async function bienvenida(conv, fecha = new Date(), preguntaPrecio = '') {
   const recargables = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(fecha) <= '2026-10-31';
   const nombre = nombreParaSaludo(conv?.contactName);
 
-  const saludo = `${saludoPorHora(fecha)}${nombre ? `, ${nombre}` : ''}. Soy Aura, de OírConecta, centro auditivo en *Bogotá* (Cra. 10 #96-25, consultorio 320).`;
+  const saludo = `${saludoPorHora(fecha)}${nombre ? `, ${nombre}` : ''}. Soy Aura, de OírConecta, en *Bogotá*.`;
   const cuerpo = deAudifonos
-    ? `${promesa ? `${promesa} ` : ''}Tenemos audífonos desde *$800.000 cada uno*${recargables ? ', y este mes recargables desde *$1.800.000 cada uno*' : ''}. Cuál te sirve se define en la valoración auditiva, que *no tiene costo*: una hora con audióloga y 4 exámenes.`
+    ? `${promesa ? `${promesa} ` : ''}Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}. La valoración para saber cuál te sirve *no tiene costo*.`
     : preguntaPrecio
       // Preguntó el precio sin decir de qué: van los dos.
-      ? `La valoración auditiva *no tiene costo*; solo se pagan $150.000 si quieres llevarte los exámenes impresos. Los audífonos van desde *$800.000 cada uno*${recargables ? ', y este mes hay recargables desde *$1.800.000 cada uno*' : ''}: cuál te sirve se define en la valoración.`
-      : 'La valoración auditiva *no tiene costo*: es una hora con audióloga e incluye 4 exámenes para establecer tu grado de pérdida auditiva y qué te conviene.';
+      ? `La valoración auditiva *no tiene costo*. Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}.`
+      : 'La valoración auditiva *no tiene costo*: una hora con audióloga y 4 exámenes.';
   const h = await proximosHorarios().catch(() => null);
   const cierre = h
-    ? `${listaHorarios(h)}\n\n¿Cuál te sirve? Si prefieres otro día o tienes una pregunta antes, cuéntame.`
+    ? `${listaHorarios(h)}\n\n¿Cuál te sirve?`
     : '¿Qué día te queda bien para venir?';
   return `${saludo}\n\n${cuerpo}\n\n${cierre}`;
 }
@@ -1057,8 +1057,8 @@ Lo logras diciendo la verdad: respondes lo que preguntan, quitas las dudas y pon
 
 ═══ CUANDO PREGUNTAN EL PRECIO ═══
 La cifra va en la primera línea. Siempre.
-· De la valoración o la consulta: "La valoración no tiene costo. Solo se pagan $150.000 si quieres llevarte los exámenes impresos."
-· De los audífonos: "Tenemos audífonos desde $800.000 cada uno"; después, por qué sube el valor y que es por oído; y cierras con que el primer paso para saber cuál le sirve es la valoración, que no cuesta.
+· De la valoración o la consulta: "La valoración no tiene costo." Lo de los $150.000 por los exámenes impresos, solo si preguntan por los exámenes o por qué se paga.
+· De los audífonos: "Audífonos desde $800.000 cada uno" y que la valoración para saber cuál le sirve no cuesta. Que es por oído y por qué sube el valor, solo si lo preguntan.
 · "Precio" a secas: si viene de un anuncio de audífonos o ya habló de audífonos, es el de los audífonos. Si no está claro, da los dos en dos líneas.
 · "¿Y el más caro?" o un valor exacto: no tienes ese dato y no lo inventes; depende de la tecnología y se lo muestran en la valoración.
 · Si vuelve a preguntar, repite la cifra sin rodeos.
@@ -1111,8 +1111,8 @@ Si un dato no está en estas instrucciones, en el conocimiento del centro o en l
 · No adivines el grado de pérdida ni interpretes exámenes o síntomas por chat.
 
 ═══ CÓMO ESCRIBES ═══
-· En tu primer mensaje saludas por el nombre y te presentas una sola vez: "Hola, soy Aura, de servicio al cliente de OírConecta". Si en la conversación ya hay una bienvenida tuya, no te vuelvas a presentar ni repitas lo que ya dijo.
-· Máximo 4 líneas por mensaje, sin contar la lista de horarios. Frases cortas, de persona que habla, no de folleto.
+· En tu primer mensaje saludas por el nombre y te presentas una sola vez: "Hola, soy Aura, de OírConecta". Si en la conversación ya hay una bienvenida tuya, no te vuelvas a presentar ni repitas lo que ya dijo.
+· MENSAJES CORTOS, de chat: máximo 2 frases (unas 30 palabras) antes de la lista de horarios, y después de la lista solo "¿Cuál te sirve?". Responde lo que preguntó y solo eso. No expliques qué incluye la valoración, no repitas precios ni la dirección que ya diste y no agregues datos que no pidió. Un mensaje largo no se lee.
 · Que se note una persona: usa las palabras de quien te escribe, cambia la forma de abrir y de cerrar de un mensaje a otro, y no repitas una frase que ya dijiste en la conversación. Nada de "¡Perfecto!" ni "¡Excelente!" al empezar cada mensaje.
 · Español correcto, sin errores de ortografía. Tuteo cercano.
 · Negrita con UN asterisco: *así*. Nunca dos. Sin Markdown. Máximo 2 emojis por mensaje.
@@ -1879,7 +1879,7 @@ function relativoCorrecto(texto, hoy = new Date()) {
  * El prompt lo pide; esto lo garantiza cuando el modelo lo olvida.
  */
 const YA_DEJA_OTRO_DIA = /otro d[ií]a|otra fecha|otro horario|otra hora|qu[ée] d[ií]a te (queda|sirve|funciona|viene)|ninguno te (sirve|funciona|queda)/i;
-const OTRO_DIA = 'Si ninguno te funciona, dime qué día te queda bien y te busco espacio.';
+const OTRO_DIA = 'Si prefieres otro día, dime cuál.';
 
 function conPuertaAOtroDia(texto, yaDicha = false) {
   const t = String(texto || '');
@@ -2313,6 +2313,15 @@ async function turnoConHerramientas({
         corregir(resp, CORRECCION_HORAS_INVENTADAS);
         continue;
       }
+      // Largo: lo que no es lista de horarios no pasa de unas 45 palabras. La
+      // confirmación de una cita y un caso que se escala no se recortan.
+      const palabras = palabrasSinHorarios(r.texto);
+      if (puede && palabras > 45 && !r.citaCreada && !r.citaMovida && !r.texto.includes(ESCALATE_TAG)) {
+        console.warn('[wa-bot] mensaje largo:', palabras, 'palabras — se devuelve para acortar.', etiqueta);
+        respuestaPrevia = '';
+        corregir(resp, `ALTO — esto no lo ve el paciente.\n\nTu mensaje tiene ${palabras} palabras y por WhatsApp nadie lee tanto. Escríbelo de nuevo en máximo 30 palabras: solo la respuesta a lo que preguntó, en una o dos frases. Si traía lista de horarios, déjala igual y termina con "¿Cuál te sirve?". Nada de presentaciones ni explicaciones que no pidió.`);
+        continue;
+      }
       break;
     }
 
@@ -2358,6 +2367,12 @@ async function turnoConHerramientas({
   return r;
 }
 
+/** Palabras del mensaje sin contar las líneas de la lista de horarios. */
+function palabrasSinHorarios(texto) {
+  return String(texto || '').split('\n').filter((l) => !/^\s*(?:[1-9]\uFE0F?\u20E3|[1-9][.)])/.test(l))
+    .join(' ').split(/\s+/).filter(Boolean).length;
+}
+
 const HERRAMIENTAS_QUE_ESCRIBEN = ['create_appointment', 'reprogramar_cita', 'cancelar_cita', 'registrar_paciente_otra_ciudad', 'registrar_referido_otra_ciudad'];
 
 /** Última malla: una hora que no está en la agenda no sale. */
@@ -2365,7 +2380,7 @@ async function soloHorasDeAgenda(reply, horasDeAgenda, agendaProfileId) {
   if (!horasOfrecidas(reply).some((h) => !horasDeAgenda.has(h))) return reply;
   const reales = await proximosHorarios(agendaProfileId).catch(() => null);
   return reales
-    ? `${listaHorarios(reales)}\n\n¿Cuál te sirve? Si prefieres otro día, dime cuál y lo reviso.`
+    ? `${listaHorarios(reales)}\n\n¿Cuál te sirve? Si prefieres otro día, dime cuál.`
     : `En este momento no veo cupos en la agenda para los próximos días. Le paso tu caso al equipo para que te confirme un horario. ${ESCALATE_TAG}`;
 }
 
