@@ -1067,6 +1067,18 @@ Cuéntame en qué te puedo ayudar.`;
 async function handleButtonReply({ conversationId, buttonId, buttonTitle }) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
   if (String(buttonId).startsWith('emb_')) return pasoDelEmbudo({ conversationId, buttonId });
+  // Botones de las plantillas de maduración (día 3 y día 7). Llegan con el
+  // texto del botón, y la conversación pudo quedar cerrada desde hace días.
+  const tocado = String(buttonTitle || buttonId || '').trim().toLowerCase();
+  if (tocado === 'ver horarios' || tocado === 'ahora no') {
+    await reopenIfClosed(conversationId);
+    if (tocado === 'ver horarios') return pasoDelEmbudo({ conversationId, buttonId: EMB.AGENDAR });
+    const conv = await prisma.whatsAppConversation.findUnique({
+      where: { id: conversationId }, select: { id: true, phone: true, status: true },
+    });
+    if (!conv || conv.status !== 'BOT') return { skipped: 'not-bot-status' };
+    return enviarTextoFijo(conv, 'Listo, no te escribo más. Si algún día quieres revisar tu audición, aquí estoy. 🙂');
+  }
 
   const contactTypeByBtn = {
     [BUTTON_IDS.PACIENTE_BOGOTA]: 'PACIENTE_BOGOTA',

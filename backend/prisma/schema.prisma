@@ -3070,6 +3070,9 @@ model WhatsAppConversation {
   /// puede mandar sin plantilla aprobada.
   silencio1At DateTime?
   silencio2At DateTime?
+  /// Maduración fuera de la ventana de 24h: plantilla del día 3 y del día 7.
+  maduracion1At DateTime?
+  maduracion2At DateTime?
 
   /// Cuándo se le mandó el mensaje de recuperación con la oferta. Una sola vez
   /// por conversación: insistir con lo mismo dos veces es spam.
