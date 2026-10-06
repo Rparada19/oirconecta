@@ -147,6 +147,8 @@ async function datosDelDia(dia) {
     chats.push({
       id: conv.id,
       conv,
+      desde,
+      hasta,
       mensajes,
       final: await desenlace(conv, mensajes),
       seFueTras: dondeSeFue(mensajes),
@@ -189,11 +191,19 @@ async function datosDelDia(dia) {
 const recorte = (t, n) => (String(t || '').length > n ? `${String(t).slice(0, n)}…` : String(t || ''));
 
 function transcripcion(chat, etiqueta) {
-  const lineas = chat.mensajes.slice(-40).map((m) => {
+  const linea = (m) => {
     const hora = m.createdAt.toLocaleTimeString('es-CO', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
     return `[${hora}] ${quien(m)}: ${recorte(m.body, 600).replace(/\n+/g, ' ⏎ ')}`;
-  });
-  return `### ${etiqueta} — desenlace: ${chat.final}\n${lineas.join('\n')}`;
+  };
+  // Solo los mensajes del día revisado. Antes iba la conversación entera y el
+  // revisor seguía reportando, día tras día, lo que el bot dijo la semana
+  // pasada ("cupos de la semana") como si fuera de hoy.
+  const delDia = chat.mensajes.filter((m) => m.createdAt >= chat.desde && m.createdAt < chat.hasta).slice(-40);
+  const antes = chat.mensajes.filter((m) => m.createdAt < chat.desde).slice(-3);
+  const contexto = antes.length
+    ? `(días anteriores, solo contexto: NO los juzgues ni los cites)\n${antes.map(linea).join('\n')}\n(día revisado)\n`
+    : '';
+  return `### ${etiqueta} — desenlace: ${chat.final}\n${contexto}${delDia.map(linea).join('\n')}`;
 }
 
 const ESQUEMA = {
@@ -243,6 +253,7 @@ Reglas:
 - "chats" son las etiquetas (C1, C2…) de las conversaciones de hoy que la respaldan.
 - "evidencia" dice lo que viste, con cifras y citando frases cortas reales: "En 4 de 6 chats que preguntaron el precio, Aura contestó con la explicación larga y el paciente no volvió a escribir".
 - No repitas lo que ya está en las instrucciones vigentes, en las FAQs, en las lecciones activas ni en las propuestas pendientes. Si un patrón ya propuesto volvió a pasar, no lo propongas otra vez.
+- Juzga solo los mensajes del día revisado. Lo que aparezca como "días anteriores" es contexto: puede ser de una versión vieja de Aura y no cuenta.
 - Menos es más: 0 a 5 propuestas. Un día sin nada que proponer es una respuesta válida.
 - "resumen": tres frases para el dueño del centro, sin tecnicismos: cómo fue el día, la razón principal por la que se fue la gente y qué hicieron distinto los chats que sí agendaron. Si una lección activa no se está cumpliendo, o está espantando gente, dilo aquí citándola.
 - Escribe en español de Colombia.`;
