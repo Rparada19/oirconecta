@@ -107,6 +107,17 @@ function conFormatoWhatsApp(texto) {
  *   - title, subtitle: encabezado personalizable
  */
 /**
+ * Los mensajes con botones se guardan con una última línea "(botones: A | B)".
+ * El paciente ve botones de verdad; aquí se dibujan como tales para que no
+ * parezca que esa línea le llegó escrita.
+ */
+function separarBotones(body) {
+  const m = /\n*\(botones: ([^)\n]*)\)\s*$/.exec(String(body || ''));
+  if (!m) return { texto: body, botones: [] };
+  return { texto: String(body).slice(0, m.index), botones: m[1].split('|').map((b) => b.trim()).filter(Boolean) };
+}
+
+/**
  * Las fotos del celular pesan más de los 5 MB que recibe WhatsApp. Se reducen
  * a 2000 px de lado antes de subirlas; un examen o un audífono se ven igual.
  */
@@ -905,8 +916,16 @@ export default function WhatsAppInboxPage({
                             🎤 NOTA DE VOZ · TRANSCRITA
                           </Typography>
                         )}
-                        {m.body ? conFormatoWhatsApp(m.body) : `[${m.type}]`}
+                        {m.body ? conFormatoWhatsApp(separarBotones(m.body).texto) : `[${m.type}]`}
                       </Typography>
+                      {separarBotones(m.body).botones.length > 0 && (
+                        <Stack direction="row" spacing={0.75} sx={{ mt: 1, flexWrap: 'wrap', rowGap: 0.75 }}>
+                          {separarBotones(m.body).botones.map((b) => (
+                            <Chip key={b} size="small" label={b}
+                              sx={{ bgcolor: '#fff', border: '1px solid #cbd5e1', color: '#0369a1', fontWeight: 600 }} />
+                          ))}
+                        </Stack>
+                      )}
                       <Stack direction="row" spacing={0.75} justifyContent="flex-end" alignItems="center" sx={{ mt: 0.25 }}>
                         {outbound && m.sentByUser && (
                           <Typography sx={{ fontSize: '0.62rem', color: MUTED }}>
