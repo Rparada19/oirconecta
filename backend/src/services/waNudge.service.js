@@ -879,7 +879,59 @@ async function recuperarConversaciones({ dryRun = false, conPlantilla = false } 
 const DIA = 24 * 3600 * 1000;
 const TOPE_DIARIO = Number(process.env.WA_MADURACION_TOPE) || 40;
 const FRASES_DE_MADURACION = ['no quería dejar tu consulta a medias', 'Este es mi último mensaje'];
+const DEL_FLUJO = { type: 'template', direction: 'OUTBOUND', OR: FRASES_DE_MADURACION.map((f) => ({ body: { contains: f } })) };
+// Meta acepta la plantilla y segundos después avisa si no la entregó. Cuando
+// el motivo es de la cuenta (131042: sin medio de pago), no le llegó a nadie.
+const FALLA_DE_LA_CUENTA = /payment|eligib|billing|131042/i;
 let maduracionEnPausaHasta = 0;
+
+/**
+ * Las plantillas que Meta no entregó por un problema de la cuenta no cuentan
+ * como enviadas: se quita la marca y la conversación vuelve a la fecha que
+ * tenía, para que reciba el mensaje cuando la cuenta esté al día.
+ */
+async function repararNoEntregadas(ahora) {
+  const fallidas = (await prisma.whatsAppMessage.findMany({
+    where: { ...DEL_FLUJO, deliveryStatus: 'failed', timestamp: { gt: new Date(ahora.getTime() - 14 * DIA) } },
+    select: { conversationId: true, body: true, timestamp: true, errorMessage: true },
+    orderBy: { timestamp: 'desc' },
+    take: 300,
+  })).filter((f) => FALLA_DE_LA_CUENTA.test(f.errorMessage || ''));
+  if (!fallidas.length) return { ultima: null, reparadas: 0 };
+  const convs = await prisma.whatsAppConversation.findMany({
+    where: { id: { in: [...new Set(fallidas.map((f) => f.conversationId))] } },
+    select: { id: true, maduracion1At: true, maduracion2At: true, lastMessageAt: true },
+  });
+  let reparadas = 0;
+  for (const f of fallidas) {
+    const conv = convs.find((c) => c.id === f.conversationId);
+    const campo = f.body.includes(FRASES_DE_MADURACION[0]) ? 'maduracion1At' : 'maduracion2At';
+    const marca = conv?.[campo]?.getTime();
+    // La marca se puso justo antes de enviar este mensaje.
+    if (!marca || marca > f.timestamp.getTime() || marca < f.timestamp.getTime() - 5 * 60 * 1000) continue;
+    if (campo === 'maduracion1At' && conv.maduracion2At) continue;
+    const data = { [campo]: null };
+    if (conv.lastMessageAt?.getTime() === f.timestamp.getTime()) {
+      const previo = await prisma.whatsAppMessage.findFirst({
+        where: {
+          conversationId: f.conversationId, timestamp: { lt: f.timestamp },
+          OR: [{ deliveryStatus: null }, { deliveryStatus: { not: 'failed' } }],
+        },
+        orderBy: { timestamp: 'desc' },
+        select: { timestamp: true, body: true, direction: true },
+      });
+      if (previo) {
+        data.lastMessageAt = previo.timestamp;
+        data.lastMessagePreview = `${previo.direction === 'OUTBOUND' ? 'Bot: ' : ''}${(previo.body || '').slice(0, 140)}`;
+      }
+    }
+    await prisma.whatsAppConversation.update({ where: { id: f.conversationId }, data });
+    conv[campo] = null;
+    reparadas++;
+  }
+  if (reparadas) console.warn('[wa-maduracion] Meta no entregó', reparadas, 'plantillas (', fallidas[0].errorMessage, '): se devuelven.');
+  return { ultima: fallidas[0], reparadas };
+}
 
 async function processMaduracion() {
   if (process.env.WA_BOT_ENABLED !== 'true') return { skipped: 'bot-disabled' };
@@ -903,14 +955,25 @@ async function processMaduracion() {
     take: 10,
   });
 
+  // Si Meta no está entregando, se espera seis horas y se prueba con una sola.
+  const noEntregadas = await repararNoEntregadas(ahora);
+  if (noEntregadas.ultima && ahora.getTime() - noEntregadas.ultima.timestamp.getTime() < 6 * 3600 * 1000) {
+    return { skipped: 'meta-no-entrega', motivo: noEntregadas.ultima.errorMessage, reparadas: noEntregadas.reparadas };
+  }
+  const ultimaDelFlujo = await prisma.whatsAppMessage.findFirst({
+    where: DEL_FLUJO, orderBy: { timestamp: 'desc' }, select: { timestamp: true, deliveryStatus: true },
+  });
+  // El aviso de entrega tarda unos segundos: no se manda otra tanda sin tenerlo.
+  if (ultimaDelFlujo && ahora.getTime() - ultimaDelFlujo.timestamp.getTime() < 2 * 60 * 1000) return { skipped: 'esperando-entrega' };
+  const porTanda = ultimaDelFlujo?.deliveryStatus === 'failed' ? 1 : 3;
+
   const bot = require('./waCorporateBot.service');
   const corp = require('./waCorporate.service');
   // Medianoche de Bogotá (UTC-5, sin horario de verano).
   const hoy = new Date(Math.floor((ahora.getTime() - 5 * 3600 * 1000) / DIA) * DIA + 5 * 3600 * 1000);
   const enviadasHoy = await prisma.whatsAppMessage.count({
     where: {
-      type: 'template', direction: 'OUTBOUND', timestamp: { gte: hoy }, deliveryStatus: { not: 'failed' },
-      OR: FRASES_DE_MADURACION.map((f) => ({ body: { contains: f } })),
+      ...DEL_FLUJO, timestamp: { gte: hoy }, deliveryStatus: { not: 'failed' },
     },
   });
   if (enviadasHoy >= TOPE_DIARIO) return { skipped: 'tope-diario', enviadasHoy };
@@ -959,7 +1022,7 @@ async function processMaduracion() {
         break;
       }
       if (conv.maduracion1At) dia7++; else dia3++;
-      if (dia3 + dia7 >= 3 || enviadasHoy + dia3 + dia7 >= TOPE_DIARIO) break; // de a pocos por minuto
+      if (dia3 + dia7 >= porTanda || enviadasHoy + dia3 + dia7 >= TOPE_DIARIO) break; // de a pocos
     } catch (e) {
       console.error('[wa-maduracion] conversación', conv.id, 'falló:', e.message);
     }
