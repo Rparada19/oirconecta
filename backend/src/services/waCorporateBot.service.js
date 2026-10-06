@@ -748,6 +748,106 @@ function promesaDelAnuncio(anuncio) {
   return '';
 }
 
+// ─── Embudo con botones ──────────────────────────────────────────────────────
+// Un paso por mensaje y la persona toca en vez de escribir:
+//   1. saludo + el dato por el que vino + "¿Estás en Bogotá o cerca?"
+//   2. tres horas de la agenda como botones
+//   3. tocó una hora → se le pide el nombre → el modelo crea la cita
+// Antes iba todo en el primer mensaje (precios y horarios) y cerca de la mitad
+// no contestaba; y uno de cada cuatro escribía desde otra ciudad después de
+// haber recibido horarios. Si en cualquier paso escribe en vez de tocar,
+// contesta el modelo como siempre.
+const EMB = { BOGOTA: 'emb_bogota', OTRA: 'emb_otra', SLOT: 'emb_slot' };
+const BOTONES_CIUDAD = [
+  { id: EMB.BOGOTA, title: 'Sí, en Bogotá' },
+  { id: EMB.OTRA, title: 'Otra ciudad' },
+];
+// Así queda en el historial lo que se ofreció en los botones: lo lee el equipo
+// en la bandeja y lo lee el modelo. El modelo nunca escribe esta línea.
+const etiquetaBotones = (botones) => `\n\n(botones: ${botones.map((b) => b.title).join(' | ')})`;
+
+async function guardarEnviado(conv, texto, wamid, type = 'text') {
+  await prisma.whatsAppMessage.create({
+    data: {
+      conversationId: conv.id, wamid: wamid || null, direction: 'OUTBOUND', type,
+      body: texto, sentByBot: true, deliveryStatus: 'sent', timestamp: new Date(),
+    },
+  });
+  await prisma.whatsAppConversation.update({
+    where: { id: conv.id },
+    data: { lastMessageAt: new Date(), lastMessagePreview: `Bot: ${texto.slice(0, 140)}` },
+  });
+}
+
+async function enviarTextoFijo(conv, texto) {
+  const r = await sendWhatsAppText({ to: conv.phone, text: texto });
+  await guardarEnviado(conv, texto, r?.providerMessageId);
+  return { sent: true };
+}
+
+/** Con botones; si Meta los rechaza, el mismo mensaje sale como texto. */
+async function enviarConBotones(conv, texto, botones, sinBotones = texto) {
+  try {
+    const r = await sendWhatsAppInteractiveButtons({ to: conv.phone, bodyText: texto, buttons: botones });
+    await guardarEnviado(conv, `${texto}${etiquetaBotones(botones)}`, r?.providerMessageId, 'interactive');
+    return { sent: true, botones: true };
+  } catch (e) {
+    console.error('[wa-bot] los botones no salieron, va como texto:', e.message);
+    return enviarTextoFijo(conv, sinBotones);
+  }
+}
+
+/** Tres horas reales de la agenda, cada una en un botón. */
+async function horariosConBotones(conv, intro) {
+  const h = await proximosHorarios().catch(() => null);
+  if (!h) return enviarTextoFijo(conv, `${intro}\n\n¿Qué día te queda bien para venir?`);
+  return enviarConBotones(
+    conv,
+    `${intro}\n\nEl ${h.dia} tengo estos horarios. Si prefieres otro día, escríbemelo.`,
+    h.horas.map((x) => ({ id: `${EMB.SLOT}|${h.date}|${x}`, title: hora12(x) })),
+    `${intro}\n\n${listaHorarios(h)}\n\n¿Cuál te sirve?`,
+  );
+}
+
+/** La retoma de las 3 horas: un toque para elegir hora. La usa waNudge. */
+async function retomaConBotones(conv) {
+  const nombre = nombreParaSaludo(conv.contactName);
+  return horariosConBotones(conv, `Hola${nombre ? `, ${nombre}` : ''} 🙂 ¿Te agendo la valoración? No tiene costo.`);
+}
+
+async function pasoDelEmbudo({ conversationId, buttonId }) {
+  const conv = await prisma.whatsAppConversation.findUnique({
+    where: { id: conversationId },
+    select: { id: true, phone: true, status: true, contactName: true },
+  });
+  if (!conv) return { skipped: 'conv-not-found' };
+  // Si ya lo tomó una persona del equipo, el toque lo ve ella en la bandeja.
+  if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
+
+  const [paso, date, time] = String(buttonId).split('|');
+  if (paso === EMB.OTRA) {
+    return enviarTextoFijo(conv, 'Nuestro consultorio está solo en Bogotá. ¿En qué ciudad estás? El equipo te busca un profesional de confianza allá.');
+  }
+  if (paso === EMB.BOGOTA) {
+    return horariosConBotones(conv, '¡Perfecto! ¿Te agendo la valoración? No tiene costo.');
+  }
+  if (paso === EMB.SLOT) {
+    // El botón pudo quedar de ayer o la hora se ocupó mientras tanto.
+    const pid = await retailProfileId();
+    const tipos = pid ? await booking.publicListTypes(pid) : [];
+    const tipo = tipos.find((t) => /valoraci/i.test(t.nombre)) || tipos[0];
+    const { slots } = tipo ? await booking.computeSlotsForDay(pid, date, { appointmentTypeId: tipo.id }) : { slots: [] };
+    const ahoraBogota = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'short' }).format(new Date());
+    const yaPaso = `${date} ${time}` <= ahoraBogota;
+    if (yaPaso || !(slots || []).some((x) => x.time === time)) {
+      return horariosConBotones(conv, 'Ese horario ya no está disponible.');
+    }
+    const dia = fechaLegible(`${date}T12:00:00`).replace(',', '').replace(/ de \d{4}$/, '');
+    return enviarTextoFijo(conv, `Listo: *${dia}, ${hora12(time)}*\n\n¿A nombre de quién dejo la cita? Escríbeme el nombre completo.`);
+  }
+  return { skipped: 'unknown-button' };
+}
+
 /**
  * El anuncio trae sus propios precios ("Precios desde $1.000.000 · 2x1 en
  * batería · recargables desde 2.000.000"): esos son los que la persona acaba
@@ -780,11 +880,7 @@ async function bienvenida(conv, fecha = new Date(), preguntaPrecio = '') {
       // Preguntó el precio sin decir de qué: van los dos.
       ? `La valoración auditiva *no tiene costo*. Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}.`
       : 'La valoración auditiva *no tiene costo*: una hora con audióloga y 4 exámenes.';
-  const h = await proximosHorarios().catch(() => null);
-  const cierre = h
-    ? `${listaHorarios(h)}\n\n¿Cuál te sirve?`
-    : '¿Qué día te queda bien para venir?';
-  return `${saludo}\n\n${cuerpo}\n\n${cierre}`;
+  return `${saludo}\n\n${cuerpo}\n\n¿Estás en Bogotá o cerca?`;
 }
 
 /**
@@ -901,6 +997,7 @@ Cuéntame en qué te puedo ayudar.`;
  */
 async function handleButtonReply({ conversationId, buttonId, buttonTitle }) {
   if (!botEnabled()) return { skipped: 'bot-disabled' };
+  if (String(buttonId).startsWith('emb_')) return pasoDelEmbudo({ conversationId, buttonId });
 
   const contactTypeByBtn = {
     [BUTTON_IDS.PACIENTE_BOGOTA]: 'PACIENTE_BOGOTA',
@@ -941,6 +1038,11 @@ async function handleButtonReply({ conversationId, buttonId, buttonTitle }) {
   if (['PACIENTE_BOGOTA', 'INFO_GENERAL'].includes(conv.contactType || contactType)) {
     require('./waCorporate.service').asegurarLead(conversationId)
       .catch((e) => console.warn('[wa-lead] botón:', e.message));
+  }
+
+  // "Agendar cita": horas para tocar, no un enlace para irse a otra página.
+  if (contactType === 'PACIENTE_BOGOTA') {
+    return horariosConBotones(conv, 'Perfecto. La valoración auditiva no tiene costo y es en *Bogotá* (Cra. 10 #96-25).');
   }
 
   // Mensaje puente según rama
@@ -1137,6 +1239,7 @@ Si un dato no está en estas instrucciones, en el conocimiento del centro o en l
 · Que se note una persona: usa las palabras de quien te escribe, cambia la forma de abrir y de cerrar de un mensaje a otro, y no repitas una frase que ya dijiste en la conversación. Nada de "¡Perfecto!" ni "¡Excelente!" al empezar cada mensaje.
 · Español correcto, sin errores de ortografía. Tuteo cercano.
 · Negrita con UN asterisco: *así*. Nunca dos. Sin Markdown. Máximo 2 emojis por mensaje.
+· Los mensajes que terminan en "(botones: …)" los envió el sistema con botones para tocar; tú nunca escribes esa línea. Si la persona respondió tocando un botón ("Sí, en Bogotá", una hora), sigue desde ahí sin repetir la pregunta. Si ya eligió una hora y te da el nombre, crea la cita con esa fecha y esa hora.
 · Eres Aura. No digas que eres una inteligencia artificial; si te preguntan directamente si eres un bot, no lo niegues: di que eres la asistente virtual de OírConecta y sigue ayudando.
 
 ═══ SI QUIEN ESCRIBE ES UN PROFESIONAL O UN PROVEEDOR ═══
@@ -1530,30 +1633,8 @@ async function iniciarFlujoAnuncio(conversationId, incomingText) {
     return { encolado: true };
   }
 
-  const texto = await bienvenida(conv);
-
   try {
-    const result = await sendWhatsAppText({ to: conv.phone, text: texto });
-    await prisma.whatsAppMessage.create({
-      data: {
-        conversationId,
-        wamid: result?.providerMessageId || null,
-        direction: 'OUTBOUND',
-        type: 'text',
-        body: texto,
-        sentByBot: true,
-        deliveryStatus: 'sent',
-        timestamp: new Date(),
-      },
-    });
-    await prisma.whatsAppConversation.update({
-      where: { id: conversationId },
-      data: {
-        lastMessageAt: new Date(),
-        lastMessagePreview: `Bot: ${texto.slice(0, 140)}`,
-      },
-    });
-    return { sent: true };
+    return await enviarConBotones(conv, await bienvenida(conv), BOTONES_CIUDAD);
   } catch (e) {
     console.error('[wa-bot] arranque de flujo de anuncio falló:', e.message);
     return { error: e.message };
@@ -1932,6 +2013,7 @@ function formatoWhatsApp(texto) {
     // (<response>…</response>) y al paciente le llegaba el cierre escrito en
     // el chat, debajo de la confirmación de su cita. Se quitan aquí.
     .replace(/<\/?(response|answer|respuesta|mensaje|message|output)>/gi, '')
+    .replace(/\n*\(botones:[^)\n]*\)/gi, '')
     .replace(/\*\*\*(.+?)\*\*\*/gs, '*$1*')   // ***negrita cursiva***
     .replace(/\*\*(.+?)\*\*/gs, '*$1*')         // **negrita**
     .replace(/^#{1,6}\s+/gm, '')                 // ## títulos
@@ -2461,7 +2543,7 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
   const primero = messages.length === 1 && typeof messages[0].content === 'string' ? messages[0].content : '';
   if (contactType === 'PACIENTE_BOGOTA' && primero && (soloPidePrecio(primero) || soloPideInformacion(primero))) {
     return {
-      texto: await bienvenida(conv, new Date(), soloPidePrecio(primero) ? primero : ''),
+      texto: `${await bienvenida(conv, new Date(), soloPidePrecio(primero) ? primero : '')}${etiquetaBotones(BOTONES_CIUDAD)}`,
       escala: false, trazas: [], promptChars: 0, model: 'bienvenida fija',
     };
   }
@@ -2801,19 +2883,12 @@ async function responder({ conversationId, incomingText, desdeAudio = false }) {
     const [conv, yaRespondimos] = await Promise.all([
       prisma.whatsAppConversation.findUnique({
         where: { id: conversationId },
-        select: { status: true, contactType: true, contactName: true, adHeadline: true, adBody: true },
+        select: { id: true, phone: true, status: true, contactType: true, contactName: true, adHeadline: true, adBody: true },
       }),
       prisma.whatsAppMessage.count({ where: { conversationId, direction: 'OUTBOUND' } }),
     ]);
     if (conv?.status === 'BOT' && conv.contactType === 'PACIENTE_BOGOTA' && yaRespondimos === 0) {
-      const texto = await bienvenida(conv, new Date(), pidePrecio ? incomingText : '');
-      await require('./waCorporate.service').sendTextToConversation({
-        conversationId, text: texto, sentByBot: true,
-      });
-      await prisma.whatsAppConversation.update({
-        where: { id: conversationId },
-        data: { lastMessagePreview: `Bot: ${texto.slice(0, 140)}` },
-      });
+      await enviarConBotones(conv, await bienvenida(conv, new Date(), pidePrecio ? incomingText : ''), BOTONES_CIUDAD);
       return { sent: true, bienvenida: true };
     }
     // Escribió "quiero información" y al minuto "precio": la bienvenida que
@@ -2873,4 +2948,5 @@ module.exports = {
   listaHorarios,
   reopenIfClosed,
   instruccionesVigentes: () => SYSTEM_PROMPTS.PACIENTE_BOGOTA,
+  retomaConBotones,
 };

@@ -477,7 +477,19 @@ async function processSilencios() {
           where: { conversationId: conv.id, direction: 'INBOUND' },
           select: { body: true },
         });
-        const texto = await armarRetoma(conv, previo?.body, suyos.map((m) => m.body || '').join(' '));
+        // Al paciente de Bogotá, las horas van en botones: un toque y elige.
+        const dicho = suyos.map((m) => m.body || '').join(' ');
+        if (TIPOS_PACIENTE.includes(conv.contactType) && !VIVE_EN_OTRA_CIUDAD.test(dicho)) {
+          const claim = await prisma.whatsAppConversation.updateMany({
+            where: { id: conv.id, silencio1At: null }, data: { silencio1At: new Date() },
+          });
+          if (claim.count === 0) continue;
+          const ok = await require('./waCorporateBot.service').retomaConBotones(conv)
+            .then((r) => !!r?.sent).catch((e) => { console.error('[wa-silencio] retoma con botones falló:', e.message); return false; });
+          if (ok) { retomas++; continue; }
+          await prisma.whatsAppConversation.updateMany({ where: { id: conv.id }, data: { silencio1At: null } });
+        }
+        const texto = await armarRetoma(conv, previo?.body, dicho);
         if (await enviarYGuardar(conv, texto, 'silencio1At')) retomas++;
       } else if (horas >= SILENCIO_2_HORAS - SILENCIO_1_HORAS) {
         // La segunda se mide desde la primera retoma, no desde el silencio
