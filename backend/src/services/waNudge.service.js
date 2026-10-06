@@ -494,6 +494,20 @@ async function processSilencios() {
       } else if (horas >= SILENCIO_2_HORAS - SILENCIO_1_HORAS) {
         // La segunda se mide desde la primera retoma, no desde el silencio
         // original: si no, las dos caerían casi juntas.
+        // Al paciente de Bogotá, en vez de una despedida: algo útil y un botón.
+        const suyos2 = await prisma.whatsAppMessage.findMany({
+          where: { conversationId: conv.id, direction: 'INBOUND' }, select: { body: true },
+        });
+        if (TIPOS_PACIENTE.includes(conv.contactType) && !VIVE_EN_OTRA_CIUDAD.test(suyos2.map((m) => m.body || '').join(' '))) {
+          const claim = await prisma.whatsAppConversation.updateMany({
+            where: { id: conv.id, silencio2At: null }, data: { silencio2At: new Date() },
+          });
+          if (claim.count === 0) continue;
+          const ok = await require('./waCorporateBot.service').ultimoToque(conv)
+            .then((r) => !!r?.sent).catch((e) => { console.error('[wa-silencio] último toque falló:', e.message); return false; });
+          if (ok) { despedidas++; continue; }
+          await prisma.whatsAppConversation.updateMany({ where: { id: conv.id }, data: { silencio2At: null } });
+        }
         if (await enviarYGuardar(conv, DESPEDIDA, 'silencio2At')) despedidas++;
       }
     } catch (e) {
@@ -618,7 +632,7 @@ async function responderPendientes() {
  * escribiéramos, a los que el bot ya les dijo "te escribo por última vez", los
  * chats que el equipo cerró, y los que ya recibieron este mismo mensaje.
  */
-const VIVE_EN_OTRA_CIUDAD = /villavicencio|c[úu]cuta|manizales|pereira|medell[íi]n|neiva|duitama|chaparral|popay[áa]n|cartagena|barranquilla|\bcali\b|ibagu[ée]|bucaramanga|santa marta|monter[íi]a|pasto|tunja|armenia|villavo|yopal|valledupar|sincelejo|facatativ[áa]|chaparral|arauca|casanare|huila|tolima|boyac[áa]|fusagasug[áa]|fuera de bogot[áa]|no estoy en bogot[áa]|vivo (muy )?lejos|no puedo viajar/i;
+const VIVE_EN_OTRA_CIUDAD = /villavicencio|c[úu]cuta|manizales|pereira|medell[íi]n|neiva|duitama|chaparral|popay[áa]n|cartagena|barranquilla|\bcali\b|ibagu[ée]|bucaramanga|santa marta|monter[íi]a|pasto|tunja|armenia|villavo|yopal|valledupar|sincelejo|facatativ[áa]|chaparral|arauca|casanare|huila|tolima|boyac[áa]|fusagasug[áa]|fuera de bogot[áa]|no estoy en bogot[áa]|vivo (muy )?lejos|no puedo viajar|^otra ciudad$|\botra ciudad\b/i;
 const PIDIO_QUE_NO = /no,? gracias|no me interesa|ya resolv[ií]|no vuelvan|no escriban|d[ée]jenme|no quiero/i;
 const TIPOS_PACIENTE = ['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS'];
 
