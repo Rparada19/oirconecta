@@ -872,14 +872,18 @@ async function recuperarConversaciones({ dryRun = false, conPlantilla = false } 
 //   · día 7: el simulador y la valoración, y se avisa que es el último
 // No se le escribe a quien ya tiene cita, a quien vive en otra ciudad, a quien
 // dijo que no, ni a un chat que tomó el equipo. Solo de lunes a sábado, de
-// 9 a.m. a 6 p.m. Se enciende con WA_MADURACION=true cuando Meta apruebe las
-// dos plantillas.
+// 9 a.m. a 6 p.m. Va encendida; WA_MADURACION=false la apaga. Mientras Meta no
+// apruebe las plantillas el envío falla sin dejar rastro en el chat y se
+// reintenta a las seis horas. Tope de 40 al día: al encender hay dos semanas
+// de conversaciones acumuladas y no se le escribe a todas de un golpe.
 const DIA = 24 * 3600 * 1000;
+const TOPE_DIARIO = Number(process.env.WA_MADURACION_TOPE) || 40;
+const FRASES_DE_MADURACION = ['no quería dejar tu consulta a medias', 'Este es mi último mensaje'];
 let maduracionEnPausaHasta = 0;
 
 async function processMaduracion() {
   if (process.env.WA_BOT_ENABLED !== 'true') return { skipped: 'bot-disabled' };
-  if (process.env.WA_MADURACION !== 'true') return { skipped: 'apagada' };
+  if (process.env.WA_MADURACION === 'false') return { skipped: 'apagada' };
   const ahora = new Date();
   if (ahora.getTime() < maduracionEnPausaHasta) return { skipped: 'en-pausa' };
   const partes = new Intl.DateTimeFormat('en-US', {
@@ -901,6 +905,15 @@ async function processMaduracion() {
 
   const bot = require('./waCorporateBot.service');
   const corp = require('./waCorporate.service');
+  // Medianoche de Bogotá (UTC-5, sin horario de verano).
+  const hoy = new Date(Math.floor((ahora.getTime() - 5 * 3600 * 1000) / DIA) * DIA + 5 * 3600 * 1000);
+  const enviadasHoy = await prisma.whatsAppMessage.count({
+    where: {
+      type: 'template', direction: 'OUTBOUND', timestamp: { gte: hoy }, deliveryStatus: { not: 'failed' },
+      OR: FRASES_DE_MADURACION.map((f) => ({ body: { contains: f } })),
+    },
+  });
+  if (enviadasHoy >= TOPE_DIARIO) return { skipped: 'tope-diario', enviadasHoy };
   let dia3 = 0, dia7 = 0, descartadas = 0;
   for (const conv of candidatas) {
     try {
@@ -934,18 +947,19 @@ async function processMaduracion() {
           conversationId: conv.id,
           templateKey: conv.maduracion1At ? 'maduracion_dia_7' : 'maduracion_dia_3',
           variables: { nombre: bot.nombreParaSaludo(conv.contactName) || 'de nuevo' },
+          sinRastroSiFalla: true,
         });
       } catch (e) {
         // Lo más probable: Meta todavía no aprueba la plantilla, o el nombre no
         // coincide. Se devuelve la marca y se espera seis horas antes de
-        // insistir, para no llenar la bandeja de envíos fallidos.
+        // insistir.
         await prisma.whatsAppConversation.updateMany({ where: { id: conv.id }, data: { [campo]: null } });
         maduracionEnPausaHasta = Date.now() + 6 * 3600 * 1000;
         console.error('[wa-maduracion] la plantilla falló; pausa de 6 horas:', e.message);
         break;
       }
       if (conv.maduracion1At) dia7++; else dia3++;
-      if (dia3 + dia7 >= 3) break; // de a pocos por minuto
+      if (dia3 + dia7 >= 3 || enviadasHoy + dia3 + dia7 >= TOPE_DIARIO) break; // de a pocos por minuto
     } catch (e) {
       console.error('[wa-maduracion] conversación', conv.id, 'falló:', e.message);
     }
