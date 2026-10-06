@@ -748,20 +748,40 @@ function promesaDelAnuncio(anuncio) {
   return '';
 }
 
-// ─── Embudo con botones ──────────────────────────────────────────────────────
-// Un paso por mensaje y la persona toca en vez de escribir:
-//   1. saludo + el dato por el que vino + "¿Estás en Bogotá o cerca?"
-//   2. tres horas de la agenda como botones
-//   3. tocó una hora → se le pide el nombre → el modelo crea la cita
-// Antes iba todo en el primer mensaje (precios y horarios) y cerca de la mitad
-// no contestaba; y uno de cada cuatro escribía desde otra ciudad después de
-// haber recibido horarios. Si en cualquier paso escribe en vez de tocar,
-// contesta el modelo como siempre.
-const EMB = { BOGOTA: 'emb_bogota', OTRA: 'emb_otra', SLOT: 'emb_slot' };
-const BOTONES_CIUDAD = [
-  { id: EMB.BOGOTA, title: 'Sí, en Bogotá' },
+// ─── Embudo de maduración, con botones ───────────────────────────────────────
+// La persona llega fría de un anuncio. No se le suelta el precio ni la agenda:
+// se la lleva un paso por mensaje, y toca en vez de escribir.
+//   1. Enganche: saludo y "¿es para ti o para un familiar?"
+//   2. Ciudad: "¿Estás en Bogotá o cerca?" (uno de cada cuatro no lo está)
+//   3. Valor: qué es la valoración y qué se lleva → Agendar / Ver precios / Tengo exámenes
+//   4. Horas de la agenda como botones → nombre → el modelo crea la cita
+// Si no contesta: a las 3 horas, las horas en botones; antes de que cierre la
+// ventana de 24 horas, un último mensaje con algo útil y un botón.
+// Quien abre preguntando el precio recibe el precio de entrada (dejar esa
+// pregunta sin cifra era la fuga más grande) y pasa de la ciudad a las horas.
+// Si en cualquier paso escribe en vez de tocar, contesta el modelo como siempre.
+const EMB = {
+  PARA_MI: 'emb_para_mi', PARA_FAMILIAR: 'emb_para_familiar',
+  BOGOTA: 'emb_bogota', BOGOTA_DIRECTO: 'emb_bogota_h', OTRA: 'emb_otra',
+  PRECIOS: 'emb_precios', AGENDAR: 'emb_agendar', EXAMENES: 'emb_examenes', SLOT: 'emb_slot',
+};
+// Quien ya preguntó el precio recibió el precio en el saludo: de la ciudad pasa
+// directo a los horarios. Los demás pasan por "¿en qué te ayudo?".
+const botonesDeCiudad = (yaTieneElPrecio) => [
+  { id: yaTieneElPrecio ? EMB.BOGOTA_DIRECTO : EMB.BOGOTA, title: 'Sí, en Bogotá' },
   { id: EMB.OTRA, title: 'Otra ciudad' },
 ];
+const BOTONES_PARA_QUIEN = [
+  { id: EMB.PARA_MI, title: 'Para mí' },
+  { id: EMB.PARA_FAMILIAR, title: 'Para un familiar' },
+];
+const BOTONES_MENU = [
+  { id: EMB.AGENDAR, title: 'Agendar valoración' },
+  { id: EMB.PRECIOS, title: 'Ver precios' },
+  { id: EMB.EXAMENES, title: 'Tengo exámenes' },
+];
+const botonesDeBienvenida = (pidioPrecio) => (pidioPrecio ? botonesDeCiudad(true) : BOTONES_PARA_QUIEN);
+const SIMULADOR = 'https://oirconecta.com/ponte-en-sus-oidos';
 // Así queda en el historial lo que se ofreció en los botones: lo lee el equipo
 // en la bandeja y lo lee el modelo. El modelo nunca escribe esta línea.
 const etiquetaBotones = (botones) => `\n\n(botones: ${botones.map((b) => b.title).join(' | ')})`;
@@ -812,13 +832,30 @@ async function horariosConBotones(conv, intro) {
 /** La retoma de las 3 horas: un toque para elegir hora. La usa waNudge. */
 async function retomaConBotones(conv) {
   const nombre = nombreParaSaludo(conv.contactName);
-  return horariosConBotones(conv, `Hola${nombre ? `, ${nombre}` : ''} 🙂 ¿Te agendo la valoración? No tiene costo.`);
+  return horariosConBotones(conv, `Hola${nombre ? `, ${nombre}` : ''} 🙂 Tengo espacio para tu valoración auditiva: una hora con audióloga y sales sabiendo cómo está tu audición. *No tiene costo*.`);
+}
+
+/**
+ * El último mensaje antes de que se cierre la ventana de 24 horas. En vez de
+ * una despedida, algo que sirva y un botón: a quien pregunta por un familiar,
+ * el simulador para oír como oye él.
+ */
+async function ultimoToque(conv) {
+  const suyos = await prisma.whatsAppMessage.findMany({
+    where: { conversationId: conv.id, direction: 'INBOUND' }, select: { body: true },
+  });
+  const dicho = suyos.map((m) => m.body || '').join(' ');
+  const paraFamiliar = /para un familiar|mi (mam[áa]|pap[áa]|espos[oa]|abuel[oa]|hij[oa]|herman[oa]|suegr[oa])/i.test(dicho);
+  const texto = paraFamiliar
+    ? `No quiero insistir, así que te dejo algo que sirve 🙂\n\nSi quieres entender cómo oye tu familiar, este simulador toma un minuto: ${SIMULADOR}\n\nY cuando quieran venir, la valoración *no tiene costo*: toca el botón y te muestro horarios.`
+    : 'No quiero insistir, así que te dejo esto por si te sirve 🙂\n\nLa valoración es una hora con audióloga, *no tiene costo* y sales sabiendo cómo está tu audición y qué opciones tienes. Cuando quieras, toca el botón y te muestro horarios.';
+  return enviarConBotones(conv, texto, [{ id: EMB.AGENDAR, title: 'Ver horarios' }]);
 }
 
 async function pasoDelEmbudo({ conversationId, buttonId }) {
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, phone: true, status: true, contactName: true },
+    select: { id: true, phone: true, status: true, contactName: true, adHeadline: true, adBody: true },
   });
   if (!conv) return { skipped: 'conv-not-found' };
   // Si ya lo tomó una persona del equipo, el toque lo ve ella en la bandeja.
@@ -828,8 +865,30 @@ async function pasoDelEmbudo({ conversationId, buttonId }) {
   if (paso === EMB.OTRA) {
     return enviarTextoFijo(conv, 'Nuestro consultorio está solo en Bogotá. ¿En qué ciudad estás? El equipo te busca un profesional de confianza allá.');
   }
+  if (paso === EMB.PARA_MI) {
+    return enviarConBotones(conv, 'Perfecto 🙌 Dar este paso ya es avanzar.\n\nAtendemos en *Bogotá*. ¿Estás en Bogotá o cerca?', botonesDeCiudad(false));
+  }
+  if (paso === EMB.PARA_FAMILIAR) {
+    return enviarConBotones(conv, 'Qué bien que lo acompañas: ese apoyo hace la diferencia 💙\n\nAtendemos en *Bogotá*. ¿Están en Bogotá o cerca?', botonesDeCiudad(false));
+  }
   if (paso === EMB.BOGOTA) {
+    return enviarConBotones(
+      conv,
+      'Así funciona: empiezas con una *valoración auditiva* con audióloga, una hora y 4 exámenes. Sales sabiendo cómo está tu audición y qué opciones tienes. *No tiene costo* y no te compromete a nada.\n\n¿Qué prefieres?',
+      BOTONES_MENU,
+    );
+  }
+  if (paso === EMB.BOGOTA_DIRECTO) {
     return horariosConBotones(conv, '¡Perfecto! ¿Te agendo la valoración? No tiene costo.');
+  }
+  if (paso === EMB.PRECIOS) {
+    return horariosConBotones(conv, `${preciosPara(conv)}\n\n¿Te la agendo?`);
+  }
+  if (paso === EMB.AGENDAR) {
+    return horariosConBotones(conv, '¡Listo! 🙌');
+  }
+  if (paso === EMB.EXAMENES) {
+    return horariosConBotones(conv, 'Tráelos a la valoración: la audióloga los revisa y te dice qué te conviene. *No tiene costo*.\n\n¿Te la agendo?');
   }
   if (paso === EMB.SLOT) {
     // El botón pudo quedar de ayer o la hora se ocupó mientras tanto.
@@ -864,23 +923,33 @@ function ofertaDelAnuncio(adBody) {
     .join('. ')}.`;
 }
 
-async function bienvenida(conv, fecha = new Date(), preguntaPrecio = '') {
+/** Los precios para esta persona: los del anuncio por el que llegó, si los trae. */
+function preciosPara(conv, fecha = new Date(), preguntaPrecio = '') {
   const anuncio = `${conv?.adHeadline || ''} ${conv?.adBody || ''}`;
-  const deAudifonos = /aud[ií]fono|recargable|2x1/i.test(`${anuncio} ${preguntaPrecio}`);
-  const promesa = promesaDelAnuncio(anuncio);
+  const oferta = ofertaDelAnuncio(conv?.adBody);
+  if (oferta) return `${oferta} La valoración para saber cuál te sirve *no tiene costo*.`;
   const recargables = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(fecha) <= '2026-10-31';
-  const nombre = nombreParaSaludo(conv?.contactName);
+  const audifonos = `Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}.`;
+  if (/aud[ií]fono|recargable|2x1/i.test(`${anuncio} ${preguntaPrecio}`)) {
+    const promesa = promesaDelAnuncio(anuncio);
+    return `${promesa ? `${promesa} ` : ''}${audifonos} La valoración para saber cuál te sirve *no tiene costo*.`;
+  }
+  return `La valoración auditiva *no tiene costo*. ${audifonos}`;
+}
 
-  const saludo = `${saludoPorHora(fecha)}${nombre ? `, ${nombre}` : ''}. Soy Aura, de OírConecta, en *Bogotá*.`;
-  const cuerpo = deAudifonos
-    ? (ofertaDelAnuncio(conv?.adBody)
-      ? `${ofertaDelAnuncio(conv?.adBody)} La valoración para saber cuál te sirve *no tiene costo*.`
-      : `${promesa ? `${promesa} ` : ''}Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}. La valoración para saber cuál te sirve *no tiene costo*.`)
-    : preguntaPrecio
-      // Preguntó el precio sin decir de qué: van los dos.
-      ? `La valoración auditiva *no tiene costo*. Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}.`
-      : 'La valoración auditiva *no tiene costo*: una hora con audióloga y 4 exámenes.';
-  return `${saludo}\n\n${cuerpo}\n\n¿Estás en Bogotá o cerca?`;
+/**
+ * Paso 1 del embudo: saludar y preguntar la ciudad. Sin precios: el precio va
+ * cuando la persona lo pide (botón "Precios" o escribiéndolo). Solo si su
+ * primer mensaje YA fue "precio" se le contesta de entrada, porque dejar esa
+ * pregunta sin cifra era la fuga más grande (38 de 90).
+ */
+async function bienvenida(conv, fecha = new Date(), preguntaPrecio = '') {
+  const nombre = nombreParaSaludo(conv?.contactName);
+  const saludo = `¡Hola${nombre ? `, ${nombre}` : ''}! 👋 Soy Aura, de OírConecta.`;
+  if (preguntaPrecio) {
+    return `${saludo}\n\n${preciosPara(conv, fecha, preguntaPrecio)}\n\nAtendemos en *Bogotá*. ¿Estás en Bogotá o cerca?`;
+  }
+  return `${saludo}\n\nQué bueno que escribes: volver a oír bien cambia las conversaciones de todos los días.\n\nPara orientarte mejor, ¿es para ti o para un familiar?`;
 }
 
 /**
@@ -1236,6 +1305,7 @@ Si un dato no está en estas instrucciones, en el conocimiento del centro o en l
 
 ═══ CÓMO ESCRIBES ═══
 · En tu primer mensaje saludas por el nombre y te presentas una sola vez: "Hola, soy Aura, de OírConecta". Si en la conversación ya hay una bienvenida tuya, no te vuelvas a presentar ni repitas lo que ya dijo.
+· Habla de lo que la persona gana, no de fichas técnicas: "sales sabiendo cómo está tu audición y qué opciones tienes" dice más que "incluye 4 exámenes". Cálida y sin presionar: nunca miedo, culpa ni urgencia inventada.
 · MENSAJES CORTOS, de chat: máximo 2 frases (unas 30 palabras) antes de la lista de horarios, y después de la lista solo "¿Cuál te sirve?". Responde lo que preguntó y solo eso. No expliques qué incluye la valoración, no repitas precios ni la dirección que ya diste y no agregues datos que no pidió. Un mensaje largo no se lee.
 · Que se note una persona: usa las palabras de quien te escribe, cambia la forma de abrir y de cerrar de un mensaje a otro, y no repitas una frase que ya dijiste en la conversación. Nada de "¡Perfecto!" ni "¡Excelente!" al empezar cada mensaje.
 · Español correcto, sin errores de ortografía. Tuteo cercano.
@@ -1635,7 +1705,7 @@ async function iniciarFlujoAnuncio(conversationId, incomingText) {
   }
 
   try {
-    return await enviarConBotones(conv, await bienvenida(conv), BOTONES_CIUDAD);
+    return await enviarConBotones(conv, await bienvenida(conv), botonesDeBienvenida(false));
   } catch (e) {
     console.error('[wa-bot] arranque de flujo de anuncio falló:', e.message);
     return { error: e.message };
@@ -2544,7 +2614,7 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
   const primero = messages.length === 1 && typeof messages[0].content === 'string' ? messages[0].content : '';
   if (contactType === 'PACIENTE_BOGOTA' && primero && (soloPidePrecio(primero) || soloPideInformacion(primero))) {
     return {
-      texto: `${await bienvenida(conv, new Date(), soloPidePrecio(primero) ? primero : '')}${etiquetaBotones(BOTONES_CIUDAD)}`,
+      texto: `${await bienvenida(conv, new Date(), soloPidePrecio(primero) ? primero : '')}${etiquetaBotones(botonesDeBienvenida(soloPidePrecio(primero)))}`,
       escala: false, trazas: [], promptChars: 0, model: 'bienvenida fija',
     };
   }
@@ -2889,7 +2959,7 @@ async function responder({ conversationId, incomingText, desdeAudio = false }) {
       prisma.whatsAppMessage.count({ where: { conversationId, direction: 'OUTBOUND' } }),
     ]);
     if (conv?.status === 'BOT' && conv.contactType === 'PACIENTE_BOGOTA' && yaRespondimos === 0) {
-      await enviarConBotones(conv, await bienvenida(conv, new Date(), pidePrecio ? incomingText : ''), BOTONES_CIUDAD);
+      await enviarConBotones(conv, await bienvenida(conv, new Date(), pidePrecio ? incomingText : ''), botonesDeBienvenida(pidePrecio));
       return { sent: true, bienvenida: true };
     }
     // Escribió "quiero información" y al minuto "precio": la bienvenida que
@@ -2950,4 +3020,5 @@ module.exports = {
   reopenIfClosed,
   instruccionesVigentes: () => SYSTEM_PROMPTS.PACIENTE_BOGOTA,
   retomaConBotones,
+  ultimoToque,
 };
