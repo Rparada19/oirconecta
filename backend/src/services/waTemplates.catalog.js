@@ -68,7 +68,7 @@ const CATALOG = [
     // ventana de 24 horas. Hay que crearla en Meta (WhatsApp Manager →
     // Plantillas) con este nombre, categoría Marketing, idioma Spanish (COL),
     // este texto exacto y dos botones de respuesta rápida: "Ver horarios" y
-    // "Ahora no". Hasta que Meta la apruebe no se envía (WA_MADURACION).
+    // "Ahora no". Hasta que Meta la apruebe, el envío falla y se reintenta solo.
     key: 'maduracion_dia_3',
     metaName: 'maduracion_dia_3',
     locale: 'es_CO',

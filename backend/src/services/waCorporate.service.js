@@ -497,8 +497,30 @@ async function startNewConversation({
  * Meta responde 132000 ("number of parameters does not match") cuando el
  * formato no calza, así que probamos: nombradas → posicionales → sin
  * parámetros. Solo se reintenta ante 132000; cualquier otro error se propaga.
+ *
+ * Lo mismo con el idioma: en WhatsApp Manager "Spanish" (es) y "Spanish (COL)"
+ * (es_CO) son distintos y Meta responde 132001 si no es el de la plantilla.
+ * Se prueba el del catálogo y luego el otro, y se recuerda el que funcionó.
  */
-async function sendTemplateAutoParams({ to, template, bodyParams, phoneNumberId }) {
+const idiomaQueFunciono = new Map();
+async function sendTemplateAutoParams(args) {
+  const { template } = args;
+  const idiomas = [...new Set([idiomaQueFunciono.get(template.metaName), template.locale || 'es_CO', 'es', 'es_CO'].filter(Boolean))];
+  let ultimoError = null;
+  for (const locale of idiomas) {
+    try {
+      const r = await enviarEnIdioma({ ...args, locale });
+      idiomaQueFunciono.set(template.metaName, locale);
+      return r;
+    } catch (e) {
+      if (!(e.code === 'META_132001' || /132001/.test(e.message || ''))) throw e;
+      ultimoError = e;
+    }
+  }
+  throw ultimoError;
+}
+
+async function enviarEnIdioma({ to, template, bodyParams, phoneNumberId, locale }) {
   const named = {};
   (template.variables || []).forEach((v, i) => {
     if (bodyParams[i] != null) named[v.key] = bodyParams[i];
@@ -515,7 +537,7 @@ async function sendTemplateAutoParams({ to, template, bodyParams, phoneNumberId 
       return await sendWhatsAppTemplate({
         to,
         metaTemplateName: template.metaName,
-        locale: template.locale || 'es_CO',
+        locale,
         phoneNumberId,
         ...variante,
       });
@@ -533,7 +555,7 @@ async function sendTemplateAutoParams({ to, template, bodyParams, phoneNumberId 
  * reactivar cuando la ventana de 24h se cerró).
  */
 async function sendTemplateToExistingConversation({
-  conversationId, templateKey, variables = {}, sentByUserId = null,
+  conversationId, templateKey, variables = {}, sentByUserId = null, sinRastroSiFalla = false,
 }) {
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
@@ -568,6 +590,8 @@ async function sendTemplateToExistingConversation({
     deliveryStatus = 'failed';
     errorMessage = (e.message || 'Error desconocido').slice(0, 500);
     console.error('[wa-corp] send template a existente falló:', e.message);
+    // Los envíos automáticos no dejan un mensaje fallido en el chat.
+    if (sinRastroSiFalla) throw e;
   }
 
   const msg = await prisma.whatsAppMessage.create({
