@@ -738,11 +738,30 @@ function promesaDelAnuncio(anuncio) {
     /seguro/i.test(a) && 'seguro por pérdida, robo y rotura',
   ].filter(Boolean).join(' y ');
   if (/2x1/i.test(a)) {
-    const que = /widex/i.test(a) ? 'audífonos Widex recargables' : 'audífonos';
+    // Solo lo que el anuncio dice: a quien llegó por "2x1 en batería" se le
+    // contestó "2x1 en Widex recargables".
+    const que = /bater[ií]a|pila/i.test(a) ? 'audífonos de batería'
+      : (/widex/i.test(a) && /recargable/i.test(a)) ? 'audífonos Widex recargables' : 'audífonos';
     return `Este mes tenemos *2x1 en ${que}*${extras ? `, con ${extras}` : ''}.`;
   }
   if (/seguro/i.test(a)) return 'Los audífonos de promoción incluyen *seguro por pérdida, robo y rotura*.';
   return '';
+}
+
+/**
+ * El anuncio trae sus propios precios ("Precios desde $1.000.000 · 2x1 en
+ * batería · recargables desde 2.000.000"): esos son los que la persona acaba
+ * de leer, y son los que se le repiten. Contestarle con otras cifras es
+ * desmentir el anuncio en el primer mensaje.
+ */
+function ofertaDelAnuncio(adBody) {
+  const plata = /\$\s?\d|\d{1,3}\.\d{3}\.\d{3}/;
+  const lineas = String(adBody || '').split(/\n+/).map((l) => l.trim())
+    .filter((l) => plata.test(l) || /2x1/i.test(l));
+  if (!lineas.some((l) => plata.test(l))) return '';
+  return `${lineas.slice(0, 3)
+    .map((l) => l.replace(/[.\s]+$/, '').replace(/(^|[^$\d.])(\d{1,3}\.\d{3}\.\d{3})/g, '$1$$$2'))
+    .join('. ')}.`;
 }
 
 async function bienvenida(conv, fecha = new Date(), preguntaPrecio = '') {
@@ -754,7 +773,9 @@ async function bienvenida(conv, fecha = new Date(), preguntaPrecio = '') {
 
   const saludo = `${saludoPorHora(fecha)}${nombre ? `, ${nombre}` : ''}. Soy Aura, de OírConecta, en *Bogotá*.`;
   const cuerpo = deAudifonos
-    ? `${promesa ? `${promesa} ` : ''}Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}. La valoración para saber cuál te sirve *no tiene costo*.`
+    ? (ofertaDelAnuncio(conv?.adBody)
+      ? `${ofertaDelAnuncio(conv?.adBody)} La valoración para saber cuál te sirve *no tiene costo*.`
+      : `${promesa ? `${promesa} ` : ''}Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}. La valoración para saber cuál te sirve *no tiene costo*.`)
     : preguntaPrecio
       // Preguntó el precio sin decir de qué: van los dos.
       ? `La valoración auditiva *no tiene costo*. Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}.`
@@ -1636,7 +1657,7 @@ ${SOLO_EL_MENSAJE}`;
 // Frases que solo se dicen cuando se está proponiendo un día. No se exige que
 // el mensaje diga "cita": a Edgar le escribió "¿Mañana lunes te viene bien, o
 // prefieres otro día?" — ni una palabra de agenda, y es justo el caso.
-const PROPONE_UN_DIA = /te vienen? bien|que te muestre|qu[ée] d[íi]a|prefieres otro d[íi]a|alg[úu]n d[íi]a|cu[áa]ndo te (sirve|queda|viene|gustar[íi]a)|cu[áa]ndo (quieres|puedes|podr[íi]as) venir|te gustar[íi]a (ma[ñn]ana|el |alguno)|quieres que te (muestre|busque|comparta|pase)|te (busco|muestro) (un |los |unos )?horarios?/i;
+const PROPONE_UN_DIA = /te vienen? bien|que te muestre|qu[ée] d[íi]a|prefieres otro d[íi]a|alg[úu]n d[íi]a de (esta|la)|cu[áa]ndo te (sirve|queda|viene|gustar[íi]a)|cu[áa]ndo (quieres|puedes|podr[íi]as) venir|te gustar[íi]a (ma[ñn]ana|el |alguno)|quieres que te (muestre|busque|comparta|pase)|te (busco|muestro) (un |los |unos )?horarios?/i;
 // Anunciar los horarios en vez de ponerlos: "déjame traerte los horarios",
 // "veo los horarios exactos para ti". Con el Ensayo del 4-oct salió dos veces.
 const PROMETE_HORARIOS = /(veo|reviso|miro|busco|traigo|muestro|consulto)\s+(los |tus |unos |el |la )?(horarios?|cupos?|agenda|disponibilidad)|d[ée]jame (traerte|mostrarte|revisar|consultar|mirar|buscarte)|cu[áa]l de los (dos |tres )?(s[áa]bados|d[íi]as)/i;
@@ -2058,6 +2079,7 @@ Cómo usarlo:
 · Lo que haces es dar por sentado el tema: si el anuncio hablaba de audiometría, hablas de audiometría, sin explicar cómo lo sabes.
 · NO prometas nada que el anuncio no diga, y NO inventes descuentos, promociones ni precios. Si el anuncio ofrece algo puntual, respétalo tal cual está escrito arriba.
 · Si el anuncio habla de audífonos (precio, recargables, 2x1) y la persona pregunta "precio" o pide información, habla primero de los audífonos y de su precio; después, de la valoración.
+· Si el anuncio trae precios, esos son los precios para esta persona: usa esas cifras y no menciones otras distintas, aunque más abajo aparezcan $800.000 o $1.800.000.
 · Si el anuncio ofrece una promoción, dila completa y con sus datos, tal como está escrita arriba (qué incluye, marca, garantía, seguro). No contestes "las condiciones te las explican en la valoración" a algo que el anuncio ya dice: eso es una evasiva. Solo lo que el anuncio NO dice se confirma en la valoración, y lo dices únicamente si te lo preguntan.
 ═══════════════════════════════════`;
   }
@@ -2082,8 +2104,11 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
       if (retailId) {
         const iaConfig = require('./iaAgentConfig.service');
         const education = await iaConfig.getEducationForPrompt(retailId);
-        systemPrompt += iaConfig.buildEducationSection(education, 'OírConecta');
-        firma = education?.signature || null;
+        // Sin la "frase de cierre habitual": puesta al final de cada despedida
+        // ("Recuerda que hablaste con Aura y estoy acá para acompañarte en cada
+        // paso") suena a grabación.
+        systemPrompt += iaConfig.buildEducationSection({ ...education, signature: null }, 'OírConecta');
+        firma = null;
 
         // Los documentos que se le cargaron al agente. El bot del consultorio
         // los ignoraba: se entrenaba el cerebro en /portal-profesional/ia y
@@ -2298,8 +2323,18 @@ async function turnoConHerramientas({
         corregir(resp, CORRECCION_REPROGRAMAR);
         continue;
       }
+      // Dijo que pasó el caso al equipo sin registrarlo: el equipo no se entera.
+      if (
+        puede && PROMESA_DE_TRASPASO.test(r.texto)
+        && !r.trazas.some((x) => /^registrar_/.test(x.tool))
+        && !messages.some((m) => m.role === 'assistant' && PROMESA_DE_TRASPASO.test(String(m.content)))
+      ) {
+        console.warn('[wa-bot] dijo que pasó el caso sin registrarlo — lo devuelvo a registrar.', etiqueta);
+        corregir(resp, CORRECCION_TRASPASO);
+        continue;
+      }
       // Preguntó "¿qué día?" o prometió horarios sin haber mirado la agenda.
-      if (puede && !disponibilidadConsultada && preguntaElDiaSinOfrecerHoras(r.texto)) {
+      if (puede && !disponibilidadConsultada && !FUERA_DE_BOGOTA.test(r.texto) && preguntaElDiaSinOfrecerHoras(r.texto)) {
         console.warn('[wa-bot] preguntó el día sin ofrecer horarios — lo devuelvo a la agenda.', etiqueta);
         respuestaPrevia = r.texto.split(/\n{2,}/)
           .filter((p) => !PROPONE_UN_DIA.test(p) && !PROMETE_HORARIOS.test(p)).join('\n\n').trim();
@@ -2319,7 +2354,7 @@ async function turnoConHerramientas({
       if (puede && palabras > 45 && !r.citaCreada && !r.citaMovida && !r.texto.includes(ESCALATE_TAG)) {
         console.warn('[wa-bot] mensaje largo:', palabras, 'palabras — se devuelve para acortar.', etiqueta);
         respuestaPrevia = '';
-        corregir(resp, `ALTO — esto no lo ve el paciente.\n\nTu mensaje tiene ${palabras} palabras y por WhatsApp nadie lee tanto. Escríbelo de nuevo en máximo 30 palabras: solo la respuesta a lo que preguntó, en una o dos frases. Si traía lista de horarios, déjala igual y termina con "¿Cuál te sirve?". Nada de presentaciones ni explicaciones que no pidió.`);
+        corregir(resp, `ALTO — esto no lo ve el paciente.\n\nTu mensaje tiene ${palabras} palabras y por WhatsApp nadie lee tanto. Escríbelo de nuevo en máximo 30 palabras: solo la respuesta a lo que preguntó, en una o dos frases. Si traía lista de horarios, déjala igual y termina con "¿Cuál te sirve?". Nada de presentaciones ni explicaciones que no pidió.\n\n${SOLO_EL_MENSAJE}`);
         continue;
       }
       break;
@@ -2360,12 +2395,35 @@ async function turnoConHerramientas({
   }
   // Gastó las vueltas en herramientas y no escribió: no lo dejamos mudo.
   if (!r.texto) r.texto = await respuestaSinTools(client, systemPrompt, r.workingMessages, corte, model);
+  // Corregido, a veces le contesta al corrector y no al paciente. A Beatriz le
+  // llegó "No voy a ofrecerle horarios a Beatriz… mis instrucciones para quien
+  // vive fuera de Bogotá son…". Eso no sale: se escribe de nuevo con la
+  // conversación limpia y, si insiste, se pasa a una persona.
+  if (LE_HABLA_AL_CORRECTOR.test(r.texto)) {
+    console.error('[wa-bot] el mensaje le hablaba al corrector, no al paciente — se descarta.', etiqueta, r.texto.slice(0, 160));
+    respuestaPrevia = '';
+    r.texto = await respuestaSinTools(client, systemPrompt, messages, corte, model);
+    if (!r.texto || LE_HABLA_AL_CORRECTOR.test(r.texto)) r.texto = `Dame un momento y ya te confirmo. ${ESCALATE_TAG}`;
+  }
   if (respuestaPrevia && MULETILLA.test(r.texto) && horasOfrecidas(r.texto).length) {
     const resto = r.texto.replace(MULETILLA, '');
     r.texto = `${respuestaPrevia}\n\n${resto.charAt(0).toUpperCase()}${resto.slice(1)}`;
   }
   return r;
 }
+
+const LE_HABLA_AL_CORRECTOR = /mis instrucciones|(en )?mi (último|ultimo|anterior) mensaje|(esta|la) correcci[óo]n|no voy a ofrecerle|tampoco le pregunt[ée]|registrar_paciente|registrar_referido|get_availability|create_appointment|reprogramar_cita|cancelar_cita|\bALTO\b/i;
+// Ya le está diciendo que vive en otra ciudad: ahí no van horarios.
+const FUERA_DE_BOGOTA = /solo en Bogot[áa]|en tu ciudad|profesional (de confianza )?(en|cerca)|como vives en|vives (lejos|en otra)|otra ciudad/i;
+const PROMESA_DE_TRASPASO = /pas[ée] tu caso|tu caso (ya )?qued[óo] registrado|ya qued[óo] registrado|qued[óo] registrado tu caso/i;
+const CORRECCION_TRASPASO =
+`ALTO — esto no lo ve el paciente.
+
+Le escribiste que su caso ya pasó al equipo, pero NO llamaste registrar_paciente_otra_ciudad: nadie del equipo se va a enterar y esa persona se queda esperando.
+
+Llámala ahora con la ciudad y el nombre que ya te dio. Si no te ha dicho la ciudad, pregúntasela en vez de decir que pasaste el caso.
+
+${SOLO_EL_MENSAJE}`;
 
 /** Palabras del mensaje sin contar las líneas de la lista de horarios. */
 function palabrasSinHorarios(texto) {
@@ -2427,10 +2485,9 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
   const impls = {
     ...bookingToolImpls,
     async create_appointment(ctx, input) {
-      return {
-        id: 'ensayo', simulado: true,
-        mensaje: `[ENSAYO] Aquí se habría creado la cita: ${input.scheduledAt}`,
-      };
+      // Con forma de respuesta real: si dice "simulado", el modelo le cuenta al
+      // paciente que el sistema está en modo de prueba y el ensayo no sirve.
+      return { id: 'ensayo', estado: 'CONFIRMADA', scheduledAt: input.scheduledAt, patientName: input.patientName };
     },
     async registrar_referido_otra_ciudad(ctx, input) {
       return { leadId: 'ensayo', simulado: true, mensaje: `[ENSAYO] Lead registrado en ${input.ciudad}` };
@@ -2628,13 +2685,18 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   // Detecta tag de escalada. Una cita que no se pudo crear NO escala: el bot
   // se queda a cargo y la reintenta con la persona.
   const shouldEscalate = reply.includes(ESCALATE_TAG);
-  const cleanReply = await sinFirmaRepetida(
+  let cleanReply = await sinFirmaRepetida(
     // Si en este turno se creó o movió la cita, el mensaje es una confirmación: no se ofrece otro día.
     (fechaDeLaCita ? (x) => x : (x) => conPuertaAOtroDia(x, history.some((m) => m.role === 'assistant' && String(m.content).includes(OTRO_DIA))))(
       formatoWhatsApp(conFechaDeLaAgenda(reply.replace(ESCALATE_TAG, ''), fechaDeLaCita)),
     ).trim(),
     firma, conversationId,
   );
+  // Ya se presentó en esta conversación: no vuelve a decir "Hola, soy Aura".
+  if (history.some((m) => m.role === 'assistant' && /soy aura/i.test(String(m.content)))) {
+    const sinSaludo = cleanReply.replace(/^(?:¡?hola|buen[oa]s (?:d[ií]as|tardes|noches))[^.!?\n]*?soy aura[^.!?\n]*[.!?]\s*/i, '');
+    if (sinSaludo && sinSaludo !== cleanReply) cleanReply = sinSaludo.charAt(0).toUpperCase() + sinSaludo.slice(1);
+  }
 
   try {
     // El webhook ya respondió 200 hace rato: esperar aquí no le cuesta nada a
@@ -2649,6 +2711,10 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
       console.log('[wa-bot] llegó otro mensaje mientras respondía: se contesta todo en la siguiente tanda.', conversationId);
       return { skipped: 'llego-otro-mensaje' };
     }
+    // Mientras se escribía esto, alguien del equipo tomó el chat y contestó:
+    // el bot no escribe encima.
+    const estado = await prisma.whatsAppConversation.findUnique({ where: { id: conversationId }, select: { status: true } }).catch(() => null);
+    if (estado && estado.status !== 'BOT' && !huboEscritura) return { skipped: 'lo-tomo-el-equipo' };
     const result = await sendWhatsAppText({ to: conv.phone, text: cleanReply });
     await prisma.whatsAppMessage.create({
       data: {
@@ -2749,6 +2815,18 @@ async function responder({ conversationId, incomingText, desdeAudio = false }) {
         data: { lastMessagePreview: `Bot: ${texto.slice(0, 140)}` },
       });
       return { sent: true, bienvenida: true };
+    }
+    // Escribió "quiero información" y al minuto "precio": la bienvenida que
+    // acaba de salir ya trae los precios. Repetirlos es un segundo mensaje igual.
+    if (conv?.status === 'BOT' && yaRespondimos > 0) {
+      const ultima = await prisma.whatsAppMessage.findFirst({
+        where: { conversationId, direction: 'OUTBOUND', sentByBot: true },
+        orderBy: { timestamp: 'desc' }, select: { body: true, timestamp: true },
+      });
+      const reciente = ultima && Date.now() - new Date(ultima.timestamp).getTime() < 3 * 60 * 1000;
+      if (reciente && /soy aura/i.test(ultima.body || '') && (!pidePrecio || /\$\s?\d/.test(ultima.body))) {
+        return { skipped: 'ya-respondido-en-la-bienvenida' };
+      }
     }
   }
   return handleTextForBot({ conversationId, incomingText, desdeAudio });
