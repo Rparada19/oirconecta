@@ -64,6 +64,40 @@ const CONTACT_TYPES = [
 // Cada plantilla especifica el contactType al que aplica.
 const CATALOG = [
   {
+    // Maduración, día 3: la persona escribió, no agendó y ya se cerró la
+    // ventana de 24 horas. Hay que crearla en Meta (WhatsApp Manager →
+    // Plantillas) con este nombre, categoría Marketing, idioma Spanish (COL),
+    // este texto exacto y dos botones de respuesta rápida: "Ver horarios" y
+    // "Ahora no". Hasta que Meta la apruebe no se envía (WA_MADURACION).
+    key: 'maduracion_dia_3',
+    metaName: 'maduracion_dia_3',
+    locale: 'es_CO',
+    category: 'MARKETING',
+    label: 'Maduración · día 3',
+    description: 'Retomar a quien escribió y no agendó, tres días después. Botones: Ver horarios / Ahora no.',
+    contactType: 'PACIENTE_BOGOTA',
+    variables: [
+      { key: 'nombre', label: 'Nombre del paciente', placeholder: 'Ej. María' },
+    ],
+    preview:
+      'Hola {{1}}, te escribe Aura, de OírConecta. Hace unos días nos escribiste y no quería dejar tu consulta a medias. La valoración auditiva es una hora con audióloga, no tiene costo y sales sabiendo cómo está tu audición y qué opciones tienes. ¿Te muestro horarios?',
+  },
+  {
+    // Maduración, día 7: el último mensaje. Mismas condiciones que la anterior.
+    key: 'maduracion_dia_7',
+    metaName: 'maduracion_dia_7',
+    locale: 'es_CO',
+    category: 'MARKETING',
+    label: 'Maduración · día 7',
+    description: 'Último mensaje a quien no agendó: el simulador y la valoración. Botones: Ver horarios / Ahora no.',
+    contactType: 'PACIENTE_BOGOTA',
+    variables: [
+      { key: 'nombre', label: 'Nombre del paciente', placeholder: 'Ej. María' },
+    ],
+    preview:
+      'Hola {{1}}, soy Aura, de OírConecta. Te comparto algo que puede servirte: un simulador de un minuto para escuchar cómo se oye con pérdida auditiva: https://oirconecta.com/ponte-en-sus-oidos Si quieres revisar tu audición, la valoración no tiene costo y no te compromete a nada. Este es mi último mensaje: si quieres horarios, toca el botón.',
+  },
+  {
     // Para volver a quien escribió hace más de 24h: pasada esa ventana Meta no
     // deja texto libre, y sin esta plantilla esas conversaciones se pierden
     // aunque la persona siga interesada. Es el caso de casi todos los que

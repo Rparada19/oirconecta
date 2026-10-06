@@ -863,7 +863,99 @@ async function recuperarConversaciones({ dryRun = false, conPlantilla = false } 
   return { revisadas: abiertas.length, enviados, porPlantilla, fueraDeVentana, yaTenianCita, fallidos };
 }
 
+// ─── Maduración: día 3 y día 7 ───────────────────────────────
+//
+// Pasadas 24 horas del último mensaje del paciente, Meta solo deja enviar
+// plantillas aprobadas. Hasta ahí llegaba el seguimiento: quien no agendaba el
+// primer día no volvía a saber de nosotros. Ahora recibe dos mensajes más:
+//   · día 3: "no quería dejar tu consulta a medias" + Ver horarios / Ahora no
+//   · día 7: el simulador y la valoración, y se avisa que es el último
+// No se le escribe a quien ya tiene cita, a quien vive en otra ciudad, a quien
+// dijo que no, ni a un chat que tomó el equipo. Solo de lunes a sábado, de
+// 9 a.m. a 6 p.m. Se enciende con WA_MADURACION=true cuando Meta apruebe las
+// dos plantillas.
+const DIA = 24 * 3600 * 1000;
+let maduracionEnPausaHasta = 0;
+
+async function processMaduracion() {
+  if (process.env.WA_BOT_ENABLED !== 'true') return { skipped: 'bot-disabled' };
+  if (process.env.WA_MADURACION !== 'true') return { skipped: 'apagada' };
+  const ahora = new Date();
+  if (ahora.getTime() < maduracionEnPausaHasta) return { skipped: 'en-pausa' };
+  const partes = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Bogota', hour: 'numeric', hourCycle: 'h23', weekday: 'short',
+  }).formatToParts(ahora);
+  const hora = Number(partes.find((p) => p.type === 'hour').value);
+  if (partes.find((p) => p.type === 'weekday').value === 'Sun' || hora < 9 || hora >= 18) return { skipped: 'fuera-de-horario' };
+
+  const candidatas = await prisma.whatsAppConversation.findMany({
+    where: {
+      businessLine: 'CRM', status: 'BOT', contactType: { in: TIPOS_PACIENTE }, maduracion2At: null,
+      lastMessageAt: { lt: new Date(ahora.getTime() - 3 * DIA), gt: new Date(ahora.getTime() - 14 * DIA) },
+      OR: [{ maduracion1At: null }, { maduracion1At: { lt: new Date(ahora.getTime() - 4 * DIA) } }],
+    },
+    select: { id: true, phone: true, contactName: true, maduracion1At: true },
+    orderBy: { lastMessageAt: 'asc' },
+    take: 10,
+  });
+
+  const bot = require('./waCorporateBot.service');
+  const corp = require('./waCorporate.service');
+  let dia3 = 0, dia7 = 0, descartadas = 0;
+  for (const conv of candidatas) {
+    try {
+      const mensajes = await prisma.whatsAppMessage.findMany({
+        where: { conversationId: conv.id }, select: { direction: true, body: true, sentByBot: true, type: true },
+      });
+      const dicho = mensajes.filter((m) => m.direction === 'INBOUND').map((m) => m.body || '').join(' ');
+      const nuestro = mensajes.filter((m) => m.direction === 'OUTBOUND').map((m) => m.body || '').join(' ');
+      const last10 = String(conv.phone || '').replace(/\D/g, '').slice(-10);
+      const cita = last10 ? await prisma.appointment.findFirst({
+        where: { patientPhone: { contains: last10 }, estado: { not: 'CANCELLED' } }, select: { id: true },
+      }).catch(() => null) : null;
+      const noVa = cita || !dicho.trim() || VIVE_EN_OTRA_CIUDAD.test(dicho) || APLAZA_EL_PACIENTE.test(dicho)
+        || /ahora no|no me escrib|me equivoqu/i.test(dicho) || /caso al equipo|equipo te (va a )?escrib/i.test(nuestro);
+      if (noVa) {
+        // Se marca completa para no volver a mirarla cada minuto.
+        await prisma.whatsAppConversation.update({
+          where: { id: conv.id }, data: { maduracion1At: conv.maduracion1At || ahora, maduracion2At: ahora },
+        });
+        descartadas++;
+        continue;
+      }
+
+      const campo = conv.maduracion1At ? 'maduracion2At' : 'maduracion1At';
+      const claim = await prisma.whatsAppConversation.updateMany({
+        where: { id: conv.id, [campo]: null }, data: { [campo]: ahora },
+      });
+      if (claim.count === 0) continue;
+      try {
+        await corp.sendTemplateToExistingConversation({
+          conversationId: conv.id,
+          templateKey: conv.maduracion1At ? 'maduracion_dia_7' : 'maduracion_dia_3',
+          variables: { nombre: bot.nombreParaSaludo(conv.contactName) || 'de nuevo' },
+        });
+      } catch (e) {
+        // Lo más probable: Meta todavía no aprueba la plantilla, o el nombre no
+        // coincide. Se devuelve la marca y se espera seis horas antes de
+        // insistir, para no llenar la bandeja de envíos fallidos.
+        await prisma.whatsAppConversation.updateMany({ where: { id: conv.id }, data: { [campo]: null } });
+        maduracionEnPausaHasta = Date.now() + 6 * 3600 * 1000;
+        console.error('[wa-maduracion] la plantilla falló; pausa de 6 horas:', e.message);
+        break;
+      }
+      if (conv.maduracion1At) dia7++; else dia3++;
+      if (dia3 + dia7 >= 3) break; // de a pocos por minuto
+    } catch (e) {
+      console.error('[wa-maduracion] conversación', conv.id, 'falló:', e.message);
+    }
+  }
+  if (dia3 || dia7 || descartadas) console.log('[wa-maduracion] día 3:', dia3, 'día 7:', dia7, 'descartadas:', descartadas);
+  return { dia3, dia7, descartadas, revisadas: candidatas.length };
+}
+
 module.exports = {
+  processMaduracion,
   processWaAgendarNudges,
   recuperarConversaciones,
   envioMasivoTexto,

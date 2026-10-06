@@ -610,6 +610,11 @@ async function tick() {
       return waNudge.processSilencios();
     });
 
+    // 8c) Maduración: plantillas del día 3 y del día 7 a quien no agendó.
+    await runJob('waMaduracion', async () => (
+      require('../services/waNudge.service').processMaduracion()
+    ));
+
     // 9) Refresco editorial de marcas (día 1 del mes 8-9am CO si BRAND_AUTO_ENABLED=true)
     // Mensajes que quedaron sin respuesta porque el proceso se reinició
     // mientras la cola de 9 segundos esperaba. Sin esto, silencio para siempre.
