@@ -12,7 +12,7 @@
  *     color: '#1A1A1A',      // color signature de la marca
  *     stats: [{ value: '4.8', label: 'Rating' }, ...]
  *   }
- *   productos: [{ nombre, categoria, descripcion, caracteristicas[] }]
+ *   productos: [{ nombre, categoria, descripcion, caracteristicas[], imagen? }]
  *   tecnologias: [{ Icon, titulo, descripcion }]
  *   categoria: 'audifonos' | 'implantes'   (para breadcrumb)
  *   seoTitle, seoDescription, canonical
@@ -73,17 +73,17 @@ function BrandHero({ brand, productosCount }) {
             }}>
               <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
                 <Box component={RouterLink} to="/" sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.78rem', color: C.gris,
+                  fontFamily: '"Gotham", sans-serif', fontSize: '0.78rem', color: C.gris,
                   textDecoration: 'none', '&:hover': { color: C.navy },
                 }}>Inicio</Box>
                 <Typography sx={{ color: C.grisClaro, fontSize: '0.78rem' }}>/</Typography>
                 <Box component={RouterLink} to="/audifonos/" sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.78rem', color: C.gris,
+                  fontFamily: '"Gotham", sans-serif', fontSize: '0.78rem', color: C.gris,
                   textDecoration: 'none', '&:hover': { color: C.navy },
                 }}>Audífonos</Box>
                 <Typography sx={{ color: C.grisClaro, fontSize: '0.78rem' }}>/</Typography>
                 <Typography sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.78rem',
+                  fontFamily: '"Gotham", sans-serif', fontSize: '0.78rem',
                   fontWeight: 700, color: C.navy,
                 }}>{brand.nombre}</Typography>
               </Stack>
@@ -91,7 +91,7 @@ function BrandHero({ brand, productosCount }) {
               <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 4 }}>
                 <Box sx={{ width: 32, height: 2, bgcolor: brand.color }} />
                 <Typography sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: brand.color,
                 }}>
@@ -119,7 +119,7 @@ function BrandHero({ brand, productosCount }) {
               </Typography>
 
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
                 color: C.gris, lineHeight: 1.6, mb: 4.5, maxWidth: 600,
               }}>
@@ -132,7 +132,7 @@ function BrandHero({ brand, productosCount }) {
                   to={`/contacto?asunto=${encodeURIComponent(`Solicitud de información - ${brand.nombre}`)}`}
                   sx={{
                     display: 'inline-flex', alignItems: 'center', gap: 1.25,
-                    fontFamily: '"Gotham", "DM Sans", sans-serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: '0.95rem', fontWeight: 700,
                     bgcolor: C.navy, color: '#fff',
                     px: 3.5, py: 1.85, borderRadius: '6px',
@@ -206,7 +206,7 @@ function BrandHero({ brand, productosCount }) {
                           {s.value}
                         </Typography>
                         <Typography sx={{
-                          fontFamily: '"Gotham", "DM Sans", sans-serif',
+                          fontFamily: '"Gotham", sans-serif',
                           fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em',
                           textTransform: 'uppercase', color: C.gris,
                         }}>
@@ -243,18 +243,40 @@ function ProductoCard({ producto, brand, n, delay }) {
         transform: 'translateY(-6px)',
         boxShadow: `0 24px 48px ${C.navy}1a`,
       },
+      '&:hover .oc-prod-media img': { transform: 'scale(1.06) translateY(-4px)' },
     }}>
       {producto.destacado && (
         <Box sx={{
-          position: 'absolute', top: 16, right: 16,
+          position: 'absolute', top: 16, right: 16, zIndex: 1,
           bgcolor: brand.color, color: '#fff',
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em',
           textTransform: 'uppercase', px: 1.25, py: 0.5, borderRadius: '4px',
         }}>
           Destacado
         </Box>
       )}
+
+      {/* Foto del producto (o logo de la marca mientras no haya foto) */}
+      <Box className="oc-prod-media" sx={{
+        mx: { xs: -3, md: -3.5 }, mt: { xs: -3, md: -3.5 }, mb: 3,
+        height: 200, borderRadius: '12px 12px 0 0', overflow: 'hidden',
+        background: 'radial-gradient(120% 90% at 50% 100%, #DCE5FB 0%, #EEF2FC 55%, #F7F9FE 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+      }}>
+        {producto.imagen ? (
+          <Box component="img" src={producto.imagen} alt={`${brand.nombre} ${producto.nombre}`}
+            loading="lazy" decoding="async"
+            sx={{
+              maxHeight: 170, maxWidth: '78%', objectFit: 'contain',
+              filter: 'drop-shadow(0 18px 22px rgba(27,37,80,0.22))',
+              transition: 'transform 0.6s cubic-bezier(0.2,0.7,0.2,1)',
+            }} />
+        ) : (
+          <Box component="img" src={brand.logo} alt="" aria-hidden
+            sx={{ maxHeight: 54, maxWidth: '55%', objectFit: 'contain', opacity: 0.55, mixBlendMode: 'multiply' }} />
+        )}
+      </Box>
 
       <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
         <Typography sx={{
@@ -265,7 +287,7 @@ function ProductoCard({ producto, brand, n, delay }) {
         </Typography>
         {producto.categoria && (
           <Box sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em',
             textTransform: 'uppercase', color: C.gris,
             border: `1px solid ${C.border}`, px: 1.25, py: 0.4, borderRadius: '4px',
@@ -284,7 +306,7 @@ function ProductoCard({ producto, brand, n, delay }) {
       </Typography>
 
       <Typography sx={{
-        fontFamily: '"Gotham", "DM Sans", sans-serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: '0.95rem', color: C.gris, lineHeight: 1.55, mb: 3,
       }}>
         {producto.descripcion}
@@ -295,7 +317,7 @@ function ProductoCard({ producto, brand, n, delay }) {
           <Stack key={c} direction="row" spacing={1.25} alignItems="flex-start" sx={{ mb: 0.85 }}>
             <CheckCircleOutline sx={{ fontSize: 15, color: brand.color, mt: 0.4, flexShrink: 0 }} />
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.85rem', color: C.navy, lineHeight: 1.45,
             }}>
               {c}
@@ -339,7 +361,7 @@ function TecnologiaCard({ t, brand, delay }) {
         {t.titulo}
       </Typography>
       <Typography sx={{
-        fontFamily: '"Gotham", "DM Sans", sans-serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: '0.92rem', color: C.gris, lineHeight: 1.55,
       }}>
         {t.descripcion}
@@ -387,13 +409,13 @@ function BrandEditorialBody({ md, accent }) {
             {b.items.map((it, j) => (
               <Box key={j} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 1.5 }}>
                 <CheckCircleOutline sx={{ fontSize: 20, color: accent, mt: 0.3, flexShrink: 0 }} />
-                <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '1.05rem', color: C.gris, lineHeight: 1.7 }}>{renderInline(it)}</Typography>
+                <Typography sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.05rem', color: C.gris, lineHeight: 1.7 }}>{renderInline(it)}</Typography>
               </Box>
             ))}
           </Box>
         );
         return (
-          <Typography key={i} sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '1.1rem', color: C.gris, lineHeight: 1.85, mb: 2.5, textAlign: 'justify', hyphens: 'auto' }}>{renderInline(b.text)}</Typography>
+          <Typography key={i} sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.1rem', color: C.gris, lineHeight: 1.85, mb: 2.5, textAlign: 'justify', hyphens: 'auto' }}>{renderInline(b.text)}</Typography>
         );
       })}
     </Box>
@@ -448,7 +470,7 @@ export default function BrandPageTemplate({
                 <SectionTitle before={`${productos.length} modelos de`} accent={brand.nombre} size="md" accentColor={brand.color} />
               </Box>
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1.05rem', md: '1.15rem' }, color: C.gris,
                 lineHeight: 1.6, maxWidth: 540, pb: { md: 1.5 },
               }}>
@@ -534,7 +556,7 @@ export default function BrandPageTemplate({
             sx={{ color: '#fff', mb: 3 }}
           />
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4, maxWidth: 580, mx: 'auto',
           }}>
             Un audiólogo verificado de OírConecta te orienta sobre los modelos {brand.nombre} que mejor se adaptan a tu caso.
@@ -546,7 +568,7 @@ export default function BrandPageTemplate({
               sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 1.25,
                 bgcolor: C.oro, color: C.navy,
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.95rem', fontWeight: 700,
                 px: 4, py: 1.85, borderRadius: '6px',
                 textDecoration: 'none', letterSpacing: '0.02em',

@@ -9,7 +9,7 @@ const pros = [
     text: 'Encuentra audiólogos que te explican con paciencia y ajustan a tu vida real.',
     to: '/profesionales/audiologos',
     cta: 'Ver audiólogos',
-    img: '/img/audifono-retroauricular-bte.jpg',
+    img: '/img/audiologa-atendiendo-paciente.jpg',
   },
   {
     role: 'Medicina del oído',

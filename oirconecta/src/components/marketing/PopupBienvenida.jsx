@@ -187,7 +187,7 @@ export default function PopupBienvenida() {
           px: 1, py: 0.25, borderRadius: '4px',
           bgcolor: 'rgba(0,0,0,0.5)', color: '#fff',
           fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase',
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
         }}>
           Publicidad
         </Box>
