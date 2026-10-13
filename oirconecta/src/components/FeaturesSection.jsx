@@ -11,8 +11,8 @@ const FEATURES = [
     num: '01',
     title: 'Valores al día',
     description: 'Referencia mensual de audífonos y accesorios para orientarte; los precios finales los define cada profesional de la red.',
-    gradient: 'linear-gradient(135deg, #0d7a5c 0%, #085946 100%)',
-    glow: 'rgba(8,89,70,0.18)',
+    gradient: 'linear-gradient(135deg, #5A6FD6 0%, #4054B2 100%)',
+    glow: 'rgba(64,84,178,0.18)',
   },
   {
     icon: <MenuBook sx={{ fontSize: 28 }} />,
@@ -70,12 +70,12 @@ const FeaturesSection = () => (
             display: 'inline-block',
             px: 2, py: 0.625,
             borderRadius: '8px',
-            background: 'rgba(8,89,70,0.08)',
-            border: '1px solid rgba(8,89,70,0.16)',
+            background: 'rgba(64,84,178,0.08)',
+            border: '1px solid rgba(64,84,178,0.16)',
             mb: 2.5,
           }}
         >
-          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#085946' }}>
+          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#4054B2' }}>
             Qué hacemos por ti
           </Typography>
         </Box>
@@ -91,7 +91,7 @@ const FeaturesSection = () => (
           }}
         >
           Todo lo que necesitas{' '}
-          <Box component="span" sx={{ color: '#085946' }}>para decidir con calma</Box>
+          <Box component="span" sx={{ color: '#4054B2' }}>para decidir con calma</Box>
         </Typography>
         <Typography sx={{ color: '#4a5568', maxWidth: 560, mx: 'auto', fontSize: '1.0625rem', lineHeight: 1.65 }}>
           Información clara, educación sencilla y acceso a la red: para que no tengas que recorrer solo el camino.
@@ -109,7 +109,7 @@ const FeaturesSection = () => (
                 background: 'rgba(255,255,255,0.85)',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.70)',
-                boxShadow: '0 2px 16px rgba(8,89,70,0.06)',
+                boxShadow: '0 2px 16px rgba(64,84,178,0.06)',
                 p: { xs: 3, md: 3.5 },
                 transition: 'all 0.28s cubic-bezier(0.4,0,0.2,1)',
                 position: 'relative',
@@ -127,7 +127,7 @@ const FeaturesSection = () => (
                 sx={{
                   position: 'absolute', top: 16, right: 20,
                   fontSize: '3.5rem', fontWeight: 900, letterSpacing: '-0.05em',
-                  color: 'rgba(8,89,70,0.05)', lineHeight: 1, userSelect: 'none',
+                  color: 'rgba(64,84,178,0.05)', lineHeight: 1, userSelect: 'none',
                 }}
               >
                 {f.num}

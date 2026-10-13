@@ -7,10 +7,10 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 const C = {
-  navy: '#272F50', verde: '#085946', verdeProfundo: '#00382B',
-  oro: '#C9A86A', oroSuave: '#E0C28A',
-  blanco: '#FBFAF8', cremaCalida: '#F5EFE6',
-  arena: '#D9CDBF', border: '#E5E0D6',
+  navy: '#272F50', verde: '#4054B2', verdeProfundo: '#1B2550',
+  oro: '#4C7DF0', oroSuave: '#9DB8FF',
+  blanco: '#FAFBFE', cremaCalida: '#EEF2FC',
+  arena: '#D5DDF0', border: '#E1E6F2',
   gris: '#6B7280',
 };
 
@@ -51,7 +51,7 @@ export default function HomeB2BSection() {
             <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 3 }}>
               <Box sx={{ width: 28, height: 2, bgcolor: C.navy }} />
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.75rem',
+                fontFamily: '"Gotham", sans-serif', fontSize: '0.75rem',
                 fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.navy,
               }}>Para profesionales auditivos</Typography>
             </Stack>
@@ -69,7 +69,7 @@ export default function HomeB2BSection() {
             </Typography>
 
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+              fontFamily: '"Gotham", sans-serif', fontSize: { xs: '1.0625rem', md: '1.1875rem' },
               color: C.gris, lineHeight: 1.6, mb: 4, maxWidth: 580,
             }}>
               Si eres audiólogo, otorrino, fonoaudiólogo o tienes un centro auditivo, súmate a la red. Acompañamiento, visibilidad y pacientes que ya buscan especialistas de confianza.
@@ -80,7 +80,7 @@ export default function HomeB2BSection() {
                 <Box key={b} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <CheckCircleOutlineIcon sx={{ fontSize: 20, color: C.verde }} />
                   <Typography sx={{
-                    fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.9375rem',
+                    fontFamily: '"Gotham", sans-serif', fontSize: '0.9375rem',
                     color: C.navy,
                   }}>{b}</Typography>
                 </Box>
@@ -96,7 +96,7 @@ export default function HomeB2BSection() {
                 startIcon={<PersonAddAltOutlinedIcon />}
                 endIcon={<ArrowForwardIcon />}
                 sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif',
+                  fontFamily: '"Gotham", sans-serif',
                   background: '#272F50 !important', color: '#fff !important', fontWeight: 700, fontSize: '0.9375rem',
                   px: 3.5, py: 1.75, borderRadius: '6px', letterSpacing: '0.01em',
                   boxShadow: `0 8px 24px ${C.navy}33`,
@@ -110,7 +110,7 @@ export default function HomeB2BSection() {
                 size="large"
                 startIcon={<LoginIcon />}
                 sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif',
+                  fontFamily: '"Gotham", sans-serif',
                   color: C.navy, borderColor: `${C.navy}66`, borderWidth: '1.5px',
                   fontWeight: 600, fontSize: '0.9375rem', px: 3.5, py: 1.75, borderRadius: '6px',
                   '&:hover': { borderColor: C.navy, borderWidth: '1.5px', bgcolor: `${C.navy}08` },
@@ -152,7 +152,7 @@ export default function HomeB2BSection() {
                     fontWeight: 700, color: C.navy, lineHeight: 1.2,
                   }}>Red verificada nacional</Typography>
                   <Typography sx={{
-                    fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.75rem',
+                    fontFamily: '"Gotham", sans-serif', fontSize: '0.75rem',
                     color: C.gris, mt: 0.25,
                   }}>Audiólogos, otorrinos y centros</Typography>
                 </Box>

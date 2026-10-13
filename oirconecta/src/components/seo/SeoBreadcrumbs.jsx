@@ -37,7 +37,7 @@ export default function SeoBreadcrumbs({ items = [], sx }) {
               component={RouterLink}
               to={it.to}
               underline="hover"
-              sx={{ fontSize: '0.875rem', color: '#085946' }}
+              sx={{ fontSize: '0.875rem', color: '#4054B2' }}
             >
               {it.label}
             </MuiLink>

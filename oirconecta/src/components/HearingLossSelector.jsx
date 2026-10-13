@@ -103,7 +103,7 @@ const HearingLossSelector = ({ selectedCategory, onCategorySelect, showEffects =
           justifyContent: 'center',
           gap: 1
         }}>
-          <Hearing sx={{ color: '#085946' }} />
+          <Hearing sx={{ color: '#4054B2' }} />
           Selecciona el Tipo de Pérdida Auditiva
         </Typography>
         <Typography variant="body1" sx={{ 
@@ -257,13 +257,13 @@ const HearingLossSelector = ({ selectedCategory, onCategorySelect, showEffects =
       <Box sx={{ 
         mt: 4, 
         p: 3, 
-        background: 'linear-gradient(135deg, #08594610 0%, #272F5010 100%)',
+        background: 'linear-gradient(135deg, #4054B210 0%, #272F5010 100%)',
         borderRadius: 16,
-        border: '1px solid #08594620'
+        border: '1px solid #4054B220'
       }}>
         <Typography variant="h6" sx={{ 
           fontWeight: 700, 
-          color: '#085946',
+          color: '#4054B2',
           mb: 2,
           display: 'flex',
           alignItems: 'center',

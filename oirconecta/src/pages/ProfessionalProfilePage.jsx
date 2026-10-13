@@ -83,7 +83,7 @@ import { BrandMark, BrandWordmark } from '../components/profesional/BrandLogo';
 const BannerContainer = styled(Box)(() => ({
   minHeight: '520px',
   width: '100%',
-  background: '#FBFAF8',
+  background: '#FAFBFE',
   position: 'relative',
   display: 'flex',
   alignItems: 'center',
@@ -99,7 +99,7 @@ const BannerContainer = styled(Box)(() => ({
     width: 540,
     height: 540,
     borderRadius: '50%',
-    background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+    background: 'radial-gradient(circle, #D5DDF055 0%, transparent 70%)',
     filter: 'blur(80px)',
     zIndex: 1,
     pointerEvents: 'none',
@@ -125,7 +125,7 @@ const SectionCard = styled(Card)(() => ({
   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 12px 24px rgba(8, 89, 70, 0.15)'
+    boxShadow: '0 12px 24px rgba(64, 84, 178, 0.15)'
   }
 }));
 
@@ -435,9 +435,9 @@ const ProfessionalProfilePage = () => {
               <Box sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 1.5, mb: 2.5,
               }}>
-                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+                <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
                 <Typography sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: '#272F50',
                 }}>
@@ -455,7 +455,7 @@ const ProfessionalProfilePage = () => {
               </Typography>
 
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1rem', md: '1.125rem' },
                 color: '#6B7280', lineHeight: 1.6, mb: 3, maxWidth: 600,
                 mx: { xs: 'auto', md: 0 },
@@ -470,7 +470,7 @@ const ProfessionalProfilePage = () => {
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Rating value={professional.rating} precision={0.1} readOnly size="small" />
                   <Typography sx={{
-                    fontFamily: '"Gotham", "DM Sans", sans-serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: '0.85rem', fontWeight: 700, color: '#272F50',
                   }}>
                     {professional.rating} · {professional.reviews} reseñas
@@ -478,7 +478,7 @@ const ProfessionalProfilePage = () => {
                 </Stack>
                 {professional.verified && (
                   <Chip icon={<VerifiedUser sx={{ fontSize: 16 }} />} label="Verificado" size="small"
-                    sx={{ bgcolor: 'rgba(8,89,70,0.08)', color: '#085946', fontWeight: 700 }} />
+                    sx={{ bgcolor: 'rgba(64,84,178,0.08)', color: '#4054B2', fontWeight: 700 }} />
                 )}
                 {professional.premium && (
                   <Chip icon={<Star sx={{ fontSize: 16 }} />} label="Premium" size="small"
@@ -506,11 +506,11 @@ const ProfessionalProfilePage = () => {
               startIcon={<CalendarToday sx={{ fontSize: 20 }} />}
               onClick={handleBookingClick}
               sx={{
-                background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+                background: 'linear-gradient(135deg, #4054B2 0%, #0d7a5f 100%)',
                 color: 'white',
                 border: '2px solid transparent',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #0d7a5f 0%, #085946 100%)',
+                  background: 'linear-gradient(135deg, #0d7a5f 0%, #4054B2 100%)',
                   border: '2px solid rgba(255, 255, 255, 0.3)'
                 }
               }}
@@ -599,12 +599,12 @@ const ProfessionalProfilePage = () => {
                 textTransform: 'none',
                 color: '#666',
                 '&.Mui-selected': {
-                  color: '#085946',
+                  color: '#4054B2',
                   fontWeight: 700
                 }
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: '#085946',
+                backgroundColor: '#4054B2',
                 height: '3px'
               }
             }}
@@ -626,7 +626,7 @@ const ProfessionalProfilePage = () => {
               <Grid item xs={12} md={6}>
                 <SectionCard>
                   <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                       Datos de Contacto
                     </Typography>
                     <List>
@@ -700,7 +700,7 @@ const ProfessionalProfilePage = () => {
               <Grid item xs={12} md={6}>
                 <SectionCard>
                   <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                       Información Profesional
                     </Typography>
                     <List>
@@ -747,22 +747,22 @@ const ProfessionalProfilePage = () => {
                   p: { xs: 2.5, md: 3.5 },
                   mb: 3,
                   borderRadius: 3,
-                  background: 'linear-gradient(125deg, rgba(8, 89, 70, 0.09) 0%, rgba(39, 47, 80, 0.07) 55%, rgba(113, 160, 149, 0.12) 100%)',
-                  border: '1px solid rgba(8, 89, 70, 0.14)',
+                  background: 'linear-gradient(125deg, rgba(64, 84, 178, 0.09) 0%, rgba(39, 47, 80, 0.07) 55%, rgba(113, 160, 149, 0.12) 100%)',
+                  border: '1px solid rgba(64, 84, 178, 0.14)',
                 }}
               >
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }} justifyContent="space-between">
                   <Box>
                     <Typography
                       variant="overline"
-                      sx={{ letterSpacing: 0.12, fontWeight: 700, color: '#085946', display: 'block', mb: 0.5 }}
+                      sx={{ letterSpacing: 0.12, fontWeight: 700, color: '#4054B2', display: 'block', mb: 0.5 }}
                     >
                       Reserva en línea
                     </Typography>
                     <Typography variant="h4" sx={{ fontWeight: 800, color: '#272F50', lineHeight: 1.2, mb: 0.5 }}>
                       Agenda tu cita
                     </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#085946', mb: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#4054B2', mb: 1 }}>
                       {professional.name}
                     </Typography>
                     <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 560, lineHeight: 1.65 }}>
@@ -782,7 +782,7 @@ const ProfessionalProfilePage = () => {
                       flexShrink: 0,
                     }}
                   >
-                    <EventAvailable sx={{ fontSize: 40, color: '#085946' }} />
+                    <EventAvailable sx={{ fontSize: 40, color: '#4054B2' }} />
                     <Box>
                       <Typography variant="caption" color="text.secondary" fontWeight={600}>
                         Especialidad
@@ -812,7 +812,7 @@ const ProfessionalProfilePage = () => {
                             width: 36,
                             height: 36,
                             borderRadius: 2,
-                            bgcolor: '#085946',
+                            bgcolor: '#4054B2',
                             color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
@@ -845,7 +845,7 @@ const ProfessionalProfilePage = () => {
                           scrollbarWidth: 'thin',
                           '&::-webkit-scrollbar': { height: 6 },
                           '&::-webkit-scrollbar-thumb': {
-                            backgroundColor: 'rgba(8,89,70,0.25)',
+                            backgroundColor: 'rgba(64,84,178,0.25)',
                             borderRadius: 3,
                           },
                         }}
@@ -875,14 +875,14 @@ const ProfessionalProfilePage = () => {
                                 appearance: 'none',
                                 WebkitAppearance: 'none',
                                 border: '2px solid',
-                                borderColor: selected ? '#085946' : 'transparent',
-                                bgcolor: selected ? 'rgba(8, 89, 70, 0.09)' : '#f8fafc',
+                                borderColor: selected ? '#4054B2' : 'transparent',
+                                bgcolor: selected ? 'rgba(64, 84, 178, 0.09)' : '#f8fafc',
                                 borderRadius: 2.5,
                                 transition: 'all 0.2s ease',
-                                boxShadow: selected ? '0 4px 14px rgba(8, 89, 70, 0.18)' : 'none',
+                                boxShadow: selected ? '0 4px 14px rgba(64, 84, 178, 0.18)' : 'none',
                                 '&:hover': {
                                   borderColor: '#71A095',
-                                  bgcolor: 'rgba(8, 89, 70, 0.05)',
+                                  bgcolor: 'rgba(64, 84, 178, 0.05)',
                                   transform: 'translateY(-2px)',
                                 },
                               }}
@@ -892,7 +892,7 @@ const ProfessionalProfilePage = () => {
                                 sx={{
                                   display: 'block',
                                   fontWeight: 700,
-                                  color: selected ? '#085946' : 'text.secondary',
+                                  color: selected ? '#4054B2' : 'text.secondary',
                                   textTransform: 'uppercase',
                                   letterSpacing: 0.06,
                                   fontSize: '0.65rem',
@@ -905,7 +905,7 @@ const ProfessionalProfilePage = () => {
                                   fontSize: '1.65rem',
                                   fontWeight: 800,
                                   lineHeight: 1.1,
-                                  color: selected ? '#085946' : '#272F50',
+                                  color: selected ? '#4054B2' : '#272F50',
                                   my: 0.25,
                                 }}
                               >
@@ -970,7 +970,7 @@ const ProfessionalProfilePage = () => {
                       >
                         {slotsLoading ? (
                           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
-                            <CircularProgress size={36} thickness={4} sx={{ color: '#085946' }} />
+                            <CircularProgress size={36} thickness={4} sx={{ color: '#4054B2' }} />
                           </Box>
                         ) : slots.length === 0 ? (
                           <Box sx={{ textAlign: 'center', py: 3 }}>
@@ -997,13 +997,13 @@ const ProfessionalProfilePage = () => {
                                       textTransform: 'none',
                                       fontWeight: 700,
                                       fontSize: '0.95rem',
-                                      borderColor: active ? '#085946' : '#cfd8d4',
+                                      borderColor: active ? '#4054B2' : '#cfd8d4',
                                       color: active ? '#fff' : '#272F50',
-                                      bgcolor: active ? '#085946' : '#fff',
-                                      boxShadow: active ? '0 4px 12px rgba(8,89,70,0.25)' : 'none',
+                                      bgcolor: active ? '#4054B2' : '#fff',
+                                      boxShadow: active ? '0 4px 12px rgba(64,84,178,0.25)' : 'none',
                                       '&:hover': {
-                                        borderColor: '#085946',
-                                        bgcolor: active ? '#064a3a' : 'rgba(8,89,70,0.06)',
+                                        borderColor: '#4054B2',
+                                        bgcolor: active ? '#2E3E8F' : 'rgba(64,84,178,0.06)',
                                       },
                                     }}
                                   >
@@ -1022,8 +1022,8 @@ const ProfessionalProfilePage = () => {
                           mt: 3,
                           p: 2,
                           borderRadius: 2.5,
-                          bgcolor: 'rgba(8, 89, 70, 0.06)',
-                          border: '1px dashed rgba(8, 89, 70, 0.25)',
+                          bgcolor: 'rgba(64, 84, 178, 0.06)',
+                          border: '1px dashed rgba(64, 84, 178, 0.25)',
                         }}
                       >
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }} justifyContent="space-between">
@@ -1048,10 +1048,10 @@ const ProfessionalProfilePage = () => {
                             disabled={!pickDate || !pickSlot}
                             sx={{
                               px: 3,
-                              background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+                              background: 'linear-gradient(135deg, #4054B2 0%, #0d7a5f 100%)',
                               color: 'white',
                               '&:hover': {
-                                background: 'linear-gradient(135deg, #064a3a 0%, #085946 100%)',
+                                background: 'linear-gradient(135deg, #2E3E8F 0%, #4054B2 100%)',
                               },
                               '&.Mui-disabled': { bgcolor: 'grey.300', color: 'grey.500' },
                             }}
@@ -1080,18 +1080,18 @@ const ProfessionalProfilePage = () => {
                         <Stack spacing={1.5}>
                           {[
                             {
-                              icon: <AttachMoney sx={{ color: '#085946' }} />,
+                              icon: <AttachMoney sx={{ color: '#4054B2' }} />,
                               title: 'Costos y pagos',
                               body: consultationInfo.costos,
                               defaultOpen: true,
                             },
                             {
-                              icon: <MenuBook sx={{ color: '#085946' }} />,
+                              icon: <MenuBook sx={{ color: '#4054B2' }} />,
                               title: 'Preparación',
                               body: consultationInfo.preparacion,
                             },
                             {
-                              icon: <Business sx={{ color: '#085946' }} />,
+                              icon: <Business sx={{ color: '#4054B2' }} />,
                               title: 'Contacto del centro',
                               body: consultationInfo.contactoCentro,
                             },
@@ -1109,11 +1109,11 @@ const ProfessionalProfilePage = () => {
                               }}
                             >
                               <AccordionSummary
-                                expandIcon={<ExpandMore sx={{ color: '#085946' }} />}
+                                expandIcon={<ExpandMore sx={{ color: '#4054B2' }} />}
                                 sx={{
                                   minHeight: 52,
                                   px: 1.5,
-                                  bgcolor: idx === 0 ? 'rgba(8,89,70,0.04)' : 'transparent',
+                                  bgcolor: idx === 0 ? 'rgba(64,84,178,0.04)' : 'transparent',
                                   '& .MuiAccordionSummary-content': { my: 1.25, alignItems: 'center', gap: 1.25 },
                                 }}
                               >
@@ -1142,7 +1142,7 @@ const ProfessionalProfilePage = () => {
                     >
                       <CardContent sx={{ p: 3 }}>
                         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
-                          <Schedule sx={{ color: '#085946' }} />
+                          <Schedule sx={{ color: '#4054B2' }} />
                           <Typography variant="h6" sx={{ fontWeight: 700, color: '#272F50' }}>
                             Horario habitual
                           </Typography>
@@ -1185,7 +1185,7 @@ const ProfessionalProfilePage = () => {
           {selectedTab === 2 && (
             <Grid container spacing={4}>
               <Grid item xs={12}>
-                <Typography variant="h4" gutterBottom fontWeight="bold" color="#085946">
+                <Typography variant="h4" gutterBottom fontWeight="bold" color="#4054B2">
                   Videos Educativos
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -1217,7 +1217,7 @@ const ProfessionalProfilePage = () => {
                 </ImageList>
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="h4" gutterBottom fontWeight="bold" color="#085946">
+                <Typography variant="h4" gutterBottom fontWeight="bold" color="#4054B2">
                   Galería de Fotos
                 </Typography>
                 <ImageList cols={3} rowHeight={200} gap={16}>
@@ -1246,7 +1246,7 @@ const ProfessionalProfilePage = () => {
               <Grid item xs={12} md={6}>
                 <SectionCard>
                   <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                       Enviar Pregunta
                     </Typography>
                     <Typography variant="body1" paragraph>
@@ -1281,10 +1281,10 @@ const ProfessionalProfilePage = () => {
                         fullWidth
                         startIcon={<Send />}
                         sx={{
-                          background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+                          background: 'linear-gradient(135deg, #4054B2 0%, #0d7a5f 100%)',
                           color: 'white',
                           '&:hover': {
-                            background: 'linear-gradient(135deg, #0d7a5f 0%, #085946 100%)'
+                            background: 'linear-gradient(135deg, #0d7a5f 0%, #4054B2 100%)'
                           }
                         }}
                       >
@@ -1297,7 +1297,7 @@ const ProfessionalProfilePage = () => {
               <Grid item xs={12} md={6}>
                 <SectionCard>
                   <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                       Preguntas Frecuentes
                     </Typography>
                     <Stack spacing={2}>
@@ -1359,7 +1359,7 @@ const ProfessionalProfilePage = () => {
           {/* Pestaña 5: Aliados (solo categorías con contenido) */}
           {selectedTab === 4 && (
             <Box>
-              <Typography variant="h4" gutterBottom fontWeight="bold" color="#085946">
+              <Typography variant="h4" gutterBottom fontWeight="bold" color="#4054B2">
                 Aliados
               </Typography>
               <Typography variant="body1" paragraph sx={{ mb: 3 }}>
@@ -1401,7 +1401,7 @@ const ProfessionalProfilePage = () => {
           {/* Pestaña 6: Estudios (solo categorías con contenido) */}
           {selectedTab === 5 && (
             <Box>
-              <Typography variant="h4" gutterBottom fontWeight="bold" color="#085946">
+              <Typography variant="h4" gutterBottom fontWeight="bold" color="#4054B2">
                 Estudios y formación
               </Typography>
               <Typography variant="body1" paragraph sx={{ mb: 3 }}>
@@ -1420,7 +1420,7 @@ const ProfessionalProfilePage = () => {
                         <Grid item xs={12} md={4} key={`${cat.key}-${index}`}>
                           <SectionCard>
                             <CardContent sx={{ p: 3 }}>
-                              <Typography variant="h6" fontWeight="bold" color="#085946" gutterBottom>
+                              <Typography variant="h6" fontWeight="bold" color="#4054B2" gutterBottom>
                                 {study.title}
                               </Typography>
                               <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -1500,7 +1500,7 @@ const ProfessionalProfilePage = () => {
           <Button onClick={() => setBookingDialog(false)}>Cancelar</Button>
           <Button
             variant="contained"
-            sx={{ bgcolor: '#085946' }}
+            sx={{ bgcolor: '#4054B2' }}
             onClick={handleConfirmBooking}
             disabled={bookingSubmitting}
           >

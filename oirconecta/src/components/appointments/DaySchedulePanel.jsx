@@ -141,7 +141,7 @@ const DaySchedulePanel = ({
                   <TableRow
                     key={slot}
                     sx={{
-                      '&:hover': { bgcolor: type === 'occupied' ? 'rgba(8, 89, 70, 0.04)' : undefined },
+                      '&:hover': { bgcolor: type === 'occupied' ? 'rgba(64, 84, 178, 0.04)' : undefined },
                       cursor: type === 'occupied' ? 'pointer' : 'default',
                     }}
                     onClick={() => type === 'occupied' && onAppointmentClick?.(appointment)}
@@ -208,8 +208,8 @@ const DaySchedulePanel = ({
                             gap: 1,
                             p: 1.5,
                             borderRadius: 1,
-                            bgcolor: 'rgba(8, 89, 70, 0.06)',
-                            border: '1px solid rgba(8, 89, 70, 0.15)',
+                            bgcolor: 'rgba(64, 84, 178, 0.06)',
+                            border: '1px solid rgba(64, 84, 178, 0.15)',
                           }}
                         >
                           <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -260,7 +260,7 @@ const DaySchedulePanel = ({
           Bloqueado
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#085946' }} />
+          <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#4054B2' }} />
           Con cita (clic para ver)
         </Box>
       </Box>

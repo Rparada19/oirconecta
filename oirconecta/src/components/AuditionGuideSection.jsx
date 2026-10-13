@@ -9,13 +9,13 @@ import { useReveal } from '../hooks/useReveal';
 
 const C = {
   navy: '#272F50',
-  verde: '#085946',
-  oro: '#C9A86A',
-  arena: '#D9CDBF',
-  cremaCalida: '#F5EFE6',
-  blanco: '#FBFAF8',
+  verde: '#4054B2',
+  oro: '#4C7DF0',
+  arena: '#D5DDF0',
+  cremaCalida: '#EEF2FC',
+  blanco: '#FAFBFE',
   gris: '#6B7280',
-  border: '#E5E0D6',
+  border: '#E1E6F2',
 };
 
 const SIGNALS = [
@@ -80,7 +80,7 @@ function SignalRow({ s, delay }) {
           {s.title}
         </Typography>
         <Typography sx={{
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: { xs: '0.95rem', md: '1.05rem' },
           color: C.gris, lineHeight: 1.55, maxWidth: 560,
         }}>
@@ -125,7 +125,7 @@ export default function AuditionGuideSection() {
             <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
               <Box sx={{ width: 32, height: 2, bgcolor: C.oro }} />
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                 textTransform: 'uppercase', color: C.navy,
               }}>
@@ -146,7 +146,7 @@ export default function AuditionGuideSection() {
           </Box>
           <Box sx={{ pb: { md: 1.5 } }}>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.2rem' }, lineHeight: 1.55,
               color: C.gris, maxWidth: 540,
             }}>
@@ -185,7 +185,7 @@ export default function AuditionGuideSection() {
             to="/contacto/"
             sx={{
               display: 'inline-flex', alignItems: 'center', gap: 1.25,
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.9rem', fontWeight: 700, color: '#fff',
               textDecoration: 'none', whiteSpace: 'nowrap',
               bgcolor: C.navy, px: 3.25, py: 1.65, borderRadius: '6px',

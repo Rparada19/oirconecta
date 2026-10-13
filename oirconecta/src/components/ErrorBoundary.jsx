@@ -58,7 +58,7 @@ export class ErrorBoundary extends React.Component {
                 ? 'Acabamos de publicar una versión nueva del sitio. Recarga para usarla.'
                 : (this.state.error?.message || 'Error desconocido')}
             </Typography>
-            <Button variant="contained" onClick={this.handleReload} sx={{ bgcolor: '#085946', '&:hover': { bgcolor: '#064a38' } }}>
+            <Button variant="contained" onClick={this.handleReload} sx={{ bgcolor: '#4054B2', '&:hover': { bgcolor: '#064a38' } }}>
               Recargar página
             </Button>
           </Paper>

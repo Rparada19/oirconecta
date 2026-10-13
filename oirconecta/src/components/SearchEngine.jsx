@@ -58,16 +58,16 @@ const InputWrapper = styled(Box)(() => ({
     height: 56,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    border: '1px solid rgba(8, 89, 70, 0.1)',
+    border: '1px solid rgba(64, 84, 178, 0.1)',
     transition: 'all 0.3s ease',
     '&:hover': {
-      borderColor: '#085946',
+      borderColor: '#4054B2',
       backgroundColor: 'rgba(255, 255, 255, 1)',
     },
     '&.Mui-focused': {
-      borderColor: '#085946',
+      borderColor: '#4054B2',
       backgroundColor: 'rgba(255, 255, 255, 1)',
-      boxShadow: '0 0 0 3px rgba(8, 89, 70, 0.1)',
+      boxShadow: '0 0 0 3px rgba(64, 84, 178, 0.1)',
     },
   },
   '& .MuiInputBase-input': {
@@ -153,6 +153,7 @@ export default function SearchEngine({
   polizas = null,
   initialFilters = null,
   directoryNavigateBase = DIRECTORY_LISTADO_PATH,
+  hideTitle = false,
 }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState(initialFilters?.query ?? '');
@@ -276,9 +277,9 @@ export default function SearchEngine({
         ...(directoryMode
           ? {
               boxShadow: compactPad
-                ? '0 8px 32px rgba(8, 89, 70, 0.06)'
-                : '0 24px 64px rgba(8, 89, 70, 0.1)',
-              border: compactPad ? '1px solid rgba(8, 89, 70, 0.08)' : '1px solid rgba(8, 89, 70, 0.1)',
+                ? '0 8px 32px rgba(64, 84, 178, 0.06)'
+                : '0 24px 64px rgba(64, 84, 178, 0.1)',
+              border: compactPad ? '1px solid rgba(64, 84, 178, 0.08)' : '1px solid rgba(64, 84, 178, 0.1)',
               bgcolor: compactPad ? 'rgba(255,255,255,0.94)' : undefined,
             }
           : {}),
@@ -286,7 +287,7 @@ export default function SearchEngine({
 
   const inner = (
     <>
-        {!isProfessionalPage && !directoryMode && (
+        {!isProfessionalPage && !directoryMode && !hideTitle && (
           <Typography
             component="h2"
             variant="h5"
@@ -516,7 +517,7 @@ export default function SearchEngine({
                       transition: 'transform 0.18s ease, box-shadow 0.18s ease',
                       '&:hover': {
                         bgcolor: 'primary.dark',
-                        boxShadow: '0 6px 20px rgba(8, 89, 70, 0.22)',
+                        boxShadow: '0 6px 20px rgba(64, 84, 178, 0.22)',
                       },
                       '&:focus-visible': {
                         outline: '2px solid',
@@ -688,7 +689,7 @@ export default function SearchEngine({
                       transition: 'transform 0.18s ease, box-shadow 0.18s ease',
                       '&:hover': {
                         bgcolor: 'primary.dark',
-                        boxShadow: '0 6px 20px rgba(8, 89, 70, 0.22)',
+                        boxShadow: '0 6px 20px rgba(64, 84, 178, 0.22)',
                       },
                       '&:focus-visible': {
                         outline: '2px solid',

@@ -111,8 +111,8 @@ export default function PatientActionBar({
         startIcon={<CalendarMonth />}
         sx={{
           textTransform: 'none', fontWeight: 800, fontSize: 13,
-          bgcolor: '#085946', borderRadius: 1.5, py: 1, px: 2,
-          boxShadow: '0 2px 8px rgba(8,89,70,0.25)',
+          bgcolor: '#4054B2', borderRadius: 1.5, py: 1, px: 2,
+          boxShadow: '0 2px 8px rgba(64,84,178,0.25)',
           '&:hover': { bgcolor: '#064a38' },
         }}
       >

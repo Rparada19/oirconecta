@@ -142,7 +142,7 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
               ))}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 2 }}>
                 <Typography sx={{ fontWeight: 700 }}>Subtotal</Typography>
-                <Typography sx={{ fontWeight: 800, color: '#085946' }}>{formatPrice(subtotal)}</Typography>
+                <Typography sx={{ fontWeight: 800, color: '#4054B2' }}>{formatPrice(subtotal)}</Typography>
               </Box>
               <Typography variant="caption" color="text.secondary">El costo de envío se coordina al confirmar el pedido.</Typography>
 
@@ -157,7 +157,7 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
                         <Typography variant="caption" color="text.secondary">{formatPrice(p.precio)}</Typography>
                       </Box>
                       <Button size="small" variant="outlined" onClick={() => addCross(p)}
-                        sx={{ borderRadius: '8px', borderColor: '#085946', color: '#085946', minWidth: 0 }}>
+                        sx={{ borderRadius: '8px', borderColor: '#4054B2', color: '#4054B2', minWidth: 0 }}>
                         Agregar
                       </Button>
                     </Box>
@@ -184,14 +184,14 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
             <Divider sx={{ my: 2 }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography sx={{ fontWeight: 700 }}>Total</Typography>
-              <Typography sx={{ fontWeight: 800, color: '#085946' }}>{formatPrice(subtotal)}</Typography>
+              <Typography sx={{ fontWeight: 800, color: '#4054B2' }}>{formatPrice(subtotal)}</Typography>
             </Box>
           </Box>
         )}
 
         {step === 'done' && (
           <Box sx={{ textAlign: 'center', py: 2 }}>
-            <CheckCircleOutlineIcon sx={{ fontSize: 56, color: '#085946', mb: 1 }} />
+            <CheckCircleOutlineIcon sx={{ fontSize: 56, color: '#4054B2', mb: 1 }} />
             <Typography variant="h6" sx={{ fontWeight: 700 }}>¡Gracias por tu pedido!</Typography>
             <Typography color="text.secondary" sx={{ mt: 1 }}>
               Tu pedido <strong>#{result?.numero}</strong> fue registrado. Te contactaremos para coordinar el pago y la entrega.
@@ -204,7 +204,7 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
           <>
             <Button onClick={handleClose} sx={{ borderRadius: '10px' }}>Seguir comprando</Button>
             <Button variant="contained" disabled={cart.length === 0} onClick={() => setStep('form')}
-              sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+              sx={{ borderRadius: '10px', fontWeight: 700, background: '#4054B2', '&:hover': { background: '#2E3E8F' } }}>
               Continuar
             </Button>
           </>
@@ -213,14 +213,14 @@ export default function ShopCartDialog({ open, onClose, cart, setCart }) {
           <>
             <Button onClick={() => setStep('cart')} sx={{ borderRadius: '10px' }}>Atrás</Button>
             <Button variant="contained" disabled={submitting} onClick={handleSubmit}
-              sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+              sx={{ borderRadius: '10px', fontWeight: 700, background: '#4054B2', '&:hover': { background: '#2E3E8F' } }}>
               {submitting ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Confirmar pedido'}
             </Button>
           </>
         )}
         {step === 'done' && (
           <Button variant="contained" onClick={handleClose}
-            sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+            sx={{ borderRadius: '10px', fontWeight: 700, background: '#4054B2', '&:hover': { background: '#2E3E8F' } }}>
             Cerrar
           </Button>
         )}

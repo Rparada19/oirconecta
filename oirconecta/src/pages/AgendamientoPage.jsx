@@ -89,13 +89,13 @@ function MiniCalendar({ selectedDate, onSelect, availableDays }) {
       {/* Nav */}
       <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:2 }}>
         <IconButton size="small" onClick={prevMonth} disabled={!canPrev}
-          sx={{ color:'#085946', '&:hover':{ bgcolor:'rgba(8,89,70,0.08)' }, '&.Mui-disabled':{ opacity:0.3 } }}>
+          sx={{ color:'#4054B2', '&:hover':{ bgcolor:'rgba(64,84,178,0.08)' }, '&.Mui-disabled':{ opacity:0.3 } }}>
           <ChevronLeftIcon />
         </IconButton>
         <Typography sx={{ fontWeight:700, fontSize:'0.9375rem', color:'#272F50' }}>
           {MONTHS[month]} {year}
         </Typography>
-        <IconButton size="small" onClick={nextMonth} sx={{ color:'#085946', '&:hover':{ bgcolor:'rgba(8,89,70,0.08)' } }}>
+        <IconButton size="small" onClick={nextMonth} sx={{ color:'#4054B2', '&:hover':{ bgcolor:'rgba(64,84,178,0.08)' } }}>
           <ChevronRightIcon />
         </IconButton>
       </Box>
@@ -129,11 +129,11 @@ function MiniCalendar({ selectedDate, onSelect, availableDays }) {
                 aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center',
                 borderRadius:'10px', cursor: disabled ? 'default' : 'pointer', position:'relative',
                 fontSize:'0.8125rem', fontWeight: selected ? 700 : isToday ? 600 : 500,
-                bgcolor: selected ? '#085946' : isToday ? 'rgba(8,89,70,0.08)' : 'transparent',
+                bgcolor: selected ? '#4054B2' : isToday ? 'rgba(64,84,178,0.08)' : 'transparent',
                 color: selected ? '#fff' : disabled ? '#d1d5db' : '#272F50',
-                border: isToday && !selected ? '1.5px solid rgba(8,89,70,0.40)' : '1.5px solid transparent',
+                border: isToday && !selected ? '1.5px solid rgba(64,84,178,0.40)' : '1.5px solid transparent',
                 transition:'all 0.15s ease',
-                '&:hover': disabled ? {} : { bgcolor: selected ? '#085946' : 'rgba(8,89,70,0.10)', transform:'scale(1.08)' },
+                '&:hover': disabled ? {} : { bgcolor: selected ? '#4054B2' : 'rgba(64,84,178,0.10)', transform:'scale(1.08)' },
               }}
             >
               {d}
@@ -153,7 +153,7 @@ function MiniCalendar({ selectedDate, onSelect, availableDays }) {
           <Typography sx={{ fontSize:'0.6875rem', color:'#6b7280' }}>Feriado</Typography>
         </Box>
         <Box sx={{ display:'flex', alignItems:'center', gap:0.75 }}>
-          <Box sx={{ width:8, height:8, borderRadius:'50%', bgcolor:'#085946' }} />
+          <Box sx={{ width:8, height:8, borderRadius:'50%', bgcolor:'#4054B2' }} />
           <Typography sx={{ fontSize:'0.6875rem', color:'#6b7280' }}>Seleccionado</Typography>
         </Box>
       </Stack>
@@ -168,14 +168,14 @@ function StepBadge({ num, label, active, done }) {
       <Box sx={{
         width:28, height:28, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center',
         flexShrink:0, fontSize:'0.8125rem', fontWeight:700,
-        bgcolor: done ? '#085946' : active ? '#085946' : 'rgba(8,89,70,0.12)',
+        bgcolor: done ? '#4054B2' : active ? '#4054B2' : 'rgba(64,84,178,0.12)',
         color: done || active ? '#fff' : '#6b7280',
         transition:'all 0.2s',
       }}>
         {done ? '✓' : num}
       </Box>
       <Typography sx={{ fontSize:'0.875rem', fontWeight: active ? 700 : 500,
-        color: active ? '#085946' : done ? '#374151' : '#9ca3af', display:{ xs:'none', sm:'block' } }}>
+        color: active ? '#4054B2' : done ? '#374151' : '#9ca3af', display:{ xs:'none', sm:'block' } }}>
         {label}
       </Typography>
     </Box>
@@ -350,12 +350,12 @@ export default function AgendamientoPage() {
       <Box sx={{
         position: 'relative', overflow: 'hidden',
         pt: { xs: 14, md: 16 }, pb: { xs: 6, md: 8 },
-        bgcolor: '#FBFAF8',
+        bgcolor: '#FAFBFE',
       }}>
         <Box aria-hidden sx={{
           position: 'absolute', top: -180, right: -180,
           width: 540, height: 540, borderRadius: '50%',
-          background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+          background: 'radial-gradient(circle, #D5DDF055 0%, transparent 70%)',
           filter: 'blur(80px)', pointerEvents: 'none',
         }} />
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
@@ -365,9 +365,9 @@ export default function AgendamientoPage() {
           }}>
             <Box>
               <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+                <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
                 <Typography sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: '#272F50',
                 }}>
@@ -382,7 +382,7 @@ export default function AgendamientoPage() {
                 color: '#272F50', mb: { xs: 2.5, md: 3 },
               }}>
                 Vuelve a escuchar{' '}
-                <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#4054B2' }}>
                   como antes.
                 </Box>
               </Typography>
@@ -391,9 +391,9 @@ export default function AgendamientoPage() {
                 variant="contained"
                 sx={{
                   mt: 1, borderRadius: '14px', fontWeight: 700, fontSize: '1rem', py: 1.5, px: 3.5,
-                  background: 'linear-gradient(135deg,#085946,#0d7a5f)',
-                  boxShadow: '0 6px 20px rgba(8,89,70,0.28)',
-                  '&:hover': { boxShadow: '0 8px 28px rgba(8,89,70,0.38)', transform: 'translateY(-1px)' },
+                  background: 'linear-gradient(135deg,#4054B2,#0d7a5f)',
+                  boxShadow: '0 6px 20px rgba(64,84,178,0.28)',
+                  '&:hover': { boxShadow: '0 8px 28px rgba(64,84,178,0.38)', transform: 'translateY(-1px)' },
                   transition: 'all 0.2s ease',
                 }}
               >
@@ -403,7 +403,7 @@ export default function AgendamientoPage() {
 
             <Box sx={{ pb: { md: 1.5 } }}>
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
                 color: '#6B7280', lineHeight: 1.55, maxWidth: 460, mb: 3,
               }}>
@@ -423,7 +423,7 @@ export default function AgendamientoPage() {
                   }}>
                     <Box sx={{ color: '#272F50', display: 'flex' }}>{c.icon}</Box>
                     <Typography sx={{
-                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.8rem',
+                      fontFamily: '"Gotham", sans-serif', fontSize: '0.8rem',
                       color: '#272F50', fontWeight: 600,
                     }}>{c.text}</Typography>
                   </Box>
@@ -438,9 +438,9 @@ export default function AgendamientoPage() {
       <Box sx={{ bgcolor: '#fff', py: { xs: 6, md: 8 }, borderTop: '1px solid rgba(39,47,80,0.06)' }}>
         <Container maxWidth="lg">
           <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-            <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+            <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
               textTransform: 'uppercase', color: '#272F50',
             }}>
@@ -462,11 +462,11 @@ export default function AgendamientoPage() {
               { icon: <SupportAgentOutlinedIcon />, title: 'Seguimiento real', desc: 'Recordatorios, controles de adaptación a 15 días y soporte por WhatsApp durante todo el proceso.' },
             ].map(b => (
               <Grid item xs={12} sm={6} md={3} key={b.title}>
-                <Box sx={{ p: 3, borderRadius: '16px', bgcolor: '#FBFAF8', height: '100%',
+                <Box sx={{ p: 3, borderRadius: '16px', bgcolor: '#FAFBFE', height: '100%',
                   border: '1px solid rgba(39,47,80,0.06)' }}>
-                  <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'rgba(8,89,70,0.10)',
+                  <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'rgba(64,84,178,0.10)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2,
-                    '& svg': { color: '#085946', fontSize: 24 } }}>
+                    '& svg': { color: '#4054B2', fontSize: 24 } }}>
                     {b.icon}
                   </Box>
                   <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#272F50', mb: 1 }}>
@@ -483,12 +483,12 @@ export default function AgendamientoPage() {
       </Box>
 
       {/* ── Cómo es tu cita ── */}
-      <Box sx={{ bgcolor: '#FBFAF8', py: { xs: 6, md: 8 } }}>
+      <Box sx={{ bgcolor: '#FAFBFE', py: { xs: 6, md: 8 } }}>
         <Container maxWidth="lg">
           <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-            <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+            <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
               textTransform: 'uppercase', color: '#272F50',
             }}>
@@ -513,7 +513,7 @@ export default function AgendamientoPage() {
                   border: '1px solid rgba(39,47,80,0.06)', boxShadow: '0 2px 12px rgba(39,47,80,0.04)' }}>
                   <Typography sx={{
                     fontFamily: '"Gotham", sans-serif',
-                    fontSize: '2.5rem', fontWeight: 500, color: '#C9A86A',
+                    fontSize: '2.5rem', fontWeight: 500, color: '#4C7DF0',
                     lineHeight: 1, letterSpacing: '-0.02em', mb: 1.5,
                   }}>
                     {s.n}
@@ -538,11 +538,11 @@ export default function AgendamientoPage() {
         {step < 3 && (
           <Box sx={{ display:'flex', alignItems:'center', gap:{ xs:2, md:4 }, mb:4,
             px:3, py:2, borderRadius:'16px', bgcolor:'#fff',
-            border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 2px 12px rgba(8,89,70,0.06)' }}>
+            border:'1px solid rgba(64,84,178,0.08)', boxShadow:'0 2px 12px rgba(64,84,178,0.06)' }}>
             <StepBadge num={1} label="Selecciona fecha" active={step===0} done={step>0} />
-            <Box sx={{ flex:1, height:1, bgcolor:'rgba(8,89,70,0.12)', display:{ xs:'none', sm:'block' } }} />
+            <Box sx={{ flex:1, height:1, bgcolor:'rgba(64,84,178,0.12)', display:{ xs:'none', sm:'block' } }} />
             <StepBadge num={2} label="Elige horario" active={step===1} done={step>1} />
-            <Box sx={{ flex:1, height:1, bgcolor:'rgba(8,89,70,0.12)', display:{ xs:'none', sm:'block' } }} />
+            <Box sx={{ flex:1, height:1, bgcolor:'rgba(64,84,178,0.12)', display:{ xs:'none', sm:'block' } }} />
             <StepBadge num={3} label="Tus datos" active={step===2} done={step>2} />
           </Box>
         )}
@@ -554,9 +554,9 @@ export default function AgendamientoPage() {
           <Grid container spacing={3}>
             <Grid item xs={12} md={7}>
               <Box sx={{ borderRadius:'20px', p:3, bgcolor:'#fff',
-                border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)' }}>
+                border:'1px solid rgba(64,84,178,0.08)', boxShadow:'0 4px 20px rgba(64,84,178,0.08)' }}>
                 <Typography sx={{ fontWeight:800, fontSize:'1.125rem', color:'#272F50', mb:3, letterSpacing:'-0.01em' }}>
-                  <CalendarMonthIcon sx={{ verticalAlign:'middle', mr:1, color:'#085946', fontSize:20 }} />
+                  <CalendarMonthIcon sx={{ verticalAlign:'middle', mr:1, color:'#4054B2', fontSize:20 }} />
                   Selecciona una fecha
                 </Typography>
                 <MiniCalendar selectedDate={selectedDate} onSelect={handleDateSelect} />
@@ -564,18 +564,18 @@ export default function AgendamientoPage() {
             </Grid>
             <Grid item xs={12} md={5}>
               <Box sx={{ borderRadius:'20px', p:3, bgcolor:'#fff',
-                border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)', height:'100%' }}>
+                border:'1px solid rgba(64,84,178,0.08)', boxShadow:'0 4px 20px rgba(64,84,178,0.08)', height:'100%' }}>
                 <Typography sx={{ fontWeight:700, fontSize:'0.9375rem', color:'#272F50', mb:2.5 }}>
                   Información importante
                 </Typography>
                 {[
-                  { icon:<AccessTimeIcon sx={{ fontSize:18, color:'#085946' }} />, title:'Duración', desc:'50 minutos por consulta' },
-                  { icon:<CalendarMonthIcon sx={{ fontSize:18, color:'#085946' }} />, title:'Horario', desc:'Lun – Vie, 8:00 AM a 4:00 PM' },
-                  { icon:<LocationOnOutlinedIcon sx={{ fontSize:18, color:'#085946' }} />, title:'Ubicación', desc:'Carrera 10 #96-25, Cons. 320\nEdificio Centro Ejecutivo, Bogotá' },
-                  { icon:<MedicalServicesOutlinedIcon sx={{ fontSize:18, color:'#085946' }} />, title:'Especialidad', desc:'Audiología clínica y valoración auditiva' },
+                  { icon:<AccessTimeIcon sx={{ fontSize:18, color:'#4054B2' }} />, title:'Duración', desc:'50 minutos por consulta' },
+                  { icon:<CalendarMonthIcon sx={{ fontSize:18, color:'#4054B2' }} />, title:'Horario', desc:'Lun – Vie, 8:00 AM a 4:00 PM' },
+                  { icon:<LocationOnOutlinedIcon sx={{ fontSize:18, color:'#4054B2' }} />, title:'Ubicación', desc:'Carrera 10 #96-25, Cons. 320\nEdificio Centro Ejecutivo, Bogotá' },
+                  { icon:<MedicalServicesOutlinedIcon sx={{ fontSize:18, color:'#4054B2' }} />, title:'Especialidad', desc:'Audiología clínica y valoración auditiva' },
                 ].map(item => (
                   <Box key={item.title} sx={{ display:'flex', gap:1.5, mb:2.5 }}>
-                    <Box sx={{ width:36, height:36, borderRadius:'10px', bgcolor:'rgba(8,89,70,0.08)',
+                    <Box sx={{ width:36, height:36, borderRadius:'10px', bgcolor:'rgba(64,84,178,0.08)',
                       display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                       {item.icon}
                     </Box>
@@ -585,7 +585,7 @@ export default function AgendamientoPage() {
                     </Box>
                   </Box>
                 ))}
-                <Box sx={{ mt:2, borderRadius:'12px', overflow:'hidden', border:'1px solid rgba(8,89,70,0.10)' }}>
+                <Box sx={{ mt:2, borderRadius:'12px', overflow:'hidden', border:'1px solid rgba(64,84,178,0.10)' }}>
                   <iframe
                     title="Cómo llegar a OírConecta"
                     src="https://www.google.com/maps?q=Carrera+10+%2396-25+Bogot%C3%A1&output=embed"
@@ -601,7 +601,7 @@ export default function AgendamientoPage() {
                       href="https://www.google.com/maps/dir/?api=1&destination=Carrera+10+%2396-25+Bogot%C3%A1"
                       target="_blank"
                       rel="noopener"
-                      sx={{ fontSize:'0.75rem', fontWeight:700, color:'#085946', textDecoration:'none',
+                      sx={{ fontSize:'0.75rem', fontWeight:700, color:'#4054B2', textDecoration:'none',
                         '&:hover':{ textDecoration:'underline' } }}
                     >
                       Cómo llegar en Google Maps →
@@ -616,11 +616,11 @@ export default function AgendamientoPage() {
         {/* ── PASO 1: Selección de hora ── */}
         {step === 1 && (
           <Box sx={{ borderRadius:'20px', p:{ xs:3, md:4 }, bgcolor:'#fff',
-            border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)' }}>
+            border:'1px solid rgba(64,84,178,0.08)', boxShadow:'0 4px 20px rgba(64,84,178,0.08)' }}>
             <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:3, flexWrap:'wrap', gap:2 }}>
               <Box>
                 <Typography sx={{ fontWeight:800, fontSize:'1.125rem', color:'#272F50', letterSpacing:'-0.01em' }}>
-                  <AccessTimeIcon sx={{ verticalAlign:'middle', mr:1, color:'#085946', fontSize:20 }} />
+                  <AccessTimeIcon sx={{ verticalAlign:'middle', mr:1, color:'#4054B2', fontSize:20 }} />
                   Selecciona un horario
                 </Typography>
                 <Typography sx={{ fontSize:'0.875rem', color:'#6b7280', mt:0.5 }}>
@@ -628,20 +628,20 @@ export default function AgendamientoPage() {
                 </Typography>
               </Box>
               <Button size="small" onClick={() => { setStep(0); setSelectedTime(null); }}
-                sx={{ color:'#085946', fontWeight:600, fontSize:'0.8125rem' }}>
+                sx={{ color:'#4054B2', fontWeight:600, fontSize:'0.8125rem' }}>
                 ← Cambiar fecha
               </Button>
             </Box>
 
             {loadingSlots ? (
               <Box sx={{ display:'flex', justifyContent:'center', py:6 }}>
-                <CircularProgress size={36} thickness={4} sx={{ color:'#085946' }} />
+                <CircularProgress size={36} thickness={4} sx={{ color:'#4054B2' }} />
               </Box>
             ) : slots.length === 0 ? (
               <Box sx={{ textAlign:'center', py:6 }}>
                 <Typography sx={{ color:'#6b7280', mb:2 }}>No hay horarios disponibles para este día.</Typography>
                 <Button onClick={() => setStep(0)} variant="outlined"
-                  sx={{ borderColor:'#085946', color:'#085946', borderRadius:'12px' }}>
+                  sx={{ borderColor:'#4054B2', color:'#4054B2', borderRadius:'12px' }}>
                   Elegir otra fecha
                 </Button>
               </Box>
@@ -653,12 +653,12 @@ export default function AgendamientoPage() {
                     <Grid item xs={12} sm={6} md={4} key={slot}>
                       <Box onClick={() => handleTimeSelect(slot)} sx={{
                         p:2.5, borderRadius:'14px', cursor:'pointer', textAlign:'center',
-                        bgcolor: sel ? '#085946' : '#f8fafc',
-                        border: sel ? '2px solid #085946' : '2px solid rgba(8,89,70,0.10)',
+                        bgcolor: sel ? '#4054B2' : '#f8fafc',
+                        border: sel ? '2px solid #4054B2' : '2px solid rgba(64,84,178,0.10)',
                         transition:'all 0.2s ease',
-                        '&:hover':{ bgcolor: sel ? '#085946' : 'rgba(8,89,70,0.06)', transform:'translateY(-2px)', boxShadow:'0 6px 18px rgba(8,89,70,0.12)' },
+                        '&:hover':{ bgcolor: sel ? '#4054B2' : 'rgba(64,84,178,0.06)', transform:'translateY(-2px)', boxShadow:'0 6px 18px rgba(64,84,178,0.12)' },
                       }}>
-                        <AccessTimeIcon sx={{ fontSize:18, color: sel ? '#6ee7c8' : '#085946', mb:0.5 }} />
+                        <AccessTimeIcon sx={{ fontSize:18, color: sel ? '#6ee7c8' : '#4054B2', mb:0.5 }} />
                         <Typography sx={{ fontSize:'0.9375rem', fontWeight:700, color: sel ? '#fff' : '#272F50', lineHeight:1.3 }}>
                           {formatSlot(slot).split('–')[0].trim()}
                         </Typography>
@@ -679,14 +679,14 @@ export default function AgendamientoPage() {
           <Grid container spacing={3}>
             <Grid item xs={12} md={7}>
               <Box sx={{ borderRadius:'20px', p:{ xs:3, md:4 }, bgcolor:'#fff',
-                border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)' }}>
+                border:'1px solid rgba(64,84,178,0.08)', boxShadow:'0 4px 20px rgba(64,84,178,0.08)' }}>
                 <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:3, flexWrap:'wrap', gap:2 }}>
                   <Typography sx={{ fontWeight:800, fontSize:'1.125rem', color:'#272F50', letterSpacing:'-0.01em' }}>
-                    <PersonOutlineIcon sx={{ verticalAlign:'middle', mr:1, color:'#085946', fontSize:20 }} />
+                    <PersonOutlineIcon sx={{ verticalAlign:'middle', mr:1, color:'#4054B2', fontSize:20 }} />
                     Tus datos
                   </Typography>
                   <Button size="small" onClick={() => setStep(1)}
-                    sx={{ color:'#085946', fontWeight:600, fontSize:'0.8125rem' }}>
+                    sx={{ color:'#4054B2', fontWeight:600, fontSize:'0.8125rem' }}>
                     ← Cambiar hora
                   </Button>
                 </Box>
@@ -718,9 +718,9 @@ export default function AgendamientoPage() {
                   disabled={submitting || !form.name
                     || !esEmailValido(form.email) || !esTelefonoValido(form.phone)}
                   sx={{ mt:3.5, borderRadius:'14px', fontWeight:700, fontSize:'1rem', py:1.75,
-                    background:'linear-gradient(135deg,#085946,#0d7a5f)',
-                    boxShadow:'0 6px 20px rgba(8,89,70,0.28)',
-                    '&:hover':{ boxShadow:'0 8px 28px rgba(8,89,70,0.38)', transform:'translateY(-1px)' },
+                    background:'linear-gradient(135deg,#4054B2,#0d7a5f)',
+                    boxShadow:'0 6px 20px rgba(64,84,178,0.28)',
+                    '&:hover':{ boxShadow:'0 8px 28px rgba(64,84,178,0.38)', transform:'translateY(-1px)' },
                     '&:disabled':{ background:'#e5e7eb', color:'#9ca3af', boxShadow:'none' },
                     transition:'all 0.2s ease' }}>
                   {submitting ? <CircularProgress size={22} sx={{ color:'#fff' }} /> : 'Confirmar cita'}
@@ -731,7 +731,7 @@ export default function AgendamientoPage() {
             {/* Resumen */}
             <Grid item xs={12} md={5}>
               <Box sx={{ borderRadius:'20px', p:3, bgcolor:'#fff',
-                border:'1px solid rgba(8,89,70,0.08)', boxShadow:'0 4px 20px rgba(8,89,70,0.08)' }}>
+                border:'1px solid rgba(64,84,178,0.08)', boxShadow:'0 4px 20px rgba(64,84,178,0.08)' }}>
                 <Typography sx={{ fontWeight:700, fontSize:'0.9375rem', color:'#272F50', mb:2.5 }}>
                   Resumen de tu cita
                 </Typography>
@@ -742,7 +742,7 @@ export default function AgendamientoPage() {
                   { label:'Lugar', value:'Cr 10 #96-25 Cons. 320\nEdificio Centro Ejecutivo, Bogotá' },
                 ].map(r => (
                   <Box key={r.label} sx={{ display:'flex', flexDirection:'column', mb:2,
-                    pb:2, borderBottom:'1px solid rgba(8,89,70,0.06)', '&:last-child':{ border:'none', mb:0, pb:0 } }}>
+                    pb:2, borderBottom:'1px solid rgba(64,84,178,0.06)', '&:last-child':{ border:'none', mb:0, pb:0 } }}>
                     <Typography sx={{ fontSize:'0.75rem', fontWeight:700, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.06em' }}>{r.label}</Typography>
                     <Typography sx={{ fontSize:'0.9375rem', color:'#272F50', fontWeight:600, mt:0.25, whiteSpace:'pre-line' }}>{r.value}</Typography>
                   </Box>
@@ -755,9 +755,9 @@ export default function AgendamientoPage() {
         {/* ── PASO 3: Éxito ── */}
         {step === 3 && (
           <Box sx={{ maxWidth:560, mx:'auto', textAlign:'center' }}>
-            <Box sx={{ width:80, height:80, borderRadius:'50%', bgcolor:'rgba(8,89,70,0.10)',
+            <Box sx={{ width:80, height:80, borderRadius:'50%', bgcolor:'rgba(64,84,178,0.10)',
               display:'flex', alignItems:'center', justifyContent:'center', mx:'auto', mb:3 }}>
-              <CheckCircleIcon sx={{ fontSize:44, color:'#085946' }} />
+              <CheckCircleIcon sx={{ fontSize:44, color:'#4054B2' }} />
             </Box>
             <Typography sx={{ fontWeight:900, fontSize:'2rem', color:'#272F50', letterSpacing:'-0.03em', mb:1.5 }}>
               ¡Cita confirmada!
@@ -767,8 +767,8 @@ export default function AgendamientoPage() {
               Recibirás un correo de confirmación y recordatorios antes de la cita.
             </Typography>
 
-            <Box sx={{ borderRadius:'16px', p:3, bgcolor:'#f0fdf4', border:'1px solid rgba(8,89,70,0.15)', mb:4, textAlign:'left' }}>
-              <Typography sx={{ fontSize:'0.8125rem', fontWeight:700, color:'#085946', mb:1.5, textTransform:'uppercase', letterSpacing:'0.06em' }}>
+            <Box sx={{ borderRadius:'16px', p:3, bgcolor:'#f0fdf4', border:'1px solid rgba(64,84,178,0.15)', mb:4, textAlign:'left' }}>
+              <Typography sx={{ fontSize:'0.8125rem', fontWeight:700, color:'#4054B2', mb:1.5, textTransform:'uppercase', letterSpacing:'0.06em' }}>
                 Detalle de la cita
               </Typography>
               {[
@@ -786,11 +786,11 @@ export default function AgendamientoPage() {
 
             <Stack spacing={2}>
               <Button variant="contained" onClick={reset} sx={{ borderRadius:'14px', fontWeight:700, py:1.5,
-                background:'linear-gradient(135deg,#085946,#0d7a5f)', boxShadow:'0 6px 20px rgba(8,89,70,0.25)' }}>
+                background:'linear-gradient(135deg,#4054B2,#0d7a5f)', boxShadow:'0 6px 20px rgba(64,84,178,0.25)' }}>
                 Agendar otra cita
               </Button>
               <Button variant="outlined" component={RouterLink} to="/blog/"
-                sx={{ borderRadius:'14px', fontWeight:600, py:1.5, borderColor:'#085946', color:'#085946' }}>
+                sx={{ borderRadius:'14px', fontWeight:600, py:1.5, borderColor:'#4054B2', color:'#4054B2' }}>
                 Leer artículos de salud auditiva
               </Button>
             </Stack>
@@ -802,9 +802,9 @@ export default function AgendamientoPage() {
       <Box sx={{ bgcolor: '#fff', py: { xs: 6, md: 8 }, borderTop: '1px solid rgba(39,47,80,0.06)' }}>
         <Container maxWidth="lg">
           <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-            <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+            <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
               textTransform: 'uppercase', color: '#272F50',
             }}>
@@ -825,11 +825,11 @@ export default function AgendamientoPage() {
               { name: 'Doña Cecilia', age: '72 años', text: 'Después de años de decir "¿qué?", mi familia me convenció. La audióloga me trató con dignidad y hoy escucho a mis nietos.' },
             ].map(t => (
               <Grid item xs={12} md={4} key={t.name}>
-                <Box sx={{ p: 3.5, borderRadius: '16px', bgcolor: '#FBFAF8', height: '100%',
+                <Box sx={{ p: 3.5, borderRadius: '16px', bgcolor: '#FAFBFE', height: '100%',
                   border: '1px solid rgba(39,47,80,0.06)' }}>
                   <Stack direction="row" spacing={0.5} sx={{ mb: 2 }}>
                     {[...Array(5)].map((_, i) => (
-                      <StarRoundedIcon key={i} sx={{ fontSize: 18, color: '#C9A86A' }} />
+                      <StarRoundedIcon key={i} sx={{ fontSize: 18, color: '#4C7DF0' }} />
                     ))}
                   </Stack>
                   <Typography sx={{ fontSize: '0.9375rem', color: '#374151', lineHeight: 1.7, mb: 2.5, fontStyle: 'italic' }}>
@@ -849,12 +849,12 @@ export default function AgendamientoPage() {
       </Box>
 
       {/* ── FAQ ── */}
-      <Box sx={{ bgcolor: '#FBFAF8', py: { xs: 6, md: 8 } }}>
+      <Box sx={{ bgcolor: '#FAFBFE', py: { xs: 6, md: 8 } }}>
         <Container maxWidth="md">
           <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-            <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+            <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
               textTransform: 'uppercase', color: '#272F50',
             }}>
@@ -881,7 +881,7 @@ export default function AgendamientoPage() {
               border: '1px solid rgba(39,47,80,0.08)',
               '&:before': { display: 'none' },
             }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#085946' }} />}
+              <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#4054B2' }} />}
                 sx={{ px: 3, py: 1 }}>
                 <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#272F50' }}>
                   {f.q}
@@ -908,7 +908,7 @@ export default function AgendamientoPage() {
             No pospongas más tu audición.
           </Typography>
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1rem', md: '1.125rem' },
             color: 'rgba(255,255,255,0.75)', mb: 4, maxWidth: 560, mx: 'auto',
           }}>
@@ -919,7 +919,7 @@ export default function AgendamientoPage() {
             variant="contained"
             sx={{
               borderRadius: '14px', fontWeight: 700, fontSize: '1rem', py: 1.75, px: 4,
-              bgcolor: '#C9A86A', color: '#272F50',
+              bgcolor: '#4C7DF0', color: '#272F50',
               boxShadow: '0 6px 20px rgba(201,168,106,0.35)',
               '&:hover': { bgcolor: '#d4b578', boxShadow: '0 8px 28px rgba(201,168,106,0.45)', transform: 'translateY(-1px)' },
               transition: 'all 0.2s ease',

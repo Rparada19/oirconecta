@@ -158,26 +158,26 @@ const EcommercePage = () => {
         <script type="application/ld+json">{JSON.stringify(catalogJsonLd)}</script>
       </Helmet>
 
-      <Box component="main" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#FBFAF8' }}>
+      <Box component="main" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#FAFBFE' }}>
         <Header />
 
         {/* HERO editorial */}
         <Box sx={{
           position: 'relative', overflow: 'hidden',
           pt: { xs: 14, md: 16 }, pb: { xs: 5, md: 7 },
-          bgcolor: '#FBFAF8',
+          bgcolor: '#FAFBFE',
         }}>
           <Box aria-hidden sx={{
             position: 'absolute', top: -180, right: -180, width: 540, height: 540,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+            background: 'radial-gradient(circle, #D5DDF055 0%, transparent 70%)',
             filter: 'blur(80px)', pointerEvents: 'none',
           }} />
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
             <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-              <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+              <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                 textTransform: 'uppercase', color: '#272F50',
               }}>
@@ -191,12 +191,12 @@ const EcommercePage = () => {
               color: '#272F50', mb: 3,
             }}>
               Lo que tu audífono{' '}
-              <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
+              <Box component="span" sx={{ fontStyle: 'italic', color: '#4054B2' }}>
                 necesita.
               </Box>
             </Typography>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.0625rem', md: '1.1875rem' },
               color: '#6B7280', lineHeight: 1.55, maxWidth: 680,
             }}>
@@ -366,7 +366,7 @@ const EcommercePage = () => {
                       disabled={!puedeAgregar}
                       onClick={() => handleAddToCart(product, chosen)}
                       sx={{
-                        bgcolor: '#085946',
+                        bgcolor: '#4054B2',
                         '&:hover': { bgcolor: '#272F50' }
                       }}
                     >

@@ -6,8 +6,8 @@ import { Link as RouterLink } from 'react-router-dom';
 import { HOME_VIDEO_EMBED_URL } from '../config/homeContent';
 
 const C = {
-  navy: '#272F50', verde: '#085946', verdeProfundo: '#00382B',
-  oro: '#C9A86A', blanco: '#FBFAF8', gris: '#6B7280', arena: '#D9CDBF',
+  navy: '#272F50', verde: '#4054B2', verdeProfundo: '#1B2550',
+  oro: '#4C7DF0', blanco: '#FAFBFE', gris: '#6B7280', arena: '#D5DDF0',
 };
 
 const POSTER = '/img/audiologa-atendiendo-paciente.jpg';
@@ -25,7 +25,7 @@ export default function HomeVideoSection() {
             <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 2.5 }}>
               <Box sx={{ width: 28, height: 2, bgcolor: C.verde }} />
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.75rem',
+                fontFamily: '"Gotham", sans-serif', fontSize: '0.75rem',
                 fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.verde,
               }}>Historia humana</Typography>
             </Stack>
@@ -40,7 +40,7 @@ export default function HomeVideoSection() {
               </Box>
             </Typography>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '1.0625rem',
+              fontFamily: '"Gotham", sans-serif', fontSize: '1.0625rem',
               color: C.gris, lineHeight: 1.65, mb: 4,
             }}>
               Conversación, pruebas sencillas y espacio para preguntar. Nada de tecnicismos innecesarios: solo personas cuidando personas.
@@ -48,10 +48,10 @@ export default function HomeVideoSection() {
             <Button component={RouterLink} to="/agendar/" variant="contained" size="large"
               startIcon={<CalendarMonthIcon />}
               sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif', background: 'linear-gradient(135deg, #0d7a5c 0%, #085946 60%, #00382B 100%) !important', color: '#fff !important',
+                fontFamily: '"Gotham", sans-serif', background: 'linear-gradient(135deg, #5A6FD6 0%, #4054B2 60%, #1B2550 100%) !important', color: '#fff !important',
                 fontWeight: 700, fontSize: '0.9375rem', px: 3.5, py: 1.5, borderRadius: '6px',
-                boxShadow: '0 6px 18px rgba(8,89,70,0.35)',
-                '&:hover': { background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #064a3a 100%) !important', transform: 'translateY(-2px)', boxShadow: '0 10px 24px rgba(8,89,70,0.45)' },
+                boxShadow: '0 6px 18px rgba(64,84,178,0.35)',
+                '&:hover': { background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #2E3E8F 100%) !important', transform: 'translateY(-2px)', boxShadow: '0 10px 24px rgba(64,84,178,0.45)' },
               }}
             >Agendar una valoración</Button>
           </Box>
@@ -103,7 +103,7 @@ export default function HomeVideoSection() {
                     boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
                   }}>
                     <Typography sx={{
-                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem',
+                      fontFamily: '"Gotham", sans-serif', fontSize: '0.6875rem',
                       fontWeight: 700, color: C.navy, letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                     }}>

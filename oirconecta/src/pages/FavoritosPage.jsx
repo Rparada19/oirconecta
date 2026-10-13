@@ -58,7 +58,7 @@ export default function FavoritosPage() {
 
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress sx={{ color: '#085946' }} />
+              <CircularProgress sx={{ color: '#4054B2' }} />
             </Box>
           ) : profiles.length === 0 ? (
             <Box sx={{
@@ -73,7 +73,7 @@ export default function FavoritosPage() {
                 Cuando visites un perfil del directorio, toca el corazón para guardarlo aquí.
               </Typography>
               <Button component={RouterLink} to="/directorio/listado" variant="contained"
-                sx={{ bgcolor: '#085946', textTransform: 'none', fontWeight: 700, borderRadius: 1.5, '&:hover': { bgcolor: '#064a38' } }}>
+                sx={{ bgcolor: '#4054B2', textTransform: 'none', fontWeight: 700, borderRadius: 1.5, '&:hover': { bgcolor: '#064a38' } }}>
                 Explorar directorio
               </Button>
             </Box>

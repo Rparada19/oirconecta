@@ -177,12 +177,12 @@ const OtologosPage = () => {
       <Box sx={{
         position: 'relative', overflow: 'hidden',
         pt: { xs: 14, md: 16 }, pb: { xs: 6, md: 8 },
-        bgcolor: '#FBFAF8',
+        bgcolor: '#FAFBFE',
       }}>
         <Box aria-hidden sx={{
           position: 'absolute', top: -180, right: -180, width: 540, height: 540,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+          background: 'radial-gradient(circle, #D5DDF055 0%, transparent 70%)',
           filter: 'blur(80px)', pointerEvents: 'none',
         }} />
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
@@ -192,9 +192,9 @@ const OtologosPage = () => {
           }}>
             <Box>
               <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+                <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
                 <Typography sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                   textTransform: 'uppercase', color: '#272F50',
                 }}>
@@ -208,14 +208,14 @@ const OtologosPage = () => {
                 color: '#272F50', mb: 3,
               }}>
                 Encuentra a tu{' '}
-                <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#4054B2' }}>
                   otorrinolaringólogo.
                 </Box>
               </Typography>
             </Box>
             <Box sx={{ pb: { md: 1.5 } }}>
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1.0625rem', md: '1.1875rem' },
                 color: '#6B7280', lineHeight: 1.55, maxWidth: 460, mb: 3,
               }}>
@@ -236,7 +236,7 @@ const OtologosPage = () => {
                       {s.num}
                     </Typography>
                     <Typography sx={{
-                      fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.7rem',
+                      fontFamily: '"Gotham", sans-serif', fontSize: '0.7rem',
                       fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase',
                       color: '#6B7280', mt: 0.75,
                     }}>

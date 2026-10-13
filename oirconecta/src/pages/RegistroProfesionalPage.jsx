@@ -82,7 +82,7 @@ export default function RegistroProfesionalPage() {
       <Box sx={{ flex: 1, pt: { xs: 12, md: 14 }, pb: 6, bgcolor: 'grey.50' }}>
         <Container maxWidth="sm">
           <Paper sx={{ p: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, color: '#085946' }}>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, color: '#4054B2' }}>
               Registro profesional
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -164,7 +164,7 @@ export default function RegistroProfesionalPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 2 }}>
-                <Button type="submit" variant="contained" fullWidth sx={{ py: 1.5, bgcolor: '#085946', fontWeight: 800, textTransform: 'none' }} disabled={loading}>
+                <Button type="submit" variant="contained" fullWidth sx={{ py: 1.5, bgcolor: '#4054B2', fontWeight: 800, textTransform: 'none' }} disabled={loading}>
                   {loading ? 'Enviando…' : 'Registrarme'}
                 </Button>
                 <Button
@@ -172,7 +172,7 @@ export default function RegistroProfesionalPage() {
                   to="/login-directorio"
                   variant="outlined"
                   fullWidth
-                  sx={{ py: 1.5, fontWeight: 700, textTransform: 'none', borderWidth: 2, borderColor: '#085946', color: '#085946' }}
+                  sx={{ py: 1.5, fontWeight: 700, textTransform: 'none', borderWidth: 2, borderColor: '#4054B2', color: '#4054B2' }}
                 >
                   Iniciar sesión
                 </Button>

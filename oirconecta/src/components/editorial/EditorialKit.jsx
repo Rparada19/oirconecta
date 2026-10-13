@@ -21,15 +21,15 @@ import { useReveal } from '../../hooks/useReveal';
 export const C = {
   navy: '#272F50',
   navyDark: '#1B2240',
-  verde: '#085946',
-  oro: '#C9A86A',
-  oroSuave: '#E0C28A',
-  arena: '#D9CDBF',
-  cremaCalida: '#F5EFE6',
-  blanco: '#FBFAF8',
+  verde: '#4054B2',
+  oro: '#4C7DF0',
+  oroSuave: '#9DB8FF',
+  arena: '#D5DDF0',
+  cremaCalida: '#EEF2FC',
+  blanco: '#FAFBFE',
   gris: '#6B7280',
   grisClaro: '#A1A7B1',
-  border: '#E5E0D6',
+  border: '#E1E6F2',
 };
 
 // ─── SectionEyebrow ─────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ export function SectionEyebrow({ children, color = C.navy, dash = C.oro, sx }) {
     <Stack direction="row" alignItems="center" spacing={1.75} sx={sx}>
       <Box sx={{ width: 32, height: 2, bgcolor: dash }} />
       <Typography sx={{
-        fontFamily: '"Gotham", "DM Sans", sans-serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
         textTransform: 'uppercase', color,
       }}>
@@ -141,7 +141,7 @@ export function PageHero({
               />
               {intro && (
                 <Typography sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: { xs: '1.125rem', md: '1.3125rem' }, lineHeight: 1.55,
                   color: C.gris, mb: { xs: 4, md: 5 }, maxWidth: 580,
                 }}>
@@ -198,7 +198,7 @@ export function PageHero({
                     position: 'absolute', top: { xs: 16, md: 32 }, right: { xs: 16, md: 32 },
                     bgcolor: 'rgba(255,255,255,0.92)', color: C.navy,
                     px: 2, py: 0.75, borderRadius: '4px',
-                    fontFamily: '"Gotham", "DM Sans", sans-serif',
+                    fontFamily: '"Gotham", sans-serif',
                     fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
                   }}>
                     {imageTag}
@@ -230,7 +230,7 @@ export function PageHero({
             />
             {intro && (
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: { xs: '1.125rem', md: '1.3rem' }, lineHeight: 1.55,
                 color: C.gris, mb: 4, maxWidth: 640,
               }}>
@@ -277,7 +277,7 @@ export function CTAArrowLink({ to, label, primary, onClick }) {
         onClick={onClick}
         type={onClick ? 'button' : undefined}
         sx={{
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '1.05rem', fontWeight: 700,
           color: C.navy, textDecoration: 'none', border: 'none', background: 'none',
           cursor: 'pointer',
@@ -300,7 +300,7 @@ export function CTAArrowLink({ to, label, primary, onClick }) {
       onClick={onClick}
       type={onClick ? 'button' : undefined}
       sx={{
-        fontFamily: '"Gotham", "DM Sans", sans-serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: '0.95rem', fontWeight: 600,
         color: C.gris, textDecoration: 'none', border: 'none', background: 'none',
         cursor: 'pointer',
@@ -319,7 +319,7 @@ export function CTAArrowLink({ to, label, primary, onClick }) {
 export function EditorialIntro({ children, dropCap, color = C.navy }) {
   return (
     <Typography sx={{
-      fontFamily: '"Gotham", "DM Sans", sans-serif',
+      fontFamily: '"Gotham", sans-serif',
       fontSize: { xs: '1.05rem', md: '1.15rem' }, lineHeight: 1.65,
       color,
       ...(dropCap && {
@@ -360,7 +360,7 @@ export function PullQuote({ children, author, bgcolor = C.cremaCalida }) {
         </Typography>
         {author && (
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.2em',
             textTransform: 'uppercase', color: C.gris, mt: 3,
           }}>

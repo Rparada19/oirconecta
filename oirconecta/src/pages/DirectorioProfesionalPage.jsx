@@ -155,7 +155,7 @@ const dirBleed = (sx = {}) => ({
 const dirCardSx = {
   borderRadius: 2,
   p: { xs: 2, md: 2.5 },
-  border: '1px solid rgba(8, 89, 70, 0.08)',
+  border: '1px solid rgba(64, 84, 178, 0.08)',
   boxShadow: '0 1px 2px rgba(16, 40, 32, 0.04), 0 12px 32px rgba(16, 40, 32, 0.06)',
   bgcolor: 'background.paper',
 };
@@ -181,13 +181,13 @@ const dirFieldSx = {
     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
   },
   '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: 'rgba(8, 89, 70, 0.35)',
+    borderColor: 'rgba(64, 84, 178, 0.35)',
   },
   '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
     borderWidth: '1.5px',
   },
   '& .MuiOutlinedInput-root.Mui-focused': {
-    boxShadow: '0 0 0 3px rgba(8, 89, 70, 0.1)',
+    boxShadow: '0 0 0 3px rgba(64, 84, 178, 0.1)',
   },
 };
 
@@ -653,9 +653,9 @@ export default function DirectorioProfesionalPage() {
                 borderRadius: { xs: 0, md: 3 },
                 /* Sin borde inferior: evita la línea que se veía entre el cierre de la tarjeta y la barra fija */
                 border: { xs: 'none', md: 'none' },
-                borderTop: { md: '1px solid rgba(8, 89, 70, 0.2)' },
-                borderLeft: { md: '1px solid rgba(8, 89, 70, 0.2)' },
-                borderRight: { md: '1px solid rgba(8, 89, 70, 0.2)' },
+                borderTop: { md: '1px solid rgba(64, 84, 178, 0.2)' },
+                borderLeft: { md: '1px solid rgba(64, 84, 178, 0.2)' },
+                borderRight: { md: '1px solid rgba(64, 84, 178, 0.2)' },
                 boxShadow: { md: 'none' },
                 bgcolor: { md: 'background.paper' },
               }}
@@ -697,7 +697,7 @@ export default function DirectorioProfesionalPage() {
                 background: [
                   'radial-gradient(80% 60% at 20% 20%, rgba(255,255,255,0.35) 0%, transparent 55%)',
                   'radial-gradient(70% 50% at 100% 0%, rgba(113, 160, 149, 0.45) 0%, transparent 50%)',
-                  'linear-gradient(165deg, rgba(8, 89, 70, 0.88) 0%, rgba(13, 109, 88, 0.78) 38%, rgba(26, 40, 64, 0.88) 100%)',
+                  'linear-gradient(165deg, rgba(64, 84, 178, 0.88) 0%, rgba(13, 109, 88, 0.78) 38%, rgba(26, 40, 64, 0.88) 100%)',
                 ].join(', '),
               }}
             />
@@ -1063,7 +1063,7 @@ export default function DirectorioProfesionalPage() {
               width: '100%',
               py: { xs: 1.75, md: 2 },
               bgcolor: 'background.paper',
-              borderBottom: '1px solid rgba(8, 89, 70, 0.08)',
+              borderBottom: '1px solid rgba(64, 84, 178, 0.08)',
             }}
           >
             <Box sx={dirContentSx}>
@@ -1092,8 +1092,8 @@ export default function DirectorioProfesionalPage() {
                       bgcolor: 'primary.main',
                       color: 'common.white',
                       px: 2.5,
-                      boxShadow: '0 8px 24px rgba(8, 89, 70, 0.35)',
-                      '&:hover': { bgcolor: 'primary.dark', boxShadow: '0 10px 28px rgba(8, 89, 70, 0.4)' },
+                      boxShadow: '0 8px 24px rgba(64, 84, 178, 0.35)',
+                      '&:hover': { bgcolor: 'primary.dark', boxShadow: '0 10px 28px rgba(64, 84, 178, 0.4)' },
                     }}
                   >
                     Agendar ahora
@@ -1139,10 +1139,10 @@ export default function DirectorioProfesionalPage() {
                 sx={{
                   display: 'inline-flex', alignItems: 'center', gap: 0.75,
                   px: 1.25, py: 0.5, borderRadius: 1,
-                  fontSize: 12.5, fontWeight: 700, color: '#085946',
-                  bgcolor: 'rgba(8,89,70,0.06)', border: '1px dashed rgba(8,89,70,0.30)',
+                  fontSize: 12.5, fontWeight: 700, color: '#4054B2',
+                  bgcolor: 'rgba(64,84,178,0.06)', border: '1px dashed rgba(64,84,178,0.30)',
                   cursor: 'pointer', mt: 0.5,
-                  '&:hover': { bgcolor: 'rgba(8,89,70,0.10)' },
+                  '&:hover': { bgcolor: 'rgba(64,84,178,0.10)' },
                 }}>
                 💬 ¿Quieres una segunda opinión sobre tu caso?
               </Box>
@@ -1197,7 +1197,7 @@ export default function DirectorioProfesionalPage() {
                                 width: 44,
                                 height: 44,
                                 borderRadius: 2,
-                                bgcolor: 'rgba(8, 89, 70, 0.08)',
+                                bgcolor: 'rgba(64, 84, 178, 0.08)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -1240,7 +1240,7 @@ export default function DirectorioProfesionalPage() {
                       flex: { sm: '0 0 auto' },
                       bgcolor: 'primary.main',
                       color: 'common.white',
-                      boxShadow: '0 8px 24px rgba(8, 89, 70, 0.3)',
+                      boxShadow: '0 8px 24px rgba(64, 84, 178, 0.3)',
                       '&:hover': { bgcolor: 'primary.dark' },
                     }}
                   >
@@ -1339,7 +1339,7 @@ export default function DirectorioProfesionalPage() {
                                   display: 'block',
                                 }}
                               />
-                              <Box sx={{ px: 2, py: 1.5, bgcolor: 'rgba(8, 89, 70, 0.04)', borderTop: '1px solid rgba(8, 89, 70, 0.08)' }}>
+                              <Box sx={{ px: 2, py: 1.5, bgcolor: 'rgba(64, 84, 178, 0.04)', borderTop: '1px solid rgba(64, 84, 178, 0.08)' }}>
                                 <Typography sx={{ ...dirType.small, fontWeight: 700, color: 'primary.dark' }}>
                                   {i === 0 ? 'Consultorio y entorno' : 'Acompañamiento en consulta'}
                                 </Typography>
@@ -1470,7 +1470,7 @@ export default function DirectorioProfesionalPage() {
                               flex: { sm: '0 0 auto' },
                               bgcolor: 'primary.main',
                               color: 'common.white',
-                              boxShadow: '0 8px 24px rgba(8, 89, 70, 0.28)',
+                              boxShadow: '0 8px 24px rgba(64, 84, 178, 0.28)',
                               '&:hover': { bgcolor: 'primary.dark' },
                             }}
                           >
@@ -1580,7 +1580,7 @@ export default function DirectorioProfesionalPage() {
                                     height: '100%',
                                     p: 2,
                                     borderRadius: 2.5,
-                                    border: '1px solid rgba(8, 89, 70, 0.1)',
+                                    border: '1px solid rgba(64, 84, 178, 0.1)',
                                     bgcolor: 'rgba(255,255,255,0.85)',
                                     display: 'flex',
                                     alignItems: 'flex-start',
@@ -1595,7 +1595,7 @@ export default function DirectorioProfesionalPage() {
                                   <Box
                                     sx={{
                                       width: 40, height: 40, borderRadius: 1.75,
-                                      bgcolor: 'rgba(8, 89, 70, 0.08)',
+                                      bgcolor: 'rgba(64, 84, 178, 0.08)',
                                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                                       color: 'primary.dark', flexShrink: 0,
                                     }}
@@ -1634,13 +1634,13 @@ export default function DirectorioProfesionalPage() {
                           <Paper elevation={0}
                             sx={{
                               height: '100%', p: 2, borderRadius: 2.5,
-                              border: '1px solid rgba(8, 89, 70, 0.1)',
+                              border: '1px solid rgba(64, 84, 178, 0.1)',
                               bgcolor: 'rgba(255,255,255,0.85)',
                               display: 'flex', alignItems: 'flex-start', gap: 1.5,
                             }}>
                             <Box sx={{
                               width: 40, height: 40, borderRadius: 1.75,
-                              bgcolor: 'rgba(8, 89, 70, 0.08)',
+                              bgcolor: 'rgba(64, 84, 178, 0.08)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               color: 'primary.dark', flexShrink: 0,
                             }}>
@@ -1667,7 +1667,7 @@ export default function DirectorioProfesionalPage() {
                 ) : null}
 
                 {(consultationBlocks.costos || consultationBlocks.preparacion || consultationBlocks.contactoCentro) ? (
-                  <Box sx={{ mt: 4, pt: 3, borderTop: '1px dashed rgba(8, 89, 70, 0.2)' }}>
+                  <Box sx={{ mt: 4, pt: 3, borderTop: '1px dashed rgba(64, 84, 178, 0.2)' }}>
                     <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: '0.12em', color: 'primary.main' }}>
                       {sectionTitles.infoPacientes}
                     </Typography>
@@ -1732,7 +1732,7 @@ export default function DirectorioProfesionalPage() {
                   direction={{ xs: 'column', sm: 'row' }}
                   spacing={{ xs: 1.25, sm: 1.5 }}
                   useFlexGap
-                  sx={{ mt: 4, pt: 3, borderTop: '1px dashed rgba(8, 89, 70, 0.2)', flexWrap: 'wrap', alignItems: { xs: 'stretch', sm: 'center' } }}
+                  sx={{ mt: 4, pt: 3, borderTop: '1px dashed rgba(64, 84, 178, 0.2)', flexWrap: 'wrap', alignItems: { xs: 'stretch', sm: 'center' } }}
                 >
                   <Box sx={{ width: { xs: '100%', sm: 'auto' }, mr: { sm: 2 }, minWidth: { sm: 200 } }}>
                     <Typography component="p" sx={{ ...dirType.h3, color: '#0f1f18', mb: 0.25 }}>
@@ -1779,7 +1779,7 @@ export default function DirectorioProfesionalPage() {
                         p: { xs: 2, sm: 2.25, md: 2.5 },
                         borderRadius: 3,
                         bgcolor: '#ffffff',
-                        border: '1px solid rgba(8, 89, 70, 0.16)',
+                        border: '1px solid rgba(64, 84, 178, 0.16)',
                         boxShadow: '0 8px 28px rgba(16, 40, 32, 0.07)',
                         maxWidth: { md: 820, lg: 920 },
                         mx: { md: 'auto' },
@@ -1798,7 +1798,7 @@ export default function DirectorioProfesionalPage() {
                       <Stack
                         spacing={2}
                         divider={
-                          <Divider flexItem sx={{ borderColor: 'rgba(8, 89, 70, 0.1)', my: 0 }} />
+                          <Divider flexItem sx={{ borderColor: 'rgba(64, 84, 178, 0.1)', my: 0 }} />
                         }
                         sx={{ mt: 1.75 }}
                       >
@@ -1819,12 +1819,12 @@ export default function DirectorioProfesionalPage() {
                                     fontWeight: 700,
                                     fontSize: '0.875rem',
                                     color: '#1a2332',
-                                    bgcolor: 'rgba(8, 89, 70, 0.04)',
-                                    border: '1px solid rgba(8, 89, 70, 0.12)',
+                                    bgcolor: 'rgba(64, 84, 178, 0.04)',
+                                    border: '1px solid rgba(64, 84, 178, 0.12)',
                                     transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
                                     '&:hover': {
                                       transform: 'translateY(-1px)',
-                                      borderColor: 'rgba(8, 89, 70, 0.22)',
+                                      borderColor: 'rgba(64, 84, 178, 0.22)',
                                       boxShadow: '0 6px 18px rgba(16, 40, 32, 0.08)',
                                     },
                                   }}
@@ -1863,7 +1863,7 @@ export default function DirectorioProfesionalPage() {
                               p: { xs: 2, md: 2.25 },
                               borderRadius: 2.5,
                               bgcolor: '#ffffff',
-                              border: '1px solid rgba(8, 89, 70, 0.16)',
+                              border: '1px solid rgba(64, 84, 178, 0.16)',
                               boxShadow: '0 6px 22px rgba(16, 40, 32, 0.07)',
                               maxWidth: { md: 680, lg: 720 },
                               width: '100%',
@@ -1886,7 +1886,7 @@ export default function DirectorioProfesionalPage() {
                                 <Box
                                   sx={{
                                     pt: 1.5,
-                                    borderTop: '1px solid rgba(8, 89, 70, 0.1)',
+                                    borderTop: '1px solid rgba(64, 84, 178, 0.1)',
                                   }}
                                 >
                                   <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
@@ -2052,7 +2052,7 @@ export default function DirectorioProfesionalPage() {
                   sm: 'calc(36px + 80px + env(safe-area-inset-bottom, 0px))',
                   md: 'calc(44px + 80px + env(safe-area-inset-bottom, 0px))',
                 },
-                background: 'linear-gradient(135deg, rgba(8, 89, 70, 0.95) 0%, rgba(26, 40, 64, 0.92) 100%)',
+                background: 'linear-gradient(135deg, rgba(64, 84, 178, 0.95) 0%, rgba(26, 40, 64, 0.92) 100%)',
               }}
             >
               <Box sx={{ ...dirContentSx, textAlign: 'center', color: 'common.white' }}>
@@ -2177,7 +2177,7 @@ export default function DirectorioProfesionalPage() {
               backgroundImage: 'none',
               /* Sin backdrop-filter: en WebKit suele dejar una línea oscura en el borde inferior de elementos fixed */
               border: 'none',
-              borderTop: '1px solid rgba(8, 89, 70, 0.14)',
+              borderTop: '1px solid rgba(64, 84, 178, 0.14)',
               borderBottom: 'none',
               boxShadow: 'none',
               boxSizing: 'border-box',
@@ -2205,7 +2205,7 @@ export default function DirectorioProfesionalPage() {
                   flex: { sm: '0 0 auto' },
                   minWidth: { sm: 168 },
                   boxShadow: 'none',
-                  '&:hover': { boxShadow: '0 4px 14px rgba(8, 89, 70, 0.22)' },
+                  '&:hover': { boxShadow: '0 4px 14px rgba(64, 84, 178, 0.22)' },
                 }}
               >
                 Agendar cita

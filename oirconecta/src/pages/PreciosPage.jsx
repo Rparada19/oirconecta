@@ -14,9 +14,9 @@ import Footer from '../components/Footer';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
 
-const GREEN = '#085946';
+const GREEN = '#4054B2';
 const NAVY = '#272F50';
-const GOLD = '#C9A86A';
+const GOLD = '#4C7DF0';
 const MUTED = '#5b6b66';
 
 const fmt = (n) => `$${(n || 0).toLocaleString('es-CO')}`;
@@ -137,7 +137,7 @@ export default function PreciosPage() {
       <Container maxWidth="lg" sx={{ pt: { xs: 6, md: 10 }, pb: { xs: 4, md: 6 }, textAlign: 'center' }}>
         <Typography
           sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700,
+            fontFamily: '"Gotham", sans-serif', fontSize: '0.6875rem', fontWeight: 700,
             letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, mb: 2,
           }}
         >
@@ -166,7 +166,7 @@ export default function PreciosPage() {
           sx={{
             mt: 4,
             bgcolor: '#fff', borderRadius: '999px', p: 0.5,
-            border: '1px solid rgba(8,89,70,0.14)',
+            border: '1px solid rgba(64,84,178,0.14)',
             '& .MuiToggleButton-root': {
               border: 0, borderRadius: '999px !important', px: 3, py: 1,
               textTransform: 'none', fontWeight: 600, fontSize: '0.9375rem', color: MUTED,
@@ -232,11 +232,11 @@ export default function PreciosPage() {
                     sx={{
                       position: 'relative',
                       bgcolor: '#fff',
-                      border: destacado ? `2px solid ${GREEN}` : '1px solid rgba(8,89,70,0.12)',
+                      border: destacado ? `2px solid ${GREEN}` : '1px solid rgba(64,84,178,0.12)',
                       borderRadius: '16px',
                       p: { xs: 3, md: 3.5 },
                       display: 'flex', flexDirection: 'column',
-                      boxShadow: destacado ? '0 12px 32px rgba(8,89,70,0.12)' : '0 2px 10px rgba(39,47,80,0.05)',
+                      boxShadow: destacado ? '0 12px 32px rgba(64,84,178,0.12)' : '0 2px 10px rgba(39,47,80,0.05)',
                     }}
                   >
                     {meta.tag && (
@@ -281,7 +281,7 @@ export default function PreciosPage() {
                         size="small"
                         sx={{
                           alignSelf: 'flex-start', mb: 2.5,
-                          bgcolor: 'rgba(8,89,70,0.08)', color: GREEN, fontWeight: 600, fontSize: '0.75rem',
+                          bgcolor: 'rgba(64,84,178,0.08)', color: GREEN, fontWeight: 600, fontSize: '0.75rem',
                         }}
                       />
                     )}
@@ -306,7 +306,7 @@ export default function PreciosPage() {
                         borderRadius: '10px', textTransform: 'none', fontWeight: 600, py: 1.25,
                         ...(destacado
                           ? { bgcolor: GREEN, '&:hover': { bgcolor: '#064c3c' } }
-                          : { color: GREEN, borderColor: 'rgba(8,89,70,0.35)', '&:hover': { borderColor: GREEN, bgcolor: 'rgba(8,89,70,0.04)' } }),
+                          : { color: GREEN, borderColor: 'rgba(64,84,178,0.35)', '&:hover': { borderColor: GREEN, bgcolor: 'rgba(64,84,178,0.04)' } }),
                       }}
                     >
                       Empezar
@@ -320,7 +320,7 @@ export default function PreciosPage() {
       ) : (
         /* ── IPS y centros ── */
         <Container maxWidth="md" sx={{ pb: 10 }}>
-          <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(8,89,70,0.12)', borderRadius: '16px', p: { xs: 3, md: 5 } }}>
+          <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(64,84,178,0.12)', borderRadius: '16px', p: { xs: 3, md: 5 } }}>
             <Typography
               sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.875rem', fontWeight: 600, color: NAVY, mb: 1.5 }}
             >
@@ -334,7 +334,7 @@ export default function PreciosPage() {
 
             <Typography
               sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700,
+                fontFamily: '"Gotham", sans-serif', fontSize: '0.6875rem', fontWeight: 700,
                 letterSpacing: '0.16em', textTransform: 'uppercase', color: MUTED, mb: 1.5,
               }}
             >
@@ -399,7 +399,7 @@ export default function PreciosPage() {
           </Typography>
           <Stack spacing={3}>
             {FAQ.map((f) => (
-              <Box key={f.q} sx={{ bgcolor: '#fff', borderRadius: '12px', p: 3, border: '1px solid rgba(8,89,70,0.08)' }}>
+              <Box key={f.q} sx={{ bgcolor: '#fff', borderRadius: '12px', p: 3, border: '1px solid rgba(64,84,178,0.08)' }}>
                 <Typography sx={{ fontWeight: 700, color: NAVY, fontSize: '1.0625rem', mb: 1 }}>
                   {f.q}
                 </Typography>
