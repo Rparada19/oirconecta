@@ -222,7 +222,7 @@ export default function ImplantesPage() {
         imageTag="3 fabricantes · Colombia"
         imageCaption="No todos los pacientes son candidatos. La indicación la define un equipo especializado."
         cta={{ label: 'Buscar especialista', to: '/directorio/listado' }}
-        ctaSecondary={{ label: 'Leer guía completa', to: '/blog/implante-coclear-guia' }}
+        ctaSecondary={{ label: 'Leer guía completa', to: '/blog/implante-coclear-guia/' }}
       />
 
       {/* TIPOS DE IMPLANTE */}

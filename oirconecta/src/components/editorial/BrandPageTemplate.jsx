@@ -30,6 +30,7 @@ import {
 import { useReveal } from '../../hooks/useReveal';
 import { Swoosh } from '../brand/BrandMark';
 import BrandLogo, { isBrand } from '../profesional/BrandLogo';
+import { articulosDeMarca } from '../../data/articulosPorMarca';
 
 function BrandHero({ brand, productosCount }) {
   const text = useReveal({ threshold: 0.1 });
@@ -528,6 +529,38 @@ export default function BrandPageTemplate({
             }}>
               <BrandEditorialBody md={editorial} accent={brand.color} />
             </Box>
+          </Container>
+        </Box>
+      )}
+
+      {/* LECTURAS: enlaces internos al blog (ayudan a que Google rastree los artículos) */}
+      {articulosDeMarca(brand.slug).length > 0 && (
+        <Box component="section" sx={{ bgcolor: C.cremaCalida, py: { xs: 7, md: 10 } }}>
+          <Container maxWidth="md">
+            <SectionEyebrow color={C.navy} dash={brand.color} sx={{ mb: 3 }}>
+              Para leer antes de decidir
+            </SectionEyebrow>
+            <Stack spacing={1.5}>
+              {articulosDeMarca(brand.slug).map((a) => (
+                <Box
+                  key={a.slug}
+                  component={RouterLink}
+                  to={`/blog/${a.slug}/`}
+                  sx={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2,
+                    bgcolor: C.blanco, borderRadius: '10px', px: 3, py: 2.25,
+                    borderLeft: `4px solid ${brand.color}`,
+                    color: C.navy, textDecoration: 'none',
+                    fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '1rem', fontWeight: 600,
+                    transition: 'transform 0.2s ease',
+                    '&:hover': { transform: 'translateX(4px)' },
+                  }}
+                >
+                  {a.titulo}
+                  <ArrowForward sx={{ fontSize: 18, flexShrink: 0 }} />
+                </Box>
+              ))}
+            </Stack>
           </Container>
         </Box>
       )}
