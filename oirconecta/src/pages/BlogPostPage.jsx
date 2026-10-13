@@ -37,13 +37,13 @@ const CATEGORIAS = {
 };
 
 const CAT_COLOR = {
-  productos: '#085946',
+  productos: '#4054B2',
   salud: '#272F50',
   'estilo-de-vida': '#71A095',
-  guias: '#085946',
+  guias: '#4054B2',
   cuidados: '#0d7a5f',
   comparativas: '#1a2240',
-  glosario: '#C9A86A',
+  glosario: '#4C7DF0',
   tecnologia: '#272F50',
   lanzamientos: '#d97706',
   casos: '#71A095',
@@ -104,7 +104,7 @@ const MD_COMPONENTS = {
       pb: 1.5,
       letterSpacing: '-0.02em',
       lineHeight: 1.15,
-      borderBottom: '2px solid #C9A86A',
+      borderBottom: '2px solid #4C7DF0',
       display: 'inline-block',
       pr: 2,
     }}>
@@ -113,7 +113,7 @@ const MD_COMPONENTS = {
   ),
   h3: ({ children }) => <Typography component="h3" sx={{ fontFamily: '"Gotham", sans-serif', fontSize: { xs: '1.25rem', md: '1.5rem' }, fontWeight: 600, color: '#272F50', mt: 5, mb: 1.75, letterSpacing: '-0.01em' }}>{children}</Typography>,
   h4: ({ children }) => <Typography component="h4" sx={{ fontFamily: '"Gotham", sans-serif', fontSize: '1.15rem', fontWeight: 600, color: '#272F50', mt: 3.5, mb: 1.25 }}>{children}</Typography>,
-  p: ({ children }) => <Typography sx={{ fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: { xs: '1.0625rem', md: '1.15rem' }, color: '#272F50', lineHeight: 1.75, mb: 3, letterSpacing: '0.003em' }}>{children}</Typography>,
+  p: ({ children }) => <Typography sx={{ fontFamily: '"Gotham", sans-serif', fontSize: { xs: '1.0625rem', md: '1.15rem' }, color: '#272F50', lineHeight: 1.75, mb: 3, letterSpacing: '0.003em' }}>{children}</Typography>,
   ul: ({ children }) => (
     <Box component="ul" sx={{
       pl: 0,
@@ -134,7 +134,7 @@ const MD_COMPONENTS = {
           width: 8,
           height: 8,
           borderRadius: '50%',
-          backgroundColor: '#085946',
+          backgroundColor: '#4054B2',
         },
       },
     }}>
@@ -163,7 +163,7 @@ const MD_COMPONENTS = {
           width: 26,
           height: 26,
           borderRadius: '50%',
-          backgroundColor: '#085946',
+          backgroundColor: '#4054B2',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
@@ -186,14 +186,14 @@ const MD_COMPONENTS = {
         component="a"
         href={href}
         {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-        sx={{ color: '#085946', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: '3px', '&:hover': { color: '#0d7a5f' } }}
+        sx={{ color: '#4054B2', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: '3px', '&:hover': { color: '#0d7a5f' } }}
       >
         {children}
       </Box>
     );
   },
   blockquote: ({ children }) => (
-    <Box sx={{ borderLeft: '4px solid #C9A86A', pl: 2.5, py: 1, my: 3, bgcolor: 'rgba(201,168,106,0.08)', borderRadius: '0 8px 8px 0', '& p': { color: '#272F50', fontStyle: 'italic' } }}>
+    <Box sx={{ borderLeft: '4px solid #4C7DF0', pl: 2.5, py: 1, my: 3, bgcolor: 'rgba(201,168,106,0.08)', borderRadius: '0 8px 8px 0', '& p': { color: '#272F50', fontStyle: 'italic' } }}>
       {children}
     </Box>
   ),
@@ -220,7 +220,7 @@ const MD_COMPONENTS = {
       '&::after': { ml: 2 },
       '&::before': { mr: 2 },
     }}>
-      <Box sx={{ color: '#C9A86A', fontSize: '1.5rem', lineHeight: 1 }}>◆</Box>
+      <Box sx={{ color: '#4C7DF0', fontSize: '1.5rem', lineHeight: 1 }}>◆</Box>
     </Box>
   ),
   table: ({ children }) => (
@@ -228,7 +228,7 @@ const MD_COMPONENTS = {
       <Box component="table" sx={{ borderCollapse: 'collapse', width: '100%', fontSize: { xs: '0.9375rem', md: '1rem' } }}>{children}</Box>
     </Box>
   ),
-  thead: ({ children }) => <Box component="thead" sx={{ bgcolor: '#085946', '& th': { color: '#fff !important' } }}>{children}</Box>,
+  thead: ({ children }) => <Box component="thead" sx={{ bgcolor: '#4054B2', '& th': { color: '#fff !important' } }}>{children}</Box>,
   tbody: ({ children }) => <Box component="tbody">{children}</Box>,
   tr: ({ children }) => <Box component="tr" sx={{ borderBottom: '1px solid #e5e7eb', '&:last-child': { borderBottom: 'none' }, '&:nth-of-type(even)': { backgroundColor: '#f9fafb' } }}>{children}</Box>,
   th: ({ children }) => <Box component="th" sx={{ textAlign: 'left', fontWeight: 700, p: 1.75 }}>{children}</Box>,
@@ -423,15 +423,15 @@ export default function BlogPostPage() {
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress size={40} thickness={4} sx={{ color: '#085946' }} />
+          <CircularProgress size={40} thickness={4} sx={{ color: '#4054B2' }} />
         </Box>
       ) : (notFound || loadError) ? (
         <Container maxWidth="md" sx={{ py: 16, textAlign: 'center' }}>
-          <ArticleOutlinedIcon sx={{ fontSize: 56, color: 'rgba(8,89,70,0.2)', mb: 2 }} />
+          <ArticleOutlinedIcon sx={{ fontSize: 56, color: 'rgba(64,84,178,0.2)', mb: 2 }} />
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             {notFound ? 'Artículo no encontrado' : 'No pudimos cargar el artículo. Intenta de nuevo.'}
           </Typography>
-          <Button component={RouterLink} to="/blog/" startIcon={<ArrowBackIcon />} variant="contained" sx={{ borderRadius: '12px', bgcolor: '#085946' }}>
+          <Button component={RouterLink} to="/blog/" startIcon={<ArrowBackIcon />} variant="contained" sx={{ borderRadius: '12px', bgcolor: '#4054B2' }}>
             Volver al blog
           </Button>
         </Container>
@@ -447,7 +447,7 @@ export default function BlogPostPage() {
             pt: { xs: 14, md: 18 },
             pb: { xs: 7, md: 10 },
             overflow: 'hidden',
-            background: heroCover ? 'transparent' : 'linear-gradient(160deg, #1B2240 0%, #272F50 50%, #085946 100%)',
+            background: heroCover ? 'transparent' : 'linear-gradient(160deg, #1B2240 0%, #272F50 50%, #4054B2 100%)',
           }}>
             {/* Imagen de portada como <img> real (indexable por Google Imágenes) */}
             {heroCover && (
@@ -476,7 +476,7 @@ export default function BlogPostPage() {
             {/* Forma decorativa */}
             <Box sx={{
               position: 'absolute', bottom: -1, left: 0, right: 0, height: 80,
-              background: 'linear-gradient(to top, #FBFAF8, transparent)',
+              background: 'linear-gradient(to top, #FAFBFE, transparent)',
               pointerEvents: 'none',
             }} />
             <Container maxWidth="md" sx={{ position: 'relative', zIndex: 2, width: '100%' }}>
@@ -484,16 +484,16 @@ export default function BlogPostPage() {
                 sx={{
                   color: 'rgba(255,255,255,0.90)', mb: 4, fontWeight: 600, p: 0,
                   textTransform: 'none', fontSize: '0.875rem',
-                  '&:hover': { color: '#C9A86A', bgcolor: 'transparent' },
+                  '&:hover': { color: '#4C7DF0', bgcolor: 'transparent' },
                 }}>
                 Volver al blog
               </Button>
               <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
-                <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+                <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
                 <Typography sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif',
+                  fontFamily: '"Gotham", sans-serif',
                   fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
-                  textTransform: 'uppercase', color: '#C9A86A',
+                  textTransform: 'uppercase', color: '#4C7DF0',
                 }}>
                   {catLabel}
                 </Typography>
@@ -533,7 +533,7 @@ export default function BlogPostPage() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     border: '1.5px solid rgba(201,168,106,0.40)',
                   }}>
-                    <PersonOutlineIcon sx={{ fontSize: 17, color: '#C9A86A' }} />
+                    <PersonOutlineIcon sx={{ fontSize: 17, color: '#4C7DF0' }} />
                   </Box>
                   <Typography sx={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{post.autorNombre}</Typography>
                 </Box>
@@ -580,7 +580,7 @@ export default function BlogPostPage() {
               '& > div > p:first-of-type::first-letter': {
                 fontSize: { xs: '3.25rem', md: '4rem' },
                 fontWeight: 900,
-                color: '#085946',
+                color: '#4054B2',
                 float: 'left',
                 lineHeight: 0.9,
                 pr: 1.5,
@@ -611,7 +611,7 @@ export default function BlogPostPage() {
                   lineHeight: 1.7, '& p': { mt: 1.5, mb: 0 },
                   '& h2, & h3': { mt: 2, mb: 1, fontWeight: 800, color: '#272F50' },
                   '& ul, & ol': { mt: 1, pl: 3 }, '& li': { mb: 0.5 },
-                  '& strong': { color: '#085946' },
+                  '& strong': { color: '#4054B2' },
                 }}>
                   {renderContent(post.cierre)}
                 </Box>
@@ -623,11 +623,11 @@ export default function BlogPostPage() {
               <Box sx={{
                 mt: 4, p: { xs: 3, sm: 4 },
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, #085946 0%, #064a38 100%)',
+                background: 'linear-gradient(135deg, #4054B2 0%, #064a38 100%)',
                 color: '#fff',
                 display: 'flex', flexDirection: { xs: 'column', sm: 'row' },
                 alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2.5,
-                boxShadow: '0 6px 24px rgba(8,89,70,0.25)',
+                boxShadow: '0 6px 24px rgba(64,84,178,0.25)',
               }}>
                 <Box>
                   <Typography sx={{
@@ -648,7 +648,7 @@ export default function BlogPostPage() {
                       : { to: post.ctaUrl })}
                     sx={{
                       display: 'inline-flex', alignItems: 'center', gap: 0.75,
-                      bgcolor: '#fff', color: '#085946',
+                      bgcolor: '#fff', color: '#4054B2',
                       px: 2.5, py: 1.25, borderRadius: 1.5,
                       fontWeight: 800, fontSize: 14, textDecoration: 'none',
                       whiteSpace: 'nowrap', flexShrink: 0,
@@ -669,7 +669,7 @@ export default function BlogPostPage() {
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
                   {post.tags.map((t) => (
-                    <Chip key={t} label={t} size="small" sx={{ bgcolor: '#f0fdf4', color: '#085946', fontWeight: 600, border: '1px solid #d1fae5' }} />
+                    <Chip key={t} label={t} size="small" sx={{ bgcolor: '#f0fdf4', color: '#4054B2', fontWeight: 600, border: '1px solid #d1fae5' }} />
                   ))}
                 </Stack>
               </Box>
@@ -721,7 +721,7 @@ export default function BlogPostPage() {
                       transition: 'box-shadow .2s, border-color .2s',
                       '&:hover': { boxShadow: '0 8px 24px rgba(0,0,0,0.08)', borderColor: '#d1fae5' },
                     }}>
-                      <Typography sx={{ fontSize: '0.72rem', color: '#085946', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1 }}>
+                      <Typography sx={{ fontSize: '0.72rem', color: '#4054B2', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1 }}>
                         {CATEGORIAS[r.categoria] || r.categoria || 'Blog'}
                       </Typography>
                       <Typography component="h3" sx={{ fontWeight: 700, color: '#272F50', fontSize: '1.0625rem', lineHeight: 1.35, mb: 0.75 }}>
@@ -741,7 +741,7 @@ export default function BlogPostPage() {
 
             <Divider sx={{ mt: 6, mb: 4 }} />
             <Button component={RouterLink} to="/blog/" startIcon={<ArrowBackIcon />}
-              variant="outlined" sx={{ borderRadius: '12px', borderColor: '#085946', color: '#085946', fontWeight: 600 }}>
+              variant="outlined" sx={{ borderRadius: '12px', borderColor: '#4054B2', color: '#4054B2', fontWeight: 600 }}>
               Volver al blog
             </Button>
           </Container>

@@ -41,7 +41,7 @@ const TimeSelector = ({ selectedDate, selectedTime, onTimeSelect, availableTimes
     return (
       <Box>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <AccessTime sx={{ color: '#085946', mr: 1 }} />
+          <AccessTime sx={{ color: '#4054B2', mr: 1 }} />
           <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600 }}>
             Selecciona una hora
           </Typography>
@@ -52,7 +52,7 @@ const TimeSelector = ({ selectedDate, selectedTime, onTimeSelect, availableTimes
             p: 4,
             borderRadius: 2,
             backgroundColor: '#f8fafc',
-            border: '1px solid rgba(8, 89, 70, 0.1)',
+            border: '1px solid rgba(64, 84, 178, 0.1)',
             textAlign: 'center',
           }}
         >
@@ -70,7 +70,7 @@ const TimeSelector = ({ selectedDate, selectedTime, onTimeSelect, availableTimes
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <AccessTime sx={{ color: '#085946', mr: 1 }} />
+        <AccessTime sx={{ color: '#4054B2', mr: 1 }} />
         <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600 }}>
           Selecciona una hora
         </Typography>
@@ -82,7 +82,7 @@ const TimeSelector = ({ selectedDate, selectedTime, onTimeSelect, availableTimes
           p: 3,
           borderRadius: 2,
           backgroundColor: '#f8fafc',
-          border: '1px solid rgba(8, 89, 70, 0.1)',
+          border: '1px solid rgba(64, 84, 178, 0.1)',
         }}
       >
         <Typography variant="body2" sx={{ color: '#86899C', mb: 3, textAlign: 'center' }}>
@@ -101,16 +101,16 @@ const TimeSelector = ({ selectedDate, selectedTime, onTimeSelect, availableTimes
                     borderRadius: 2,
                     textAlign: 'center',
                     cursor: 'pointer',
-                    backgroundColor: isSelected ? '#085946' : '#ffffff',
+                    backgroundColor: isSelected ? '#4054B2' : '#ffffff',
                     color: isSelected ? '#ffffff' : '#272F50',
-                    border: isSelected ? 'none' : '1px solid rgba(8, 89, 70, 0.2)',
+                    border: isSelected ? 'none' : '1px solid rgba(64, 84, 178, 0.2)',
                     fontWeight: isSelected ? 600 : 500,
                     transition: 'all 0.2s',
                     '&:hover': {
-                      backgroundColor: isSelected ? '#085946' : '#f0f4f3',
+                      backgroundColor: isSelected ? '#4054B2' : '#f0f4f3',
                       transform: 'translateY(-2px)',
                       boxShadow: isSelected
-                        ? '0 4px 12px rgba(8, 89, 70, 0.3)'
+                        ? '0 4px 12px rgba(64, 84, 178, 0.3)'
                         : '0 2px 8px rgba(39, 47, 80, 0.1)',
                     },
                   }}
@@ -125,7 +125,7 @@ const TimeSelector = ({ selectedDate, selectedTime, onTimeSelect, availableTimes
 
       {selectedTime && (
         <Box sx={{ mt: 3, p: 2, backgroundColor: '#f0f4f3', borderRadius: 2 }}>
-          <Typography variant="body2" sx={{ color: '#085946', fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ color: '#4054B2', fontWeight: 600 }}>
             Hora seleccionada: {formatTime(selectedTime)}
           </Typography>
         </Box>

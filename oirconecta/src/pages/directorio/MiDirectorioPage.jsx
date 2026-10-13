@@ -417,7 +417,7 @@ export default function MiDirectorioPage() {
       <Box sx={{ pt: { xs: 12, md: 14 }, pb: 6, minHeight: '70vh', bgcolor: 'grey.50' }}>
         <Container maxWidth="md">
           <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} sx={{ mb: 2 }}>
-            <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: '#085946' }}>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: '#4054B2' }}>
               Mi ficha pública
             </Typography>
             <Button variant="outlined" color="inherit" size="small" onClick={logoutDirectory}>
@@ -554,8 +554,8 @@ export default function MiDirectorioPage() {
                             p: 2.5,
                             height: '100%',
                             borderRadius: 2,
-                            borderColor: 'rgba(8, 89, 70, 0.14)',
-                            bgcolor: 'rgba(8, 89, 70, 0.02)',
+                            borderColor: 'rgba(64, 84, 178, 0.14)',
+                            bgcolor: 'rgba(64, 84, 178, 0.02)',
                           }}
                         >
                           <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: '0.08em', color: 'text.secondary' }}>
@@ -1097,7 +1097,7 @@ export default function MiDirectorioPage() {
                 </Alert>
               )}
               {tab !== 5 ? (
-                <Button variant="contained" sx={{ bgcolor: '#085946', fontWeight: 700 }} onClick={save} disabled={saving}>
+                <Button variant="contained" sx={{ bgcolor: '#4054B2', fontWeight: 700 }} onClick={save} disabled={saving}>
                   {saving ? 'Guardando…' : 'Guardar cambios'}
                 </Button>
               ) : (

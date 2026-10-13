@@ -15,9 +15,9 @@ import { trackImpression, trackClick, buildDestinationUrl } from '../../services
 import { usePreviewMode } from '../../hooks/usePreviewMode';
 import SlotPreviewWrapper from './SlotPreviewWrapper';
 
-const ACCENT = '#085946';
+const ACCENT = '#4054B2';
 const NAVY = '#272F50';
-const GOLD = '#C9A86A';
+const GOLD = '#4C7DF0';
 
 export default function BrandCard({ campaign }) {
   const ref = useRef(null);
@@ -96,7 +96,7 @@ export default function BrandCard({ campaign }) {
       {/* Contenido */}
       <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography sx={{
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '0.7rem', fontWeight: 700,
           letterSpacing: '0.1em', textTransform: 'uppercase',
           color: GOLD, mb: 0.5,

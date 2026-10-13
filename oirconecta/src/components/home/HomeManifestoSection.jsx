@@ -4,12 +4,12 @@ import { useReveal } from '../../hooks/useReveal';
 
 const C = {
   navy: '#272F50',
-  verde: '#085946',
-  oro: '#C9A86A',
-  oroSuave: '#E0C28A',
-  arena: '#D9CDBF',
-  cremaCalida: '#F5EFE6',
-  blanco: '#FBFAF8',
+  verde: '#4054B2',
+  oro: '#4C7DF0',
+  oroSuave: '#9DB8FF',
+  arena: '#D5DDF0',
+  cremaCalida: '#EEF2FC',
+  blanco: '#FAFBFE',
   gris: '#6B7280',
 };
 
@@ -28,11 +28,11 @@ export default function HomeManifestoSection() {
   return (
     <Box component="section" ref={ref} sx={{
       position: 'relative', overflow: 'hidden',
-      bgcolor: C.cremaCalida, color: C.navy,
+      background: 'linear-gradient(180deg, #141C3F 0%, #1B2550 100%)', color: '#fff',
       py: { xs: 10, md: 16 },
     }}>
       {/* Línea sutil arriba */}
-      <Box aria-hidden sx={{ position: 'absolute', top: 0, left: '8%', right: '8%', height: 1, bgcolor: `${C.navy}14` }} />
+      <Box aria-hidden sx={{ position: 'absolute', top: 0, left: '8%', right: '8%', height: '1px', bgcolor: 'rgba(255,255,255,0.08)' }} />
 
       {/* Palabra fantasma gigante de fondo */}
       <Box aria-hidden sx={{
@@ -40,7 +40,7 @@ export default function HomeManifestoSection() {
         transform: 'translate(-50%, -50%)',
         fontFamily: '"Gotham", sans-serif',
         fontSize: { xs: '20rem', md: '36rem' },
-        fontWeight: 700, color: `${C.navy}05`,
+        fontWeight: 700, color: 'rgba(157,184,255,0.06)',
         lineHeight: 0.85, pointerEvents: 'none',
         userSelect: 'none', whiteSpace: 'nowrap',
       }}>
@@ -49,9 +49,9 @@ export default function HomeManifestoSection() {
 
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <Typography sx={{
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.28em',
-          textTransform: 'uppercase', color: C.oro, mb: { xs: 5, md: 8 },
+          textTransform: 'uppercase', color: '#9DB8FF', mb: { xs: 5, md: 8 },
           opacity: visible ? 1 : 0, transition: 'opacity 0.8s ease',
         }}>
           ※ Manifiesto OírConecta
@@ -69,7 +69,7 @@ export default function HomeManifestoSection() {
               component="span"
               sx={{
                 display: 'block',
-                color: l.accent ? C.verde : (l.faded ? `${C.navy}55` : C.navy),
+                color: l.accent ? '#9DB8FF' : (l.faded ? 'rgba(255,255,255,0.38)' : '#fff'),
                 fontStyle: l.accent ? 'italic' : 'normal',
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(40px)',
@@ -77,7 +77,7 @@ export default function HomeManifestoSection() {
                 pl: i % 2 === 1 ? { md: '8vw' } : 0, // sangrías intercaladas
               }}
             >
-              {l.text}
+              {l.text}{' '}
             </Box>
           ))}
         </Box>
@@ -90,11 +90,11 @@ export default function HomeManifestoSection() {
           transform: visible ? 'translateY(0)' : 'translateY(20px)',
           transition: 'all 1.2s cubic-bezier(0.2,0.7,0.2,1) 0.8s',
         }}>
-          <Box sx={{ width: 32, height: 2, bgcolor: C.navy, mb: 2.5 }} />
+          <Box sx={{ width: 32, height: 2, bgcolor: '#9DB8FF', mb: 2.5 }} />
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1rem', md: '1.125rem' }, lineHeight: 1.6,
-            color: C.gris,
+            color: 'rgba(255,255,255,0.72)',
           }}>
             Por eso nos sumamos a esta misión: conectar a cada persona con la solución
             auditiva correcta, sin presión y sin venta forzada. Porque cuidar la audición
@@ -102,7 +102,7 @@ export default function HomeManifestoSection() {
           </Typography>
           <Typography sx={{
             fontFamily: '"Gotham", sans-serif',
-            fontStyle: 'italic', fontSize: '1.1rem', color: C.navy, mt: 2.5,
+            fontStyle: 'italic', fontSize: '1.1rem', color: '#fff', mt: 2.5,
           }}>
             — Equipo OírConecta
           </Typography>

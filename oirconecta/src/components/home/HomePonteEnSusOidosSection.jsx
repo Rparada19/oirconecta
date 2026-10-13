@@ -7,13 +7,13 @@ import { useReveal } from '../../hooks/useReveal';
 
 const C = {
   navy: '#272F50',
-  verde: '#085946',
-  verdeProfundo: '#00382B',
-  oro: '#C9A86A',
-  oroSuave: '#E0C28A',
-  arena: '#D9CDBF',
-  cremaCalida: '#F5EFE6',
-  blanco: '#FBFAF8',
+  verde: '#4054B2',
+  verdeProfundo: '#1B2550',
+  oro: '#4C7DF0',
+  oroSuave: '#9DB8FF',
+  arena: '#D5DDF0',
+  cremaCalida: '#EEF2FC',
+  blanco: '#FAFBFE',
   gris: '#6B7280',
 };
 
@@ -62,7 +62,7 @@ export default function HomePonteEnSusOidosSection() {
             <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
               <Box sx={{ width: 36, height: 2, bgcolor: C.oro }} />
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                 textTransform: 'uppercase', color: C.oro,
               }}>
@@ -85,7 +85,7 @@ export default function HomePonteEnSusOidosSection() {
             </Typography>
 
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.2rem' }, lineHeight: 1.55,
               color: '#ffffffb3', mb: 4.5, maxWidth: 540,
             }}>
@@ -99,7 +99,7 @@ export default function HomePonteEnSusOidosSection() {
               to="/ponte-en-sus-oidos/"
               sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 1.25,
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '1rem', fontWeight: 700, color: '#fff',
                 textDecoration: 'none', pb: 0.5,
                 borderBottom: `2px solid ${C.oro}`,
@@ -128,7 +128,7 @@ export default function HomePonteEnSusOidosSection() {
               boxShadow: `0 24px 60px ${C.navy}66`,
             }}>
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.22em',
                 textTransform: 'uppercase', color: '#ffffff66', mb: 1,
               }}>
@@ -181,7 +181,7 @@ export default function HomePonteEnSusOidosSection() {
 
               {/* Niveles seleccionables */}
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.22em',
                 textTransform: 'uppercase', color: '#ffffff66', mb: 1.25,
               }}>
@@ -204,11 +204,11 @@ export default function HomePonteEnSusOidosSection() {
                       }}
                     >
                       <Typography sx={{
-                        fontFamily: '"Gotham", "DM Sans", sans-serif',
+                        fontFamily: '"Gotham", sans-serif',
                         fontSize: '0.92rem', fontWeight: 700,
                       }}>{l.label}</Typography>
                       <Typography sx={{
-                        fontFamily: '"Gotham", "DM Sans", sans-serif',
+                        fontFamily: '"Gotham", sans-serif',
                         fontSize: '0.75rem', opacity: active ? 0.7 : 0.55,
                       }}>{l.range}</Typography>
                     </Stack>
@@ -222,7 +222,7 @@ export default function HomePonteEnSusOidosSection() {
               position: 'absolute', top: -16, right: -16,
               bgcolor: C.oro, color: C.navy,
               px: 2, py: 0.75, borderRadius: '4px',
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
               boxShadow: `0 12px 24px ${C.navy}99`,
               transform: 'rotate(2deg)',

@@ -7,11 +7,11 @@ import { useReveal } from '../hooks/useReveal';
 const C = {
   navy: '#272F50',
   navyDark: '#1B2240',
-  verde: '#085946',
-  oro: '#C9A86A',
-  arena: '#D9CDBF',
-  cremaCalida: '#F5EFE6',
-  blanco: '#FBFAF8',
+  verde: '#4054B2',
+  oro: '#4C7DF0',
+  arena: '#D5DDF0',
+  cremaCalida: '#EEF2FC',
+  blanco: '#FAFBFE',
 };
 
 const TESTIMONIOS = [
@@ -94,7 +94,7 @@ export default function TestimonialsSection() {
         filter: 'blur(80px)',
       }} />
       <Box aria-hidden sx={{
-        position: 'absolute', top: 0, left: '8%', right: '8%', height: 1, bgcolor: '#ffffff14',
+        position: 'absolute', top: 0, left: '8%', right: '8%', height: '1px', bgcolor: '#ffffff14',
       }} />
 
       <Container maxWidth="lg" ref={ref} sx={{ position: 'relative' }}>
@@ -102,7 +102,7 @@ export default function TestimonialsSection() {
           <Stack direction="row" alignItems="center" spacing={2}>
             <Box sx={{ width: 32, height: 2, bgcolor: C.oro }} />
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.22em',
               textTransform: 'uppercase', color: C.oro,
             }}>
@@ -184,11 +184,11 @@ export default function TestimonialsSection() {
               </Box>
               <Box sx={{ textAlign: { xs: 'left', md: 'center' } }}>
                 <Typography sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.95rem',
+                  fontFamily: '"Gotham", sans-serif', fontSize: '0.95rem',
                   fontWeight: 700, color: '#fff',
                 }}>{t.nombre}</Typography>
                 <Typography sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.78rem',
+                  fontFamily: '"Gotham", sans-serif', fontSize: '0.78rem',
                   color: '#ffffff99', mt: 0.25,
                 }}>{t.rol}</Typography>
               </Box>
@@ -228,7 +228,7 @@ export default function TestimonialsSection() {
         </Stack>
 
         <Typography sx={{
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '0.7rem', color: '#ffffff66', mt: 3, textAlign: 'center',
           letterSpacing: '0.12em', textTransform: 'uppercase',
         }}>

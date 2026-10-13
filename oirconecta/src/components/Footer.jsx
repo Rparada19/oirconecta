@@ -66,7 +66,7 @@ const Footer = () => (
       <Box sx={{
         position: 'absolute', top: -100, right: -100,
         width: 360, height: 360, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(8,89,70,0.18) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(64,84,178,0.18) 0%, transparent 70%)',
         filter: 'blur(60px)', pointerEvents: 'none',
       }} />
       {/* Blob ocre */}
@@ -104,7 +104,7 @@ const Footer = () => (
               Suscríbete a nuestro boletín
             </Typography>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               color: 'rgba(255,255,255,0.65)',
               fontSize: '0.9375rem',
             }}>
@@ -133,7 +133,7 @@ const Footer = () => (
               fontFamily: '"Gotham", sans-serif',
               fontStyle: 'italic',
               fontSize: '1rem',
-              color: '#C9A86A',
+              color: '#4C7DF0',
               mb: 2.5,
               fontWeight: 400,
               letterSpacing: '0.02em',
@@ -141,7 +141,7 @@ const Footer = () => (
               Escucha. Conecta. Vive mejor.
             </Typography>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               color: 'rgba(255,255,255,0.65)',
               lineHeight: 1.7,
               fontSize: '0.9375rem',
@@ -171,8 +171,8 @@ const Footer = () => (
                     transition: 'all 0.25s ease',
                     '&:hover': {
                       color: '#272F50',
-                      background: '#C9A86A',
-                      border: '1px solid #C9A86A',
+                      background: '#4C7DF0',
+                      border: '1px solid #4C7DF0',
                       transform: 'translateY(-3px)',
                     },
                   }}
@@ -188,7 +188,7 @@ const Footer = () => (
             <Grid item xs={6} sm={4} md={2} key={s.title}>
               <Typography
                 sx={{
-                  fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
+                  fontFamily: '"Gotham", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
                   textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)',
                   mb: 2.5,
                 }}
@@ -222,7 +222,7 @@ const Footer = () => (
           <Grid item xs={12} sm={6} md={2}>
             <Typography
               sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
+                fontFamily: '"Gotham", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.18em',
                 textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)',
                 mb: 2.5,
               }}

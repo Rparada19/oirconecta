@@ -9,7 +9,7 @@
  */
 import React from 'react';
 
-export function Swoosh({ width = 480, color = '#272F50', accent = '#C9A86A', opacity = 1, ...rest }) {
+export function Swoosh({ width = 480, color = '#272F50', accent = '#4C7DF0', opacity = 1, ...rest }) {
   return (
     <svg viewBox="0 0 480 220" width={width} style={{ display: 'block' }} aria-hidden {...rest}>
       <defs>
@@ -27,7 +27,7 @@ export function Swoosh({ width = 480, color = '#272F50', accent = '#C9A86A', opa
   );
 }
 
-export function SoundWave({ width = 600, height = 160, color = '#272F50', accent = '#C9A86A', ...rest }) {
+export function SoundWave({ width = 600, height = 160, color = '#272F50', accent = '#4C7DF0', ...rest }) {
   return (
     <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} aria-hidden {...rest}>
       <g style={{ transformOrigin: 'center' }}>
@@ -81,7 +81,7 @@ function wavePath(w, h, amp, freq, phase) {
   return d;
 }
 
-export function BigQuote({ color = '#C9A86A', size = 180, ...rest }) {
+export function BigQuote({ color = '#4C7DF0', size = 180, ...rest }) {
   return (
     <svg width={size} viewBox="0 0 200 160" aria-hidden {...rest}>
       <text x="0" y="160" fontFamily='"Gotham", sans-serif'

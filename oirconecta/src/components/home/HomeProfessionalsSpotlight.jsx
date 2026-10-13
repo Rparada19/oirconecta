@@ -38,7 +38,7 @@ export default function HomeProfessionalsSpotlight() {
           mb: 2,
         }}>
           Profesionales que te{' '}
-          <Box component="span" sx={{ fontStyle: 'italic', color: '#085946', fontWeight: 500 }}>
+          <Box component="span" sx={{ fontStyle: 'italic', color: '#4054B2', fontWeight: 500 }}>
             escuchan de verdad
           </Box>
         </Typography>
@@ -60,7 +60,7 @@ export default function HomeProfessionalsSpotlight() {
                   display: 'flex',
                   flexDirection: 'column',
                   transition: 'all 0.3s ease',
-                  '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 32px rgba(8,89,70,0.10)', '& .pro-img': { transform: 'scale(1.04)' } },
+                  '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 32px rgba(64,84,178,0.10)', '& .pro-img': { transform: 'scale(1.04)' } },
                 }}
               >
                 <Box sx={{ position: 'relative', height: { xs: 240, md: 280 }, overflow: 'hidden' }}>
@@ -77,7 +77,7 @@ export default function HomeProfessionalsSpotlight() {
                   />
                   <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.55) 100%)' }} />
                   <Stack direction="row" alignItems="center" spacing={1.25} sx={{ position: 'absolute', bottom: 20, left: 20 }}>
-                    <Avatar sx={{ bgcolor: '#fff', color: '#085946', width: 44, height: 44, fontSize: '1rem', fontWeight: 800, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                    <Avatar sx={{ bgcolor: '#fff', color: '#4054B2', width: 44, height: 44, fontSize: '1rem', fontWeight: 800, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
                       {p.role.charAt(0)}
                     </Avatar>
                     <Typography sx={{ fontWeight: 800, color: '#fff', fontSize: '0.875rem', letterSpacing: '0.08em', textTransform: 'uppercase', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>

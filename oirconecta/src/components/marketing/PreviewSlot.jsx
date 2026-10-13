@@ -8,7 +8,7 @@ import React, { useEffect, useRef } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { usePreviewMode, usePreviewFocusSlot } from '../../hooks/usePreviewMode';
 
-const ACCENT = '#085946';
+const ACCENT = '#4054B2';
 
 export default function PreviewSlot({
   slotId, slotLabel, minHeight = 120, container = true,

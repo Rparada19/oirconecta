@@ -56,7 +56,7 @@ export default function CookieConsentBanner() {
           Utilizamos cookies técnicas necesarias para el funcionamiento del sitio, y —con tu autorización— cookies
           analíticas y de marketing (Meta Pixel, analítica propia) para entender cómo usas el sitio y mostrarte
           publicidad relevante. Puedes cambiar tu preferencia en cualquier momento desde la{' '}
-          <RouterLink to="/legal#cookies" style={{ color: '#085946', fontWeight: 700 }}>
+          <RouterLink to="/legal#cookies" style={{ color: '#4054B2', fontWeight: 700 }}>
             Política de cookies
           </RouterLink>.
         </Typography>
@@ -81,9 +81,9 @@ export default function CookieConsentBanner() {
             variant="contained"
             sx={{
               borderRadius: '10px', fontWeight: 700, textTransform: 'none',
-              background: 'linear-gradient(135deg,#085946,#0d7a5f)',
-              boxShadow: '0 4px 14px rgba(8,89,70,0.28)',
-              '&:hover': { boxShadow: '0 6px 20px rgba(8,89,70,0.38)' },
+              background: 'linear-gradient(135deg,#4054B2,#0d7a5f)',
+              boxShadow: '0 4px 14px rgba(64,84,178,0.28)',
+              '&:hover': { boxShadow: '0 6px 20px rgba(64,84,178,0.38)' },
             }}
           >
             Aceptar todas

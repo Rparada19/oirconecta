@@ -17,7 +17,7 @@ import { getDirectoryShowcaseBrands, DIRECTORY_FEATURED_BRANDS_PERIOD } from '..
 
 function wordmarkColor(slug) {
   const map = {
-    phonak: '#085946',
+    phonak: '#4054B2',
     oticon: '#0a4d6e',
     widex: '#1a3652',
     signia: '#2d3748',
@@ -40,8 +40,8 @@ export default function DirectoryRecommendedBrands() {
         my: { xs: 5, md: 7 },
         py: { xs: 4, md: 5 },
         px: { xs: 0, sm: 0 },
-        borderTop: '1px solid rgba(8, 89, 70, 0.1)',
-        borderBottom: '1px solid rgba(8, 89, 70, 0.08)',
+        borderTop: '1px solid rgba(64, 84, 178, 0.1)',
+        borderBottom: '1px solid rgba(64, 84, 178, 0.08)',
         background: 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(244,247,246,0.98) 48%, rgba(232,241,236,0.55) 100%)',
       }}
     >
@@ -84,14 +84,14 @@ export default function DirectoryRecommendedBrands() {
                 sx={{
                   height: '100%',
                   borderRadius: 4,
-                  border: '1px solid rgba(8, 89, 70, 0.14)',
+                  border: '1px solid rgba(64, 84, 178, 0.14)',
                   boxShadow: '0 20px 56px rgba(8, 41, 34, 0.1), 0 2px 8px rgba(0,0,0,0.04)',
                   overflow: 'hidden',
                   bgcolor: 'background.paper',
                   transition: 'transform 0.25s ease, box-shadow 0.25s ease',
                   '&:hover': {
                     transform: 'translateY(-6px)',
-                    boxShadow: '0 28px 72px rgba(8, 89, 70, 0.14), 0 8px 24px rgba(0,0,0,0.06)',
+                    boxShadow: '0 28px 72px rgba(64, 84, 178, 0.14), 0 8px 24px rgba(0,0,0,0.06)',
                   },
                 }}
               >
@@ -105,9 +105,9 @@ export default function DirectoryRecommendedBrands() {
                         fontWeight: 700,
                         fontSize: '0.65rem',
                         letterSpacing: '0.06em',
-                        bgcolor: 'rgba(8, 89, 70, 0.09)',
+                        bgcolor: 'rgba(64, 84, 178, 0.09)',
                         color: 'primary.dark',
-                        border: '1px solid rgba(8, 89, 70, 0.15)',
+                        border: '1px solid rgba(64, 84, 178, 0.15)',
                       }}
                     />
                   </Stack>
@@ -186,8 +186,8 @@ export default function DirectoryRecommendedBrands() {
                       fontWeight: 800,
                       textTransform: 'none',
                       fontSize: '1rem',
-                      boxShadow: '0 8px 24px rgba(8, 89, 70, 0.28)',
-                      '&:hover': { boxShadow: '0 12px 32px rgba(8, 89, 70, 0.35)' },
+                      boxShadow: '0 8px 24px rgba(64, 84, 178, 0.28)',
+                      '&:hover': { boxShadow: '0 12px 32px rgba(64, 84, 178, 0.35)' },
                     }}
                   >
                     Hablar por WhatsApp

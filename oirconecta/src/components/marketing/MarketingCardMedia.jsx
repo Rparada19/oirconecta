@@ -10,7 +10,7 @@ export default function MarketingCardMedia({ title, subtitle, icon: Icon, gradie
       sx={{
         width: '100%',
         height: 200,
-        background: gradient || 'linear-gradient(135deg, #085946 0%, #71A095 100%)',
+        background: gradient || 'linear-gradient(135deg, #4054B2 0%, #71A095 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

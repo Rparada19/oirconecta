@@ -16,7 +16,7 @@ import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 
 const API = import.meta.env.VITE_API_URL || 'https://oirconecta-api.onrender.com';
-const ACCENT = '#085946';
+const ACCENT = '#4054B2';
 const NAVY = '#272F50';
 
 export default function ContactoProfesionalDialog({ open, onClose, profileId, profesionalNombre, initialMessage = '' }) {
@@ -112,7 +112,7 @@ export default function ContactoProfesionalDialog({ open, onClose, profileId, pr
         {done ? (
           <Button onClick={handleClose} variant="contained"
             sx={{ background: ACCENT, borderRadius: '8px', textTransform: 'none', fontWeight: 700,
-              '&:hover': { background: '#064a3a' } }}>
+              '&:hover': { background: '#2E3E8F' } }}>
             Cerrar
           </Button>
         ) : (
@@ -122,7 +122,7 @@ export default function ContactoProfesionalDialog({ open, onClose, profileId, pr
               variant="contained"
               startIcon={sending ? <CircularProgress size={16} color="inherit" /> : <SendRoundedIcon />}
               sx={{ background: ACCENT, borderRadius: '8px', textTransform: 'none', fontWeight: 700,
-                '&:hover': { background: '#064a3a' } }}>
+                '&:hover': { background: '#2E3E8F' } }}>
               Enviar solicitud
             </Button>
           </>

@@ -10,12 +10,12 @@ import { Swoosh } from '../brand/BrandMark';
 
 const C = {
   navy: '#272F50',
-  verde: '#085946',
-  oro: '#C9A86A',
-  oroSuave: '#E0C28A',
-  arena: '#D9CDBF',
-  cremaCalida: '#F5EFE6',
-  blanco: '#FBFAF8',
+  verde: '#4054B2',
+  oro: '#4C7DF0',
+  oroSuave: '#9DB8FF',
+  arena: '#D5DDF0',
+  cremaCalida: '#EEF2FC',
+  blanco: '#FAFBFE',
   gris: '#6B7280',
 };
 
@@ -52,7 +52,7 @@ export default function HomeSearchSection() {
             <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 3 }}>
               <Box sx={{ width: 32, height: 2, bgcolor: C.oro }} />
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                 textTransform: 'uppercase', color: C.navy,
               }}>
@@ -72,7 +72,7 @@ export default function HomeSearchSection() {
           </Box>
           <Box sx={{ pb: { md: 1 } }}>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.15rem' }, lineHeight: 1.6,
               color: C.gris, maxWidth: 480,
             }}>
@@ -93,7 +93,7 @@ export default function HomeSearchSection() {
           transform: visible ? 'translateY(0)' : 'translateY(28px)',
           transition: 'all 1s cubic-bezier(0.2,0.7,0.2,1) 0.15s',
         }}>
-          <SearchEngine />
+          <SearchEngine hideTitle />
         </Box>
       </Container>
     </Box>

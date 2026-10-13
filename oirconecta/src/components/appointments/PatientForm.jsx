@@ -11,7 +11,7 @@ const PatientForm = ({ patientData, onDataChange }) => {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Person sx={{ color: '#085946', mr: 1 }} />
+        <Person sx={{ color: '#4054B2', mr: 1 }} />
         <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600 }}>
           Información del Paciente
         </Typography>
@@ -35,10 +35,10 @@ const PatientForm = ({ patientData, onDataChange }) => {
           sx={{
             '& .MuiOutlinedInput-root': {
               '&:hover fieldset': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
             },
           }}
@@ -62,10 +62,10 @@ const PatientForm = ({ patientData, onDataChange }) => {
           sx={{
             '& .MuiOutlinedInput-root': {
               '&:hover fieldset': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
             },
           }}
@@ -89,10 +89,10 @@ const PatientForm = ({ patientData, onDataChange }) => {
           sx={{
             '& .MuiOutlinedInput-root': {
               '&:hover fieldset': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
             },
           }}
@@ -111,13 +111,13 @@ const PatientForm = ({ patientData, onDataChange }) => {
             }
             sx={{
               '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
               '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
               '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
             }}
           >
@@ -147,10 +147,10 @@ const PatientForm = ({ patientData, onDataChange }) => {
           sx={{
             '& .MuiOutlinedInput-root': {
               '&:hover fieldset': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#085946',
+                borderColor: '#4054B2',
               },
             },
           }}

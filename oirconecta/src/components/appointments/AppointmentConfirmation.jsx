@@ -30,7 +30,7 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
   return (
     <Box>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <CheckCircle sx={{ fontSize: 80, color: '#085946', mb: 2 }} />
+        <CheckCircle sx={{ fontSize: 80, color: '#4054B2', mb: 2 }} />
         <Typography variant="h4" sx={{ color: '#272F50', fontWeight: 700, mb: 1 }}>
           ¡Cita Agendada Exitosamente!
         </Typography>
@@ -45,7 +45,7 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
           p: 4,
           borderRadius: 3,
           backgroundColor: '#f8fafc',
-          border: '1px solid rgba(8, 89, 70, 0.1)',
+          border: '1px solid rgba(64, 84, 178, 0.1)',
         }}
       >
         <Typography variant="h6" sx={{ color: '#272F50', fontWeight: 600, mb: 3 }}>
@@ -54,7 +54,7 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <CalendarToday sx={{ color: '#085946' }} />
+            <CalendarToday sx={{ color: '#4054B2' }} />
             <Box>
               <Typography variant="caption" sx={{ color: '#86899C', display: 'block' }}>
                 Fecha
@@ -66,7 +66,7 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <AccessTime sx={{ color: '#085946' }} />
+            <AccessTime sx={{ color: '#4054B2' }} />
             <Box>
               <Typography variant="caption" sx={{ color: '#86899C', display: 'block' }}>
                 Hora
@@ -80,7 +80,7 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
           <Divider sx={{ my: 2 }} />
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Person sx={{ color: '#085946' }} />
+            <Person sx={{ color: '#4054B2' }} />
             <Box>
               <Typography variant="caption" sx={{ color: '#86899C', display: 'block' }}>
                 Paciente
@@ -92,7 +92,7 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Email sx={{ color: '#085946' }} />
+            <Email sx={{ color: '#4054B2' }} />
             <Box>
               <Typography variant="caption" sx={{ color: '#86899C', display: 'block' }}>
                 Email
@@ -104,7 +104,7 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Phone sx={{ color: '#085946' }} />
+            <Phone sx={{ color: '#4054B2' }} />
             <Box>
               <Typography variant="caption" sx={{ color: '#86899C', display: 'block' }}>
                 Teléfono
@@ -117,7 +117,7 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
 
           {appointment.reason && (
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-              <Description sx={{ color: '#085946', mt: 0.5 }} />
+              <Description sx={{ color: '#4054B2', mt: 0.5 }} />
               <Box>
                 <Typography variant="caption" sx={{ color: '#86899C', display: 'block' }}>
                   Motivo
@@ -172,10 +172,10 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
           variant="outlined"
           onClick={onReset}
           sx={{
-            borderColor: '#085946',
+            borderColor: '#4054B2',
             borderWidth: 2,
-            color: '#085946',
-            '&:hover': { borderColor: '#085946', borderWidth: 2, bgcolor: '#f0f4f3' },
+            color: '#4054B2',
+            '&:hover': { borderColor: '#4054B2', borderWidth: 2, bgcolor: '#f0f4f3' },
             px: 4,
             py: 1.5,
             textTransform: 'none',
@@ -189,7 +189,7 @@ const AppointmentConfirmation = ({ appointment, onReset, onContinue }) => {
             variant="contained"
             onClick={onContinue}
             sx={{
-              bgcolor: '#085946',
+              bgcolor: '#4054B2',
               '&:hover': { bgcolor: '#272F50' },
               px: 4,
               py: 1.5,

@@ -62,13 +62,13 @@ export default function DirectoryHero({
         position: 'relative', overflow: 'hidden',
         pt: { xs: 12, md: 14 },
         pb: { xs: 5, md: 7 },
-        bgcolor: '#FBFAF8',
+        bgcolor: '#FAFBFE',
       }}
     >
       <Box aria-hidden sx={{
         position: 'absolute', top: -180, right: -180,
         width: 540, height: 540, borderRadius: '50%',
-        background: 'radial-gradient(circle, #D9CDBF50 0%, transparent 70%)',
+        background: 'radial-gradient(circle, #D5DDF050 0%, transparent 70%)',
         filter: 'blur(60px)', pointerEvents: 'none',
       }} />
       <Box aria-hidden sx={{
@@ -81,13 +81,13 @@ export default function DirectoryHero({
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <Stack spacing={2.5} alignItems="center" textAlign="center" sx={{ mb: { xs: 4, md: 5 } }}>
           <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.25}>
-            <Box sx={{ width: 28, height: 2, bgcolor: '#085946' }} />
+            <Box sx={{ width: 28, height: 2, bgcolor: '#4054B2' }} />
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '0.75rem',
+              fontFamily: '"Gotham", sans-serif', fontSize: '0.75rem',
               fontWeight: 600, letterSpacing: '0.18em',
-              textTransform: 'uppercase', color: '#085946',
+              textTransform: 'uppercase', color: '#4054B2',
             }}>Directorio verificado · Colombia</Typography>
-            <Box sx={{ width: 28, height: 2, bgcolor: '#085946' }} />
+            <Box sx={{ width: 28, height: 2, bgcolor: '#4054B2' }} />
           </Stack>
 
           <Typography component="h1" sx={{
@@ -100,7 +100,7 @@ export default function DirectoryHero({
             {title || (
               <>
                 Encuentra al{' '}
-                <Box component="span" sx={{ fontStyle: 'italic', color: '#085946', fontWeight: 500 }}>
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#4054B2', fontWeight: 500 }}>
                   especialista auditivo
                 </Box>{' '}
                 ideal
@@ -109,7 +109,7 @@ export default function DirectoryHero({
           </Typography>
 
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             color: '#6B7280', maxWidth: 640,
             fontSize: { xs: '1rem', md: '1.1875rem' }, lineHeight: 1.6,
           }}>

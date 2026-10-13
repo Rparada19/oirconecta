@@ -9,8 +9,8 @@ import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
 
 const FALLBACK = null;
 const C = {
-  navy: '#272F50', verde: '#085946', oro: '#C9A86A',
-  blanco: '#FBFAF8', gris: '#6B7280', grisClaro: '#A1A7B1',
+  navy: '#272F50', verde: '#4054B2', oro: '#4C7DF0',
+  blanco: '#FAFBFE', gris: '#6B7280', grisClaro: '#A1A7B1',
 };
 
 function pickImage(profile) {
@@ -105,7 +105,7 @@ const DirectoryCardV2 = memo(function DirectoryCardV2({ profile }) {
               <PersonOutlineRoundedIcon sx={{ fontSize: 30, color: C.verde }} />
             </Box>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.6875rem', fontWeight: 600,
               color: C.gris, letterSpacing: '0.1em', textTransform: 'uppercase',
             }}>
@@ -193,7 +193,7 @@ const DirectoryCardV2 = memo(function DirectoryCardV2({ profile }) {
         </Typography>
 
         <Typography sx={{
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '0.8125rem', fontWeight: 600,
           color: C.verde, letterSpacing: '0.02em',
           textTransform: 'uppercase',

@@ -137,16 +137,16 @@ export default function ComparadorPage() {
   const precioDe = (et) => result?.precios?.find((p) => p.etiqueta === et)?.precio ?? null;
 
   const leadCapture = (
-    <Paper sx={{ p: 3, borderRadius: 3, mt: 3, border: '1px solid rgba(8,89,70,0.15)' }} elevation={0}>
+    <Paper sx={{ p: 3, borderRadius: 3, mt: 3, border: '1px solid rgba(64,84,178,0.15)' }} elevation={0}>
       {leadState.done ? (
         <Box sx={{ textAlign: 'center', py: 2 }}>
-          <PhoneInTalkOutlinedIcon sx={{ fontSize: 44, color: '#085946', mb: 1 }} />
+          <PhoneInTalkOutlinedIcon sx={{ fontSize: 44, color: '#4054B2', mb: 1 }} />
           <Typography variant="h6" sx={{ fontWeight: 700 }}>¡Gracias! Te contactaremos pronto.</Typography>
           <Typography color="text.secondary">Un asesor te llamará para orientarte sobre la opción que más te conviene.</Typography>
         </Box>
       ) : (
         <>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#085946', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#4054B2', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
             <PhoneInTalkOutlinedIcon /> ¿Quieres que te orientemos?
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -163,7 +163,7 @@ export default function ComparadorPage() {
           </Grid>
           <Box sx={{ mt: 2 }}>
             <Button variant="contained" disabled={leadState.sending} onClick={enviarLead}
-              sx={{ borderRadius: '10px', fontWeight: 700, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+              sx={{ borderRadius: '10px', fontWeight: 700, background: '#4054B2', '&:hover': { background: '#2E3E8F' } }}>
               {leadState.sending ? 'Enviando…' : 'Quiero que me llamen'}
             </Button>
           </Box>
@@ -180,26 +180,26 @@ export default function ComparadorPage() {
         <link rel="canonical" href="https://oirconecta.com/comparador/" />
       </Helmet>
 
-      <Box component="main" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#FBFAF8' }}>
+      <Box component="main" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#FAFBFE' }}>
         <Header />
 
         {/* HERO editorial */}
         <Box sx={{
           position: 'relative', overflow: 'hidden',
           pt: { xs: 14, md: 16 }, pb: { xs: 5, md: 7 },
-          bgcolor: '#FBFAF8',
+          bgcolor: '#FAFBFE',
         }}>
           <Box aria-hidden sx={{
             position: 'absolute', top: -180, right: -180, width: 540, height: 540,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, #D9CDBF55 0%, transparent 70%)',
+            background: 'radial-gradient(circle, #D5DDF055 0%, transparent 70%)',
             filter: 'blur(80px)', pointerEvents: 'none',
           }} />
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
             <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-              <Box sx={{ width: 32, height: 2, bgcolor: '#C9A86A' }} />
+              <Box sx={{ width: 32, height: 2, bgcolor: '#4C7DF0' }} />
               <Typography sx={{
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
                 textTransform: 'uppercase', color: '#272F50',
               }}>
@@ -213,12 +213,12 @@ export default function ComparadorPage() {
               color: '#272F50', mb: 3,
             }}>
               Compara hasta tres{' '}
-              <Box component="span" sx={{ fontStyle: 'italic', color: '#085946' }}>
+              <Box component="span" sx={{ fontStyle: 'italic', color: '#4054B2' }}>
                 audífonos.
               </Box>
             </Typography>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.0625rem', md: '1.1875rem' },
               color: '#6B7280', lineHeight: 1.55, maxWidth: 720,
             }}>
@@ -230,7 +230,7 @@ export default function ComparadorPage() {
         <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, flex: 1 }}>
 
           {loadingItems ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: '#085946' }} /></Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: '#4054B2' }} /></Box>
           ) : items.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" color="text.secondary">Pronto habilitaremos el comparador.</Typography>
@@ -241,9 +241,9 @@ export default function ComparadorPage() {
               <Grid container spacing={2} sx={{ mb: 4 }}>
                 {cands.map((c, idx) => (
                   <Grid item xs={12} md={4} key={idx}>
-                    <Paper sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(8,89,70,0.12)' }} elevation={0}>
+                    <Paper sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(64,84,178,0.12)' }} elevation={0}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography sx={{ fontWeight: 700, color: '#085946' }}>Opción {idx + 1}</Typography>
+                        <Typography sx={{ fontWeight: 700, color: '#4054B2' }}>Opción {idx + 1}</Typography>
                         {cands.length > 1 && (
                           <Button size="small" color="inherit" onClick={() => removeCand(idx)} sx={{ color: '#9ca3af', minWidth: 0 }}>Quitar</Button>
                         )}
@@ -271,7 +271,7 @@ export default function ComparadorPage() {
                 ))}
                 {cands.length < 3 && (
                   <Grid item xs={12} md={4}>
-                    <Button onClick={addCand} fullWidth sx={{ height: '100%', minHeight: 120, border: '1px dashed rgba(8,89,70,0.4)', borderRadius: 3, color: '#085946' }}>
+                    <Button onClick={addCand} fullWidth sx={{ height: '100%', minHeight: 120, border: '1px dashed rgba(64,84,178,0.4)', borderRadius: 3, color: '#4054B2' }}>
                       + Agregar opción
                     </Button>
                   </Grid>
@@ -302,14 +302,14 @@ export default function ComparadorPage() {
 
               <Box sx={{ textAlign: 'center', mb: 5 }}>
                 <Button variant="contained" size="large" startIcon={<AutoAwesomeIcon />} disabled={!puedeAccionar} onClick={comparar}
-                  sx={{ borderRadius: '12px', fontWeight: 700, px: 4, py: 1.2, background: '#085946', '&:hover': { background: '#064a3a' } }}>
+                  sx={{ borderRadius: '12px', fontWeight: 700, px: 4, py: 1.2, background: '#4054B2', '&:hover': { background: '#2E3E8F' } }}>
                   {loading ? 'Analizando…' : modoReco ? 'Recomiéndame con IA' : 'Comparar con IA'}
                 </Button>
                 {modoReco && !testListo && <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>Indica al menos tu pérdida o presupuesto, o elige marcas para comparar.</Typography>}
               </Box>
 
               {error && <Alert severity="error" sx={{ mb: 3, borderRadius: '12px' }}>{error}</Alert>}
-              {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress sx={{ color: '#085946' }} /></Box>}
+              {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress sx={{ color: '#4054B2' }} /></Box>}
 
               {/* Resultado */}
               {result && (
@@ -319,13 +319,13 @@ export default function ComparadorPage() {
                       const esGanador = result.recomendacion?.ganadorEtiqueta === c.etiqueta;
                       return (
                         <Grid item xs={12} md={result.candidatos.length > 1 ? 6 : 12} lg={result.candidatos.length >= 3 ? 4 : 6} key={c.etiqueta}>
-                          <Card sx={{ height: '100%', borderRadius: 3, border: esGanador ? '2px solid #085946' : '1px solid rgba(0,0,0,0.08)' }}>
+                          <Card sx={{ height: '100%', borderRadius: 3, border: esGanador ? '2px solid #4054B2' : '1px solid rgba(0,0,0,0.08)' }}>
                             <CardContent>
                               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                                 <Typography variant="h6" sx={{ fontWeight: 700 }}>{c.etiqueta}</Typography>
                                 {esGanador && <Chip icon={<StarIcon />} label="Recomendado" size="small" color="success" sx={{ fontWeight: 700 }} />}
                               </Box>
-                              <Typography variant="h5" sx={{ fontWeight: 800, color: '#085946', mb: 2 }}>{formatPrice(precioDe(c.etiqueta))}</Typography>
+                              <Typography variant="h5" sx={{ fontWeight: 800, color: '#4054B2', mb: 2 }}>{formatPrice(precioDe(c.etiqueta))}</Typography>
                               <Divider sx={{ mb: 1.5 }} />
                               <Section icon={<CheckCircleOutlineIcon sx={{ fontSize: 18, color: '#10B981' }} />} title="Fortalezas" items={c.fortalezas} color="#10B981" />
                               <Section icon={<ErrorOutlineIcon sx={{ fontSize: 18, color: '#F59E0B' }} />} title="Debilidades" items={c.debilidades} color="#F59E0B" />
@@ -344,8 +344,8 @@ export default function ComparadorPage() {
                   </Grid>
 
                   {result.recomendacion && (
-                    <Paper sx={{ p: 3, borderRadius: 3, background: 'rgba(8,89,70,0.05)', border: '1px solid rgba(8,89,70,0.15)' }} elevation={0}>
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#085946', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Paper sx={{ p: 3, borderRadius: 3, background: 'rgba(64,84,178,0.05)', border: '1px solid rgba(64,84,178,0.15)' }} elevation={0}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#4054B2', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <StarIcon /> Nuestra recomendación: {result.recomendacion.ganadorEtiqueta}
                       </Typography>
                       <Typography variant="body1" sx={{ mb: 1.5 }}>{result.recomendacion.razon}</Typography>
@@ -371,7 +371,7 @@ export default function ComparadorPage() {
                         <Card sx={{ height: '100%', borderRadius: 3, border: '1px solid rgba(0,0,0,0.08)' }}>
                           <CardContent>
                             <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>{r.opcion}</Typography>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#085946', mb: 1.5 }}>{r.rangoPrecioAprox}</Typography>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#4054B2', mb: 1.5 }}>{r.rangoPrecioAprox}</Typography>
                             <Box sx={{ mb: 1 }}>
                               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Por qué</Typography>
                               <Typography variant="body2" color="text.secondary">{r.porque}</Typography>
@@ -385,8 +385,8 @@ export default function ComparadorPage() {
                       </Grid>
                     ))}
                   </Grid>
-                  <Paper sx={{ p: 3, borderRadius: 3, background: 'rgba(8,89,70,0.05)', border: '1px solid rgba(8,89,70,0.15)' }} elevation={0}>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#085946', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Paper sx={{ p: 3, borderRadius: 3, background: 'rgba(64,84,178,0.05)', border: '1px solid rgba(64,84,178,0.15)' }} elevation={0}>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#4054B2', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <StarIcon /> En resumen
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 1.5 }}>{reco.resumen}</Typography>

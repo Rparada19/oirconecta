@@ -8,7 +8,7 @@ import Footer from '../components/Footer';
 
 const Section = ({ id, title, children }) => (
   <Box id={id} component="section" sx={{ mb: 5, scrollMarginTop: 96 }}>
-    <Typography variant="h4" component="h2" gutterBottom sx={{ color: '#085946', fontWeight: 700 }}>
+    <Typography variant="h4" component="h2" gutterBottom sx={{ color: '#4054B2', fontWeight: 700 }}>
       {title}
     </Typography>
     <Typography variant="body1" color="text.secondary" component="div" sx={{ lineHeight: 1.75 }}>
@@ -32,7 +32,7 @@ const ConsentPanel = () => {
       </Typography>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
         <Button size="small" variant="contained" onClick={() => setConsent('accepted')}
-          sx={{ bgcolor: '#085946', '&:hover': { bgcolor: '#0d7a5f' }, textTransform: 'none', borderRadius: '8px' }}>
+          sx={{ bgcolor: '#4054B2', '&:hover': { bgcolor: '#0d7a5f' }, textTransform: 'none', borderRadius: '8px' }}>
           Aceptar todas
         </Button>
         <Button size="small" variant="outlined" onClick={() => setConsent('rejected')}

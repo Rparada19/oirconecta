@@ -16,8 +16,8 @@ export default function RecommendationOfMonthSection() {
           borderRadius: '8px',
           overflow: 'hidden',
           background: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 50%, #ecfdf5 100%)',
-          border: '1px solid rgba(8,89,70,0.10)',
-          boxShadow: '0 8px 32px rgba(8,89,70,0.08)',
+          border: '1px solid rgba(64,84,178,0.10)',
+          boxShadow: '0 8px 32px rgba(64,84,178,0.08)',
         }}>
           {/* Decorative blob */}
           <Box sx={{
@@ -36,7 +36,7 @@ export default function RecommendationOfMonthSection() {
                     label={r.label}
                     size="small"
                     sx={{
-                      bgcolor: '#085946', color: '#fff',
+                      bgcolor: '#4054B2', color: '#fff',
                       fontWeight: 800, fontSize: '0.6875rem',
                       letterSpacing: '0.12em', textTransform: 'uppercase',
                       px: 0.5, height: 26,
@@ -68,12 +68,12 @@ export default function RecommendationOfMonthSection() {
                 <Box sx={{
                   p: 2.5,
                   borderRadius: '8px',
-                  bgcolor: 'rgba(8,89,70,0.06)',
-                  border: '1px solid rgba(8,89,70,0.10)',
+                  bgcolor: 'rgba(64,84,178,0.06)',
+                  border: '1px solid rgba(64,84,178,0.10)',
                   mb: 3,
                 }}>
                   <Typography sx={{ fontSize: { xs: '0.9375rem', md: '1rem' }, color: '#0f1923', lineHeight: 1.65 }}>
-                    <Box component="strong" sx={{ color: '#085946', fontWeight: 800 }}>Ideal si…</Box> {r.forWho}
+                    <Box component="strong" sx={{ color: '#4054B2', fontWeight: 800 }}>Ideal si…</Box> {r.forWho}
                   </Typography>
                 </Box>
 
@@ -96,8 +96,8 @@ export default function RecommendationOfMonthSection() {
                     fontWeight: 700,
                     fontSize: '0.9375rem',
                     px: 3.5, py: 1.5,
-                    bgcolor: '#085946',
-                    '&:hover': { bgcolor: '#064a3a' },
+                    bgcolor: '#4054B2',
+                    '&:hover': { bgcolor: '#2E3E8F' },
                   }}
                 >
                   {r.ctaLabel}
@@ -107,7 +107,7 @@ export default function RecommendationOfMonthSection() {
 
             {/* Lado derecho: visual con icono grande y stats */}
             <Grid item xs={12} md={5} sx={{
-              background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 50%, #1a2240 100%)',
+              background: 'linear-gradient(135deg, #4054B2 0%, #0d7a5f 50%, #1a2240 100%)',
               color: '#fff',
               display: 'flex',
               flexDirection: 'column',
@@ -134,14 +134,14 @@ export default function RecommendationOfMonthSection() {
                 position: 'relative', zIndex: 1,
                 backdropFilter: 'blur(10px)',
               }}>
-                <LightbulbOutlinedIcon sx={{ fontSize: 52, color: '#C9A86A' }} />
+                <LightbulbOutlinedIcon sx={{ fontSize: 52, color: '#4C7DF0' }} />
               </Box>
               <Typography sx={{
                 fontSize: '0.6875rem',
                 fontWeight: 800,
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                color: '#C9A86A',
+                color: '#4C7DF0',
                 mb: 1.5,
                 textAlign: 'center',
                 position: 'relative', zIndex: 1,

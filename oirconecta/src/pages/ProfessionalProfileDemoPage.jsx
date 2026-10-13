@@ -123,7 +123,7 @@ const SectionCard = styled(Card)(() => ({
   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 12px 24px rgba(8, 89, 70, 0.15)'
+    boxShadow: '0 12px 24px rgba(64, 84, 178, 0.15)'
   }
 }));
 
@@ -552,11 +552,11 @@ const ProfessionalProfileDemoPage = () => {
               startIcon={<CalendarToday sx={{ fontSize: 20 }} />}
               onClick={handleBookingClick}
               sx={{
-                background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+                background: 'linear-gradient(135deg, #4054B2 0%, #0d7a5f 100%)',
                 color: 'white',
                 border: '2px solid transparent',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #0d7a5f 0%, #085946 100%)',
+                  background: 'linear-gradient(135deg, #0d7a5f 0%, #4054B2 100%)',
                   border: '2px solid rgba(255, 255, 255, 0.3)'
                 }
               }}
@@ -654,17 +654,17 @@ const ProfessionalProfileDemoPage = () => {
                   boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)'
                 },
                 '&.Mui-selected': {
-                  color: '#085946',
+                  color: '#4054B2',
                   fontWeight: 700,
-                  backgroundColor: 'rgba(8, 89, 70, 0.08)',
+                  backgroundColor: 'rgba(64, 84, 178, 0.08)',
                   '&:hover': {
-                    color: '#085946',
-                    backgroundColor: 'rgba(8, 89, 70, 0.12)'
+                    color: '#4054B2',
+                    backgroundColor: 'rgba(64, 84, 178, 0.12)'
                   }
                 }
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: '#085946',
+                backgroundColor: '#4054B2',
                 height: '3px',
                 borderRadius: '2px'
               }
@@ -687,7 +687,7 @@ const ProfessionalProfileDemoPage = () => {
               <Grid item xs={12} md={6}>
                 <SectionCard>
                   <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                       Datos de Contacto
                     </Typography>
                     <List>
@@ -761,7 +761,7 @@ const ProfessionalProfileDemoPage = () => {
               <Grid item xs={12} md={6}>
                 <SectionCard>
                   <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                       Información Profesional
                     </Typography>
                     <List>
@@ -805,7 +805,7 @@ const ProfessionalProfileDemoPage = () => {
               <Grid item xs={12} md={8}>
                 <SectionCard>
                   <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                       Calendario de Disponibilidad
                     </Typography>
                     <Box sx={{ 
@@ -826,7 +826,7 @@ const ProfessionalProfileDemoPage = () => {
               <Grid item xs={12} md={4}>
                 <SectionCard>
                   <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                       Horarios de Atención
                     </Typography>
                     <List>
@@ -855,15 +855,15 @@ const ProfessionalProfileDemoPage = () => {
                        startIcon={<CalendarToday sx={{ fontSize: 18 }} />}
                        onClick={handleBookingClick}
                        sx={{
-                         background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+                         background: 'linear-gradient(135deg, #4054B2 0%, #0d7a5f 100%)',
                          color: 'white',
                          mt: 3,
                          border: '2px solid transparent',
                          '&:hover': {
-                           background: 'linear-gradient(135deg, #0d7a5f 0%, #085946 100%)',
+                           background: 'linear-gradient(135deg, #0d7a5f 0%, #4054B2 100%)',
                            border: '2px solid rgba(255, 255, 255, 0.3)',
                            transform: 'translateY(-4px) scale(1.02)',
-                           boxShadow: '0 12px 32px rgba(8, 89, 70, 0.4)'
+                           boxShadow: '0 12px 32px rgba(64, 84, 178, 0.4)'
                          }
                        }}
                      >
@@ -880,7 +880,7 @@ const ProfessionalProfileDemoPage = () => {
             <Grid container spacing={4}>
               {/* Videos */}
               <Grid item xs={12}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                   Videos Educativos
                 </Typography>
                 <ImageList cols={3} gap={16}>
@@ -908,7 +908,7 @@ const ProfessionalProfileDemoPage = () => {
 
               {/* Fotos */}
               <Grid item xs={12}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                   Galería de Fotos
                 </Typography>
                 <ImageList cols={3} gap={16}>
@@ -931,7 +931,7 @@ const ProfessionalProfileDemoPage = () => {
 
               {/* Blogs */}
               <Grid item xs={12}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                   Artículos y Blog
                 </Typography>
                 <Grid container spacing={3}>
@@ -976,7 +976,7 @@ const ProfessionalProfileDemoPage = () => {
               <Grid item xs={12} md={4}>
                 <SectionCard>
                   <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                       Enviar Pregunta
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -1018,12 +1018,12 @@ const ProfessionalProfileDemoPage = () => {
                         variant="contained"
                         fullWidth
                         sx={{
-                          background: 'linear-gradient(135deg, #085946 0%, #0d7a5f 100%)',
+                          background: 'linear-gradient(135deg, #4054B2 0%, #0d7a5f 100%)',
                           color: 'white',
                           py: 1.5,
                           fontWeight: 600,
                           '&:hover': {
-                            background: 'linear-gradient(135deg, #0d7a5f 0%, #085946 100%)'
+                            background: 'linear-gradient(135deg, #0d7a5f 0%, #4054B2 100%)'
                           }
                         }}
                       >
@@ -1036,7 +1036,7 @@ const ProfessionalProfileDemoPage = () => {
 
               {/* Preguntas existentes */}
               <Grid item xs={12} md={8}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                   Preguntas Frecuentes
                 </Typography>
                 <Grid container spacing={3}>
@@ -1044,7 +1044,7 @@ const ProfessionalProfileDemoPage = () => {
                     <Grid item xs={12} key={q.id}>
                       <SectionCard>
                         <CardContent sx={{ p: 3 }}>
-                          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#085946' }}>
+                          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#4054B2' }}>
                             {q.question}
                           </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -1073,7 +1073,7 @@ const ProfessionalProfileDemoPage = () => {
           {selectedTab === 4 && (
             <Grid container spacing={4}>
               <Grid item xs={12}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                   Nuestros Aliados Comerciales
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
@@ -1115,7 +1115,7 @@ const ProfessionalProfileDemoPage = () => {
             <Grid container spacing={4}>
               {/* Estudios */}
               <Grid item xs={12}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                   Estudios y Certificaciones
                 </Typography>
                 <Grid container spacing={3}>
@@ -1146,7 +1146,7 @@ const ProfessionalProfileDemoPage = () => {
 
               {/* Premios */}
               <Grid item xs={12}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#085946' }}>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#4054B2' }}>
                   Premios y Reconocimientos
                 </Typography>
                 <Grid container spacing={3}>

@@ -121,8 +121,8 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
           p: { xs: 2, md: 3 },
           borderRadius: 4,
           background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-          border: '1px solid rgba(8, 89, 70, 0.08)',
-          boxShadow: '0 4px 24px rgba(8, 89, 70, 0.08), 0 0 0 1px rgba(8, 89, 70, 0.04)',
+          border: '1px solid rgba(64, 84, 178, 0.08)',
+          boxShadow: '0 4px 24px rgba(64, 84, 178, 0.08), 0 0 0 1px rgba(64, 84, 178, 0.04)',
           overflow: 'hidden',
         }}
       >
@@ -134,16 +134,16 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
             alignItems: 'center',
             mb: 2,
             pb: 2,
-            borderBottom: '1px solid rgba(8, 89, 70, 0.12)',
+            borderBottom: '1px solid rgba(64, 84, 178, 0.12)',
           }}
         >
           <IconButton
             onClick={goToPreviousMonth}
             size="small"
             sx={{
-              color: '#085946',
-              bgcolor: 'rgba(8, 89, 70, 0.06)',
-              '&:hover': { bgcolor: '#085946', color: '#fff' },
+              color: '#4054B2',
+              bgcolor: 'rgba(64, 84, 178, 0.06)',
+              '&:hover': { bgcolor: '#4054B2', color: '#fff' },
               transition: 'all 0.2s',
             }}
           >
@@ -164,9 +164,9 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
             onClick={goToNextMonth}
             size="small"
             sx={{
-              color: '#085946',
-              bgcolor: 'rgba(8, 89, 70, 0.06)',
-              '&:hover': { bgcolor: '#085946', color: '#fff' },
+              color: '#4054B2',
+              bgcolor: 'rgba(64, 84, 178, 0.06)',
+              '&:hover': { bgcolor: '#4054B2', color: '#fff' },
               transition: 'all 0.2s',
             }}
           >
@@ -226,9 +226,9 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
                     borderRadius: 2,
                     cursor: !allowAllDates && (isPast(day) || isWeekend(day)) ? 'not-allowed' : 'pointer',
                     background: isSelected(day)
-                      ? 'linear-gradient(135deg, #085946 0%, #0d7a63 100%)'
+                      ? 'linear-gradient(135deg, #4054B2 0%, #0d7a63 100%)'
                       : isToday(day)
-                      ? 'rgba(8, 89, 70, 0.08)'
+                      ? 'rgba(64, 84, 178, 0.08)'
                       : isWeekend(day)
                       ? 'rgba(0,0,0,0.02)'
                       : 'transparent',
@@ -237,7 +237,7 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
                       : !allowAllDates && (isPast(day) || isWeekend(day))
                       ? '#94a3b8'
                       : isToday(day)
-                      ? '#085946'
+                      ? '#4054B2'
                       : isWeekend(day)
                       ? '#64748b'
                       : '#334155',
@@ -245,7 +245,7 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
                     border: isSelected(day)
                       ? 'none'
                       : isToday(day)
-                      ? '2px solid #085946'
+                      ? '2px solid #4054B2'
                       : '1px solid transparent',
                     opacity: isWeekend(day) && !allowAllDates ? 0.6 : 1,
                     position: 'relative',
@@ -255,9 +255,9 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
                       : {
                           background: isSelected(day)
                             ? 'linear-gradient(135deg, #0a6b56 0%, #0d7a63 100%)'
-                            : 'rgba(8, 89, 70, 0.12)',
+                            : 'rgba(64, 84, 178, 0.12)',
                           transform: 'scale(1.06)',
-                          boxShadow: '0 2px 8px rgba(8, 89, 70, 0.2)',
+                          boxShadow: '0 2px 8px rgba(64, 84, 178, 0.2)',
                         },
                   }}
                 >
@@ -290,7 +290,7 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
                             width: 4,
                             height: 4,
                             borderRadius: '50%',
-                            bgcolor: isToday(day) ? '#085946' : '#64748b',
+                            bgcolor: isToday(day) ? '#4054B2' : '#64748b',
                           }}
                         />
                       ))}
@@ -324,9 +324,9 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
           sx={{
             mt: 2,
             py: 1,
-            color: '#085946',
+            color: '#4054B2',
             fontWeight: 600,
-            '&:hover': { bgcolor: 'rgba(8, 89, 70, 0.08)' },
+            '&:hover': { bgcolor: 'rgba(64, 84, 178, 0.08)' },
           }}
         >
           Ir a hoy
@@ -339,14 +339,14 @@ const DateSelector = ({ selectedDate, onDateSelect, datesWithCounts = {}, allowA
             mt: 2,
             p: 2,
             borderRadius: 2,
-            bgcolor: 'rgba(8, 89, 70, 0.06)',
-            border: '1px solid rgba(8, 89, 70, 0.12)',
+            bgcolor: 'rgba(64, 84, 178, 0.06)',
+            border: '1px solid rgba(64, 84, 178, 0.12)',
           }}
         >
           <Typography
             variant="body2"
             sx={{
-              color: '#085946',
+              color: '#4054B2',
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
