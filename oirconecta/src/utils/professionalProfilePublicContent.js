@@ -41,16 +41,16 @@ export function studyCategoriesWithContent(studies) {
 export function buildPublicAllies(isAudiologa, audiologa) {
   const base = {
     audifonos: [
-      { name: 'Phonak', description: 'Tecnología y adaptación', image: '/img/audifono-retroauricular-bte.jpg' },
-      { name: 'Oticon', description: 'Soluciones auditivas', image: '/img/audifono-intracanal-itc.jpg' },
+      { name: 'Phonak', description: 'Tecnología y adaptación', image: '/logos/marcas/Phonak-logo.jpg' },
+      { name: 'Oticon', description: 'Soluciones auditivas', image: '/logos/marcas/Oticon-logo.png.webp' },
     ],
     implantes: [
-      { name: 'Cochlear', description: 'Implantes cocleares', image: '/img/audifono-retroauricular-bte.jpg' },
-      { name: 'MED-EL', description: 'Sistemas implantables', image: '/img/consultorio-audiologia-banner.jpg' },
+      { name: 'Cochlear', description: 'Implantes cocleares', image: '/logos/marcas/Cochlear-logo.png' },
+      { name: 'MED-EL', description: 'Sistemas implantables', image: '/logos/marcas/MED-EL_Logo.jpg' },
     ],
     medicamentos: [],
     accesorios: [
-      { name: 'Consumibles y accesorios', description: 'Filtros, domos, pilas y conectividad según prescripción.', image: '/img/consultorio-audiologia-banner.jpg' },
+      { name: 'Consumibles y accesorios', description: 'Filtros, domos, pilas y conectividad según prescripción.', image: '/img/accesorios-audifonos-pilas.jpg' },
     ],
   };
 

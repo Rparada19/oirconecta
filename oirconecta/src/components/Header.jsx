@@ -375,7 +375,7 @@ function MegaBlog({ navigate, onClose }) {
           {[
             { titulo: 'Cómo elegir tu primer audífono', slug: 'guia-elegir-primer-audifono', cover: '/img/blog/audifono-receiver-ric.jpg' },
             { titulo: 'Tipos de pérdida auditiva', slug: 'tipos-de-perdida-auditiva', cover: '/img/clinica-audiologia-tratamiento.jpg' },
-            { titulo: 'Cuándo cambiar de audífono', slug: 'vida-util-audifono', cover: '/img/audifono-tecnologia-moderna.jpg' },
+            { titulo: 'Cuándo cambiar de audífono', slug: 'vida-util-audifono', cover: '/img/blog/cuidados-audifono.jpg' },
           ].map((a) => (
             <Box
               key={a.slug}

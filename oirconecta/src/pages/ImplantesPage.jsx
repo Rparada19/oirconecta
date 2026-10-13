@@ -98,7 +98,7 @@ function MarcaCard({ m, delay }) {
       </Typography>
 
       <Typography sx={{
-        fontFamily: '"Gotham", "DM Sans", sans-serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.18em',
         textTransform: 'uppercase', color: m.color, mb: 2,
       }}>
@@ -106,7 +106,7 @@ function MarcaCard({ m, delay }) {
       </Typography>
 
       <Typography sx={{
-        fontFamily: '"Gotham", "DM Sans", sans-serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: '0.95rem', color: C.gris, lineHeight: 1.6, mb: 3,
       }}>
         {m.desc}
@@ -117,14 +117,14 @@ function MarcaCard({ m, delay }) {
       {/* Líneas */}
       <Box sx={{ mb: 3, pt: 2, borderTop: `1px solid ${C.border}` }}>
         <Typography sx={{
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.22em',
           textTransform: 'uppercase', color: C.gris, mb: 1.5,
         }}>Líneas actuales</Typography>
         <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
           {m.lineas.map((l) => (
             <Box key={l} sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.75rem', fontWeight: 600, color: C.navy,
               bgcolor: `${m.color}14`, px: 1.25, py: 0.5, borderRadius: '4px',
             }}>{l}</Box>
@@ -134,7 +134,7 @@ function MarcaCard({ m, delay }) {
 
       <Box className="oc-mark-arrow" sx={{
         display: 'inline-flex', alignItems: 'center', gap: 1.25,
-        fontFamily: '"Gotham", "DM Sans", sans-serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: '0.85rem', fontWeight: 700, color: C.navy,
         letterSpacing: '0.08em', textTransform: 'uppercase',
         transition: 'gap 0.3s ease, color 0.3s ease',
@@ -174,7 +174,7 @@ function TipoRow({ t, delay }) {
           {t.titulo}
         </Typography>
         <Typography sx={{
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: { xs: '0.95rem', md: '1.05rem' }, lineHeight: 1.55,
           color: C.gris, maxWidth: 580,
         }}>
@@ -186,7 +186,7 @@ function TipoRow({ t, delay }) {
           <Stack key={ind} direction="row" spacing={1.25} alignItems="flex-start">
             <CheckCircleOutline sx={{ fontSize: 16, color: C.verde, mt: 0.25, flexShrink: 0 }} />
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.85rem', color: C.navy, lineHeight: 1.4,
             }}>
               {ind}
@@ -207,7 +207,7 @@ export default function ImplantesPage() {
         <link rel="canonical" href="https://oirconecta.com/implantes/" />
         <meta property="og:title" content="Implantes auditivos — OírConecta" />
         <meta property="og:url" content="https://oirconecta.com/implantes" />
-        <meta property="og:image" content="https://oirconecta.com/img/audifono-tecnologia-moderna.jpg" />
+        <meta property="og:image" content="https://oirconecta.com/img/otologo-examinando-oido.jpg" />
       </Helmet>
 
       <Header />
@@ -217,7 +217,7 @@ export default function ImplantesPage() {
         titleBefore="Cuando los audífonos"
         titleAccent="ya no alcanzan."
         intro="Un implante coclear o de oído medio puede restituir el acceso al sonido cuando la pérdida es severa o profunda. Aquí te explicamos cuándo, cómo y con qué marcas — sin tecnicismos."
-        image="/img/audifono-tecnologia-moderna.jpg"
+        image="/img/otologo-examinando-oido.jpg"
         imageAlt="Implante auditivo de tecnología moderna"
         imageTag="3 fabricantes · Colombia"
         imageCaption="No todos los pacientes son candidatos. La indicación la define un equipo especializado."
@@ -239,7 +239,7 @@ export default function ImplantesPage() {
               <SectionTitle before="No todo es" accent="coclear." size="lg" />
             </Box>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.15rem' }, color: C.gris,
               lineHeight: 1.6, maxWidth: 540, pb: { md: 1.5 },
             }}>
@@ -306,7 +306,7 @@ export default function ImplantesPage() {
             sx={{ color: '#fff', mb: 3 }}
           />
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4, maxWidth: 580, mx: 'auto',
           }}>
             La candidatura a un implante exige imágenes, audiometría avanzada y a veces evaluación
@@ -318,7 +318,7 @@ export default function ImplantesPage() {
             sx={{
               display: 'inline-flex', alignItems: 'center', gap: 1.25,
               bgcolor: C.oro, color: C.navy,
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: '0.95rem', fontWeight: 700,
               px: 4, py: 1.85, borderRadius: '6px',
               textDecoration: 'none', letterSpacing: '0.02em',

@@ -56,7 +56,7 @@ function NumberCard({ n, delay }) {
         {n.value}
       </Typography>
       <Typography sx={{
-        fontFamily: '"Gotham", "DM Sans", sans-serif',
+        fontFamily: '"Gotham", sans-serif',
         fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.12em',
         textTransform: 'uppercase', color: C.gris, mt: 1,
       }}>
@@ -94,7 +94,7 @@ function ValorRow({ v, delay }) {
           {v.titulo}
         </Typography>
         <Typography sx={{
-          fontFamily: '"Gotham", "DM Sans", sans-serif',
+          fontFamily: '"Gotham", sans-serif',
           fontSize: { xs: '0.95rem', md: '1.05rem' }, lineHeight: 1.6,
           color: C.gris, maxWidth: 620,
         }}>
@@ -157,14 +157,14 @@ export default function NosotrosPage() {
             En 2024 perdimos meses tratando de ayudar a un familiar mayor a encontrar un audífono que de verdad sirviera para su pérdida. Cada centro nos vendía la marca con la que tenían convenio. Cada profesional repetía argumentos de comercial. Nadie nos explicaba qué pasaba en su oído, qué tipo de pérdida tenía, ni por qué un equipo costaba el triple del otro.
           </EditorialIntro>
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.05rem', md: '1.15rem' }, lineHeight: 1.65,
             color: C.navy, mt: 3.5,
           }}>
             Cuando finalmente dimos con un audiólogo honesto, fue por suerte — un comentario en un grupo de WhatsApp. Eso nos pareció demasiado azaroso para algo que cambia tanto la vida de la gente. Entonces hicimos OírConecta.
           </Typography>
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: { xs: '1.05rem', md: '1.15rem' }, lineHeight: 1.65,
             color: C.navy, mt: 2.5,
           }}>
@@ -198,7 +198,7 @@ export default function NosotrosPage() {
               <SectionTitle before="Lo que" accent="defendemos." size="lg" />
             </Box>
             <Typography sx={{
-              fontFamily: '"Gotham", "DM Sans", sans-serif',
+              fontFamily: '"Gotham", sans-serif',
               fontSize: { xs: '1.05rem', md: '1.15rem' }, color: C.gris,
               lineHeight: 1.6, maxWidth: 540, pb: { md: 1 },
             }}>
@@ -241,7 +241,7 @@ export default function NosotrosPage() {
         }} />
         <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative' }}>
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
             textTransform: 'uppercase', color: C.oro, mb: 2,
           }}>
@@ -254,7 +254,7 @@ export default function NosotrosPage() {
             sx={{ color: '#fff', mb: 3 }}
           />
           <Typography sx={{
-            fontFamily: '"Gotham", "DM Sans", sans-serif',
+            fontFamily: '"Gotham", sans-serif',
             fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4.5, maxWidth: 560, mx: 'auto',
           }}>
             Audiólogos, otorrinos, fonoaudiólogos y centros auditivos verificados en toda Colombia.
@@ -265,7 +265,7 @@ export default function NosotrosPage() {
               href="/directorio/listado"
               sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 1.25,
-                fontFamily: '"Gotham", "DM Sans", sans-serif',
+                fontFamily: '"Gotham", sans-serif',
                 fontSize: '0.95rem', fontWeight: 700,
                 bgcolor: C.oro, color: C.navy,
                 px: 4, py: 1.85, borderRadius: '6px',
