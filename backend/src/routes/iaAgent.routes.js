@@ -10,6 +10,8 @@ const ia = require('../services/iaAgent.service');
 const iaAdmin = require('../services/iaAdmin.service');
 const iaPacks = require('../services/iaPacks.service');
 const iaConfig = require('../services/iaAgentConfig.service');
+const aura = require('../services/auraSettings.service');
+const auraStats = require('../services/auraStats.service');
 const { authenticate, authorize } = require('../middleware/auth');
 const { authenticateDirectoryAccount } = require('../middleware/directoryAuth');
 const { PrismaClient } = require('@prisma/client');
@@ -88,6 +90,24 @@ router.get('/me/agent-config', authenticateDirectoryAccount, withProfile, (req, 
 
 router.put('/me/agent-config', authenticateDirectoryAccount, withProfile, (req, res) =>
   send(res, () => iaConfig.upsertConfig(req.profileId, req.body || {})));
+
+// Consola de Aura: solo el perfil del consultorio de OírConecta. Los demás
+// profesionales reciben isAura:false y su página queda como siempre.
+router.get('/me/aura', authenticateDirectoryAccount, withProfile, (req, res) =>
+  send(res, async () => {
+    if (!(await aura.isAuraProfile(req.profileId))) return { isAura: false };
+    const dias = Math.min(Math.max(parseInt(req.query.dias, 10) || 30, 7), 180);
+    return {
+      isAura: true,
+      settings: await aura.refresh({ force: true }),
+      defaults: aura.DEFAULTS,
+      pasos: aura.PASOS,
+      stats: await auraStats.resumen({ dias }),
+    };
+  }));
+
+router.put('/me/aura', authenticateDirectoryAccount, withProfile, (req, res) =>
+  send(res, () => aura.save(req.profileId, req.body || {})));
 
 // Límites y catálogos (para el UI)
 router.get('/agent-config/limits', (req, res) =>

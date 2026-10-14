@@ -40,6 +40,7 @@ import AssistantChat from '../../components/profesional/AssistantChat';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import ProfesionalPageHeader from '../../components/profesional/ProfesionalPageHeader';
 import IaDocumentsSection from '../../components/profesional/IaDocumentsSection';
+import AuraConsole from '../../components/profesional/AuraConsole';
 import { ThemeProvider } from '@mui/material/styles';
 import { C, consoleTheme, ConsoleShell } from '../../components/profesional/iaConsole';
 
@@ -254,6 +255,9 @@ export default function ProfesionalIAPage() {
     <ThemeProvider theme={consoleTheme}>
     <ConsoleShell>
     <Box sx={{ p: { xs: 0, md: 0 } }}>
+
+      {/* Solo en el perfil del consultorio: flujo y precios del bot de WhatsApp */}
+      <AuraConsole />
 
       {/* Saldo */}
       <Card sx={{ mt: 2, background: `linear-gradient(135deg, rgba(124,92,255,0.10) 0%, ${C.ink2} 60%)` }}>

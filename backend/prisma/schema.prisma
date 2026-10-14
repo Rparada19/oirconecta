@@ -2840,6 +2840,9 @@ model IaAgentConfig {
   /// Qué puede decir de dinero y qué no. Antes vivía repartido entre
   /// services y avoidTopics.
   pricing           String?
+  /// Consola de Aura (solo el perfil retail): precios y textos del flujo de
+  /// WhatsApp. Solo guarda lo que difiere de auraSettings.service DEFAULTS.
+  auraSettings      Json?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
