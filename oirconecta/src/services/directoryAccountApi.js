@@ -34,6 +34,42 @@ export function clearDirectoryToken() {
   }
 }
 
+/** true si el token es un JWT cuya fecha de vencimiento (`exp`) ya pasó. */
+export function isDirectoryTokenExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now();
+  } catch {
+    return false;
+  }
+}
+
+/** Token guardado y vigente. Si está vencido lo borra, para que el portal pida login. */
+export function getValidDirectoryToken() {
+  const token = getDirectoryToken();
+  if (!token) return null;
+  if (isDirectoryTokenExpired(token)) {
+    clearDirectoryToken();
+    return null;
+  }
+  return token;
+}
+
+let redirecting = false;
+
+/**
+ * La sesión venció en el servidor: se borra el token y se manda al login. Antes
+ * el portal se quedaba abierto y cada sección mostraba "Token expirado".
+ */
+function handleDirectoryUnauthorized() {
+  clearDirectoryToken();
+  if (redirecting || typeof window === 'undefined') return;
+  const path = window.location.pathname || '';
+  if (!path.startsWith('/portal-profesional')) return;
+  redirecting = true;
+  window.location.href = '/login-directorio?reason=expired';
+}
+
 export const DIRECTORY_MUST_CHANGE_KEY = 'oirconecta_directory_must_change_pwd';
 
 export function setDirectoryMustChangePassword(flag) {
@@ -87,6 +123,7 @@ export async function directoryRequest(path, options = {}) {
 
     if (!res.ok) {
       const msg = data?.error || data?.message || res.statusText || `Error ${res.status}`;
+      if (!skipAuth && token && res.status === 401) handleDirectoryUnauthorized();
       return { data: null, error: msg, status: res.status };
     }
     return { data, error: null, status: res.status };
