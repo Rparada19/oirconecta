@@ -27,6 +27,7 @@ const booking = require('./professionalBooking.service');
 const retailService = require('./retail.service');
 const comercialService = require('./comercial.service');
 const config = require('../config');
+const aura = require('./auraSettings.service');
 
 const prisma = new PrismaClient();
 
@@ -832,7 +833,8 @@ async function horariosConBotones(conv, intro) {
 /** La retoma de las 3 horas: un toque para elegir hora. La usa waNudge. */
 async function retomaConBotones(conv) {
   const nombre = nombreParaSaludo(conv.contactName);
-  return horariosConBotones(conv, `Hola${nombre ? `, ${nombre}` : ''} 🙂 Tengo espacio para tu valoración auditiva: una hora con audióloga y sales sabiendo cómo está tu audición. *No tiene costo*.`);
+  await aura.refresh();
+  return horariosConBotones(conv, aura.fill(aura.current().textos.retoma, { nombre }));
 }
 
 /**
@@ -848,7 +850,7 @@ async function ultimoToque(conv) {
   const paraFamiliar = /para un familiar|mi (mam[áa]|pap[áa]|espos[oa]|abuel[oa]|hij[oa]|herman[oa]|suegr[oa])/i.test(dicho);
   const texto = paraFamiliar
     ? `No quiero insistir, así que te dejo algo que sirve 🙂\n\nSi quieres entender cómo oye tu familiar, este simulador toma un minuto: ${SIMULADOR}\n\nY cuando quieran venir, la valoración *no tiene costo*: toca el botón y te muestro horarios.`
-    : 'No quiero insistir, así que te dejo esto por si te sirve 🙂\n\nLa valoración es una hora con audióloga, *no tiene costo* y sales sabiendo cómo está tu audición y qué opciones tienes. Cuando quieras, toca el botón y te muestro horarios.';
+    : (await aura.refresh()).textos.ultimoToque;
   return enviarConBotones(conv, texto, [{ id: EMB.AGENDAR, title: 'Ver horarios' }]);
 }
 
@@ -862,19 +864,20 @@ async function pasoDelEmbudo({ conversationId, buttonId }) {
   if (conv.status !== 'BOT') return { skipped: 'not-bot-status' };
 
   const [paso, date, time] = String(buttonId).split('|');
+  const { textos } = await aura.refresh();
   if (paso === EMB.OTRA) {
-    return enviarTextoFijo(conv, 'Nuestro consultorio está solo en Bogotá. ¿En qué ciudad estás? El equipo te busca un profesional de confianza allá.');
+    return enviarTextoFijo(conv, textos.otraCiudad);
   }
   if (paso === EMB.PARA_MI) {
-    return enviarConBotones(conv, 'Perfecto 🙌 Dar este paso ya es avanzar.\n\nAtendemos en *Bogotá*. ¿Estás en Bogotá o cerca?', botonesDeCiudad(false));
+    return enviarConBotones(conv, textos.paraMi, botonesDeCiudad(false));
   }
   if (paso === EMB.PARA_FAMILIAR) {
-    return enviarConBotones(conv, 'Qué bien que lo acompañas: ese apoyo hace la diferencia 💙\n\nAtendemos en *Bogotá*. ¿Están en Bogotá o cerca?', botonesDeCiudad(false));
+    return enviarConBotones(conv, textos.paraFamiliar, botonesDeCiudad(false));
   }
   if (paso === EMB.BOGOTA) {
     return enviarConBotones(
       conv,
-      'Así funciona: empiezas con una *valoración auditiva* con audióloga, una hora y 4 exámenes. Sales sabiendo cómo está tu audición y qué opciones tienes. *No tiene costo* y no te compromete a nada.\n\n¿Qué prefieres?',
+      textos.comoFunciona,
       BOTONES_MENU,
     );
   }
@@ -902,7 +905,7 @@ async function pasoDelEmbudo({ conversationId, buttonId }) {
       return horariosConBotones(conv, 'Ese horario ya no está disponible.');
     }
     const dia = fechaLegible(`${date}T12:00:00`).replace(',', '').replace(/ de \d{4}$/, '');
-    return enviarTextoFijo(conv, `Listo: *${dia}, ${hora12(time)}*\n\n¿A nombre de quién dejo la cita? Escríbeme el nombre completo.`);
+    return enviarTextoFijo(conv, aura.fill(textos.confirmarHora, { dia, hora: hora12(time) }));
   }
   return { skipped: 'unknown-button' };
 }
@@ -928,8 +931,9 @@ function preciosPara(conv, fecha = new Date(), preguntaPrecio = '') {
   const anuncio = `${conv?.adHeadline || ''} ${conv?.adBody || ''}`;
   const oferta = ofertaDelAnuncio(conv?.adBody);
   if (oferta) return `${oferta} La valoración para saber cuál te sirve *no tiene costo*.`;
-  const recargables = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(fecha) <= '2026-10-31';
-  const audifonos = `Audífonos desde *$800.000 cada uno*${recargables ? '; recargables desde *$1.800.000*' : ''}.`;
+  const { precios } = aura.current();
+  const promo = aura.promoVigente(aura.current(), fecha);
+  const audifonos = `Audífonos desde *${precios.audifonosDesde} cada uno*${promo ? `; ${precios.promoProducto} desde *${precios.promoPrecio}*` : ''}.`;
   if (/aud[ií]fono|recargable|2x1/i.test(`${anuncio} ${preguntaPrecio}`)) {
     const promesa = promesaDelAnuncio(anuncio);
     return `${promesa ? `${promesa} ` : ''}${audifonos} La valoración para saber cuál te sirve *no tiene costo*.`;
@@ -944,12 +948,13 @@ function preciosPara(conv, fecha = new Date(), preguntaPrecio = '') {
  * pregunta sin cifra era la fuga más grande (38 de 90).
  */
 async function bienvenida(conv, fecha = new Date(), preguntaPrecio = '') {
+  await aura.refresh();
   const nombre = nombreParaSaludo(conv?.contactName);
   const saludo = `¡Hola${nombre ? `, ${nombre}` : ''}! 👋 Soy Aura, de OírConecta.`;
   if (preguntaPrecio) {
     return `${saludo}\n\n${preciosPara(conv, fecha, preguntaPrecio)}\n\nAtendemos en *Bogotá*. ¿Estás en Bogotá o cerca?`;
   }
-  return `${saludo}\n\nQué bueno que escribes: volver a oír bien cambia las conversaciones de todos los días.\n\nPara orientarte mejor, ¿es para ti o para un familiar?`;
+  return `${saludo}\n\n${aura.fill(aura.current().textos.bienvenida, { nombre })}`;
 }
 
 /**
@@ -2124,10 +2129,11 @@ async function construirPrompt(conv, consulta = null) {
   // Antes, un contactType sin prompt dejaba al bot mudo sin dejar rastro:
   // pasaba con PACIENTE_EXISTENTE y ALIADO_PROVEEDOR, que tienen plantillas
   // activas. Ahora cualquier tipo desconocido cae en OTROS, que pregunta.
-  let systemPrompt = SYSTEM_PROMPTS[conv.contactType];
+  // Las cifras escritas en las instrucciones fijas son las de la consola de Aura.
+  let systemPrompt = SYSTEM_PROMPTS[conv.contactType] && aura.conPrecios(SYSTEM_PROMPTS[conv.contactType], await aura.refresh());
   if (!systemPrompt) {
     console.warn('[wa-bot] sin prompt para contactType', conv.contactType, '— uso OTROS');
-    systemPrompt = SYSTEM_PROMPTS.OTROS;
+    systemPrompt = aura.conPrecios(SYSTEM_PROMPTS.OTROS);
   }
 
   // Cómo se trata a la persona. Va en TODAS las ramas y no como una línea de
@@ -2244,7 +2250,7 @@ Cómo usarlo:
 · Lo que haces es dar por sentado el tema: si el anuncio hablaba de audiometría, hablas de audiometría, sin explicar cómo lo sabes.
 · NO prometas nada que el anuncio no diga, y NO inventes descuentos, promociones ni precios. Si el anuncio ofrece algo puntual, respétalo tal cual está escrito arriba.
 · Si el anuncio habla de audífonos (precio, recargables, 2x1) y la persona pregunta "precio" o pide información, habla primero de los audífonos y de su precio; después, de la valoración.
-· Si el anuncio trae precios, esos son los precios para esta persona: usa esas cifras y no menciones otras distintas, aunque más abajo aparezcan $800.000 o $1.800.000.
+· Si el anuncio trae precios, esos son los precios para esta persona: usa esas cifras y no menciones otras distintas, aunque más abajo aparezcan ${aura.current().precios.audifonosDesde} o ${aura.current().precios.promoPrecio}.
 · Si el anuncio ofrece una promoción, dila completa y con sus datos, tal como está escrita arriba (qué incluye, marca, garantía, seguro). No contestes "las condiciones te las explican en la valoración" a algo que el anuncio ya dice: eso es una evasiva. Solo lo que el anuncio NO dice se confirma en la valoración, y lo dices únicamente si te lo preguntan.
 ═══════════════════════════════════`;
   }
@@ -2329,13 +2335,15 @@ ${process.env.PROMO_ACTIVA}
   // Promoción del mes (decisión del dueño, 2-oct-2026). Se apaga sola el 1-nov:
   // una promo vencida que el bot sigue ofreciendo es una promesa que alguien
   // tiene que desmentir en el consultorio.
-  const hoyPromo = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
-  if (hoyPromo <= '2026-10-31' && ['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS', 'PACIENTE_EXISTENTE'].includes(conv.contactType)) {
-    systemPrompt += `\n\n═══ PROMOCIÓN DE OCTUBRE ═══
-Todo octubre: *audífonos recargables desde $1.800.000 cada uno*. Recargable = sin pilas: se cargan de noche, como el celular.
+  const ajustes = await aura.refresh();
+  const { precios } = ajustes;
+  if (aura.promoVigente(ajustes) && ['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS', 'PACIENTE_EXISTENTE'].includes(conv.contactType)) {
+    const esRecargable = /recargable/i.test(precios.promoProducto);
+    systemPrompt += `\n\n═══ PROMOCIÓN DEL MES ═══
+${precios.promoHasta ? `Hasta el ${precios.promoHasta}` : 'Este mes'}: *${precios.promoProducto} desde ${precios.promoPrecio} cada uno*.${esRecargable ? ' Recargable = sin pilas: se cargan de noche, como el celular.' : ''}
 Cuándo la dices:
-· Cuando pregunten cuánto vale un audífono: después de "desde $800.000 cada uno", en una sola frase: "y este mes tenemos audífonos recargables desde $1.800.000 cada uno". No reemplaza la cifra de $800.000, se suma.
-· Cuando pregunten por promociones, descuentos, audífonos recargables o pilas.
+· Cuando pregunten cuánto vale un audífono: después de "desde ${precios.audifonosDesde} cada uno", en una sola frase: "y este mes tenemos ${precios.promoProducto} desde ${precios.promoPrecio} cada uno". No reemplaza la cifra de ${precios.audifonosDesde}, se suma.
+· Cuando pregunten por promociones, descuentos, ${precios.promoProducto} o pilas.
 · NO la uses para abrir la conversación ni la repitas en cada mensaje: es un dato, no un volante.
 · Es por oído, igual que el otro precio.
 · Lo que no está aquí —marcas, modelos, qué incluye, si aplica con financiación— no lo tienes: "esos detalles te los muestran en la valoración".
@@ -2354,9 +2362,9 @@ Cuándo la dices:
   // nunca, y anunciar un cupo limitado que no existe es mentirle al paciente.
   if (['PACIENTE_BOGOTA', 'INFO_GENERAL', 'OTROS'].includes(conv.contactType)) {
     systemPrompt += `\n\n═══ PRECIO DE LA VALORACIÓN (esto manda sobre cualquier otra cifra de arriba) ═══
-La valoración auditiva no tiene costo. Lo único que se paga es si el paciente quiere llevarse los exámenes impresos: $150.000.
+La valoración auditiva no tiene costo. Lo único que se paga es si el paciente quiere llevarse los exámenes impresos: ${precios.impresos}.
 No existe ninguna oferta de "cupos sin costo de la semana" ni condición de "agendar hoy": no las menciones. Si el conocimiento del centro o una lección dicen otra cosa sobre el precio de la valoración, ignóralo.
-Los audífonos sí se venden por unidad, desde $800.000 cada uno, aunque el conocimiento del centro diga que solo van dentro de un plan.
+Los audífonos sí se venden por unidad, desde ${precios.audifonosDesde} cada uno, aunque el conocimiento del centro diga que solo van dentro de un plan.
 ═══════════════════════════════════`;
   }
 

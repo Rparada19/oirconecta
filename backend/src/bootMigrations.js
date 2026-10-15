@@ -507,6 +507,8 @@ async function ensureIaAgentConfigSchema(prisma) {
     // Educación ampliada: el profesional necesitaba espacio para marcas,
     // servicios y logística, que antes no cabían en "expertise".
     await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "technologies" TEXT`);
+    // Consola de Aura: precios y textos del flujo de WhatsApp (solo perfil retail).
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ia_agent_config" ADD COLUMN IF NOT EXISTS "auraSettings" JSONB`);
     // Nodos nuevos: conocimiento que guía sin divulgarse, manejo de objeciones
     // y política de precios. Antes no había dónde poner "esto lo sabes pero no
     // lo dices", y terminaba mal metido en avoidTopics o en technologies.
