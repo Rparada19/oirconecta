@@ -302,12 +302,25 @@ const MATERIAL = {
     archivos: [{ file: 'por-que-oirconecta.jpg', mime: 'image/jpeg' }],
     dice: 'Imagen con seis razones: la valoración no tiene costo ni compromete a comprar, es con audióloga y dura una hora, 4 exámenes, todas las EPS y prepagadas sin autorización, puede traer sus exámenes, y todo se maneja por WhatsApp.',
   },
+  // Va sola con el saludo; el modelo no la manda (no está en enviar_material).
+  bienvenida: {
+    etiqueta: '📷 Bienvenida',
+    archivos: [{ file: 'bienvenida.jpg', mime: 'image/jpeg' }],
+    dice: 'Imagen de bienvenida: "Hola, soy Aura. Qué bueno que nos escribes", valoración sin costo, con audióloga, todas las EPS.',
+  },
   cuando_acudir: {
     etiqueta: '📷 Cuándo ir a un centro auditivo',
     archivos: [{ file: 'cuando-acudir.jpg', mime: 'image/jpeg' }],
     dice: 'Imagen con cinco señales para revisarse la audición (sube el volumen de la TV, pide que le repitan, siente que hablan entre dientes, zumbido, más de 60 sin audiometría) y cuándo ir de urgencia al otorrino.',
   },
 };
+
+/** El saludo va con su imagen, como cuando una asesora abre con una foto. */
+async function enviarBienvenida(conv, texto, botones) {
+  await enviarMaterial({ conversationId: conv.id, waPhone: conv.phone }, 'bienvenida')
+    .catch((e) => console.error('[wa-bot] imagen de bienvenida no salió:', e.message));
+  return enviarConBotones(conv, texto, botones);
+}
 
 async function enviarMaterial(ctx, clave) {
   const m = MATERIAL[clave];
@@ -1833,7 +1846,7 @@ async function iniciarFlujoAnuncio(conversationId, incomingText) {
   }
 
   try {
-    return await enviarConBotones(conv, await bienvenida(conv), botonesDeBienvenida(false));
+    return await enviarBienvenida(conv, await bienvenida(conv), botonesDeBienvenida(false));
   } catch (e) {
     console.error('[wa-bot] arranque de flujo de anuncio falló:', e.message);
     return { error: e.message };
@@ -3100,7 +3113,7 @@ async function responder({ conversationId, incomingText, desdeAudio = false }) {
       prisma.whatsAppMessage.count({ where: { conversationId, direction: 'OUTBOUND' } }),
     ]);
     if (conv?.status === 'BOT' && conv.contactType === 'PACIENTE_BOGOTA' && yaRespondimos === 0) {
-      await enviarConBotones(conv, await bienvenida(conv, new Date(), pidePrecio ? incomingText : ''), botonesDeBienvenida(pidePrecio));
+      await enviarBienvenida(conv, await bienvenida(conv, new Date(), pidePrecio ? incomingText : ''), botonesDeBienvenida(pidePrecio));
       return { sent: true, bienvenida: true };
     }
     // Escribió "quiero información" y al minuto "precio": la bienvenida que
