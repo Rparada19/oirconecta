@@ -32,8 +32,8 @@ const DEFAULTS = {
     otraCiudad: 'Nuestro consultorio está solo en Bogotá. ¿En qué ciudad estás? El equipo te busca un profesional de confianza allá.',
     comoFunciona: 'Así funciona: empiezas con una *valoración auditiva* con audióloga, una hora y 4 exámenes. Sales sabiendo cómo está tu audición y qué opciones tienes. *No tiene costo* y no te compromete a nada.\n\n¿Qué prefieres?',
     confirmarHora: 'Listo: *{dia}, {hora}*\n\n¿A nombre de quién dejo la cita? Escríbeme el nombre completo.',
-    retoma: 'Hola, {nombre} 🙂 Tengo espacio para tu valoración auditiva: una hora con audióloga y sales sabiendo cómo está tu audición. *No tiene costo*.',
-    ultimoToque: 'No quiero insistir, así que te dejo esto por si te sirve 🙂\n\nLa valoración es una hora con audióloga, *no tiene costo* y sales sabiendo cómo está tu audición y qué opciones tienes. Cuando quieras, toca el botón y te muestro horarios.',
+    retoma: 'Hola, {nombre} 🙂 ¿Pudiste pensar en lo que hablamos? Si te quedó alguna duda, cuéntame con confianza.',
+    ultimoToque: 'Te dejo esto por si te sirve 🙂\n\nLa valoración es una hora con audióloga, *no tiene costo* y sales sabiendo cómo está tu audición y qué opciones tienes. Cuando quieras, aquí estoy.',
   },
 };
 
@@ -46,7 +46,7 @@ const PASOS = [
   { key: 'otraCiudad', titulo: 'Si toca "Otra ciudad"', cuando: 'La persona no vive en Bogotá' },
   { key: 'comoFunciona', titulo: 'Si toca "Sí, en Bogotá"', cuando: 'Explica la valoración y ofrece el menú', botones: ['Agendar valoración', 'Ver precios', 'Tengo exámenes'] },
   { key: 'confirmarHora', titulo: 'Eligió una hora', cuando: 'Pide el nombre para crear la cita', variables: ['dia', 'hora'] },
-  { key: 'retoma', titulo: 'Seguimiento a las 3 horas', cuando: 'Si no contesta en 3 horas. Van 3 horarios reales como botones', variables: ['nombre'] },
+  { key: 'retoma', titulo: 'Seguimiento a las 3 horas', cuando: 'Si no contesta en 3 horas. Va con un botón para ver horarios', variables: ['nombre'], botones: ['Ver horarios'] },
   { key: 'ultimoToque', titulo: 'Seguimiento a las 20 horas', cuando: 'Último mensaje antes de que cierre la ventana de 24 horas de WhatsApp', botones: ['Ver horarios'] },
 ];
 

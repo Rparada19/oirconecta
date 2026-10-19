@@ -246,9 +246,9 @@ const SILENCIO_1_HORAS = 3;
 const SILENCIO_2_HORAS = 20;
 
 const DESPEDIDA =
-`No quiero incomodarte, así que no insisto más. 🙂
+`Te dejo tranquilo por ahora 🙂
 
-Cuando quieras agendar tu valoración auditiva —no tiene costo— o resolver una duda, escríbeme por acá.`;
+Si más adelante te surge una duda o quieres venir a la valoración, me escribes por acá y con gusto te ayudo.`;
 
 /**
  * Arma el mensaje para retomar.
@@ -275,7 +275,7 @@ async function armarRetoma(conv, ultimoTextoBot, dichoPorElPaciente = '') {
   if (TIPOS_PACIENTE.includes(conv.contactType) && !VIVE_EN_OTRA_CIUDAD.test(dichoPorElPaciente)) {
     const h = await bot.proximosHorarios().catch(() => null);
     if (h) {
-      return `Hola${nombre} 🙂 ¿Te agendo la valoración? No tiene costo.\n\n${bot.listaHorarios(h)}\n\n¿Cuál te sirve?`;
+      return `Hola${nombre} 🙂 ¿Te quedó alguna duda de lo que hablamos?\n\nPor si quieres venir a la valoración, que no tiene costo, estos son los espacios más cercanos:\n\n${bot.listaHorarios(h)}\n\nSin afán: cuando quieras me cuentas.`;
     }
   }
 

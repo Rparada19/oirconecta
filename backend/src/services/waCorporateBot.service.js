@@ -106,6 +106,17 @@ const BOOKING_TOOLS = [
       required: ['ciudad'],
     },
   },
+  {
+    name: 'enviar_material',
+    description: 'Le manda a la persona, por este chat, una imagen o un video del centro. Úsalo cuando ayude de verdad a lo que preguntó, como lo haría una asesora que manda una foto: dónde queda → como_llegar; cómo son los audífonos, recargables o modelos → video_audifonos; por qué venir aquí o qué incluye la valoración → por_que_oirconecta; si duda de si lo necesita o cuenta síntomas → cuando_acudir. Cada material sale una sola vez por conversación. Tu texto acompaña al material: no repitas lo que ya dice.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        material: { type: 'string', enum: ['como_llegar', 'video_audifonos', 'por_que_oirconecta', 'cuando_acudir'] },
+      },
+      required: ['material'],
+    },
+  },
 ];
 
 // Solo para la rama REFERIDO_ALIADO: fuera de Bogotá no hay agenda propia, así
@@ -266,7 +277,95 @@ function fechaLegible(valor) {
   }).format(new Date(Date.UTC(y, m, dia, 12)));
 }
 
+// ─── Material para mandar por el chat ─────────────────────────────────────────
+// Lo que una asesora le manda a alguien por WhatsApp: la foto del edificio a
+// quien pregunta dónde queda, un video de los audífonos a quien quiere verlos.
+// Los archivos viven en backend/assets/aura. Cada uno sale una vez por
+// conversación: la marca es la primera línea del mensaje guardado.
+const CARPETA_MATERIAL = require('path').join(__dirname, '..', '..', 'assets', 'aura');
+const MAPA_CENTRO = 'https://maps.google.com/?q=Carrera+10+%2396-25+Bogota';
+const MATERIAL = {
+  como_llegar: {
+    etiqueta: '📷 Cómo llegar',
+    archivos: [
+      { file: 'como-llegar.jpg', mime: 'image/jpeg', caption: `Cra. 10 #96-25, Edificio Centro Ejecutivo, consultorio 320.\nAbre la ubicación aquí: ${MAPA_CENTRO}` },
+    ],
+    dice: 'Imagen con la foto del edificio y de la recepción, la dirección (Cra. 10 #96-25, Edificio Centro Ejecutivo, consultorio 320), el enlace al mapa y cómo subir.',
+  },
+  video_audifonos: {
+    etiqueta: '🎬 Video: audífonos recargables',
+    archivos: [{ file: 'video-audifonos.mp4', mime: 'video/mp4' }],
+    dice: 'Video corto con los audífonos recargables Widex Moment, Allure y SmartRIC, sin precios. Cierra con que en la valoración se ve cuál le sirve.',
+  },
+  por_que_oirconecta: {
+    etiqueta: '📷 Por qué OírConecta',
+    archivos: [{ file: 'por-que-oirconecta.jpg', mime: 'image/jpeg' }],
+    dice: 'Imagen con seis razones: la valoración no tiene costo ni compromete a comprar, es con audióloga y dura una hora, 4 exámenes, todas las EPS y prepagadas sin autorización, puede traer sus exámenes, y todo se maneja por WhatsApp.',
+  },
+  // Va sola con el saludo; el modelo no la manda (no está en enviar_material).
+  bienvenida: {
+    etiqueta: '📷 Bienvenida',
+    archivos: [{ file: 'bienvenida.jpg', mime: 'image/jpeg' }],
+    dice: 'Imagen de bienvenida: "Hola, soy Aura. Qué bueno que nos escribes", valoración sin costo, con audióloga, todas las EPS.',
+  },
+  cuando_acudir: {
+    etiqueta: '📷 Cuándo ir a un centro auditivo',
+    archivos: [{ file: 'cuando-acudir.jpg', mime: 'image/jpeg' }],
+    dice: 'Imagen con cinco señales para revisarse la audición (sube el volumen de la TV, pide que le repitan, siente que hablan entre dientes, zumbido, más de 60 sin audiometría) y cuándo ir de urgencia al otorrino.',
+  },
+};
+
+/** El saludo va con su imagen, como cuando una asesora abre con una foto. */
+async function enviarBienvenida(conv, texto, botones) {
+  await enviarMaterial({ conversationId: conv.id, waPhone: conv.phone }, 'bienvenida')
+    .catch((e) => console.error('[wa-bot] imagen de bienvenida no salió:', e.message));
+  return enviarConBotones(conv, texto, botones);
+}
+
+async function enviarMaterial(ctx, clave) {
+  const m = MATERIAL[clave];
+  if (!m) return { error: `No hay material "${clave}".` };
+  if (!ctx?.conversationId) return { error: 'Sin conversación.' };
+  const yaSalio = await prisma.whatsAppMessage.findFirst({
+    where: { conversationId: ctx.conversationId, direction: 'OUTBOUND', body: { startsWith: m.etiqueta } },
+    select: { id: true },
+  });
+  if (yaSalio) return { yaEnviado: true, mensaje: 'Esto ya se lo mandaste antes en esta conversación. No lo vuelvas a mandar: si hace falta, dile que lo tiene más arriba en el chat.' };
+
+  const fs = require('fs');
+  const { sendWhatsAppMedia } = require('../notifications/channels/whatsapp');
+  for (const a of m.archivos) {
+    const buffer = await fs.promises.readFile(require('path').join(CARPETA_MATERIAL, a.file));
+    let wamid = null, deliveryStatus = 'sent', errorMessage = null, mediaId = null;
+    try {
+      const r = await sendWhatsAppMedia({
+        to: ctx.waPhone, buffer, mime: a.mime, filename: a.file, caption: a.caption,
+        phoneNumberId: process.env.META_CORPORATE_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID,
+      });
+      wamid = r.providerMessageId; mediaId = r.mediaId;
+    } catch (e) {
+      deliveryStatus = 'failed';
+      errorMessage = (e.message || 'Error desconocido').slice(0, 500);
+      console.error('[wa-bot] material', clave, 'no salió:', e.message);
+    }
+    await prisma.whatsAppMessage.create({
+      data: {
+        conversationId: ctx.conversationId, wamid, direction: 'OUTBOUND',
+        type: a.mime.startsWith('video/') ? 'video' : 'image',
+        body: a.caption ? `${m.etiqueta}\n${a.caption}` : m.etiqueta,
+        mediaUrl: mediaId, mediaMimeType: a.mime, sentByBot: true,
+        deliveryStatus, errorMessage, timestamp: new Date(),
+      },
+    });
+    if (deliveryStatus === 'failed') return { error: 'No se pudo enviar. Sigue con texto y no menciones el archivo.' };
+  }
+  return { enviado: true, loQueVio: m.dice, mensaje: 'Ya le llegó. Escribe un mensaje corto que lo acompañe, sin repetir lo que dice el material.' };
+}
+
 const bookingToolImpls = {
+  async enviar_material(ctx, { material }) {
+    return enviarMaterial(ctx, material);
+  },
   async list_appointment_types(ctx) {
     const profileId = ctx?.profileId || await retailProfileId();
     if (!profileId) return { error: 'Agenda interna no encontrada (falta seed o env).' };
@@ -830,11 +929,15 @@ async function horariosConBotones(conv, intro) {
   );
 }
 
-/** La retoma de las 3 horas: un toque para elegir hora. La usa waNudge. */
+/**
+ * La retoma de las 3 horas. La usa waNudge. Una persona no le vuelve a
+ * escribir a alguien con tres horas para escoger: le pregunta si le quedó una
+ * duda y le deja a mano los horarios, por si quiere verlos.
+ */
 async function retomaConBotones(conv) {
   const nombre = nombreParaSaludo(conv.contactName);
   await aura.refresh();
-  return horariosConBotones(conv, aura.fill(aura.current().textos.retoma, { nombre }));
+  return enviarConBotones(conv, aura.fill(aura.current().textos.retoma, { nombre }), [{ id: EMB.AGENDAR, title: 'Ver horarios' }]);
 }
 
 /**
@@ -849,7 +952,7 @@ async function ultimoToque(conv) {
   const dicho = suyos.map((m) => m.body || '').join(' ');
   const paraFamiliar = /para un familiar|mi (mam[áa]|pap[áa]|espos[oa]|abuel[oa]|hij[oa]|herman[oa]|suegr[oa])/i.test(dicho);
   const texto = paraFamiliar
-    ? `No quiero insistir, así que te dejo algo que sirve 🙂\n\nSi quieres entender cómo oye tu familiar, este simulador toma un minuto: ${SIMULADOR}\n\nY cuando quieran venir, la valoración *no tiene costo*: toca el botón y te muestro horarios.`
+    ? `Te dejo algo que puede servirles 🙂\n\nSi quieres entender cómo oye tu familiar, este simulador toma un minuto: ${SIMULADOR}\n\nCualquier cosa que necesiten, aquí estoy.`
     : (await aura.refresh()).textos.ultimoToque;
   return enviarConBotones(conv, texto, [{ id: EMB.AGENDAR, title: 'Ver horarios' }]);
 }
@@ -882,16 +985,22 @@ async function pasoDelEmbudo({ conversationId, buttonId }) {
     );
   }
   if (paso === EMB.BOGOTA_DIRECTO) {
-    return horariosConBotones(conv, '¡Perfecto! ¿Te agendo la valoración? No tiene costo.');
+    return horariosConBotones(conv, 'Qué bien, te queda cerca 🙂 Si quieres venir a la valoración, que *no tiene costo*, estos son los espacios más cercanos.');
   }
+  // Ver precios y Tengo exámenes contestan lo que la persona tocó y dejan los
+  // horarios a un toque. Ponérselos de una vez después de cada respuesta es lo
+  // que hacía sentir al bot insistente.
   if (paso === EMB.PRECIOS) {
-    return horariosConBotones(conv, `${preciosPara(conv)}\n\n¿Te la agendo?`);
+    const video = await enviarMaterial({ conversationId: conv.id, waPhone: conv.phone }, 'video_audifonos')
+      .catch((e) => { console.error('[wa-bot] video de audífonos no salió:', e.message); return null; });
+    const dejo = video?.enviado ? 'Te dejé un video corto de los recargables. ' : '';
+    return enviarConBotones(conv, `${preciosPara(conv)}\n\n${dejo}Si quieres venir a conocerlos, te muestro los espacios.`, [{ id: EMB.AGENDAR, title: 'Ver horarios' }]);
   }
   if (paso === EMB.AGENDAR) {
-    return horariosConBotones(conv, '¡Listo! 🙌');
+    return horariosConBotones(conv, 'Con mucho gusto 🙂');
   }
   if (paso === EMB.EXAMENES) {
-    return horariosConBotones(conv, 'Tráelos a la valoración: la audióloga los revisa y te dice qué te conviene. *No tiene costo*.\n\n¿Te la agendo?');
+    return enviarConBotones(conv, 'Qué bien que ya los tengas. Tráelos a la valoración: la audióloga los revisa contigo y te dice qué te conviene. *No tiene costo*.', [{ id: EMB.AGENDAR, title: 'Ver horarios' }]);
   }
   if (paso === EMB.SLOT) {
     // El botón pudo quedar de ayer o la hora se ocupó mientras tanto.
@@ -1243,17 +1352,52 @@ FORMATO WHATSAPP (obligatorio):
   PACIENTE_BOGOTA:
 `Eres *Aura*, de servicio al cliente de OírConecta, centro auditivo en Bogotá (Cra. 10 #96-25, Edificio Centro Ejecutivo, consultorio 320). Escribes por WhatsApp. Hoy es {HOY_PLACEHOLDER}.
 
-═══ TU OBJETIVO ═══
-Que cada persona que vive en Bogotá o la Sabana termine la conversación con su *valoración auditiva agendada*. Ese es tu trabajo y así se mide.
-Lo logras diciendo la verdad: respondes lo que preguntan, quitas las dudas y pones la cita fácil. Nunca presionas con miedo, culpa ni urgencia inventada, y nunca inventas un dato.
+═══ QUIÉN ERES ═══
+Eres la asesora que contesta el WhatsApp del centro: una persona amable que sabe de audición, escucha y ayuda a decidir. Tu meta es que quien vive en Bogotá o la Sabana venga a su *valoración auditiva*, y eso se logra como lo logra una buena asesora: entendiendo a la persona, resolviendo lo que le preocupa y proponiendo la cita en el momento justo. Una cita que se agenda a la fuerza no llega.
+Nunca presionas con miedo, culpa ni urgencia inventada, y nunca inventas un dato.
 
-═══ CÓMO SE GANA UNA CITA ═══
-1. PRIMERO RESPONDE lo que preguntó, en la primera línea y con el dato concreto: precio, dirección, horario. Contestar otra cosa es perder a la persona.
-2. ENSEGUIDA OFRECE LA CITA con horarios reales de la agenda. No preguntes "¿quieres que te muestre horarios?" ni "¿qué día te sirve?": muéstralos.
-3. SI DUDA, resuelve la duda y vuelve a ofrecer una vez. Si dice que no o se despide, despídete bien y para: no insistas.
-· Todo mensaje tuyo termina con un paso concreto hacia la cita, salvo que la persona ya haya cerrado.
-· No hagas preguntas de diagnóstico antes de ofrecer la cita ("¿qué vienes notando?", "¿desde cuándo?", "¿es para ti o para un familiar?"). Si la persona cuenta lo que le pasa, reconócelo en una línea con sus propias palabras y pasa a los horarios.
+═══ CÓMO CONVERSAS ═══
+1. RESPONDE PRIMERO lo que preguntó, en la primera línea y con el dato concreto: precio, dirección, horario. Contestar otra cosa es perder a la persona.
+2. INTERÉSATE por la persona. Después de responder puedes hacer UNA pregunta natural que te ayude a orientarla ("¿es para ti o para alguien de tu familia?", "¿hace cuánto lo vienes notando?", "¿ya usas audífonos?"). Nunca antes de responder, nunca dos seguidas y nunca una que ya te contestó.
+3. USA LO QUE TE CUENTA. Si dijo que su mamá sube mucho el volumen, háblale de su mamá. Repetir sus palabras es lo que hace que se sienta escuchado.
+4. PROPÓN LA CITA CUANDO HAY SEÑAL, no en cada mensaje. Hay señal cuando pregunta dónde queda, cuándo atienden, cuánto dura o cuesta la valoración; cuando cuenta lo que le pasa a él o a un familiar; cuando dice que le interesa, o cuando ya resolviste su duda principal.
+5. CIERRA COMO UNA PERSONA. Primero conecta lo que te contó con la valoración en una frase ("Con lo que me cuentas de tu papá, lo que sigue es una valoración: ahí sabes exactamente cómo está oyendo"). Después muestra los horarios reales.
+6. SI NO ELIGE HORA, no vuelvas a poner horarios en tu siguiente mensaje: conversa, resuelve lo que pregunte, y vuelve a proponer solo si aparece otra señal. Como máximo propones la cita dos veces en toda la conversación, salvo que la persona te la pida.
+7. SI DICE QUE NO, QUE LO VA A PENSAR O SE DESPIDE, respétalo de verdad: despídete con calidez, deja la puerta abierta en una frase y no vuelvas a ofrecer la cita.
 · Máximo una pregunta por mensaje. Nunca repitas una pregunta que ya hiciste ni un mensaje que ya enviaste.
+
+═══ CUANDO TE CUENTAN LO QUE LES PASA ═══
+Cuando alguien cuenta algo de su audición o de la de un familiar, eso es lo más importante del chat: antes de cualquier dato, precio u horario, hazle sentir que lo entendiste. Así:
+1. NOMBRA LO QUE SIENTE, con sus palabras y lo que eso significa en su día. No lo que dijo, sino lo que vive.
+2. QUÍTALE EL PESO: es más común de lo que cree y tiene manejo. Sin dramatizar y sin diagnosticar.
+3. UNA PREGUNTA que lo invite a contar más (desde cuándo, en qué momentos, quién lo nota).
+Ejemplos del tono (no los copies igual, adáptalos):
+· "Me toca subirle todo el volumen al televisor" → "Qué difícil es eso, sentir que te pierdes lo que dicen y que en la casa te pidan bajarle 😔 Es algo muy común y tiene solución. ¿Hace cuánto lo vienes notando?"
+· "Tengo que pedir que me repitan todo" → "Qué cansancio debe ser estar pendiente de cada palabra, y que a veces uno prefiera ni preguntar. ¿Te pasa más cuando hay ruido o en general?"
+· "En las reuniones familiares no entiendo nada" → "Qué duro sentirse por fuera justo cuando está la familia reunida. ¿Te pasa más cuando hablan varios a la vez?"
+· "Mi mamá ya no oye y se aísla" → "Qué difícil verla así, y lo que más duele es que se vaya apartando de las conversaciones. ¿Ella ya lo reconoce o todavía no quiere hablar del tema?"
+· "Tengo un pito en el oído" → "Qué molesto es ese pitido, sobre todo en la noche cuando todo está en silencio. ¿Lo tienes todo el tiempo o va y viene?"
+Reglas:
+· La empatía va en una o dos frases, en el mismo mensaje: nada de discursos ni de "entiendo perfectamente tu situación".
+· Cambia la forma cada vez. Nunca la misma frase dos veces en una conversación, ni "qué difícil" en todos los mensajes.
+· No le digas qué tiene ni qué tan grave es: eso lo dice la valoración.
+· Si lo que cuenta es una urgencia (dolor fuerte, sangre, pérdida de un día para otro, mareo fuerte), aplica CUÁNDO PASAS A UNA PERSONA DEL EQUIPO.
+
+═══ TÚ LLEVAS LA CONVERSACIÓN ═══
+Una buena asesora no espera a que le pregunten: guía. Cada mensaje tuyo deja a la persona un paso más cerca de saber qué le pasa y qué hacer, en este orden:
+1. Entender: para quién es, qué nota y desde cuándo.
+2. Acompañar: que sienta que la entiendes (CUANDO TE CUENTAN LO QUE LES PASA).
+3. Explicar: lo que sigue es una valoración, y por qué le sirve a ella, con lo que te contó.
+4. Proponer: los horarios reales.
+No te saltes pasos ni los fuerces: si en el primer mensaje ya pide horarios, ve directo al 4. Si se desvía o pregunta otra cosa, contéstale bien y retoma desde donde iban con una pregunta natural, sin olvidar lo que ya te contó.
+
+═══ TU MATERIAL ═══
+Puedes mandar imágenes y un video con enviar_material, como lo haría una asesora por WhatsApp. Úsalo cuando le sirva a la persona, no para llenar:
+· Pregunta dónde quedan o cómo llegar → como_llegar (foto del edificio, recepción, dirección y mapa).
+· Quiere ver los audífonos, pregunta por los recargables o por modelos → video_audifonos.
+· Pregunta por qué venir aquí, qué incluye la valoración o si es confiable → por_que_oirconecta.
+· Duda de si de verdad lo necesita, o cuenta lo que le pasa sin decidirse → cuando_acudir.
+Cada material va una sola vez por conversación y como máximo uno por mensaje. Tu texto lo acompaña en una o dos frases ("Te dejo cómo llegar 👆"): no repitas lo que ya dice la imagen.
 
 ═══ LO QUE OFRECEMOS ═══
 · *Valoración auditiva*: con audióloga, dura una hora e incluye 4 exámenes: otoscopia (conducto auditivo y tímpano), audiometría (cuánto oye cada oído), logoaudiometría (qué tan bien entiende las palabras) e impedanciometría (oído medio). Con ella se establece el grado de pérdida auditiva y qué le conviene a la persona.
@@ -1289,12 +1433,14 @@ REGLA DURA: la cita la crea la herramienta, no tu mensaje. Está prohibido escri
 Mover o cancelar una cita también lo haces tú, con reprogramar_cita y cancelar_cita. Nunca mandes a la persona a llamar.
 
 ═══ CUANDO DUDAN ═══
-· "Lo voy a pensar" / "después te escribo": "Claro. Si quieres te la dejo agendada de una vez: no tiene costo y la puedes mover o cancelar por acá." Si dice que no, te despides.
-· "No tengo plata" / "está caro": la valoración no cuesta y no compromete a comprar nada; sale sabiendo qué tiene y qué opciones hay.
-· "Es para mi mamá / mi papá": la cita se agenda a nombre de quien viene; ofrece horarios.
-· "Queda lejos" (dentro de Bogotá o la Sabana): da la dirección y ofrece el horario que mejor le quede.
-· "No tengo tiempo": es una hora; ofrece el primer horario de la mañana o el último de la tarde.
+Primero reconoce lo que siente, después da el dato. Nunca discutas.
+· "Lo voy a pensar" / "después te escribo": "Claro, piénsalo con calma. Cualquier duda que te surja, me escribes por aquí." Y nada más: no le ofrezcas dejarla agendada.
+· "No tengo plata" / "está caro": entiéndelo ("te entiendo, es una inversión"). La valoración no cuesta y no compromete a comprar nada: sale sabiendo qué tiene y qué opciones hay para su bolsillo.
+· "Es para mi mamá / mi papá": pregunta cómo la ves tú o qué notas. La cita se agenda a nombre de quien viene, y es mejor que venga acompañado.
+· "Queda lejos" (dentro de Bogotá o la Sabana): da la dirección o manda como_llegar, y busca el horario que mejor le quede.
+· "No tengo tiempo": es una hora; también hay primeras horas de la mañana, últimas de la tarde y algunos sábados.
 · "Estoy comparando": bien hecho; la valoración no cuesta y le sirve para comparar con datos.
+· "Me da miedo / no quiero usar audífonos": es normal; la valoración solo es para saber cómo está, y nadie lo va a obligar a comprar nada.
 
 ═══ SI VIVE FUERA DE BOGOTÁ ═══
 El consultorio está solo en Bogotá. La Sabana cuenta como cerca (Chía, Cajicá, Soacha, Cota, Mosquera, Funza, La Calera, Facatativá, Zipaquirá).
@@ -1322,9 +1468,12 @@ Si un dato no está en estas instrucciones, en el conocimiento del centro o en l
 
 ═══ CÓMO ESCRIBES ═══
 · En tu primer mensaje saludas por el nombre y te presentas una sola vez: "Hola, soy Aura, de OírConecta". Si en la conversación ya hay una bienvenida tuya, no te vuelvas a presentar ni repitas lo que ya dijo.
-· Habla de lo que la persona gana, no de fichas técnicas: "sales sabiendo cómo está tu audición y qué opciones tienes" dice más que "incluye 4 exámenes". Cálida y sin presionar: nunca miedo, culpa ni urgencia inventada.
-· MENSAJES CORTOS, de chat: máximo 2 frases (unas 30 palabras) antes de la lista de horarios, y después de la lista solo "¿Cuál te sirve?". Responde lo que preguntó y solo eso. No expliques qué incluye la valoración, no repitas precios ni la dirección que ya diste y no agregues datos que no pidió. Un mensaje largo no se lee.
-· Que se note una persona: usa las palabras de quien te escribe, cambia la forma de abrir y de cerrar de un mensaje a otro, y no repitas una frase que ya dijiste en la conversación. Nada de "¡Perfecto!" ni "¡Excelente!" al empezar cada mensaje.
+· Escribe como alguien que chatea, no como un folleto: frases cortas, naturales, con el tono de una bogotana amable ("claro que sí", "con mucho gusto", "te cuento", "qué pena contigo"). Sin listas ni viñetas, salvo los horarios.
+· Habla de lo que la persona gana, no de fichas técnicas: "sales sabiendo cómo está tu audición y qué opciones tienes" dice más que "incluye 4 exámenes".
+· Cuando la persona cuenta algo, la empatía va primero (CUANDO TE CUENTAN LO QUE LES PASA), corta y sin exagerar.
+· MENSAJES CORTOS, de chat: máximo 2 frases (unas 30 palabras) antes de la lista de horarios, y después de la lista una pregunta corta y variada ("¿alguno te sirve?", "¿cuál te queda mejor?"). Responde lo que preguntó y no agregues datos que no pidió. Un mensaje largo no se lee.
+· Que se note una persona: usa las palabras de quien te escribe, cambia la forma de abrir y de cerrar de un mensaje a otro, y no repitas una frase que ya dijiste en la conversación. Nada de "¡Perfecto!" ni "¡Excelente!" al empezar cada mensaje, ni "¿Te agendo?" como muletilla.
+· No todos tus mensajes tienen que terminar en pregunta. A veces basta con responder bien.
 · Español correcto, sin errores de ortografía. Tuteo cercano.
 · Negrita con UN asterisco: *así*. Nunca dos. Sin Markdown. Máximo 2 emojis por mensaje.
 · Los mensajes que terminan en "(botones: …)" los envió el sistema con botones para tocar; tú nunca escribes esa línea. Si la persona respondió tocando un botón ("Sí, en Bogotá", una hora), sigue desde ahí sin repetir la pregunta. Si ya eligió una hora y te da el nombre, crea la cita con esa fecha y esa hora.
@@ -1398,7 +1547,7 @@ async function loadHistory(conversationId) {
   const rows = await prisma.whatsAppMessage.findMany({
     // Fotos y PDF van por su texto ("📄 PDF: cotización.pdf"): el bot debe
     // saber que el equipo ya envió algo, aunque no vea el archivo.
-    where: { conversationId, type: { in: ['text', 'interactive', 'audio', 'image', 'document'] } },
+    where: { conversationId, type: { in: ['text', 'interactive', 'audio', 'image', 'video', 'document'] } },
     orderBy: { timestamp: 'desc' },
     take: MAX_HISTORY_MESSAGES,
     select: { direction: true, body: true, sentByBot: true, sentByUserId: true, type: true },
@@ -1722,7 +1871,7 @@ async function iniciarFlujoAnuncio(conversationId, incomingText) {
   }
 
   try {
-    return await enviarConBotones(conv, await bienvenida(conv), botonesDeBienvenida(false));
+    return await enviarBienvenida(conv, await bienvenida(conv), botonesDeBienvenida(false));
   } catch (e) {
     console.error('[wa-bot] arranque de flujo de anuncio falló:', e.message);
     return { error: e.message };
@@ -1831,9 +1980,14 @@ const PROPONE_UN_DIA = /te vienen? bien|que te muestre|qu[ée] d[íi]a|prefieres
 // "veo los horarios exactos para ti". Con el Ensayo del 4-oct salió dos veces.
 const PROMETE_HORARIOS = /(veo|reviso|miro|busco|traigo|muestro|consulto)\s+(los |tus |unos |el |la )?(horarios?|cupos?|agenda|disponibilidad)|d[ée]jame (traerte|mostrarte|revisar|consultar|mirar|buscarte)|cu[áa]l de los (dos |tres )?(s[áa]bados|d[íi]as)/i;
 
+// Preguntarle si quiere ver los horarios es lo que hace una asesora cuando la
+// persona todavía no ha dado señal de querer venir: eso no se corrige.
+const PREGUNTA_SI_QUIERE_VER = /(quieres que te|te) (muestre|muestro|busco|busque|comparta|comparto|paso|pase) (los |unos |algunos )?(horarios?|espacios|cupos)[^?\n]*\?/i;
+
 function preguntaElDiaSinOfrecerHoras(texto) {
   const t = String(texto || '');
   if (horasOfrecidas(t).length) return false;
+  if (PREGUNTA_SI_QUIERE_VER.test(t)) return false;
   return (t.includes('?') && PROPONE_UN_DIA.test(t)) || PROMETE_HORARIOS.test(t);
 }
 
@@ -2527,7 +2681,7 @@ async function turnoConHerramientas({
       if (puede && palabras > 45 && !r.citaCreada && !r.citaMovida && !r.texto.includes(ESCALATE_TAG)) {
         console.warn('[wa-bot] mensaje largo:', palabras, 'palabras — se devuelve para acortar.', etiqueta);
         respuestaPrevia = '';
-        corregir(resp, `ALTO — esto no lo ve el paciente.\n\nTu mensaje tiene ${palabras} palabras y por WhatsApp nadie lee tanto. Escríbelo de nuevo en máximo 30 palabras: solo la respuesta a lo que preguntó, en una o dos frases. Si traía lista de horarios, déjala igual y termina con "¿Cuál te sirve?". Nada de presentaciones ni explicaciones que no pidió.\n\n${SOLO_EL_MENSAJE}`);
+        corregir(resp, `ALTO — esto no lo ve el paciente.\n\nTu mensaje tiene ${palabras} palabras y por WhatsApp nadie lee tanto. Escríbelo de nuevo en máximo 30 palabras: solo la respuesta a lo que preguntó, en una o dos frases. Si traía lista de horarios, déjala igual y termina con una pregunta corta. Nada de presentaciones ni explicaciones que no pidió.\n\n${SOLO_EL_MENSAJE}`);
         continue;
       }
       break;
@@ -2585,7 +2739,7 @@ async function turnoConHerramientas({
   return r;
 }
 
-const LE_HABLA_AL_CORRECTOR = /mis instrucciones|(en )?mi (último|ultimo|anterior) mensaje|(esta|la) correcci[óo]n|no voy a ofrecerle|tampoco le pregunt[ée]|registrar_paciente|registrar_referido|get_availability|create_appointment|reprogramar_cita|cancelar_cita|\bALTO\b/i;
+const LE_HABLA_AL_CORRECTOR = /mis instrucciones|(en )?mi (último|ultimo|anterior) mensaje|(esta|la) correcci[óo]n|no voy a ofrecerle|tampoco le pregunt[ée]|registrar_paciente|registrar_referido|get_availability|create_appointment|reprogramar_cita|cancelar_cita|enviar_material|\bALTO\b/i;
 // Ya le está diciendo que vive en otra ciudad: ahí no van horarios.
 const FUERA_DE_BOGOTA = /solo en Bogot[áa]|en tu ciudad|profesional (de confianza )?(en|cerca)|como vives en|vives (lejos|en otra)|otra ciudad/i;
 const PROMESA_DE_TRASPASO = /pas[ée] tu caso|tu caso (ya )?qued[óo] registrado|ya qued[óo] registrado|qued[óo] registrado tu caso/i;
@@ -2604,7 +2758,7 @@ function palabrasSinHorarios(texto) {
     .join(' ').split(/\s+/).filter(Boolean).length;
 }
 
-const HERRAMIENTAS_QUE_ESCRIBEN = ['create_appointment', 'reprogramar_cita', 'cancelar_cita', 'registrar_paciente_otra_ciudad', 'registrar_referido_otra_ciudad'];
+const HERRAMIENTAS_QUE_ESCRIBEN = ['create_appointment', 'reprogramar_cita', 'cancelar_cita', 'registrar_paciente_otra_ciudad', 'registrar_referido_otra_ciudad', 'enviar_material'];
 
 /** Última malla: una hora que no está en la agenda no sale. */
 async function soloHorasDeAgenda(reply, horasDeAgenda, agendaProfileId) {
@@ -2670,6 +2824,11 @@ async function ensayar({ contactType = 'PACIENTE_BOGOTA', messages = [], contact
     },
     async cancelar_cita() {
       return { simulado: true, mensaje: '[ENSAYO] Aquí se habría cancelado la cita.' };
+    },
+    async enviar_material(ctx, { material }) {
+      const m = MATERIAL[material];
+      if (!m) return { error: `No hay material "${material}".` };
+      return { enviado: true, loQueVio: m.dice, mensaje: `[ENSAYO] Aquí habría salido: ${m.etiqueta}. Escribe un mensaje corto que lo acompañe.` };
     },
     async registrar_paciente_otra_ciudad(ctx, input) {
       return { simulado: true, mensaje: `[ENSAYO] Caso pasado al equipo (${input.ciudad}).` };
@@ -2979,7 +3138,7 @@ async function responder({ conversationId, incomingText, desdeAudio = false }) {
       prisma.whatsAppMessage.count({ where: { conversationId, direction: 'OUTBOUND' } }),
     ]);
     if (conv?.status === 'BOT' && conv.contactType === 'PACIENTE_BOGOTA' && yaRespondimos === 0) {
-      await enviarConBotones(conv, await bienvenida(conv, new Date(), pidePrecio ? incomingText : ''), botonesDeBienvenida(pidePrecio));
+      await enviarBienvenida(conv, await bienvenida(conv, new Date(), pidePrecio ? incomingText : ''), botonesDeBienvenida(pidePrecio));
       return { sent: true, bienvenida: true };
     }
     // Escribió "quiero información" y al minuto "precio": la bienvenida que

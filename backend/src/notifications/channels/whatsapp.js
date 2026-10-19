@@ -253,7 +253,7 @@ async function sendWhatsAppInteractiveButtons({
  * @param {object} p
  * @param {string} p.to
  * @param {Buffer} p.buffer
- * @param {string} p.mime       image/jpeg | image/png | application/pdf
+ * @param {string} p.mime       image/jpeg | image/png | video/mp4 | application/pdf
  * @param {string} [p.filename] nombre que ve el paciente (documentos)
  * @param {string} [p.caption]  texto que acompaña al archivo
  * @param {string} [p.phoneNumberId]
@@ -262,7 +262,7 @@ async function sendWhatsAppMedia({ to, buffer, mime, filename, caption, phoneNum
   const phoneId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
-  const tipo = String(mime).startsWith('image/') ? 'image' : 'document';
+  const tipo = String(mime).startsWith('image/') ? 'image' : String(mime).startsWith('video/') ? 'video' : 'document';
 
   if (!phoneId || !token) {
     console.warn('[whatsapp] credenciales no configuradas, simulando archivo a', to, ':', filename);
