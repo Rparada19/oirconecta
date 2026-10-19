@@ -58,7 +58,8 @@ async function resumen({ dias = 30 } = {}) {
   `;
 
   // Seguimientos automáticos: cuántos salieron y cuántos tuvieron respuesta.
-  const seguimiento = async (patron) => {
+  // Se cuentan por el texto: el de antes y el de ahora, para no perder la serie.
+  const seguimiento = async (...patrones) => {
     const [r] = await prisma.$queryRaw`
       SELECT count(*) AS enviados,
         count(*) FILTER (WHERE EXISTS (
@@ -66,7 +67,7 @@ async function resumen({ dias = 30 } = {}) {
           WHERE i."conversationId" = m."conversationId" AND i.direction = 'INBOUND' AND i.timestamp > m.timestamp
         )) AS respondidos
       FROM whatsapp_messages m
-      WHERE m.direction = 'OUTBOUND' AND m."sentByBot" AND m.timestamp >= ${desde} AND m.body LIKE ${patron}
+      WHERE m.direction = 'OUTBOUND' AND m."sentByBot" AND m.timestamp >= ${desde} AND m.body LIKE ANY(${patrones})
     `;
     return { enviados: n(r.enviados), respondidos: n(r.respondidos) };
   };
@@ -97,8 +98,8 @@ async function resumen({ dias = 30 } = {}) {
     },
     promesas: { hechas: n(promesas.hechas), sinCumplir: n(promesas.sin_cumplir) },
     seguimientos: {
-      retoma: await seguimiento('%Tengo espacio para tu valoración%'),
-      ultimoToque: await seguimiento('No quiero insistir%'),
+      retoma: await seguimiento('%Tengo espacio para tu valoración%', '%Pudiste pensar en lo que hablamos%', '%Te quedó alguna duda de lo que hablamos%'),
+      ultimoToque: await seguimiento('No quiero insistir%', 'Te dejo esto por si te sirve%', 'Te dejo algo que puede servirles%'),
       maduracion: await seguimiento('%Hace unos días%'),
     },
     recordatorios: {
