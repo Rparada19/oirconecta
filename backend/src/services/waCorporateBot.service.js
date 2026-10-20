@@ -1042,12 +1042,16 @@ function preciosPara(conv, fecha = new Date(), preguntaPrecio = '') {
   if (oferta) return `${oferta} La valoración para saber cuál te sirve *no tiene costo*.`;
   const { precios } = aura.current();
   const promo = aura.promoVigente(aura.current(), fecha);
-  const audifonos = `Audífonos desde *${precios.audifonosDesde} cada uno*${promo ? `; ${precios.promoProducto} desde *${precios.promoPrecio}*` : ''}.`;
+  const audifonos = `Los audífonos dependen de la tecnología, y el precio es por oído:
+· *Básica, de pilas*: ${precios.audifonosDesde} a $1.200.000 cada uno
+· *Intermedia*: $3.000.000 a $5.000.000
+· *Avanzada*: más de $7.000.000
+· *Recargables*: de $3.000.000 a $14.000.000${promo ? `\n\nEste mes, ${precios.promoProducto} desde *${precios.promoPrecio}* cada uno.` : ''}`;
   if (/aud[ií]fono|recargable|2x1/i.test(`${anuncio} ${preguntaPrecio}`)) {
     const promesa = promesaDelAnuncio(anuncio);
-    return `${promesa ? `${promesa} ` : ''}${audifonos} La valoración para saber cuál te sirve *no tiene costo*.`;
+    return `${promesa ? `${promesa}\n\n` : ''}${audifonos}\n\nLa valoración para saber cuál te sirve *no tiene costo*.`;
   }
-  return `La valoración auditiva *no tiene costo*. ${audifonos}`;
+  return `La valoración auditiva *no tiene costo*.\n\n${audifonos}`;
 }
 
 /**
@@ -1402,7 +1406,12 @@ Cada material va una sola vez por conversación y como máximo uno por mensaje. 
 ═══ LO QUE OFRECEMOS ═══
 · *Valoración auditiva*: con audióloga, dura una hora e incluye 4 exámenes: otoscopia (conducto auditivo y tímpano), audiometría (cuánto oye cada oído), logoaudiometría (qué tan bien entiende las palabras) e impedanciometría (oído medio). Con ella se establece el grado de pérdida auditiva y qué le conviene a la persona.
 · *La valoración no tiene costo.* Lo único que se paga es si el paciente quiere llevarse los exámenes impresos: $150.000.
-· *Audífonos*: desde $800.000 cada uno. El valor sube por la tecnología (qué tan bien ayuda a entender con ruido, en una reunión o en la calle), no por qué tan fuerte sea la pérdida. Es por oído: si es en los dos, son dos. Cuál le sirve y su valor exacto se definen en la valoración.
+· *Audífonos*: el precio es por oído (si son los dos, son dos) y lo define la tecnología, no qué tan fuerte sea la pérdida. Tecnología es qué tan bien ayuda a entender cuando hay ruido: en una reunión, en un restaurante, en la calle.
+  · *Básica, de pilas*: entre $800.000 y $1.200.000 cada uno. Para ambientes tranquilos: hablar con una persona, la televisión en la casa.
+  · *Intermedia*: entre $3.000.000 y $5.000.000 cada uno. Entiende mejor con algo de ruido: reuniones familiares, varias personas hablando a la vez.
+  · *Avanzada*: más de $7.000.000 cada uno. La que mejor separa la voz del ruido y se ajusta sola a cada lugar: restaurantes, la calle, trabajo con mucha gente.
+  · *Recargables*: desde $3.000.000 hasta $14.000.000 cada uno, según la tecnología. No usan pilas: se cargan de noche, como el celular.
+  Cuál le sirve a cada persona y su valor exacto se definen en la valoración.
 · Por chat no se elige ni se cotiza un audífono específico. No hables de "planes". De marcas, solo lo que diga el conocimiento del centro.
 · Si ya tiene exámenes o audífonos de otro lugar: que los traiga a la valoración; la audióloga los revisa y le dice qué le conviene.
 · Los sábados también atendemos cuando la agenda tiene cupos ese día: consúltala antes de ofrecer un sábado o de decir que no hay.
@@ -1411,9 +1420,11 @@ Cada material va una sola vez por conversación y como máximo uno por mensaje. 
 ═══ CUANDO PREGUNTAN EL PRECIO ═══
 La cifra va en la primera línea. Siempre.
 · De la valoración o la consulta: "La valoración no tiene costo." Lo de los $150.000 por los exámenes impresos, solo si preguntan por los exámenes o por qué se paga.
-· De los audífonos: "Audífonos desde $800.000 cada uno" y que la valoración para saber cuál le sirve no cuesta. Que es por oído y por qué sube el valor, solo si lo preguntan.
-· "Precio" a secas: si viene de un anuncio de audífonos o ya habló de audífonos, es el de los audífonos. Si no está claro, da los dos en dos líneas.
-· "¿Y el más caro?" o un valor exacto: no tienes ese dato y no lo inventes; depende de la tecnología y se lo muestran en la valoración.
+· De los audífonos: explícalo bien, es lo que la persona necesita para decidirse. Una línea de entrada ("Depende de la tecnología, y el precio es por oído:"), después los cuatro niveles de LO QUE OFRECEMOS en lista corta con "·" (cada uno con su cifra y en pocas palabras para qué sirve) y al final que la valoración *no tiene costo* y ahí se define cuál le sirve. Es la única respuesta, además de los horarios, que va en lista.
+· Si ya te contó su situación (la TV, las reuniones, el trabajo), después de la lista dile qué nivel se suele mirar para eso, sin prometerlo: "Por lo que me cuentas de las reuniones, normalmente se mira desde la intermedia; la audióloga te lo confirma". Si no te ha contado nada, termina con UNA pregunta que la ayude a ubicarse ("¿lo necesitas más para la casa o también para reuniones y salidas?").
+· Si pregunta solo por los recargables: su rango, que no usan pilas (se cargan de noche, como el celular) y que el valor cambia por la tecnología, igual que en los de pilas.
+· "Precio" a secas: si viene de un anuncio de audífonos o ya habló de audífonos, es el de los audífonos. Si no está claro, primero que la valoración no tiene costo y después los niveles.
+· "¿Y el más caro?": la avanzada pasa de $7.000.000 y los recargables llegan a $14.000.000 cada uno. El valor de un modelo exacto no lo tienes: se lo muestran en la valoración.
 · Si vuelve a preguntar, repite la cifra sin rodeos.
 
 ═══ CÓMO AGENDAS ═══
@@ -1471,7 +1482,7 @@ Si un dato no está en estas instrucciones, en el conocimiento del centro o en l
 · Escribe como alguien que chatea, no como un folleto: frases cortas, naturales, con el tono de una bogotana amable ("claro que sí", "con mucho gusto", "te cuento", "qué pena contigo"). Sin listas ni viñetas, salvo los horarios.
 · Habla de lo que la persona gana, no de fichas técnicas: "sales sabiendo cómo está tu audición y qué opciones tienes" dice más que "incluye 4 exámenes".
 · Cuando la persona cuenta algo, la empatía va primero (CUANDO TE CUENTAN LO QUE LES PASA), corta y sin exagerar.
-· MENSAJES CORTOS, de chat: máximo 2 frases (unas 30 palabras) antes de la lista de horarios, y después de la lista una pregunta corta y variada ("¿alguno te sirve?", "¿cuál te queda mejor?"). Responde lo que preguntó y no agregues datos que no pidió. Un mensaje largo no se lee.
+· MENSAJES CORTOS, de chat: máximo 2 frases (unas 30 palabras) antes de la lista de horarios o de precios, y después de la lista una pregunta corta y variada ("¿alguno te sirve?", "¿cuál te queda mejor?"). Responde lo que preguntó y no agregues datos que no pidió. Un mensaje largo no se lee.
 · Que se note una persona: usa las palabras de quien te escribe, cambia la forma de abrir y de cerrar de un mensaje a otro, y no repitas una frase que ya dijiste en la conversación. Nada de "¡Perfecto!" ni "¡Excelente!" al empezar cada mensaje, ni "¿Te agendo?" como muletilla.
 · No todos tus mensajes tienen que terminar en pregunta. A veces basta con responder bien.
 · Español correcto, sin errores de ortografía. Tuteo cercano.
@@ -2496,7 +2507,7 @@ ${process.env.PROMO_ACTIVA}
     systemPrompt += `\n\n═══ PROMOCIÓN DEL MES ═══
 ${precios.promoHasta ? `Hasta el ${precios.promoHasta}` : 'Este mes'}: *${precios.promoProducto} desde ${precios.promoPrecio} cada uno*.${esRecargable ? ' Recargable = sin pilas: se cargan de noche, como el celular.' : ''}
 Cuándo la dices:
-· Cuando pregunten cuánto vale un audífono: después de "desde ${precios.audifonosDesde} cada uno", en una sola frase: "y este mes tenemos ${precios.promoProducto} desde ${precios.promoPrecio} cada uno". No reemplaza la cifra de ${precios.audifonosDesde}, se suma.
+· Cuando pregunten cuánto vale un audífono: después de la lista de niveles, en una sola frase: "y este mes tenemos ${precios.promoProducto} desde ${precios.promoPrecio} cada uno". No reemplaza los niveles, se suma.
 · Cuando pregunten por promociones, descuentos, ${precios.promoProducto} o pilas.
 · NO la uses para abrir la conversación ni la repitas en cada mensaje: es un dato, no un volante.
 · Es por oído, igual que el otro precio.
@@ -2518,7 +2529,7 @@ Cuándo la dices:
     systemPrompt += `\n\n═══ PRECIO DE LA VALORACIÓN (esto manda sobre cualquier otra cifra de arriba) ═══
 La valoración auditiva no tiene costo. Lo único que se paga es si el paciente quiere llevarse los exámenes impresos: ${precios.impresos}.
 No existe ninguna oferta de "cupos sin costo de la semana" ni condición de "agendar hoy": no las menciones. Si el conocimiento del centro o una lección dicen otra cosa sobre el precio de la valoración, ignóralo.
-Los audífonos sí se venden por unidad, desde ${precios.audifonosDesde} cada uno, aunque el conocimiento del centro diga que solo van dentro de un plan.
+Los audífonos sí se venden por unidad, con los precios por nivel de LO QUE OFRECEMOS (básica de pilas desde ${precios.audifonosDesde}, intermedia, avanzada y recargables), aunque el conocimiento del centro diga que solo van dentro de un plan.
 ═══════════════════════════════════`;
   }
 
@@ -2753,8 +2764,12 @@ Llámala ahora con la ciudad y el nombre que ya te dio. Si no te ha dicho la ciu
 ${SOLO_EL_MENSAJE}`;
 
 /** Palabras del mensaje sin contar las líneas de la lista de horarios. */
+// Ni la lista de horarios ni la de precios por nivel ("· *Intermedia*: entre
+// $3.000.000…") cuentan como largo: son la respuesta, no relleno.
 function palabrasSinHorarios(texto) {
-  return String(texto || '').split('\n').filter((l) => !/^\s*(?:[1-9]\uFE0F?\u20E3|[1-9][.)])/.test(l))
+  return String(texto || '').split('\n')
+    .filter((l) => !/^\s*(?:[1-9]\uFE0F?\u20E3|[1-9][.)])/.test(l))
+    .filter((l) => !/^\s*[·•\-*]\s*\S.*\$\s?\d/.test(l))
     .join(' ').split(/\s+/).filter(Boolean).length;
 }
 
