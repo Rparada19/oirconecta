@@ -1027,9 +1027,20 @@ model Quote {
   // Historial de cambios
   history QuoteHistory[]
 
+  // Módulo Cotizaciones (propuestas con varias opciones + seguimiento comercial)
+  /// Agrupa las opciones de una misma propuesta. Null = cotización suelta (ella misma es la propuesta).
+  propuestaId     String?
+  /// Etapa comercial: enviada, en_prueba, negociacion, ganada, perdida
+  etapa           String?   @default("enviada")
+  proximoContacto DateTime?
+  profesional     String?
+  vigenciaDias    Int       @default(15)
+  codigoFirma     String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([propuestaId])
   @@map("quotes")
 }
 

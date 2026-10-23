@@ -25,7 +25,7 @@ import {
   MailOutline as MailOutlineIcon,
   AccountBalance,
   AutoAwesome,
-  TrendingUp,
+  RequestQuote,
   History,
 } from '@mui/icons-material';
 import Handshake from '@mui/icons-material/HandshakeOutlined';
@@ -63,8 +63,8 @@ const NAV_ITEMS = [
     path: '/portal-crm/crm', section: 'operativo' },
   { key: MENU_KEYS.CONTROLES, label: 'Controles', icon: EventRepeatIcon,
     path: '/portal-crm/controles', section: 'operativo' },
-  { key: MENU_KEYS.OPORTUNIDADES, label: 'Oportunidades', icon: TrendingUp,
-    path: '/portal-crm/oportunidades', section: 'operativo' },
+  { key: MENU_KEYS.OPORTUNIDADES, label: 'Cotizaciones', icon: RequestQuote,
+    path: '/portal-crm/cotizaciones', section: 'operativo' },
   { key: MENU_KEYS.WHATSAPP, label: 'WhatsApp', icon: WhatsAppIcon,
     path: '/portal-crm/whatsapp', section: 'operativo' },
   { key: MENU_KEYS.CAMPANAS, label: 'Campañas', icon: Campaign,
