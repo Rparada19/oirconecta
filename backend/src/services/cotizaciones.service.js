@@ -176,6 +176,7 @@ async function detalle(propuestaId) {
   const ultimo = interacciones[0] ? { fecha: interacciones[0].occurredAt, detalle: interacciones[0].title } : null;
   return {
     ...armarPropuesta(grupo, ultimo, seguimiento.length),
+    intro: meta.intro || null,
     garantias: meta.garantias || null,
     plan: meta.plan || null,
     condiciones: meta.condiciones || null,
@@ -200,7 +201,7 @@ async function crear(data, user) {
   const codigo = codigoFirma({ propuestaId, paciente: patient.nombre, profesional: data.profesional, opciones });
   const comun = {
     garantias: data.garantias || null, plan: data.plan || null, condiciones: data.condiciones || null,
-    numero: data.numero || null, profesional: data.profesional || null, cargo: data.cargo || null, creadoPor: user?.email || null,
+    numero: data.numero || null, profesional: data.profesional || null, cargo: data.cargo || null, intro: data.intro || null, creadoPor: user?.email || null,
   };
 
   // Campañas de cada opción: el descuento lo pone la campaña, no la mano.
