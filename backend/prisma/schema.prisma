@@ -3452,3 +3452,31 @@ model BotRevision {
 
   @@map("bot_revisiones")
 }
+
+/// Catálogo de productos para cotizar (compartido entre usuarios del CRM).
+/// Las campañas se relacionan por Campaign.catalogProductIds.
+model CatalogoProducto {
+  id          String   @id @default(uuid())
+  tipo        String   @default("AUDIFONO") // AUDIFONO | ACCESORIO
+  marca       String
+  nombre      String
+  tecnologia  String?
+  plataforma  String?
+  linea       String?
+  sub         String?
+  etiqueta    String?
+  /// Ruta pública o data URL (imagen sin fondo, reducida)
+  imagen      String?  @db.Text
+  /// [{ i, t, d }]
+  atributos   Json?
+  valor       Float    @default(0)
+  anosGarantia Int     @default(2)
+  recargable  String   @default("SI")
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([marca])
+  @@map("catalogo_productos")
+}
+

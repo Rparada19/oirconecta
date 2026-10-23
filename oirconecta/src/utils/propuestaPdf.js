@@ -305,7 +305,7 @@ export function propuestaDesdeApi(p) {
     paciente: p.paciente?.nombre || '',
     profesional: p.profesional || 'Equipo OírConecta',
     cargo: p.cargo || 'Audióloga',
-    intro: PROPUESTA_DEFAULTS.intro,
+    intro: p.intro || PROPUESTA_DEFAULTS.intro,
     productos: (p.opciones || []).map((o) => ({
       nombre: o.nombre, linea: o.linea || o.tecnologia || '', sub: o.sub || o.plataforma || '', corto: o.corto || o.tecnologia || '',
       tag: o.etiqueta || '', img: o.imagen || '', precio: o.valorUnitario, dto: o.descuento || 0, feats: o.atributos || [],
