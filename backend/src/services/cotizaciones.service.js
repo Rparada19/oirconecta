@@ -47,6 +47,7 @@ function opcionDe(q) {
     imagen: m.imagen || (Array.isArray(m.images) ? m.images[0] : null) || null,
     atributos: Array.isArray(m.atributos) ? m.atributos : [],
     etiqueta: m.etiqueta || null,
+    campana: q.campaign?.nombre || m.campanaNombre || null,
     linea: m.linea || null,
     sub: m.sub || null,
     corto: m.corto || null,
@@ -202,9 +203,22 @@ async function crear(data, user) {
     numero: data.numero || null, profesional: data.profesional || null, cargo: data.cargo || null, creadoPor: user?.email || null,
   };
 
+  // Campañas de cada opción: el descuento lo pone la campaña, no la mano.
+  const campIds = [...new Set(opciones.map((o) => o.campaignId).filter(Boolean))];
+  const campanas = campIds.length
+    ? await prisma.campaign.findMany({ where: { id: { in: campIds } } }) : [];
+  const campPorId = new Map(campanas.map((c) => [c.id, c]));
+
   const creadas = await prisma.$transaction(opciones.map((o, idx) => {
     const unit = Number(o.valorUnitario) || 0;
-    const dto = Number(o.descuento) || 0;
+    const camp = o.campaignId ? campPorId.get(o.campaignId) : null;
+    let dto = Number(o.descuento) || 0;
+    if (camp) {
+      const d = Number(camp.descuentoAprobado) || 0;
+      // SEGUNDO_AUDIFONO: el % solo aplica a la 2.ª unidad → descuento promedio por unidad.
+      dto = camp.aplicacionDescuento === 'SEGUNDO_AUDIFONO' && cantidad >= 2 ? d / cantidad : d;
+      dto = Math.round(dto * 100) / 100;
+    }
     const neto = Math.round(unit * (1 - dto / 100));
     return prisma.quote.create({
       data: {
@@ -220,7 +234,7 @@ async function crear(data, user) {
         descuento: dto,
         valorPorUnidad: neto,
         valorTotal: neto * cantidad,
-        campaignId: data.campaignId || null,
+        campaignId: camp?.id || data.campaignId || null,
         patientId: patient.id,
         profesional: data.profesional || null,
         vigenciaDias,
@@ -228,7 +242,7 @@ async function crear(data, user) {
         etapa: 'enviada',
         proximoContacto: data.proximoContacto ? new Date(data.proximoContacto) : new Date(Date.now() + 2 * 86400000),
         notas: o.notas || null,
-        metadata: { ...comun, producto: o.nombre, imagen: o.imagen || null, atributos: o.atributos || [], etiqueta: o.etiqueta || null, linea: o.linea || null, sub: o.sub || null, corto: o.corto || null },
+        metadata: { ...comun, catalogoProductoId: o.catalogoProductoId || null, campanaNombre: camp?.nombre || null, producto: o.nombre, imagen: o.imagen || null, atributos: o.atributos || [], etiqueta: o.etiqueta || null, linea: o.linea || null, sub: o.sub || null, corto: o.corto || null },
       },
     });
   }));

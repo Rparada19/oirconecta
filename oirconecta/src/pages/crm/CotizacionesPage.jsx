@@ -13,17 +13,18 @@ import {
   Box, Container, Grid, Typography, Chip, CircularProgress, Button, Drawer, Divider,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip,
   Snackbar, Alert, TextField, MenuItem, Stack, Dialog, DialogTitle, DialogContent,
-  DialogActions, Autocomplete, ToggleButton, ToggleButtonGroup,
+  DialogActions, Autocomplete, ToggleButton, ToggleButtonGroup, Tabs, Tab,
 } from '@mui/material';
 import {
   RequestQuote, Refresh, WhatsApp, Add, Close, PictureAsPdf, Phone, Email, Chat,
   Storefront, EventNote, EmojiEvents, DeleteOutline,
 } from '@mui/icons-material';
 import PageHeader from '../../components/crm/ui/PageHeader';
+import CatalogoTab from '../../components/crm/cotizaciones/CatalogoTab';
 import { api } from '../../services/apiClient';
 import { getPatients } from '../../services/patientService';
 import {
-  CATALOGO_COTIZACION, descargarPropuestaPdf, propuestaDesdeApi, LOGOS, PROPUESTA_DEFAULTS,
+  descargarPropuestaPdf, propuestaDesdeApi, LOGOS, PROPUESTA_DEFAULTS,
 } from '../../utils/propuestaPdf';
 
 // Formato propio: el espacio duro de Intl se dibuja mal con Gotham.
@@ -273,19 +274,26 @@ function DetalleDrawer({ id, onClose, onChanged, notify }) {
 /* ------------------------------------------------------------------ */
 /* Nueva propuesta                                                      */
 /* ------------------------------------------------------------------ */
-const opcionDesdeCatalogo = (k) => {
-  const c = CATALOGO_COTIZACION[k];
-  return {
-    key: `${k}-${Math.random().toString(36).slice(2, 7)}`,
-    nombre: c.nombre, linea: c.linea, sub: c.sub, corto: c.corto, etiqueta: c.tag, imagen: c.img,
-    valorUnitario: c.precio, descuento: c.dto,
-    atributosTxt: c.feats.filter((f) => f.t).map((f) => `${f.t}: ${f.d}`).join('\n'),
-    iconos: c.feats.map((f) => f.i),
-    marca: k === 'blank' ? '' : 'Widex',
-  };
+const ICONOS_BASE = ['onda', 'bateria', 'celular', 'bluetooth', 'ia', 'agua'];
+const opcionDesdeProducto = (p) => ({
+  key: `${p?.id || 'otro'}-${Math.random().toString(36).slice(2, 7)}`,
+  catalogoProductoId: p?.id || null,
+  nombre: p?.nombre || '', linea: p?.linea || '', sub: p?.sub || '', corto: p?.plataforma || p?.tecnologia || '',
+  etiqueta: p?.etiqueta || '', imagen: p?.imagen || '', marca: p?.marca || '', tecnologia: p?.tecnologia || '',
+  valorUnitario: p?.valor || 0, descuento: 0, campaignId: '',
+  atributosTxt: (p?.atributos || []).map((a) => `${a.t}${a.d ? `: ${a.d}` : ''}`).join('\n'),
+  iconos: (p?.atributos || []).map((a) => a.i),
+  campanas: (p?.campanas || []).filter((c) => c.vigente),
+});
+
+/** Descuento promedio por unidad que deja una campaña (igual que el backend). */
+const dtoCampana = (c, cantidad) => {
+  const d = Number(c?.descuentoAprobado) || 0;
+  return c?.aplicacionDescuento === 'SEGUNDO_AUDIFONO' && cantidad >= 2 ? Math.round((d / cantidad) * 100) / 100 : d;
 };
 
-function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
+function NuevaPropuestaDialog({ open, onClose, onCreated, notify, catalogo }) {
+  const productos = catalogo?.productos || [];
   const [buscar, setBuscar] = useState('');
   const [pacientes, setPacientes] = useState([]);
   const [paciente, setPaciente] = useState(null);
@@ -295,8 +303,11 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
   const [cargo, setCargo] = useState('Audióloga');
   const [cantidad, setCantidad] = useState(2);
   const [vigencia, setVigencia] = useState(15);
-  const [opciones, setOpciones] = useState([opcionDesdeCatalogo('allure')]);
-  const [agregar, setAgregar] = useState('smartric');
+  const [opciones, setOpciones] = useState([]);
+  const [agregar, setAgregar] = useState('');
+  useEffect(() => {
+    if (open && productos.length && opciones.length === 0) setOpciones([opcionDesdeProducto(productos[0])]);
+  }, [open, productos]); // eslint-disable-line react-hooks/exhaustive-deps
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -321,6 +332,7 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
       patientId = data.data.id;
     }
     if (!patientId) return notify('Elige un paciente.', 'warning');
+    if (!opciones.length || opciones.some((o) => !o.nombre.trim())) return notify('Agrega al menos una opción con nombre.', 'warning');
     setSaving(true);
     const hoy = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const body = {
@@ -328,11 +340,12 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
       numero: `COT-OC-${hoy}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`,
       garantias: PROPUESTA_DEFAULTS.garantias, plan: PROPUESTA_DEFAULTS.plan, condiciones: PROPUESTA_DEFAULTS.condiciones,
       opciones: opciones.map((o) => ({
-        nombre: o.nombre, marca: o.marca || o.nombre.split(' ')[0], tecnologia: o.corto, linea: o.linea, sub: o.sub, corto: o.corto,
+        nombre: o.nombre, marca: o.marca || o.nombre.split(' ')[0], tecnologia: o.tecnologia || o.corto, linea: o.linea, sub: o.sub, corto: o.corto,
         etiqueta: o.etiqueta, imagen: o.imagen, valorUnitario: Number(o.valorUnitario) || 0, descuento: Number(o.descuento) || 0,
+        campaignId: o.campaignId || undefined, catalogoProductoId: o.catalogoProductoId || undefined,
         atributos: o.atributosTxt.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 6).map((l, j) => {
           const [t, ...rest] = l.split(':');
-          return { i: o.iconos[j] || 'check', t: t.trim(), d: rest.join(':').trim() };
+          return { i: o.iconos[j] || ICONOS_BASE[j] || 'check', t: t.trim(), d: rest.join(':').trim() };
         }),
       })),
     };
@@ -370,7 +383,10 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
           <Grid item xs={12} sm={4}><TextField fullWidth size="small" label="Profesional" value={profesional} onChange={(e) => setProfesional(e.target.value)} /></Grid>
           <Grid item xs={6} sm={3}><TextField fullWidth size="small" label="Cargo" value={cargo} onChange={(e) => setCargo(e.target.value)} /></Grid>
           <Grid item xs={6} sm={3}>
-            <TextField select fullWidth size="small" label="Adaptación" value={cantidad} onChange={(e) => setCantidad(Number(e.target.value))}>
+            <TextField select fullWidth size="small" label="Adaptación" value={cantidad} onChange={(e) => {
+              const q = Number(e.target.value); setCantidad(q);
+              setOpciones((ops) => ops.map((o) => (o.campaignId ? { ...o, descuento: dtoCampana(o.campanas.find((c) => c.id === o.campaignId), q) } : o)));
+            }}>
               <MenuItem value={2}>Binaural (2)</MenuItem><MenuItem value={1}>Monoaural (1)</MenuItem>
             </TextField>
           </Grid>
@@ -384,7 +400,8 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
               <Grid container spacing={1.25} alignItems="center">
                 <Grid item xs={12} sm={4}><TextField fullWidth size="small" label="Producto" value={o.nombre} onChange={(e) => setOp(i, 'nombre', e.target.value)} /></Grid>
                 <Grid item xs={6} sm={3}><TextField fullWidth size="small" type="number" label="Valor unitario" value={o.valorUnitario} onChange={(e) => setOp(i, 'valorUnitario', e.target.value)} /></Grid>
-                <Grid item xs={6} sm={2}><TextField fullWidth size="small" type="number" label="Descuento %" value={o.descuento} onChange={(e) => setOp(i, 'descuento', e.target.value)} /></Grid>
+                <Grid item xs={6} sm={2}><TextField fullWidth size="small" type="number" label="Descuento %" value={o.descuento} disabled={Boolean(o.campaignId)}
+                  helperText={o.campaignId ? 'Lo define la campaña' : ''} onChange={(e) => setOp(i, 'descuento', e.target.value)} /></Grid>
                 <Grid item xs={9} sm={2}>
                   <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>Neto c/u</Typography>
                   <Typography sx={{ fontWeight: 800, fontSize: '0.88rem' }}>{cop((Number(o.valorUnitario) || 0) * (1 - (Number(o.descuento) || 0) / 100))}</Typography>
@@ -393,6 +410,17 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
                   <Tooltip title="Quitar opción"><span>
                     <IconButton disabled={opciones.length === 1} onClick={() => setOpciones((ops) => ops.filter((_, j) => j !== i))}><DeleteOutline /></IconButton>
                   </span></Tooltip>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField select fullWidth size="small" label="Campaña" value={o.campaignId}
+                    onChange={(e) => {
+                      const c = o.campanas.find((x) => x.id === e.target.value);
+                      setOpciones((ops) => ops.map((x, j) => (j === i ? { ...x, campaignId: e.target.value, descuento: c ? dtoCampana(c, cantidad) : 0 } : x)));
+                    }}
+                    helperText={o.campanas.length ? '' : 'Este producto no tiene campañas vigentes'}>
+                    <MenuItem value="">Sin campaña</MenuItem>
+                    {o.campanas.map((c) => <MenuItem key={c.id} value={c.id}>{c.nombre} · {c.descuentoAprobado}%{c.aplicacionDescuento === 'SEGUNDO_AUDIFONO' ? ' en el 2.º' : ''}</MenuItem>)}
+                  </TextField>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField fullWidth size="small" multiline minRows={2} label="Atributos (uno por línea, «Título: descripción»)"
@@ -404,17 +432,17 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
         </Stack>
         {opciones.length < 3 && (
           <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
-            <TextField select size="small" value={agregar} onChange={(e) => setAgregar(e.target.value)} sx={{ minWidth: 220 }}>
-              <MenuItem value="allure">Widex Allure 220</MenuItem>
-              <MenuItem value="smartric">Widex SmartRIC 220</MenuItem>
-              <MenuItem value="moment">Widex Moment 220</MenuItem>
-              <MenuItem value="blank">Otro producto</MenuItem>
+            <TextField select size="small" label="Producto del catálogo" value={agregar} onChange={(e) => setAgregar(e.target.value)} sx={{ minWidth: 260 }}>
+              {productos.map((p) => <MenuItem key={p.id} value={p.id}>{p.nombre} · {cop(p.valor)}</MenuItem>)}
+              <MenuItem value="otro">Otro producto (manual)</MenuItem>
             </TextField>
-            <Button startIcon={<Add />} onClick={() => setOpciones((ops) => [...ops, opcionDesdeCatalogo(agregar)])} sx={{ textTransform: 'none', fontWeight: 700 }}>Agregar opción</Button>
+            <Button startIcon={<Add />} disabled={!agregar}
+              onClick={() => { setOpciones((ops) => [...ops, opcionDesdeProducto(productos.find((p) => p.id === agregar))]); setAgregar(''); }}
+              sx={{ textTransform: 'none', fontWeight: 700 }}>Agregar opción</Button>
           </Stack>
         )}
         <Typography sx={{ mt: 2, fontSize: '0.78rem', color: '#64748b' }}>
-          Garantías, plan audiológico y condiciones van con los valores estándar de OírConecta.
+          Garantías, plan audiológico y condiciones van con los valores estándar de OírConecta. Para agregar productos o relacionarlos con campañas, usa la pestaña Catálogo.
         </Typography>
       </DialogContent>
       <DialogActions>
@@ -435,6 +463,8 @@ export default function CotizacionesPage() {
   const [filtro, setFiltro] = useState('');
   const [abierta, setAbierta] = useState(null);
   const [nueva, setNueva] = useState(false);
+  const [tab, setTab] = useState('propuestas');
+  const [catalogo, setCatalogo] = useState(null);
   const [snack, setSnack] = useState({ open: false, msg: '', sev: 'success' });
   const notify = (msg, sev = 'success') => setSnack({ open: true, msg, sev });
 
@@ -445,6 +475,12 @@ export default function CotizacionesPage() {
     setLoading(false);
   }, [verCerradas]);
   useEffect(() => { load(); }, [load]);
+
+  const loadCatalogo = useCallback(async () => {
+    const { data: res } = await api.get('/api/crm/catalogo');
+    setCatalogo(res?.data || { productos: [], campanas: [] });
+  }, []);
+  useEffect(() => { loadCatalogo(); }, [loadCatalogo]);
 
   const items = useMemo(() => {
     const q = filtro.trim().toLowerCase();
@@ -474,7 +510,13 @@ export default function CotizacionesPage() {
       />
 
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        {loading ? (
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: '1px solid #e5e7eb', '& .MuiTab-root': { textTransform: 'none', fontWeight: 700 } }}>
+          <Tab value="propuestas" label="Propuestas y seguimiento" />
+          <Tab value="catalogo" label={`Catálogo${catalogo ? ` (${catalogo.productos.length})` : ''}`} />
+        </Tabs>
+        {tab === 'catalogo' ? (
+          <CatalogoTab catalogo={catalogo} onChanged={loadCatalogo} notify={notify} />
+        ) : loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
         ) : !data ? (
           <Typography sx={{ color: '#94a3b8' }}>No se pudieron cargar las cotizaciones.</Typography>
@@ -555,7 +597,7 @@ export default function CotizacionesPage() {
       </Container>
 
       <DetalleDrawer id={abierta} onClose={() => setAbierta(null)} onChanged={load} notify={notify} />
-      <NuevaPropuestaDialog open={nueva} onClose={() => setNueva(false)} notify={notify}
+      <NuevaPropuestaDialog open={nueva} onClose={() => setNueva(false)} notify={notify} catalogo={catalogo}
         onCreated={(p) => { setNueva(false); load(); setAbierta(p.id); }} />
       <Snackbar open={snack.open} autoHideDuration={3500} onClose={() => setSnack((s) => ({ ...s, open: false }))}>
         <Alert severity={snack.sev} variant="filled" onClose={() => setSnack((s) => ({ ...s, open: false }))}>{snack.msg}</Alert>
