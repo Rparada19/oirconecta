@@ -103,7 +103,7 @@ const CampanasPage = lazy(() => import('./pages/crm/CampanasPage'));
 const ReportesPage = lazy(() => import('./pages/crm/ReportesPage'));
 const FinanzasPage = lazy(() => import('./pages/crm/FinanzasPage'));
 const AutomatizacionesPage = lazy(() => import('./pages/crm/AutomatizacionesPage'));
-const OportunidadesPage = lazy(() => import('./pages/crm/OportunidadesPage'));
+const CotizacionesPage = lazy(() => import('./pages/crm/CotizacionesPage'));
 const ConfiguracionPage = lazy(() => import('./pages/crm/ConfiguracionPage'));
 const AccionesDiaPage = lazy(() => import('./pages/crm/AccionesDiaPage'));
 const ProductosPage = lazy(() => import('./pages/crm/ProductosPage'));
@@ -321,7 +321,9 @@ export default function App() {
             <Route path="reportes" element={<ReportesPage />} />
             <Route path="finanzas" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><FinanzasPage /></ProtectedRouteByRole>} />
             <Route path="aliados" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><AliadosPage /></ProtectedRouteByRole>} />
-            <Route path="oportunidades" element={<OportunidadesPage />} />
+            <Route path="cotizaciones" element={<CotizacionesPage />} />
+            {/* Oportunidades se unificó en Cotizaciones */}
+            <Route path="oportunidades" element={<Navigate to="/portal-crm/cotizaciones" replace />} />
             <Route path="automatizaciones" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><AutomatizacionesPage /></ProtectedRouteByRole>} />
             <Route path="configuracion" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ConfiguracionPage /></ProtectedRouteByRole>} />
             <Route path="productos" element={<ProtectedRouteByRole allowedRoles={['ADMIN']}><ProductosPage /></ProtectedRouteByRole>} />
