@@ -10,15 +10,17 @@ import {
   DialogActions, TextField, Grid, Autocomplete, Table, TableHead, TableRow, TableCell,
   TableBody, TableContainer, Alert, CircularProgress, Link,
 } from '@mui/material';
-import { Add, Edit, DeleteOutline, UploadFile, Download, Inventory2, Description, AutoAwesome } from '@mui/icons-material';
+import { Add, Edit, DeleteOutline, UploadFile, Download, Inventory2, Description, AutoAwesome, CloudUpload } from '@mui/icons-material';
 import { api } from '../../../services/apiClient';
+import { prepImagen, dataUrlABlob } from '../../../utils/imagenProducto';
+import CargaMasivaDialog from './CargaMasivaDialog';
 
 const cop = (n) => `$ ${Math.round(n || 0).toLocaleString('es-CO')}`;
 const ICONOS = ['onda', 'bateria', 'celular', 'bluetooth', 'ia', 'agua', 'chip', 'oido', 'enfoque', 'hoja', 'tv', 'ajustes', 'estuche', 'check'];
 
 const vacio = {
   tipo: 'AUDIFONO', marca: 'Widex', nombre: '', tecnologia: '', plataforma: '', linea: '', sub: '', etiqueta: '',
-  imagen: '', valor: 0, anosGarantia: 2, recargable: 'SI', atributosTxt: '', campaignIds: [], fichas: [],
+  imagen: '', valor: 0, anosGarantia: 2, recargable: 'SI', atributosTxt: '', campaignIds: [], fichas: [], fotos: [],
 };
 
 const atributosATexto = (a) => (Array.isArray(a) ? a.map((x) => `${x.t}${x.d ? `: ${x.d}` : ''}`).join('\n') : '');
@@ -28,35 +30,6 @@ const textoAAtributos = (txt, prev = []) => String(txt || '').split(/\n|\|/).map
     return { i: prev[j]?.i || ICONOS[j] || 'check', t: t.trim(), d: rest.join(':').trim() };
   });
 
-/** Quita el fondo blanco, recorta y reduce la foto del producto. */
-function prepImagen(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader(); r.onerror = rej;
-    r.onload = () => {
-      const im = new Image(); im.onerror = rej;
-      im.onload = () => {
-        const sc = Math.min(1, 520 / Math.max(im.width, im.height));
-        const w = Math.round(im.width * sc); const h = Math.round(im.height * sc);
-        const c = document.createElement('canvas'); c.width = w; c.height = h;
-        const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h);
-        const id = x.getImageData(0, 0, w, h); const a = id.data;
-        let minX = w; let minY = h; let maxX = 0; let maxY = 0;
-        for (let i = 0; i < a.length; i += 4) {
-          const m = Math.min(a[i], a[i + 1], a[i + 2]);
-          a[i + 3] = Math.min(a[i + 3], Math.max(0, Math.min(255, ((255 - m) * 255) / 28)));
-          if (a[i + 3] > 10) { const p = i / 4; const px = p % w; const py = (p / w) | 0; minX = Math.min(minX, px); maxX = Math.max(maxX, px); minY = Math.min(minY, py); maxY = Math.max(maxY, py); }
-        }
-        x.putImageData(id, 0, 0);
-        if (maxX <= minX || maxY <= minY) return res(c.toDataURL('image/png'));
-        const c2 = document.createElement('canvas'); c2.width = maxX - minX + 1; c2.height = maxY - minY + 1;
-        c2.getContext('2d').drawImage(c, minX, minY, c2.width, c2.height, 0, 0, c2.width, c2.height);
-        res(c2.toDataURL('image/webp', 0.85));
-      };
-      im.src = r.result;
-    };
-    r.readAsDataURL(file);
-  });
-}
 
 const COLUMNAS = ['Marca', 'Nombre', 'Tecnología', 'Plataforma', 'Línea', 'Subtítulo', 'Etiqueta', 'Valor', 'Años garantía', 'Recargable', 'Atributos', 'Campañas'];
 
@@ -82,6 +55,8 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
   const [saving, setSaving] = useState(false);
   const [importRes, setImportRes] = useState(null);
   const [leyendo, setLeyendo] = useState(false);
+  const [subiendoFotos, setSubiendoFotos] = useState(false);
+  const [masiva, setMasiva] = useState(false);
   const fileRef = useRef(null);
   const fichaRef = useRef(null);
   const productos = catalogo?.productos || [];
@@ -90,6 +65,7 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
   const abrir = (p) => setEdit(p ? {
     ...vacio, ...p, atributosTxt: atributosATexto(p.atributos), campaignIds: (p.campanas || []).map((c) => c.id),
     fichas: Array.isArray(p.fichas) ? p.fichas : [],
+    fotos: Array.isArray(p.fotos) && p.fotos.length ? p.fotos : (p.imagen ? [{ url: p.imagen, principal: true }] : []),
   } : { ...vacio });
 
   /** Lee una ficha técnica y llena los campos vacíos del producto en edición (o de uno nuevo). */
@@ -119,7 +95,7 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
     const prevAtr = productos.find((p) => p.id === edit.id)?.atributos || [];
     const body = {
       tipo: edit.tipo, marca: edit.marca, nombre: edit.nombre, tecnologia: edit.tecnologia, plataforma: edit.plataforma,
-      linea: edit.linea, sub: edit.sub, etiqueta: edit.etiqueta, imagen: edit.imagen || null, valor: Number(edit.valor) || 0,
+      linea: edit.linea, sub: edit.sub, etiqueta: edit.etiqueta, imagen: edit.imagen || null, fotos: (edit.fotos || []).length ? edit.fotos : (edit.imagen ? [{ url: edit.imagen, principal: true }] : []), valor: Number(edit.valor) || 0,
       anosGarantia: Number(edit.anosGarantia) || 2, recargable: edit.recargable,
       atributos: textoAAtributos(edit.atributosTxt, prevAtr), campaignIds: edit.campaignIds, fichas: edit.fichas || [],
     };
@@ -171,7 +147,8 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
         </Typography>
         <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
           <Button size="small" startIcon={<Download />} onClick={() => descargarPlantilla(campanas)} sx={{ textTransform: 'none', fontWeight: 700 }}>Plantilla Excel</Button>
-          <Button size="small" variant="outlined" startIcon={<UploadFile />} onClick={() => fileRef.current?.click()} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>Importar catálogo</Button>
+          <Button size="small" variant="contained" startIcon={<CloudUpload />} onClick={() => setMasiva(true)} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>Carga masiva (fotos y fichas)</Button>
+          <Button size="small" variant="outlined" startIcon={<UploadFile />} onClick={() => fileRef.current?.click()} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>Importar Excel</Button>
           <input ref={fileRef} type="file" hidden accept=".xlsx,.xls,.csv" onChange={(e) => e.target.files[0] && importar(e.target.files[0])} />
           <Button size="small" variant="outlined" startIcon={leyendo ? <CircularProgress size={14} /> : <AutoAwesome />} disabled={leyendo}
             onClick={() => fichaRef.current?.click()} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>
@@ -179,7 +156,7 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
           </Button>
           <input ref={fichaRef} type="file" hidden accept="application/pdf,image/png,image/jpeg,image/webp"
             onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) leerFicha(f, null); }} />
-          <Button size="small" variant="contained" startIcon={<Add />} onClick={() => abrir(null)} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>Nuevo producto</Button>
+          <Button size="small" variant="outlined" startIcon={<Add />} onClick={() => abrir(null)} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>Nuevo producto</Button>
         </Stack>
       </Stack>
 
@@ -259,14 +236,48 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
                     {edit.imagen ? <Box component="img" src={edit.imagen} alt="" sx={{ maxWidth: '85%', maxHeight: 130, objectFit: 'contain' }} />
                       : <Typography sx={{ fontSize: '0.78rem', color: '#94a3b8', px: 2, textAlign: 'center' }}>Sin foto</Typography>}
                   </Box>
-                  <Button component="label" fullWidth size="small" variant="outlined" sx={{ textTransform: 'none', fontWeight: 700 }}>
-                    Subir foto
-                    <input hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={async (e) => {
-                      const f = e.target.files[0]; if (!f) return;
-                      try { const url = await prepImagen(f); setEdit((x) => ({ ...x, imagen: url })); } catch { notify('No se pudo leer esa imagen. Usa JPG o PNG.', 'error'); }
+                  {(edit.fotos || []).length > 0 && (
+                    <Stack direction="row" spacing={0.75} sx={{ mb: 1, flexWrap: 'wrap', rowGap: 0.75 }}>
+                      {edit.fotos.map((f, k) => (
+                        <Box key={f.url} sx={{ position: 'relative', width: 46, height: 46, borderRadius: '8px', bgcolor: '#f1f5fb', cursor: 'pointer',
+                          border: f.url === edit.imagen ? '2px solid #4054B2' : '1px solid #e5e7eb', overflow: 'hidden' }}
+                          onClick={() => setEdit({ ...edit, imagen: f.url, fotos: edit.fotos.map((x, j) => ({ ...x, principal: j === k })) })}>
+                          <Box component="img" src={f.url} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          <Box component="button" type="button" aria-label="Quitar foto"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const resto = edit.fotos.filter((_, j) => j !== k);
+                              const principal = f.url === edit.imagen ? (resto[0]?.url || '') : edit.imagen;
+                              setEdit({ ...edit, fotos: resto.map((x) => ({ ...x, principal: x.url === principal })), imagen: principal });
+                            }}
+                            sx={{ position: 'absolute', right: 0, top: 0, border: 0, bgcolor: 'rgba(255,255,255,.9)', fontSize: 11, lineHeight: 1, px: 0.5, cursor: 'pointer' }}>×</Box>
+                        </Box>
+                      ))}
+                    </Stack>
+                  )}
+                  <Button component="label" fullWidth size="small" variant="outlined" disabled={subiendoFotos} sx={{ textTransform: 'none', fontWeight: 700 }}>
+                    {subiendoFotos ? 'Subiendo…' : 'Agregar fotos'}
+                    <input hidden multiple type="file" accept="image/png,image/jpeg,image/webp" onChange={async (e) => {
+                      const files = [...e.target.files]; e.target.value = ''; if (!files.length) return;
+                      setSubiendoFotos(true);
+                      const nuevas = [];
+                      for (const f of files) {
+                        try {
+                          const dataUrl = await prepImagen(f);
+                          const fd = new FormData(); fd.append('file', await dataUrlABlob(dataUrl), 'foto.webp');
+                          const { data, error } = await api.upload('/api/crm/catalogo/foto', fd);
+                          nuevas.push({ url: error ? dataUrl : data.data.url, principal: false });
+                        } catch { notify(`No se pudo leer ${f.name}. Usa JPG o PNG.`, 'error'); }
+                      }
+                      setSubiendoFotos(false);
+                      setEdit((x) => {
+                        const fotos = [...(x.fotos || []), ...nuevas];
+                        const imagen = x.imagen || fotos[0]?.url || '';
+                        return { ...x, imagen, fotos: fotos.map((p) => ({ ...p, principal: p.url === imagen })) };
+                      });
                     }} />
                   </Button>
-                  <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', mt: 0.5 }}>El fondo blanco se quita solo.</Typography>
+                  <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', mt: 0.5 }}>El fondo blanco se quita solo. Toca una foto para hacerla principal.</Typography>
                 </Grid>
                 <Grid item xs={12} sm={9}>
                   <Grid container spacing={1.5}>
@@ -325,6 +336,7 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
           </>
         )}
       </Dialog>
+      <CargaMasivaDialog open={masiva} onClose={() => setMasiva(false)} onSaved={() => { setMasiva(false); onChanged(); }} catalogo={catalogo} notify={notify} />
     </Box>
   );
 }
