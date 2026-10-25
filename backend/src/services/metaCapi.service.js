@@ -22,6 +22,8 @@
  *   META_WABA_ID         id de la cuenta de WhatsApp Business (opcional: si
  *                        falta se toma del webhook de WhatsApp)
  *   META_WA_DATASET_ID   dataset de mensajes (por defecto el pixel)
+ *   META_WA_CAPI_ACCESS_TOKEN  token generado en ese dataset (por defecto
+ *                        META_CAPI_ACCESS_TOKEN)
  *   META_PAGE_ID         página de Facebook de los anuncios (obligatoria para mensajes)
  *
  * Meta no acepta Schedule en eventos de mensajes: ahí la cita sale como
@@ -43,6 +45,7 @@ function recordarWabaId(id) {
   console.log('[metaCapi] WABA detectada desde el webhook:', wabaIdWebhook);
 }
 const WA_DATASET_ID = process.env.META_WA_DATASET_ID || PIXEL_ID;
+const WA_ACCESS_TOKEN = process.env.META_WA_CAPI_ACCESS_TOKEN || ACCESS_TOKEN;
 const PAGE_ID = process.env.META_PAGE_ID || '969933116201109';
 
 if (!ACCESS_TOKEN) {
@@ -85,7 +88,8 @@ function hashUserData({ email, phone, firstName, lastName, city, country = 'co',
  *   - eventId: id único para dedupe con el pixel del navegador
  */
 async function sendEvent(eventName, opts = {}) {
-  if (!ACCESS_TOKEN) return { skipped: true, reason: 'no_token' };
+  const token = opts.accessToken || ACCESS_TOKEN;
+  if (!token) return { skipped: true, reason: 'no_token' };
   const {
     user = {},
     customData = {},
@@ -115,7 +119,7 @@ async function sendEvent(eventName, opts = {}) {
   if (TEST_EVENT_CODE) payload.test_event_code = TEST_EVENT_CODE;
 
   try {
-    const res = await fetch(`https://graph.facebook.com/${API_VERSION}/${datasetId}/events?access_token=${ACCESS_TOKEN}`, {
+    const res = await fetch(`https://graph.facebook.com/${API_VERSION}/${datasetId}/events?access_token=${token}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -142,7 +146,7 @@ async function sendEvent(eventName, opts = {}) {
  * sale como system_generated y Meta solo puede cruzarlo por teléfono/correo.
  */
 async function sendAppointmentSchedule(appointment, { prisma } = {}) {
-  if (!ACCESS_TOKEN || !appointment) return { skipped: true, reason: 'no_token' };
+  if (!(ACCESS_TOKEN || WA_ACCESS_TOKEN) || !appointment) return { skipped: true, reason: 'no_token' };
 
   let conv = null;
   const digits = String(appointment.patientPhone || '').replace(/\D/g, '');
@@ -175,6 +179,7 @@ async function sendAppointmentSchedule(appointment, { prisma } = {}) {
     actionSource: porAnuncio ? 'business_messaging' : 'system_generated',
     messagingChannel: porAnuncio ? 'whatsapp' : undefined,
     datasetId: porAnuncio ? WA_DATASET_ID : PIXEL_ID,
+    accessToken: porAnuncio ? WA_ACCESS_TOKEN : ACCESS_TOKEN,
   });
 }
 
