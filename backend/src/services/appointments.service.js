@@ -385,6 +385,15 @@ const create = async (data, createdById) => {
     }).catch((e) => console.error('[appointments.create] interaction agendada:', e.message));
   }
 
+  // Meta: las citas web ya mandan Schedule desde la ruta pública (con el
+  // eventId del pixel). Las del bot de WhatsApp y del CRM salen desde aquí,
+  // atadas al anuncio de click-to-WhatsApp cuando lo hay.
+  if (appointment.canalRegistro !== 'web') {
+    require('./metaCapi.service')
+      .sendAppointmentSchedule(appointment, { prisma })
+      .catch((e) => console.error('[appointments.create] meta capi:', e.message));
+  }
+
   // Nuevo sistema de notificaciones (Fase 1):
   // encola CITA_AGENDADA inmediato + RECORDATORIO_24H + RECORDATORIO_2H.
   // Solo si la cita tiene patientId (paciente registrado).

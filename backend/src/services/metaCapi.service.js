@@ -13,7 +13,14 @@
  *   META_PIXEL_ID
  *   META_CAPI_ACCESS_TOKEN
  *
- * Si falta cualquiera, sendEvent() es no-op silenciosa (no rompe la request).
+ * Si falta cualquiera, sendEvent() es no-op (no rompe la request). Al arrancar
+ * se avisa una vez en el log, porque sin token Meta no recibe ninguna cita.
+ *
+ * Citas que no nacen en la web (bot de WhatsApp, CRM): ver
+ * sendAppointmentSchedule(). Para que Meta atribuya la cita al anuncio de
+ * click-to-WhatsApp hacen falta además:
+ *   META_WABA_ID         id de la cuenta de WhatsApp Business
+ *   META_WA_DATASET_ID   dataset conectado a esa WABA (por defecto el pixel)
  */
 
 const crypto = require('crypto');
@@ -22,14 +29,23 @@ const PIXEL_ID = process.env.META_PIXEL_ID || '1056565756928195';
 const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN || '';
 const TEST_EVENT_CODE = process.env.META_CAPI_TEST_EVENT_CODE || '';
 const API_VERSION = 'v21.0';
+const WABA_ID = process.env.META_WABA_ID || '';
+const WA_DATASET_ID = process.env.META_WA_DATASET_ID || PIXEL_ID;
+
+if (!ACCESS_TOKEN) {
+  console.warn('[metaCapi] META_CAPI_ACCESS_TOKEN no está configurado: no se envían eventos a Meta (Schedule/Lead).');
+}
 
 function sha256(v) {
   if (!v) return undefined;
   return crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
 }
 
-function hashUserData({ email, phone, firstName, lastName, city, country = 'co', ip, userAgent }) {
+function hashUserData({ email, phone, firstName, lastName, city, country = 'co', ip, userAgent, ctwaClid, wabaId }) {
   const ud = {};
+  // Identificadores de click-to-WhatsApp: van sin hashear.
+  if (ctwaClid) ud.ctwa_clid = ctwaClid;
+  if (wabaId) ud.whatsapp_business_account_id = wabaId;
   if (email) ud.em = [sha256(email)];
   if (phone) {
     // Meta espera E.164 sin '+' ni espacios
@@ -62,6 +78,8 @@ async function sendEvent(eventName, opts = {}) {
     eventSourceUrl,
     eventId = crypto.randomUUID(),
     actionSource = 'website',
+    messagingChannel,
+    datasetId = PIXEL_ID,
   } = opts;
 
   const payload = {
@@ -71,6 +89,7 @@ async function sendEvent(eventName, opts = {}) {
         event_time: Math.floor(Date.now() / 1000),
         event_id: eventId,
         action_source: actionSource,
+        ...(messagingChannel ? { messaging_channel: messagingChannel } : {}),
         event_source_url: eventSourceUrl,
         user_data: hashUserData(user),
         custom_data: customData,
@@ -82,7 +101,7 @@ async function sendEvent(eventName, opts = {}) {
   if (TEST_EVENT_CODE) payload.test_event_code = TEST_EVENT_CODE;
 
   try {
-    const res = await fetch(`https://graph.facebook.com/${API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`, {
+    const res = await fetch(`https://graph.facebook.com/${API_VERSION}/${datasetId}/events?access_token=${ACCESS_TOKEN}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -99,4 +118,49 @@ async function sendEvent(eventName, opts = {}) {
   }
 }
 
-module.exports = { sendEvent };
+/**
+ * Schedule server-side para citas que NO pasan por la agenda web (esas ya lo
+ * mandan desde la ruta pública, con el eventId del pixel para dedupe).
+ *
+ * Casi todas las citas entran por WhatsApp desde anuncios de click-to-WhatsApp.
+ * Si la conversación de ese teléfono trae ctwa_clid, el evento sale como
+ * business_messaging y Meta lo asigna al anuncio que trajo a la persona. Si no,
+ * sale como system_generated y Meta solo puede cruzarlo por teléfono/correo.
+ */
+async function sendAppointmentSchedule(appointment, { prisma } = {}) {
+  if (!ACCESS_TOKEN || !appointment) return { skipped: true, reason: 'no_token' };
+
+  let conv = null;
+  const digits = String(appointment.patientPhone || '').replace(/\D/g, '');
+  if (prisma && digits.length >= 10) {
+    try {
+      conv = await prisma.whatsAppConversation.findFirst({
+        where: { phone: { endsWith: digits.slice(-10) }, adCtwaClid: { not: null } },
+        orderBy: { adSeenAt: 'desc' },
+        select: { adCtwaClid: true },
+      });
+    } catch (e) {
+      console.warn('[metaCapi] buscar conversación de anuncio:', e.message);
+    }
+  }
+
+  const porAnuncio = !!(conv?.adCtwaClid && WABA_ID);
+  return sendEvent('Schedule', {
+    user: {
+      email: appointment.patientEmail,
+      phone: digits.length === 10 ? `57${digits}` : digits,
+      firstName: (appointment.patientName || '').split(' ')[0],
+      ...(porAnuncio ? { ctwaClid: conv.adCtwaClid, wabaId: WABA_ID } : {}),
+    },
+    customData: {
+      content_name: appointment.tipoConsulta || 'cita',
+      content_category: appointment.canalRegistro || 'cita',
+    },
+    eventId: `schedule_${appointment.id}`,
+    actionSource: porAnuncio ? 'business_messaging' : 'system_generated',
+    messagingChannel: porAnuncio ? 'whatsapp' : undefined,
+    datasetId: porAnuncio ? WA_DATASET_ID : PIXEL_ID,
+  });
+}
+
+module.exports = { sendEvent, sendAppointmentSchedule };
