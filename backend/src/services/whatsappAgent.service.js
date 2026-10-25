@@ -171,6 +171,9 @@ async function processIncomingEvent(body) {
   const entries = body.entry || [];
   let processed = 0, skipped = 0;
   for (const entry of entries) {
+    // entry.id es el id de la WABA. Meta CAPI lo necesita para atribuir citas
+    // a los anuncios de click-to-WhatsApp, y así no depende de META_WABA_ID.
+    require('./metaCapi.service').recordarWabaId(entry.id);
     for (const change of (entry.changes || [])) {
       if (change.field !== 'messages') continue;
       const value = change.value || {};

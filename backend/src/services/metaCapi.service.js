@@ -19,7 +19,8 @@
  * Citas que no nacen en la web (bot de WhatsApp, CRM): ver
  * sendAppointmentSchedule(). Para que Meta atribuya la cita al anuncio de
  * click-to-WhatsApp hacen falta además:
- *   META_WABA_ID         id de la cuenta de WhatsApp Business
+ *   META_WABA_ID         id de la cuenta de WhatsApp Business (opcional: si
+ *                        falta se toma del webhook de WhatsApp)
  *   META_WA_DATASET_ID   dataset de mensajes (por defecto el pixel)
  *   META_PAGE_ID         página de Facebook de los anuncios (obligatoria para mensajes)
  *
@@ -34,6 +35,13 @@ const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN || '';
 const TEST_EVENT_CODE = process.env.META_CAPI_TEST_EVENT_CODE || '';
 const API_VERSION = 'v21.0';
 const WABA_ID = process.env.META_WABA_ID || '';
+let wabaIdWebhook = '';
+
+function recordarWabaId(id) {
+  if (!id || WABA_ID || wabaIdWebhook === String(id)) return;
+  wabaIdWebhook = String(id);
+  console.log('[metaCapi] WABA detectada desde el webhook:', wabaIdWebhook);
+}
 const WA_DATASET_ID = process.env.META_WA_DATASET_ID || PIXEL_ID;
 const PAGE_ID = process.env.META_PAGE_ID || '969933116201109';
 
@@ -150,13 +158,14 @@ async function sendAppointmentSchedule(appointment, { prisma } = {}) {
     }
   }
 
-  const porAnuncio = !!(conv?.adCtwaClid && WABA_ID);
+  const wabaId = WABA_ID || wabaIdWebhook;
+  const porAnuncio = !!(conv?.adCtwaClid && wabaId);
   return sendEvent(porAnuncio ? 'LeadSubmitted' : 'Schedule', {
     user: {
       email: appointment.patientEmail,
       phone: digits.length === 10 ? `57${digits}` : digits,
       firstName: (appointment.patientName || '').split(' ')[0],
-      ...(porAnuncio ? { ctwaClid: conv.adCtwaClid, wabaId: WABA_ID, pageId: PAGE_ID } : {}),
+      ...(porAnuncio ? { ctwaClid: conv.adCtwaClid, wabaId, pageId: PAGE_ID } : {}),
     },
     customData: {
       content_name: appointment.tipoConsulta || 'cita',
@@ -169,4 +178,4 @@ async function sendAppointmentSchedule(appointment, { prisma } = {}) {
   });
 }
 
-module.exports = { sendEvent, sendAppointmentSchedule };
+module.exports = { sendEvent, sendAppointmentSchedule, recordarWabaId };
