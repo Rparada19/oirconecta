@@ -8,9 +8,9 @@ import * as XLSX from 'xlsx';
 import {
   Box, Typography, Button, Chip, Stack, IconButton, Tooltip, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, Grid, Autocomplete, Table, TableHead, TableRow, TableCell,
-  TableBody, TableContainer, Alert,
+  TableBody, TableContainer, Alert, CircularProgress, Link,
 } from '@mui/material';
-import { Add, Edit, DeleteOutline, UploadFile, Download, Inventory2 } from '@mui/icons-material';
+import { Add, Edit, DeleteOutline, UploadFile, Download, Inventory2, Description, AutoAwesome } from '@mui/icons-material';
 import { api } from '../../../services/apiClient';
 
 const cop = (n) => `$ ${Math.round(n || 0).toLocaleString('es-CO')}`;
@@ -18,7 +18,7 @@ const ICONOS = ['onda', 'bateria', 'celular', 'bluetooth', 'ia', 'agua', 'chip',
 
 const vacio = {
   tipo: 'AUDIFONO', marca: 'Widex', nombre: '', tecnologia: '', plataforma: '', linea: '', sub: '', etiqueta: '',
-  imagen: '', valor: 0, anosGarantia: 2, recargable: 'SI', atributosTxt: '', campaignIds: [],
+  imagen: '', valor: 0, anosGarantia: 2, recargable: 'SI', atributosTxt: '', campaignIds: [], fichas: [],
 };
 
 const atributosATexto = (a) => (Array.isArray(a) ? a.map((x) => `${x.t}${x.d ? `: ${x.d}` : ''}`).join('\n') : '');
@@ -81,13 +81,37 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
   const [edit, setEdit] = useState(null);
   const [saving, setSaving] = useState(false);
   const [importRes, setImportRes] = useState(null);
+  const [leyendo, setLeyendo] = useState(false);
   const fileRef = useRef(null);
+  const fichaRef = useRef(null);
   const productos = catalogo?.productos || [];
   const campanas = catalogo?.campanas || [];
 
   const abrir = (p) => setEdit(p ? {
     ...vacio, ...p, atributosTxt: atributosATexto(p.atributos), campaignIds: (p.campanas || []).map((c) => c.id),
+    fichas: Array.isArray(p.fichas) ? p.fichas : [],
   } : { ...vacio });
+
+  /** Lee una ficha técnica y llena los campos vacíos del producto en edición (o de uno nuevo). */
+  const leerFicha = async (file, base) => {
+    setLeyendo(true);
+    const fd = new FormData(); fd.append('file', file);
+    const { data, error } = await api.upload('/api/crm/catalogo/ficha', fd);
+    setLeyendo(false);
+    if (error) return notify(`No se pudo leer la ficha: ${error}`, 'error');
+    const { datos, ficha, aviso } = data.data;
+    const actual = base || { ...vacio, marca: '' };
+    const llenar = (k) => (actual[k] && String(actual[k]).trim() ? actual[k] : (datos?.[k] || actual[k] || ''));
+    setEdit({
+      ...actual,
+      marca: llenar('marca'), nombre: llenar('nombre'), plataforma: llenar('plataforma'), tecnologia: llenar('tecnologia'),
+      linea: llenar('linea'), sub: llenar('sub'), etiqueta: llenar('etiqueta'),
+      recargable: datos?.recargable || actual.recargable,
+      atributosTxt: actual.atributosTxt?.trim() ? actual.atributosTxt : atributosATexto(datos?.atributos || []),
+      fichas: [...(actual.fichas || []), ficha],
+    });
+    notify(aviso || (datos ? 'Ficha leída: revisa los datos y completa el precio.' : 'Ficha agregada.'), aviso ? 'warning' : 'success');
+  };
 
   const guardar = async () => {
     if (!edit.marca.trim() || !edit.nombre.trim()) return notify('Marca y nombre son obligatorios.', 'warning');
@@ -97,7 +121,7 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
       tipo: edit.tipo, marca: edit.marca, nombre: edit.nombre, tecnologia: edit.tecnologia, plataforma: edit.plataforma,
       linea: edit.linea, sub: edit.sub, etiqueta: edit.etiqueta, imagen: edit.imagen || null, valor: Number(edit.valor) || 0,
       anosGarantia: Number(edit.anosGarantia) || 2, recargable: edit.recargable,
-      atributos: textoAAtributos(edit.atributosTxt, prevAtr), campaignIds: edit.campaignIds,
+      atributos: textoAAtributos(edit.atributosTxt, prevAtr), campaignIds: edit.campaignIds, fichas: edit.fichas || [],
     };
     const { error } = edit.id ? await api.put(`/api/crm/catalogo/${edit.id}`, body) : await api.post('/api/crm/catalogo', body);
     setSaving(false);
@@ -149,6 +173,12 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
           <Button size="small" startIcon={<Download />} onClick={() => descargarPlantilla(campanas)} sx={{ textTransform: 'none', fontWeight: 700 }}>Plantilla Excel</Button>
           <Button size="small" variant="outlined" startIcon={<UploadFile />} onClick={() => fileRef.current?.click()} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>Importar catálogo</Button>
           <input ref={fileRef} type="file" hidden accept=".xlsx,.xls,.csv" onChange={(e) => e.target.files[0] && importar(e.target.files[0])} />
+          <Button size="small" variant="outlined" startIcon={leyendo ? <CircularProgress size={14} /> : <AutoAwesome />} disabled={leyendo}
+            onClick={() => fichaRef.current?.click()} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>
+            {leyendo ? 'Leyendo ficha…' : 'Crear desde ficha técnica'}
+          </Button>
+          <input ref={fichaRef} type="file" hidden accept="application/pdf,image/png,image/jpeg,image/webp"
+            onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) leerFicha(f, null); }} />
           <Button size="small" variant="contained" startIcon={<Add />} onClick={() => abrir(null)} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>Nuevo producto</Button>
         </Stack>
       </Stack>
@@ -184,6 +214,15 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
                       <Box>
                         <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>{p.nombre}</Typography>
                         <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>{p.marca}{p.etiqueta ? ` · ${p.etiqueta}` : ''}</Typography>
+                        {Array.isArray(p.fichas) && p.fichas.length > 0 && (
+                          <Stack direction="row" spacing={1} sx={{ mt: 0.25 }}>
+                            {p.fichas.filter((f) => f.url).map((f) => (
+                              <Link key={f.url} href={f.url} target="_blank" rel="noopener" sx={{ fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
+                                <Description sx={{ fontSize: 13 }} />Ficha técnica
+                              </Link>
+                            ))}
+                          </Stack>
+                        )}
                       </Box>
                     </Stack>
                   </TableCell>
@@ -241,6 +280,31 @@ export default function CatalogoTab({ catalogo, onChanged, notify }) {
                     <Grid item xs={12} sm={4}><TextField fullWidth size="small" label="Subtítulo" value={edit.sub || ''} onChange={(e) => setEdit({ ...edit, sub: e.target.value })} /></Grid>
                     <Grid item xs={12} sm={4}><TextField fullWidth size="small" label="Etiqueta" value={edit.etiqueta || ''} onChange={(e) => setEdit({ ...edit, etiqueta: e.target.value })} /></Grid>
                   </Grid>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box sx={{ p: 1.5, borderRadius: '10px', bgcolor: '#f8fafc', border: '1px dashed #cbd5e1' }}>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }} justifyContent="space-between">
+                      <Box>
+                        <Typography sx={{ fontWeight: 700, fontSize: '0.86rem' }}>Fichas técnicas</Typography>
+                        <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>Al subir una ficha se leen los datos y se llenan los campos vacíos.</Typography>
+                      </Box>
+                      <Button component="label" size="small" variant="outlined" disabled={leyendo}
+                        startIcon={leyendo ? <CircularProgress size={14} /> : <UploadFile />} sx={{ textTransform: 'none', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        {leyendo ? 'Leyendo…' : 'Subir ficha (PDF o imagen)'}
+                        <input hidden type="file" accept="application/pdf,image/png,image/jpeg,image/webp"
+                          onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) leerFicha(f, edit); }} />
+                      </Button>
+                    </Stack>
+                    {(edit.fichas || []).length > 0 && (
+                      <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap', rowGap: 1 }}>
+                        {edit.fichas.map((f, j) => (
+                          <Chip key={`${f.nombre}-${j}`} size="small" icon={<Description />} label={f.nombre}
+                            component={f.url ? 'a' : 'div'} href={f.url || undefined} target="_blank" clickable={Boolean(f.url)}
+                            onDelete={() => setEdit({ ...edit, fichas: edit.fichas.filter((_, k) => k !== j) })} />
+                        ))}
+                      </Stack>
+                    )}
+                  </Box>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField fullWidth size="small" multiline minRows={3} label="Atributos (uno por línea, «Título: descripción», máx. 6)"

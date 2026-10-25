@@ -48,6 +48,7 @@ function opcionDe(q) {
     atributos: Array.isArray(m.atributos) ? m.atributos : [],
     etiqueta: m.etiqueta || null,
     campana: q.campaign?.nombre || m.campanaNombre || null,
+    fichas: Array.isArray(m.fichas) ? m.fichas : [],
     linea: m.linea || null,
     sub: m.sub || null,
     corto: m.corto || null,
@@ -243,7 +244,7 @@ async function crear(data, user) {
         etapa: 'enviada',
         proximoContacto: data.proximoContacto ? new Date(data.proximoContacto) : new Date(Date.now() + 2 * 86400000),
         notas: o.notas || null,
-        metadata: { ...comun, catalogoProductoId: o.catalogoProductoId || null, campanaNombre: camp?.nombre || null, producto: o.nombre, imagen: o.imagen || null, atributos: o.atributos || [], etiqueta: o.etiqueta || null, linea: o.linea || null, sub: o.sub || null, corto: o.corto || null },
+        metadata: { ...comun, catalogoProductoId: o.catalogoProductoId || null, campanaNombre: camp?.nombre || null, fichas: Array.isArray(o.fichas) ? o.fichas.slice(0, 5) : [], producto: o.nombre, imagen: o.imagen || null, atributos: o.atributos || [], etiqueta: o.etiqueta || null, linea: o.linea || null, sub: o.sub || null, corto: o.corto || null },
       },
     });
   }));

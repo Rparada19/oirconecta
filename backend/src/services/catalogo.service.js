@@ -47,7 +47,7 @@ const SEMILLA = [
   },
 ];
 
-const CAMPOS = ['tipo', 'marca', 'nombre', 'tecnologia', 'plataforma', 'linea', 'sub', 'etiqueta', 'imagen', 'atributos', 'valor', 'anosGarantia', 'recargable', 'activo'];
+const CAMPOS = ['tipo', 'marca', 'nombre', 'tecnologia', 'plataforma', 'linea', 'sub', 'etiqueta', 'imagen', 'atributos', 'valor', 'anosGarantia', 'recargable', 'fichas', 'activo'];
 
 function limpiar(data) {
   const out = {};
@@ -155,4 +155,19 @@ async function importar(filas) {
   return res;
 }
 
-module.exports = { listar, crear, actualizar, eliminar, asignarCampanas, importar };
+/**
+ * Agrega una ficha a un producto existente. Los datos leídos solo llenan
+ * campos vacíos: lo que el equipo ya escribió a mano se respeta.
+ */
+async function agregarFicha(id, ficha, datos) {
+  const p = await prisma.catalogoProducto.findUnique({ where: { id } });
+  if (!p) throw Object.assign(new Error('Producto no encontrado'), { status: 404 });
+  const data = { fichas: [...(Array.isArray(p.fichas) ? p.fichas : []), ficha] };
+  if (datos) {
+    for (const k of ['plataforma', 'tecnologia', 'linea', 'sub', 'etiqueta']) if (!p[k] && datos[k]) data[k] = datos[k];
+    if ((!Array.isArray(p.atributos) || p.atributos.length === 0) && datos.atributos?.length) data.atributos = datos.atributos;
+  }
+  return prisma.catalogoProducto.update({ where: { id }, data });
+}
+
+module.exports = { listar, crear, actualizar, eliminar, asignarCampanas, importar, agregarFicha };
