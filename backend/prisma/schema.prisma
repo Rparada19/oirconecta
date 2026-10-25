@@ -3472,8 +3472,10 @@ model CatalogoProducto {
   valor       Float    @default(0)
   anosGarantia Int     @default(2)
   recargable  String   @default("SI")
-  /// Fichas técnicas: [{ nombre, url, subidaEl }]
+  /// Fichas técnicas: [{ nombre, url, subidaEl, tipo }]
   fichas      Json?
+  /// Galería: [{ url, principal }]. `imagen` guarda la principal.
+  fotos       Json?
   activo      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

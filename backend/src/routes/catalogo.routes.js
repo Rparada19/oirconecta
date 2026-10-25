@@ -8,7 +8,7 @@ const router = express.Router();
 
 const multer = require('multer');
 const service = require('../services/catalogo.service');
-const { leerFicha } = require('../services/fichaTecnica.service');
+const { leerFicha, analizarArchivo, subirImagen } = require('../services/fichaTecnica.service');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 const { authenticate } = require('../middleware/auth');
@@ -50,6 +50,27 @@ router.post('/ficha', (req, res, next) => upload.single('file')(req, res, (err) 
     await service.agregarFicha(req.query.productoId, out.ficha, out.datos);
   }
   res.json({ success: true, data: out });
+}));
+
+const unArchivo = (req, res, next) => upload.single('file')(req, res, (err) => {
+  if (err) return res.status(400).json({ success: false, error: err.code === 'LIMIT_FILE_SIZE' ? 'El archivo supera 15 MB' : err.message });
+  next();
+});
+
+/** Carga masiva, paso 1: clasifica un archivo (foto o ficha) y dice de qué producto es. */
+router.post('/analizar', unArchivo, wrap(async (req, res) => {
+  res.json({ success: true, data: await analizarArchivo(req.file) });
+}));
+
+/** Sube una foto ya procesada (sin fondo) y devuelve su URL. */
+router.post('/foto', unArchivo, wrap(async (req, res) => {
+  if (!req.file || !/^image\//.test(req.file.mimetype)) return res.status(400).json({ success: false, error: 'Sube una imagen' });
+  res.json({ success: true, data: { url: await subirImagen(req.file.buffer, req.file.mimetype) } });
+}));
+
+/** Carga masiva, paso final: crea o actualiza los productos revisados. */
+router.post('/lote', [body('items').isArray({ min: 1, max: 300 })], validateRequest, wrap(async (req, res) => {
+  res.json({ success: true, data: await service.guardarLote(req.body.items) });
 }));
 
 router.put('/:id', [param('id').isUUID()], validateRequest, wrap(async (req, res) => {

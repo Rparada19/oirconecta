@@ -13,7 +13,7 @@ import {
   Box, Container, Grid, Typography, Chip, CircularProgress, Button, Drawer, Divider,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip,
   Snackbar, Alert, TextField, MenuItem, Stack, Dialog,
-  Autocomplete, ToggleButton, ToggleButtonGroup, Tabs, Tab,
+  Autocomplete, ToggleButton, ToggleButtonGroup, Tabs, Tab, Checkbox,
 } from '@mui/material';
 import {
   RequestQuote, Refresh, WhatsApp, Add, Close, PictureAsPdf, Phone, Email, Chat,
@@ -61,6 +61,13 @@ const waLink = (tel, nombre) => {
   const e164 = num.length === 10 && num.startsWith('3') ? `57${num}` : num;
   const texto = encodeURIComponent(`Hola ${(nombre || '').split(' ')[0]}, te escribimos de OírConecta. ¿Pudiste revisar con calma la propuesta que te enviamos? Cualquier duda, aquí estamos.`);
   return `https://wa.me/${e164}?text=${texto}`;
+};
+
+const normTxt = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+/** Fichas técnicas de todas las opciones de una propuesta, sin repetir. */
+const fichasDe = (p) => {
+  const vistas = new Set();
+  return (p?.opciones || []).flatMap((o) => o.fichas || []).filter((f) => f?.url && !vistas.has(f.url) && vistas.add(f.url));
 };
 
 const TH = { fontWeight: 800, fontSize: '0.75rem', color: '#475569', bgcolor: '#f8fafc', whiteSpace: 'nowrap' };
@@ -118,11 +125,11 @@ function DetalleDrawer({ id, onClose, onChanged, notify }) {
     onChanged();
   };
 
-  const pdf = async () => {
+  const pdf = async (conFichas = false) => {
     setPdfBusy(true);
     try {
       const nombre = `Cotizacion_${(p.paciente?.nombre || 'paciente').replace(/\s+/g, '_')}_${p.numero}.pdf`;
-      await descargarPropuestaPdf(propuestaDesdeApi(p), LOGOS, nombre);
+      await descargarPropuestaPdf(propuestaDesdeApi(p), LOGOS, nombre, { fichas: conFichas ? fichasDe(p) : [] });
     } catch {
       notify('No se pudo generar el PDF.', 'error');
     }
@@ -152,8 +159,12 @@ function DetalleDrawer({ id, onClose, onChanged, notify }) {
               {p.profesional && <Chip size="small" variant="outlined" label={p.profesional} />}
             </Stack>
             <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-              <Button variant="contained" startIcon={pdfBusy ? <CircularProgress size={16} color="inherit" /> : <PictureAsPdf />} onClick={pdf} disabled={pdfBusy}
+              <Button variant="contained" startIcon={pdfBusy ? <CircularProgress size={16} color="inherit" /> : <PictureAsPdf />} onClick={() => pdf(false)} disabled={pdfBusy}
                 sx={{ borderRadius: '10px', fontWeight: 700, textTransform: 'none' }}>Descargar PDF</Button>
+              {fichasDe(p).length > 0 && (
+                <Button variant="outlined" onClick={() => pdf(true)} disabled={pdfBusy}
+                  sx={{ borderRadius: '10px', fontWeight: 700, textTransform: 'none' }}>PDF + fichas</Button>
+              )}
               {p.paciente?.telefono && (
                 <Button variant="outlined" startIcon={<WhatsApp />} href={waLink(p.paciente.telefono, p.paciente.nombre)} target="_blank" rel="noopener"
                   sx={{ borderRadius: '10px', fontWeight: 700, textTransform: 'none' }}>WhatsApp</Button>
@@ -288,6 +299,7 @@ const opcionDesdeProducto = (p) => ({
   iconos: (p?.atributos || []).map((a) => a.i),
   campanas: (p?.campanas || []).filter((c) => c.vigente),
   fichas: (p?.fichas || []).filter((f) => f.url),
+  fotos: (p?.fotos || []).filter((f) => f.url),
 });
 
 const atributosDe = (o) => String(o.atributosTxt || '').split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 6).map((l, j) => {
@@ -313,11 +325,8 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify, catalogo }) {
   const [cantidad, setCantidad] = useState(2);
   const [vigencia, setVigencia] = useState(15);
   const [intro, setIntro] = useState(PROPUESTA_DEFAULTS.intro);
+  const [adjuntarFichas, setAdjuntarFichas] = useState(true);
   const [opciones, setOpciones] = useState([]);
-  const [agregar, setAgregar] = useState('');
-  useEffect(() => {
-    if (open && productos.length && opciones.length === 0) setOpciones([opcionDesdeProducto(productos[0])]);
-  }, [open, productos]); // eslint-disable-line react-hooks/exhaustive-deps
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -363,7 +372,8 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify, catalogo }) {
     if (descargar) {
       try {
         const p = data.data;
-        await descargarPropuestaPdf(propuestaDesdeApi(p), LOGOS, `Cotizacion_${(p.paciente?.nombre || 'paciente').replace(/\s+/g, '_')}_${p.numero}.pdf`);
+        await descargarPropuestaPdf(propuestaDesdeApi(p), LOGOS, `Cotizacion_${(p.paciente?.nombre || 'paciente').replace(/\s+/g, '_')}_${p.numero}.pdf`,
+          { fichas: adjuntarFichas ? fichasDe(p) : [] });
       } catch {
         notify('La propuesta se creó, pero no se pudo generar el PDF. Descárgalo desde el detalle.', 'warning');
       }
@@ -437,26 +447,6 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify, catalogo }) {
             )}
 
             <Divider sx={{ my: 2 }} />
-            <Seccion>Profesional y condiciones</Seccion>
-            <Stack spacing={1.25}>
-              <Stack direction="row" spacing={1.25}>
-                <TextField size="small" fullWidth label="Profesional" value={profesional} onChange={(e) => setProfesional(e.target.value)} />
-                <TextField size="small" sx={{ width: 150 }} label="Cargo" value={cargo} onChange={(e) => setCargo(e.target.value)} />
-              </Stack>
-              <Stack direction="row" spacing={1.25}>
-                <TextField select size="small" fullWidth label="Adaptación" value={cantidad} onChange={(e) => {
-                  const q = Number(e.target.value); setCantidad(q);
-                  setOpciones((ops) => ops.map((o) => (o.campaignId ? { ...o, descuento: dtoCampana(o.campanas.find((c) => c.id === o.campaignId), q) } : o)));
-                }}>
-                  <MenuItem value={2}>Binaural (2 unidades)</MenuItem><MenuItem value={1}>Monoaural (1 unidad)</MenuItem>
-                </TextField>
-                <TextField size="small" sx={{ width: 150 }} type="number" label="Vigencia (días)" value={vigencia} onChange={(e) => setVigencia(Number(e.target.value) || 15)} />
-              </Stack>
-              <TextField size="small" multiline minRows={3} label="Mensaje al paciente" value={intro} onChange={(e) => setIntro(e.target.value)}
-                helperText="Puedes usar {nombre} y {profesional}." />
-            </Stack>
-
-            <Divider sx={{ my: 2 }} />
             <Seccion>{`Productos (${opciones.length}/3)`}</Seccion>
             <Stack spacing={1}>
               {opciones.map((o, i) => (
@@ -477,6 +467,20 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify, catalogo }) {
                     </Typography>
                   </Box>
                   <Stack spacing={1.25} sx={{ px: 1.25, pb: 1.25 }}>
+                    {o.fotos?.length > 1 && (
+                      <Box>
+                        <Typography sx={{ fontSize: '0.72rem', color: '#64748b', mb: 0.5 }}>Foto para la propuesta</Typography>
+                        <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', rowGap: 0.75 }}>
+                          {o.fotos.map((f) => (
+                            <Box key={f.url} onClick={() => setOp(i, 'imagen', f.url)}
+                              sx={{ width: 52, height: 52, borderRadius: '9px', bgcolor: '#f1f5fb', cursor: 'pointer', overflow: 'hidden',
+                                border: f.url === o.imagen ? '2px solid #4054B2' : '1px solid #e5e7eb' }}>
+                              <Box component="img" src={f.url} alt={f.color || ''} sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+                    )}
                     <TextField size="small" label="Nombre del producto" value={o.nombre} onChange={(e) => setOp(i, 'nombre', e.target.value)} />
                     <Stack direction="row" spacing={1.25}>
                       <TextField size="small" fullWidth type="number" label="Valor unitario" value={o.valorUnitario} onChange={(e) => setOp(i, 'valorUnitario', e.target.value)} />
@@ -501,16 +505,62 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify, catalogo }) {
               ))}
             </Stack>
             {opciones.length < 3 && (
-              <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
-                <TextField select size="small" fullWidth label="Agregar del catálogo" value={agregar} onChange={(e) => setAgregar(e.target.value)}>
-                  {productos.map((p) => <MenuItem key={p.id} value={p.id}>{p.nombre} · {cop(p.valor)}</MenuItem>)}
-                  <MenuItem value="otro">Otro producto (manual)</MenuItem>
-                </TextField>
-                <Button variant="outlined" disabled={!agregar}
-                  onClick={() => { setOpciones((ops) => [...ops, opcionDesdeProducto(productos.find((p) => p.id === agregar))]); setAgregar(''); }}
-                  sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px', whiteSpace: 'nowrap' }}>Agregar</Button>
+              <Box sx={{ mt: 1.25 }}>
+                <Autocomplete
+                  options={productos} value={null} blurOnSelect clearOnBlur
+                  getOptionLabel={(p) => p.nombre || ''}
+                  filterOptions={(opts, { inputValue }) => {
+                    const t = normTxt(inputValue).split(' ').filter(Boolean);
+                    if (!t.length) return opts;
+                    return opts.filter((p) => { const h = normTxt([p.nombre, p.marca, p.plataforma, p.tecnologia, p.etiqueta, p.linea, p.recargable === 'SI' ? 'recargable' : 'pila bateria'].join(' ')); return t.every((w) => h.includes(w)); });
+                  }}
+                  onChange={(_, p) => { if (p) setOpciones((ops) => [...ops, opcionDesdeProducto(p)]); }}
+                  noOptionsText="Sin coincidencias en el catálogo"
+                  renderOption={(props, p) => (
+                    <Box component="li" {...props} key={p.id} sx={{ display: 'flex', gap: 1.25, alignItems: 'center' }}>
+                      <Box sx={{ width: 44, height: 44, borderRadius: '9px', bgcolor: '#f1f5fb', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                        {p.imagen ? <Box component="img" src={p.imagen} alt="" sx={{ maxWidth: 38, maxHeight: 38, objectFit: 'contain' }} /> : <RequestQuote sx={{ fontSize: 18, color: '#94a3b8' }} />}
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: '0.86rem' }} noWrap>{p.nombre}</Typography>
+                        <Typography sx={{ fontSize: '0.72rem', color: '#64748b' }} noWrap>
+                          {cop(p.valor)}{(p.campanas || []).filter((c) => c.vigente).length ? ` · ${(p.campanas || []).filter((c) => c.vigente).map((c) => c.nombre).join(', ')}` : ''}
+                          {(p.fotos || []).length > 1 ? ` · ${p.fotos.length} fotos` : ''}{(p.fichas || []).length ? ' · ficha' : ''}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                  renderInput={(params) => <TextField {...params} size="small" label="Buscar producto en el catálogo" placeholder="Ej. allure 220, recargable, phonak…" />}
+                />
+                <Button size="small" onClick={() => setOpciones((ops) => [...ops, opcionDesdeProducto(null)])} sx={{ textTransform: 'none', mt: 0.5, px: 0 }}>+ Producto manual (fuera del catálogo)</Button>
+              </Box>
+            )}
+            {opciones.some((o) => o.fichas?.length) && (
+              <Stack direction="row" alignItems="center" sx={{ mt: 1 }}>
+                <Checkbox size="small" checked={adjuntarFichas} onChange={(e) => setAdjuntarFichas(e.target.checked)} />
+                <Typography sx={{ fontSize: '0.82rem' }}>Adjuntar las fichas técnicas al final del PDF</Typography>
               </Stack>
             )}
+            <Divider sx={{ my: 2 }} />
+            <Seccion>Profesional y condiciones</Seccion>
+            <Stack spacing={1.25}>
+              <Stack direction="row" spacing={1.25}>
+                <TextField size="small" fullWidth label="Profesional" value={profesional} onChange={(e) => setProfesional(e.target.value)} />
+                <TextField size="small" sx={{ width: 150 }} label="Cargo" value={cargo} onChange={(e) => setCargo(e.target.value)} />
+              </Stack>
+              <Stack direction="row" spacing={1.25}>
+                <TextField select size="small" fullWidth label="Adaptación" value={cantidad} onChange={(e) => {
+                  const q = Number(e.target.value); setCantidad(q);
+                  setOpciones((ops) => ops.map((o) => (o.campaignId ? { ...o, descuento: dtoCampana(o.campanas.find((c) => c.id === o.campaignId), q) } : o)));
+                }}>
+                  <MenuItem value={2}>Binaural (2 unidades)</MenuItem><MenuItem value={1}>Monoaural (1 unidad)</MenuItem>
+                </TextField>
+                <TextField size="small" sx={{ width: 150 }} type="number" label="Vigencia (días)" value={vigencia} onChange={(e) => setVigencia(Number(e.target.value) || 15)} />
+              </Stack>
+              <TextField size="small" multiline minRows={3} maxRows={6} label="Mensaje al paciente" value={intro} onChange={(e) => setIntro(e.target.value)}
+                helperText="Puedes usar {nombre} y {profesional}." />
+            </Stack>
+
             <Typography sx={{ mt: 2, fontSize: '0.74rem', color: '#94a3b8' }}>
               Garantías, plan audiológico y condiciones van con los valores estándar de OírConecta.
             </Typography>
@@ -527,6 +577,13 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify, catalogo }) {
         <Box ref={previewRef} sx={{ bgcolor: '#eef2f7', overflowY: 'auto', py: 3, display: { xs: 'none', md: 'block' } }}>
           <style>{PROPUESTA_CSS}</style>
           <Stack spacing={3} alignItems="center">
+            {hojas.length === 0 && (
+              <Box sx={{ mt: 12, textAlign: 'center', color: '#64748b', maxWidth: 360 }}>
+                <RequestQuote sx={{ fontSize: 48, color: '#94a3b8' }} />
+                <Typography sx={{ fontWeight: 800, mt: 1 }}>Busca un producto para empezar</Typography>
+                <Typography sx={{ fontSize: '0.85rem' }}>Al elegirlo se traen la foto, los atributos, la campaña vigente y la ficha técnica, y aquí ves la propuesta armándose.</Typography>
+              </Box>
+            )}
             {hojas.map((h, i) => (
               <Box key={i} sx={{ textAlign: 'center' }}>
                 <Typography sx={{ fontSize: '0.66rem', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', mb: 1 }}>

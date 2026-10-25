@@ -7,6 +7,7 @@
  */
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { PDFDocument } from 'pdf-lib';
 
 export const PROPUESTA_CSS = `
 .page{--g:#085946;--g2:#0e7a5f;--g3:#12936f;--gl:#e9f2ee;--gl2:#f4f8f6;--gr:#a6a6a6;--gr2:#d9d9d9;--ink:#17231f;--mute:#5d6964;
@@ -248,8 +249,8 @@ export function renderPropuestaPages(S, IMG) {
   return [p1, p2, p3];
 }
 
-/** Genera y descarga el PDF. */
-export async function descargarPropuestaPdf(S, IMG, filename) {
+/** Genera y descarga el PDF. Con opts.fichas, las agrega al final (PDF o imagen). */
+export async function descargarPropuestaPdf(S, IMG, filename, opts = {}) {
   const holder = document.createElement('div');
   holder.style.cssText = 'position:fixed;left:-20000px;top:0';
   holder.innerHTML = `<style>${PROPUESTA_CSS} .page .mini{box-shadow:none;border:1px solid #dfe8e4}</style>` + renderPropuestaPages(S, IMG).join('');
@@ -264,7 +265,11 @@ export async function descargarPropuestaPdf(S, IMG, filename) {
       if (i > 0) pdf.addPage('letter', 'portrait');
       pdf.addImage(c.toDataURL('image/jpeg', 0.93), 'JPEG', 0, 0, 8.5, 11);
     }
-    pdf.save(filename);
+    if (opts.fichas?.length) {
+      await guardarConFichas(pdf, opts.fichas, filename);
+    } else {
+      pdf.save(filename);
+    }
   } finally {
     holder.remove();
   }
@@ -318,4 +323,48 @@ export function propuestaDesdeApi(p) {
     firma: { on: true },
     codigoFirma: p.codigoFirma,
   };
+}
+
+/** Imagen (cualquier formato del navegador) → JPEG para incrustarla en el PDF. */
+async function imagenAJpeg(blob) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0);
+    const b = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.9));
+    return { bytes: await b.arrayBuffer(), w: c.width, h: c.height };
+  } finally { URL.revokeObjectURL(url); }
+}
+
+/** Une la propuesta con las fichas técnicas y descarga el resultado. */
+async function guardarConFichas(pdf, fichas, filename) {
+  const doc = await PDFDocument.load(pdf.output('arraybuffer'));
+  const W = 612; const H = 792; // carta en puntos
+  for (const f of fichas) {
+    try {
+      const r = await fetch(f.url);
+      const blob = await r.blob();
+      const tipo = blob.type || f.tipo || '';
+      if (tipo.includes('pdf') || /\.pdf($|\?)/i.test(f.url)) {
+        const src = await PDFDocument.load(await blob.arrayBuffer(), { ignoreEncryption: true });
+        const pages = await doc.copyPages(src, src.getPageIndices());
+        pages.forEach((p) => doc.addPage(p));
+      } else {
+        const { bytes, w, h } = await imagenAJpeg(blob);
+        const img = await doc.embedJpg(bytes);
+        const page = doc.addPage([W, H]);
+        const sc = Math.min((W - 48) / w, (H - 48) / h);
+        page.drawImage(img, { x: (W - w * sc) / 2, y: (H - h * sc) / 2, width: w * sc, height: h * sc });
+      }
+    } catch (e) {
+      console.warn('[propuesta] no se pudo adjuntar la ficha', f.nombre, e);
+    }
+  }
+  const out = await doc.save();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out], { type: 'application/pdf' }));
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }

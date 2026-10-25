@@ -47,7 +47,7 @@ const SEMILLA = [
   },
 ];
 
-const CAMPOS = ['tipo', 'marca', 'nombre', 'tecnologia', 'plataforma', 'linea', 'sub', 'etiqueta', 'imagen', 'atributos', 'valor', 'anosGarantia', 'recargable', 'fichas', 'activo'];
+const CAMPOS = ['tipo', 'marca', 'nombre', 'tecnologia', 'plataforma', 'linea', 'sub', 'etiqueta', 'imagen', 'atributos', 'valor', 'anosGarantia', 'recargable', 'fichas', 'fotos', 'activo'];
 
 function limpiar(data) {
   const out = {};
@@ -56,6 +56,11 @@ function limpiar(data) {
   if (out.anosGarantia !== undefined) out.anosGarantia = Number(out.anosGarantia) || 2;
   if (out.atributos !== undefined && !Array.isArray(out.atributos)) out.atributos = [];
   if (out.nombre !== undefined) out.nombre = String(out.nombre).trim();
+  // La foto principal de la galería es la que usa la propuesta.
+  if (Array.isArray(out.fotos)) {
+    const principal = out.fotos.find((f) => f.principal) || out.fotos[0];
+    if (principal && out.imagen === undefined) out.imagen = principal.url;
+  }
   if (out.marca !== undefined) out.marca = String(out.marca).trim();
   return out;
 }
@@ -170,4 +175,40 @@ async function agregarFicha(id, ficha, datos) {
   return prisma.catalogoProducto.update({ where: { id }, data });
 }
 
-module.exports = { listar, crear, actualizar, eliminar, asignarCampanas, importar, agregarFicha };
+const unir = (a, b, key) => {
+  const out = [...(Array.isArray(a) ? a : [])];
+  for (const x of (Array.isArray(b) ? b : [])) if (x && x[key] && !out.some((y) => y[key] === x[key])) out.push(x);
+  return out;
+};
+
+/**
+ * Guarda el resultado de la carga masiva. Cada item crea un producto nuevo o,
+ * con existenteId, suma fotos y fichas a uno existente y llena campos vacíos.
+ */
+async function guardarLote(items) {
+  const res = { creados: 0, actualizados: 0, errores: [] };
+  for (const it of items) {
+    try {
+      if (it.existenteId) {
+        const p = await prisma.catalogoProducto.findUnique({ where: { id: it.existenteId } });
+        if (!p) throw new Error('producto no encontrado');
+        const fotos = unir(p.fotos, it.fotos, 'url');
+        const data = { fotos, fichas: unir(p.fichas, it.fichas, 'url') };
+        for (const k of ['plataforma', 'tecnologia', 'linea', 'sub', 'etiqueta']) if (!p[k] && it[k]) data[k] = it[k];
+        if ((!Array.isArray(p.atributos) || !p.atributos.length) && it.atributos?.length) data.atributos = it.atributos;
+        if (Number(it.valor) > 0) data.valor = Number(it.valor);
+        if (!p.imagen && fotos.length) data.imagen = (fotos.find((f) => f.principal) || fotos[0]).url;
+        await prisma.catalogoProducto.update({ where: { id: p.id }, data });
+        res.actualizados++;
+      } else {
+        await crear(it);
+        res.creados++;
+      }
+    } catch (e) {
+      res.errores.push({ producto: it.nombre || '(sin nombre)', error: e.message });
+    }
+  }
+  return res;
+}
+
+module.exports = { listar, crear, actualizar, eliminar, asignarCampanas, importar, agregarFicha, guardarLote };
