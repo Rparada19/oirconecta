@@ -24,7 +24,7 @@
  *   META_WA_DATASET_ID   dataset de mensajes (por defecto el pixel)
  *   META_WA_CAPI_ACCESS_TOKEN  token generado en ese dataset (por defecto
  *                        META_CAPI_ACCESS_TOKEN)
- *   META_PAGE_ID         página de Facebook de los anuncios (obligatoria para mensajes)
+ *   META_PAGE_ID         página de Facebook (solo Messenger; WhatsApp no la acepta)
  *
  * Meta no acepta Schedule en eventos de mensajes: ahí la cita sale como
  * LeadSubmitted.
@@ -126,7 +126,11 @@ async function sendEvent(eventName, opts = {}) {
     });
     const json = await res.json();
     if (!res.ok) {
-      console.warn('[metaCapi] error', res.status, json?.error?.message || JSON.stringify(json));
+      // "Invalid parameter" a secas no dice cuál: el detalle viene en error_user_msg.
+      const err = json?.error || {};
+      console.warn('[metaCapi] error', res.status, eventName, err.message || '',
+        '| subcode', err.error_subcode || '-', '|', err.error_user_title || '', err.error_user_msg || '',
+        '| fbtrace', err.fbtrace_id || '-');
       return { ok: false, error: json?.error };
     }
     return { ok: true, events_received: json?.events_received, fbtrace_id: json?.fbtrace_id };
@@ -169,7 +173,7 @@ async function sendAppointmentSchedule(appointment, { prisma } = {}) {
       email: appointment.patientEmail,
       phone: digits.length === 10 ? `57${digits}` : digits,
       firstName: (appointment.patientName || '').split(' ')[0],
-      ...(porAnuncio ? { ctwaClid: conv.adCtwaClid, wabaId, pageId: PAGE_ID } : {}),
+      ...(porAnuncio ? { ctwaClid: conv.adCtwaClid, wabaId } : {}),
     },
     customData: {
       content_name: appointment.tipoConsulta || 'cita',
