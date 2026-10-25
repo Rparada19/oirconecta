@@ -20,7 +20,11 @@
  * sendAppointmentSchedule(). Para que Meta atribuya la cita al anuncio de
  * click-to-WhatsApp hacen falta además:
  *   META_WABA_ID         id de la cuenta de WhatsApp Business
- *   META_WA_DATASET_ID   dataset conectado a esa WABA (por defecto el pixel)
+ *   META_WA_DATASET_ID   dataset de mensajes (por defecto el pixel)
+ *   META_PAGE_ID         página de Facebook de los anuncios (obligatoria para mensajes)
+ *
+ * Meta no acepta Schedule en eventos de mensajes: ahí la cita sale como
+ * LeadSubmitted.
  */
 
 const crypto = require('crypto');
@@ -31,6 +35,7 @@ const TEST_EVENT_CODE = process.env.META_CAPI_TEST_EVENT_CODE || '';
 const API_VERSION = 'v21.0';
 const WABA_ID = process.env.META_WABA_ID || '';
 const WA_DATASET_ID = process.env.META_WA_DATASET_ID || PIXEL_ID;
+const PAGE_ID = process.env.META_PAGE_ID || '969933116201109';
 
 if (!ACCESS_TOKEN) {
   console.warn('[metaCapi] META_CAPI_ACCESS_TOKEN no está configurado: no se envían eventos a Meta (Schedule/Lead).');
@@ -41,11 +46,12 @@ function sha256(v) {
   return crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
 }
 
-function hashUserData({ email, phone, firstName, lastName, city, country = 'co', ip, userAgent, ctwaClid, wabaId }) {
+function hashUserData({ email, phone, firstName, lastName, city, country = 'co', ip, userAgent, ctwaClid, wabaId, pageId }) {
   const ud = {};
   // Identificadores de click-to-WhatsApp: van sin hashear.
   if (ctwaClid) ud.ctwa_clid = ctwaClid;
   if (wabaId) ud.whatsapp_business_account_id = wabaId;
+  if (pageId) ud.page_id = pageId;
   if (email) ud.em = [sha256(email)];
   if (phone) {
     // Meta espera E.164 sin '+' ni espacios
@@ -145,12 +151,12 @@ async function sendAppointmentSchedule(appointment, { prisma } = {}) {
   }
 
   const porAnuncio = !!(conv?.adCtwaClid && WABA_ID);
-  return sendEvent('Schedule', {
+  return sendEvent(porAnuncio ? 'LeadSubmitted' : 'Schedule', {
     user: {
       email: appointment.patientEmail,
       phone: digits.length === 10 ? `57${digits}` : digits,
       firstName: (appointment.patientName || '').split(' ')[0],
-      ...(porAnuncio ? { ctwaClid: conv.adCtwaClid, wabaId: WABA_ID } : {}),
+      ...(porAnuncio ? { ctwaClid: conv.adCtwaClid, wabaId: WABA_ID, pageId: PAGE_ID } : {}),
     },
     customData: {
       content_name: appointment.tipoConsulta || 'cita',
