@@ -8,22 +8,23 @@
  * - Las propuestas nuevas llevan hasta 3 opciones y generan el PDF de marca.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Box, Container, Grid, Typography, Chip, CircularProgress, Button, Drawer, Divider,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip,
-  Snackbar, Alert, TextField, MenuItem, Stack, Dialog, DialogTitle, DialogContent,
-  DialogActions, Autocomplete, ToggleButton, ToggleButtonGroup,
+  Snackbar, Alert, TextField, MenuItem, Stack, Dialog,
+  Autocomplete, ToggleButton, ToggleButtonGroup, Tabs, Tab,
 } from '@mui/material';
 import {
   RequestQuote, Refresh, WhatsApp, Add, Close, PictureAsPdf, Phone, Email, Chat,
   Storefront, EventNote, EmojiEvents, DeleteOutline,
 } from '@mui/icons-material';
 import PageHeader from '../../components/crm/ui/PageHeader';
+import CatalogoTab from '../../components/crm/cotizaciones/CatalogoTab';
 import { api } from '../../services/apiClient';
 import { getPatients } from '../../services/patientService';
 import {
-  CATALOGO_COTIZACION, descargarPropuestaPdf, propuestaDesdeApi, LOGOS, PROPUESTA_DEFAULTS,
+  descargarPropuestaPdf, propuestaDesdeApi, renderPropuestaPages, LOGOS, PROPUESTA_DEFAULTS, PROPUESTA_CSS, EMPRESA,
 } from '../../utils/propuestaPdf';
 
 // Formato propio: el espacio duro de Intl se dibuja mal con Gotham.
@@ -273,19 +274,31 @@ function DetalleDrawer({ id, onClose, onChanged, notify }) {
 /* ------------------------------------------------------------------ */
 /* Nueva propuesta                                                      */
 /* ------------------------------------------------------------------ */
-const opcionDesdeCatalogo = (k) => {
-  const c = CATALOGO_COTIZACION[k];
-  return {
-    key: `${k}-${Math.random().toString(36).slice(2, 7)}`,
-    nombre: c.nombre, linea: c.linea, sub: c.sub, corto: c.corto, etiqueta: c.tag, imagen: c.img,
-    valorUnitario: c.precio, descuento: c.dto,
-    atributosTxt: c.feats.filter((f) => f.t).map((f) => `${f.t}: ${f.d}`).join('\n'),
-    iconos: c.feats.map((f) => f.i),
-    marca: k === 'blank' ? '' : 'Widex',
-  };
+const ICONOS_BASE = ['onda', 'bateria', 'celular', 'bluetooth', 'ia', 'agua'];
+const opcionDesdeProducto = (p) => ({
+  key: `${p?.id || 'otro'}-${Math.random().toString(36).slice(2, 7)}`,
+  catalogoProductoId: p?.id || null,
+  nombre: p?.nombre || '', linea: p?.linea || '', sub: p?.sub || '', corto: p?.plataforma || p?.tecnologia || '',
+  etiqueta: p?.etiqueta || '', imagen: p?.imagen || '', marca: p?.marca || '', tecnologia: p?.tecnologia || '',
+  valorUnitario: p?.valor || 0, descuento: 0, campaignId: '',
+  atributosTxt: (p?.atributos || []).map((a) => `${a.t}${a.d ? `: ${a.d}` : ''}`).join('\n'),
+  iconos: (p?.atributos || []).map((a) => a.i),
+  campanas: (p?.campanas || []).filter((c) => c.vigente),
+});
+
+const atributosDe = (o) => String(o.atributosTxt || '').split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 6).map((l, j) => {
+  const [t, ...rest] = l.split(':');
+  return { i: o.iconos?.[j] || ICONOS_BASE[j] || 'check', t: t.trim(), d: rest.join(':').trim() };
+});
+
+/** Descuento promedio por unidad que deja una campaña (igual que el backend). */
+const dtoCampana = (c, cantidad) => {
+  const d = Number(c?.descuentoAprobado) || 0;
+  return c?.aplicacionDescuento === 'SEGUNDO_AUDIFONO' && cantidad >= 2 ? Math.round((d / cantidad) * 100) / 100 : d;
 };
 
-function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
+function NuevaPropuestaDialog({ open, onClose, onCreated, notify, catalogo }) {
+  const productos = catalogo?.productos || [];
   const [buscar, setBuscar] = useState('');
   const [pacientes, setPacientes] = useState([]);
   const [paciente, setPaciente] = useState(null);
@@ -295,8 +308,12 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
   const [cargo, setCargo] = useState('Audióloga');
   const [cantidad, setCantidad] = useState(2);
   const [vigencia, setVigencia] = useState(15);
-  const [opciones, setOpciones] = useState([opcionDesdeCatalogo('allure')]);
-  const [agregar, setAgregar] = useState('smartric');
+  const [intro, setIntro] = useState(PROPUESTA_DEFAULTS.intro);
+  const [opciones, setOpciones] = useState([]);
+  const [agregar, setAgregar] = useState('');
+  useEffect(() => {
+    if (open && productos.length && opciones.length === 0) setOpciones([opcionDesdeProducto(productos[0])]);
+  }, [open, productos]); // eslint-disable-line react-hooks/exhaustive-deps
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -310,7 +327,7 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
 
   const setOp = (i, k, v) => setOpciones((ops) => ops.map((o, j) => (j === i ? { ...o, [k]: v } : o)));
 
-  const crear = async () => {
+  const crear = async (descargar) => {
     let patientId = paciente?.id;
     if (modoNuevo) {
       if (!nuevo.nombre.trim() || !nuevo.telefono.trim()) return notify('Escribe nombre y teléfono del paciente.', 'warning');
@@ -321,108 +338,205 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify }) {
       patientId = data.data.id;
     }
     if (!patientId) return notify('Elige un paciente.', 'warning');
+    if (!opciones.length || opciones.some((o) => !o.nombre.trim())) return notify('Agrega al menos una opción con nombre.', 'warning');
     setSaving(true);
     const hoy = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const body = {
-      patientId, profesional, cargo, cantidad, vigenciaDias: vigencia,
+      patientId, profesional, cargo, cantidad, vigenciaDias: vigencia, intro,
       numero: `COT-OC-${hoy}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`,
       garantias: PROPUESTA_DEFAULTS.garantias, plan: PROPUESTA_DEFAULTS.plan, condiciones: PROPUESTA_DEFAULTS.condiciones,
       opciones: opciones.map((o) => ({
-        nombre: o.nombre, marca: o.marca || o.nombre.split(' ')[0], tecnologia: o.corto, linea: o.linea, sub: o.sub, corto: o.corto,
+        nombre: o.nombre, marca: o.marca || o.nombre.split(' ')[0], tecnologia: o.tecnologia || o.corto, linea: o.linea, sub: o.sub, corto: o.corto,
         etiqueta: o.etiqueta, imagen: o.imagen, valorUnitario: Number(o.valorUnitario) || 0, descuento: Number(o.descuento) || 0,
-        atributos: o.atributosTxt.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 6).map((l, j) => {
-          const [t, ...rest] = l.split(':');
-          return { i: o.iconos[j] || 'check', t: t.trim(), d: rest.join(':').trim() };
-        }),
+        campaignId: o.campaignId || undefined, catalogoProductoId: o.catalogoProductoId || undefined,
+        atributos: atributosDe(o),
       })),
     };
     const { data, error } = await api.post('/api/crm/cotizaciones', body);
     setSaving(false);
     if (error) return notify(`No se pudo crear la propuesta: ${error}`, 'error');
     notify('Propuesta creada.');
+    if (descargar) {
+      try {
+        const p = data.data;
+        await descargarPropuestaPdf(propuestaDesdeApi(p), LOGOS, `Cotizacion_${(p.paciente?.nombre || 'paciente').replace(/\s+/g, '_')}_${p.numero}.pdf`);
+      } catch {
+        notify('La propuesta se creó, pero no se pudo generar el PDF. Descárgalo desde el detalle.', 'warning');
+      }
+    }
     onCreated(data.data);
   };
 
+  // Vista previa en vivo: mismas 3 hojas del PDF, escaladas al panel derecho.
+  const previewRef = useRef(null);
+  const [escala, setEscala] = useState(0.6);
+  useEffect(() => {
+    if (!open) return undefined;
+    const el = previewRef.current;
+    if (!el) return undefined;
+    const ro = new ResizeObserver(() => setEscala(Math.min(1, (el.clientWidth - 48) / 816)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [open]);
+
+  const nombrePaciente = modoNuevo ? nuevo.nombre : (paciente?.nombre || '');
+  const datosPreview = useMemo(() => ({
+    numero: 'COT-OC-(se asigna al crear)',
+    fecha: new Date().toISOString().slice(0, 10), vigencia, cantidad,
+    paciente: nombrePaciente || 'Nombre del paciente', profesional, cargo, intro,
+    productos: opciones.map((o) => ({
+      nombre: o.nombre || 'Producto', linea: o.linea, sub: o.sub, corto: o.corto, tag: o.etiqueta, img: o.imagen,
+      precio: Number(o.valorUnitario) || 0, dto: Number(o.descuento) || 0, feats: atributosDe(o),
+    })),
+    garantias: PROPUESTA_DEFAULTS.garantias, plan: PROPUESTA_DEFAULTS.plan, planNota: PROPUESTA_DEFAULTS.planNota,
+    condiciones: PROPUESTA_DEFAULTS.condiciones, e: EMPRESA, firma: { on: true }, codigoFirma: 'se genera al crear',
+  }), [opciones, vigencia, cantidad, nombrePaciente, profesional, cargo, intro]);
+  const hojas = useMemo(() => (opciones.length ? renderPropuestaPages(datosPreview, LOGOS) : []), [datosPreview, opciones.length]);
+
+  const Seccion = ({ children }) => (
+    <Typography sx={{ fontSize: '0.68rem', letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 800, color: '#4054B2', mb: 1.25 }}>{children}</Typography>
+  );
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle sx={{ fontWeight: 800 }}>Nueva propuesta</DialogTitle>
-      <DialogContent dividers>
-        <Typography sx={{ fontWeight: 800, mb: 1 }}>Paciente</Typography>
-        {!modoNuevo ? (
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2.5 }}>
-            <Autocomplete sx={{ flex: 1 }} options={pacientes} value={paciente} onChange={(_, v) => setPaciente(v)}
-              getOptionLabel={(o) => `${o.nombre}${o.telefono ? ` · ${o.telefono}` : ''}`}
-              isOptionEqualToValue={(a, b) => a.id === b.id}
-              onInputChange={(_, v) => setBuscar(v)} filterOptions={(x) => x}
-              renderInput={(params) => <TextField {...params} size="small" label="Buscar por nombre, teléfono o correo" />} />
-            <Button onClick={() => setModoNuevo(true)} sx={{ textTransform: 'none', fontWeight: 700 }}>Paciente nuevo</Button>
-          </Stack>
-        ) : (
-          <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-            <Grid item xs={12} sm={4}><TextField fullWidth size="small" label="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} /></Grid>
-            <Grid item xs={12} sm={3}><TextField fullWidth size="small" label="Teléfono" value={nuevo.telefono} onChange={(e) => setNuevo({ ...nuevo, telefono: e.target.value })} /></Grid>
-            <Grid item xs={12} sm={3}><TextField fullWidth size="small" label="Correo (opcional)" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} /></Grid>
-            <Grid item xs={12} sm={2}><Button fullWidth onClick={() => setModoNuevo(false)} sx={{ textTransform: 'none' }}>Buscar existente</Button></Grid>
-          </Grid>
-        )}
-
-        <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-          <Grid item xs={12} sm={4}><TextField fullWidth size="small" label="Profesional" value={profesional} onChange={(e) => setProfesional(e.target.value)} /></Grid>
-          <Grid item xs={6} sm={3}><TextField fullWidth size="small" label="Cargo" value={cargo} onChange={(e) => setCargo(e.target.value)} /></Grid>
-          <Grid item xs={6} sm={3}>
-            <TextField select fullWidth size="small" label="Adaptación" value={cantidad} onChange={(e) => setCantidad(Number(e.target.value))}>
-              <MenuItem value={2}>Binaural (2)</MenuItem><MenuItem value={1}>Monoaural (1)</MenuItem>
-            </TextField>
-          </Grid>
-          <Grid item xs={12} sm={2}><TextField fullWidth size="small" type="number" label="Vigencia (días)" value={vigencia} onChange={(e) => setVigencia(Number(e.target.value) || 15)} /></Grid>
-        </Grid>
-
-        <Typography sx={{ fontWeight: 800, mb: 1 }}>Opciones ({opciones.length}/3)</Typography>
-        <Stack spacing={1.5}>
-          {opciones.map((o, i) => (
-            <Box key={o.key} sx={{ p: 1.5, border: '1px solid #e5e7eb', borderRadius: '12px' }}>
-              <Grid container spacing={1.25} alignItems="center">
-                <Grid item xs={12} sm={4}><TextField fullWidth size="small" label="Producto" value={o.nombre} onChange={(e) => setOp(i, 'nombre', e.target.value)} /></Grid>
-                <Grid item xs={6} sm={3}><TextField fullWidth size="small" type="number" label="Valor unitario" value={o.valorUnitario} onChange={(e) => setOp(i, 'valorUnitario', e.target.value)} /></Grid>
-                <Grid item xs={6} sm={2}><TextField fullWidth size="small" type="number" label="Descuento %" value={o.descuento} onChange={(e) => setOp(i, 'descuento', e.target.value)} /></Grid>
-                <Grid item xs={9} sm={2}>
-                  <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>Neto c/u</Typography>
-                  <Typography sx={{ fontWeight: 800, fontSize: '0.88rem' }}>{cop((Number(o.valorUnitario) || 0) * (1 - (Number(o.descuento) || 0) / 100))}</Typography>
-                </Grid>
-                <Grid item xs={3} sm={1} sx={{ textAlign: 'right' }}>
-                  <Tooltip title="Quitar opción"><span>
-                    <IconButton disabled={opciones.length === 1} onClick={() => setOpciones((ops) => ops.filter((_, j) => j !== i))}><DeleteOutline /></IconButton>
-                  </span></Tooltip>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField fullWidth size="small" multiline minRows={2} label="Atributos (uno por línea, «Título: descripción»)"
-                    value={o.atributosTxt} onChange={(e) => setOp(i, 'atributosTxt', e.target.value)} />
-                </Grid>
-              </Grid>
+    <Dialog open={open} onClose={onClose} fullScreen>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '420px 1fr' }, height: '100%', minHeight: 0 }}>
+        {/* PANEL DE DATOS */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderRight: '1px solid #e5e7eb', bgcolor: '#fff' }}>
+          <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: '1.05rem' }}>Nueva propuesta</Typography>
+              <Typography sx={{ fontSize: '0.78rem', color: '#64748b' }}>Llena los datos y revisa la propuesta a la derecha.</Typography>
             </Box>
-          ))}
-        </Stack>
-        {opciones.length < 3 && (
-          <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
-            <TextField select size="small" value={agregar} onChange={(e) => setAgregar(e.target.value)} sx={{ minWidth: 220 }}>
-              <MenuItem value="allure">Widex Allure 220</MenuItem>
-              <MenuItem value="smartric">Widex SmartRIC 220</MenuItem>
-              <MenuItem value="moment">Widex Moment 220</MenuItem>
-              <MenuItem value="blank">Otro producto</MenuItem>
-            </TextField>
-            <Button startIcon={<Add />} onClick={() => setOpciones((ops) => [...ops, opcionDesdeCatalogo(agregar)])} sx={{ textTransform: 'none', fontWeight: 700 }}>Agregar opción</Button>
+            <IconButton onClick={onClose} aria-label="Cerrar"><Close /></IconButton>
+          </Box>
+
+          <Box sx={{ flex: 1, overflowY: 'auto', px: 2.5, py: 2 }}>
+            <Seccion>Paciente</Seccion>
+            {!modoNuevo ? (
+              <>
+                <Autocomplete options={pacientes} value={paciente} onChange={(_, v) => setPaciente(v)}
+                  getOptionLabel={(o) => `${o.nombre}${o.telefono ? ` · ${o.telefono}` : ''}`}
+                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  onInputChange={(_, v) => setBuscar(v)} filterOptions={(x) => x}
+                  renderInput={(params) => <TextField {...params} size="small" label="Buscar paciente" placeholder="Nombre, teléfono o correo" />} />
+                <Button size="small" onClick={() => setModoNuevo(true)} sx={{ textTransform: 'none', fontWeight: 700, mt: 0.5, px: 0 }}>+ Paciente nuevo</Button>
+              </>
+            ) : (
+              <Stack spacing={1.25}>
+                <TextField size="small" label="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
+                <Stack direction="row" spacing={1.25}>
+                  <TextField size="small" fullWidth label="Teléfono" value={nuevo.telefono} onChange={(e) => setNuevo({ ...nuevo, telefono: e.target.value })} />
+                  <TextField size="small" fullWidth label="Correo (opcional)" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} />
+                </Stack>
+                <Button size="small" onClick={() => setModoNuevo(false)} sx={{ textTransform: 'none', alignSelf: 'flex-start', px: 0 }}>Buscar un paciente existente</Button>
+              </Stack>
+            )}
+
+            <Divider sx={{ my: 2 }} />
+            <Seccion>Profesional y condiciones</Seccion>
+            <Stack spacing={1.25}>
+              <Stack direction="row" spacing={1.25}>
+                <TextField size="small" fullWidth label="Profesional" value={profesional} onChange={(e) => setProfesional(e.target.value)} />
+                <TextField size="small" sx={{ width: 150 }} label="Cargo" value={cargo} onChange={(e) => setCargo(e.target.value)} />
+              </Stack>
+              <Stack direction="row" spacing={1.25}>
+                <TextField select size="small" fullWidth label="Adaptación" value={cantidad} onChange={(e) => {
+                  const q = Number(e.target.value); setCantidad(q);
+                  setOpciones((ops) => ops.map((o) => (o.campaignId ? { ...o, descuento: dtoCampana(o.campanas.find((c) => c.id === o.campaignId), q) } : o)));
+                }}>
+                  <MenuItem value={2}>Binaural (2 unidades)</MenuItem><MenuItem value={1}>Monoaural (1 unidad)</MenuItem>
+                </TextField>
+                <TextField size="small" sx={{ width: 150 }} type="number" label="Vigencia (días)" value={vigencia} onChange={(e) => setVigencia(Number(e.target.value) || 15)} />
+              </Stack>
+              <TextField size="small" multiline minRows={3} label="Mensaje al paciente" value={intro} onChange={(e) => setIntro(e.target.value)}
+                helperText="Puedes usar {nombre} y {profesional}." />
+            </Stack>
+
+            <Divider sx={{ my: 2 }} />
+            <Seccion>{`Productos (${opciones.length}/3)`}</Seccion>
+            <Stack spacing={1}>
+              {opciones.map((o, i) => (
+                <Box key={o.key} component="details" open={i === opciones.length - 1}
+                  sx={{ border: '1px solid #e5e7eb', borderRadius: '12px', '& > summary': { listStyle: 'none', cursor: 'pointer' }, '& > summary::-webkit-details-marker': { display: 'none' } }}>
+                  <Box component="summary" sx={{ display: 'flex', alignItems: 'center', gap: 1.25, p: 1.25 }}>
+                    <Box sx={{ width: 40, height: 40, borderRadius: '9px', bgcolor: '#f1f5fb', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                      {o.imagen ? <Box component="img" src={o.imagen} alt="" sx={{ maxWidth: 34, maxHeight: 34, objectFit: 'contain' }} /> : <RequestQuote sx={{ fontSize: 18, color: '#94a3b8' }} />}
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.86rem' }} noWrap>{o.nombre || 'Producto sin nombre'}</Typography>
+                      <Typography sx={{ fontSize: '0.72rem', color: '#64748b' }} noWrap>
+                        {o.campaignId ? (o.campanas.find((c) => c.id === o.campaignId)?.nombre || 'Campaña') : (Number(o.descuento) ? `−${o.descuento}%` : 'Sin descuento')}
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ fontWeight: 800, fontSize: '0.84rem', whiteSpace: 'nowrap' }}>
+                      {cop((Number(o.valorUnitario) || 0) * (1 - (Number(o.descuento) || 0) / 100))}
+                    </Typography>
+                  </Box>
+                  <Stack spacing={1.25} sx={{ px: 1.25, pb: 1.25 }}>
+                    <TextField size="small" label="Nombre del producto" value={o.nombre} onChange={(e) => setOp(i, 'nombre', e.target.value)} />
+                    <Stack direction="row" spacing={1.25}>
+                      <TextField size="small" fullWidth type="number" label="Valor unitario" value={o.valorUnitario} onChange={(e) => setOp(i, 'valorUnitario', e.target.value)} />
+                      <TextField size="small" sx={{ width: 110 }} type="number" label="Dto. %" value={o.descuento} disabled={Boolean(o.campaignId)}
+                        onChange={(e) => setOp(i, 'descuento', e.target.value)} />
+                    </Stack>
+                    <TextField select size="small" label="Campaña" value={o.campaignId}
+                      onChange={(e) => {
+                        const c = o.campanas.find((x) => x.id === e.target.value);
+                        setOpciones((ops) => ops.map((x, j) => (j === i ? { ...x, campaignId: e.target.value, descuento: c ? dtoCampana(c, cantidad) : 0 } : x)));
+                      }}
+                      helperText={o.campaignId ? 'El descuento lo define la campaña.' : (o.campanas.length ? '' : 'Sin campañas vigentes para este producto.')}>
+                      <MenuItem value="">Sin campaña</MenuItem>
+                      {o.campanas.map((c) => <MenuItem key={c.id} value={c.id}>{c.nombre} · {c.descuentoAprobado}%{c.aplicacionDescuento === 'SEGUNDO_AUDIFONO' ? ' en el 2.º' : ''}</MenuItem>)}
+                    </TextField>
+                    <TextField size="small" multiline minRows={3} label="Atributos (uno por línea, «Título: descripción»)"
+                      value={o.atributosTxt} onChange={(e) => setOp(i, 'atributosTxt', e.target.value)} />
+                    <Button size="small" color="error" startIcon={<DeleteOutline />} disabled={opciones.length === 1}
+                      onClick={() => setOpciones((ops) => ops.filter((_, j) => j !== i))} sx={{ textTransform: 'none', alignSelf: 'flex-start' }}>Quitar producto</Button>
+                  </Stack>
+                </Box>
+              ))}
+            </Stack>
+            {opciones.length < 3 && (
+              <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
+                <TextField select size="small" fullWidth label="Agregar del catálogo" value={agregar} onChange={(e) => setAgregar(e.target.value)}>
+                  {productos.map((p) => <MenuItem key={p.id} value={p.id}>{p.nombre} · {cop(p.valor)}</MenuItem>)}
+                  <MenuItem value="otro">Otro producto (manual)</MenuItem>
+                </TextField>
+                <Button variant="outlined" disabled={!agregar}
+                  onClick={() => { setOpciones((ops) => [...ops, opcionDesdeProducto(productos.find((p) => p.id === agregar))]); setAgregar(''); }}
+                  sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px', whiteSpace: 'nowrap' }}>Agregar</Button>
+              </Stack>
+            )}
+            <Typography sx={{ mt: 2, fontSize: '0.74rem', color: '#94a3b8' }}>
+              Garantías, plan audiológico y condiciones van con los valores estándar de OírConecta.
+            </Typography>
+          </Box>
+
+          <Box sx={{ px: 2.5, py: 1.75, borderTop: '1px solid #e5e7eb', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button variant="contained" onClick={() => crear(true)} disabled={saving} startIcon={<PictureAsPdf />}
+              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>{saving ? 'Creando…' : 'Crear y descargar PDF'}</Button>
+            <Button variant="outlined" onClick={() => crear(false)} disabled={saving} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>Solo crear</Button>
+          </Box>
+        </Box>
+
+        {/* VISTA PREVIA */}
+        <Box ref={previewRef} sx={{ bgcolor: '#eef2f7', overflowY: 'auto', py: 3, display: { xs: 'none', md: 'block' } }}>
+          <style>{PROPUESTA_CSS}</style>
+          <Stack spacing={3} alignItems="center">
+            {hojas.map((h, i) => (
+              <Box key={i} sx={{ textAlign: 'center' }}>
+                <Typography sx={{ fontSize: '0.66rem', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', mb: 1 }}>
+                  Página {i + 1} de 3
+                </Typography>
+                <Box sx={{ width: 816 * escala, height: 1056 * escala, position: 'relative', overflow: 'hidden', bgcolor: '#fff', boxShadow: '0 8px 28px rgba(15,23,42,0.16)' }}>
+                  <Box sx={{ position: 'absolute', left: 0, top: 0, transform: `scale(${escala})`, transformOrigin: '0 0', textAlign: 'left' }}
+                    dangerouslySetInnerHTML={{ __html: h }} />
+                </Box>
+              </Box>
+            ))}
           </Stack>
-        )}
-        <Typography sx={{ mt: 2, fontSize: '0.78rem', color: '#64748b' }}>
-          Garantías, plan audiológico y condiciones van con los valores estándar de OírConecta.
-        </Typography>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} sx={{ textTransform: 'none' }}>Cancelar</Button>
-        <Button variant="contained" onClick={crear} disabled={saving} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>
-          {saving ? 'Creando…' : 'Crear propuesta'}
-        </Button>
-      </DialogActions>
+        </Box>
+      </Box>
     </Dialog>
   );
 }
@@ -435,6 +549,8 @@ export default function CotizacionesPage() {
   const [filtro, setFiltro] = useState('');
   const [abierta, setAbierta] = useState(null);
   const [nueva, setNueva] = useState(false);
+  const [tab, setTab] = useState('propuestas');
+  const [catalogo, setCatalogo] = useState(null);
   const [snack, setSnack] = useState({ open: false, msg: '', sev: 'success' });
   const notify = (msg, sev = 'success') => setSnack({ open: true, msg, sev });
 
@@ -445,6 +561,12 @@ export default function CotizacionesPage() {
     setLoading(false);
   }, [verCerradas]);
   useEffect(() => { load(); }, [load]);
+
+  const loadCatalogo = useCallback(async () => {
+    const { data: res } = await api.get('/api/crm/catalogo');
+    setCatalogo(res?.data || { productos: [], campanas: [] });
+  }, []);
+  useEffect(() => { loadCatalogo(); }, [loadCatalogo]);
 
   const items = useMemo(() => {
     const q = filtro.trim().toLowerCase();
@@ -474,7 +596,13 @@ export default function CotizacionesPage() {
       />
 
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        {loading ? (
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: '1px solid #e5e7eb', '& .MuiTab-root': { textTransform: 'none', fontWeight: 700 } }}>
+          <Tab value="propuestas" label="Propuestas y seguimiento" />
+          <Tab value="catalogo" label={`Catálogo${catalogo ? ` (${catalogo.productos.length})` : ''}`} />
+        </Tabs>
+        {tab === 'catalogo' ? (
+          <CatalogoTab catalogo={catalogo} onChanged={loadCatalogo} notify={notify} />
+        ) : loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
         ) : !data ? (
           <Typography sx={{ color: '#94a3b8' }}>No se pudieron cargar las cotizaciones.</Typography>
@@ -555,7 +683,7 @@ export default function CotizacionesPage() {
       </Container>
 
       <DetalleDrawer id={abierta} onClose={() => setAbierta(null)} onChanged={load} notify={notify} />
-      <NuevaPropuestaDialog open={nueva} onClose={() => setNueva(false)} notify={notify}
+      <NuevaPropuestaDialog open={nueva} onClose={() => setNueva(false)} notify={notify} catalogo={catalogo}
         onCreated={(p) => { setNueva(false); load(); setAbierta(p.id); }} />
       <Snackbar open={snack.open} autoHideDuration={3500} onClose={() => setSnack((s) => ({ ...s, open: false }))}>
         <Alert severity={snack.sev} variant="filled" onClose={() => setSnack((s) => ({ ...s, open: false }))}>{snack.msg}</Alert>
