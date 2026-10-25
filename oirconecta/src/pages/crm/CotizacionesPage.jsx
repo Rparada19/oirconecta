@@ -173,8 +173,11 @@ function DetalleDrawer({ id, onClose, onChanged, notify }) {
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{o.nombre}</Typography>
                     <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
-                      {cop(o.valorPorUnidad)} c/u{o.descuento ? ` · −${o.descuento}%` : ''} · {o.cantidad} unidad{o.cantidad > 1 ? 'es' : ''}
+                      {cop(o.valorPorUnidad)} c/u{o.descuento ? ` · −${o.descuento}%` : ''} · {o.cantidad} unidad{o.cantidad > 1 ? 'es' : ''}{o.campana ? ` · ${o.campana}` : ''}
                     </Typography>
+                    {o.fichas?.length > 0 && o.fichas.map((f) => (
+                      <Typography key={f.url} component="a" href={f.url} target="_blank" rel="noopener" sx={{ fontSize: '0.72rem', color: '#4054B2', mr: 1 }}>Ficha técnica</Typography>
+                    ))}
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
                     <Typography sx={{ fontWeight: 800, color: '#0F2A4A', fontSize: '0.92rem' }}>{cop(o.valorTotal)}</Typography>
@@ -284,6 +287,7 @@ const opcionDesdeProducto = (p) => ({
   atributosTxt: (p?.atributos || []).map((a) => `${a.t}${a.d ? `: ${a.d}` : ''}`).join('\n'),
   iconos: (p?.atributos || []).map((a) => a.i),
   campanas: (p?.campanas || []).filter((c) => c.vigente),
+  fichas: (p?.fichas || []).filter((f) => f.url),
 });
 
 const atributosDe = (o) => String(o.atributosTxt || '').split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 6).map((l, j) => {
@@ -348,7 +352,7 @@ function NuevaPropuestaDialog({ open, onClose, onCreated, notify, catalogo }) {
       opciones: opciones.map((o) => ({
         nombre: o.nombre, marca: o.marca || o.nombre.split(' ')[0], tecnologia: o.tecnologia || o.corto, linea: o.linea, sub: o.sub, corto: o.corto,
         etiqueta: o.etiqueta, imagen: o.imagen, valorUnitario: Number(o.valorUnitario) || 0, descuento: Number(o.descuento) || 0,
-        campaignId: o.campaignId || undefined, catalogoProductoId: o.catalogoProductoId || undefined,
+        campaignId: o.campaignId || undefined, catalogoProductoId: o.catalogoProductoId || undefined, fichas: o.fichas || [],
         atributos: atributosDe(o),
       })),
     };
