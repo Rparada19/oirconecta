@@ -323,18 +323,19 @@ export default function BlogPostPage() {
     const key = (p) => p.slug || p.id;
     const self = post.slug || slug;
     const cat = post.categoria;
-    const pick = (arr) => (arr || []).filter((p) => key(p) !== self);
-    const base = cat ? `${API}/api/blog?limit=7&categoria=${encodeURIComponent(cat)}` : `${API}/api/blog?limit=7`;
-    fetch(base)
+    // Anillo: cada artículo enlaza a los 4 siguientes (misma categoría primero),
+    // así todos reciben enlaces internos y no solo los más recientes.
+    const ring = (arr) => {
+      const i = arr.findIndex((p) => key(p) === self);
+      return i < 0 ? arr : [...arr.slice(i + 1), ...arr.slice(0, i)];
+    };
+    fetch(`${API}/api/blog?limit=500`)
       .then((r) => r.json())
       .then((data) => {
-        const list = pick(data.data || data.posts);
-        if (list.length >= 3) { setRelated(list.slice(0, 4)); return null; }
-        return fetch(`${API}/api/blog?limit=8`).then((r) => r.json()).then((d2) => {
-          const recent = pick(d2.data || d2.posts);
-          const merged = [...list, ...recent.filter((p) => !list.some((x) => key(x) === key(p)))];
-          setRelated(merged.slice(0, 4));
-        });
+        const all = data.data || data.posts || [];
+        const same = ring(all.filter((p) => p.categoria === cat || key(p) === self));
+        const rest = ring(all).filter((p) => p.categoria !== cat);
+        setRelated([...same, ...rest].filter((p) => key(p) !== self).slice(0, 4));
       })
       .catch(() => {});
   }, [post, slug]);
