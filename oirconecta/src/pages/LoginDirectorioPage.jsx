@@ -15,7 +15,7 @@ import {
   Stack,
 } from '@mui/material';
 import { Person, Lock, Visibility, VisibilityOff, Login as LoginIcon, PersonAddAltOutlined } from '@mui/icons-material';
-import { directoryApi, setDirectoryToken, getDirectoryToken, setDirectoryMustChangePassword } from '../services/directoryAccountApi';
+import { directoryApi, setDirectoryToken, getValidDirectoryToken, setDirectoryMustChangePassword } from '../services/directoryAccountApi';
 import { DIRECTORY_API } from '../config/directoryApi';
 
 function isDirectorySchemaError(raw) {
@@ -27,11 +27,16 @@ export default function LoginDirectorioPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  // Viene del portal porque la sesión venció: se lo decimos en vez de un login mudo.
+  const [error, setError] = useState(() => (
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('reason') === 'expired'
+      ? 'Tu sesión venció. Ingresa de nuevo para continuar.'
+      : ''
+  ));
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (getDirectoryToken()) {
+    if (getValidDirectoryToken()) {
       navigate('/portal-profesional', { replace: true });
     }
   }, [navigate]);

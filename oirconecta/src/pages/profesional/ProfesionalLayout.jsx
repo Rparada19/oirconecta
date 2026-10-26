@@ -24,7 +24,7 @@ import {
   Logout,
   ArrowBack,
 } from '@mui/icons-material';
-import { directoryApi, clearDirectoryToken, getDirectoryToken, getDirectoryMustChangePassword } from '../../services/directoryAccountApi';
+import { directoryApi, clearDirectoryToken, getDirectoryToken, getValidDirectoryToken, getDirectoryMustChangePassword } from '../../services/directoryAccountApi';
 import { DIRECTORY_API } from '../../config/directoryApi';
 import TrialBadge from '../../components/profesional/TrialBadge';
 
@@ -257,8 +257,9 @@ export default function ProfesionalLayout() {
   const [userMenu, setUserMenu] = useState(null);
 
   useEffect(() => {
-    if (!getDirectoryToken()) {
-      navigate('/login-directorio', { replace: true });
+    const teniaSesion = !!getDirectoryToken();
+    if (!getValidDirectoryToken()) {
+      navigate(teniaSesion ? '/login-directorio?reason=expired' : '/login-directorio', { replace: true });
       return;
     }
     if (getDirectoryMustChangePassword()) {
