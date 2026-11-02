@@ -22,7 +22,7 @@
 
 const { PrismaClient } = require('@prisma/client');
 const Anthropic = require('@anthropic-ai/sdk');
-const { sendWhatsAppText, sendWhatsAppInteractiveButtons } = require('../notifications/channels/whatsapp');
+const { sendWhatsAppText, sendWhatsAppInteractiveButtons, sendWhatsAppInteractiveList } = require('../notifications/channels/whatsapp');
 const booking = require('./professionalBooking.service');
 const horarioCampana = require('./horarioCampana');
 const retailService = require('./retail.service');
@@ -830,6 +830,39 @@ async function proximosHorarios(profileId = null) {
   return null;
 }
 
+/**
+ * Horarios de varios días. 28 de 38 ofertas de horarios (20 al 31 de octubre)
+ * fueron de un solo día, casi siempre mañana, y quien no podía ese día
+ * contestaba "déjame consultar y después la agendo" y no volvía. Con dos o
+ * tres días a la vista, casi siempre hay uno que le sirve.
+ * Devuelve [{ date, dia, horas: ['08:00', '14:00'] }], dos horas por día
+ * (una temprano y una tarde) y hasta tres días con cupo en los próximos 10.
+ */
+async function proximosDias(profileId = null, { dias = 3, porDia = 2 } = {}) {
+  const pid = profileId || await retailProfileId();
+  if (!pid) return [];
+  const tipos = await booking.publicListTypes(pid);
+  const tipo = tipos.find((t) => /valoraci/i.test(t.nombre)) || tipos[0];
+  if (!tipo) return [];
+  const out = [];
+  for (let i = 1; i <= 10 && out.length < dias; i++) {
+    const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' })
+      .format(new Date(Date.now() + i * 86400000));
+    const { slots } = await slotsAura(pid, date, { appointmentTypeId: tipo.id });
+    const horas = (slots || []).map((x) => x.time);
+    if (!horas.length) continue;
+    const elegidas = horas.length <= porDia ? horas
+      : porDia === 1 ? [horas[0]]
+        : [horas[0], horas[horas.length - 1]];
+    out.push({
+      date,
+      dia: fechaLegible(`${date}T12:00:00`).replace(',', '').replace(/ de \d{4}$/, ''),
+      horas: [...new Set(elegidas)],
+    });
+  }
+  return out;
+}
+
 function listaHorarios(h) {
   const n = ['1️⃣', '2️⃣', '3️⃣'];
   return `El ${h.dia} tengo:\n${h.horas.map((x, i) => `${n[i]} ${hora12(x)}`).join('\n')}`;
@@ -898,7 +931,11 @@ const BOTONES_MENU = [
   { id: EMB.PRECIOS, title: 'Ver precios' },
   { id: EMB.EXAMENES, title: 'Tengo exámenes' },
 ];
-const botonesDeBienvenida = (pidioPrecio) => (pidioPrecio ? botonesDeCiudad(true) : BOTONES_PARA_QUIEN);
+// La bienvenida hace una sola pregunta, la ciudad. Antes preguntaba primero
+// "¿para ti o para un familiar?" y después la ciudad: dos toques antes de
+// recibir algo, y varios se quedaban ahí. Para quién es se entiende de la
+// conversación.
+const botonesDeBienvenida = (pidioPrecio) => botonesDeCiudad(pidioPrecio);
 const SIMULADOR = 'https://oirconecta.com/ponte-en-sus-oidos';
 // Así queda en el historial lo que se ofreció en los botones: lo lee el equipo
 // en la bandeja y lo lee el modelo. El modelo nunca escribe esta línea.
@@ -935,8 +972,34 @@ async function enviarConBotones(conv, texto, botones, sinBotones = texto) {
   }
 }
 
-/** Tres horas reales de la agenda, cada una en un botón. */
+/**
+ * Horarios reales de la agenda. Con varios días, van en una lista desplegable
+ * ("Ver horarios") con dos horas por día; si la lista no sale o solo hay un
+ * día, tres horas de ese día en botones, como antes.
+ */
 async function horariosConBotones(conv, intro) {
+  const dias = await proximosDias().catch(() => []);
+  if (dias.length >= 2) {
+    // "miércoles 18 de noviembre" → "miércoles 18 de nov.": el título de la lista admite 24 letras.
+    const corto = (d) => d.dia.replace(/ de (\S{3})\S*$/, ' de $1.');
+    const texto = `${intro}\n\nTe dejo espacios de los próximos días: ${dias.map((d) => `*${corto(d)}*`).join(', ').replace(/, ([^,]*)$/, ' y $1')}. Toca *Ver horarios* y escoge el que te quede mejor. Si ninguno te sirve, dime qué día prefieres.`;
+    const etiqueta = `\n\n(botones: ${dias.map((d) => `${corto(d)}: ${d.horas.map(hora12).join(', ')}`).join(' | ')})`;
+    try {
+      const r = await sendWhatsAppInteractiveList({
+        to: conv.phone,
+        bodyText: texto,
+        buttonText: 'Ver horarios',
+        sections: dias.map((d) => ({
+          title: corto(d),
+          rows: d.horas.map((x) => ({ id: `${EMB.SLOT}|${d.date}|${x}`, title: hora12(x), description: corto(d) })),
+        })),
+      });
+      await guardarEnviado(conv, `${texto}${etiqueta}`, r?.providerMessageId, 'interactive');
+      return { sent: true, lista: true };
+    } catch (e) {
+      console.error('[wa-bot] la lista de horarios no salió, van botones de un día:', e.message);
+    }
+  }
   const h = await proximosHorarios().catch(() => null);
   if (!h) return enviarTextoFijo(conv, `${intro}\n\n¿Qué día te queda bien para venir?`);
   return enviarConBotones(
@@ -955,7 +1018,13 @@ async function horariosConBotones(conv, intro) {
 async function retomaConBotones(conv) {
   const nombre = nombreParaSaludo(conv.contactName);
   await aura.refresh();
-  return enviarConBotones(conv, aura.fill(aura.current().textos.retoma, { nombre }), [{ id: EMB.AGENDAR, title: 'Ver horarios' }]);
+  // Con días concretos: "¿pudiste pensar?" solo, sin nada a mano, casi nadie
+  // lo contestaba.
+  const dias = await proximosDias(null, { dias: 2, porDia: 1 }).catch(() => []);
+  const cuando = dias.length
+    ? `\n\nPor si te sirve, tengo espacio ${dias.map((d) => `el *${d.dia}*`).join(' y ')}.`
+    : '';
+  return enviarConBotones(conv, `${aura.fill(aura.current().textos.retoma, { nombre })}${cuando}`, [{ id: EMB.AGENDAR, title: 'Ver horarios' }]);
 }
 
 /**
@@ -1060,14 +1129,21 @@ function preciosPara(conv, fecha = new Date(), preguntaPrecio = '') {
   if (oferta) return `${oferta} La valoración para saber cuál te sirve *no tiene costo*.`;
   const { precios } = aura.current();
   const promo = aura.promoVigente(aura.current(), fecha);
-  const audifonos = `Los audífonos dependen de la tecnología, y el precio es por oído:
-· *Básica, de pilas*: ${precios.audifonosDesde} a $1.200.000 cada uno
-· *Intermedia*: $3.000.000 a $5.000.000
-· *Avanzada*: más de $7.000.000
-· *Recargables*: de $3.000.000 a $14.000.000${promo ? `\n\nEste mes, ${precios.promoProducto} desde *${precios.promoPrecio}* cada uno.` : ''}`;
+  // Corto y con salida. La tabla de cuatro niveles, que llegaba hasta
+  // $14.000.000 "por oído", la recibían personas que venían por "recargables
+  // más baratos": de los 80 de Bogotá que preguntaron el precio entre el 20 y
+  // el 31 de octubre, 40 no volvieron a escribir. Aquí va desde cuánto, que la
+  // audióloga dice cuál necesita y que se puede pagar a cuotas. El detalle por
+  // nivel lo da el modelo si la persona lo pide.
+  const recargables = promo && /recargable/i.test(precios.promoProducto || '')
+    ? `los recargables, este mes desde *${precios.promoPrecio}*`
+    : 'los recargables desde *$3.000.000*';
+  const audifonos = `Los audífonos se cotizan por oído y dependen de la tecnología: los de pilas van desde *${precios.audifonosDesde}* y ${recargables}.${promo && !/recargable/i.test(precios.promoProducto || '') ? ` Este mes, ${precios.promoProducto} desde *${precios.promoPrecio}*.` : ''}
+
+En la valoración, que *no tiene costo*, la audióloga te dice cuál necesitas de verdad y te muestra opciones para tu presupuesto. También se pueden pagar a cuotas con *ADDI* o *Welly*.`;
   if (/aud[ií]fono|recargable|2x1/i.test(`${anuncio} ${preguntaPrecio}`)) {
     const promesa = promesaDelAnuncio(anuncio);
-    return `${promesa ? `${promesa}\n\n` : ''}${audifonos}\n\nLa valoración para saber cuál te sirve *no tiene costo*.`;
+    return `${promesa ? `${promesa}\n\n` : ''}${audifonos}`;
   }
   return `La valoración auditiva *no tiene costo*.\n\n${audifonos}`;
 }
@@ -1413,6 +1489,15 @@ Una buena asesora no espera a que le pregunten: guía. Cada mensaje tuyo deja a 
 4. Proponer: los horarios reales.
 No te saltes pasos ni los fuerces: si en el primer mensaje ya pide horarios, ve directo al 4. Si se desvía o pregunta otra cosa, contéstale bien y retoma desde donde iban con una pregunta natural, sin olvidar lo que ya te contó.
 
+═══ ERES EXPERTA AGENDANDO ═══
+Tu trabajo es que la persona que puede venir salga del chat con su valoración agendada, y que lo sienta como una ayuda, no como una venta. Lo que más citas consigue:
+· Señales de compra = horarios en ese mismo mensaje. Si pregunta la dirección, el horario de atención, si atienden su EPS, cómo se paga o "dónde los compro", contesta en una frase y pon horarios reales de dos días. Contestar "atendemos de lunes a viernes de 8 a 6" sin ofrecer horas es dejarla ir.
+· Después del precio, no termines con una pregunta de diagnóstico ("¿en qué momentos te cuesta más oír?"): esa pregunta la deja pensando y no vuelve. Termina con algo que pueda tocar o contestar en una palabra: "¿Te muestro los espacios de esta semana?" o directamente las horas si ya dio señales.
+· Si solo pregunta a qué hora atienden, el mejor horario para ella es el que le das: dale dos días con horas concretas.
+· Una sola pregunta por mensaje, y que sea fácil de contestar.
+· Quien eligió hora: pide solo el nombre y crea la cita de una vez.
+· Insistir no es lo mismo que guiar: si dice que no, que ahora no o que lo piensa, respeta (CUANDO DUDAN).
+
 ═══ TU MATERIAL ═══
 Puedes mandar imágenes y un video con enviar_material, como lo haría una asesora por WhatsApp. Úsalo cuando le sirva a la persona, no para llenar:
 · Pregunta dónde quedan o cómo llegar → como_llegar (foto del edificio, recepción, dirección y mapa).
@@ -1438,7 +1523,8 @@ Cada material va una sola vez por conversación y como máximo uno por mensaje. 
 ═══ CUANDO PREGUNTAN EL PRECIO ═══
 La cifra va en la primera línea. Siempre.
 · De la valoración o la consulta: "La valoración no tiene costo." Lo de los $150.000 por los exámenes impresos, solo si preguntan por los exámenes o por qué se paga.
-· De los audífonos: explícalo bien, es lo que la persona necesita para decidirse. Una línea de entrada ("Depende de la tecnología, y el precio es por oído:"), después los cuatro niveles de LO QUE OFRECEMOS en lista corta con "·" (cada uno con su cifra y en pocas palabras para qué sirve) y al final que la valoración *no tiene costo* y ahí se define cuál le sirve. Es la única respuesta, además de los horarios, que va en lista.
+· De los audífonos, la primera vez: corto. Desde cuánto (pilas desde $800.000, recargables desde $3.000.000 o la promo vigente), que el precio es por oído, que en la valoración *sin costo* la audióloga le dice cuál necesita de verdad y le muestra opciones para su presupuesto, y que se puede pagar a cuotas con *ADDI* o *Welly*. Soltar de entrada los cuatro niveles hasta $14.000.000 asustaba: la mitad de quienes preguntaban el precio no volvía a escribir.
+· Si pide más detalle ("¿y cuál es la diferencia?", "¿cuánto el mejor?") o ya te contó su situación: ahí sí los cuatro niveles de LO QUE OFRECEMOS en lista corta con "·" (cada uno con su cifra y en pocas palabras para qué sirve). Es la única respuesta, además de los horarios, que va en lista.
 · Si ya te contó su situación (la TV, las reuniones, el trabajo), después de la lista dile qué nivel se suele mirar para eso, sin prometerlo: "Por lo que me cuentas de las reuniones, normalmente se mira desde la intermedia; la audióloga te lo confirma". Si no te ha contado nada, termina con UNA pregunta que la ayude a ubicarse ("¿lo necesitas más para la casa o también para reuniones y salidas?").
 · Si pregunta solo por los recargables: su rango, que no usan pilas (se cargan de noche, como el celular) y que el valor cambia por la tecnología, igual que en los de pilas.
 · "Precio" a secas: si viene de un anuncio de audífonos o ya habló de audífonos, es el de los audífonos. Si no está claro, primero que la valoración no tiene costo y después los niveles.
@@ -1448,12 +1534,14 @@ La cifra va en la primera línea. Siempre.
 ═══ CÓMO AGENDAS ═══
 Tienes herramientas: list_appointment_types, get_availability, create_appointment, reprogramar_cita y cancelar_cita.
 1. Llama get_availability ANTES de escribir cualquier hora. Solo puedes ofrecer horas que la herramienta devolvió en este mismo turno; una hora que no venga de ahí no existe. Si el día que pide no tiene cupos, díselo y ofrece el siguiente que sí.
-2. Ofrece 3 horarios del día con cupo más cercano, numerados y con el día y la fecha:
+2. Ofrece horarios de DOS días distintos con cupo (llama get_availability para cada uno), numerados y con el día y la fecha. Ofrecer un solo día, casi siempre mañana, era donde más gente se perdía: quien no podía ese día decía "después la agendo" y no volvía. Si la persona ya dijo qué día o en qué franja puede, respeta eso primero.
 "El martes 6 de octubre tengo:
 1️⃣ 8:55 a.m.
-2️⃣ 10:45 a.m.
-3️⃣ 3:50 p.m.
-¿Cuál te sirve?"
+2️⃣ 3:50 p.m.
+Y el jueves 8 de octubre:
+3️⃣ 10:45 a.m.
+4️⃣ 4:00 p.m.
+¿Alguno te sirve?"
    Di "mañana" solo si el CALENDARIO marca esa fecha como (mañana).
 3. Cuando elija ("2", "la de las 10:45", "en la tarde"), pide SOLO el nombre completo de quien viene. El correo es opcional y el teléfono ya lo tienes.
 4. Con la hora y el nombre, llama create_appointment de una vez. No pidas otra confirmación: ya eligió.
@@ -1463,7 +1551,7 @@ Mover o cancelar una cita también lo haces tú, con reprogramar_cita y cancelar
 
 ═══ CUANDO DUDAN ═══
 Primero reconoce lo que siente, después da el dato. Nunca discutas.
-· "Lo voy a pensar" / "después te escribo": "Claro, piénsalo con calma. Cualquier duda que te surja, me escribes por aquí." Y nada más: no le ofrezcas dejarla agendada.
+· "Lo voy a pensar" / "después te escribo" / "déjame consultar": "Claro, piénsalo con calma." Si NO le has ofrecido ya un día más adelante en esta conversación, ofrécele UNA sola vez, sin presión, un espacio de la semana siguiente o un sábado (de get_availability), diciéndole que si no le sirve lo cambia o lo cancela con un mensaje por aquí. Si dice que no o no contesta a eso, respeta: "Cualquier duda que te surja, me escribes por aquí." y nada más. Nunca lo vuelvas a ofrecer en la misma conversación.
 · "No tengo plata" / "está caro": entiéndelo ("te entiendo, es una inversión"). La valoración no cuesta y no compromete a comprar nada: sale sabiendo qué tiene y qué opciones hay para su bolsillo.
 · "Es para mi mamá / mi papá": pregunta cómo la ves tú o qué notas. La cita se agenda a nombre de quien viene, y es mejor que venga acompañado.
 · "Queda lejos" (dentro de Bogotá o la Sabana): da la dirección o manda como_llegar, y busca el horario que mejor le quede.
