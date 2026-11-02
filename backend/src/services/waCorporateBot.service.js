@@ -24,6 +24,7 @@ const { PrismaClient } = require('@prisma/client');
 const Anthropic = require('@anthropic-ai/sdk');
 const { sendWhatsAppText, sendWhatsAppInteractiveButtons } = require('../notifications/channels/whatsapp');
 const booking = require('./professionalBooking.service');
+const horarioCampana = require('./horarioCampana');
 const retailService = require('./retail.service');
 const comercialService = require('./comercial.service');
 const config = require('../config');
@@ -226,6 +227,16 @@ async function cuposDelBeneficio() {
 }
 
 /**
+ * Cupos de un día para Aura: los de la agenda, menos las horas que una campaña
+ * deja fuera (ver horarioCampana.js). Todo lo que Aura ofrece o agenda pasa por
+ * aquí, para que la regla no dependa de que el modelo la recuerde.
+ */
+async function slotsAura(profileId, date, opts = {}) {
+  const out = await booking.computeSlotsForDay(profileId, date, opts);
+  return { ...out, slots: horarioCampana.filtrarSlots(date, out.slots) };
+}
+
+/**
  * El horario real del centro, leído de la agenda.
  *
  * Estaba escrito a mano en el prompt —"lunes a viernes de 8:00 a 6:00"— y no
@@ -376,7 +387,7 @@ const bookingToolImpls = {
   async get_availability(ctx, { date, appointmentTypeId }) {
     const profileId = ctx?.profileId || await retailProfileId();
     if (!profileId) return { error: 'Agenda interna no encontrada (falta seed o env).' };
-    const out = await booking.computeSlotsForDay(profileId, date, { appointmentTypeId });
+    const out = await slotsAura(profileId, date, { appointmentTypeId });
     // El día de la semana lo pone la herramienta. Cuando lo deducía el bot
     // ofrecía "el martes" y agendaba un jueves: le confirmó a un paciente
     // "martes 10 de septiembre" cuando el 10 era jueves.
@@ -387,6 +398,13 @@ const bookingToolImpls = {
     const { conversationId, waPhone, contactName } = ctx || {};
     const profileId = ctx?.profileId || await retailProfileId();
     if (!profileId) return { error: 'Agenda interna no encontrada (falta seed o env).' };
+
+    // La agenda acepta esa hora, pero la campaña puede no hacerlo (lunes en la
+    // mañana, antes de las 8 o después de las 4 en noviembre).
+    const [fechaCita, horaCita] = String(input.scheduledAt || '').split('T');
+    if (fechaCita && horaCita && !horarioCampana.horaPermitida(fechaCita, horaCita.slice(0, 5))) {
+      return { error: `Las ${horaCita.slice(0, 5)} del ${fechaLegible(`${fechaCita}T12:00:00`)} no se pueden agendar. Llama get_availability y ofrécele otras horas.` };
+    }
 
     // El teléfono lo tomamos del WA E.164 (573xxx). Reusamos como telefono.
     const res = await booking.createPublicAppointment(profileId, {
@@ -512,7 +530,7 @@ const bookingToolImpls = {
     if (!cita.rescheduleToken) return { error: 'Esta cita no se puede mover desde el chat. Dile que el equipo se la mueve y agrega [ESCALAR_HUMANO].' };
 
     const profileId = ctx?.profileId || await retailProfileId();
-    const { slots } = await booking.computeSlotsForDay(profileId, date, {});
+    const { slots } = await slotsAura(profileId, date, {});
     if (!(slots || []).some((s) => s.time === time)) {
       return { error: `Las ${time} del ${fechaLegible(`${date}T12:00:00`)} no están libres. Llama get_availability y ofrécele otras.` };
     }
@@ -798,7 +816,7 @@ async function proximosHorarios(profileId = null) {
   for (let i = 1; i <= 10; i++) {
     const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' })
       .format(new Date(Date.now() + i * 86400000));
-    const { slots } = await booking.computeSlotsForDay(pid, date, { appointmentTypeId: tipo.id });
+    const { slots } = await slotsAura(pid, date, { appointmentTypeId: tipo.id });
     const horas = (slots || []).map((s) => s.time);
     if (horas.length) {
       return {
@@ -1007,7 +1025,7 @@ async function pasoDelEmbudo({ conversationId, buttonId }) {
     const pid = await retailProfileId();
     const tipos = pid ? await booking.publicListTypes(pid) : [];
     const tipo = tipos.find((t) => /valoraci/i.test(t.nombre)) || tipos[0];
-    const { slots } = tipo ? await booking.computeSlotsForDay(pid, date, { appointmentTypeId: tipo.id }) : { slots: [] };
+    const { slots } = tipo ? await slotsAura(pid, date, { appointmentTypeId: tipo.id }) : { slots: [] };
     const ahoraBogota = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'short' }).format(new Date());
     const yaPaso = `${date} ${time}` <= ahoraBogota;
     if (yaPaso || !(slots || []).some((x) => x.time === time)) {
@@ -2480,6 +2498,11 @@ Retoma desde ahí con naturalidad. No repitas preguntas que ya le hiciste ni le 
       const horario = await horarioDelCentro(await retailProfileId());
       if (horario) {
         systemPrompt += `\n\n═══ HORARIO DE ATENCIÓN ═══\n${horario}\nEs el horario real de la agenda. Si te preguntan, di esto y nada más — los cupos concretos los da get_availability.\n═══════════════════`;
+      }
+      const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
+      const aviso = horarioCampana.avisoParaPrompt(hoy);
+      if (aviso) {
+        systemPrompt += `\n\n═══ HORARIO ESPECIAL DE CITAS ═══\n${aviso}\nEsto manda sobre el horario de atención de arriba cuando hables de citas en esas fechas.\n═══════════════════`;
       }
     } catch (e) {
       console.warn('[wa-bot] no pude leer el horario:', e.message);
