@@ -818,7 +818,7 @@ export default function Header() {
     <>
       {/* Pre-header strip — en móvil solo deja el WhatsApp corto a la derecha */}
       <Box sx={{
-        bgcolor: C.navy, color: '#fff',
+        bgcolor: '#141B3D', color: '#fff',
         fontFamily: '"Gotham", sans-serif',
         fontSize: '0.72rem', py: 0.75,
         pt: 'calc(env(safe-area-inset-top, 0px) + 6px)',
@@ -829,7 +829,7 @@ export default function Header() {
         }}>
           <Typography sx={{
             fontFamily: '"Gotham", sans-serif',
-            fontStyle: 'italic', fontSize: '0.78rem', color: C.oro,
+            fontStyle: 'italic', fontSize: '0.78rem', color: C.oroSuave,
             display: { xs: 'none', sm: 'block' },
           }}>
             Escucha. Conecta. Vive mejor.
@@ -872,10 +872,10 @@ export default function Header() {
         component="header"
         sx={{
           position: 'sticky', top: 0, zIndex: 1100,
-          bgcolor: scrolled ? 'rgba(250,251,254,0.92)' : C.blanco,
+          bgcolor: scrolled ? 'rgba(27,37,80,0.94)' : '#1B2550',
           backdropFilter: scrolled ? 'blur(14px)' : 'none',
-          color: C.navy,
-          borderBottom: `1px solid ${scrolled ? C.border : 'transparent'}`,
+          color: '#fff',
+          borderBottom: `1px solid ${scrolled ? 'rgba(157,184,255,0.18)' : 'transparent'}`,
           transition: 'background 0.3s ease, border-color 0.3s ease, padding 0.3s ease',
           py: scrolled ? 1 : 1.75,
         }}
@@ -887,7 +887,7 @@ export default function Header() {
             {/* LOGO */}
             <Box component={RouterLink} to="/"
               sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-              <Box component="img" src="/logo-oirconecta.png" alt="OírConecta"
+              <Box component="img" src="/logo-oirconecta-blanco.png" alt="OírConecta"
                 sx={{ height: { xs: 34, sm: scrolled ? 36 : 44 }, transition: 'height 0.3s ease', display: 'block' }} />
             </Box>
 
@@ -913,14 +913,15 @@ export default function Header() {
                         display: 'inline-flex', alignItems: 'center', gap: 1,
                         fontFamily: '"Gotham", sans-serif',
                         fontSize: '0.92rem', fontWeight: 600,
-                        color: C.navy, textDecoration: 'none',
+                        color: '#D5DDF0', textDecoration: 'none',
+                        '&:hover': { color: '#fff' },
                         px: 2, py: 1.5,
                         position: 'relative',
                         fontStyle: n.italic ? 'italic' : 'normal',
                         '&::after': {
                           content: '""', position: 'absolute',
                           left: 16, right: 16, bottom: 6, height: 2,
-                          bgcolor: C.navy,
+                          bgcolor: C.oroSuave,
                           transform: (active || open) ? 'scaleX(1)' : 'scaleX(0)',
                           transformOrigin: 'left',
                           transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
@@ -933,8 +934,8 @@ export default function Header() {
                         <Box component="span" sx={{
                           fontFamily: '"Gotham", sans-serif', fontSize: '0.55rem',
                           fontWeight: 700, letterSpacing: '0.15em',
-                          bgcolor: C.oro, color: C.navy,
-                          px: 0.75, py: 0.25, borderRadius: '4px',
+                          bgcolor: C.oro, color: '#fff',
+                          px: 0.75, py: 0.25, borderRadius: '999px',
                           textTransform: 'uppercase',
                         }}>{n.badge}</Box>
                       )}
@@ -947,38 +948,38 @@ export default function Header() {
             {/* RIGHT ACTIONS */}
             <Stack direction="row" spacing={{ xs: 0, sm: 1 }} alignItems="center" sx={{ ml: 'auto' }}>
               <IconButton onClick={() => setSearchOpen(true)} aria-label="Buscar (Cmd+K)"
-                sx={{ color: C.navy }}>
+                sx={{ color: '#fff' }}>
                 <SearchIcon />
               </IconButton>
               <IconButton
                 component={RouterLink}
                 to="/ecommerce/"
                 aria-label="Ir a la tienda"
-                sx={{ color: C.navy }}
+                sx={{ color: '#fff' }}
               >
                 <ShoppingBagOutlined />
               </IconButton>
               <Box
                 component={RouterLink}
-                to="/directorio/"
+                to="/agendar"
                 sx={{
                   display: { xs: 'none', md: 'inline-flex' },
                   alignItems: 'center', gap: 1,
-                  bgcolor: C.navy, color: '#fff',
+                  bgcolor: '#fff', color: '#1B2550',
                   fontFamily: '"Gotham", sans-serif',
                   fontSize: '0.875rem', fontWeight: 700,
-                  px: 2.5, py: 1.25, borderRadius: '6px',
+                  px: 2.75, py: 1.25, borderRadius: '999px',
                   textDecoration: 'none', letterSpacing: '0.02em',
-                  boxShadow: `0 6px 16px ${C.navy}22`,
+                  boxShadow: 'none',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    bgcolor: C.navyDark,
-                    boxShadow: `0 10px 22px ${C.navy}33`,
+                    bgcolor: '#D5DDF0',
+                    boxShadow: '0 10px 22px rgba(0,0,0,0.25)',
                     transform: 'translateY(-1px)',
                   },
                 }}
               >
-                Encontrar especialista
+                Agendar valoración
                 <ArrowForward sx={{ fontSize: 16 }} />
               </Box>
 
@@ -986,7 +987,7 @@ export default function Header() {
               <IconButton
                 onClick={() => setMobileOpen(true)}
                 aria-label="Abrir menú"
-                sx={{ color: C.navy, display: { xs: 'inline-flex', lg: 'none' } }}
+                sx={{ color: '#fff', display: { xs: 'inline-flex', lg: 'none' } }}
               >
                 <MenuIcon />
               </IconButton>

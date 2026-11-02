@@ -36,7 +36,7 @@ export default function CookieConsentBanner() {
         zIndex: 2000,
         bgcolor: '#fff',
         border: '1px solid rgba(39,47,80,0.12)',
-        borderRadius: '14px',
+        borderRadius: '24px',
         boxShadow: '0 10px 40px rgba(39,47,80,0.18)',
         p: { xs: 2.5, md: 3 },
       }}
@@ -69,7 +69,7 @@ export default function CookieConsentBanner() {
             onClick={reject}
             variant="outlined"
             sx={{
-              borderRadius: '10px', fontWeight: 600, textTransform: 'none',
+              borderRadius: '999px', fontWeight: 600, textTransform: 'none',
               borderColor: 'rgba(39,47,80,0.25)', color: '#272F50',
               '&:hover': { borderColor: '#272F50', bgcolor: 'rgba(39,47,80,0.04)' },
             }}
@@ -80,8 +80,8 @@ export default function CookieConsentBanner() {
             onClick={accept}
             variant="contained"
             sx={{
-              borderRadius: '10px', fontWeight: 700, textTransform: 'none',
-              background: 'linear-gradient(135deg,#4054B2,#0d7a5f)',
+              borderRadius: '999px', fontWeight: 700, textTransform: 'none',
+              background: '#4C7DF0',
               boxShadow: '0 4px 14px rgba(64,84,178,0.28)',
               '&:hover': { boxShadow: '0 6px 20px rgba(64,84,178,0.38)' },
             }}

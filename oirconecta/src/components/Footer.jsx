@@ -54,7 +54,7 @@ const Footer = () => (
     <BannerFooter />
     <Box
       sx={{
-        background: 'linear-gradient(180deg, #272F50 0%, #1a1f38 100%)',
+        background: 'linear-gradient(180deg, #1B2550 0%, #141B3D 100%)',
         color: '#fff',
         pt: { xs: 8, md: 10 },
         pb: 0,
@@ -73,7 +73,7 @@ const Footer = () => (
       <Box sx={{
         position: 'absolute', bottom: 80, left: -80,
         width: 280, height: 280, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(201,168,106,0.12) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(157,184,255,0.12) 0%, transparent 70%)',
         filter: 'blur(60px)', pointerEvents: 'none',
       }} />
 
@@ -83,7 +83,7 @@ const Footer = () => (
           sx={{
             mb: { xs: 5, md: 7 },
             p: { xs: 3, md: 4 },
-            borderRadius: '10px',
+            borderRadius: '24px',
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
             alignItems: { xs: 'flex-start', md: 'center' },
@@ -166,11 +166,11 @@ const Footer = () => (
                     color: 'rgba(255,255,255,0.60)',
                     background: 'rgba(255,255,255,0.06)',
                     border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '6px',
+                    borderRadius: '999px',
                     width: 40, height: 40,
                     transition: 'all 0.25s ease',
                     '&:hover': {
-                      color: '#272F50',
+                      color: '#fff',
                       background: '#4C7DF0',
                       border: '1px solid #4C7DF0',
                       transform: 'translateY(-3px)',

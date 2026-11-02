@@ -57,7 +57,7 @@ export function buildTheme(createThemeFn) {
         oro:       OC_COLORS.oroSuave,
       },
       background: {
-        default: OC_COLORS.blancoCalido,  // Blanco cálido #FAFBFE
+        default: '#F6F8FD',  // Fondo azul muy claro (diseño 2027)
         paper: '#ffffff',
       },
       text: {
@@ -233,8 +233,8 @@ export function buildTheme(createThemeFn) {
         defaultProps: { disableElevation: true },
         styleOverrides: {
           root: {
-            borderRadius: 6,
-            padding: '10px 22px',
+            borderRadius: 999,
+            padding: '11px 24px',
             fontWeight: 700,
             textTransform: 'none',
             fontSize: '0.9375rem',
@@ -244,17 +244,17 @@ export function buildTheme(createThemeFn) {
             overflow: 'hidden',
           },
           contained: {
-            background: 'linear-gradient(135deg, #5A6FD6 0%, #4054B2 60%, #1B2550 100%)',
+            background: '#4C7DF0',
             color: '#ffffff',
-            boxShadow: '0 4px 16px rgba(64,84,178,0.30), 0 1px 4px rgba(64,84,178,0.18), inset 0 1px 0 rgba(255,255,255,0.18)',
+            boxShadow: '0 8px 22px rgba(76,125,240,0.28)',
             '&:hover': {
-              background: 'linear-gradient(135deg, #109070 0%, #0a6a54 60%, #2E3E8F 100%)',
-              boxShadow: '0 8px 28px rgba(64,84,178,0.40), 0 2px 8px rgba(64,84,178,0.22)',
+              background: '#4054B2',
+              boxShadow: '0 12px 28px rgba(64,84,178,0.35)',
               transform: 'translateY(-1px)',
             },
-            '&:active': { transform: 'translateY(0)', boxShadow: '0 2px 8px rgba(64,84,178,0.28)' },
-            '&:focus-visible': { outline: '2px solid #6ee7c8', outlineOffset: 2 },
-            '&.Mui-disabled': { background: '#cbd5d1', color: '#7a8a85' },
+            '&:active': { transform: 'translateY(0)' },
+            '&:focus-visible': { outline: '3px solid #9DB8FF', outlineOffset: 3 },
+            '&.Mui-disabled': { background: '#C3CDE6', color: '#6B7280' },
           },
           outlined: {
             borderWidth: '1.5px',
@@ -273,15 +273,15 @@ export function buildTheme(createThemeFn) {
             color: '#4054B2',
             '&:hover': { backgroundColor: 'rgba(64,84,178,0.07)' },
           },
-          sizeLarge: { padding: '13px 28px', fontSize: '1rem', borderRadius: 14 },
-          sizeSmall: { padding: '7px 16px', fontSize: '0.875rem', borderRadius: 10 },
+          sizeLarge: { padding: '15px 30px', fontSize: '1rem', borderRadius: 999 },
+          sizeSmall: { padding: '7px 16px', fontSize: '0.875rem', borderRadius: 999 },
         },
       },
 
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 6,
+            borderRadius: 24,
             background: 'rgba(255,255,255,0.82)',
             backdropFilter: 'blur(20px) saturate(1.8)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
