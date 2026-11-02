@@ -677,7 +677,7 @@ export default function DirectorioProfesionalPage() {
               <Box
                 component="img"
                 src={bannerUrl || photo}
-                alt=""
+                alt={name ? `${name} — profesional de la audición en OírConecta` : 'Profesional de la audición en OírConecta'}
                 sx={{
                   position: 'absolute',
                   inset: 0,

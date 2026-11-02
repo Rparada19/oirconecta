@@ -178,7 +178,7 @@ function OrbitCards() {
             willChange: 'transform, opacity',
             '&:focus-visible': { outline: '3px solid #9DB8FF', outlineOffset: 3 },
           }}>
-          <Box component="img" src={m.img} alt="" loading="lazy" sx={{ width: '100%', height: small ? 84 : 116, objectFit: 'cover', borderRadius: small ? '10px' : '12px', display: 'block' }} />
+          <Box component="img" src={m.img} alt={m.text} loading="lazy" sx={{ width: '100%', height: small ? 84 : 116, objectFit: 'cover', borderRadius: small ? '10px' : '12px', display: 'block' }} />
           <Typography component="span" sx={{ display: 'block', fontFamily: FONT, fontSize: small ? 10.5 : 12, fontWeight: 700, color: OC.deep, lineHeight: 1.35, m: '7px 5px 3px' }}>{m.text}</Typography>
           {active === i && !muted && (
             <Box component="span" aria-hidden="true" sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'flex-end', gap: '2px', height: 14, bgcolor: 'rgba(27,37,80,.75)', borderRadius: 999, px: .75, py: .5 }}>
