@@ -468,198 +468,128 @@ function MobileMenu({ open, onClose, navigate, onOpenSearch }) {
     { key: 'contacto', label: 'Contacto', to: '/contacto/' },
   ];
 
+  const DEEP = '#1B2550';
+  const SKY = '#9DB8FF';
+  const MIST = '#C3CDE6';
+  const LINE = 'rgba(157,184,255,0.16)';
+  const F = '"Gotham", sans-serif';
+
   return (
-    <Box sx={{
-      position: 'fixed', inset: 0, zIndex: 1500,
-      bgcolor: C.cremaCalida, color: C.navy,
-      transform: open ? 'translateY(0)' : 'translateY(-100%)',
-      transition: 'transform 0.45s cubic-bezier(0.7,0,0.2,1)',
-      display: 'flex', flexDirection: 'column',
-    }}>
-      {/* TOP bar fija — logo + cerrar */}
-      <Box sx={{
-        flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        px: 2.5, py: 2, borderBottom: `1px solid ${C.border}`,
-        pt: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+    <>
+      {/* Fondo oscurecido: en tablet/desktop el menú es un panel lateral */}
+      <Box onClick={onClose} aria-hidden sx={{
+        position: 'fixed', inset: 0, zIndex: 1499,
+        bgcolor: 'rgba(20,27,61,0.55)', backdropFilter: 'blur(2px)',
+        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+        transition: 'opacity 0.3s ease',
+      }} />
+      <Box role="dialog" aria-modal="true" aria-label="Menú" sx={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 1500,
+        width: { xs: '100%', sm: 400 },
+        bgcolor: DEEP, color: '#fff',
+        transform: open ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 0.4s cubic-bezier(0.7,0,0.2,1)',
+        display: 'flex', flexDirection: 'column',
+        boxShadow: open ? '-20px 0 60px rgba(0,0,0,0.35)' : 'none',
       }}>
-        <Box component={RouterLink} to="/" onClick={onClose}
-          sx={{ display: 'flex', alignItems: 'center' }}>
-          <Box component="img" src="/logo-oirconecta.png" alt="OírConecta" sx={{ height: 32 }} />
-        </Box>
-        <IconButton onClick={onClose} aria-label="Cerrar menú"
-          sx={{ color: C.navy, width: 44, height: 44 }}>
-          <CloseIcon />
-        </IconButton>
-      </Box>
-
-      {/* QUICK ACCESS chip strip — search · contacto · WhatsApp */}
-      <Box sx={{
-        flexShrink: 0, px: 2.5, py: 2,
-        borderBottom: `1px solid ${C.border}`,
-        bgcolor: '#fff',
-      }}>
-        <Stack direction="row" spacing={1.25}>
-          <Box
-            onClick={onOpenSearch}
-            sx={{
-              flex: 1, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 1.25,
-              bgcolor: `${C.arena}55`, borderRadius: '8px',
-              px: 1.5, py: 1.25, minHeight: 44,
-              fontFamily: '"Gotham", sans-serif', fontSize: '0.875rem', color: C.gris,
-            }}
-          >
-            <SearchIcon sx={{ fontSize: 18 }} /> Buscar…
-          </Box>
-          <Box
-            component="a"
-            href={getWhatsAppHref()}
-            target="_blank" rel="noopener noreferrer"
-            sx={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 44, height: 44, borderRadius: '8px',
-              bgcolor: '#25D366', color: '#fff', textDecoration: 'none',
-            }}
-            aria-label="Contactar por WhatsApp"
-          >
-            <WhatsApp />
-          </Box>
-        </Stack>
-      </Box>
-
-      {/* NAV scrollable */}
-      <Box sx={{
-        flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch',
-        px: 2.5, py: 3,
-      }}>
-        <Typography sx={{
-          fontFamily: '"Gotham", sans-serif', fontSize: '0.65rem', fontWeight: 700,
-          letterSpacing: '0.24em', textTransform: 'uppercase', color: C.gris, mb: 1.5,
+        <Box sx={{
+          flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          px: 2.5, pb: 1.5, pt: 'calc(env(safe-area-inset-top, 0px) + 14px)',
         }}>
-          Navegar
-        </Typography>
+          <Box component={RouterLink} to="/" onClick={onClose} sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box component="img" src="/logo-oirconecta-blanco.png" alt="OírConecta" sx={{ height: 28 }} />
+          </Box>
+          <IconButton onClick={onClose} aria-label="Cerrar menú" sx={{ color: '#fff', width: 44, height: 44 }}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
 
-        <Stack spacing={0}>
+        <Box sx={{ flexShrink: 0, px: 2.5, pb: 2 }}>
+          <Stack direction="row" spacing={1}>
+            <Box component="button" type="button" onClick={onOpenSearch} sx={{
+              flex: 1, cursor: 'pointer', border: `1px solid ${LINE}`,
+              display: 'flex', alignItems: 'center', gap: 1.25,
+              bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 999,
+              px: 2, minHeight: 44, color: MIST, fontFamily: F, fontSize: '0.9rem',
+            }}>
+              <SearchIcon sx={{ fontSize: 18 }} /> Buscar
+            </Box>
+            <Box component="a" href={getWhatsAppHref()} target="_blank" rel="noopener noreferrer"
+              aria-label="Contactar por WhatsApp" sx={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 44, height: 44, borderRadius: 999, bgcolor: '#25D366', color: '#fff',
+              }}>
+              <WhatsApp sx={{ fontSize: 22 }} />
+            </Box>
+          </Stack>
+        </Box>
+
+        <Box component="nav" aria-label="Menú principal" sx={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', px: 2.5, pb: 3 }}>
           {SECTIONS.map((s) => {
             const isOpen = expanded === s.key;
             const hasChildren = !!s.children?.length;
             return (
-              <Box key={s.key}>
-                <Box
-                  onClick={() => {
-                    if (hasChildren) setExpanded(isOpen ? null : s.key);
-                    else go(s.to);
-                  }}
+              <Box key={s.key} sx={{ borderBottom: `1px solid ${LINE}` }}>
+                <Box component="button" type="button" aria-expanded={hasChildren ? isOpen : undefined}
+                  onClick={() => { if (hasChildren) setExpanded(isOpen ? null : s.key); else go(s.to); }}
                   sx={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    py: 1.75, cursor: 'pointer', minHeight: 48,
-                    borderBottom: `1px solid ${C.border}`,
-                  }}
-                >
-                  <Typography sx={{
-                    fontFamily: '"Gotham", sans-serif',
-                    fontSize: { xs: '1.625rem', sm: '1.875rem' }, fontWeight: 500,
-                    color: C.navy,
-                    fontStyle: s.key === 'simulador' ? 'italic' : 'normal',
-                    lineHeight: 1.1, display: 'inline-flex', alignItems: 'center', gap: 1.25,
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    minHeight: 54, py: 1, px: 0, border: 'none', bgcolor: 'transparent', cursor: 'pointer',
+                    color: '#fff', fontFamily: F, fontSize: '1.0625rem', fontWeight: 700, textAlign: 'left',
                   }}>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
                     {s.label}
                     {s.key === 'simulador' && (
-                      <Box component="span" sx={{
-                        fontFamily: '"Gotham", sans-serif', fontSize: '0.55rem',
-                        fontWeight: 700, letterSpacing: '0.15em',
-                        bgcolor: C.oro, color: C.navy, px: 0.85, py: 0.3, borderRadius: '4px',
-                        verticalAlign: 'middle', lineHeight: 1,
-                      }}>NUEVO</Box>
+                      <Box component="span" sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', bgcolor: '#4C7DF0', color: '#fff', px: 0.9, py: 0.35, borderRadius: 999 }}>NUEVO</Box>
                     )}
-                  </Typography>
+                  </Box>
                   {hasChildren && (
-                    <Box sx={{
-                      width: 32, height: 32, display: 'flex',
-                      alignItems: 'center', justifyContent: 'center',
-                      color: C.gris,
-                      transform: isOpen ? 'rotate(180deg)' : 'rotate(0)',
-                      transition: 'transform 0.3s ease',
-                    }}>
-                      <ExpandMore />
-                    </Box>
+                    <ExpandMore sx={{ color: SKY, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s ease' }} />
                   )}
                 </Box>
                 {hasChildren && isOpen && (
-                  <Stack spacing={0} sx={{
-                    pl: 1.5, pb: 1.5,
-                    animation: 'oc-fade 0.3s ease',
-                    '@keyframes oc-fade': { from: { opacity: 0, transform: 'translateY(-6px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
-                  }}>
+                  <Box sx={{ pb: 1.5, display: 'grid', gridTemplateColumns: s.key === 'directorio' || s.key === 'blog' ? '1fr' : '1fr 1fr', columnGap: 1 }}>
                     {s.children.map((c) => (
-                      <Box key={c.to} onClick={() => go(c.to)} sx={{
-                        py: 1.25, cursor: 'pointer', minHeight: 40,
-                        fontFamily: '"Gotham", sans-serif', fontSize: '0.95rem',
-                        color: C.gris,
-                        '&:active': { color: C.verde, transform: 'translateX(2px)' },
-                        transition: 'all 0.15s ease',
+                      <Box key={c.to} component="button" type="button" onClick={() => go(c.to)} sx={{
+                        minHeight: 40, py: 0.75, px: 0, border: 'none', bgcolor: 'transparent', cursor: 'pointer',
+                        textAlign: 'left', fontFamily: F, fontSize: '0.95rem', color: MIST,
+                        '&:hover, &:active': { color: '#fff' },
                       }}>
                         {c.label}
                       </Box>
                     ))}
-                  </Stack>
+                  </Box>
                 )}
               </Box>
             );
           })}
-        </Stack>
 
-        {/* Utility links al final */}
-        <Stack spacing={0.5} sx={{ mt: 4, pt: 3, borderTop: `1px solid ${C.border}` }}>
-          {[
-            { label: 'Soy profesional · únete a la red', to: '/registro-profesional' },
-            { label: 'Iniciar sesión profesional', to: '/login-directorio' },
-          ].map((u) => (
-            <Box key={u.to} onClick={() => go(u.to)} sx={{
-              py: 1.25, cursor: 'pointer', minHeight: 40,
-              fontFamily: '"Gotham", sans-serif', fontSize: '0.875rem',
-              color: C.gris,
-            }}>
-              → {u.label}
-            </Box>
-          ))}
-        </Stack>
+          <Stack spacing={0} sx={{ mt: 2.5 }}>
+            {[
+              { label: 'Soy profesional · únete a la red', to: '/registro-profesional' },
+              { label: 'Iniciar sesión profesional', to: '/login-directorio' },
+            ].map((u) => (
+              <Box key={u.to} component="button" type="button" onClick={() => go(u.to)} sx={{
+                minHeight: 40, py: 0.75, px: 0, border: 'none', bgcolor: 'transparent', cursor: 'pointer',
+                textAlign: 'left', fontFamily: F, fontSize: '0.875rem', color: SKY,
+              }}>
+                {u.label} →
+              </Box>
+            ))}
+          </Stack>
+        </Box>
 
-        <Typography sx={{
-          fontFamily: '"Gotham", sans-serif', fontStyle: 'italic',
-          fontSize: '0.95rem', color: `${C.navy}66`, mt: 4, mb: 12, textAlign: 'center',
-        }}>
-          Escucha. Conecta. Vive mejor.
-        </Typography>
-      </Box>
-
-      {/* CTA fija al fondo */}
-      <Box sx={{
-        flexShrink: 0,
-        position: 'sticky', bottom: 0,
-        bgcolor: '#fff',
-        borderTop: `1px solid ${C.border}`,
-        px: 2.5, py: 2,
-        pb: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
-        boxShadow: `0 -8px 20px ${C.navy}10`,
-      }}>
-        <Box
-          component={RouterLink}
-          to="/directorio/" onClick={onClose}
-          sx={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.25,
-            bgcolor: C.navy, color: '#fff', borderRadius: '8px',
-            px: 3, py: 1.85, textDecoration: 'none',
-            fontFamily: '"Gotham", sans-serif', fontSize: '0.95rem', fontWeight: 700,
-            letterSpacing: '0.02em',
-            boxShadow: `0 8px 20px ${C.navy}22`,
-          }}
-        >
-          Encontrar especialista <ArrowForward sx={{ fontSize: 18 }} />
+        <Box sx={{ flexShrink: 0, px: 2.5, pt: 1.5, pb: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', borderTop: `1px solid ${LINE}` }}>
+          <Box component={RouterLink} to="/agendar" onClick={onClose} sx={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+            bgcolor: '#fff', color: DEEP, borderRadius: 999, minHeight: 50,
+            textDecoration: 'none', fontFamily: F, fontSize: '0.95rem', fontWeight: 700,
+          }}>
+            Agendar valoración sin costo <ArrowForward sx={{ fontSize: 18 }} />
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </>
   );
 }
 
