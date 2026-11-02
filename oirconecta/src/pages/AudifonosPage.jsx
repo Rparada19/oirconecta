@@ -9,6 +9,7 @@ import {
   PageHero, SectionEyebrow, SectionTitle, EditorialIntro,
   PullQuote, CTAArrowLink, C,
 } from '../components/editorial/EditorialKit';
+import { FormatAdvisor } from '../components/editorial/DecisionAdvisors';
 import { useReveal } from '../hooks/useReveal';
 
 const MARCAS = [
@@ -181,6 +182,8 @@ export default function AudifonosPage() {
         ctaSecondary={{ label: 'Probar el simulador', to: '/ponte-en-sus-oidos' }}
       />
 
+      <FormatAdvisor />
+
       {/* TIPOS */}
       <Box component="section" sx={{ bgcolor: C.cremaCalida, py: { xs: 8, md: 14 } }}>
         <Container maxWidth="lg">
@@ -220,7 +223,7 @@ export default function AudifonosPage() {
       </Box>
 
       {/* MARCAS GRID */}
-      <Box component="section" sx={{ bgcolor: C.blanco, py: { xs: 7, md: 12 } }}>
+      <Box component="section" id="marcas" sx={{ bgcolor: C.blanco, py: { xs: 7, md: 12 }, scrollMarginTop: 90 }}>
         <Container maxWidth="xl">
           <Box sx={{
             display: 'grid', gridTemplateColumns: { xs: '1fr', md: '5fr 7fr' },

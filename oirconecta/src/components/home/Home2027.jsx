@@ -46,7 +46,7 @@ export function Pill({ to, href, children, variant = 'bright', sx }) {
     ghost: { color: '#fff', border: '1.5px solid rgba(255,255,255,.35)', '&:hover': { borderColor: '#fff' } },
     ghostDark: { color: OC.deep, border: `1.5px solid ${OC.line}`, '&:hover': { borderColor: OC.deep } },
   }[variant];
-  const linkProps = to ? { component: RouterLink, to } : { component: 'a', href, target: '_blank', rel: 'noopener noreferrer' };
+  const linkProps = to ? { component: RouterLink, to } : href?.startsWith('#') ? { component: 'a', href } : { component: 'a', href, target: '_blank', rel: 'noopener noreferrer' };
   return (
     <Box {...linkProps} sx={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 48,

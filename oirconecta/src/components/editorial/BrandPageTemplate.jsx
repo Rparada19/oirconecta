@@ -1,377 +1,57 @@
 /**
- * BrandPageTemplate — Plantilla editorial compartida para las 16 páginas de
- * marca (13 audífonos + 3 implantes). Cada página solo pasa data; el template
- * renderiza con el sistema de diseño OírConecta editorial.
- *
- * Props:
- *   brand: {
- *     nombre: 'Widex',
- *     logo: '/logos/marcas/Widex-logo.jpg',
- *     eslogan: 'Tecnología PureSound™',
- *     descripcion: '...',
- *     color: '#1A1A1A',      // color signature de la marca
- *     stats: [{ value: '4.8', label: 'Rating' }, ...]
- *   }
- *   productos: [{ nombre, categoria, descripcion, caracteristicas[], imagen? }]
- *   tecnologias: [{ Icon, titulo, descripcion }]
- *   categoria: 'audifonos' | 'implantes'   (para breadcrumb)
- *   seoTitle, seoDescription, canonical
+ * BrandPageTemplate — Plantilla compartida para las 16 páginas de marca
+ * (13 de audífonos + 3 de implantes). Diseño 2027: hero azul profundo y
+ * herramientas de decisión (buscador por necesidad, comparador, guía de
+ * formatos y preguntas para la cita). Cada página solo pasa data.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Box, Container, Typography, Grid, Stack } from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { ArrowForward, CheckCircleOutline } from '@mui/icons-material';
+import { Box, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import { ArrowForward, CheckCircleOutline, Check, Remove } from '@mui/icons-material';
 import Header from '../Header';
 import Footer from '../Footer';
-import {
-  SectionEyebrow, SectionTitle, CTAArrowLink, C,
-} from './EditorialKit';
-import { useReveal } from '../../hooks/useReveal';
-import { Swoosh } from '../brand/BrandMark';
+import { C } from './EditorialKit';
 import BrandLogo, { isBrand } from '../profesional/BrandLogo';
 import { articulosDeMarca } from '../../data/articulosPorMarca';
+import { OC, Pill, Eyebrow, FinalCta } from '../home/Home2027';
+import { NEEDS, traitsOf, scoreProducts, STYLE_GUIDE, QUESTIONS } from './brandDecision';
 
-function BrandHero({ brand, productosCount }) {
-  const text = useReveal({ threshold: 0.1 });
-  const card = useReveal({ threshold: 0.15 });
+const FONT = '"Gotham", "Helvetica", "Arial", sans-serif';
+const wrap = { maxWidth: 1200, mx: 'auto', px: { xs: 2, md: 4 } };
+const h2 = { fontFamily: FONT, fontSize: { xs: 28, md: 38 }, fontWeight: 900, lineHeight: 1.1, color: OC.text, textWrap: 'balance', m: 0 };
+const lead = { fontFamily: FONT, fontSize: 16, lineHeight: 1.6, color: OC.muted, maxWidth: 620 };
 
-  const stats = brand.stats || [
-    { value: brand.rating || '—', label: 'Rating' },
-    { value: String(productosCount).padStart(2, '0'), label: 'Modelos' },
-  ];
+/* Silueta del formato: ilustra el estilo, no un modelo exacto. */
+function StyleGlyph({ categoria, color = OC.blue }) {
+  const c = (categoria || '').toLowerCase();
+  let shape;
+  if (c === 'bte' || c.includes('procesador')) {
+    shape = <><path d="M52 18c14 0 22 10 22 24v26c0 10-7 16-15 16h-8c-6 0-10-5-10-11V30c0-7 4-12 11-12z" fill={color} /><path d="M50 22c-12 2-18 14-17 28" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" /><circle cx="33" cy="52" r="5" fill={color} opacity=".7" /></>;
+  } else if (c === 'ric') {
+    shape = <><path d="M56 16c11 0 18 8 18 19v20c0 8-5 13-12 13h-5c-5 0-9-4-9-9V25c0-5 3-9 8-9z" fill={color} /><path d="M52 24c-14 4-20 18-18 34" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" /><ellipse cx="34" cy="62" rx="6" ry="7" fill={color} opacity=".75" /></>;
+  } else if (c === 'itc' || c === 'cic' || c === 'iic') {
+    const s = c === 'itc' ? 1 : 0.78;
+    shape = <g transform={`translate(50 46) scale(${s}) translate(-50 -46)`}><path d="M34 34c6-10 26-12 34-2 7 9 3 24-8 28l-12 4c-9 3-18-4-18-13 0-6 1-12 4-17z" fill={color} /><circle cx="46" cy="44" r="4" fill="#fff" opacity=".6" /></g>;
+  } else if (c.includes('off-the-ear')) {
+    shape = <><circle cx="50" cy="46" r="24" fill={color} /><circle cx="50" cy="46" r="11" fill="#fff" opacity=".35" /></>;
+  } else if (c.includes('ósea') || c.includes('osea')) {
+    shape = <><rect x="34" y="28" width="32" height="38" rx="10" fill={color} /><circle cx="50" cy="47" r="6" fill="#fff" opacity=".5" /><path d="M22 47h8M70 47h8" stroke={color} strokeWidth="3" strokeLinecap="round" /></>;
+  } else {
+    shape = <><circle cx="50" cy="46" r="18" fill={color} /><path d="M50 64c0 10 6 14 14 16" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" /></>;
+  }
+  return <svg viewBox="0 0 100 92" width="100%" height="100%" aria-hidden="true">{shape}</svg>;
+}
 
+function SectionHead({ eyebrow, title, text, light }) {
   return (
-    <Box component="section" sx={{
-      position: 'relative', overflow: 'hidden',
-      bgcolor: C.blanco,
-      pt: { xs: 13, md: 15 }, pb: { xs: 7, md: 11 },
-    }}>
-      {/* Swoosh signature */}
-      <Box aria-hidden sx={{
-        position: 'absolute', top: '8%', left: -120,
-        width: { xs: 480, md: 720 }, opacity: 0.05, pointerEvents: 'none',
-        transform: 'rotate(-8deg)',
-      }}>
-        <Swoosh width="100%" color={C.navy} accent={brand.color} />
-      </Box>
-      {/* Halo color marca arriba derecha */}
-      <Box aria-hidden sx={{
-        position: 'absolute', top: -160, right: -160, width: 480, height: 480,
-        borderRadius: '50%',
-        background: `radial-gradient(circle, ${brand.color}1f 0%, transparent 70%)`,
-        filter: 'blur(80px)', pointerEvents: 'none',
-      }} />
-
-      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
-        <Grid container spacing={{ xs: 5, md: 8 }} alignItems="center">
-          {/* Texto */}
-          <Grid item xs={12} md={7}>
-            <Box ref={text.ref} sx={{
-              opacity: text.visible ? 1 : 0,
-              transform: text.visible ? 'translateY(0)' : 'translateY(24px)',
-              transition: 'all 0.9s cubic-bezier(0.2,0.7,0.2,1)',
-            }}>
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
-                <Box component={RouterLink} to="/" sx={{
-                  fontFamily: '"Gotham", sans-serif', fontSize: '0.78rem', color: C.gris,
-                  textDecoration: 'none', '&:hover': { color: C.navy },
-                }}>Inicio</Box>
-                <Typography sx={{ color: C.grisClaro, fontSize: '0.78rem' }}>/</Typography>
-                <Box component={RouterLink} to="/audifonos/" sx={{
-                  fontFamily: '"Gotham", sans-serif', fontSize: '0.78rem', color: C.gris,
-                  textDecoration: 'none', '&:hover': { color: C.navy },
-                }}>Audífonos</Box>
-                <Typography sx={{ color: C.grisClaro, fontSize: '0.78rem' }}>/</Typography>
-                <Typography sx={{
-                  fontFamily: '"Gotham", sans-serif', fontSize: '0.78rem',
-                  fontWeight: 700, color: C.navy,
-                }}>{brand.nombre}</Typography>
-              </Stack>
-
-              <Stack direction="row" alignItems="center" spacing={1.75} sx={{ mb: 4 }}>
-                <Box sx={{ width: 32, height: 2, bgcolor: brand.color }} />
-                <Typography sx={{
-                  fontFamily: '"Gotham", sans-serif',
-                  fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.24em',
-                  textTransform: 'uppercase', color: brand.color,
-                }}>
-                  Marca · {brand.nombre}
-                </Typography>
-              </Stack>
-
-              <Typography component="h1" sx={{
-                fontFamily: '"Gotham", sans-serif',
-                fontSize: { xs: '2.75rem', sm: '3.5rem', md: '5rem', lg: '5.75rem' },
-                fontWeight: 500, lineHeight: 0.98,
-                letterSpacing: '-0.025em',
-                color: C.navy, mb: 2,
-              }}>
-                {brand.nombre}
-                <Box component="span" sx={{
-                  display: 'block',
-                  fontFamily: '"Gotham", sans-serif',
-                  fontStyle: 'italic', color: brand.color,
-                  fontSize: { xs: '1.5rem', md: '2.5rem' }, fontWeight: 500,
-                  lineHeight: 1, mt: 2, letterSpacing: '-0.015em',
-                }}>
-                  — {brand.eslogan}
-                </Box>
-              </Typography>
-
-              <Typography sx={{
-                fontFamily: '"Gotham", sans-serif',
-                fontSize: { xs: '1.0625rem', md: '1.1875rem' },
-                color: C.gris, lineHeight: 1.6, mb: 4.5, maxWidth: 600,
-              }}>
-                {brand.descripcion}
-              </Typography>
-
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={4} alignItems={{ sm: 'center' }}>
-                <Box
-                  component={RouterLink}
-                  to={`/contacto?asunto=${encodeURIComponent(`Solicitud de información - ${brand.nombre}`)}`}
-                  sx={{
-                    display: 'inline-flex', alignItems: 'center', gap: 1.25,
-                    fontFamily: '"Gotham", sans-serif',
-                    fontSize: '0.95rem', fontWeight: 700,
-                    bgcolor: C.navy, color: '#fff',
-                    px: 3.5, py: 1.85, borderRadius: '6px',
-                    textDecoration: 'none', letterSpacing: '0.02em',
-                    boxShadow: `0 10px 28px ${C.navy}33`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      bgcolor: C.navyDark, transform: 'translateY(-2px)',
-                      boxShadow: `0 14px 32px ${C.navy}44`,
-                    },
-                  }}
-                >
-                  Solicitar información
-                  <ArrowForward sx={{ fontSize: 18 }} />
-                </Box>
-                <CTAArrowLink to="/directorio/listado" label="Buscar audiólogo cerca" />
-              </Stack>
-            </Box>
-          </Grid>
-
-          {/* Card visual marca */}
-          <Grid item xs={12} md={5}>
-            <Box ref={card.ref} sx={{
-              opacity: card.visible ? 1 : 0,
-              transform: card.visible ? 'translateY(0)' : 'translateY(28px)',
-              transition: 'all 1s cubic-bezier(0.2,0.7,0.2,1) 0.15s',
-            }}>
-              <Box sx={{
-                borderRadius: '14px', overflow: 'hidden',
-                bgcolor: '#fff',
-                border: `1px solid ${C.border}`,
-                boxShadow: `0 24px 60px ${C.navy}1a`,
-                p: { xs: 3, md: 3.5 },
-              }}>
-                {/* Logo de marca — librería interna React-SVG.
-                    Fondo blanco (antes crema) para no chocar con los azules y rojos
-                    de varias marcas. */}
-                <Box sx={{
-                  bgcolor: '#fff',
-                  borderRadius: '10px', p: 3.5, mb: 3,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  minHeight: 120,
-                  border: '1px solid #eef0f2',
-                  borderLeft: `4px solid ${brand.color}`,
-                }}>
-                  {isBrand(brand.nombre) ? (
-                    <BrandLogo brand={brand.nombre} height={64} layout="row" />
-                  ) : (
-                    <Box component="img" src={brand.logo} alt={brand.nombre}
-                      sx={{ maxHeight: 72, maxWidth: '85%', objectFit: 'contain' }}
-                    />
-                  )}
-                </Box>
-
-                {/* Stats */}
-                <Grid container spacing={1.5}>
-                  {stats.map((s) => (
-                    <Grid item xs={6} key={s.label}>
-                      <Box sx={{
-                        borderRadius: '8px', p: 1.75,
-                        bgcolor: `${brand.color}08`,
-                        border: `1px solid ${brand.color}22`,
-                        textAlign: 'center',
-                      }}>
-                        <Typography sx={{
-                          fontFamily: '"Gotham", sans-serif',
-                          fontSize: '1.5rem', fontWeight: 600,
-                          color: C.navy, lineHeight: 1, mb: 0.5,
-                          letterSpacing: '-0.02em',
-                        }}>
-                          {s.value}
-                        </Typography>
-                        <Typography sx={{
-                          fontFamily: '"Gotham", sans-serif',
-                          fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em',
-                          textTransform: 'uppercase', color: C.gris,
-                        }}>
-                          {s.label}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-            </Box>
-          </Grid>
-        </Grid>
-      </Container>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxWidth: 680 }}>
+      <Eyebrow light={light}>{eyebrow}</Eyebrow>
+      <Typography component="h2" sx={{ ...h2, color: light ? '#fff' : OC.text }}>{title}</Typography>
+      {text && <Typography sx={{ ...lead, color: light ? OC.mist : OC.muted }}>{text}</Typography>}
     </Box>
   );
 }
-
-function ProductoCard({ producto, brand, n, delay }) {
-  const { ref, visible } = useReveal({ threshold: 0.18 });
-  return (
-    <Box ref={ref} sx={{
-      bgcolor: '#fff',
-      border: `1px solid ${C.border}`,
-      borderRadius: '12px', p: { xs: 3, md: 3.5 },
-      height: '100%',
-      display: 'flex', flexDirection: 'column',
-      position: 'relative',
-      opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0)' : 'translateY(24px)',
-      transition: `all 0.85s cubic-bezier(0.2,0.7,0.2,1) ${delay}s`,
-      '&:hover': {
-        borderColor: brand.color,
-        transform: 'translateY(-6px)',
-        boxShadow: `0 24px 48px ${C.navy}1a`,
-      },
-      '&:hover .oc-prod-media img': { transform: 'scale(1.06) translateY(-4px)' },
-    }}>
-      {producto.destacado && (
-        <Box sx={{
-          position: 'absolute', top: 16, right: 16, zIndex: 1,
-          bgcolor: brand.color, color: '#fff',
-          fontFamily: '"Gotham", sans-serif',
-          fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em',
-          textTransform: 'uppercase', px: 1.25, py: 0.5, borderRadius: '4px',
-        }}>
-          Destacado
-        </Box>
-      )}
-
-      {/* Foto del producto (o logo de la marca mientras no haya foto) */}
-      <Box className="oc-prod-media" sx={{
-        mx: { xs: -3, md: -3.5 }, mt: { xs: -3, md: -3.5 }, mb: 3,
-        height: 200, borderRadius: '12px 12px 0 0', overflow: 'hidden',
-        background: 'radial-gradient(120% 90% at 50% 100%, #DCE5FB 0%, #EEF2FC 55%, #F7F9FE 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
-      }}>
-        {producto.imagen ? (
-          <Box component="img" src={producto.imagen} alt={`${brand.nombre} ${producto.nombre}`}
-            loading="lazy" decoding="async"
-            sx={{
-              maxHeight: 170, maxWidth: '78%', objectFit: 'contain',
-              filter: 'drop-shadow(0 18px 22px rgba(27,37,80,0.22))',
-              transition: 'transform 0.6s cubic-bezier(0.2,0.7,0.2,1)',
-            }} />
-        ) : (
-          <Box component="img" src={brand.logo} alt="" aria-hidden
-            sx={{ maxHeight: 54, maxWidth: '55%', objectFit: 'contain', opacity: 0.55, mixBlendMode: 'multiply' }} />
-        )}
-      </Box>
-
-      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-        <Typography sx={{
-          fontFamily: '"Gotham", sans-serif',
-          fontStyle: 'italic', fontSize: '1.5rem', color: brand.color, fontWeight: 600,
-        }}>
-          №{String(n).padStart(2, '0')}
-        </Typography>
-        {producto.categoria && (
-          <Box sx={{
-            fontFamily: '"Gotham", sans-serif',
-            fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: C.gris,
-            border: `1px solid ${C.border}`, px: 1.25, py: 0.4, borderRadius: '4px',
-          }}>
-            {producto.categoria}
-          </Box>
-        )}
-      </Stack>
-
-      <Typography component="h3" sx={{
-        fontFamily: '"Gotham", sans-serif',
-        fontSize: { xs: '1.5rem', md: '1.75rem' }, fontWeight: 500,
-        color: C.navy, lineHeight: 1.15, mb: 1.5, letterSpacing: '-0.01em',
-      }}>
-        {producto.nombre}
-      </Typography>
-
-      <Typography sx={{
-        fontFamily: '"Gotham", sans-serif',
-        fontSize: '0.95rem', color: C.gris, lineHeight: 1.55, mb: 3,
-      }}>
-        {producto.descripcion}
-      </Typography>
-
-      <Box sx={{ mt: 'auto' }}>
-        {producto.caracteristicas?.slice(0, 4).map((c) => (
-          <Stack key={c} direction="row" spacing={1.25} alignItems="flex-start" sx={{ mb: 0.85 }}>
-            <CheckCircleOutline sx={{ fontSize: 15, color: brand.color, mt: 0.4, flexShrink: 0 }} />
-            <Typography sx={{
-              fontFamily: '"Gotham", sans-serif',
-              fontSize: '0.85rem', color: C.navy, lineHeight: 1.45,
-            }}>
-              {c}
-            </Typography>
-          </Stack>
-        ))}
-      </Box>
-    </Box>
-  );
-}
-
-function TecnologiaCard({ t, brand, delay }) {
-  const { ref, visible } = useReveal({ threshold: 0.2 });
-  return (
-    <Box ref={ref} sx={{
-      bgcolor: '#fff',
-      border: `1px solid ${C.border}`,
-      borderRadius: '12px', p: 3.5,
-      height: '100%',
-      opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0)' : 'translateY(20px)',
-      transition: `all 0.85s cubic-bezier(0.2,0.7,0.2,1) ${delay}s`,
-      '&:hover': {
-        borderColor: brand.color,
-        transform: 'translateY(-4px)',
-        boxShadow: `0 16px 36px ${C.navy}14`,
-      },
-    }}>
-      <Box sx={{
-        width: 52, height: 52, borderRadius: '10px',
-        bgcolor: `${brand.color}14`, color: brand.color,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2.5,
-      }}>
-        {t.Icon && <t.Icon sx={{ fontSize: 26 }} />}
-      </Box>
-      <Typography component="h3" sx={{
-        fontFamily: '"Gotham", sans-serif',
-        fontSize: '1.25rem', fontWeight: 600,
-        color: C.navy, mb: 1.25, lineHeight: 1.2, letterSpacing: '-0.01em',
-      }}>
-        {t.titulo}
-      </Typography>
-      <Typography sx={{
-        fontFamily: '"Gotham", sans-serif',
-        fontSize: '0.92rem', color: C.gris, lineHeight: 1.55,
-      }}>
-        {t.descripcion}
-      </Typography>
-    </Box>
-  );
-}
-
-// Parser inline: convierte **negrita** en <strong> y limpia markers sueltos.
 function renderInline(text) {
   const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
   return parts.map((p, i) => {
@@ -423,12 +103,273 @@ function BrandEditorialBody({ md, accent }) {
   );
 }
 
+/* ── HERO ─────────────────────────────────────────────────────────── */
+function BrandHero({ brand, productos, categoria, needs }) {
+  const estilos = [...new Set(productos.map((p) => p.categoria).filter(Boolean))];
+  const allTraits = new Set(productos.flatMap((p) => [...traitsOf(p)]));
+  const funciones = needs.filter((n) => allTraits.has(n.id));
+  const kind = categoria === 'implantes' ? 'sistemas' : 'modelos';
+  return (
+    <Box component="section" sx={{ background: 'radial-gradient(120% 90% at 85% 15%, #2C3E8F 0%, #1B2550 55%, #141B3D 100%)', color: '#fff', pt: { xs: 5, md: 8 }, pb: { xs: 7, md: 10 } }}>
+      <Box sx={wrap}>
+        <Box component="nav" aria-label="Ruta" sx={{ fontFamily: FONT, fontSize: 13, color: OC.sky, mb: { xs: 3, md: 5 }, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Box component={RouterLink} to="/" sx={{ color: OC.sky, textDecoration: 'none', '&:hover': { color: '#fff' } }}>Inicio</Box>
+          <span aria-hidden="true">/</span>
+          <Box component={RouterLink} to={`/${categoria}/`} sx={{ color: OC.sky, textDecoration: 'none', '&:hover': { color: '#fff' } }}>{categoria === 'implantes' ? 'Implantes' : 'Marcas'}</Box>
+          <span aria-hidden="true">/</span>
+          <span style={{ color: '#fff' }}>{brand.nombre}</span>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0,1.15fr) minmax(0,0.85fr)' }, gap: { xs: 5, md: 7 }, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {brand.eslogan && <Eyebrow light>{brand.eslogan}</Eyebrow>}
+            <Typography component="h1" sx={{ fontFamily: FONT, fontWeight: 900, fontSize: { xs: 40, md: 64 }, lineHeight: 1.02, letterSpacing: '-.02em', m: 0 }}>
+              {brand.nombre}
+            </Typography>
+            <Typography sx={{ fontFamily: FONT, fontSize: 18, lineHeight: 1.6, color: OC.mist, maxWidth: 560 }}>{brand.descripcion}</Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+              <Pill href="#encuentra" variant="bright">Encontrar mi {categoria === 'implantes' ? 'opción' : 'modelo'}</Pill>
+              <Pill to="/agendar" variant="ghost">Agendar valoración sin costo</Pill>
+            </Box>
+          </Box>
+          <Box sx={{ bgcolor: '#fff', color: OC.text, borderRadius: '28px', p: { xs: 3, md: 4 }, boxShadow: '0 30px 70px rgba(0,0,0,.35)', display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ minHeight: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${OC.line}`, pb: 3 }}>
+              {isBrand(brand.nombre)
+                ? <BrandLogo brand={brand.nombre} height={56} layout="row" />
+                : <Box component="img" src={brand.logo} alt={brand.nombre} sx={{ maxHeight: 64, maxWidth: '80%', objectFit: 'contain' }} />}
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <Typography sx={{ fontFamily: FONT, fontSize: 40, fontWeight: 900, lineHeight: 1, color: OC.blue }}>{productos.length}</Typography>
+                <Typography sx={{ fontFamily: FONT, fontSize: 13, color: OC.muted, mt: .5 }}>{kind} en esta guía</Typography>
+              </Box>
+              <Box>
+                <Typography sx={{ fontFamily: FONT, fontSize: 40, fontWeight: 900, lineHeight: 1, color: OC.blue }}>{estilos.length}</Typography>
+                <Typography sx={{ fontFamily: FONT, fontSize: 13, color: OC.muted, mt: .5 }}>{estilos.length === 1 ? 'formato' : 'formatos'} disponibles</Typography>
+              </Box>
+            </Box>
+            {funciones.length > 0 && (
+              <Box>
+                <Typography sx={{ fontFamily: FONT, fontSize: 12, letterSpacing: '.12em', textTransform: 'uppercase', color: OC.muted, fontWeight: 700, mb: 1.25 }}>Lo que ofrece la línea</Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {funciones.map((f) => <Box key={f.id} component="span" sx={{ fontFamily: FONT, fontSize: 13, px: 1.5, py: .75, borderRadius: 999, bgcolor: OC.wash, color: '#272F50' }}>{f.short}</Box>)}
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+/* ── BUSCADOR POR NECESIDAD + MODELOS ─────────────────────────────── */
+function ModelCard({ r, selected, needs, brand }) {
+  const { p, hits, t } = r;
+  const top = selected.length > 0 && hits.length === selected.length;
+  return (
+    <Box component="article" sx={{
+      bgcolor: '#fff', borderRadius: '24px', border: `1.5px solid ${top ? OC.bright : OC.line}`,
+      boxShadow: top ? '0 18px 40px rgba(76,125,240,.18)' : 'none',
+      display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'all .25s ease',
+      opacity: selected.length && hits.length === 0 ? 0.55 : 1,
+    }}>
+      <Box sx={{ position: 'relative', bgcolor: OC.wash, height: 170, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
+        {p.imagen
+          ? <Box component="img" src={p.imagen} alt={p.nombre} loading="lazy" sx={{ maxHeight: '100%', maxWidth: '80%', objectFit: 'contain' }} />
+          : <Box sx={{ width: 110, height: 100 }}><StyleGlyph categoria={p.categoria} /></Box>}
+        <Box component="span" sx={{ position: 'absolute', top: 14, left: 14, fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', bgcolor: '#fff', color: OC.blue, px: 1.25, py: .5, borderRadius: 999 }}>{p.categoria}</Box>
+        {top && <Box component="span" sx={{ position: 'absolute', top: 14, right: 14, fontFamily: FONT, fontSize: 11, fontWeight: 700, bgcolor: OC.bright, color: '#fff', px: 1.25, py: .5, borderRadius: 999 }}>Mejor coincidencia</Box>}
+        {!top && p.destacado && !selected.length && <Box component="span" sx={{ position: 'absolute', top: 14, right: 14, fontFamily: FONT, fontSize: 11, fontWeight: 700, bgcolor: OC.deep, color: '#fff', px: 1.25, py: .5, borderRadius: 999 }}>Lo más reciente</Box>}
+      </Box>
+      <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1 }}>
+        <Typography component="h3" sx={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, color: OC.text }}>{p.nombre}</Typography>
+        <Typography sx={{ fontFamily: FONT, fontSize: 14, lineHeight: 1.55, color: OC.muted }}>{p.descripcion}</Typography>
+        <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, display: 'flex', flexDirection: 'column', gap: .75 }}>
+          {(p.caracteristicas || []).map((c) => (
+            <Box component="li" key={c} sx={{ display: 'flex', gap: 1, fontFamily: FONT, fontSize: 13.5, color: OC.text, lineHeight: 1.45 }}>
+              <CheckCircleOutline sx={{ fontSize: 17, color: OC.blue, mt: '1px' }} />{c}
+            </Box>
+          ))}
+        </Box>
+        {selected.length > 0 && (
+          <Box sx={{ mt: 'auto', pt: 1.5, borderTop: `1px solid ${OC.line}`, display: 'flex', flexWrap: 'wrap', gap: .75 }}>
+            {selected.map((id) => {
+              const n = needs.find((x) => x.id === id);
+              const ok = t.has(id);
+              return <Box key={id} component="span" sx={{ fontFamily: FONT, fontSize: 12, px: 1.25, py: .5, borderRadius: 999, bgcolor: ok ? '#E6F4EF' : '#F1F2F6', color: ok ? OC.ok : '#6B7280' }}>{ok ? '✓' : '–'} {n?.short}</Box>;
+            })}
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+function Finder({ brand, productos, needs, categoria }) {
+  const [sel, setSel] = useState([]);
+  const available = useMemo(() => {
+    const all = new Set(productos.flatMap((p) => [...traitsOf(p)]));
+    return needs.filter((n) => all.has(n.id));
+  }, [productos, needs]);
+  const ranked = scoreProducts(productos, sel);
+  const toggle = (id) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const best = sel.length ? ranked.filter((r) => r.hits.length === sel.length).length : 0;
+  return (
+    <Box component="section" id="encuentra" sx={{ py: { xs: 8, md: 11 }, scrollMarginTop: 90 }}>
+      <Box sx={{ ...wrap, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <SectionHead
+          eyebrow={categoria === 'implantes' ? 'Encuentra tu opción' : 'Encuentra tu modelo'}
+          title="¿Qué es lo más importante para ti?"
+          text={`Marca lo que necesitas y ordenamos los ${categoria === 'implantes' ? 'sistemas' : 'modelos'} de ${brand.nombre} según lo que ofrecen. Es una guía para llegar mejor preparado: la recomendación final la da tu especialista con tu audiometría.`}
+        />
+        <Box role="group" aria-label="Necesidades" sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {available.map((n) => {
+            const on = sel.includes(n.id);
+            return (
+              <Box key={n.id} component="button" type="button" aria-pressed={on} onClick={() => toggle(n.id)} sx={{
+                fontFamily: FONT, fontSize: 14, fontWeight: 700, minHeight: 44, px: 2.25, borderRadius: 999, cursor: 'pointer',
+                bgcolor: on ? OC.deep : '#fff', color: on ? '#fff' : OC.text, border: `1.5px solid ${on ? OC.deep : OC.line}`,
+                transition: 'all .2s ease', '&:hover': { borderColor: OC.deep },
+                '&:focus-visible': { outline: `3px solid ${OC.sky}`, outlineOffset: 3 },
+              }}>{on ? '✓ ' : ''}{n.label}</Box>
+            );
+          })}
+          {sel.length > 0 && (
+            <Box component="button" type="button" onClick={() => setSel([])} sx={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, minHeight: 44, px: 2, border: 'none', bgcolor: 'transparent', color: OC.blue, cursor: 'pointer', textDecoration: 'underline' }}>Limpiar</Box>
+          )}
+        </Box>
+        <Typography aria-live="polite" sx={{ fontFamily: FONT, fontSize: 14, color: OC.muted, minHeight: 21 }}>
+          {sel.length === 0 ? `Mostrando los ${productos.length} ${categoria === 'implantes' ? 'sistemas' : 'modelos'}.`
+            : best > 0 ? `${best} ${best === 1 ? 'coincide' : 'coinciden'} con todo lo que marcaste.`
+              : 'Ninguno reúne todo lo que marcaste; te mostramos los más cercanos primero.'}
+        </Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', md: `repeat(${Math.min(productos.length, 4)}, minmax(0,1fr))` }, gap: 2.5 }}>
+          {ranked.map((r) => <ModelCard key={r.p.nombre} r={r} selected={sel} needs={needs} brand={brand} />)}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+/* ── COMPARADOR ───────────────────────────────────────────────────── */
+function Compare({ productos, needs }) {
+  const rows = needs.filter((n) => productos.some((p) => traitsOf(p).has(n.id)));
+  if (productos.length < 2 || rows.length === 0) return null;
+  return (
+    <Box component="section" sx={{ pb: { xs: 8, md: 11 } }}>
+      <Box sx={{ ...wrap, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <SectionHead eyebrow="Comparar" title="Lado a lado, sin letra pequeña." text="Resumen de lo que cada uno declara en su ficha. Si una celda está vacía, pregúntale a tu especialista: puede depender de la versión o del accesorio." />
+        <Box sx={{ overflowX: 'auto', borderRadius: '24px', border: `1px solid ${OC.line}`, bgcolor: '#fff' }}>
+          <Box component="table" sx={{ width: '100%', minWidth: 560, borderCollapse: 'collapse', fontFamily: FONT, fontSize: 14 }}>
+            <Box component="thead">
+              <Box component="tr">
+                <Box component="th" scope="col" sx={{ textAlign: 'left', p: 2.5, color: OC.muted, fontWeight: 700, fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', borderBottom: `1px solid ${OC.line}` }}>Característica</Box>
+                {productos.map((p) => (
+                  <Box component="th" scope="col" key={p.nombre} sx={{ textAlign: 'center', p: 2.5, color: OC.text, fontWeight: 700, borderBottom: `1px solid ${OC.line}` }}>
+                    {p.nombre}<Box sx={{ fontWeight: 400, fontSize: 12, color: OC.muted, mt: .5 }}>{p.categoria}</Box>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+            <Box component="tbody">
+              {rows.map((n, i) => (
+                <Box component="tr" key={n.id} sx={{ bgcolor: i % 2 ? '#fff' : OC.ground }}>
+                  <Box component="th" scope="row" sx={{ textAlign: 'left', p: 2.25, fontWeight: 400, color: OC.text }}>{n.short}</Box>
+                  {productos.map((p) => {
+                    const ok = traitsOf(p).has(n.id);
+                    return (
+                      <Box component="td" key={p.nombre} sx={{ textAlign: 'center', p: 2.25 }}>
+                        {ok ? <Check sx={{ color: OC.ok, fontSize: 22 }} aria-label="Sí" /> : <Remove sx={{ color: '#C3CDE6', fontSize: 20 }} aria-label="No indicado" />}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+/* ── GUÍA DE FORMATOS ─────────────────────────────────────────────── */
+function StyleGuide({ productos, categoria }) {
+  const keys = [...new Set(productos.map((p) => (p.categoria === 'IIC' ? 'CIC' : p.categoria)))].filter((k) => STYLE_GUIDE[k]);
+  if (!keys.length) return null;
+  return (
+    <Box component="section" sx={{ bgcolor: OC.deep, color: '#fff', py: { xs: 8, md: 11 } }}>
+      <Box sx={{ ...wrap, display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <SectionHead light eyebrow="Guía de formatos" title={categoria === 'implantes' ? '¿Qué tipo de sistema es para ti?' : '¿Qué formato es para ti?'} text="El formato depende de tu tipo de pérdida, la forma de tu oído y tu rutina. Esto te ayuda a entender las opciones antes de la cita." />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: `repeat(${Math.min(keys.length, 3)}, minmax(0,1fr))` }, gap: 2.5 }}>
+          {keys.map((k) => {
+            const g = STYLE_GUIDE[k];
+            return (
+              <Box key={k} sx={{ bgcolor: 'rgba(255,255,255,.06)', border: '1px solid rgba(157,184,255,.2)', borderRadius: '24px', p: 3.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{ width: 56, height: 52, flexShrink: 0 }}><StyleGlyph categoria={k} color={OC.sky} /></Box>
+                  <Typography component="h3" sx={{ fontFamily: FONT, fontSize: 18, fontWeight: 700 }}>{g.nombre}</Typography>
+                </Box>
+                <Typography sx={{ fontFamily: FONT, fontSize: 15, lineHeight: 1.55, color: OC.mist }}><Box component="strong" sx={{ color: '#fff' }}>Ideal para: </Box>{g.para}</Typography>
+                <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, display: 'flex', flexDirection: 'column', gap: .75 }}>
+                  {g.pros.map((x) => <Box component="li" key={x} sx={{ display: 'flex', gap: 1, fontFamily: FONT, fontSize: 14, color: '#fff' }}><Check sx={{ fontSize: 18, color: OC.sky }} />{x}</Box>)}
+                </Box>
+                <Typography sx={{ mt: 'auto', fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5, color: OC.sky, borderTop: '1px solid rgba(157,184,255,.2)', pt: 1.75 }}>A tener en cuenta: {g.ojo}</Typography>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+/* ── TECNOLOGÍA ───────────────────────────────────────────────────── */
+function Tech({ tecnologias, brand }) {
+  if (!tecnologias.length) return null;
+  return (
+    <Box component="section" sx={{ py: { xs: 8, md: 11 } }}>
+      <Box sx={{ ...wrap, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <SectionHead eyebrow="Tecnología" title={`Lo que distingue a ${brand.nombre}.`} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', md: `repeat(${Math.min(tecnologias.length, 4)}, minmax(0,1fr))` }, gap: 2.5 }}>
+          {tecnologias.map(({ Icon, titulo, descripcion }) => (
+            <Box key={titulo} sx={{ bgcolor: '#fff', border: `1px solid ${OC.line}`, borderRadius: '24px', p: 3, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ width: 48, height: 48, borderRadius: '14px', bgcolor: OC.wash, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{Icon && <Icon sx={{ color: OC.blue }} />}</Box>
+              <Typography component="h3" sx={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: OC.text }}>{titulo}</Typography>
+              <Typography sx={{ fontFamily: FONT, fontSize: 14.5, lineHeight: 1.55, color: OC.muted }}>{descripcion}</Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+/* ── PREGUNTAS PARA LA CITA ───────────────────────────────────────── */
+function Questions({ categoria, brand }) {
+  const qs = QUESTIONS[categoria] || QUESTIONS.audifonos;
+  return (
+    <Box component="section" sx={{ bgcolor: OC.wash, py: { xs: 8, md: 10 } }}>
+      <Box sx={{ ...wrap, display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0,.9fr) minmax(0,1.1fr)' }, gap: { xs: 4, md: 7 }, alignItems: 'start' }}>
+        <SectionHead eyebrow="Antes de decidir" title="Lleva estas preguntas a tu cita." text={`Te ayudan a comparar ${brand.nombre} con otras opciones con criterio propio, sin presión.`} />
+        <Box component="ol" sx={{ listStyle: 'none', p: 0, m: 0, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          {qs.map((q, i) => (
+            <Box component="li" key={q} sx={{ bgcolor: '#fff', borderRadius: '18px', px: 2.5, py: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: OC.deep, color: '#fff', fontFamily: FONT, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</Box>
+              <Typography sx={{ fontFamily: FONT, fontSize: 15.5, color: OC.text, lineHeight: 1.45 }}>{q}</Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
 export default function BrandPageTemplate({
   brand, productos = [], tecnologias = [],
   categoria = 'audifonos',
   seoTitle, seoDescription, canonical,
 }) {
-  const navigate = useNavigate();
   const [editorial, setEditorial] = useState(null);
   useEffect(() => {
     if (!brand.slug) return;
@@ -439,11 +380,12 @@ export default function BrandPageTemplate({
       .catch(() => {});
   }, [brand.slug]);
   const baseUrl = `https://oirconecta.com/${categoria}/${brand.slug || ''}`;
-  // Canonical con barra final: es la URL que sirve el HTML prerenderizado.
   const canon = (canonical || baseUrl).replace(/\/?$/, '/');
+  const needs = NEEDS[categoria] || NEEDS.audifonos;
+  const lecturas = articulosDeMarca(brand.slug);
 
   return (
-    <Box component="main" sx={{ bgcolor: C.blanco, minHeight: '100vh' }}>
+    <Box component="main" sx={{ bgcolor: OC.ground, minHeight: '100vh' }}>
       <Helmet>
         <title>{seoTitle || `Audífonos ${brand.nombre} en Colombia — OírConecta`}</title>
         <meta name="description" content={seoDescription || `Conoce los audífonos ${brand.nombre} disponibles en Colombia. ${brand.eslogan}.`} />
@@ -453,174 +395,51 @@ export default function BrandPageTemplate({
       </Helmet>
 
       <Header />
+      <BrandHero brand={brand} productos={productos} categoria={categoria} needs={needs} />
+      {productos.length > 0 && <Finder brand={brand} productos={productos} needs={needs} categoria={categoria} />}
+      <Compare productos={productos} needs={needs} />
+      <StyleGuide productos={productos} categoria={categoria} />
+      <Tech tecnologias={tecnologias} brand={brand} />
 
-      <BrandHero brand={brand} productosCount={productos.length} />
-
-      {/* PRODUCTOS */}
-      {productos.length > 0 && (
-        <Box component="section" sx={{ bgcolor: C.cremaCalida, py: { xs: 8, md: 12 } }}>
-          <Container maxWidth="lg">
-            <Box sx={{
-              display: 'grid', gridTemplateColumns: { xs: '1fr', md: '5fr 7fr' },
-              gap: { xs: 4, md: 6 }, alignItems: 'end', mb: { xs: 5, md: 7 },
-            }}>
-              <Box>
-                <SectionEyebrow color={C.navy} dash={brand.color} sx={{ mb: 3 }}>
-                  Línea actual
-                </SectionEyebrow>
-                <SectionTitle before={`${productos.length} modelos de`} accent={brand.nombre} size="md" accentColor={brand.color} />
-              </Box>
-              <Typography sx={{
-                fontFamily: '"Gotham", sans-serif',
-                fontSize: { xs: '1.05rem', md: '1.15rem' }, color: C.gris,
-                lineHeight: 1.6, maxWidth: 540, pb: { md: 1.5 },
-              }}>
-                Disponibles a través de los audiólogos verificados de la red OírConecta.
-                Pregunta a tu profesional cuál se adapta mejor a tu pérdida.
-              </Typography>
-            </Box>
-
-            <Grid container spacing={3}>
-              {productos.map((p, i) => (
-                <Grid item xs={12} sm={6} md={3} key={p.nombre}>
-                  <ProductoCard producto={p} brand={brand} n={i + 1} delay={i * 0.05} />
-                </Grid>
-              ))}
-            </Grid>
-          </Container>
-        </Box>
-      )}
-
-      {/* TECNOLOGÍAS */}
-      {tecnologias.length > 0 && (
-        <Box component="section" sx={{ bgcolor: C.blanco, py: { xs: 8, md: 12 } }}>
-          <Container maxWidth="lg">
-            <Box sx={{ mb: { xs: 5, md: 7 } }}>
-              <SectionEyebrow color={C.navy} dash={C.oro} sx={{ mb: 3 }}>
-                Tecnología
-              </SectionEyebrow>
-              <SectionTitle before="Innovación que" accent="se siente." size="md" />
-            </Box>
-            <Grid container spacing={3}>
-              {tecnologias.map((t, i) => (
-                <Grid item xs={12} sm={6} md={3} key={t.titulo}>
-                  <TecnologiaCard t={t} brand={brand} delay={i * 0.06} />
-                </Grid>
-              ))}
-            </Grid>
-          </Container>
-        </Box>
-      )}
-
-      {/* CONTENIDO EDITORIAL (generado con IA, refrescado por cron) */}
       {editorial && (
-        <Box component="section" sx={{ bgcolor: C.blanco, py: { xs: 8, md: 12 } }}>
-          <Container maxWidth="md">
-            <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
-              <SectionEyebrow color={C.navy} dash={brand.color} sx={{ mb: 3, justifyContent: 'center', display: 'inline-flex' }}>
-                La marca
-              </SectionEyebrow>
-              <SectionTitle before="Conoce" accent={brand.nombre} size="md" accentColor={brand.color} />
+        <Box component="section" sx={{ pb: { xs: 8, md: 11 } }}>
+          <Box sx={{ ...wrap, maxWidth: 880 }}>
+            <Box sx={{ mb: 4 }}><SectionHead eyebrow="La marca" title={`Conoce ${brand.nombre}`} /></Box>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '28px', p: { xs: 3, md: 6 }, border: `1px solid ${OC.line}` }}>
+              <BrandEditorialBody md={editorial} accent={OC.blue} />
             </Box>
-            <Box sx={{
-              bgcolor: C.cremaCalida, borderRadius: '14px',
-              p: { xs: 3, md: 6 }, borderTop: `4px solid ${brand.color}`,
-              boxShadow: '0 20px 50px rgba(15,42,74,0.06)',
-            }}>
-              <BrandEditorialBody md={editorial} accent={brand.color} />
-            </Box>
-          </Container>
+          </Box>
         </Box>
       )}
 
-      {/* LECTURAS: enlaces internos al blog (ayudan a que Google rastree los artículos) */}
-      {articulosDeMarca(brand.slug).length > 0 && (
-        <Box component="section" sx={{ bgcolor: C.cremaCalida, py: { xs: 7, md: 10 } }}>
-          <Container maxWidth="md">
-            <SectionEyebrow color={C.navy} dash={brand.color} sx={{ mb: 3 }}>
-              Para leer antes de decidir
-            </SectionEyebrow>
-            <Stack spacing={1.5}>
-              {articulosDeMarca(brand.slug).map((a) => (
-                <Box
-                  key={a.slug}
-                  component={RouterLink}
-                  to={`/blog/${a.slug}/`}
-                  sx={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2,
-                    bgcolor: C.blanco, borderRadius: '10px', px: 3, py: 2.25,
-                    borderLeft: `4px solid ${brand.color}`,
-                    color: C.navy, textDecoration: 'none',
-                    fontFamily: '"Gotham", "DM Sans", sans-serif', fontSize: '1rem', fontWeight: 600,
-                    transition: 'transform 0.2s ease',
-                    '&:hover': { transform: 'translateX(4px)' },
-                  }}
-                >
-                  {a.titulo}
-                  <ArrowForward sx={{ fontSize: 18, flexShrink: 0 }} />
+      <Questions categoria={categoria} brand={brand} />
+
+      {lecturas.length > 0 && (
+        <Box component="section" sx={{ py: { xs: 8, md: 10 } }}>
+          <Box sx={{ ...wrap, maxWidth: 880, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <SectionHead eyebrow="Para leer antes de decidir" title="Guías relacionadas" />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+              {lecturas.map((a) => (
+                <Box key={a.slug} component={RouterLink} to={`/blog/${a.slug}/`} sx={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2,
+                  bgcolor: '#fff', border: `1px solid ${OC.line}`, borderRadius: '18px', px: 3, py: 2.25,
+                  color: OC.text, textDecoration: 'none', fontFamily: FONT, fontSize: 16, fontWeight: 700,
+                  transition: 'all .2s ease', '&:hover': { borderColor: OC.blue, transform: 'translateX(4px)' },
+                }}>
+                  {a.titulo}<ArrowForward sx={{ fontSize: 18, color: OC.blue, flexShrink: 0 }} />
                 </Box>
               ))}
-            </Stack>
-          </Container>
+            </Box>
+          </Box>
         </Box>
       )}
 
-      {/* CTA FINAL */}
-      <Box component="section" sx={{
-        bgcolor: C.navy, color: '#fff', py: { xs: 8, md: 12 },
-        position: 'relative', overflow: 'hidden',
-      }}>
-        <Box aria-hidden sx={{
-          position: 'absolute', top: -120, right: -120, width: 400, height: 400,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${brand.color}44 0%, transparent 70%)`,
-          filter: 'blur(60px)', pointerEvents: 'none',
-        }} />
-        <Container maxWidth="md" sx={{ position: 'relative', textAlign: 'center' }}>
-          <SectionEyebrow color={C.oro} dash={brand.color} sx={{ mb: 3, justifyContent: 'center', display: 'inline-flex' }}>
-            Próximo paso
-          </SectionEyebrow>
-          <SectionTitle
-            before="¿Quieres conocer"
-            accent={brand.nombre}
-            after="con un especialista?"
-            size="lg"
-            accentColor={brand.color}
-            sx={{ color: '#fff', mb: 3 }}
-          />
-          <Typography sx={{
-            fontFamily: '"Gotham", sans-serif',
-            fontSize: '1.05rem', color: '#D9CDBFcc', mb: 4, maxWidth: 580, mx: 'auto',
-          }}>
-            Un audiólogo verificado de OírConecta te orienta sobre los modelos {brand.nombre} que mejor se adaptan a tu caso.
-          </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} justifyContent="center" alignItems="center">
-            <Box
-              component={RouterLink}
-              to={`/contacto?asunto=${encodeURIComponent(`Solicitud de información - ${brand.nombre}`)}`}
-              sx={{
-                display: 'inline-flex', alignItems: 'center', gap: 1.25,
-                bgcolor: C.oro, color: C.navy,
-                fontFamily: '"Gotham", sans-serif',
-                fontSize: '0.95rem', fontWeight: 700,
-                px: 4, py: 1.85, borderRadius: '6px',
-                textDecoration: 'none', letterSpacing: '0.02em',
-                boxShadow: `0 10px 28px ${C.oro}55`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  bgcolor: '#D4B97A', transform: 'translateY(-2px)',
-                  boxShadow: `0 14px 32px ${C.oro}66`,
-                },
-              }}
-            >
-              Solicitar información
-              <ArrowForward sx={{ fontSize: 18 }} />
-            </Box>
-            <CTAArrowLink to={`/${categoria}`} label="Ver más marcas" />
-          </Stack>
-        </Container>
+      <FinalCta />
+      <Box sx={{ bgcolor: OC.deep, pb: 6, textAlign: 'center' }}>
+        <Box component={RouterLink} to={`/${categoria}/`} sx={{ fontFamily: FONT, fontSize: 14, color: OC.sky, '&:hover': { color: '#fff' } }}>
+          ← Ver todas las {categoria === 'implantes' ? 'marcas de implantes' : 'marcas'}
+        </Box>
       </Box>
-
       <Footer />
     </Box>
   );

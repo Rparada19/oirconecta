@@ -9,6 +9,7 @@ import {
   PageHero, SectionEyebrow, SectionTitle, EditorialIntro,
   PullQuote, CTAArrowLink, C,
 } from '../components/editorial/EditorialKit';
+import { CandidacyCheck } from '../components/editorial/DecisionAdvisors';
 import { useReveal } from '../hooks/useReveal';
 
 const MARCAS = [
@@ -224,6 +225,9 @@ export default function ImplantesPage() {
         cta={{ label: 'Buscar especialista', to: '/directorio/listado' }}
         ctaSecondary={{ label: 'Leer guía completa', to: '/blog/implante-coclear-guia/' }}
       />
+
+      <CandidacyCheck />
+
 
       {/* TIPOS DE IMPLANTE */}
       <Box component="section" sx={{ bgcolor: C.cremaCalida, py: { xs: 8, md: 14 } }}>
