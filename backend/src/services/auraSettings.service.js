@@ -26,7 +26,7 @@ const DEFAULTS = {
     promoHasta: '2026-10-31',
   },
   textos: {
-    bienvenida: 'Qué bueno que escribes: volver a oír bien cambia las conversaciones de todos los días.\n\nPara orientarte mejor, ¿es para ti o para un familiar?',
+    bienvenida: 'Qué bueno que escribes: volver a oír bien cambia las conversaciones de todos los días.\n\nAtendemos en *Bogotá* y la valoración auditiva *no tiene costo*. ¿Estás en Bogotá o cerca?',
     paraMi: 'Perfecto 🙌 Dar este paso ya es avanzar.\n\nAtendemos en *Bogotá*. ¿Estás en Bogotá o cerca?',
     paraFamiliar: 'Qué bien que lo acompañas: ese apoyo hace la diferencia 💙\n\nAtendemos en *Bogotá*. ¿Están en Bogotá o cerca?',
     otraCiudad: 'Nuestro consultorio está solo en Bogotá. ¿En qué ciudad estás? El equipo te busca un profesional de confianza allá.',
@@ -40,9 +40,9 @@ const DEFAULTS = {
 // Dónde aparece cada texto y qué variables admite. La consola lo usa para
 // dibujar el flujo en orden; el orden de este arreglo es el del chat.
 const PASOS = [
-  { key: 'bienvenida', titulo: 'Bienvenida', cuando: 'Primer mensaje, salvo que la persona ya haya preguntado el precio. Va después de "¡Hola, {nombre}! 👋 Soy Aura, de OírConecta."', botones: ['Para mí', 'Para un familiar'] },
-  { key: 'paraMi', titulo: 'Si toca "Para mí"', cuando: 'Pregunta la ciudad', botones: ['Sí, en Bogotá', 'Otra ciudad'] },
-  { key: 'paraFamiliar', titulo: 'Si toca "Para un familiar"', cuando: 'Pregunta la ciudad', botones: ['Sí, en Bogotá', 'Otra ciudad'] },
+  { key: 'bienvenida', titulo: 'Bienvenida', cuando: 'Primer mensaje, salvo que la persona ya haya preguntado el precio. Va después de "¡Hola, {nombre}! 👋 Soy Aura, de OírConecta." Hace una sola pregunta: la ciudad', botones: ['Sí, en Bogotá', 'Otra ciudad'] },
+  { key: 'paraMi', titulo: 'Si toca "Para mí" (botón antiguo)', cuando: 'Pregunta la ciudad', botones: ['Sí, en Bogotá', 'Otra ciudad'] },
+  { key: 'paraFamiliar', titulo: 'Si toca "Para un familiar" (botón antiguo)', cuando: 'Pregunta la ciudad', botones: ['Sí, en Bogotá', 'Otra ciudad'] },
   { key: 'otraCiudad', titulo: 'Si toca "Otra ciudad"', cuando: 'La persona no vive en Bogotá' },
   { key: 'comoFunciona', titulo: 'Si toca "Sí, en Bogotá"', cuando: 'Explica la valoración y ofrece el menú', botones: ['Agendar valoración', 'Ver precios', 'Tengo exámenes'] },
   { key: 'confirmarHora', titulo: 'Eligió una hora', cuando: 'Pide el nombre para crear la cita', variables: ['dia', 'hora'] },
