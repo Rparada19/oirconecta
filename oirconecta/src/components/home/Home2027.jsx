@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { getWhatsAppHref } from '../../config/publicSite';
@@ -61,6 +61,61 @@ export function Pill({ to, href, children, variant = 'bright', sx }) {
 }
 
 /* ── 1. HERO con esfera de sonido 3D ─────────────────────────────── */
+/* Momentos que vuelven: tarjetas que orbitan sobre las ondas */
+const MOMENTS = [
+  { img: '/img/abuela-nieta-riendo.jpg', text: 'Volver a reírte de sus chistes' },
+  { img: '/img/blog/2027/musica-audifonos.webp', text: 'Disfrutar otra vez la música en vivo' },
+  { img: '/img/blog/2027/presbiacusia.webp', text: 'No perderte ninguna charla' },
+  { img: '/img/blog/2027/adaptacion-audifonos-primeras-semanas.webp', text: 'Oír los pájaros en la mañana' },
+  { img: '/img/blog/2027/bluetooth-audifonos-celular.webp', text: 'Hablar por teléfono sin repetir' },
+  { img: '/img/blog/2027/audifonos-demencia.webp', text: 'Jugar y conversar con tus nietos' },
+];
+
+function OrbitCards() {
+  const refs = useRef([]);
+  const paused = useRef(false);
+  useEffect(() => {
+    const n = MOMENTS.length;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    let raf; let angle = 0; let last = performance.now();
+    const place = () => {
+      refs.current.forEach((el, i) => {
+        if (!el) return;
+        const a = angle + (i * 2 * Math.PI) / n;
+        const x = Math.cos(a) * 205;
+        const y = Math.sin(a) * 84;
+        const depth = (Math.sin(a) + 1) / 2; // 0 atrás · 1 adelante
+        el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${0.62 + depth * 0.4})`;
+        el.style.zIndex = depth > 0.5 ? 3 : 1;
+        el.style.opacity = String(0.45 + depth * 0.55);
+        el.style.filter = depth < 0.35 ? 'blur(1px)' : 'none';
+      });
+    };
+    const tick = (now) => {
+      if (!paused.current) angle += ((now - last) / 1000) * 0.22;
+      last = now; place(); raf = requestAnimationFrame(tick);
+    };
+    place();
+    if (!reduce) raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <Box onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }}
+      sx={{ position: 'absolute', inset: 0 }}>
+      {MOMENTS.map((m, i) => (
+        <Box key={m.img} ref={(el) => { refs.current[i] = el; }} sx={{
+          position: 'absolute', left: "50%", top: "50%", width: 136,
+          bgcolor: '#fff', borderRadius: '18px', p: '7px', boxShadow: '0 20px 44px rgba(0,0,0,.32)',
+          willChange: 'transform, opacity',
+        }}>
+          <Box component="img" src={m.img} alt="" loading="lazy" sx={{ width: '100%', height: 116, objectFit: 'cover', borderRadius: '12px', display: 'block' }} />
+          <Typography sx={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: OC.deep, lineHeight: 1.35, m: '7px 5px 3px' }}>{m.text}</Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
 function SoundOrb() {
   const rings = [
     { s: 440, d: 14, c: 'rgba(157,184,255,.55)', r: false },
@@ -69,7 +124,7 @@ function SoundOrb() {
     { s: 520, d: 30, c: 'rgba(157,184,255,.18)', r: true },
   ];
   return (
-    <Box aria-hidden sx={{ position: 'relative', height: { xs: 360, md: 500 }, perspective: '900px', transform: { xs: 'scale(.72)', md: 'none' } }}>
+    <Box aria-hidden sx={{ position: 'relative', height: { xs: 360, md: 520 }, perspective: '900px', transform: { xs: 'scale(.62)', sm: 'scale(.85)', md: 'none' } }}>
       {rings.map((r) => (
         <Box key={r.s} sx={{
           position: 'absolute', inset: 0, m: 'auto', width: r.s, height: r.s, borderRadius: '50%',
@@ -80,21 +135,14 @@ function SoundOrb() {
       <Box sx={{
         position: 'absolute', inset: 0, m: 'auto', width: 210, height: 210, borderRadius: '50%',
         background: 'radial-gradient(circle at 35% 30%, #9DB8FF 0%, #4C7DF0 45%, #2C3E8F 100%)',
-        boxShadow: '0 0 90px rgba(76,125,240,.55)', animation: 'ocPulse 3.2s ease-in-out infinite',
+        boxShadow: '0 0 90px rgba(76,125,240,.55)', animation: 'ocPulse 3.2s ease-in-out infinite', zIndex: 2,
       }} />
-      <Box sx={{ position: 'absolute', inset: 0, m: 'auto', width: 120, height: 64, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '7px' }}>
+      <Box sx={{ position: 'absolute', inset: 0, m: 'auto', width: 120, height: 64, zIndex: 2, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '7px' }}>
         {[30, 52, 64, 44, 26].map((h, i) => (
           <Box key={i} sx={{ width: 8, height: h, bgcolor: '#fff', borderRadius: 1, transformOrigin: 'bottom', animation: 'ocEq 1.6s ease-in-out infinite', animationDelay: `${i * 0.2}s` }} />
         ))}
       </Box>
-      <Box sx={{ position: 'absolute', left: 0, top: 24, width: 170, bgcolor: '#fff', borderRadius: '20px', p: 1, boxShadow: '0 24px 50px rgba(0,0,0,.3)', animation: 'ocFloat 6s ease-in-out infinite' }}>
-        <Box component="img" src="/img/abuela-nieta-riendo.jpg" alt="" sx={{ width: '100%', height: 190, objectFit: 'cover', borderRadius: '14px', display: 'block' }} />
-        <Typography sx={{ fontFamily: FONT, fontSize: 12, color: OC.deep, lineHeight: 1.4, m: '8px 6px 4px' }}>“Volví a reírme de sus chistes.”</Typography>
-      </Box>
-      <Box sx={{ position: 'absolute', right: 0, bottom: 40, bgcolor: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.25)', backdropFilter: 'blur(10px)', borderRadius: '16px', px: 2.25, py: 1.75, animation: 'ocFloat 6s ease-in-out 1.5s infinite' }}>
-        <Typography sx={{ fontFamily: FONT, fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: OC.sky }}>Rango que evaluamos</Typography>
-        <Typography sx={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, color: '#fff', mt: .75 }}>250 Hz — 8.000 Hz</Typography>
-      </Box>
+      <OrbitCards />
     </Box>
   );
 }
