@@ -63,24 +63,60 @@ export function Pill({ to, href, children, variant = 'bright', sx }) {
 /* ── 1. HERO con esfera de sonido 3D ─────────────────────────────── */
 /* Momentos que vuelven: tarjetas que orbitan sobre las ondas */
 const MOMENTS = [
-  { img: '/img/abuela-nieta-riendo.jpg', text: 'Volver a reírte de sus chistes' },
-  { img: '/img/blog/2027/musica-audifonos.webp', text: 'Disfrutar otra vez la música en vivo' },
-  { img: '/img/blog/2027/presbiacusia.webp', text: 'No perderte ninguna charla' },
-  { img: '/img/blog/2027/adaptacion-audifonos-primeras-semanas.webp', text: 'Oír los pájaros en la mañana' },
-  { img: '/img/blog/2027/bluetooth-audifonos-celular.webp', text: 'Hablar por teléfono sin repetir' },
-  { img: '/img/blog/2027/audifonos-demencia.webp', text: 'Jugar y conversar con tus nietos' },
+  { img: '/img/abuela-nieta-riendo.jpg', text: 'Volver a reírte de sus chistes', sound: '/audio/momentos/risas.mp3' },
+  { img: '/img/blog/2027/musica-audifonos.webp', text: 'Disfrutar otra vez la música en vivo', sound: '/audio/momentos/musica.mp3' },
+  { img: '/img/blog/2027/presbiacusia.webp', text: 'No perderte ninguna charla', sound: '/audio/momentos/charla.mp3' },
+  { img: '/img/blog/2027/adaptacion-audifonos-primeras-semanas.webp', text: 'Oír los pájaros en la mañana', sound: '/audio/momentos/pajaros.mp3' },
+  { img: '/img/blog/2027/bluetooth-audifonos-celular.webp', text: 'Hablar por teléfono sin repetir', sound: '/audio/momentos/telefono.mp3' },
+  { img: '/img/blog/2027/audifonos-demencia.webp', text: 'Jugar y conversar con tus nietos', sound: '/audio/momentos/nietos.mp3' },
 ];
+
+function useMomentAudio() {
+  const cur = useRef(null);
+  const fadeOut = (au) => {
+    if (!au) return;
+    const step = () => { au.volume = Math.max(0, au.volume - 0.08); if (au.volume > 0) requestAnimationFrame(step); else au.pause(); };
+    step();
+  };
+  const play = (src, muted) => {
+    fadeOut(cur.current); cur.current = null;
+    if (muted) return;
+    try {
+      const chime = new Audio('/audio/momentos/chime.mp3'); chime.volume = 0.35; chime.play().catch(() => {});
+      const au = new Audio(src); au.volume = 0.8; cur.current = au;
+      au.play().catch(() => {});
+    } catch { /* sin audio */ }
+  };
+  const stop = () => { fadeOut(cur.current); cur.current = null; };
+  useEffect(() => stop, []);
+  return { play, stop };
+}
 
 function OrbitCards() {
   const refs = useRef([]);
   const box = useRef(null);
   const paused = useRef(false);
+  const activeRef = useRef(null);
+  const openedAt = useRef(0);
+  const [active, setActive] = useState(null);
+  const [muted, setMuted] = useState(false);
   const [small, setSmall] = useState(false);
+  const audio = useMomentAudio();
+
+  const open = (i) => {
+    if (activeRef.current === i) return;
+    activeRef.current = i; openedAt.current = performance.now(); setActive(i); paused.current = true;
+    audio.play(MOMENTS[i].sound, muted);
+  };
+  const close = () => {
+    activeRef.current = null; setActive(null); paused.current = false; audio.stop();
+  };
+
   useEffect(() => {
     const geo = { rx: 205, ry: 84, n: MOMENTS.length };
     const measure = () => {
       const w = box.current?.offsetWidth || 600;
-      const sm = w < 560;
+      const sm = w < 480;
       setSmall(sm);
       const card = sm ? 104 : 136;
       geo.rx = Math.min(205, w / 2 - card / 2 - 8);
@@ -89,9 +125,11 @@ function OrbitCards() {
     };
     measure();
     window.addEventListener('resize', measure);
-    const n = MOMENTS.length;
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     let raf; let angle = 0; let last = performance.now();
+    const sc = MOMENTS.map(() => 1);
+    const px = MOMENTS.map(() => null);
+    const py = MOMENTS.map(() => 0);
     const place = () => {
       refs.current.forEach((el, i) => {
         if (!el) return;
@@ -101,33 +139,69 @@ function OrbitCards() {
         const x = Math.cos(a) * geo.rx;
         const y = Math.sin(a) * geo.ry;
         const depth = (Math.sin(a) + 1) / 2; // 0 atrás · 1 adelante
-        el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${0.62 + depth * 0.4})`;
-        el.style.zIndex = depth > 0.5 ? 3 : 1;
-        el.style.opacity = String(0.45 + depth * 0.55);
-        el.style.filter = depth < 0.35 ? 'blur(1px)' : 'none';
+        const on = activeRef.current === i;
+        const target = on ? 1.4 : 0.62 + depth * 0.4;
+        sc[i] += (target - sc[i]) * 0.18;
+        const tx = on ? 0 : x; const ty = on ? 0 : y;
+        if (px[i] == null) { px[i] = tx; py[i] = ty; }
+        px[i] += (tx - px[i]) * 0.2; py[i] += (ty - py[i]) * 0.2;
+        el.style.transform = `translate(-50%, -50%) translate(${px[i]}px, ${py[i]}px) scale(${sc[i]})`;
+        el.style.zIndex = on ? 10 : depth > 0.5 ? 3 : 1;
+        el.style.opacity = on ? '1' : activeRef.current != null ? String(0.25 + depth * 0.3) : String(0.45 + depth * 0.55);
+        el.style.filter = !on && depth < 0.35 ? 'blur(1px)' : 'none';
       });
     };
     const tick = (now) => {
-      if (!paused.current) angle += ((now - last) / 1000) * 0.22;
+      if (!paused.current && !reduce) angle += ((now - last) / 1000) * 0.22;
       last = now; place(); raf = requestAnimationFrame(tick);
     };
     place();
-    if (!reduce) raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
+    raf = requestAnimationFrame(tick);
+    const onDocDown = (e) => { if (box.current && !box.current.contains(e.target)) close(); };
+    document.addEventListener('pointerdown', onDocDown);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', measure); document.removeEventListener('pointerdown', onDocDown); };
   }, []);
+
   return (
-    <Box ref={box} onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }}
-      sx={{ position: 'absolute', inset: 0 }}>
+    <Box ref={box} onMouseLeave={close} sx={{ position: 'absolute', inset: 0 }}>
       {MOMENTS.map((m, i) => (
-        <Box key={m.img} ref={(el) => { refs.current[i] = el; }} sx={{
-          position: 'absolute', left: "50%", top: "50%", width: small ? 104 : 136,
-          bgcolor: '#fff', borderRadius: '18px', p: '7px', boxShadow: '0 20px 44px rgba(0,0,0,.32)',
-          willChange: 'transform, opacity',
-        }}>
+        <Box key={m.img} component="button" type="button" ref={(el) => { refs.current[i] = el; }}
+          aria-label={`${m.text}. Escuchar sonido`} aria-pressed={active === i}
+          onMouseEnter={() => open(i)}
+          onFocus={() => open(i)} onBlur={close}
+          onClick={() => { if (activeRef.current === i) { if (performance.now() - openedAt.current > 500) close(); } else open(i); }}
+          sx={{
+            position: 'absolute', left: '50%', top: '50%', width: small ? 104 : 136,
+            bgcolor: '#fff', borderRadius: '18px', p: '7px', border: 'none', cursor: 'pointer', textAlign: 'left',
+            boxShadow: active === i ? '0 30px 70px rgba(0,0,0,.45), 0 0 0 3px #9DB8FF' : '0 20px 44px rgba(0,0,0,.32)',
+            transition: 'box-shadow .3s ease, opacity .3s ease',
+            willChange: 'transform, opacity',
+            '&:focus-visible': { outline: '3px solid #9DB8FF', outlineOffset: 3 },
+          }}>
           <Box component="img" src={m.img} alt="" loading="lazy" sx={{ width: '100%', height: small ? 84 : 116, objectFit: 'cover', borderRadius: small ? '10px' : '12px', display: 'block' }} />
-          <Typography sx={{ fontFamily: FONT, fontSize: small ? 10.5 : 12, fontWeight: 700, color: OC.deep, lineHeight: 1.35, m: '7px 5px 3px' }}>{m.text}</Typography>
+          <Typography component="span" sx={{ display: 'block', fontFamily: FONT, fontSize: small ? 10.5 : 12, fontWeight: 700, color: OC.deep, lineHeight: 1.35, m: '7px 5px 3px' }}>{m.text}</Typography>
+          {active === i && !muted && (
+            <Box component="span" aria-hidden="true" sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'flex-end', gap: '2px', height: 14, bgcolor: 'rgba(27,37,80,.75)', borderRadius: 999, px: .75, py: .5 }}>
+              {[8, 13, 6, 11].map((h, k) => <Box key={k} component="span" sx={{ width: 2.5, height: h, bgcolor: '#fff', borderRadius: 1, transformOrigin: 'bottom', animation: 'ocEq 0.9s ease-in-out infinite', animationDelay: `${k * 0.12}s` }} />)}
+            </Box>
+          )}
         </Box>
       ))}
+      <Box component="button" type="button" onClick={() => { setMuted((v) => !v); audio.stop(); }}
+        aria-label={muted ? 'Activar sonido' : 'Silenciar sonido'}
+        sx={{
+          position: 'absolute', right: { xs: 4, md: 0 }, bottom: { xs: -6, md: 8 }, zIndex: 12,
+          display: 'inline-flex', alignItems: 'center', gap: .75, minHeight: 40, px: 1.75,
+          fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: '#fff', cursor: 'pointer',
+          bgcolor: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.25)', borderRadius: 999, backdropFilter: 'blur(8px)',
+          '&:focus-visible': { outline: '3px solid #9DB8FF', outlineOffset: 3 },
+        }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" />
+          {muted ? <path d="m16 9 5 6m0-6-5 6" /> : <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />}
+        </svg>
+        {muted ? 'Sonido apagado' : (small ? 'Toca una tarjeta' : 'Pasa sobre una tarjeta')}
+      </Box>
     </Box>
   );
 }
@@ -140,7 +214,7 @@ function SoundOrb() {
     { s: 520, d: 30, c: 'rgba(157,184,255,.18)', r: true },
   ];
   return (
-    <Box aria-hidden sx={{ position: 'relative', height: { xs: 330, sm: 460, md: 520 }, perspective: '900px', overflow: 'visible' }}>
+    <Box sx={{ position: 'relative', height: { xs: 330, sm: 460, md: 520 }, perspective: '900px', overflow: 'visible' }}>
       {rings.map((r) => (
         <Box key={r.s} sx={{
           position: 'absolute', inset: 0, m: 'auto', width: { xs: r.s * 0.62, sm: r.s * 0.85, md: r.s }, height: { xs: r.s * 0.62, sm: r.s * 0.85, md: r.s }, borderRadius: '50%',
