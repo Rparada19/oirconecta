@@ -73,17 +73,33 @@ const MOMENTS = [
 
 function OrbitCards() {
   const refs = useRef([]);
+  const box = useRef(null);
   const paused = useRef(false);
+  const [small, setSmall] = useState(false);
   useEffect(() => {
+    const geo = { rx: 205, ry: 84, n: MOMENTS.length };
+    const measure = () => {
+      const w = box.current?.offsetWidth || 600;
+      const sm = w < 560;
+      setSmall(sm);
+      const card = sm ? 104 : 136;
+      geo.rx = Math.min(205, w / 2 - card / 2 - 8);
+      geo.ry = sm ? geo.rx * 0.78 : 84;
+      geo.n = sm ? 4 : MOMENTS.length;
+    };
+    measure();
+    window.addEventListener('resize', measure);
     const n = MOMENTS.length;
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     let raf; let angle = 0; let last = performance.now();
     const place = () => {
       refs.current.forEach((el, i) => {
         if (!el) return;
-        const a = angle + (i * 2 * Math.PI) / n;
-        const x = Math.cos(a) * 205;
-        const y = Math.sin(a) * 84;
+        if (i >= geo.n) { el.style.display = 'none'; return; }
+        el.style.display = '';
+        const a = angle + (i * 2 * Math.PI) / geo.n;
+        const x = Math.cos(a) * geo.rx;
+        const y = Math.sin(a) * geo.ry;
         const depth = (Math.sin(a) + 1) / 2; // 0 atrás · 1 adelante
         el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${0.62 + depth * 0.4})`;
         el.style.zIndex = depth > 0.5 ? 3 : 1;
@@ -97,19 +113,19 @@ function OrbitCards() {
     };
     place();
     if (!reduce) raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
   }, []);
   return (
-    <Box onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }}
+    <Box ref={box} onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }}
       sx={{ position: 'absolute', inset: 0 }}>
       {MOMENTS.map((m, i) => (
         <Box key={m.img} ref={(el) => { refs.current[i] = el; }} sx={{
-          position: 'absolute', left: "50%", top: "50%", width: 136,
+          position: 'absolute', left: "50%", top: "50%", width: small ? 104 : 136,
           bgcolor: '#fff', borderRadius: '18px', p: '7px', boxShadow: '0 20px 44px rgba(0,0,0,.32)',
           willChange: 'transform, opacity',
         }}>
-          <Box component="img" src={m.img} alt="" loading="lazy" sx={{ width: '100%', height: 116, objectFit: 'cover', borderRadius: '12px', display: 'block' }} />
-          <Typography sx={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: OC.deep, lineHeight: 1.35, m: '7px 5px 3px' }}>{m.text}</Typography>
+          <Box component="img" src={m.img} alt="" loading="lazy" sx={{ width: '100%', height: small ? 84 : 116, objectFit: 'cover', borderRadius: small ? '10px' : '12px', display: 'block' }} />
+          <Typography sx={{ fontFamily: FONT, fontSize: small ? 10.5 : 12, fontWeight: 700, color: OC.deep, lineHeight: 1.35, m: '7px 5px 3px' }}>{m.text}</Typography>
         </Box>
       ))}
     </Box>
@@ -124,20 +140,20 @@ function SoundOrb() {
     { s: 520, d: 30, c: 'rgba(157,184,255,.18)', r: true },
   ];
   return (
-    <Box aria-hidden sx={{ position: 'relative', height: { xs: 360, md: 520 }, perspective: '900px', transform: { xs: 'scale(.62)', sm: 'scale(.85)', md: 'none' } }}>
+    <Box aria-hidden sx={{ position: 'relative', height: { xs: 330, sm: 460, md: 520 }, perspective: '900px', overflow: 'visible' }}>
       {rings.map((r) => (
         <Box key={r.s} sx={{
-          position: 'absolute', inset: 0, m: 'auto', width: r.s, height: r.s, borderRadius: '50%',
+          position: 'absolute', inset: 0, m: 'auto', width: { xs: r.s * 0.62, sm: r.s * 0.85, md: r.s }, height: { xs: r.s * 0.62, sm: r.s * 0.85, md: r.s }, borderRadius: '50%',
           border: `1.5px solid ${r.c}`, transformStyle: 'preserve-3d',
           animation: `ocSpin ${r.d}s linear infinite`, animationDirection: r.r ? 'reverse' : 'normal',
         }} />
       ))}
       <Box sx={{
-        position: 'absolute', inset: 0, m: 'auto', width: 210, height: 210, borderRadius: '50%',
+        position: 'absolute', inset: 0, m: 'auto', width: { xs: 110, sm: 180, md: 210 }, height: { xs: 110, sm: 180, md: 210 }, borderRadius: '50%',
         background: 'radial-gradient(circle at 35% 30%, #9DB8FF 0%, #4C7DF0 45%, #2C3E8F 100%)',
         boxShadow: '0 0 90px rgba(76,125,240,.55)', animation: 'ocPulse 3.2s ease-in-out infinite', zIndex: 2,
       }} />
-      <Box sx={{ position: 'absolute', inset: 0, m: 'auto', width: 120, height: 64, zIndex: 2, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '7px' }}>
+      <Box sx={{ position: 'absolute', inset: 0, m: 'auto', width: 120, height: 64, zIndex: 2, transform: { xs: 'scale(.55)', sm: 'scale(.8)', md: 'none' }, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '7px' }}>
         {[30, 52, 64, 44, 26].map((h, i) => (
           <Box key={i} sx={{ width: 8, height: h, bgcolor: '#fff', borderRadius: 1, transformOrigin: 'bottom', animation: 'ocEq 1.6s ease-in-out infinite', animationDelay: `${i * 0.2}s` }} />
         ))}
