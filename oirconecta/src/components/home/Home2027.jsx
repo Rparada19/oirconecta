@@ -66,7 +66,7 @@ const MOMENTS = [
   { img: '/img/abuela-nieta-riendo.jpg', text: 'Volver a reírte de sus chistes', sound: '/audio/momentos/risas.mp3' },
   { img: '/img/blog/2027/musica-audifonos.webp', text: 'Disfrutar otra vez la música en vivo', sound: '/audio/momentos/musica.mp3' },
   { img: '/img/blog/2027/presbiacusia.webp', text: 'No perderte ninguna charla', sound: '/audio/momentos/charla.mp3' },
-  { img: '/img/blog/2027/adaptacion-audifonos-primeras-semanas.webp', text: 'Oír los pájaros en la mañana', sound: '/audio/momentos/pajaros.mp3' },
+  { img: '/img/blog/2027/adaptacion-audifonos-primeras-semanas.webp', text: 'Oír los pájaros en la mañana', sound: '/audio/momentos/pajaros-v2.mp3' },
   { img: '/img/blog/2027/bluetooth-audifonos-celular.webp', text: 'Hablar por teléfono sin repetir', sound: '/audio/momentos/telefono.mp3' },
   { img: '/img/blog/2027/audifonos-demencia.webp', text: 'Jugar y conversar con tus nietos', sound: '/audio/momentos/nietos.mp3' },
 ];
