@@ -247,7 +247,9 @@ async function slotsAura(profileId, date, opts = {}) {
 async function horarioDelCentro(profileId) {
   if (!profileId) return null;
   const filas = await prisma.professionalAvailability.findMany({
-    where: { profileId, active: true },
+    // Sábados y domingos no se atiende (ver horarioCampana.js), aunque la agenda
+    // tenga horas cargadas esos días.
+    where: { profileId, active: true, dayOfWeek: { notIn: [0, 6] } },
     orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
     select: { dayOfWeek: true, startTime: true, endTime: true },
   }).catch(() => []);
@@ -392,7 +394,9 @@ const bookingToolImpls = {
     // ofrecía "el martes" y agendaba un jueves: le confirmó a un paciente
     // "martes 10 de septiembre" cuando el 10 era jueves.
     const bloqueo = horarioCampana.bloqueoPara(date);
-    return { ...out, fechaLegible: fechaLegible(`${date}T12:00:00`), ...(bloqueo ? { aviso: bloqueo.aviso } : {}) };
+    const sinAtencion = horarioCampana.diaSinAtencion(date);
+    const aviso = sinAtencion ? `Ese día es ${sinAtencion} y no se atiende. Ofrécele el siguiente día hábil.` : bloqueo?.aviso;
+    return { ...out, fechaLegible: fechaLegible(`${date}T12:00:00`), ...(aviso ? { aviso } : {}) };
   },
 
   async create_appointment(ctx, input) {
