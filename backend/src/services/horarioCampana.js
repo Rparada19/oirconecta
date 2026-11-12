@@ -46,6 +46,58 @@ function bloqueoPara(fecha) {
   return BLOQUEOS.find((b) => fecha >= b.desde && fecha <= b.hasta) || null;
 }
 
+// ─── Días que nunca se atienden (permanente) ─────────────────────────────────
+// Pedido de Rafael (12 de noviembre de 2026): los sábados, los domingos y los
+// festivos de Colombia no se atiende, así que Aura no agenda esos días.
+
+function sumarDias(fechaUTC, n) {
+  return new Date(fechaUTC.getTime() + n * 86400000);
+}
+function iso(fechaUTC) {
+  return fechaUTC.toISOString().slice(0, 10);
+}
+// Ley Emiliani: el festivo pasa al lunes siguiente si no cae en lunes.
+function alLunes(fechaUTC) {
+  const dia = fechaUTC.getUTCDay();
+  return dia === 1 ? fechaUTC : sumarDias(fechaUTC, (8 - dia) % 7);
+}
+// Domingo de Pascua (algoritmo de Meeus/Jones/Butcher).
+function pascua(y) {
+  const a = y % 19; const b = Math.floor(y / 100); const c = y % 100;
+  const d = Math.floor(b / 4); const e = b % 4; const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3); const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4); const k = c % 4; const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mes = Math.floor((h + l - 7 * m + 114) / 31); const dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(Date.UTC(y, mes - 1, dia));
+}
+
+const cacheFestivos = {};
+/** Festivos de Colombia de un año: Set de 'YYYY-MM-DD'. */
+function festivosColombia(y) {
+  if (cacheFestivos[y]) return cacheFestivos[y];
+  const f = (m, d) => new Date(Date.UTC(y, m - 1, d));
+  const p = pascua(y);
+  const fechas = [
+    f(1, 1), f(5, 1), f(7, 20), f(8, 7), f(12, 8), f(12, 25), // fijos
+    alLunes(f(1, 6)), alLunes(f(3, 19)), alLunes(f(6, 29)), alLunes(f(8, 15)),
+    alLunes(f(10, 12)), alLunes(f(11, 1)), alLunes(f(11, 11)), // se corren al lunes
+    sumarDias(p, -3), sumarDias(p, -2), // jueves y viernes santo
+    sumarDias(p, 43), sumarDias(p, 64), sumarDias(p, 71), // Ascensión, Corpus, Sagrado Corazón
+  ];
+  cacheFestivos[y] = new Set(fechas.map(iso));
+  return cacheFestivos[y];
+}
+
+/** ¿Ese día no se atiende? (sábado, domingo o festivo). Devuelve el motivo o null. */
+function diaSinAtencion(fecha) {
+  const dia = diaSemana(fecha);
+  if (dia === 6) return 'sábado';
+  if (dia === 0) return 'domingo';
+  if (festivosColombia(Number(fecha.slice(0, 4))).has(fecha)) return 'festivo';
+  return null;
+}
+
 function reglaPara(fecha) {
   return REGLAS.find((r) => fecha >= r.desde && fecha <= r.hasta) || null;
 }
@@ -58,6 +110,7 @@ function diaSemana(fecha) {
 
 /** ¿Se puede agendar a esa hora ese día? fecha 'YYYY-MM-DD', hora 'HH:MM'. */
 function horaPermitida(fecha, hora) {
+  if (diaSinAtencion(fecha)) return false;
   if (bloqueoPara(fecha)) return false;
   const r = reglaPara(fecha);
   if (!r) return true;
@@ -76,10 +129,14 @@ function filtrarSlots(fecha, slots) {
 
 /** Texto para el prompt mientras haya una regla vigente (hoy o más adelante). */
 function avisoParaPrompt(hoy) {
-  const avisos = BLOQUEOS.filter((b) => hoy <= b.hasta)
-    .map((b) => `${b.aviso} Si alguien pide una cita antes, dile con calidez que esa semana no tenemos agenda y ofrécele desde el lunes 23. get_availability no devuelve cupos en esos días.`);
+  const y = Number(hoy.slice(0, 4));
+  const proximos = [...festivosColombia(y), ...festivosColombia(y + 1)]
+    .filter((d) => d >= hoy).sort().slice(0, 4).join(', ');
+  const avisos = [`Los sábados, los domingos y los festivos de Colombia no hay citas (próximos festivos: ${proximos}). get_availability no devuelve cupos esos días.`];
+  avisos.push(...BLOQUEOS.filter((b) => hoy <= b.hasta)
+    .map((b) => `${b.aviso} Si alguien pide una cita antes, dile con calidez que esa semana no tenemos agenda y ofrécele desde el lunes 23. get_availability no devuelve cupos en esos días.`));
   const r = REGLAS.find((x) => hoy <= x.hasta);
-  if (!r) return avisos.length ? avisos.join('\n') : null;
+  if (!r) return avisos.join('\n');
   const lunes = r.LUNES === 'cerrado'
     ? 'los lunes no hay citas'
     : 'los lunes solo hay citas en la tarde (de 1:00 a 5:00 p.m.)';
@@ -87,4 +144,4 @@ function avisoParaPrompt(hoy) {
   return avisos.join('\n');
 }
 
-module.exports = { horaPermitida, filtrarSlots, avisoParaPrompt, bloqueoPara, REGLAS, BLOQUEOS };
+module.exports = { horaPermitida, filtrarSlots, avisoParaPrompt, bloqueoPara, diaSinAtencion, festivosColombia, REGLAS, BLOQUEOS };
