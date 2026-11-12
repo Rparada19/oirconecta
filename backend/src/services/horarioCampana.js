@@ -26,6 +26,26 @@ const REGLAS = [
   },
 ];
 
+/**
+ * Días sin agenda para Aura. Pedido de Rafael (12 de noviembre de 2026): la
+ * semana del 16 al 22 de noviembre no hay agenda y Aura empieza a agendar desde
+ * el lunes 23. Como pidió agendar "a partir del 23", también quedan cerrados
+ * los días que faltan antes de esa semana (12 al 15). Para abrirlos, cambiar
+ * `desde` a '2026-11-16'.
+ * Solo afecta lo que Aura ofrece y agenda; la agenda del centro no cambia.
+ */
+const BLOQUEOS = [
+  {
+    desde: '2026-11-12',
+    hasta: '2026-11-22',
+    aviso: 'La semana del 16 al 22 de noviembre no hay agenda disponible. Las citas se agendan a partir del lunes 23 de noviembre.',
+  },
+];
+
+function bloqueoPara(fecha) {
+  return BLOQUEOS.find((b) => fecha >= b.desde && fecha <= b.hasta) || null;
+}
+
 function reglaPara(fecha) {
   return REGLAS.find((r) => fecha >= r.desde && fecha <= r.hasta) || null;
 }
@@ -38,6 +58,7 @@ function diaSemana(fecha) {
 
 /** ¿Se puede agendar a esa hora ese día? fecha 'YYYY-MM-DD', hora 'HH:MM'. */
 function horaPermitida(fecha, hora) {
+  if (bloqueoPara(fecha)) return false;
   const r = reglaPara(fecha);
   if (!r) return true;
   if (hora < r.primeraCita || hora > r.ultimaCita) return false;
@@ -55,12 +76,15 @@ function filtrarSlots(fecha, slots) {
 
 /** Texto para el prompt mientras haya una regla vigente (hoy o más adelante). */
 function avisoParaPrompt(hoy) {
+  const avisos = BLOQUEOS.filter((b) => hoy <= b.hasta)
+    .map((b) => `${b.aviso} Si alguien pide una cita antes, dile con calidez que esa semana no tenemos agenda y ofrécele desde el lunes 23. get_availability no devuelve cupos en esos días.`);
   const r = REGLAS.find((x) => hoy <= x.hasta);
-  if (!r) return null;
+  if (!r) return avisos.length ? avisos.join('\n') : null;
   const lunes = r.LUNES === 'cerrado'
     ? 'los lunes no hay citas'
     : 'los lunes solo hay citas en la tarde (de 1:00 a 5:00 p.m.)';
-  return `Del ${r.desde} al ${r.hasta}: la primera cita es a las 8:00 a.m., la última a las 4:00 p.m., y ${lunes}. get_availability ya devuelve solo esas horas.`;
+  avisos.push(`Del ${r.desde} al ${r.hasta}: la primera cita es a las 8:00 a.m., la última a las 4:00 p.m., y ${lunes}. get_availability ya devuelve solo esas horas.`);
+  return avisos.join('\n');
 }
 
-module.exports = { horaPermitida, filtrarSlots, avisoParaPrompt, REGLAS };
+module.exports = { horaPermitida, filtrarSlots, avisoParaPrompt, bloqueoPara, REGLAS, BLOQUEOS };

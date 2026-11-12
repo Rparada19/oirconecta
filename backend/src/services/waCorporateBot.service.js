@@ -391,7 +391,8 @@ const bookingToolImpls = {
     // El día de la semana lo pone la herramienta. Cuando lo deducía el bot
     // ofrecía "el martes" y agendaba un jueves: le confirmó a un paciente
     // "martes 10 de septiembre" cuando el 10 era jueves.
-    return { ...out, fechaLegible: fechaLegible(`${date}T12:00:00`) };
+    const bloqueo = horarioCampana.bloqueoPara(date);
+    return { ...out, fechaLegible: fechaLegible(`${date}T12:00:00`), ...(bloqueo ? { aviso: bloqueo.aviso } : {}) };
   },
 
   async create_appointment(ctx, input) {
@@ -836,7 +837,8 @@ async function proximosHorarios(profileId = null) {
  * contestaba "déjame consultar y después la agendo" y no volvía. Con dos o
  * tres días a la vista, casi siempre hay uno que le sirve.
  * Devuelve [{ date, dia, horas: ['08:00', '14:00'] }], dos horas por día
- * (una temprano y una tarde) y hasta tres días con cupo en los próximos 10.
+ * (una temprano y una tarde) y hasta tres días con cupo en los próximos 21
+ * (21 y no 10 para saltar una semana sin agenda, ver horarioCampana.js).
  */
 async function proximosDias(profileId = null, { dias = 3, porDia = 2 } = {}) {
   const pid = profileId || await retailProfileId();
@@ -845,7 +847,7 @@ async function proximosDias(profileId = null, { dias = 3, porDia = 2 } = {}) {
   const tipo = tipos.find((t) => /valoraci/i.test(t.nombre)) || tipos[0];
   if (!tipo) return [];
   const out = [];
-  for (let i = 1; i <= 10 && out.length < dias; i++) {
+  for (let i = 1; i <= 21 && out.length < dias; i++) {
     const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' })
       .format(new Date(Date.now() + i * 86400000));
     const { slots } = await slotsAura(pid, date, { appointmentTypeId: tipo.id });
