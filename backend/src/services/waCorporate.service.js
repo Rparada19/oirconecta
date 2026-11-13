@@ -28,7 +28,11 @@ function isCorporatePhoneNumberId(phoneNumberId) {
 
 /** Find-or-create conversación por número del cliente. */
 async function findOrCreateConversation({ phone, contactName }) {
-  const phoneClean = String(phone || '').replace(/\D/g, '');
+  // Instagram / Messenger: el "phone" es un id (ig:… / fb:…) y se guarda tal
+  // cual. Quitarle lo que no es dígito lo dejaría vacío.
+  const phoneClean = require('./socialChannel.service').esSocial(phone)
+    ? String(phone)
+    : String(phone || '').replace(/\D/g, '');
   if (!phoneClean) throw new Error('phone requerido');
 
   const existing = await prisma.whatsAppConversation.findUnique({ where: { phone: phoneClean } });

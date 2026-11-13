@@ -621,7 +621,12 @@ export default function WhatsAppInboxPage({
     } finally { setLeadLoading(false); }
   };
 
-  const shortName = (c) => c.contactName || `+${c.phone}`;
+  // Las conversaciones de Instagram y Messenger viven en la misma bandeja; su
+  // "phone" es un identificador (ig:… / fb:…), no un número que se pueda mostrar.
+  const canalSocial = (phone) => (String(phone || '').startsWith('ig:') ? 'Instagram'
+    : String(phone || '').startsWith('fb:') ? 'Facebook Messenger' : null);
+  const etiquetaContacto = (phone) => canalSocial(phone) || `+${phone}`;
+  const shortName = (c) => c.contactName || etiquetaContacto(c.phone);
 
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', '@supports (height: 100dvh)': { height: 'calc(100dvh - 64px)' }, bgcolor: '#fafbfc' }}>
@@ -738,6 +743,11 @@ export default function WhatsAppInboxPage({
                         }}>
                           {shortName(c)}
                         </Typography>
+                        {canalSocial(c.phone) && (
+                          <Typography component="span" sx={{ fontSize: '0.68rem', color: MUTED, whiteSpace: 'nowrap' }}>
+                            · {canalSocial(c.phone) === 'Instagram' ? 'IG' : 'FB'}
+                          </Typography>
+                        )}
                         {c.status && c.status !== 'HUMAN' && (
                           <Chip label={st.label} size="small" sx={{
                             height: 16, fontSize: '0.6rem', fontWeight: 700, flexShrink: 0,
@@ -804,7 +814,7 @@ export default function WhatsAppInboxPage({
                   {shortName(selected)}
                 </Typography>
                 <Typography noWrap sx={{ fontSize: '0.75rem', color: MUTED }}>
-                  +{selected.phone}
+                  {etiquetaContacto(selected.phone)}
                   {selected.contactType ? ` · ${CONTACT_TYPE_LABELS[selected.contactType] || selected.contactType}` : ` · ${INTENT_LABELS[selected.intent]}`}
                   {selected.assignedTo ? ` · asignado a ${selected.assignedTo.nombre}` : ' · sin asignar'}
                 </Typography>

@@ -85,6 +85,12 @@ const startServer = async () => {
       }
     }
 
+    // Instagram / Messenger: que la página le mande sus eventos a la app.
+    // Idempotente; sin META_PAGE_ID no hace nada.
+    setTimeout(() => {
+      require('./services/socialChannel.service').suscribirPagina().catch(() => {});
+    }, 15000);
+
     // T4 — Cron in-process para recordatorios de cita y Reminder rows.
     // Por defecto ENCENDIDO. Se apaga con INTERNAL_CRON_ENABLED='false'.
     if (process.env.INTERNAL_CRON_ENABLED !== 'false') {

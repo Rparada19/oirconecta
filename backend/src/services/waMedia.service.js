@@ -14,6 +14,9 @@ const MAX_BYTES = 8 * 1024 * 1024; // techo defensivo: el vision de Claude no ne
 
 /** Baja un adjunto por su media id. Devuelve { buffer, mimeType } o null. */
 async function descargar(mediaId) {
+  // Instagram y Messenger no dan un id sino la URL del archivo (firmada por
+  // Meta, sin token). Se baja directo.
+  if (/^https:\/\//.test(String(mediaId || ''))) return descargarUrl(mediaId);
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
   if (!token || !mediaId) return null;
@@ -44,6 +47,25 @@ async function descargar(mediaId) {
     return { buffer, mimeType: meta.mime_type || 'application/octet-stream' };
   } catch (e) {
     console.warn('[wa-media] error con', mediaId, ':', e.message);
+    return null;
+  }
+}
+
+async function descargarUrl(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn('[wa-media] descarga por URL falló', res.status);
+      return null;
+    }
+    const largo = Number(res.headers.get('content-length') || 0);
+    if (largo > MAX_BYTES) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.length > MAX_BYTES) return null;
+    const mimeType = (res.headers.get('content-type') || 'application/octet-stream').split(';')[0].trim();
+    return { buffer, mimeType };
+  } catch (e) {
+    console.warn('[wa-media] error bajando URL:', e.message);
     return null;
   }
 }
