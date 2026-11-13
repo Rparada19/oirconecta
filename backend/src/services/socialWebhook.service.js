@@ -311,6 +311,14 @@ async function processSocialEvent(body) {
   let procesados = 0;
   for (const entry of (body.entry || [])) {
     const entryId = String(entry.id || '');
+    // Resumen sin contenido: qué tipo de evento llegó, para diagnosticar.
+    const tipos = (entry.messaging || []).map((ev) => (ev.message?.is_echo ? 'eco'
+      : ev.message ? 'mensaje' : ev.postback ? 'postback' : ev.referral ? 'referral'
+        : Object.keys(ev).filter((k) => !['sender', 'recipient', 'timestamp'].includes(k)).join('+') || 'otro'));
+    console.log('[social] llegó', canal, 'entry', entryId,
+      'messaging:', tipos.join(',') || '-',
+      'standby:', (entry.standby || []).length,
+      'changes:', (entry.changes || []).map((c) => c.field).join(',') || '-');
     for (const ev of (entry.messaging || [])) {
       try {
         await manejarMensaje(canal, entryId, ev);
