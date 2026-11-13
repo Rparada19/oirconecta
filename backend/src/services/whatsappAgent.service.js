@@ -159,16 +159,298 @@ async function processIncomingMessage({
 }
 
 /**
+ * Un mensaje entrante del número corporativo (o de Instagram / Messenger, que
+ * llegan con la misma forma): se guarda en la bandeja y se le pasa a Aura.
+ * `cont` lleva la cuenta de procesados y descartados de la tanda.
+ */
+async function procesarMensajeCorporativo({ msg, phoneNumberId, contactByWaId = {}, cont = { processed: 0, skipped: 0 }, soloGuardar = false }) {
+  const corp = require('./waCorporate.service');
+  const bot = require('./waCorporateBot.service');
+  try {
+    // Extrae texto según el tipo del mensaje
+    let textBody = null;
+    let btnPayload = null;
+    let mediaId = null;
+    let mediaMime = null;
+    let esAudio = false;
+    if (msg.type === 'text') {
+      textBody = msg.text?.body || null;
+    } else if (msg.type === 'interactive') {
+      // Botón interactivo (respuesta a los botones del bot)
+      btnPayload = msg.interactive?.button_reply
+        ? { id: msg.interactive.button_reply.id, title: msg.interactive.button_reply.title }
+        : msg.interactive?.list_reply
+        ? { id: msg.interactive.list_reply.id, title: msg.interactive.list_reply.title }
+        : null;
+      textBody = btnPayload?.title || msg.interactive?.body?.text || null;
+    } else if (msg.type === 'image' || msg.type === 'document') {
+      // El paciente mandó un archivo — típicamente su audiometría.
+      const media = msg[msg.type] || {};
+      mediaId = media.id || null;
+      mediaMime = media.mime_type || null;
+      textBody = media.caption || (msg.type === 'image' ? '[imagen]' : `[documento] ${media.filename || ''}`.trim());
+    } else if (msg.type === 'audio' || msg.type === 'voice') {
+      // Nota de voz. El texto sale de la transcripción, más abajo:
+      // aquí solo se recoge el id para poder bajarla.
+      const media = msg[msg.type] || {};
+      mediaId = media.id || null;
+      mediaMime = media.mime_type || null;
+      esAudio = true;
+    } else if (msg.type === 'request_welcome') {
+      // Meta avisa que alguien abrió el chat desde el anuncio sin
+      // escribir todavía. No hay texto: el saludo lo damos nosotros.
+      textBody = null;
+    } else if (msg.type === 'button') {
+      // Botón de plantilla (quick reply) — trae payload + texto
+      textBody = msg.button?.text || null;
+      btnPayload = msg.button?.payload
+        ? { id: msg.button.payload, title: msg.button?.text || '' }
+        : null;
+    }
+
+    // La nota de voz se transcribe antes de guardarla: lo que queda en
+    // la bandeja es el texto, y del audio solo el id de Meta.
+    let transcripcion = null;
+    if (esAudio && mediaId) {
+      try {
+        const archivo = await require('./waMedia.service').descargar(mediaId);
+        transcripcion = archivo
+          ? await require('./waAudio.service').transcribir(archivo)
+          : null;
+      } catch (ae) {
+        console.error('[wa-audio] no pude procesar la nota de voz:', ae.message);
+      }
+      textBody = transcripcion || '[nota de voz que no se pudo entender]';
+    }
+
+    const r = await corp.persistIncomingMessage({
+      phoneNumberId,
+      fromWaId: msg.from,
+      wamid: msg.id,
+      type: msg.type || 'text',
+      textBody,
+      contactName: contactByWaId[msg.from],
+      tsSeconds: msg.timestamp,
+      mediaId,
+      mediaMime,
+      // Anuncio de click-to-WhatsApp. Solo viene en el primer mensaje
+      // después del clic — si no lo capturamos aquí, se pierde.
+      referral: msg.referral || null,
+    });
+    if (r.persisted) {
+      cont.processed++;
+      // Lead nuevo: alguien que nunca había escrito. Con el volumen de
+      // hoy cada uno importa, y nadie vive con el CRM abierto.
+      if (r.isNew) {
+        const anuncio = msg.referral?.headline || msg.referral?.source_id;
+        require('./alertaEquipo.service').avisar({
+          titulo: anuncio ? `Lead nuevo por anuncio: ${anuncio}` : `Lead nuevo por ${require('./socialChannel.service').nombreCanal(msg.from)}`,
+          quien: contactByWaId[msg.from] || 'Sin nombre de perfil',
+          telefono: msg.from,
+          texto: textBody,
+        }).catch(() => {});
+      }
+    } else {
+      // Antes esto era mudo: un descarte por duplicado no dejaba rastro
+      // y el mensaje simplemente no aparecía en la bandeja.
+      console.warn('[wa-corp] mensaje NO persistido', msg.id, 'de', msg.from,
+        'motivo=', r.skipped || 'desconocido', 'conv=', r.conversationId || '-');
+      cont.skipped++;
+      return;
+    }
+
+    // Redes con el bot apagado: queda en la bandeja para que responda una persona.
+    if (soloGuardar) return;
+
+    // Confirmación de asistencia desde el recordatorio (botón "Confirmar").
+    if (btnPayload?.id && String(btnPayload.id).startsWith('confirm_appt:')) {
+      const token = String(btnPayload.id).split(':')[1];
+      try {
+        const appointmentsService = require('./appointments.service');
+        await appointmentsService.confirmByToken(token);
+        await corp.sendTextToConversation({
+          conversationId: r.conversationId,
+          text: '¡Gracias! Confirmaste tu asistencia. Te esperamos. 🙌',
+          sentByBot: true,
+        });
+      } catch (ce) {
+        console.error('[wa] confirm_appt falló:', ce.message);
+      }
+      return; // no pasar al bot
+    }
+
+    // Adjunto: se descarga, se lee y se responde orientando a la cita.
+    if (mediaId && !esAudio && corp.botHabilitado()) {
+      try {
+        const waMedia = require('./waMedia.service');
+        const archivo = await waMedia.descargar(mediaId);
+        const lectura = archivo
+          ? await require('./waExamRead.service').leerExamen(archivo, msg[msg.type]?.caption || '')
+          : null;
+        if (lectura) {
+          await corp.sendTextToConversation({
+            conversationId: r.conversationId,
+            text: lectura.texto,
+            sentByBot: true,
+          });
+          if (lectura.urgente) {
+            await prisma.whatsAppConversation.update({
+              where: { id: r.conversationId },
+              data: { status: 'ESCALATED', unreadCount: { increment: 1 } },
+            });
+          }
+          return; // ya se le respondió al adjunto
+        }
+      } catch (me) {
+        console.error('[wa-examen] falló:', me.message);
+      }
+    }
+
+    // No se entendió la nota. Decirlo es mejor que contestar cualquier
+    // cosa: la persona repite el audio o escribe, y nadie queda colgado.
+    // Una sola vez. A Yasmin y a Lilia les llegó el mismo aviso tres y
+    // cuatro veces seguidas: la que manda audios suele ser una persona
+    // mayor que no escribe, y pedirle que "lo repita" no la ayuda. Al
+    // segundo audio perdido lo escucha una persona.
+    if (esAudio && !transcripcion) {
+      try {
+        const AVISO_AUDIO = 'Me llegó tu nota de voz pero no logré escucharla bien 🙈';
+        const yaAvisado = await prisma.whatsAppMessage.findFirst({
+          where: {
+            conversationId: r.conversationId,
+            direction: 'OUTBOUND',
+            body: { startsWith: AVISO_AUDIO },
+            timestamp: { gte: new Date(Date.now() - 24 * 3600 * 1000) },
+          },
+          select: { id: true },
+        });
+        if (yaAvisado) {
+          const conv = await prisma.whatsAppConversation.findUnique({
+            where: { id: r.conversationId }, select: { status: true },
+          });
+          if (conv?.status === 'ESCALATED') return; // ya está con una persona
+          await corp.sendTextToConversation({
+            conversationId: r.conversationId,
+            text: 'Ya le paso tus notas de voz a una persona del equipo para que las escuche y te responda por acá 🙏',
+            sentByBot: true,
+          });
+          await prisma.whatsAppConversation.update({
+            where: { id: r.conversationId },
+            data: { status: 'ESCALATED', unreadCount: { increment: 1 } },
+          });
+          require('./alertaEquipo.service').avisar({
+            titulo: 'Notas de voz sin escuchar — el bot no las pudo transcribir',
+            quien: contactByWaId[msg.from] || 'Paciente',
+            telefono: msg.from,
+            texto: 'Escúchalas en WhatsApp y respóndele por la bandeja.',
+          }).catch(() => {});
+          return;
+        }
+        await corp.sendTextToConversation({
+          conversationId: r.conversationId,
+          text: `${AVISO_AUDIO} ¿Me la puedes repetir, o escribirme lo que necesitas?`,
+          sentByBot: true,
+        });
+      } catch (te) {
+        console.error('[wa-audio] aviso de audio ilegible falló:', te.message);
+      }
+      return;
+    }
+
+    // QR de tarjeta de aliado: el mensaje prellenado trae el código.
+    // Se detecta antes del dispatcher porque cambia el saludo inicial
+    // y la rama completa de la conversación.
+    let partnerDetectado = null;
+    let aliadoPrimeraVez = false;
+    if (textBody) {
+      try {
+        const referrals = require('./referralPartners.service');
+        partnerDetectado = await referrals.detectarEnTexto(textBody);
+        if (partnerDetectado) {
+          const marca = await referrals.marcarConversacion(r.conversationId, partnerDetectado.id);
+          aliadoPrimeraVez = !!marca?.primeraVez;
+        }
+      } catch (pe) {
+        console.error('[wa-aliado] detección falló:', pe.message);
+      }
+    }
+
+    // F9b — Dispatcher del bot corporativo (solo si WA_BOT_ENABLED=true)
+    try {
+      if (r.adNuevo) {
+        // Viene de una campaña. El saludo nombra el anuncio y va
+        // directo a la cita: quien acaba de tocar un anuncio ya dijo
+        // a qué viene, preguntárselo otra vez con botones lo enfría.
+        await bot.iniciarFlujoAnuncio(r.conversationId, textBody);
+      } else if (partnerDetectado && aliadoPrimeraVez) {
+        // Escaneó el QR. Da igual si nos había escrito antes: arranca
+        // la toma de datos con el saludo de la alianza, sin los botones
+        // del handshake.
+        await bot.iniciarFlujoAliado(r.conversationId, partnerDetectado);
+      } else if (btnPayload) {
+        // Respuesta a botones interactivos del handshake → tipifica y escala
+        await bot.handleButtonReply({
+          conversationId: r.conversationId,
+          buttonId: btnPayload.id,
+          buttonTitle: btnPayload.title,
+        });
+      } else if (r.isNew) {
+        // Primer mensaje entrante en la conversación → handshake con botones
+        await bot.maybeSendHandshake(r.conversationId, textBody);
+      } else if (textBody) {
+        // Si la conversación estaba CLOSED (humano cerró o timeout) y
+        // llega un mensaje nuevo del paciente, reabrimos a BOT para que
+        // la IA vuelva a atender. Excepción: PROFESIONAL_DIRECTORIO
+        // (funnel comercial) se deja CLOSED para que el equipo retome.
+        await bot.reopenIfClosed(r.conversationId);
+        // Mensaje siguiente (después del handshake) → Claude Haiku responde
+        // según la rama (contactType). Solo actúa si status=BOT.
+        // No se responde de una: se acumula. Quien escribe en tres
+        // renglones seguidos recibía tres respuestas en paralelo, cada
+        // una ciega a las otras. Ver waTurno.service.
+        require('./waTurno.service').encolar(
+          r.conversationId,
+          textBody,
+          { desdeAudio: esAudio },
+          async (textoJunto, opts) => {
+            await bot.responder({
+              conversationId: r.conversationId,
+              incomingText: textoJunto,
+              desdeAudio: opts.desdeAudio,
+            });
+            // Memoria larga: se refresca aparte para no demorar la
+            // respuesta al paciente. Solo trabaja cada N mensajes.
+            bot.actualizarResumen(r.conversationId)
+              .catch((e) => console.warn('[wa-bot] resumen:', e.message));
+          },
+        );
+      }
+    } catch (be) {
+      console.error('[wa-bot] dispatcher falló:', be.message);
+    }
+  } catch (e) {
+    console.error('[wa-corp] error persistiendo msg', msg.id, e.message);
+    cont.skipped++;
+  }
+}
+
+/**
  * Procesa el cuerpo completo del webhook Meta (puede traer múltiples entry/messages).
  */
 async function processIncomingEvent(body) {
   console.log('[wa-debug] processIncomingEvent object=', body?.object, 'entries=', body?.entry?.length);
+  // Instagram y Messenger pueden llegar a esta misma URL (en Meta se puede
+  // poner la misma para los tres productos).
+  if (body?.object === 'instagram' || body?.object === 'page') {
+    return require('./socialWebhook.service').processSocialEvent(body);
+  }
   if (body?.object !== 'whatsapp_business_account') {
     console.log('[wa-debug] IGNORED object mismatch');
     return { ok: true, ignored: 'OBJECT_MISMATCH' };
   }
   const corp = require('./waCorporate.service');
   const entries = body.entry || [];
+  const cont = { processed: 0, skipped: 0 };
   let processed = 0, skipped = 0;
   for (const entry of entries) {
     // entry.id es el id de la WABA. Meta CAPI lo necesita para atribuir citas
@@ -205,271 +487,8 @@ async function processIncomingEvent(body) {
       // bandeja del CRM (Fase 9a) o vía bot corporativo (Fase 9b).
       console.log('[wa-debug] phoneNumberId=', phoneNumberId, 'isCorporate=', corp.isCorporatePhoneNumberId(phoneNumberId), 'messages=', (value.messages || []).length);
       if (corp.isCorporatePhoneNumberId(phoneNumberId)) {
-        const bot = require('./waCorporateBot.service');
         for (const msg of (value.messages || [])) {
-          try {
-            // Extrae texto según el tipo del mensaje
-            let textBody = null;
-            let btnPayload = null;
-            let mediaId = null;
-            let mediaMime = null;
-            let esAudio = false;
-            if (msg.type === 'text') {
-              textBody = msg.text?.body || null;
-            } else if (msg.type === 'interactive') {
-              // Botón interactivo (respuesta a los botones del bot)
-              btnPayload = msg.interactive?.button_reply
-                ? { id: msg.interactive.button_reply.id, title: msg.interactive.button_reply.title }
-                : msg.interactive?.list_reply
-                ? { id: msg.interactive.list_reply.id, title: msg.interactive.list_reply.title }
-                : null;
-              textBody = btnPayload?.title || msg.interactive?.body?.text || null;
-            } else if (msg.type === 'image' || msg.type === 'document') {
-              // El paciente mandó un archivo — típicamente su audiometría.
-              const media = msg[msg.type] || {};
-              mediaId = media.id || null;
-              mediaMime = media.mime_type || null;
-              textBody = media.caption || (msg.type === 'image' ? '[imagen]' : `[documento] ${media.filename || ''}`.trim());
-            } else if (msg.type === 'audio' || msg.type === 'voice') {
-              // Nota de voz. El texto sale de la transcripción, más abajo:
-              // aquí solo se recoge el id para poder bajarla.
-              const media = msg[msg.type] || {};
-              mediaId = media.id || null;
-              mediaMime = media.mime_type || null;
-              esAudio = true;
-            } else if (msg.type === 'request_welcome') {
-              // Meta avisa que alguien abrió el chat desde el anuncio sin
-              // escribir todavía. No hay texto: el saludo lo damos nosotros.
-              textBody = null;
-            } else if (msg.type === 'button') {
-              // Botón de plantilla (quick reply) — trae payload + texto
-              textBody = msg.button?.text || null;
-              btnPayload = msg.button?.payload
-                ? { id: msg.button.payload, title: msg.button?.text || '' }
-                : null;
-            }
-
-            // La nota de voz se transcribe antes de guardarla: lo que queda en
-            // la bandeja es el texto, y del audio solo el id de Meta.
-            let transcripcion = null;
-            if (esAudio && mediaId) {
-              try {
-                const archivo = await require('./waMedia.service').descargar(mediaId);
-                transcripcion = archivo
-                  ? await require('./waAudio.service').transcribir(archivo)
-                  : null;
-              } catch (ae) {
-                console.error('[wa-audio] no pude procesar la nota de voz:', ae.message);
-              }
-              textBody = transcripcion || '[nota de voz que no se pudo entender]';
-            }
-
-            const r = await corp.persistIncomingMessage({
-              phoneNumberId,
-              fromWaId: msg.from,
-              wamid: msg.id,
-              type: msg.type || 'text',
-              textBody,
-              contactName: contactByWaId[msg.from],
-              tsSeconds: msg.timestamp,
-              mediaId,
-              mediaMime,
-              // Anuncio de click-to-WhatsApp. Solo viene en el primer mensaje
-              // después del clic — si no lo capturamos aquí, se pierde.
-              referral: msg.referral || null,
-            });
-            if (r.persisted) {
-              processed++;
-              // Lead nuevo: alguien que nunca había escrito. Con el volumen de
-              // hoy cada uno importa, y nadie vive con el CRM abierto.
-              if (r.isNew) {
-                const anuncio = msg.referral?.headline || msg.referral?.source_id;
-                require('./alertaEquipo.service').avisar({
-                  titulo: anuncio ? `Lead nuevo por anuncio: ${anuncio}` : 'Lead nuevo por WhatsApp',
-                  quien: contactByWaId[msg.from] || 'Sin nombre de perfil',
-                  telefono: msg.from,
-                  texto: textBody,
-                }).catch(() => {});
-              }
-            } else {
-              // Antes esto era mudo: un descarte por duplicado no dejaba rastro
-              // y el mensaje simplemente no aparecía en la bandeja.
-              console.warn('[wa-corp] mensaje NO persistido', msg.id, 'de', msg.from,
-                'motivo=', r.skipped || 'desconocido', 'conv=', r.conversationId || '-');
-              skipped++;
-              continue;
-            }
-
-            // Confirmación de asistencia desde el recordatorio (botón "Confirmar").
-            if (btnPayload?.id && String(btnPayload.id).startsWith('confirm_appt:')) {
-              const token = String(btnPayload.id).split(':')[1];
-              try {
-                const appointmentsService = require('./appointments.service');
-                await appointmentsService.confirmByToken(token);
-                await corp.sendTextToConversation({
-                  conversationId: r.conversationId,
-                  text: '¡Gracias! Confirmaste tu asistencia. Te esperamos. 🙌',
-                  sentByBot: true,
-                });
-              } catch (ce) {
-                console.error('[wa] confirm_appt falló:', ce.message);
-              }
-              continue; // no pasar al bot
-            }
-
-            // Adjunto: se descarga, se lee y se responde orientando a la cita.
-            if (mediaId && !esAudio && corp.botHabilitado()) {
-              try {
-                const waMedia = require('./waMedia.service');
-                const archivo = await waMedia.descargar(mediaId);
-                const lectura = archivo
-                  ? await require('./waExamRead.service').leerExamen(archivo, msg[msg.type]?.caption || '')
-                  : null;
-                if (lectura) {
-                  await corp.sendTextToConversation({
-                    conversationId: r.conversationId,
-                    text: lectura.texto,
-                    sentByBot: true,
-                  });
-                  if (lectura.urgente) {
-                    await prisma.whatsAppConversation.update({
-                      where: { id: r.conversationId },
-                      data: { status: 'ESCALATED', unreadCount: { increment: 1 } },
-                    });
-                  }
-                  continue; // ya se le respondió al adjunto
-                }
-              } catch (me) {
-                console.error('[wa-examen] falló:', me.message);
-              }
-            }
-
-            // No se entendió la nota. Decirlo es mejor que contestar cualquier
-            // cosa: la persona repite el audio o escribe, y nadie queda colgado.
-            // Una sola vez. A Yasmin y a Lilia les llegó el mismo aviso tres y
-            // cuatro veces seguidas: la que manda audios suele ser una persona
-            // mayor que no escribe, y pedirle que "lo repita" no la ayuda. Al
-            // segundo audio perdido lo escucha una persona.
-            if (esAudio && !transcripcion) {
-              try {
-                const AVISO_AUDIO = 'Me llegó tu nota de voz pero no logré escucharla bien 🙈';
-                const yaAvisado = await prisma.whatsAppMessage.findFirst({
-                  where: {
-                    conversationId: r.conversationId,
-                    direction: 'OUTBOUND',
-                    body: { startsWith: AVISO_AUDIO },
-                    timestamp: { gte: new Date(Date.now() - 24 * 3600 * 1000) },
-                  },
-                  select: { id: true },
-                });
-                if (yaAvisado) {
-                  const conv = await prisma.whatsAppConversation.findUnique({
-                    where: { id: r.conversationId }, select: { status: true },
-                  });
-                  if (conv?.status === 'ESCALATED') continue; // ya está con una persona
-                  await corp.sendTextToConversation({
-                    conversationId: r.conversationId,
-                    text: 'Ya le paso tus notas de voz a una persona del equipo para que las escuche y te responda por acá 🙏',
-                    sentByBot: true,
-                  });
-                  await prisma.whatsAppConversation.update({
-                    where: { id: r.conversationId },
-                    data: { status: 'ESCALATED', unreadCount: { increment: 1 } },
-                  });
-                  require('./alertaEquipo.service').avisar({
-                    titulo: 'Notas de voz sin escuchar — el bot no las pudo transcribir',
-                    quien: contactByWaId[msg.from] || 'Paciente',
-                    telefono: msg.from,
-                    texto: 'Escúchalas en WhatsApp y respóndele por la bandeja.',
-                  }).catch(() => {});
-                  continue;
-                }
-                await corp.sendTextToConversation({
-                  conversationId: r.conversationId,
-                  text: `${AVISO_AUDIO} ¿Me la puedes repetir, o escribirme lo que necesitas?`,
-                  sentByBot: true,
-                });
-              } catch (te) {
-                console.error('[wa-audio] aviso de audio ilegible falló:', te.message);
-              }
-              continue;
-            }
-
-            // QR de tarjeta de aliado: el mensaje prellenado trae el código.
-            // Se detecta antes del dispatcher porque cambia el saludo inicial
-            // y la rama completa de la conversación.
-            let partnerDetectado = null;
-            let aliadoPrimeraVez = false;
-            if (textBody) {
-              try {
-                const referrals = require('./referralPartners.service');
-                partnerDetectado = await referrals.detectarEnTexto(textBody);
-                if (partnerDetectado) {
-                  const marca = await referrals.marcarConversacion(r.conversationId, partnerDetectado.id);
-                  aliadoPrimeraVez = !!marca?.primeraVez;
-                }
-              } catch (pe) {
-                console.error('[wa-aliado] detección falló:', pe.message);
-              }
-            }
-
-            // F9b — Dispatcher del bot corporativo (solo si WA_BOT_ENABLED=true)
-            try {
-              if (r.adNuevo) {
-                // Viene de una campaña. El saludo nombra el anuncio y va
-                // directo a la cita: quien acaba de tocar un anuncio ya dijo
-                // a qué viene, preguntárselo otra vez con botones lo enfría.
-                await bot.iniciarFlujoAnuncio(r.conversationId, textBody);
-              } else if (partnerDetectado && aliadoPrimeraVez) {
-                // Escaneó el QR. Da igual si nos había escrito antes: arranca
-                // la toma de datos con el saludo de la alianza, sin los botones
-                // del handshake.
-                await bot.iniciarFlujoAliado(r.conversationId, partnerDetectado);
-              } else if (btnPayload) {
-                // Respuesta a botones interactivos del handshake → tipifica y escala
-                await bot.handleButtonReply({
-                  conversationId: r.conversationId,
-                  buttonId: btnPayload.id,
-                  buttonTitle: btnPayload.title,
-                });
-              } else if (r.isNew) {
-                // Primer mensaje entrante en la conversación → handshake con botones
-                await bot.maybeSendHandshake(r.conversationId, textBody);
-              } else if (textBody) {
-                // Si la conversación estaba CLOSED (humano cerró o timeout) y
-                // llega un mensaje nuevo del paciente, reabrimos a BOT para que
-                // la IA vuelva a atender. Excepción: PROFESIONAL_DIRECTORIO
-                // (funnel comercial) se deja CLOSED para que el equipo retome.
-                await bot.reopenIfClosed(r.conversationId);
-                // Mensaje siguiente (después del handshake) → Claude Haiku responde
-                // según la rama (contactType). Solo actúa si status=BOT.
-                // No se responde de una: se acumula. Quien escribe en tres
-                // renglones seguidos recibía tres respuestas en paralelo, cada
-                // una ciega a las otras. Ver waTurno.service.
-                require('./waTurno.service').encolar(
-                  r.conversationId,
-                  textBody,
-                  { desdeAudio: esAudio },
-                  async (textoJunto, opts) => {
-                    await bot.responder({
-                      conversationId: r.conversationId,
-                      incomingText: textoJunto,
-                      desdeAudio: opts.desdeAudio,
-                    });
-                    // Memoria larga: se refresca aparte para no demorar la
-                    // respuesta al paciente. Solo trabaja cada N mensajes.
-                    bot.actualizarResumen(r.conversationId)
-                      .catch((e) => console.warn('[wa-bot] resumen:', e.message));
-                  },
-                );
-              }
-            } catch (be) {
-              console.error('[wa-bot] dispatcher falló:', be.message);
-            }
-          } catch (e) {
-            console.error('[wa-corp] error persistiendo msg', msg.id, e.message);
-            skipped++;
-          }
+          await procesarMensajeCorporativo({ msg, phoneNumberId, contactByWaId, cont });
         }
         continue;
       }
@@ -496,7 +515,7 @@ async function processIncomingEvent(body) {
       }
     }
   }
-  return { ok: true, processed, skipped };
+  return { ok: true, processed: processed + cont.processed, skipped: skipped + cont.skipped };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -541,6 +560,7 @@ module.exports = {
   WaError,
   verifyWebhook,
   processIncomingEvent,
+  procesarMensajeCorporativo,
   getMyChannel,
   upsertMyChannel,
   deleteMyChannel,

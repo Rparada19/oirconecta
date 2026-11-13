@@ -25,6 +25,11 @@
 const { PrismaClient } = require('@prisma/client');
 const { sendWhatsAppText } = require('../notifications/channels/whatsapp');
 
+// Instagram y Messenger no tienen plantillas: fuera de las 24 horas no hay cómo
+// escribirles. Se sacan de todo lo que sale por plantilla; si no, un error de
+// "plantilla no aplica" pausaría la maduración también para WhatsApp.
+const SIN_REDES = { NOT: [{ phone: { startsWith: 'ig:' } }, { phone: { startsWith: 'fb:' } }] };
+
 const prisma = new PrismaClient();
 
 const NUDGE_MIN_MINUTES = 25;
@@ -669,6 +674,7 @@ async function envioMasivoTexto({ texto, dryRun = true, plantilla = null, dias =
         ...(template ? [{                       // fuera: solo con plantilla
           lastMessageAt: { gte: desde },
           contactType: { in: TIPOS_PACIENTE },
+          ...SIN_REDES,
         }] : []),
       ],
     },
@@ -775,6 +781,7 @@ async function recuperarConversaciones({ dryRun = false, conPlantilla = false } 
     // aprobada. `cupo_sin_costo` existe justo para esto.
     const dentroDeVentana = conv.windowExpiresAt && conv.windowExpiresAt > ahora;
     if (!dentroDeVentana && !conPlantilla) { fueraDeVentana++; continue; }
+    if (!dentroDeVentana && /^(ig|fb):/.test(conv.phone || '')) { fueraDeVentana++; continue; }
 
     // Si ya tiene cita, esto sobra y molesta.
     const last10 = String(conv.phone || '').replace(/\D/g, '').slice(-10);
@@ -947,6 +954,7 @@ async function processMaduracion() {
   const candidatas = await prisma.whatsAppConversation.findMany({
     where: {
       businessLine: 'CRM', status: 'BOT', contactType: { in: TIPOS_PACIENTE }, maduracion2At: null,
+      ...SIN_REDES,
       lastMessageAt: { lt: new Date(ahora.getTime() - 3 * DIA), gt: new Date(ahora.getTime() - 14 * DIA) },
       OR: [{ maduracion1At: null }, { maduracion1At: { lt: new Date(ahora.getTime() - 4 * DIA) } }],
     },

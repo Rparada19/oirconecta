@@ -68,6 +68,7 @@ const BOOKING_TOOLS = [
         scheduledAt: { type: 'string', description: 'YYYY-MM-DDTHH:MM (hora local Bogotá).' },
         patientName: { type: 'string' },
         patientEmail: { type: 'string', description: 'Opcional pero recomendado — se le envía la confirmación.' },
+        patientPhone: { type: 'string', description: 'Celular de la persona (10 dígitos). OBLIGATORIO si la conversación es por Instagram o Facebook: ahí no tenemos su número. En WhatsApp no hace falta.' },
         ciudad: { type: 'string', description: 'Ciudad de residencia, si la persona ya la dijo.' },
         notas: { type: 'string', description: 'Motivo o info adicional, opcional.' },
       },
@@ -168,10 +169,13 @@ async function procedenciaDeConversacion(conversationId) {
   if (!conversationId || conversationId === 'ensayo') return 'sitio-web';
   const conv = await prisma.whatsAppConversation.findUnique({
     where: { id: conversationId },
-    select: { adSourceId: true, partnerId: true },
+    select: { adSourceId: true, partnerId: true, phone: true },
   }).catch(() => null);
   if (conv?.partnerId) return 'recomendacion';   // lo trajo un aliado
   if (conv?.adSourceId) return 'leads-marketing-digital';
+  // Escribió por Instagram o Facebook: lo trajeron las redes, que son
+  // marketing digital aunque no haya anuncio de por medio.
+  if (require('./socialChannel.service').esSocial(conv?.phone)) return 'leads-marketing-digital';
   return 'sitio-web';
 }
 
@@ -347,12 +351,14 @@ async function enviarMaterial(ctx, clave) {
 
   const fs = require('fs');
   const { sendWhatsAppMedia } = require('../notifications/channels/whatsapp');
+  // En Instagram/Messenger el destino es el id del chat, no un teléfono.
+  const destino = ctx.destino || ctx.waPhone;
   for (const a of m.archivos) {
     const buffer = await fs.promises.readFile(require('path').join(CARPETA_MATERIAL, a.file));
     let wamid = null, deliveryStatus = 'sent', errorMessage = null, mediaId = null;
     try {
       const r = await sendWhatsAppMedia({
-        to: ctx.waPhone, buffer, mime: a.mime, filename: a.file, caption: a.caption,
+        to: destino, buffer, mime: a.mime, filename: a.file, caption: a.caption,
         phoneNumberId: process.env.META_CORPORATE_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID,
       });
       wamid = r.providerMessageId; mediaId = r.mediaId;
@@ -400,9 +406,23 @@ const bookingToolImpls = {
   },
 
   async create_appointment(ctx, input) {
-    const { conversationId, waPhone, contactName } = ctx || {};
+    const { conversationId, contactName } = ctx || {};
     const profileId = ctx?.profileId || await retailProfileId();
     if (!profileId) return { error: 'Agenda interna no encontrada (falta seed o env).' };
+
+    // En WhatsApp el teléfono es el del chat. En Instagram y Messenger no lo
+    // tenemos: sin él, el equipo no puede confirmar ni recordarle la cita.
+    let waPhone = ctx?.waPhone || null;
+    if (!waPhone) {
+      const cel = String(input.patientPhone || '').replace(/\D/g, '');
+      const local = cel.length === 12 && cel.startsWith('57') ? cel.slice(2) : cel;
+      if (!/^3\d{9}$/.test(local)) {
+        return { error: 'Falta su número de celular (10 dígitos, empieza por 3). Pídeselo con naturalidad —es para confirmarle la cita y recordársela— y vuelve a llamar create_appointment con patientPhone.' };
+      }
+      waPhone = `57${local}`;
+      // Desde aquí las demás herramientas del turno ya lo conocen.
+      if (ctx) ctx.waPhone = waPhone;
+    }
 
     // La agenda acepta esa hora, pero la campaña puede no hacerlo (lunes en la
     // mañana, antes de las 8 o después de las 4 en noviembre).
@@ -419,7 +439,7 @@ const bookingToolImpls = {
       // Quién agendó, no de dónde viene. Es lo que permite contar los cupos
       // del beneficio sin adivinar.
       canalRegistro: 'bot-whatsapp',
-      notas: input.notas || 'Agendado por WhatsApp (bot corporativo)',
+      notas: input.notas || `Agendado por ${ctx?.canal || 'WhatsApp'} (bot corporativo)`,
       patient: {
         nombre: input.patientName || contactName || 'Paciente WhatsApp',
         telefono: waPhone,
@@ -577,7 +597,7 @@ const bookingToolImpls = {
       data: {
         type: 'CALL',
         title: `Buscar profesional en ${ciudad} — ${quien}`,
-        description: `Escribió al WhatsApp y vive en ${ciudad}, no puede venir a Bogotá.\nTeléfono: ${ctx?.waPhone || ''}\nQué le pasa: ${motivo || '(no lo dijo)'}\nSe le dijo que el equipo le escribe por el mismo chat.`,
+        description: `Escribió por ${ctx?.canal || 'WhatsApp'} y vive en ${ciudad}, no puede venir a Bogotá.\nTeléfono: ${ctx?.waPhone || '(no lo dio: escribió por redes, respóndele por la bandeja)'}\nQué le pasa: ${motivo || '(no lo dijo)'}\nSe le dijo que el equipo le escribe por el mismo chat.`,
         priority: 'HIGH',
         dueAt: siguienteDiaHabil(),
         createdBy: 'system',
@@ -662,6 +682,20 @@ const bookingToolImpls = {
  * La próxima cita viva de quien escribe, por teléfono. Solo de hoy en adelante:
  * una cita de la semana pasada no se mueve ni se cancela.
  */
+/**
+ * El teléfono con el que se buscan las citas de quien escribe. En WhatsApp es
+ * el del chat; en Instagram/Messenger, el del paciente cuando ya agendó (antes
+ * de eso no lo sabemos y no se inventa).
+ */
+async function telefonoDeConversacion(conv) {
+  if (!require('./socialChannel.service').esSocial(conv?.phone)) return conv?.phone || null;
+  if (!conv?.patientId) return null;
+  const p = await prisma.patient.findUnique({
+    where: { id: conv.patientId }, select: { telefono: true },
+  }).catch(() => null);
+  return p?.telefono || null;
+}
+
 async function citaVigentePorTelefono(telefono) {
   const last10 = String(telefono || '').replace(/\D/g, '').slice(-10);
   if (!last10) return null;
@@ -3019,6 +3053,19 @@ async function handleTextForBot({ conversationId, incomingText, desdeAudio = fal
 
   let { systemPrompt, adVigente, firma, corte } = await construirPrompt(conv, incomingText);
 
+  // Instagram / Messenger: mismo bot, pero sin el teléfono de la persona.
+  const social = require('./socialChannel.service');
+  const esRedes = social.esSocial(conv.phone);
+  const canal = social.nombreCanal(conv.phone);
+  const telefono = await telefonoDeConversacion(conv);
+  if (esRedes) {
+    systemPrompt += `\n\nCANAL: esta persona te escribe por ${canal}, NO por WhatsApp. No digas "este WhatsApp" ni "por WhatsApp": di "por aquí" o "por este chat".
+${telefono
+    ? `Ya tenemos su celular (${telefono}).`
+    : `Aquí no tenemos su número. Para agendar, pídele su celular con naturalidad, una sola vez y junto con el nombre ("¿me regalas tu nombre y un celular para confirmarte la cita?"), y pásalo en patientPhone de create_appointment. No lo pidas antes de que quiera agendar.`}
+Estos chats no muestran *negritas*: escribe texto simple.`;
+  }
+
   // Lo que vas a leer lo dijo hablando, no escribiendo.
   if (desdeAudio) {
     systemPrompt += `\n\nEste último mensaje llegó como NOTA DE VOZ y lo que lees es la transcripción.
@@ -3057,7 +3104,11 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     const client = new Anthropic();
     const toolCtx = {
       conversationId: conv.id,
-      waPhone: conv.phone,
+      // Para buscar y crear citas: en redes es el celular que dio (o nada).
+      waPhone: telefono,
+      // A dónde se manda el material: el chat, sea WhatsApp, Instagram o Messenger.
+      destino: conv.phone,
+      canal,
       contactName: conv.contactName,
       profileId: agendaProfileId,
       partnerId: conv.partnerId || null,
@@ -3067,7 +3118,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
     if (useBookingTools) {
       const t = await turnoConHerramientas({
         client, systemPrompt, corte, tools, messages, impls: bookingToolImpls,
-        toolCtx, telefono: conv.phone, etiqueta: `conversación: ${conversationId}`,
+        toolCtx, telefono, etiqueta: `conversación: ${conversationId}`,
       });
       reply = t.texto;
       citaCreadaEnEsteTurno = t.citaCreada;
@@ -3111,7 +3162,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   // la conversación donde el bot puede retomarla.
   let citaFantasma = false;
   if (PROMESA_DE_CITA.test(reply) && !citaCreadaEnEsteTurno) {
-    citaFantasma = !(await tieneCitaVigente(conv.phone));
+    citaFantasma = !(await tieneCitaVigente(telefono));
     if (citaFantasma) {
       console.error(
         '[wa-bot] CITA FANTASMA — confirmó sin crear y no se corrigió.',
@@ -3126,7 +3177,7 @@ La transcripción puede traer errores: si algo no cuadra, pregunta en vez de dar
   // y la agenda la tiene en la vieja, no sale. Se le dice la verdad.
   let citaNoMovida = false;
   if (PROMESA_DE_MOVER.test(reply) && !citaMovidaEnEsteTurno && !citaCreadaEnEsteTurno) {
-    const { vigente, coincide } = await citaYaEstaEnLaFechaDicha(conv.phone, reply);
+    const { vigente, coincide } = await citaYaEstaEnLaFechaDicha(telefono, reply);
     if (vigente && !coincide) {
       citaNoMovida = true;
       console.error(

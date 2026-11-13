@@ -26,6 +26,9 @@
  * Normaliza a E.164 sin '+'. Colombia: si son 10 dígitos que empiezan por 3
  * (celular local sin indicativo), antepone 57. Si ya trae indicativo, lo deja.
  */
+// Carga perezosa: evita un require circular y deja este archivo usable solo.
+const social = () => require('../../services/socialChannel.service');
+
 function normalizePhone(raw) {
   let d = String(raw || '').replace(/\D/g, '');
   if (d.length === 10 && d.startsWith('3')) d = '57' + d;
@@ -43,6 +46,13 @@ async function sendWhatsAppTemplate({
   buttons = [], // [{ type:'url', text }, { type:'quick_reply', payload }] en orden EXACTO de la plantilla
   phoneNumberId, // override del remitente (multi-número: corporativo vs. clínico)
 }) {
+  // Las plantillas son solo de WhatsApp. En Instagram/Messenger, pasada la
+  // ventana de 24 horas, no hay forma de escribirle primero a la persona.
+  if (social().esSocial(to)) {
+    const err = new Error(`Las plantillas de WhatsApp no aplican en ${social().nombreCanal(to)}: solo se puede responder dentro de las 24 horas.`);
+    err.code = 'SOCIAL_SIN_PLANTILLAS';
+    throw err;
+  }
   const phoneId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
@@ -150,6 +160,8 @@ async function sendWhatsAppTemplate({
  *                                    si no se pasa, usa WHATSAPP_PHONE_NUMBER_ID (legacy/global).
  */
 async function sendWhatsAppText({ to, text, phoneNumberId }) {
+  // Instagram / Messenger: mismo bot, otro canal. Ver socialChannel.service.
+  if (social().esSocial(to)) return social().sendText({ to, text });
   const phoneId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
@@ -196,6 +208,7 @@ async function sendWhatsAppText({ to, text, phoneNumberId }) {
 async function sendWhatsAppInteractiveButtons({
   to, bodyText, buttons, footerText, phoneNumberId,
 }) {
+  if (social().esSocial(to)) return social().sendButtons({ to, bodyText, buttons });
   const phoneId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
@@ -260,6 +273,7 @@ async function sendWhatsAppInteractiveButtons({
 async function sendWhatsAppInteractiveList({
   to, bodyText, buttonText, sections, phoneNumberId,
 }) {
+  if (social().esSocial(to)) return social().sendList({ to, bodyText, sections });
   const phoneId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
@@ -323,6 +337,7 @@ async function sendWhatsAppInteractiveList({
  * @param {string} [p.phoneNumberId]
  */
 async function sendWhatsAppMedia({ to, buffer, mime, filename, caption, phoneNumberId }) {
+  if (social().esSocial(to)) return social().sendMedia({ to, buffer, mime, filename, caption });
   const phoneId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const version = process.env.WHATSAPP_API_VERSION || 'v21.0';

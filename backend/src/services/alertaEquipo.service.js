@@ -99,6 +99,11 @@ async function porCorreo({ titulo, quien, telefono, texto, largo }) {
  * @param {{titulo:string, quien:string, telefono?:string, texto?:string, largo?:boolean}} datos
  */
 async function avisar(datos) {
+  // Instagram / Messenger: no hay número que enlazar a wa.me. Se dice el canal.
+  const social = require('./socialChannel.service');
+  if (social.esSocial(datos?.telefono)) {
+    datos = { ...datos, titulo: `${datos.titulo} · ${social.nombreCanal(datos.telefono)}`, telefono: null };
+  }
   const [tg, mail] = await Promise.all([porTelegram(datos), porCorreo(datos)]);
   if (tg.skipped === 'sin-telegram' && mail.skipped) {
     console.warn('[alerta] nadie configurado: define TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID o ALERTAS_EMAIL');
